@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Teachers can read/write their classes
+    match /classes/{classId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == resource.data.teacherId;
+      allow read: if request.auth != null 
+        && request.auth.uid in resource.data.studentIds;
+    }
+    
+    // Students can read their own data
+    match /students/{studentId} {
+      allow read: if request.auth != null 
+        && request.auth.uid == resource.data.userId;
+      allow write: if request.auth != null 
+        && hasRole('teacher');
+    }
+    
+    // Grades - students can read their own, teachers can read/write their classes
+    match /classes/{classId}/grades/{gradeId} {
+      allow read: if request.auth != null 
+        && (request.auth.uid == resource.data.studentId 
+            || hasTeacherAccess(classId));
+      allow write: if request.auth != null && hasTeacherAccess(classId);
+    }
+    
+    // Chat messages - participants can read, authenticated users can create
+    match /conversations/{conversationId}/messages/{messageId} {
+      allow read: if request.auth != null 
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.senderId;
+    }
+    
+    // Conversations - participants can read/write
+    match /conversations/{conversationId} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid in resource.data.participants;
+    }
+    
+    // Helper functions
+    function hasRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
+    function hasTeacherAccess(classId) {
+      return request.auth.uid == get(/databases/$(database)/documents/classes/$(classId)).data.teacherId;
+    }
+  }
+}
