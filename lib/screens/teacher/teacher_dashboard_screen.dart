@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/adaptive_layout.dart';
+import '../../widgets/common/responsive_layout.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/app_theme.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {
   const TeacherDashboardScreen({super.key});
@@ -22,13 +25,11 @@ class TeacherDashboardScreen extends StatelessWidget {
           },
         ),
       ],
-      body: ResponsiveBuilder(
-        builder: (context, isWideScreen) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      body: ResponsiveContainer(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                 // Welcome Header
                 Card(
                   child: Padding(
@@ -82,9 +83,9 @@ class TeacherDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                _buildQuickStatsGrid(context, isWideScreen),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.md),
+                _buildQuickStatsGrid(context),
+                const SizedBox(height: AppSpacing.lg),
 
                 // Recent Activity
                 Text(
@@ -93,9 +94,9 @@ class TeacherDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 _buildRecentActivityCard(context),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.lg),
 
                 // Quick Actions
                 Text(
@@ -104,25 +105,25 @@ class TeacherDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                _buildQuickActionsGrid(context, isWideScreen),
+                const SizedBox(height: AppSpacing.md),
+                _buildQuickActionsGrid(context),
               ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildQuickStatsGrid(BuildContext context, bool isWideScreen) {
-    final columns = isWideScreen ? 4 : 2;
-    
-    return GridView.count(
+  Widget _buildQuickStatsGrid(BuildContext context) {
+    return ResponsiveGrid(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: columns,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      mobileColumns: 2,
+      tabletColumns: 4,
+      desktopColumns: 4,
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
       childAspectRatio: 1.5,
       children: [
         _buildStatCard(
@@ -269,15 +270,15 @@ class TeacherDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionsGrid(BuildContext context, bool isWideScreen) {
-    final columns = isWideScreen ? 3 : 2;
-    
-    return GridView.count(
+  Widget _buildQuickActionsGrid(BuildContext context) {
+    return ResponsiveGrid(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: columns,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      mobileColumns: 2,
+      tabletColumns: 3,
+      desktopColumns: 3,
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
       childAspectRatio: 1.2,
       children: [
         _buildActionCard(
