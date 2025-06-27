@@ -241,8 +241,38 @@ class RoleSelectionScreen extends StatelessWidget {
   
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Role Selection Screen')),
+    final authProvider = context.read<AuthProvider>();
+    
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Select Your Role',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                // Set role as teacher and navigate
+                authProvider.updateUserRole(UserRole.teacher);
+                context.go('/dashboard');
+              },
+              child: const Text('Teacher'),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                // Set role as student and navigate
+                authProvider.updateUserRole(UserRole.student);
+                context.go('/dashboard');
+              },
+              child: const Text('Student'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

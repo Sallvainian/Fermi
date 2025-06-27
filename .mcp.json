@@ -20,6 +20,17 @@
 				"quixotic-wasp-JEvmyu"
 			]
 		},
+		"mcp_flutter": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@smithery/cli@latest",
+				"run",
+				"@Arenukvern/mcp_flutter",
+				"--key",
+				"84185543-07cf-41cd-a083-d101425812cf"
+			]
+		},
 		"memory": {
 			"command": "npx",
 			"args": [
@@ -85,21 +96,6 @@
 				"-y",
 				"@modelcontextprotocol/server-puppeteer@latest"
 			]
-		},
-		"supabase": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@supabase/mcp-server-supabase@latest",
-				"--project-ref=yutlcpluuhjxwudfathv"
-			],
-			"env": {
-				"SUPABASE_ACCESS_TOKEN": "sbp_bb2be8f05b85429ecef3869f59af6a563bd1cc3e"
-			}
-		},
-		"typescript": {
-			"command": "npx",
-			"args": ["typescript-mcp"]
 		},
 		"toolbox": {
 			"command": "npx",

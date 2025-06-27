@@ -29,9 +29,9 @@ class StudentDashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                // Welcome Header
-                Card(
-                  child: Padding(
+              // Welcome Header
+              Card(
+                child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Row(
                       children: [
@@ -73,41 +73,40 @@ class StudentDashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-                // Academic Overview
-                Text(
+              // Academic Overview
+              Text(
                   'Academic Overview',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildAcademicOverviewGrid(context),
-                const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
+              _buildAcademicOverviewGrid(context),
+              const SizedBox(height: AppSpacing.lg),
 
-                // Upcoming Assignments
-                Text(
+              // Upcoming Assignments
+              Text(
                   'Upcoming Assignments',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildUpcomingAssignmentsCard(context),
-                const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
+              _buildUpcomingAssignmentsCard(context),
+              const SizedBox(height: AppSpacing.lg),
 
-                // Recent Grades
-                Text(
+              // Recent Grades
+              Text(
                   'Recent Grades',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildRecentGradesCard(context),
-              ],
-            ),
+              const SizedBox(height: AppSpacing.md),
+              _buildRecentGradesCard(context),
+            ],
           ),
         ),
       ),

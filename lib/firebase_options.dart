@@ -38,58 +38,55 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'your-web-api-key',
-    appId: 'your-web-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    authDomain: 'your-project-id.firebaseapp.com',
-    storageBucket: 'your-project-id.appspot.com',
-    measurementId: 'your-measurement-id',
+    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
+    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'your-android-api-key',
-    appId: 'your-android-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
+    appId: '1:218352465432:android:ANDROID_APP_ID',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'your-ios-api-key',
-    appId: 'your-ios-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
+    appId: '1:218352465432:ios:IOS_APP_ID',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
     iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'your-ios-api-key',
-    appId: 'your-ios-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    storageBucket: 'your-project-id.appspot.com',
+    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
+    appId: '1:218352465432:ios:IOS_APP_ID',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
     iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'your-web-api-key',
-    appId: 'your-web-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    authDomain: 'your-project-id.firebaseapp.com',
-    storageBucket: 'your-project-id.appspot.com',
-    measurementId: 'your-measurement-id',
+    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
+    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
   );
 
   static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: 'your-web-api-key',
-    appId: 'your-web-app-id',
-    messagingSenderId: 'your-sender-id',
-    projectId: 'your-project-id',
-    authDomain: 'your-project-id.firebaseapp.com',
-    storageBucket: 'your-project-id.appspot.com',
-    measurementId: 'your-measurement-id',
+    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
+    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
   );
 }

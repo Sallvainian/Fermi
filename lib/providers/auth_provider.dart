@@ -234,6 +234,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Update user role (for role selection after Google sign-in)
+  Future<bool> updateUserRole(UserRole role) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final userModel = await _authService.completeGoogleSignUp(
+        role: role,
+      );
+
+      if (userModel != null) {
+        _userModel = userModel;
+        _status = AuthStatus.authenticated;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   // Helper methods
   void _setLoading(bool value) {
     _isLoading = value;

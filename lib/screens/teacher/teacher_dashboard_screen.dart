@@ -5,6 +5,7 @@ import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_theme.dart';
+import '../../services/test_service.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {
   const TeacherDashboardScreen({super.key});
@@ -30,9 +31,9 @@ class TeacherDashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                // Welcome Header
-                Card(
-                  child: Padding(
+              // Welcome Header
+              Card(
+                child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Row(
                       children: [
@@ -74,41 +75,40 @@ class TeacherDashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-                // Quick Stats
-                Text(
+              // Quick Stats
+              Text(
                   'Quick Overview',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildQuickStatsGrid(context),
-                const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
+              _buildQuickStatsGrid(context),
+              const SizedBox(height: AppSpacing.lg),
 
-                // Recent Activity
-                Text(
+              // Recent Activity
+              Text(
                   'Recent Activity',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildRecentActivityCard(context),
-                const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
+              _buildRecentActivityCard(context),
+              const SizedBox(height: AppSpacing.lg),
 
-                // Quick Actions
-                Text(
+              // Quick Actions
+              Text(
                   'Quick Actions',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildQuickActionsGrid(context),
-              ],
-            ),
+              const SizedBox(height: AppSpacing.md),
+              _buildQuickActionsGrid(context),
+            ],
           ),
         ),
       ),
@@ -333,6 +333,26 @@ class TeacherDashboardScreen extends StatelessWidget {
           subtitle: 'Download gradebook backup',
           onTap: () {
             // TODO: Export functionality
+          },
+        ),
+        _buildActionCard(
+          context,
+          icon: Icons.storage,
+          title: 'Test Write DB',
+          subtitle: 'Test Firestore write',
+          onTap: () async {
+            final testService = TestService();
+            await testService.testWriteData();
+          },
+        ),
+        _buildActionCard(
+          context,
+          icon: Icons.search,
+          title: 'Test Read DB',
+          subtitle: 'Test Firestore read',
+          onTap: () async {
+            final testService = TestService();
+            await testService.testReadData();
           },
         ),
       ],

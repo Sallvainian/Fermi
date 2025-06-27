@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "218352465432",
+    "project_id": "teacher-dashboard-flutterfire",
+    "storage_bucket": "teacher-dashboard-flutterfire.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:218352465432:android:a7d591b9db6bef6038b56d",
+        "android_client_info": {
+          "package_name": "com.teacherdashboard.teacher_dashboard_flutter_firebase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "218352465432-g9u6sl8orf9f7iiv955241h7r5kb0qh5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "218352465432-g9u6sl8orf9f7iiv955241h7r5kb0qh5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
