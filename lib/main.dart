@@ -9,6 +9,8 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/teacher/teacher_dashboard_screen.dart';
 import 'screens/student/student_dashboard_screen.dart';
+import 'theme/app_theme.dart';
+import 'theme/app_typography.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,24 +40,17 @@ class TeacherDashboardApp extends StatelessWidget {
           
           return MaterialApp.router(
             title: 'Teacher Dashboard',
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.indigo,
-                brightness: Brightness.light,
-              ),
-              useMaterial3: true,
-              appBarTheme: const AppBarTheme(
-                centerTitle: true,
-                elevation: 2,
+            theme: AppTheme.lightTheme().copyWith(
+              textTheme: AppTypography.createTextTheme(
+                AppTheme.lightTheme().colorScheme,
               ),
             ),
-            darkTheme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.indigo,
-                brightness: Brightness.dark,
+            darkTheme: AppTheme.darkTheme().copyWith(
+              textTheme: AppTypography.createTextTheme(
+                AppTheme.darkTheme().colorScheme,
               ),
-              useMaterial3: true,
             ),
+            themeMode: ThemeMode.system,
             debugShowCheckedModeBanner: false,
             routerConfig: _createRouter(authProvider),
           );

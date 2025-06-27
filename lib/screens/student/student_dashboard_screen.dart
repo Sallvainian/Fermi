@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common/adaptive_layout.dart';
+import '../../widgets/common/responsive_layout.dart';
+import '../../theme/app_spacing.dart';
 
 class StudentDashboardScreen extends StatelessWidget {
   const StudentDashboardScreen({super.key});
@@ -22,13 +24,11 @@ class StudentDashboardScreen extends StatelessWidget {
           },
         ),
       ],
-      body: ResponsiveBuilder(
-        builder: (context, isWideScreen) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      body: ResponsiveContainer(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                 // Welcome Header
                 Card(
                   child: Padding(
@@ -82,9 +82,9 @@ class StudentDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                _buildAcademicOverviewGrid(context, isWideScreen),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.md),
+                _buildAcademicOverviewGrid(context),
+                const SizedBox(height: AppSpacing.lg),
 
                 // Upcoming Assignments
                 Text(
@@ -93,9 +93,9 @@ class StudentDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 _buildUpcomingAssignmentsCard(context),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.lg),
 
                 // Recent Grades
                 Text(
@@ -104,25 +104,25 @@ class StudentDashboardScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.md),
                 _buildRecentGradesCard(context),
               ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildAcademicOverviewGrid(BuildContext context, bool isWideScreen) {
-    final columns = isWideScreen ? 4 : 2;
-    
-    return GridView.count(
+  Widget _buildAcademicOverviewGrid(BuildContext context) {
+    return ResponsiveGrid(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: columns,
-      crossAxisSpacing: 16,
-      mainAxisSpacing: 16,
+      mobileColumns: 2,
+      tabletColumns: 4,
+      desktopColumns: 4,
+      spacing: AppSpacing.md,
+      runSpacing: AppSpacing.md,
       childAspectRatio: 1.5,
       children: [
         _buildOverviewCard(
