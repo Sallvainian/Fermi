@@ -36,7 +36,7 @@ class AuthService {
     required String email,
     required String password,
     required String displayName,
-    required UserRole role,
+    UserRole? role,
     String? parentEmail,
     int? gradeLevel,
   }) async {

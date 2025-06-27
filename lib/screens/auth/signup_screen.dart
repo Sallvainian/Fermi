@@ -18,10 +18,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _displayNameController = TextEditingController();
-  final _parentEmailController = TextEditingController();
-  final _gradeLevelController = TextEditingController();
   
-  UserRole _selectedRole = UserRole.student;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -31,8 +28,6 @@ class _SignupScreenState extends State<SignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _displayNameController.dispose();
-    _parentEmailController.dispose();
-    _gradeLevelController.dispose();
     super.dispose();
   }
 
@@ -44,13 +39,7 @@ class _SignupScreenState extends State<SignupScreen> {
       email: _emailController.text.trim(),
       password: _passwordController.text,
       displayName: _displayNameController.text.trim(),
-      role: _selectedRole,
-      parentEmail: _selectedRole == UserRole.student 
-          ? _parentEmailController.text.trim() 
-          : null,
-      gradeLevel: _selectedRole == UserRole.student 
-          ? int.tryParse(_gradeLevelController.text) 
-          : null,
+      role: null, // No role for now
     );
 
     if (success && mounted) {
@@ -95,44 +84,6 @@ class _SignupScreenState extends State<SignupScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-
-                  // Role Selection
-                  Text(
-                    'I am a...',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<UserRole>(
-                          title: const Text('Student'),
-                          value: UserRole.student,
-                          groupValue: _selectedRole,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedRole = value!;
-                            });
-                          },
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<UserRole>(
-                          title: const Text('Teacher'),
-                          value: UserRole.teacher,
-                          groupValue: _selectedRole,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedRole = value!;
-                            });
-                          },
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
 
                   // Sign Up Form
                   Form(
@@ -218,43 +169,6 @@ class _SignupScreenState extends State<SignupScreen> {
                             return null;
                           },
                         ),
-                        
-                        // Student-specific fields
-                        if (_selectedRole == UserRole.student) ...[
-                          const SizedBox(height: 16),
-                          AuthTextField(
-                            controller: _gradeLevelController,
-                            label: 'Grade Level',
-                            keyboardType: TextInputType.number,
-                            prefixIcon: Icons.school_outlined,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your grade level';
-                              }
-                              final grade = int.tryParse(value);
-                              if (grade == null || grade < 1 || grade > 12) {
-                                return 'Please enter a valid grade (1-12)';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          AuthTextField(
-                            controller: _parentEmailController,
-                            label: 'Parent/Guardian Email',
-                            keyboardType: TextInputType.emailAddress,
-                            prefixIcon: Icons.family_restroom,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter parent/guardian email';
-                              }
-                              if (!value.contains('@')) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                        ],
                       ],
                     ),
                   ),

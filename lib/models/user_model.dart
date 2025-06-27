@@ -6,7 +6,7 @@ class UserModel {
   final String uid;
   final String email;
   final String displayName;
-  final UserRole role;
+  final UserRole? role; // Made optional
   final String? photoURL;
   final DateTime createdAt;
   final DateTime lastActive;
@@ -48,10 +48,12 @@ class UserModel {
       uid: doc.id,
       email: data['email'] ?? '',
       displayName: data['displayName'] ?? '',
-      role: UserRole.values.firstWhere(
-        (r) => r.toString().split('.').last == data['role'],
-        orElse: () => UserRole.student,
-      ),
+      role: data['role'] != null 
+          ? UserRole.values.firstWhere(
+              (r) => r.toString().split('.').last == data['role'],
+              orElse: () => UserRole.teacher,
+            )
+          : null,
       photoURL: data['photoURL'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       lastActive: (data['lastActive'] as Timestamp).toDate(),
@@ -75,7 +77,7 @@ class UserModel {
     return {
       'email': email,
       'displayName': displayName,
-      'role': role.toString().split('.').last,
+      if (role != null) 'role': role!.toString().split('.').last,
       'photoURL': photoURL,
       'createdAt': Timestamp.fromDate(createdAt),
       'lastActive': Timestamp.fromDate(lastActive),
@@ -124,4 +126,5 @@ class UserModel {
   bool get isTeacher => role == UserRole.teacher;
   bool get isStudent => role == UserRole.student;
   bool get isAdmin => role == UserRole.admin;
+  bool get hasRole => role != null;
 }

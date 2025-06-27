@@ -196,13 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(56),
                     ),
-                    icon: Image.asset(
-                      'assets/images/google_logo.png',
-                      height: 24,
-                      width: 24,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.g_mobiledata, size: 24),
-                    ),
+                    icon: const Icon(Icons.g_mobiledata, size: 24),
                     label: const Text('Continue with Google'),
                   ),
                   const SizedBox(height: 24),
