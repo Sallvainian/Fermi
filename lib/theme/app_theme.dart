@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_color_utilities/material_color_utilities.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF3F51B5); // Indigo
@@ -40,10 +39,14 @@ class AppTheme {
 
       // Card Theme
       cardTheme: CardThemeData(
-        elevation: 2,
+        color: const Color(0xFF0F0F0F),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
         margin: const EdgeInsets.all(8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF2A2A2A), width: 0.5),
         ),
       ),
 
@@ -91,7 +94,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -157,7 +160,7 @@ class AppTheme {
 
       // Chip Theme
       chipTheme: ChipThemeData(
-        backgroundColor: colorScheme.surfaceVariant,
+        backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.primaryContainer,
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
         shape: RoundedRectangleBorder(
@@ -200,12 +203,39 @@ class AppTheme {
   }
 
   static ThemeData darkTheme() {
-    final colorScheme = _createColorScheme(Brightness.dark);
+    // Create a sleek black dark theme
+    const surfaceBlack = Color(0xFF000000);
+    const cardBlack = Color(0xFF0F0F0F);
+    const containerBlack = Color(0xFF1C1C1C);
+    const borderGrey = Color(0xFF2A2A2A);
+    
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+    ).copyWith(
+      surface: surfaceBlack,
+      onSurface: const Color(0xFFE5E5E5),
+      surfaceContainerLowest: surfaceBlack,
+      surfaceContainerLow: cardBlack,
+      surfaceContainer: containerBlack,
+      surfaceContainerHigh: const Color(0xFF252525),
+      surfaceContainerHighest: const Color(0xFF303030),
+      onSurfaceVariant: const Color(0xFFB3B3B3),
+      outline: borderGrey,
+      outlineVariant: const Color(0xFF1A1A1A),
+      primary: const Color(0xFF6366F1), // Modern indigo
+      onPrimary: Colors.white,
+      secondary: const Color(0xFF10B981), // Modern emerald
+      onSecondary: Colors.white,
+      tertiary: const Color(0xFFF59E0B), // Modern amber
+      onTertiary: Colors.black,
+    );
     
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: Brightness.dark,
+      scaffoldBackgroundColor: surfaceBlack,
       
       // App Bar Theme
       appBarTheme: AppBarTheme(
@@ -223,10 +253,14 @@ class AppTheme {
 
       // Card Theme
       cardTheme: CardThemeData(
-        elevation: 2,
+        color: const Color(0xFF0F0F0F),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.transparent,
         margin: const EdgeInsets.all(8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF2A2A2A), width: 0.5),
         ),
       ),
 
@@ -274,7 +308,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -340,7 +374,7 @@ class AppTheme {
 
       // Chip Theme
       chipTheme: ChipThemeData(
-        backgroundColor: colorScheme.surfaceVariant,
+        backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.primaryContainer,
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
         shape: RoundedRectangleBorder(

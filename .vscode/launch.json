@@ -1,0 +1,44 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Flutter (Debug Mode)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": ["--debug"],
+            "console": "debugConsole"
+        },
+        {
+            "name": "Profile Flutter (Profile Mode)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": ["--profile"],
+            "console": "debugConsole"
+        },
+        {
+            "name": "Release Flutter (Release Mode)",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": ["--release"],
+            "console": "debugConsole"
+        },
+        {
+            "name": "Debug Web",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "chrome",
+            "args": ["--web-port", "3000"]
+        },
+        {
+            "name": "Debug Android",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "deviceId": "android"
+        }
+    ]
+}

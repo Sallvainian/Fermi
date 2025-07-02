@@ -18,10 +18,25 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Clear error when user starts typing
+    _emailController.addListener(_clearError);
+    _passwordController.addListener(_clearError);
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _clearError() {
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.errorMessage != null) {
+      authProvider.clearError();
+    }
   }
 
   Future<void> _signIn() async {
@@ -60,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 48.0), // Extra bottom padding
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(

@@ -34,26 +34,67 @@ class AuthProvider extends ChangeNotifier {
 
   // Initialize auth state listener
   void _initializeAuth() {
-    _authService.authStateChanges.listen((User? user) async {
-      if (user == null) {
-        _status = AuthStatus.unauthenticated;
-        _userModel = null;
-      } else {
-        // Try to get user model from Firestore
-        final userModel = await _authService.getCurrentUserModel();
-        if (userModel != null) {
-          _userModel = userModel;
-          _status = AuthStatus.authenticated;
+    try {
+      _authService.authStateChanges.listen((User? user) async {
+        if (user == null) {
+          _status = AuthStatus.unauthenticated;
+          _userModel = null;
         } else {
-          // User exists in Auth but not in Firestore (Google sign-in needs role)
-          _status = AuthStatus.authenticating;
+          // Try to get user model from Firestore
+          final userModel = await _authService.getCurrentUserModel();
+          if (userModel != null) {
+            _userModel = userModel;
+            _status = AuthStatus.authenticated;
+          } else {
+            // User exists in Auth but not in Firestore (Google sign-in needs role)
+            _status = AuthStatus.authenticating;
+          }
         }
+        notifyListeners();
+      });
+    } catch (e) {
+      // Firebase not initialized - set to unauthenticated for development
+      if (kDebugMode) {
+        print('Firebase Auth not available: $e');
       }
+      _status = AuthStatus.unauthenticated;
+      _userModel = null;
       notifyListeners();
-    });
+    }
   }
 
-  // Sign up with email
+  // Sign up with email only (creates Auth user, redirects to role selection)
+  Future<bool> signUpWithEmailOnly({
+    required String email,
+    required String password,
+    required String displayName,
+  }) async {
+    try {
+      _setLoading(true);
+      _clearError();
+
+      final user = await _authService.signUpWithEmailOnly(
+        email: email,
+        password: password,
+        displayName: displayName,
+      );
+
+      if (user != null) {
+        // User needs to select role
+        _status = AuthStatus.authenticating;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _setError(e.toString());
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Sign up with email (creates complete user profile)
   Future<bool> signUpWithEmail({
     required String email,
     required String password,
@@ -273,5 +314,11 @@ class AuthProvider extends ChangeNotifier {
 
   void _clearError() {
     _errorMessage = null;
+  }
+
+  // Public method to clear error (useful for UI)
+  void clearError() {
+    _clearError();
+    notifyListeners();
   }
 }

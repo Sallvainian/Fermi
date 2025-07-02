@@ -2,24 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'models/user_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
+import 'screens/auth/role_selection_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/teacher/teacher_dashboard_screen.dart';
+import 'screens/teacher/classes/classes_screen.dart';
+import 'screens/teacher/gradebook/gradebook_screen.dart';
 import 'screens/student/student_dashboard_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_typography.dart';
 
+bool _firebaseInitialized = false;
+
+bool get isFirebaseInitialized => _firebaseInitialized;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+
+  // Load environment variables
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    // .env file not found or couldn't be loaded
+    print('Warning: Could not load .env file: $e');
+  }
+
+  // Initialize Firebase properly
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    _firebaseInitialized = true;
+  } catch (e) {
+    _firebaseInitialized = false;
+    print('Firebase initialization failed: $e');
+  }
+
   runApp(const TeacherDashboardApp());
 }
 
@@ -37,7 +60,7 @@ class TeacherDashboardApp extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final authProvider = context.watch<AuthProvider>();
-          
+
           return MaterialApp.router(
             title: 'Teacher Dashboard',
             theme: AppTheme.lightTheme().copyWith(
@@ -50,7 +73,7 @@ class TeacherDashboardApp extends StatelessWidget {
                 AppTheme.darkTheme().colorScheme,
               ),
             ),
-            themeMode: ThemeMode.system,
+            themeMode: ThemeMode.dark, // Force black dark mode
             debugShowCheckedModeBanner: false,
             routerConfig: _createRouter(authProvider),
           );
@@ -78,7 +101,7 @@ class TeacherDashboardApp extends StatelessWidget {
         }
 
         // If authenticated but needs role selection (Google sign-in)
-        if (authProvider.status == AuthStatus.authenticating && 
+        if (authProvider.status == AuthStatus.authenticating &&
             state.matchedLocation != '/auth/role-selection') {
           return '/auth/role-selection';
         }
@@ -103,14 +126,15 @@ class TeacherDashboardApp extends StatelessWidget {
           path: '/auth/forgot-password',
           builder: (context, state) => const ForgotPasswordScreen(),
         ),
-        
+
         // Main App Routes
         GoRoute(
           path: '/dashboard',
           builder: (context, state) {
-            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final authProvider =
+                Provider.of<AuthProvider>(context, listen: false);
             final user = authProvider.userModel;
-            
+
             if (user?.role == UserRole.teacher) {
               return const TeacherDashboardScreen();
             } else if (user?.role == UserRole.student) {
@@ -120,61 +144,70 @@ class TeacherDashboardApp extends StatelessWidget {
             }
           },
         ),
-        
+
         // Teacher Routes
         GoRoute(
           path: '/teacher/classes',
-          builder: (context, state) => const PlaceholderScreen(title: 'My Classes'),
+          builder: (context, state) => const ClassesScreen(),
         ),
         GoRoute(
           path: '/teacher/gradebook',
-          builder: (context, state) => const PlaceholderScreen(title: 'Gradebook'),
+          builder: (context, state) => const GradebookScreen(),
         ),
         GoRoute(
           path: '/teacher/assignments',
-          builder: (context, state) => const PlaceholderScreen(title: 'Assignments'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Assignments'),
         ),
         GoRoute(
           path: '/teacher/students',
-          builder: (context, state) => const PlaceholderScreen(title: 'Students'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Students'),
         ),
-        
+
         // Student Routes
         GoRoute(
           path: '/student/courses',
-          builder: (context, state) => const PlaceholderScreen(title: 'My Courses'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'My Courses'),
         ),
         GoRoute(
           path: '/student/assignments',
-          builder: (context, state) => const PlaceholderScreen(title: 'Assignments'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Assignments'),
         ),
         GoRoute(
           path: '/student/grades',
           builder: (context, state) => const PlaceholderScreen(title: 'Grades'),
         ),
-        
+
         // Common Routes
         GoRoute(
           path: '/messages',
-          builder: (context, state) => const PlaceholderScreen(title: 'Messages'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Messages'),
         ),
         GoRoute(
           path: '/calendar',
-          builder: (context, state) => const PlaceholderScreen(title: 'Calendar'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Calendar'),
         ),
         GoRoute(
           path: '/notifications',
-          builder: (context, state) => const PlaceholderScreen(title: 'Notifications'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Notifications'),
         ),
         GoRoute(
           path: '/settings',
-          builder: (context, state) => const PlaceholderScreen(title: 'Settings'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Settings'),
         ),
         GoRoute(
           path: '/help',
-          builder: (context, state) => const PlaceholderScreen(title: 'Help & Support'),
+          builder: (context, state) =>
+              const PlaceholderScreen(title: 'Help & Support'),
         ),
-        
+
         // Redirect root to login
         GoRoute(
           path: '/',
@@ -193,7 +226,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.userModel;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
@@ -235,67 +268,15 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-// Temporary screens - will be implemented next
-class RoleSelectionScreen extends StatelessWidget {
-  const RoleSelectionScreen({super.key});
-  
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = context.read<AuthProvider>();
-    
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Select Your Role',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                // Set role as teacher and navigate
-                authProvider.updateUserRole(UserRole.teacher);
-                context.go('/dashboard');
-              },
-              child: const Text('Teacher'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // Set role as student and navigate
-                authProvider.updateUserRole(UserRole.student);
-                context.go('/dashboard');
-              },
-              child: const Text('Student'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ForgotPasswordScreen extends StatelessWidget {
-  const ForgotPasswordScreen({super.key});
-  
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Forgot Password Screen')),
-    );
-  }
-}
 
 class PlaceholderScreen extends StatelessWidget {
   final String title;
-  
+
   const PlaceholderScreen({
     super.key,
     required this.title,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -320,8 +301,8 @@ class PlaceholderScreen extends StatelessWidget {
             Text(
               'This screen is under construction',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),

@@ -27,7 +27,7 @@ class UserModel {
     required this.uid,
     required this.email,
     required this.displayName,
-    required this.role,
+    this.role,
     this.photoURL,
     required this.createdAt,
     required this.lastActive,
@@ -55,8 +55,12 @@ class UserModel {
             )
           : null,
       photoURL: data['photoURL'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      lastActive: (data['lastActive'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
+      lastActive: data['lastActive'] != null 
+          ? (data['lastActive'] as Timestamp).toDate()
+          : DateTime.now(),
       isActive: data['isActive'] ?? true,
       teacherId: data['teacherId'],
       classIds: data['classIds'] != null 

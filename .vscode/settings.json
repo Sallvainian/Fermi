@@ -1,0 +1,53 @@
+{
+    "dart.flutterSdkPath": "/home/sallvain/development/flutter",
+    "dart.getFlutterSdkCommand": null,
+    "dart.sdkPath": "/home/sallvain/development/flutter/bin/cache/dart-sdk",
+    "dart.env": {},
+    
+    // Dart/Flutter specific settings
+    "[dart]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.rulers": [80],
+        "editor.selectionHighlight": false,
+        "editor.tabCompletion": "onlySnippets",
+        "editor.wordBasedSuggestions": "off",
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true
+    },
+    
+    // Flutter specific settings
+    "dart.lineLength": 80,
+    "dart.analysisExcludedFolders": [
+        ".dart_tool",
+        "build"
+    ],
+    "dart.enableSdkFormatter": true,
+    "dart.debugSdkLibraries": false,
+    "dart.debugExternalPackageLibraries": false,
+    
+    // Firebase and Flutter debugging
+    "dart.flutterAdditionalArgs": [
+        "--enable-experiment=non-nullable"
+    ],
+    
+    // File associations
+    "files.associations": {
+        "*.dart": "dart"
+    },
+    
+    // Emmet support for Flutter
+    "emmet.includeLanguages": {
+        "dart": "html"
+    },
+    
+    // Auto import settings
+    "dart.updateImportsOnRename": true,
+    
+    // Testing
+    "dart.runPubGetOnPubspecChanges": true,
+    
+    // Performance
+    "dart.previewFlutterUiGuides": true,
+    "dart.previewFlutterUiGuidesCustomTracking": true
+}
