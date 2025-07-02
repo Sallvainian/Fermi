@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/user_model.dart';
 import '../../widgets/auth/auth_text_field.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -23,6 +22,16 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscureConfirmPassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Clear error when user starts typing
+    _emailController.addListener(_clearError);
+    _passwordController.addListener(_clearError);
+    _confirmPasswordController.addListener(_clearError);
+    _displayNameController.addListener(_clearError);
+  }
+
+  @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -31,19 +40,26 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  void _clearError() {
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.errorMessage != null) {
+      authProvider.clearError();
+    }
+  }
+
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.signUpWithEmail(
+    final success = await authProvider.signUpWithEmailOnly(
       email: _emailController.text.trim(),
       password: _passwordController.text,
       displayName: _displayNameController.text.trim(),
-      role: null, // No role for now
     );
 
     if (success && mounted) {
-      context.go('/dashboard');
+      // Router will automatically redirect to role selection
+      // No need to manually navigate - handled by main.dart redirect logic
     }
   }
 
@@ -61,7 +77,7 @@ class _SignupScreenState extends State<SignupScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 48.0), // Extra bottom padding
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(

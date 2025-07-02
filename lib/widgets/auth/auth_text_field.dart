@@ -71,7 +71,7 @@ class AuthTextField extends StatelessWidget {
         filled: true,
         fillColor: enabled
             ? theme.colorScheme.surface
-            : theme.colorScheme.surfaceVariant.withOpacity(0.5),
+            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       ),
     );
   }

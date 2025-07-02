@@ -3,6 +3,7 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -37,56 +38,56 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
-    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_WEB'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
-    appId: '1:218352465432:android:ANDROID_APP_ID',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_ANDROID'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
-    appId: '1:218352465432:ios:IOS_APP_ID',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_IOS'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+    iosBundleId: dotenv.env['IOS_BUNDLE_ID'] ?? '',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
-    appId: '1:218352465432:ios:IOS_APP_ID',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
+  static FirebaseOptions get macos => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_IOS'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
+    iosBundleId: dotenv.env['IOS_BUNDLE_ID'] ?? '',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
-    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_WEB'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
   );
 
-  static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: 'AIzaSyAISrZCzxwEs-Dekl1H6qTo4rQI8bXb8EU',
-    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
+  static FirebaseOptions get linux => FirebaseOptions(
+    apiKey: dotenv.env['FIREBASE_API_KEY'] ?? '',
+    appId: dotenv.env['FIREBASE_APP_ID_WEB'] ?? '',
+    messagingSenderId: dotenv.env['FIREBASE_MESSAGING_SENDER_ID'] ?? '',
+    projectId: dotenv.env['FIREBASE_PROJECT_ID'] ?? '',
+    authDomain: dotenv.env['FIREBASE_AUTH_DOMAIN'] ?? '',
+    storageBucket: dotenv.env['FIREBASE_STORAGE_BUCKET'] ?? '',
   );
 }

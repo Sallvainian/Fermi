@@ -4,7 +4,6 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
 import '../../theme/app_spacing.dart';
-import '../../theme/app_theme.dart';
 import '../../services/test_service.dart';
 
 class TeacherDashboardScreen extends StatelessWidget {
@@ -124,7 +123,7 @@ class TeacherDashboardScreen extends StatelessWidget {
       desktopColumns: 4,
       spacing: AppSpacing.md,
       runSpacing: AppSpacing.md,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.2, // Reduced from 1.5 to give more height
       children: [
         _buildStatCard(
           context,
@@ -172,6 +171,7 @@ class TeacherDashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
@@ -191,6 +191,7 @@ class TeacherDashboardScreen extends StatelessWidget {
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -199,8 +200,6 @@ class TeacherDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentActivityCard(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -250,7 +249,7 @@ class TeacherDashboardScreen extends StatelessWidget {
     
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 0.1),
         child: Icon(icon, color: color),
       ),
       title: Text(
@@ -279,7 +278,7 @@ class TeacherDashboardScreen extends StatelessWidget {
       desktopColumns: 3,
       spacing: AppSpacing.md,
       runSpacing: AppSpacing.md,
-      childAspectRatio: 1.2,
+      childAspectRatio: 1.0, // Reduced to give more height for action cards
       children: [
         _buildActionCard(
           context,

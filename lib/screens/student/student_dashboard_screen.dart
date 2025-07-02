@@ -256,7 +256,7 @@ class StudentDashboardScreen extends StatelessWidget {
     
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 0.1),
         child: Icon(
           Icons.assignment,
           color: color,
@@ -273,7 +273,7 @@ class StudentDashboardScreen extends StatelessWidget {
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -290,8 +290,6 @@ class StudentDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentGradesCard(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -351,7 +349,7 @@ class StudentDashboardScreen extends StatelessWidget {
     
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 0.1),
         child: Text(
           grade,
           style: TextStyle(

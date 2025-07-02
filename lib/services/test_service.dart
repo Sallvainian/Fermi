@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -10,7 +11,7 @@ class TestService {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        print('No user logged in');
+        if (kDebugMode) print('No user logged in');
         return;
       }
 
@@ -22,7 +23,7 @@ class TestService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      print('✅ Successfully wrote user data to Firestore');
+      if (kDebugMode) print('✅ Successfully wrote user data to Firestore');
 
       // Test writing a test class
       final classRef = await _firestore.collection('classes').add({
@@ -32,7 +33,7 @@ class TestService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      print('✅ Successfully created test class: ${classRef.id}');
+      if (kDebugMode) print('✅ Successfully created test class: ${classRef.id}');
 
       // Test writing a student to the class
       await _firestore
@@ -46,10 +47,10 @@ class TestService {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      print('✅ Successfully added test student');
+      if (kDebugMode) print('✅ Successfully added test student');
 
     } catch (e) {
-      print('❌ Error testing Firestore write: $e');
+      if (kDebugMode) print('❌ Error testing Firestore write: $e');
     }
   }
 
@@ -58,16 +59,16 @@ class TestService {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        print('No user logged in');
+        if (kDebugMode) print('No user logged in');
         return;
       }
 
       // Test reading user data
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists) {
-        print('✅ User data: ${userDoc.data()}');
+        if (kDebugMode) print('✅ User data: ${userDoc.data()}');
       } else {
-        print('❌ No user data found');
+        if (kDebugMode) print('❌ No user data found');
       }
 
       // Test reading classes
@@ -76,10 +77,10 @@ class TestService {
           .where('teacherId', isEqualTo: user.uid)
           .get();
 
-      print('✅ Found ${classesSnapshot.docs.length} classes');
+      if (kDebugMode) print('✅ Found ${classesSnapshot.docs.length} classes');
       
       for (var classDoc in classesSnapshot.docs) {
-        print('  Class: ${classDoc.data()['name']}');
+        if (kDebugMode) print('  Class: ${classDoc.data()['name']}');
         
         // Test reading students in this class
         final studentsSnapshot = await _firestore
@@ -88,11 +89,11 @@ class TestService {
             .collection('students')
             .get();
             
-        print('    Students: ${studentsSnapshot.docs.length}');
+        if (kDebugMode) print('    Students: ${studentsSnapshot.docs.length}');
       }
 
     } catch (e) {
-      print('❌ Error testing Firestore read: $e');
+      if (kDebugMode) print('❌ Error testing Firestore read: $e');
     }
   }
 
@@ -100,7 +101,7 @@ class TestService {
   void testRealTimeListener() {
     final user = _auth.currentUser;
     if (user == null) {
-      print('No user logged in');
+      if (kDebugMode) print('No user logged in');
       return;
     }
 
@@ -109,13 +110,13 @@ class TestService {
         .where('teacherId', isEqualTo: user.uid)
         .snapshots()
         .listen((snapshot) {
-      print('🔄 Real-time update: ${snapshot.docs.length} classes');
+      if (kDebugMode) print('🔄 Real-time update: ${snapshot.docs.length} classes');
       for (var doc in snapshot.docs) {
-        print('  ${doc.data()['name']}');
+        if (kDebugMode) print('  ${doc.data()['name']}');
       }
     });
 
-    print('✅ Started real-time listener');
+    if (kDebugMode) print('✅ Started real-time listener');
   }
 
   // Clean up test data
@@ -123,7 +124,7 @@ class TestService {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        print('No user logged in');
+        if (kDebugMode) print('No user logged in');
         return;
       }
 
@@ -149,10 +150,10 @@ class TestService {
         await classDoc.reference.delete();
       }
 
-      print('✅ Cleaned up test data');
+      if (kDebugMode) print('✅ Cleaned up test data');
 
     } catch (e) {
-      print('❌ Error cleaning up test data: $e');
+      if (kDebugMode) print('❌ Error cleaning up test data: $e');
     }
   }
 }

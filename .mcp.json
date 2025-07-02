@@ -15,7 +15,7 @@
 				"run",
 				"@hyperbrowserai/mcp",
 				"--key",
-				"8537b7f7-7945-4b66-b5b2-a8b0559a08cf",
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e",
 				"--profile",
 				"quixotic-wasp-JEvmyu"
 			]
@@ -28,7 +28,16 @@
 				"run",
 				"@Arenukvern/mcp_flutter",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
+			]
+		},
+		"Ref": {
+			"command": "npx",
+			"args": [
+				"mcp-remote@0.1.0-0",
+				"https://api.ref.tools/mcp",
+				"--header",
+				"x-ref-api-key: ref-d30bd6f07358f346e289"
 			]
 		},
 		"memory": {
@@ -46,20 +55,7 @@
 				"run",
 				"@diulela/browser-tools-mcp",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf"
-			]
-		},
-		"filesystem": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@smithery/cli@latest",
-				"run",
-				"@cyanheads/filesystem-mcp-server",
-				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf",
-				"--profile",
-				"quixotic-wasp-JEvmyu"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
 		},
 		"desktop-commander": {
@@ -70,25 +66,12 @@
 				"run",
 				"@wonderwhy-er/desktop-commander",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
-		},
-		"netlify": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@netlify/mcp"
-			],
-			"env": {
-				"NETLIFY_ACCESS_TOKEN": "nfp_LANzeqBJRAPmBRoYgsSBJRw4c6jEgwMG55d7"
-			}
 		},
 		"jetbrains": {
 			"command": "npx",
-			"args": [
-				"-y",
-				"@jetbrains/mcp-proxy"
-			]
+			"args": ["-y", "@jetbrains/mcp-proxy"]
 		},
 		"puppeteer": {
 			"command": "npx",
@@ -105,7 +88,7 @@
 				"run",
 				"@smithery/toolbox",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf",
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e",
 				"--profile",
 				"quixotic-wasp-JEvmyu"
 			]
@@ -118,7 +101,7 @@
 				"run",
 				"@smithery-ai/github",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf",
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e",
 				"--profile",
 				"quixotic-wasp-JEvmyu"
 			]
@@ -131,7 +114,7 @@
 				"run",
 				"@PhillipRt/think-mcp-server",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
 		},
 		"mcp-file-context-server": {
@@ -142,7 +125,7 @@
 				"run",
 				"@bsmi021/mcp-file-context-server",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
 		},
 		"e2b": {
@@ -170,7 +153,7 @@
 				"run",
 				"@upstash/context7-mcp",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
 		},
 		"clear-thought": {
@@ -181,7 +164,7 @@
 				"run",
 				"@chirag127/clear-thought-mcp-server",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf",
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e",
 				"--profile",
 				"quixotic-wasp-JEvmyu"
 			]
@@ -194,14 +177,14 @@
 				"run",
 				"@pinkpixel-dev/deep-research-mcp",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf",
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e",
 				"--profile",
 				"quixotic-wasp-JEvmyu"
 			]
 		},
 		"mcp-svelte-docs": {
-			"command": "wsl.exe",
-			"args": ["bash", "-c", "npx -y mcp-svelte-docs"]
+			"command": "npx",
+			"args": ["-y", "mcp-svelte-docs"]
 		},
 		"exa": {
 			"command": "npx",
@@ -211,7 +194,7 @@
 				"run",
 				"exa",
 				"--key",
-				"8537b7f7-7945-4b66-b5b2-a8b0559a08cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
 		},
 		"code-context-provider-mcp": {
@@ -222,7 +205,7 @@
 				"run",
 				"@AB498/code-context-provider-mcp",
 				"--key",
-				"8537b7f7-7945-4b66-b5b2-a8b0559a08cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
 		},
 		"mcp-installer": {
@@ -232,12 +215,6 @@
 				"@anaisbetts/mcp-installer"
 			]
 		},
-		"pdf-extraction": {
-			"type": "stdio",
-			"command": "/home/frank/.local/venv/bin/pdf-extraction",
-			"args": [],
-			"env": {}
-		},
 		"mem0-mcp": {
 			"command": "npx",
 			"args": [
@@ -246,7 +223,7 @@
 				"run",
 				"@big-omega/mem0-mcp",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf",
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e",
 				"--profile",
 				"quixotic-wasp-JEvmyu"
 			]
@@ -259,7 +236,7 @@
 				"run",
 				"@Nekzus/npm-sentinel-mcp",
 				"--key",
-				"84185543-07cf-41cd-a083-d101425812cf"
+				"58cd75fe-7327-4240-a44f-622c78f4ab2e"
 			]
 		},
 		"playwright": {
@@ -268,8 +245,31 @@
 				"-y",
 				"@playwright/mcp"
 			]
+		},
+		"mcpadvisor": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@xiaohui-wang/mcpadvisor"
+			]
+		},
+		"image-downloader": {
+			"command": "npx",
+			"args": [
+				"mcp-image-downloader"
+			],
+			"env": {
+				"DEFAULT_SAVE_PATH": "/home/sallvain/MCP-Image-Downloads",
+				"DEFAULT_FORMAT": "jpeg",
+				"DEFAULT_COMPRESS": "true",
+				"DEFAULT_MAX_WIDTH": "1920",
+				"DEFAULT_MAX_HEIGHT": "1080",
+				"DEFAULT_CONCURRENCY": "5"
+			}
+		},
+		"gemini-collab": {
+			"command": "/home/sallvain/claude_code-gemini-mcp/.venv/bin/python",
+			"args": ["/home/sallvain/claude_code-gemini-mcp/server.py"]
 		}
 	}
 }
-
-

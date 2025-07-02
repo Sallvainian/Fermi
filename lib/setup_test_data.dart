@@ -33,8 +33,6 @@ class SetupScreen extends StatefulWidget {
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
   String _status = 'Ready to set up test accounts';
   
   Future<void> _createTeacherAccount() async {
