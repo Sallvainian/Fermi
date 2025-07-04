@@ -616,30 +616,6 @@ class _GradebookScreenState extends State<GradebookScreen> {
     return 'F';
   }
 
-  void _showGradeEntryDialog(GradebookStudent student, Assignment assignment, StudentGrade grade) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: GradeEntrySheet(
-          student: student,
-          assignment: assignment,
-          grade: grade,
-          onSave: (newPoints, newStatus) {
-            setState(() {
-              grade.points = newPoints;
-              grade.status = newStatus;
-            });
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-    );
-  }
-
   void _showAddAssignmentDialog() {
     showDialog(
       context: context,

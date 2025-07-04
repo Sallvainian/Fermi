@@ -37,39 +37,39 @@ class StatCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (icon != null) ...[
+              if (icon != null)
                 Icon(
                   icon,
                   color: iconColor ?? colorScheme.primary,
-                  size: 20,
+                  size: 18,
                 ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Text(
-                  title,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
               if (trailing != null) trailing!,
             ],
           ),
           const SizedBox(height: 8),
           Text(
+            title,
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
             value,
-            style: textTheme.headlineMedium?.copyWith(
+            style: textTheme.titleLarge?.copyWith(
               color: valueColor ?? colorScheme.onSurface,
               fontWeight: FontWeight.bold,
             ),
           ),
           if (subtitle != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               subtitle!,
-              style: textTheme.bodySmall?.copyWith(
+              style: textTheme.labelSmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
             ),

@@ -16,7 +16,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _displayNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -28,7 +29,8 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.addListener(_clearError);
     _passwordController.addListener(_clearError);
     _confirmPasswordController.addListener(_clearError);
-    _displayNameController.addListener(_clearError);
+    _firstNameController.addListener(_clearError);
+    _lastNameController.addListener(_clearError);
   }
 
   @override
@@ -36,7 +38,8 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _displayNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     super.dispose();
   }
 
@@ -51,10 +54,16 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final displayName = '$firstName $lastName'.trim();
+    
     final success = await authProvider.signUpWithEmailOnly(
       email: _emailController.text.trim(),
       password: _passwordController.text,
-      displayName: _displayNameController.text.trim(),
+      displayName: displayName,
+      firstName: firstName,
+      lastName: lastName,
     );
 
     if (success && mounted) {
@@ -106,16 +115,35 @@ class _SignupScreenState extends State<SignupScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        AuthTextField(
-                          controller: _displayNameController,
-                          label: 'Full Name',
-                          prefixIcon: Icons.person_outline,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your name';
-                            }
-                            return null;
-                          },
+                        Row(
+                          children: [
+                            Expanded(
+                              child: AuthTextField(
+                                controller: _firstNameController,
+                                label: 'First Name',
+                                prefixIcon: Icons.person_outline,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your first name';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: AuthTextField(
+                                controller: _lastNameController,
+                                label: 'Last Name',
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your last name';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 16),
                         AuthTextField(

@@ -76,6 +76,8 @@ class AuthService {
     required String email,
     required String password,
     required String displayName,
+    required String firstName,
+    required String lastName,
   }) async {
     if (_auth == null) {
       throw Exception('Firebase not available - cannot sign up');
@@ -92,6 +94,15 @@ class AuthService {
 
       // Update display name
       await credential.user!.updateDisplayName(displayName);
+      
+      // Store temporary user data in Firestore for role selection
+      await _firestore!.collection('pending_users').doc(credential.user!.uid).set({
+        'email': email,
+        'displayName': displayName,
+        'firstName': firstName,
+        'lastName': lastName,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       return credential.user;
     } on FirebaseAuthException catch (e) {
@@ -124,11 +135,18 @@ class AuthService {
       // Update display name
       await credential.user!.updateDisplayName(displayName);
 
+      // Parse first and last names from displayName
+      final nameParts = displayName.split(' ');
+      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      
       // Create user document in Firestore
       final userModel = UserModel(
         uid: credential.user!.uid,
         email: email,
         displayName: displayName,
+        firstName: firstName,
+        lastName: lastName,
         role: role,
         createdAt: DateTime.now(),
         lastActive: DateTime.now(),
@@ -238,10 +256,35 @@ class AuthService {
     if (user == null) return null;
 
     try {
+      // Check if we have pending user data (from email signup)
+      String firstName = '';
+      String lastName = '';
+      String displayName = user.displayName ?? user.email!.split('@')[0];
+      
+      final pendingUserDoc = await _firestore!.collection('pending_users').doc(user.uid).get();
+      if (pendingUserDoc.exists) {
+        final pendingData = pendingUserDoc.data() as Map<String, dynamic>;
+        firstName = pendingData['firstName'] ?? '';
+        lastName = pendingData['lastName'] ?? '';
+        displayName = pendingData['displayName'] ?? displayName;
+        
+        // Delete the pending user data
+        await _firestore!.collection('pending_users').doc(user.uid).delete();
+      } else {
+        // For Google sign-in, try to split the display name
+        if (user.displayName != null) {
+          final nameParts = user.displayName!.split(' ');
+          firstName = nameParts.isNotEmpty ? nameParts.first : '';
+          lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+        }
+      }
+      
       final userModel = UserModel(
         uid: user.uid,
         email: user.email!,
-        displayName: user.displayName ?? user.email!.split('@')[0],
+        displayName: displayName,
+        firstName: firstName,
+        lastName: lastName,
         role: role,
         photoURL: user.photoURL,
         createdAt: DateTime.now(),
@@ -288,7 +331,10 @@ class AuthService {
   // Update user profile
   Future<void> updateProfile({
     String? displayName,
+    String? firstName,
+    String? lastName,
     String? photoURL,
+    bool updatePhoto = false,
   }) async {
     final user = currentUser;
     if (user == null) return;
@@ -298,14 +344,16 @@ class AuthService {
       if (displayName != null) {
         await user.updateDisplayName(displayName);
       }
-      if (photoURL != null) {
+      if (updatePhoto) {
         await user.updatePhotoURL(photoURL);
       }
 
       // Update Firestore document
       final updates = <String, dynamic>{};
       if (displayName != null) updates['displayName'] = displayName;
-      if (photoURL != null) updates['photoURL'] = photoURL;
+      if (firstName != null) updates['firstName'] = firstName;
+      if (lastName != null) updates['lastName'] = lastName;
+      if (updatePhoto) updates['photoURL'] = photoURL;
       updates['lastActive'] = FieldValue.serverTimestamp();
 
       await _firestore!.collection('users').doc(user.uid).update(updates);

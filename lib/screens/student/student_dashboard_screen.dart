@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/user_model.dart';
 import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
 import '../../theme/app_spacing.dart';
@@ -21,6 +23,12 @@ class StudentDashboardScreen extends StatelessWidget {
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
             // TODO: Navigate to notifications
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () {
+            context.go('/settings');
           },
         ),
       ],
@@ -54,16 +62,15 @@ class StudentDashboardScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Welcome, ${user?.displayName ?? 'Student'}!',
+                                'Welcome Back',
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 4),
                               Text(
-                                'Grade ${user?.gradeLevel ?? 'N/A'} • Ready to learn today?',
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                _getUserFirstName(user, authProvider),
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
@@ -122,7 +129,7 @@ class StudentDashboardScreen extends StatelessWidget {
       desktopColumns: 4,
       spacing: AppSpacing.md,
       runSpacing: AppSpacing.md,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.2,
       children: [
         _buildOverviewCard(
           context,
@@ -130,6 +137,7 @@ class StudentDashboardScreen extends StatelessWidget {
           title: 'Courses',
           value: '6',
           color: Colors.blue,
+          onTap: () => context.go('/student/courses'),
         ),
         _buildOverviewCard(
           context,
@@ -162,35 +170,46 @@ class StudentDashboardScreen extends StatelessWidget {
     required String title,
     required String value,
     required Color color,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
     
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 32,
-              color: color,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 28,
                 color: color,
               ),
-            ),
-            Text(
-              title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
               ),
-            ),
-          ],
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -232,9 +251,7 @@ class StudentDashboardScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {
-                  // TODO: Navigate to all assignments
-                },
+                onPressed: () => context.go('/student/assignments'),
                 child: const Text('View All Assignments'),
               ),
             ),
@@ -325,9 +342,7 @@ class StudentDashboardScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () {
-                  // TODO: Navigate to all grades
-                },
+                onPressed: () => context.go('/student/grades'),
                 child: const Text('View All Grades'),
               ),
             ),
@@ -368,5 +383,32 @@ class StudentDashboardScreen extends StatelessWidget {
       subtitle: Text('$subject • $points'),
       contentPadding: EdgeInsets.zero,
     );
+  }
+  
+  String _getUserFirstName(UserModel? user, AuthProvider authProvider) {
+    // Try firstName field first
+    if (user?.firstName.isNotEmpty == true) {
+      return '${user!.firstName}!';
+    }
+    
+    // Try displayName from user model
+    if (user?.displayName.isNotEmpty == true) {
+      final nameParts = user!.displayName.split(' ');
+      if (nameParts.isNotEmpty) {
+        return '${nameParts.first}!';
+      }
+    }
+    
+    // Try Firebase Auth displayName
+    final firebaseUser = authProvider.firebaseUser;
+    if (firebaseUser?.displayName?.isNotEmpty == true) {
+      final nameParts = firebaseUser!.displayName!.split(' ');
+      if (nameParts.isNotEmpty) {
+        return '${nameParts.first}!';
+      }
+    }
+    
+    // Default fallback
+    return 'Student!';
   }
 }

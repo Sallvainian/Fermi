@@ -11,6 +11,7 @@ class AdaptiveLayout extends StatelessWidget {
   final bool showNavigationDrawer;
   final bool showBottomNavigation;
   final Widget? floatingActionButton;
+  final PreferredSizeWidget? bottom;
 
   const AdaptiveLayout({
     super.key,
@@ -20,6 +21,7 @@ class AdaptiveLayout extends StatelessWidget {
     this.showNavigationDrawer = true,
     this.showBottomNavigation = true,
     this.floatingActionButton,
+    this.bottom,
   });
 
   @override
@@ -32,6 +34,7 @@ class AdaptiveLayout extends StatelessWidget {
             appBar: AppBar(
               title: Text(title),
               actions: actions,
+              bottom: bottom,
             ),
             drawer: showNavigationDrawer ? const AppDrawer() : null,
             body: ResponsivePadding(
@@ -58,6 +61,7 @@ class AdaptiveLayout extends StatelessWidget {
                         title: Text(title),
                         actions: actions,
                         automaticallyImplyLeading: false,
+                        bottom: bottom,
                       ),
                       Expanded(
                         child: ResponsivePadding(

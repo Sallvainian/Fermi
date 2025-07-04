@@ -1,1 +1,4 @@
 #include "Generated.xcconfig"
+
+// Enable Crashlytics for debug builds
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym

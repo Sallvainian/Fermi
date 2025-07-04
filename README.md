@@ -10,6 +10,38 @@ This is a migration project from SvelteKit + Supabase to Flutter + Firebase, pro
 - **FROM**: SvelteKit 5, TypeScript, Supabase, Tailwind CSS, Netlify
 - **TO**: Flutter, Dart, Firebase (Firestore, Auth, Storage, Functions), Firebase Hosting
 
+## ⚠️ Current Status (July 2, 2025)
+
+**Development Stage**: Pre-MVP (~40% feature complete)
+
+### 🔴 Platform Limitations
+Firebase does not officially support Linux/Windows desktop platforms. The app will run on these platforms but Firebase services (auth, database) will not be available. For development on Linux/Windows, you can:
+1. Use Flutter web (`flutter run -d chrome`)
+2. Use an Android emulator
+3. Mock Firebase services for local development
+
+### ✅ Completed Features
+- Authentication system (email/password, Google Sign-In)
+- Role-based routing and navigation
+- Basic dashboard structure for teachers/students
+- Firestore security rules
+- Theme system with Material 3 design
+- State management with Provider pattern
+
+### 🚧 In Progress
+- Assignment creation and management system
+- Grade tracking functionality
+- Classes management
+
+### ❌ Not Yet Implemented (Placeholder Screens)
+- Student management
+- Messaging system
+- Calendar functionality
+- Notifications
+- Help & support
+- Analytics dashboard
+- Offline support
+
 ## ✨ Features
 
 ### Current Implementation (Phase 1-2)
@@ -211,6 +243,17 @@ flutter build ios --release
 
 ## 🔧 Development Guidelines
 
+### 🚨 Immediate Action Required
+1. **Fix Firebase Initialization**: Remove dotenv approach for Firebase configuration
+   - Run `flutterfire configure` to regenerate proper `firebase_options.dart`
+   - Remove `flutter_dotenv` dependency and usage
+   - Use platform-specific configuration files (google-services.json, GoogleService-Info.plist)
+
+2. **Code Quality**: Fix 38 linting issues
+   - Remove all `print` statements from production code
+   - Fix unused variables and methods
+   - Run `flutter analyze` and address all warnings
+
 ### Code Style
 - Follow Dart conventions and linting rules
 - Use meaningful variable and function names
@@ -228,6 +271,12 @@ flutter build ios --release
 - Keep state as local as possible
 - Implement proper loading states
 - Handle errors gracefully
+
+### Testing Strategy
+- Write unit tests for all services and providers
+- Add widget tests for UI components
+- Implement integration tests for critical user flows
+- Aim for >80% code coverage
 
 ## 📋 Migration Progress
 

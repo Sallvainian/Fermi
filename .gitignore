@@ -54,3 +54,4 @@ flutter/
 !/.env
 !/.env
 !/.env
+android/java_pid*.hprof
