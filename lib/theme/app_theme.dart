@@ -39,14 +39,14 @@ class AppTheme {
 
       // Card Theme
       cardTheme: CardThemeData(
-        color: const Color(0xFF0F0F0F),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shadowColor: Colors.transparent,
+        color: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
+        elevation: 1,
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
         margin: const EdgeInsets.all(8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFF2A2A2A), width: 0.5),
+          side: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2), width: 0.5),
         ),
       ),
 

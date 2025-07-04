@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/user_model.dart';
 import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
 import '../../theme/app_spacing.dart';
@@ -22,6 +24,12 @@ class TeacherDashboardScreen extends StatelessWidget {
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
             // TODO: Navigate to notifications
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: () {
+            context.go('/settings');
           },
         ),
       ],
@@ -55,16 +63,15 @@ class TeacherDashboardScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Welcome back, ${user?.displayName ?? 'Teacher'}!',
+                                'Welcome Back',
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 4),
                               Text(
-                                'Ready to inspire your students today?',
-                                style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
+                                _getUserFirstName(user, authProvider),
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
@@ -300,11 +307,20 @@ class TeacherDashboardScreen extends StatelessWidget {
         ),
         _buildActionCard(
           context,
+          icon: Icons.bug_report,
+          title: 'Test Crashlytics',
+          subtitle: 'Test crash reporting',
+          onTap: () {
+            context.go('/crashlytics-test');
+          },
+        ),
+        _buildActionCard(
+          context,
           icon: Icons.chat,
           title: 'Message Parents',
           subtitle: 'Send updates and announcements',
           onTap: () {
-            // TODO: Navigate to messaging
+            context.go('/messages');
           },
         ),
         _buildActionCard(
@@ -402,5 +418,32 @@ class TeacherDashboardScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+  String _getUserFirstName(UserModel? user, AuthProvider authProvider) {
+    // Try firstName field first
+    if (user?.firstName.isNotEmpty == true) {
+      return '${user!.firstName}!';
+    }
+    
+    // Try displayName from user model
+    if (user?.displayName.isNotEmpty == true) {
+      final nameParts = user!.displayName.split(' ');
+      if (nameParts.isNotEmpty) {
+        return '${nameParts.first}!';
+      }
+    }
+    
+    // Try Firebase Auth displayName
+    final firebaseUser = authProvider.firebaseUser;
+    if (firebaseUser?.displayName?.isNotEmpty == true) {
+      final nameParts = firebaseUser!.displayName!.split(' ');
+      if (nameParts.isNotEmpty) {
+        return '${nameParts.first}!';
+      }
+    }
+    
+    // Default fallback
+    return 'Teacher!';
   }
 }

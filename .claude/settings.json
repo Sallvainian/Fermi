@@ -1,0 +1,6 @@
+{
+  "hooks": {
+    "post_edit": "if [[ {file_path} == *.dart ]]; then dart format {file_path}; fi",
+    "post_write": "if [[ {file_path} == *.dart ]]; then dart format {file_path}; fi"
+  }
+}

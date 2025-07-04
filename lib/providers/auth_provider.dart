@@ -68,6 +68,8 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
     required String displayName,
+    required String firstName,
+    required String lastName,
   }) async {
     try {
       _setLoading(true);
@@ -77,6 +79,8 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
         displayName: displayName,
+        firstName: firstName,
+        lastName: lastName,
       );
 
       if (user != null) {
@@ -252,7 +256,10 @@ class AuthProvider extends ChangeNotifier {
   // Update profile
   Future<bool> updateProfile({
     String? displayName,
+    String? firstName,
+    String? lastName,
     String? photoURL,
+    bool updatePhoto = false,
   }) async {
     try {
       _setLoading(true);
@@ -260,7 +267,10 @@ class AuthProvider extends ChangeNotifier {
 
       await _authService.updateProfile(
         displayName: displayName,
+        firstName: firstName,
+        lastName: lastName,
         photoURL: photoURL,
+        updatePhoto: updatePhoto,
       );
 
       // Refresh user model

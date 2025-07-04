@@ -152,19 +152,19 @@ class _ClassesScreenState extends State<ClassesScreen> {
         children: [
           Expanded(
             child: StatCard(
-              title: 'Total Classes',
+              title: 'Classes',
               value: '${_classes.length}',
               icon: Icons.class_,
-              subtitle: 'Active this semester',
+              subtitle: 'Active',
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: StatCard(
-              title: 'Total Students',
+              title: 'Students',
               value: '$totalStudents',
               icon: Icons.people,
-              subtitle: 'Across all classes',
+              subtitle: 'Total',
             ),
           ),
           const SizedBox(width: 12),
@@ -174,7 +174,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
               value: _getLetterGrade(avgGradePoints),
               icon: Icons.grade,
               valueColor: AppTheme.getGradeColor(_getLetterGrade(avgGradePoints)),
-              subtitle: 'This semester',
+              subtitle: 'Overall',
             ),
           ),
         ],
@@ -184,13 +184,32 @@ class _ClassesScreenState extends State<ClassesScreen> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: TextField(
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           hintText: 'Search classes...',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(),
+          hintStyle: Theme.of(context).textTheme.bodyMedium,
+          prefixIcon: const Icon(Icons.search, size: 20),
+          filled: true,
+          fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: 1,
+            ),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
+        style: Theme.of(context).textTheme.bodyMedium,
         onChanged: (value) {
           setState(() {
             _searchQuery = value;
@@ -255,12 +274,12 @@ class _ClassesScreenState extends State<ClassesScreen> {
           const SizedBox(height: 16),
           
           // Info row
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _buildInfoChip(Icons.people, '${classData.studentCount} students'),
-              const SizedBox(width: 8),
               _buildInfoChip(Icons.room, classData.room),
-              const SizedBox(width: 8),
               _buildInfoChip(Icons.schedule, classData.schedule),
             ],
           ),
