@@ -10,8 +10,11 @@ class ChatRoom {
   final DateTime? lastMessageTime;
   final String? lastMessageSenderId;
   final int unreadCount;
+  final Map<String, int>? unreadCounts; // Per-user unread counts
   final String? classId; // For class-based chats
   final DateTime createdAt;
+  final DateTime? updatedAt;
+  final String? createdBy;
 
   ChatRoom({
     required this.id,
@@ -23,8 +26,11 @@ class ChatRoom {
     this.lastMessageTime,
     this.lastMessageSenderId,
     this.unreadCount = 0,
+    this.unreadCounts,
     this.classId,
     required this.createdAt,
+    this.updatedAt,
+    this.createdBy,
   });
 
   factory ChatRoom.fromFirestore(DocumentSnapshot doc) {
@@ -43,8 +49,15 @@ class ChatRoom {
           : null,
       lastMessageSenderId: data['lastMessageSenderId'],
       unreadCount: data['unreadCount'] ?? 0,
+      unreadCounts: data['unreadCounts'] != null
+          ? Map<String, int>.from(data['unreadCounts'])
+          : null,
       classId: data['classId'],
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : null,
+      createdBy: data['createdBy'],
     );
   }
 
@@ -60,8 +73,13 @@ class ChatRoom {
           : null,
       'lastMessageSenderId': lastMessageSenderId,
       'unreadCount': unreadCount,
+      'unreadCounts': unreadCounts,
       'classId': classId,
       'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': updatedAt != null 
+          ? Timestamp.fromDate(updatedAt!)
+          : null,
+      'createdBy': createdBy,
     };
   }
 
@@ -75,8 +93,11 @@ class ChatRoom {
     DateTime? lastMessageTime,
     String? lastMessageSenderId,
     int? unreadCount,
+    Map<String, int>? unreadCounts,
     String? classId,
     DateTime? createdAt,
+    DateTime? updatedAt,
+    String? createdBy,
   }) {
     return ChatRoom(
       id: id ?? this.id,
@@ -88,8 +109,11 @@ class ChatRoom {
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       lastMessageSenderId: lastMessageSenderId ?? this.lastMessageSenderId,
       unreadCount: unreadCount ?? this.unreadCount,
+      unreadCounts: unreadCounts ?? this.unreadCounts,
       classId: classId ?? this.classId,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      createdBy: createdBy ?? this.createdBy,
     );
   }
 }

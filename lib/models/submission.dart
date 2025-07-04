@@ -10,6 +10,7 @@ class Submission {
   final String? textContent;
   final DateTime submittedAt;
   final DateTime? gradedAt;
+  final DateTime? updatedAt;
   final SubmissionStatus status;
 
   Submission({
@@ -22,6 +23,7 @@ class Submission {
     this.textContent,
     required this.submittedAt,
     this.gradedAt,
+    this.updatedAt,
     required this.status,
   });
 
@@ -38,6 +40,9 @@ class Submission {
       submittedAt: (data['submittedAt'] as Timestamp).toDate(),
       gradedAt: data['gradedAt'] != null 
           ? (data['gradedAt'] as Timestamp).toDate() 
+          : null,
+      updatedAt: data['updatedAt'] != null 
+          ? (data['updatedAt'] as Timestamp).toDate() 
           : null,
       status: SubmissionStatus.values.firstWhere(
         (e) => e.toString() == 'SubmissionStatus.${data['status']}',
@@ -56,8 +61,37 @@ class Submission {
       'textContent': textContent,
       'submittedAt': Timestamp.fromDate(submittedAt),
       'gradedAt': gradedAt != null ? Timestamp.fromDate(gradedAt!) : null,
+      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
       'status': status.toString().split('.').last,
     };
+  }
+  
+  Submission copyWith({
+    String? id,
+    String? assignmentId,
+    String? studentId,
+    String? studentName,
+    String? fileUrl,
+    String? fileName,
+    String? textContent,
+    DateTime? submittedAt,
+    DateTime? gradedAt,
+    DateTime? updatedAt,
+    SubmissionStatus? status,
+  }) {
+    return Submission(
+      id: id ?? this.id,
+      assignmentId: assignmentId ?? this.assignmentId,
+      studentId: studentId ?? this.studentId,
+      studentName: studentName ?? this.studentName,
+      fileUrl: fileUrl ?? this.fileUrl,
+      fileName: fileName ?? this.fileName,
+      textContent: textContent ?? this.textContent,
+      submittedAt: submittedAt ?? this.submittedAt,
+      gradedAt: gradedAt ?? this.gradedAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      status: status ?? this.status,
+    );
   }
 }
 

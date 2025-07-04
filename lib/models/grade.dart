@@ -5,13 +5,15 @@ enum GradeStatus {
   pending,
   graded,
   returned,
-  revised
+  revised,
+  notSubmitted
 }
 
 class Grade {
   final String id;
   final String assignmentId;
   final String studentId;
+  final String studentName;
   final String teacherId;
   final String classId;
   final double pointsEarned;
@@ -31,6 +33,7 @@ class Grade {
     required this.id,
     required this.assignmentId,
     required this.studentId,
+    required this.studentName,
     required this.teacherId,
     required this.classId,
     required this.pointsEarned,
@@ -53,6 +56,7 @@ class Grade {
       id: doc.id,
       assignmentId: data['assignmentId'] ?? '',
       studentId: data['studentId'] ?? '',
+      studentName: data['studentName'] ?? '',
       teacherId: data['teacherId'] ?? '',
       classId: data['classId'] ?? '',
       pointsEarned: (data['pointsEarned'] ?? 0).toDouble(),
@@ -83,6 +87,7 @@ class Grade {
     return {
       'assignmentId': assignmentId,
       'studentId': studentId,
+      'studentName': studentName,
       'teacherId': teacherId,
       'classId': classId,
       'pointsEarned': pointsEarned,
@@ -104,6 +109,7 @@ class Grade {
     String? id,
     String? assignmentId,
     String? studentId,
+    String? studentName,
     String? teacherId,
     String? classId,
     double? pointsEarned,
@@ -123,6 +129,7 @@ class Grade {
       id: id ?? this.id,
       assignmentId: assignmentId ?? this.assignmentId,
       studentId: studentId ?? this.studentId,
+      studentName: studentName ?? this.studentName,
       teacherId: teacherId ?? this.teacherId,
       classId: classId ?? this.classId,
       pointsEarned: pointsEarned ?? this.pointsEarned,

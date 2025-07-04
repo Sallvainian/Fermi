@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/message.dart';
 import '../models/chat_room.dart';
-import '../services/chat_service.dart';
+import '../repositories/chat_repository.dart';
+import '../core/service_locator.dart';
 import 'auth_provider.dart';
 
 class ChatProvider with ChangeNotifier {
-  final ChatService _chatService = ChatService();
+  late final ChatRepository _chatRepository;
   late AuthProvider _authProvider;
+  
+  ChatProvider() {
+    _chatRepository = getIt<ChatRepository>();
+  }
   
   List<ChatRoom> _chatRooms = [];
   List<Message> _currentMessages = [];
@@ -37,7 +41,7 @@ class ChatProvider with ChangeNotifier {
     _chatRoomsSubscription?.cancel();
     
     // Store the subscription
-    _chatRoomsSubscription = _chatService.getUserChatRooms().listen(
+    _chatRoomsSubscription = _chatRepository.getUserChatRooms().listen(
       (rooms) {
         _chatRooms = rooms;
         _error = null;
@@ -56,7 +60,7 @@ class ChatProvider with ChangeNotifier {
     _messagesSubscription?.cancel();
     
     // Store the subscription
-    _messagesSubscription = _chatService.getChatMessages(chatRoomId).listen(
+    _messagesSubscription = _chatRepository.getChatMessages(chatRoomId).listen(
       (messages) {
         _currentMessages = messages;
         _error = null;
@@ -88,7 +92,7 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final chatRoom = await _chatService.createOrGetDirectChat(
+      final chatRoom = await _chatRepository.createOrGetDirectChat(
         otherUserId,
         otherUserName,
         otherUserRole,
@@ -118,7 +122,7 @@ class ChatProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final chatRoom = await _chatService.createGroupChat(
+      final chatRoom = await _chatRepository.createGroupChat(
         name: name,
         type: type,
         participantIds: participantIds,
@@ -144,7 +148,7 @@ class ChatProvider with ChangeNotifier {
     if (_currentChatRoom == null) return;
 
     try {
-      await _chatService.sendMessage(
+      await _chatRepository.sendMessage(
         chatRoomId: _currentChatRoom!.id,
         content: content,
         attachmentUrl: attachmentUrl,
@@ -161,7 +165,7 @@ class ChatProvider with ChangeNotifier {
   // Mark messages as read
   Future<void> markMessagesAsRead(String chatRoomId) async {
     try {
-      await _chatService.markMessagesAsRead(chatRoomId);
+      await _chatRepository.markMessagesAsRead(chatRoomId);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -173,7 +177,7 @@ class ChatProvider with ChangeNotifier {
     if (_currentChatRoom == null) return;
 
     try {
-      await _chatService.deleteMessage(_currentChatRoom!.id, messageId);
+      await _chatRepository.deleteMessage(_currentChatRoom!.id, messageId);
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -185,7 +189,7 @@ class ChatProvider with ChangeNotifier {
   // Leave chat room
   Future<void> leaveChatRoom(String chatRoomId) async {
     try {
-      await _chatService.leaveChatRoom(chatRoomId);
+      await _chatRepository.leaveChatRoom(chatRoomId);
       if (_currentChatRoom?.id == chatRoomId) {
         _currentChatRoom = null;
         _currentMessages = [];
@@ -241,22 +245,8 @@ class ChatProvider with ChangeNotifier {
         }
       }
 
-      // If not found in loaded rooms, query Firestore
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('chat_rooms')
-          .where('type', isEqualTo: 'direct')
-          .where('participantIds', arrayContains: currentUserId)
-          .get();
-
-      for (final doc in querySnapshot.docs) {
-        final chatRoom = ChatRoom.fromFirestore(doc);
-        if (chatRoom.participantIds.contains(otherUserId) &&
-            chatRoom.participantIds.length == 2) {
-          return chatRoom;
-        }
-      }
-
-      return null;
+      // If not found in loaded rooms, use repository to find it
+      return await _chatRepository.findDirectChat(currentUserId, otherUserId);
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -269,7 +259,7 @@ class ChatProvider with ChangeNotifier {
     if (_currentChatRoom == null) return [];
 
     try {
-      final results = await _chatService.searchMessages(
+      final results = await _chatRepository.searchMessages(
         _currentChatRoom!.id,
         query,
       );
@@ -294,6 +284,10 @@ class ChatProvider with ChangeNotifier {
     // Cancel all subscriptions
     _chatRoomsSubscription?.cancel();
     _messagesSubscription?.cancel();
+    
+    // Dispose repository
+    _chatRepository.dispose();
+    
     super.dispose();
   }
 }

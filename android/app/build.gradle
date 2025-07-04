@@ -29,7 +29,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-        multiDexEnabled true
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -40,9 +40,9 @@ android {
         }
     }
     
-    lintOptions {
-        checkReleaseBuilds false
-        abortOnError false
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 

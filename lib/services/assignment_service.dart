@@ -314,10 +314,13 @@ class AssignmentService {
           .get();
 
       final grades = studentsSnapshot.docs.map((studentDoc) {
+        final studentData = studentDoc.data();
+        final studentName = studentData['displayName'] ?? 'Unknown Student';
         return Grade(
           id: '', // Will be set during batch creation
           assignmentId: assignmentId,
           studentId: studentDoc.id,
+          studentName: studentName,
           teacherId: teacherId,
           classId: classId,
           pointsEarned: 0,
