@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
+import 'core/service_locator.dart';
 import 'providers/auth_provider.dart';
 import 'providers/assignment_provider.dart';
 import 'providers/student_assignment_provider.dart';
@@ -41,12 +44,26 @@ bool get isFirebaseInitialized => _firebaseInitialized;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   // Initialize Firebase properly
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     _firebaseInitialized = true;
+    
+    // Enable Firestore offline persistence
+    if (!kIsWeb) {
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: true,
+        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+      );
+    }
+    
+    // Initialize service locator
+    await setupServiceLocator();
     
     // Initialize Crashlytics
     if (!kIsWeb) {

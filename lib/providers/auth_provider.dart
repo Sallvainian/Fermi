@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
-import '../services/auth_service.dart';
+import '../repositories/auth_repository.dart';
+import '../core/service_locator.dart';
 
 enum AuthStatus {
   uninitialized,
@@ -12,7 +13,7 @@ enum AuthStatus {
 }
 
 class AuthProvider extends ChangeNotifier {
-  final AuthService _authService = AuthService();
+  late final AuthRepository _authRepository;
   
   AuthStatus _status = AuthStatus.uninitialized;
   UserModel? _userModel;
@@ -25,23 +26,24 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
-  User? get firebaseUser => _authService.currentUser;
+  User? get firebaseUser => _authRepository.currentUser;
 
   // Constructor
   AuthProvider() {
+    _authRepository = getIt<AuthRepository>();
     _initializeAuth();
   }
 
   // Initialize auth state listener
   void _initializeAuth() {
     try {
-      _authService.authStateChanges.listen((User? user) async {
+      _authRepository.authStateChanges.listen((User? user) async {
         if (user == null) {
           _status = AuthStatus.unauthenticated;
           _userModel = null;
         } else {
           // Try to get user model from Firestore
-          final userModel = await _authService.getCurrentUserModel();
+          final userModel = await _authRepository.getCurrentUserModel();
           if (userModel != null) {
             _userModel = userModel;
             _status = AuthStatus.authenticated;
@@ -75,7 +77,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final user = await _authService.signUpWithEmailOnly(
+      final user = await _authRepository.signUpWithEmailOnly(
         email: email,
         password: password,
         displayName: displayName,
@@ -111,7 +113,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authService.signUpWithEmail(
+      final userModel = await _authRepository.signUpWithEmail(
         email: email,
         password: password,
         displayName: displayName,
@@ -144,7 +146,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authService.signInWithEmail(
+      final userModel = await _authRepository.signInWithEmail(
         email: email,
         password: password,
       );
@@ -170,7 +172,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authService.signInWithGoogle();
+      final userModel = await _authRepository.signInWithGoogle();
 
       if (userModel != null) {
         _userModel = userModel;
@@ -202,7 +204,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authService.completeGoogleSignUp(
+      final userModel = await _authRepository.completeGoogleSignUp(
         role: role,
         parentEmail: parentEmail,
         gradeLevel: gradeLevel,
@@ -227,7 +229,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     try {
       _setLoading(true);
-      await _authService.signOut();
+      await _authRepository.signOut();
       _userModel = null;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
@@ -243,7 +245,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      await _authService.resetPassword(email);
+      await _authRepository.resetPassword(email);
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -265,7 +267,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      await _authService.updateProfile(
+      await _authRepository.updateProfile(
         displayName: displayName,
         firstName: firstName,
         lastName: lastName,
@@ -274,7 +276,7 @@ class AuthProvider extends ChangeNotifier {
       );
 
       // Refresh user model
-      _userModel = await _authService.getCurrentUserModel();
+      _userModel = await _authRepository.getCurrentUserModel();
       notifyListeners();
       return true;
     } catch (e) {
@@ -291,7 +293,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authService.completeGoogleSignUp(
+      final userModel = await _authRepository.completeGoogleSignUp(
         role: role,
       );
 

@@ -2,14 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // Use the web client ID from google-services.json
-    serverClientId: '218352465432-g9u6sl8orf9f7iiv955241h7r5kb0qh5.apps.googleusercontent.com',
+    serverClientId: dotenv.env['GOOGLE_OAUTH_CLIENT_ID'],
   );
 
   AuthService() {
@@ -207,11 +207,6 @@ class AuthService {
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = 
           await googleUser.authentication;
-
-      // Validate tokens
-      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
-        throw Exception('Failed to get Google authentication tokens');
-      }
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(

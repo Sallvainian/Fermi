@@ -75,3 +75,10 @@ class Message {
     );
   }
 }
+
+enum MessageStatus {
+  sent,
+  delivered,
+  read,
+  failed,
+}

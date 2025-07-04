@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../models/assignment.dart';
 import '../models/submission.dart';
 import '../models/grade.dart';
-import '../services/submission_service.dart';
+import '../repositories/assignment_repository.dart';
+import '../repositories/submission_repository.dart';
+import '../repositories/grade_repository.dart';
+import '../repositories/student_repository.dart';
+import '../core/service_locator.dart';
 
 // Combined model for student assignment view
 class StudentAssignment {
@@ -39,7 +42,17 @@ class StudentAssignment {
 }
 
 class StudentAssignmentProvider with ChangeNotifier {
-  final SubmissionService _submissionService = SubmissionService();
+  late final AssignmentRepository _assignmentRepository;
+  late final SubmissionRepository _submissionRepository;
+  late final GradeRepository _gradeRepository;
+  late final StudentRepository _studentRepository;
+  
+  StudentAssignmentProvider() {
+    _assignmentRepository = getIt<AssignmentRepository>();
+    _submissionRepository = getIt<SubmissionRepository>();
+    _gradeRepository = getIt<GradeRepository>();
+    _studentRepository = getIt<StudentRepository>();
+  }
   
   List<StudentAssignment> _assignments = [];
   bool _isLoading = false;
@@ -97,14 +110,10 @@ class StudentAssignmentProvider with ChangeNotifier {
       if (_currentClassId != null) {
         classIds = [_currentClassId!];
       } else {
-        // Query user document to get enrolled classes
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(_currentStudentId)
-            .get();
-        
-        if (userDoc.exists && userDoc.data()?['enrolledClasses'] != null) {
-          classIds = List<String>.from(userDoc.data()!['enrolledClasses']);
+        // Get student document to get enrolled classes
+        final student = await _studentRepository.getStudentByUserId(_currentStudentId!);
+        if (student != null) {
+          classIds = student.classIds;
         }
       }
 
@@ -166,36 +175,28 @@ class StudentAssignmentProvider with ChangeNotifier {
     }
 
     // Subscribe to assignments stream
-    final assignmentsSubscription = FirebaseFirestore.instance
-        .collection('assignments')
-        .where('classId', whereIn: classIds)
-        .where('isPublished', isEqualTo: true)
-        .where('status', whereIn: [
-          AssignmentStatus.active.toString().split('.').last,
-          AssignmentStatus.completed.toString().split('.').last,
-        ])
-        .snapshots()
-        .listen((snapshot) {
+    final assignmentsSubscription = _assignmentRepository
+        .getClassAssignmentsForMultipleClasses(classIds)
+        .listen((assignments) {
           final now = DateTime.now();
-          latestAssignments = snapshot.docs
-              .map((doc) => Assignment.fromFirestore(doc))
+          latestAssignments = assignments
               .where((assignment) {
-                // Only show assignments that are published now or in the past
-                return assignment.publishAt == null || assignment.publishAt!.isBefore(now);
+                // Only show published assignments that are active or completed
+                return assignment.isPublished &&
+                    (assignment.status == AssignmentStatus.active ||
+                     assignment.status == AssignmentStatus.completed) &&
+                    (assignment.publishAt == null || assignment.publishAt!.isBefore(now));
               })
               .toList();
           combineAndEmit();
         });
 
     // Subscribe to submissions stream
-    final submissionsSubscription = FirebaseFirestore.instance
-        .collection('submissions')
-        .where('studentId', isEqualTo: _currentStudentId)
-        .snapshots()
-        .listen((snapshot) {
+    final submissionsSubscription = _submissionRepository
+        .getStudentSubmissions(_currentStudentId!)
+        .listen((submissions) {
           final submissionMap = <String, Submission>{};
-          for (final doc in snapshot.docs) {
-            final submission = Submission.fromFirestore(doc);
+          for (final submission in submissions) {
             submissionMap[submission.assignmentId] = submission;
           }
           latestSubmissions = submissionMap;
@@ -203,14 +204,11 @@ class StudentAssignmentProvider with ChangeNotifier {
         });
 
     // Subscribe to grades stream
-    final gradesSubscription = FirebaseFirestore.instance
-        .collection('grades')
-        .where('studentId', isEqualTo: _currentStudentId)
-        .snapshots()
-        .listen((snapshot) {
+    final gradesSubscription = _gradeRepository
+        .getStudentGrades(_currentStudentId!)
+        .listen((grades) {
           final gradeMap = <String, Grade>{};
-          for (final doc in snapshot.docs) {
-            final grade = Grade.fromFirestore(doc);
+          for (final grade in grades) {
             gradeMap[grade.assignmentId] = grade;
           }
           latestGrades = gradeMap;
@@ -238,7 +236,7 @@ class StudentAssignmentProvider with ChangeNotifier {
     if (_currentStudentId == null) return false;
 
     try {
-      final submission = await _submissionService.submitTextContent(
+      final submission = await _submissionRepository.submitTextContent(
         assignmentId: assignmentId,
         studentId: _currentStudentId!,
         studentName: studentName,
@@ -366,6 +364,13 @@ class StudentAssignmentProvider with ChangeNotifier {
     _assignmentsSubscription?.cancel();
     _studentAssignmentsController.close();
     _assignments.clear();
+    
+    // Dispose repositories
+    _assignmentRepository.dispose();
+    _submissionRepository.dispose();
+    _gradeRepository.dispose();
+    _studentRepository.dispose();
+    
     super.dispose();
   }
 }

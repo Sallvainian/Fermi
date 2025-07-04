@@ -50,8 +50,7 @@ flutter/
 .env
 .env.local
 .env.*.local
-!/.env
-!/.env
-!/.env
-!/.env
 android/java_pid*.hprof
+/.cursor/
+/.gemini/
+/.claude/

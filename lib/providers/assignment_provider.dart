@@ -2,10 +2,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/assignment.dart';
 import '../models/grade.dart';
-import '../services/assignment_service.dart';
+import '../repositories/assignment_repository.dart';
+import '../repositories/grade_repository.dart';
+import '../core/service_locator.dart';
 
 class AssignmentProvider with ChangeNotifier {
-  final AssignmentService _assignmentService = AssignmentService();
+  late final AssignmentRepository _assignmentRepository;
+  late final GradeRepository _gradeRepository;
   
   // State variables
   List<Assignment> _assignments = [];
@@ -21,6 +24,12 @@ class AssignmentProvider with ChangeNotifier {
   StreamSubscription<List<Assignment>>? _classAssignmentsSubscription;
   StreamSubscription<List<Assignment>>? _teacherAssignmentsSubscription;
   StreamSubscription<List<Grade>>? _gradesSubscription;
+  
+  // Constructor
+  AssignmentProvider() {
+    _assignmentRepository = getIt<AssignmentRepository>();
+    _gradeRepository = getIt<GradeRepository>();
+  }
   
   // Getters
   List<Assignment> get assignments => _assignments;
@@ -62,7 +71,7 @@ class AssignmentProvider with ChangeNotifier {
       _classAssignmentsSubscription?.cancel();
       
       // Store the subscription
-      _classAssignmentsSubscription = _assignmentService.getAssignmentsForClass(classId).listen(
+      _classAssignmentsSubscription = _assignmentRepository.getClassAssignments(classId).listen(
         (assignmentList) {
           _assignments = assignmentList;
           _setLoading(false);
@@ -87,7 +96,7 @@ class AssignmentProvider with ChangeNotifier {
       _teacherAssignmentsSubscription?.cancel();
       
       // Store the subscription
-      _teacherAssignmentsSubscription = _assignmentService.getAssignmentsForTeacher(teacherId).listen(
+      _teacherAssignmentsSubscription = _assignmentRepository.getTeacherAssignments(teacherId).listen(
         (assignmentList) {
           _teacherAssignments = assignmentList;
           _setLoading(false);
@@ -112,7 +121,7 @@ class AssignmentProvider with ChangeNotifier {
       _gradesSubscription?.cancel();
       
       // Store the subscription
-      _gradesSubscription = _assignmentService.getGradesForAssignment(assignmentId).listen(
+      _gradesSubscription = _gradeRepository.getAssignmentGrades(assignmentId).listen(
         (gradeList) {
           _grades = gradeList;
           _setLoading(false);
@@ -133,14 +142,15 @@ class AssignmentProvider with ChangeNotifier {
   Future<bool> createAssignment(Assignment assignment) async {
     _setLoading(true);
     try {
-      final createdAssignment = await _assignmentService.createAssignment(assignment);
+      final assignmentId = await _assignmentRepository.createAssignment(assignment);
       
       // Initialize grades for all students if published
-      if (createdAssignment.isPublished) {
-        await _assignmentService.initializeGradesForAssignment(
-          createdAssignment.id,
-          createdAssignment.classId,
-          createdAssignment.teacherId,
+      if (assignment.isPublished) {
+        await _gradeRepository.initializeGradesForAssignment(
+          assignmentId,
+          assignment.classId,
+          assignment.teacherId,
+          assignment.totalPoints,
         );
       }
       
@@ -157,7 +167,7 @@ class AssignmentProvider with ChangeNotifier {
   Future<bool> updateAssignment(Assignment assignment) async {
     _setLoading(true);
     try {
-      await _assignmentService.updateAssignment(assignment);
+      await _assignmentRepository.updateAssignment(assignment.id, assignment);
       
       // Update local list
       final index = _teacherAssignments.indexWhere((a) => a.id == assignment.id);
@@ -179,7 +189,7 @@ class AssignmentProvider with ChangeNotifier {
   Future<bool> deleteAssignment(String assignmentId) async {
     _setLoading(true);
     try {
-      await _assignmentService.deleteAssignment(assignmentId);
+      await _assignmentRepository.deleteAssignment(assignmentId);
       
       // Remove from local list
       _teacherAssignments.removeWhere((a) => a.id == assignmentId);
@@ -199,9 +209,20 @@ class AssignmentProvider with ChangeNotifier {
     _setLoading(true);
     try {
       if (publish) {
-        await _assignmentService.publishAssignment(assignmentId);
+        final assignment = await _assignmentRepository.getAssignment(assignmentId);
+        if (assignment != null) {
+          await _assignmentRepository.publishAssignment(assignmentId);
+          
+          // Initialize grades for all students
+          await _gradeRepository.initializeGradesForAssignment(
+            assignmentId,
+            assignment.classId,
+            assignment.teacherId,
+            assignment.totalPoints,
+          );
+        }
       } else {
-        await _assignmentService.unpublishAssignment(assignmentId);
+        await _assignmentRepository.unpublishAssignment(assignmentId);
       }
       
       // Update local list
@@ -227,7 +248,7 @@ class AssignmentProvider with ChangeNotifier {
   Future<bool> updateGrade(Grade grade) async {
     _setLoading(true);
     try {
-      await _assignmentService.updateGrade(grade);
+      await _gradeRepository.updateGrade(grade.id, grade);
       
       // Update local list
       final index = _grades.indexWhere((g) => g.id == grade.id);
@@ -246,18 +267,18 @@ class AssignmentProvider with ChangeNotifier {
   }
   
   // Bulk grade update
-  Future<bool> bulkUpdateGrades(List<Grade> grades) async {
+  Future<bool> bulkUpdateGrades(Map<String, Grade> grades) async {
     _setLoading(true);
     try {
-      await _assignmentService.bulkUpdateGrades(grades);
+      await _gradeRepository.batchUpdateGrades(grades);
       
       // Update local list
-      for (final grade in grades) {
-        final index = _grades.indexWhere((g) => g.id == grade.id);
+      grades.forEach((gradeId, grade) {
+        final index = _grades.indexWhere((g) => g.id == gradeId);
         if (index != -1) {
           _grades[index] = grade;
         }
-      }
+      });
       notifyListeners();
       
       _setLoading(false);
@@ -272,10 +293,59 @@ class AssignmentProvider with ChangeNotifier {
   // Get grade statistics
   Future<GradeStatistics?> getAssignmentStatistics(String assignmentId) async {
     try {
-      return await _assignmentService.calculateAssignmentStatistics(assignmentId);
+      return await _gradeRepository.getAssignmentStatistics(assignmentId);
     } catch (e) {
       _setError(e.toString());
       return null;
+    }
+  }
+  
+  // Archive/Restore assignment
+  Future<bool> archiveAssignment(String assignmentId) async {
+    _setLoading(true);
+    try {
+      await _assignmentRepository.archiveAssignment(assignmentId);
+      
+      // Update local list
+      final index = _teacherAssignments.indexWhere((a) => a.id == assignmentId);
+      if (index != -1) {
+        _teacherAssignments[index] = _teacherAssignments[index].copyWith(
+          status: AssignmentStatus.archived,
+          updatedAt: DateTime.now(),
+        );
+        notifyListeners();
+      }
+      
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      _setLoading(false);
+      return false;
+    }
+  }
+  
+  Future<bool> restoreAssignment(String assignmentId) async {
+    _setLoading(true);
+    try {
+      await _assignmentRepository.restoreAssignment(assignmentId);
+      
+      // Update local list
+      final index = _teacherAssignments.indexWhere((a) => a.id == assignmentId);
+      if (index != -1) {
+        _teacherAssignments[index] = _teacherAssignments[index].copyWith(
+          status: AssignmentStatus.draft,
+          updatedAt: DateTime.now(),
+        );
+        notifyListeners();
+      }
+      
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      _setLoading(false);
+      return false;
     }
   }
   
@@ -318,6 +388,11 @@ class AssignmentProvider with ChangeNotifier {
     _classAssignmentsSubscription?.cancel();
     _teacherAssignmentsSubscription?.cancel();
     _gradesSubscription?.cancel();
+    
+    // Dispose repositories
+    _assignmentRepository.dispose();
+    _gradeRepository.dispose();
+    
     super.dispose();
   }
 }
