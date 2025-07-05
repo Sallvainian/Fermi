@@ -45,12 +45,9 @@ class CalendarProvider with ChangeNotifier {
   CalendarService get calendarService {
     if (_calendarService == null) {
       try {
-        print('[CalendarProvider] Attempting to get CalendarService from service locator...');
-        print('[CalendarProvider] Is CalendarService registered? ${getIt.isRegistered<CalendarService>()}');
         _calendarService = getIt<CalendarService>();
-        print('[CalendarProvider] Successfully retrieved CalendarService');
       } catch (e) {
-        print('[CalendarProvider] Error getting CalendarService: $e');
+        // Error getting CalendarService
         throw Exception('CalendarService not registered. Make sure setupServiceLocator() is called before using CalendarProvider. Error: $e');
       }
     }
@@ -59,8 +56,7 @@ class CalendarProvider with ChangeNotifier {
   
   /// Creates provider with calendar service.
   CalendarProvider() {
-    print('[CalendarProvider] Constructor called');
-    print('[CalendarProvider] Service locator ready? ${getIt.isReady}');
+    // CalendarProvider initialized
   }
   
   // Getters

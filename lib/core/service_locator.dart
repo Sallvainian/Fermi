@@ -75,7 +75,7 @@ final GetIt getIt = GetIt.instance;
 /// 
 /// @throws Exception if Firebase is not initialized before calling this
 Future<void> setupServiceLocator() async {
-  print('[ServiceLocator] Setting up service locator...');
+  // Setting up service locator...
   
   // Register Firebase instances
   getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
@@ -148,11 +148,11 @@ Future<void> setupServiceLocator() async {
     ),
   );
   
-  print('[ServiceLocator] CalendarService registered: ${getIt.isRegistered<CalendarService>()}');
+  // CalendarService registered
   
   // Note: Providers will be refactored to use these services via dependency injection
   // rather than creating service instances directly
-  print('[ServiceLocator] Service locator setup complete');
+  // Service locator setup complete
 }
 
 /// Convenience extension for accessing registered services.
