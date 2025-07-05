@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:io';
 import '../../providers/chat_provider.dart';
 import '../../models/message.dart';
+import '../../services/scheduled_messages_service.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String chatRoomId;
@@ -27,6 +29,35 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
   double _uploadProgress = 0.0;
+  late final ScheduledMessagesService _scheduledMessagesService;
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduledMessagesService = ScheduledMessagesService();
+    // Load chat room and messages when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final chatProvider = context.read<ChatProvider>();
+      
+      try {
+        // Find the chat room from the list
+        final chatRoom = chatProvider.chatRooms.firstWhere(
+          (room) => room.id == widget.chatRoomId,
+        );
+        chatProvider.setCurrentChatRoom(chatRoom);
+      } catch (e) {
+        // Try to fetch the chat room directly if not in the list
+        try {
+          final chatRoom = await chatProvider.getChatRoom(widget.chatRoomId);
+          if (chatRoom != null) {
+            chatProvider.setCurrentChatRoom(chatRoom);
+          }
+        } catch (e2) {
+          // Failed to load chat room
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -40,6 +71,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Use GoRouter to ensure proper navigation
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              // Navigate to messages list if can't pop
+              context.go('/messages');
+            }
+          },
+        ),
         title: Consumer<ChatProvider>(
           builder: (context, chatProvider, child) {
             final chatRoom = chatProvider.currentChatRoom;
@@ -100,6 +143,27 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             child: Consumer<ChatProvider>(
               builder: (context, chatProvider, child) {
                 final messages = chatProvider.currentMessages;
+                final error = chatProvider.error;
+
+                if (error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
+                        Text('Error: $error'),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            chatProvider.loadChatMessages(widget.chatRoomId);
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
                 if (messages.isEmpty) {
                   return const Center(
@@ -362,9 +426,43 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _sendMessage,
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'send') {
+                _sendMessage();
+              } else if (value == 'schedule') {
+                _showScheduleMessageDialog();
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'send',
+                child: ListTile(
+                  leading: Icon(Icons.send),
+                  title: Text('Send now'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'schedule',
+                child: ListTile(
+                  leading: Icon(Icons.schedule_send),
+                  title: Text('Schedule send'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.send,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
           ),
         ],
       ),
@@ -446,8 +544,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           ),
           TextButton(
             onPressed: () async {
+              // Close dialog
               Navigator.pop(context);
-              Navigator.pop(context);
+              // Navigate back to messages list
+              context.go('/messages');
               await context
                   .read<ChatProvider>()
                   .leaveChatRoom(widget.chatRoomId);
@@ -599,6 +699,236 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showScheduleMessageDialog() {
+    final message = _messageController.text.trim();
+    if (message.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please type a message first'),
+        ),
+      );
+      return;
+    }
+
+    DateTime selectedDate = DateTime.now().add(const Duration(hours: 1));
+    TimeOfDay selectedTime = TimeOfDay.fromDateTime(selectedDate);
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Schedule Message'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Message: "$message"',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 16),
+              const Text('Select date and time:'),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (date != null) {
+                          setState(() {
+                            selectedDate = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                              selectedTime.hour,
+                              selectedTime.minute,
+                            );
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_today),
+                      label: Text(
+                        DateFormat('MMM d, yyyy').format(selectedDate),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: selectedTime,
+                        );
+                        if (time != null) {
+                          setState(() {
+                            selectedTime = time;
+                            selectedDate = DateTime(
+                              selectedDate.year,
+                              selectedDate.month,
+                              selectedDate.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.access_time),
+                      label: Text(selectedTime.format(context)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Will be sent: ${DateFormat('MMM d, yyyy at h:mm a').format(selectedDate)}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _scheduleMessage(selectedDate);
+              },
+              child: const Text('Schedule'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _scheduleMessage(DateTime scheduledFor) async {
+    final message = _messageController.text.trim();
+    if (message.isEmpty) return;
+
+    try {
+      await _scheduledMessagesService.scheduleMessage(
+        chatRoomId: widget.chatRoomId,
+        content: message,
+        scheduledFor: scheduledFor,
+      );
+
+      _messageController.clear();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Message scheduled for ${DateFormat('MMM d, h:mm a').format(scheduledFor)}',
+            ),
+            action: SnackBarAction(
+              label: 'View scheduled',
+              onPressed: _showScheduledMessages,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to schedule message: $e')),
+        );
+      }
+    }
+  }
+
+  void _showScheduledMessages() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.5,
+        minChildSize: 0.25,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Scheduled Messages',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(),
+            Expanded(
+              child: StreamBuilder<List<ScheduledMessage>>(
+                stream: _scheduledMessagesService.getScheduledMessages(widget.chatRoomId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final scheduledMessages = snapshot.data ?? [];
+
+                  if (scheduledMessages.isEmpty) {
+                    return const Center(
+                      child: Text('No scheduled messages'),
+                    );
+                  }
+
+                  return ListView.builder(
+                    controller: scrollController,
+                    itemCount: scheduledMessages.length,
+                    itemBuilder: (context, index) {
+                      final scheduled = scheduledMessages[index];
+                      final message = scheduled.message;
+
+                      return ListTile(
+                        title: Text(message.content),
+                        subtitle: Text(
+                          'Scheduled for: ${DateFormat('MMM d, h:mm a').format(message.scheduledFor!)}',
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline),
+                          onPressed: () async {
+                            final messenger = ScaffoldMessenger.of(context);
+                            await _scheduledMessagesService.cancelScheduledMessage(
+                              scheduled.id,
+                            );
+                            if (mounted) {
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Scheduled message cancelled'),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],

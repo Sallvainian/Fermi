@@ -1,4 +1,4 @@
-package com.teacherdashboard.teacher_dashboard_flutter
+package com.teacherdashboard.teacher_dashboard_flutter_firebase
 
 import io.flutter.embedding.android.FlutterActivity
 

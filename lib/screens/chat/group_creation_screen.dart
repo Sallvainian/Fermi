@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../models/chat_room.dart';
 import '../../models/user_model.dart';
+import '../../widgets/common/adaptive_layout.dart';
 
 class GroupCreationScreen extends StatefulWidget {
   const GroupCreationScreen({super.key});
@@ -128,16 +129,22 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Group Chat'),
-        actions: [
-          TextButton(
-            onPressed: _isCreating ? null : _createGroupChat,
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+    return AdaptiveLayout(
+      title: 'Create Group Chat',
+      showBackButton: true,
+      onBackPressed: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/messages');
+        }
+      },
+      actions: [
+        TextButton(
+          onPressed: _isCreating ? null : _createGroupChat,
+          child: const Text('Create'),
+        ),
+      ],
       body: Form(
         key: _formKey,
         child: Column(

@@ -8,16 +8,16 @@ plugins {
 }
 
 android {
-    namespace = "com.teacherdashboard.teacher_dashboard_flutter"
+    namespace = "com.teacherdashboard.teacher_dashboard_flutter_firebase"
     compileSdk = 35
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = '17'
+        jvmTarget = '21'
     }
 
     defaultConfig {
@@ -33,6 +33,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled = false
+            shrinkResources = false
+            crunchPngs = false
+        }
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.

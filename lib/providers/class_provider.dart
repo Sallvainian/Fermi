@@ -1,3 +1,10 @@
+/// Class management state provider.
+/// 
+/// This module manages class (course) state for the education platform,
+/// handling teacher and student class listings, enrollment operations,
+/// and real-time updates through stream subscriptions.
+library;
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/class_model.dart';
@@ -6,55 +13,116 @@ import '../repositories/class_repository.dart';
 import '../repositories/student_repository.dart';
 import '../core/service_locator.dart';
 
+/// Provider managing class state and enrollment operations.
+/// 
+/// This provider serves as the central state manager for classes,
+/// coordinating between class and student repositories. Key features:
+/// - Real-time class list updates for teachers and students
+/// - Student enrollment and unenrollment management
+/// - Class archiving and restoration
+/// - Academic year filtering
+/// - Student search for enrollment
+/// - Bulk enrollment operations
+/// 
+/// Maintains separate lists for teacher-owned and student-enrolled
+/// classes with automatic stream management.
 class ClassProvider with ChangeNotifier {
+  /// Repository for class data operations.
   late final ClassRepository _classRepository;
+  
+  /// Repository for student data operations.
   late final StudentRepository _studentRepository;
   
   // State variables
+  
+  /// Classes taught by the current teacher.
   List<ClassModel> _teacherClasses = [];
+  
+  /// Classes enrolled by the current student.
   List<ClassModel> _studentClasses = [];
+  
+  /// Students enrolled in the selected class.
   List<Student> _classStudents = [];
+  
+  /// Loading state for async operations.
   bool _isLoading = false;
+  
+  /// Latest error message for UI display.
   String? _error;
   
-  // Selected class for detail view
+  /// Currently selected class for detail views.
   ClassModel? _selectedClass;
   
   // Stream subscriptions
+  
+  /// Subscription for teacher's class list updates.
   StreamSubscription<List<ClassModel>>? _teacherClassesSubscription;
+  
+  /// Subscription for student's class list updates.
   StreamSubscription<List<ClassModel>>? _studentClassesSubscription;
+  
+  /// Subscription for class student list updates.
   StreamSubscription<List<Student>>? _classStudentsSubscription;
   
-  // Constructor
+  /// Creates class provider with repository dependencies.
+  /// 
+  /// Retrieves repositories from dependency injection container.
   ClassProvider() {
     _classRepository = getIt<ClassRepository>();
     _studentRepository = getIt<StudentRepository>();
   }
   
   // Getters
+  
+  /// List of classes taught by current teacher.
   List<ClassModel> get teacherClasses => _teacherClasses;
+  
+  /// List of classes enrolled by current student.
   List<ClassModel> get studentClasses => _studentClasses;
+  
+  /// Students enrolled in selected class.
   List<Student> get classStudents => _classStudents;
+  
+  /// Whether an operation is in progress.
   bool get isLoading => _isLoading;
+  
+  /// Latest error message or null.
   String? get error => _error;
+  
+  /// Currently selected class or null.
   ClassModel? get selectedClass => _selectedClass;
   
-  // Get active classes
+  /// Filters teacher's classes to show only active ones.
+  /// 
+  /// Active classes accept new enrollments and assignments.
   List<ClassModel> get activeClasses {
     return _teacherClasses.where((c) => c.isActive).toList();
   }
   
-  // Get archived classes
+  /// Filters teacher's classes to show only archived ones.
+  /// 
+  /// Archived classes are read-only historical records.
   List<ClassModel> get archivedClasses {
     return _teacherClasses.where((c) => !c.isActive).toList();
   }
   
-  // Get classes by academic year
+  /// Filters classes by academic year.
+  /// 
+  /// Useful for year-specific views and reports.
+  /// 
+  /// @param academicYear Year to filter by (e.g., "2023-2024")
+  /// @return List of classes from specified year
   List<ClassModel> getClassesByAcademicYear(String academicYear) {
     return _teacherClasses.where((c) => c.academicYear == academicYear).toList();
   }
   
-  // Load classes for a teacher
+  /// Loads and subscribes to teacher's class list.
+  /// 
+  /// Sets up real-time stream for class updates.
+  /// Cancels any existing subscription before creating new one.
+  /// 
+  /// @param teacherId Teacher's unique identifier
+  /// @throws Exception if loading fails
   Future<void> loadTeacherClasses(String teacherId) async {
     _setLoading(true);
     try {
@@ -77,7 +145,13 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Load classes for a student
+  /// Loads and subscribes to student's enrolled classes.
+  /// 
+  /// Sets up real-time stream for enrollment updates.
+  /// Cancels any existing subscription before creating new one.
+  /// 
+  /// @param studentId Student's unique identifier
+  /// @throws Exception if loading fails
   Future<void> loadStudentClasses(String studentId) async {
     _setLoading(true);
     try {
@@ -100,7 +174,13 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Load students for a class
+  /// Loads and subscribes to class student roster.
+  /// 
+  /// Sets up real-time stream for enrollment changes.
+  /// Students are ordered alphabetically by name.
+  /// 
+  /// @param classId Class identifier
+  /// @throws Exception if loading fails
   Future<void> loadClassStudents(String classId) async {
     _setLoading(true);
     try {
@@ -123,7 +203,13 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Create a new class
+  /// Creates a new class in the system.
+  /// 
+  /// Adds class to Firestore and updates local state
+  /// through stream subscription.
+  /// 
+  /// @param classModel Class data to create
+  /// @return true if creation successful
   Future<bool> createClass(ClassModel classModel) async {
     _setLoading(true);
     try {
@@ -137,7 +223,14 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Update a class
+  /// Updates existing class information.
+  /// 
+  /// Modifies class in Firestore and updates local cache
+  /// for immediate UI response.
+  /// 
+  /// @param classId Class to update
+  /// @param classModel Updated class data
+  /// @return true if update successful
   Future<bool> updateClass(String classId, ClassModel classModel) async {
     _setLoading(true);
     try {
@@ -159,7 +252,13 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Delete a class
+  /// Permanently deletes a class.
+  /// 
+  /// Removes class from Firestore and local cache.
+  /// This operation cannot be undone.
+  /// 
+  /// @param classId Class to delete
+  /// @return true if deletion successful
   Future<bool> deleteClass(String classId) async {
     _setLoading(true);
     try {
@@ -178,7 +277,14 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Archive/Restore class
+  /// Archives an active class.
+  /// 
+  /// Archived classes become read-only and don't accept
+  /// new enrollments or assignments. Updates local cache
+  /// for immediate UI response.
+  /// 
+  /// @param classId Class to archive
+  /// @return true if archiving successful
   Future<bool> archiveClass(String classId) async {
     _setLoading(true);
     try {
@@ -203,6 +309,13 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
+  /// Restores an archived class to active status.
+  /// 
+  /// Reactivates class for new enrollments and assignments.
+  /// Updates local cache for immediate UI response.
+  /// 
+  /// @param classId Class to restore
+  /// @return true if restoration successful
   Future<bool> restoreClass(String classId) async {
     _setLoading(true);
     try {
@@ -227,7 +340,15 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Student enrollment
+  /// Enrolls a student in a class.
+  /// 
+  /// Updates both class roster and student's enrollment list.
+  /// Maintains bidirectional relationship in Firestore.
+  /// Updates local state if class is currently selected.
+  /// 
+  /// @param classId Target class
+  /// @param studentId Student to enroll
+  /// @return true if enrollment successful
   Future<bool> enrollStudent(String classId, String studentId) async {
     _setLoading(true);
     try {
@@ -253,6 +374,14 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
+  /// Removes a student from class enrollment.
+  /// 
+  /// Updates both class roster and student's enrollment list.
+  /// Removes from local cache for immediate UI update.
+  /// 
+  /// @param classId Class to unenroll from
+  /// @param studentId Student to remove
+  /// @return true if unenrollment successful
   Future<bool> unenrollStudent(String classId, String studentId) async {
     _setLoading(true);
     try {
@@ -282,6 +411,15 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
+  /// Enrolls multiple students in a class at once.
+  /// 
+  /// Efficient bulk enrollment for class setup.
+  /// Updates both class and student records.
+  /// Removes duplicates automatically.
+  /// 
+  /// @param classId Target class
+  /// @param studentIds List of students to enroll
+  /// @return true if bulk enrollment successful
   Future<bool> enrollMultipleStudents(String classId, List<String> studentIds) async {
     _setLoading(true);
     try {
@@ -311,7 +449,13 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Check enrollment
+  /// Checks if a student is enrolled in a class.
+  /// 
+  /// Queries current enrollment status from repository.
+  /// 
+  /// @param classId Class to check
+  /// @param studentId Student to verify
+  /// @return true if student is enrolled
   Future<bool> isStudentEnrolled(String classId, String studentId) async {
     try {
       return await _classRepository.isStudentEnrolled(classId, studentId);
@@ -321,13 +465,23 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
-  // Set selected class
+  /// Sets the currently selected class.
+  /// 
+  /// Used for detail views and context-aware operations.
+  /// 
+  /// @param classModel Class to select or null to clear
   void setSelectedClass(ClassModel? classModel) {
     _selectedClass = classModel;
     notifyListeners();
   }
   
-  // Search students
+  /// Searches for students not enrolled in selected class.
+  /// 
+  /// Filters search results to show only students available
+  /// for enrollment. Useful for enrollment UI.
+  /// 
+  /// @param query Search terms (name or email)
+  /// @return List of available students
   Future<List<Student>> searchAvailableStudents(String query) async {
     try {
       final allStudents = await _studentRepository.searchStudents(query);
@@ -347,22 +501,35 @@ class ClassProvider with ChangeNotifier {
   }
   
   // Helper methods
+  
+  /// Sets loading state and notifies listeners.
+  /// 
+  /// @param loading New loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
   }
   
+  /// Sets error message and notifies listeners.
+  /// 
+  /// @param error Error description or null
   void _setError(String? error) {
     _error = error;
     notifyListeners();
   }
   
+  /// Clears error message and notifies UI.
+  /// 
+  /// Called after user acknowledges error.
   void clearError() {
     _error = null;
     notifyListeners();
   }
   
-  // Clear all data
+  /// Clears all cached data.
+  /// 
+  /// Resets provider to initial state.
+  /// Useful for user logout or role switch.
   void clearData() {
     _teacherClasses = [];
     _studentClasses = [];
@@ -373,6 +540,10 @@ class ClassProvider with ChangeNotifier {
     notifyListeners();
   }
   
+  /// Cleans up resources when provider is disposed.
+  /// 
+  /// Cancels all stream subscriptions and disposes
+  /// repositories to prevent memory leaks.
   @override
   void dispose() {
     // Cancel subscriptions

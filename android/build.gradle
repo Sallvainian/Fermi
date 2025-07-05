@@ -9,6 +9,14 @@ buildscript {
         classpath 'com.google.gms:google-services:4.4.3'
         classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.4'
     }
+
+    // Set the JDK path for all projects
+    gradle.rootProject {
+        ext {
+            jdkPath = "/usr/lib/jvm/jdk-21.0.7-oracle-x64"
+            jlinkPath = "${jdkPath}/bin/jlink"
+        }
+    }
 }
 
 allprojects {

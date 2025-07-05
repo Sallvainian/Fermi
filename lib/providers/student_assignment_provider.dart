@@ -1,3 +1,10 @@
+/// Student assignment state management provider.
+/// 
+/// This module manages the student's view of assignments, combining
+/// assignment details with submission status and grades into a unified
+/// interface for student dashboards and assignment tracking.
+library;
+
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import '../models/assignment.dart';
@@ -9,12 +16,22 @@ import '../repositories/grade_repository.dart';
 import '../repositories/student_repository.dart';
 import '../core/service_locator.dart';
 
-// Combined model for student assignment view
+/// Combined model for student assignment view.
+/// 
+/// Aggregates assignment details, submission status, and grade
+/// information into a single model for efficient UI rendering.
+/// Provides computed properties for common status checks.
 class StudentAssignment {
+  /// The assignment details.
   final Assignment assignment;
+  
+  /// The student's submission, if any.
   final Submission? submission;
+  
+  /// The grade for this assignment, if available.
   final Grade? grade;
   
+  /// Creates a student assignment view model.
   StudentAssignment({
     required this.assignment,
     this.submission,
@@ -22,11 +39,22 @@ class StudentAssignment {
   });
   
   // Helper getters
+  
+  /// Whether the assignment has been submitted.
   bool get isSubmitted => submission != null;
+  
+  /// Whether the assignment has been graded.
   bool get isGraded => grade != null && grade!.status == GradeStatus.graded;
+  
+  /// Whether the assignment is past due and unsubmitted.
   bool get isOverdue => assignment.dueDate.isBefore(DateTime.now()) && !isSubmitted;
+  
+  /// Whether the assignment is due within 24 hours.
   bool get isDueSoon => assignment.dueDate.difference(DateTime.now()).inHours < 24 && !isSubmitted;
   
+  /// Computed status string for UI display.
+  /// 
+  /// Priority order: Graded > Submitted > Overdue > Draft > Pending
   String get status {
     if (isGraded) return 'Graded';
     if (isSubmitted) return 'Submitted';
@@ -35,18 +63,46 @@ class StudentAssignment {
     return 'Pending';
   }
   
+  /// Points earned for this assignment.
   double? get earnedPoints => grade?.pointsEarned;
+  
+  /// Letter grade representation.
   String? get letterGrade => grade?.letterGrade ?? 
     (grade != null ? Grade.calculateLetterGrade(grade!.percentage) : null);
+  
+  /// Teacher's feedback on the submission.
   String? get feedback => grade?.feedback;
 }
 
+/// Provider managing student's assignment view and operations.
+/// 
+/// This provider coordinates between multiple repositories to present
+/// a unified view of assignments, submissions, and grades. Key features:
+/// - Real-time updates combining assignment, submission, and grade data
+/// - Status tracking (pending, submitted, graded, overdue)
+/// - Assignment filtering and categorization
+/// - Submission handling and tracking
+/// - Performance statistics calculation
+/// - Multi-class assignment aggregation
+/// 
+/// Uses stream combination to maintain synchronized state across
+/// assignment lifecycle stages.
 class StudentAssignmentProvider with ChangeNotifier {
+  /// Repository for assignment data.
   late final AssignmentRepository _assignmentRepository;
+  
+  /// Repository for submission operations.
   late final SubmissionRepository _submissionRepository;
+  
+  /// Repository for grade data.
   late final GradeRepository _gradeRepository;
+  
+  /// Repository for student information.
   late final StudentRepository _studentRepository;
   
+  /// Creates provider with repository dependencies.
+  /// 
+  /// Retrieves repositories from dependency injection container.
   StudentAssignmentProvider() {
     _assignmentRepository = getIt<AssignmentRepository>();
     _submissionRepository = getIt<SubmissionRepository>();
@@ -54,46 +110,84 @@ class StudentAssignmentProvider with ChangeNotifier {
     _studentRepository = getIt<StudentRepository>();
   }
   
+  /// All assignments for the current student.
   List<StudentAssignment> _assignments = [];
+  
+  /// Loading state for async operations.
   bool _isLoading = false;
+  
+  /// Latest error message.
   String _error = '';
+  
+  /// Current student identifier.
   String? _currentStudentId;
+  
+  /// Optional class filter.
   String? _currentClassId;
   
   // Stream subscriptions
+  
+  /// Subscription for combined assignment data.
   StreamSubscription<List<StudentAssignment>>? _assignmentsSubscription;
   
-  // Stream controller for combined data
+  /// Stream controller for broadcasting combined data.
   final StreamController<List<StudentAssignment>> _studentAssignmentsController = 
       StreamController<List<StudentAssignment>>.broadcast();
   
   // Getters
+  
+  /// List of all student assignments.
   List<StudentAssignment> get assignments => _assignments;
+  
+  /// Whether data is currently loading.
   bool get isLoading => _isLoading;
+  
+  /// Latest error message or empty string.
   String get error => _error;
+  
+  /// Stream of assignment updates.
   Stream<List<StudentAssignment>> get assignmentsStream => _studentAssignmentsController.stream;
   
   // Filtered lists
+  
+  /// Assignments awaiting submission (not overdue).
   List<StudentAssignment> get pendingAssignments => 
     _assignments.where((a) => !a.isSubmitted && !a.isOverdue).toList();
   
+  /// Assignments past due date without submission.
   List<StudentAssignment> get overdueAssignments =>
     _assignments.where((a) => a.isOverdue).toList();
     
+  /// Submitted assignments awaiting grading.
   List<StudentAssignment> get submittedAssignments =>
     _assignments.where((a) => a.isSubmitted && !a.isGraded).toList();
     
+  /// Assignments with grades available.
   List<StudentAssignment> get gradedAssignments =>
     _assignments.where((a) => a.isGraded).toList();
 
-  // Initialize provider for a student
+  /// Initializes the provider for a specific student.
+  /// 
+  /// Sets up real-time streams for assignments across all enrolled
+  /// classes or a specific class if provided.
+  /// 
+  /// @param studentId Student's user identifier
+  /// @param classId Optional class filter
   Future<void> initializeForStudent(String studentId, {String? classId}) async {
     _currentStudentId = studentId;
     _currentClassId = classId;
     await setupAssignmentsStream();
   }
 
-  // Setup real-time stream for assignments with submissions and grades
+  /// Sets up real-time stream combining assignments, submissions, and grades.
+  /// 
+  /// Creates a unified stream that:
+  /// - Monitors assignments from enrolled classes
+  /// - Tracks submission status for each assignment
+  /// - Updates grade information as available
+  /// - Filters to show only published, active assignments
+  /// 
+  /// @throws Exception if student has no enrolled classes
   Future<void> setupAssignmentsStream() async {
     if (_currentStudentId == null) return;
     
@@ -146,7 +240,13 @@ class StudentAssignmentProvider with ChangeNotifier {
     }
   }
 
-  // Create combined stream of assignments, submissions, and grades
+  /// Creates a combined stream merging assignment, submission, and grade data.
+  /// 
+  /// Implements manual stream combination to synchronize data from
+  /// three separate sources. Updates emit whenever any source changes.
+  /// 
+  /// @param classIds List of class identifiers to monitor
+  /// @return Stream of combined student assignment data
   Stream<List<StudentAssignment>> _createCombinedStream(List<String> classIds) {
     // Using a StreamController to manually combine streams
     final controller = StreamController<List<StudentAssignment>>();
@@ -225,7 +325,18 @@ class StudentAssignmentProvider with ChangeNotifier {
     return controller.stream;
   }
 
-  // Submit assignment
+  /// Submits an assignment for grading.
+  /// 
+  /// Creates a submission record and updates local state immediately.
+  /// Currently supports text content submissions. File attachments
+  /// are parameters for future implementation.
+  /// 
+  /// @param assignmentId Assignment to submit
+  /// @param studentName Student's display name
+  /// @param textContent Text-based submission content
+  /// @param fileUrl Future: attached file URL
+  /// @param fileName Future: attached file name
+  /// @return true if submission successful
   Future<bool> submitAssignment({
     required String assignmentId,
     required String studentName,
@@ -262,7 +373,10 @@ class StudentAssignmentProvider with ChangeNotifier {
     }
   }
 
-  // Get assignment by ID
+  /// Retrieves a specific assignment by ID.
+  /// 
+  /// @param assignmentId Assignment identifier
+  /// @return Student assignment or null if not found
   StudentAssignment? getAssignmentById(String assignmentId) {
     try {
       return _assignments.firstWhere((a) => a.assignment.id == assignmentId);
@@ -271,17 +385,29 @@ class StudentAssignmentProvider with ChangeNotifier {
     }
   }
 
-  // Filter assignments by type
+  /// Filters assignments by type.
+  /// 
+  /// @param type Assignment type to filter by
+  /// @return List of assignments matching the type
   List<StudentAssignment> getAssignmentsByType(AssignmentType type) {
     return _assignments.where((a) => a.assignment.type == type).toList();
   }
 
-  // Filter assignments by category
+  /// Filters assignments by category.
+  /// 
+  /// @param category Category name to filter by
+  /// @return List of assignments in the category
   List<StudentAssignment> getAssignmentsByCategory(String category) {
     return _assignments.where((a) => a.assignment.category == category).toList();
   }
 
-  // Get upcoming assignments (next 7 days)
+  /// Gets assignments due within specified days.
+  /// 
+  /// Filters unsubmitted assignments with due dates in the
+  /// near future for deadline awareness.
+  /// 
+  /// @param days Number of days to look ahead (default: 7)
+  /// @return List of upcoming unsubmitted assignments
   List<StudentAssignment> getUpcomingAssignments({int days = 7}) {
     final now = DateTime.now();
     final future = now.add(Duration(days: days));
@@ -293,7 +419,15 @@ class StudentAssignmentProvider with ChangeNotifier {
     }).toList();
   }
 
-  // Get assignment statistics
+  /// Calculates comprehensive assignment statistics.
+  /// 
+  /// Computes metrics including:
+  /// - Submission and completion rates
+  /// - Grade averages and distribution
+  /// - Overdue assignment counts
+  /// - Overall performance indicators
+  /// 
+  /// @return Map of statistical metrics
   Map<String, dynamic> getStatistics() {
     final total = _assignments.length;
     final submitted = _assignments.where((a) => a.isSubmitted).length;
@@ -323,12 +457,19 @@ class StudentAssignmentProvider with ChangeNotifier {
     };
   }
 
-  // Refresh data
+  /// Refreshes all assignment data.
+  /// 
+  /// Resets and re-establishes data streams for fresh data.
   Future<void> refresh() async {
     await setupAssignmentsStream();
   }
 
-  // Search assignments
+  /// Searches assignments by title, description, or category.
+  /// 
+  /// Case-insensitive search across multiple fields.
+  /// 
+  /// @param query Search terms
+  /// @return List of matching assignments
   List<StudentAssignment> searchAssignments(String query) {
     if (query.isEmpty) return _assignments;
     
@@ -340,7 +481,15 @@ class StudentAssignmentProvider with ChangeNotifier {
     }).toList();
   }
 
-  // Sort assignments
+  /// Sorts assignments by specified criteria.
+  /// 
+  /// Supports sorting by:
+  /// - dueDate: Chronological order
+  /// - title: Alphabetical order
+  /// - points: Highest value first
+  /// - status: Status priority order
+  /// 
+  /// @param sortBy Sort criterion
   void sortAssignments(String sortBy) {
     switch (sortBy) {
       case 'dueDate':
@@ -359,6 +508,10 @@ class StudentAssignmentProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Cleans up resources when provider is disposed.
+  /// 
+  /// Cancels stream subscriptions, closes controllers,
+  /// and disposes repositories to prevent memory leaks.
   @override
   void dispose() {
     _assignmentsSubscription?.cancel();

@@ -1,3 +1,13 @@
+/// Authentication service for managing user authentication and profiles.
+/// 
+/// This service provides comprehensive authentication functionality including:
+/// - Email/password authentication
+/// - Google OAuth authentication
+/// - User profile management
+/// - Role-based user creation
+/// - Password reset functionality
+library;
+
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -5,13 +15,37 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/user_model.dart';
 
+/// Core authentication service handling all auth-related operations.
+/// 
+/// This service manages the complete authentication lifecycle:
+/// - User registration with role selection
+/// - Multiple authentication methods (email, Google)
+/// - Profile creation and updates
+/// - Session management
+/// - Error handling with user-friendly messages
+/// 
+/// The service gracefully handles Firebase initialization failures
+/// for development environments without Firebase configuration.
 class AuthService {
+  /// Firebase Authentication instance for auth operations.
+  /// Nullable to handle cases where Firebase is not initialized.
   FirebaseAuth? _auth;
+  
+  /// Firestore instance for user profile management.
+  /// Nullable to handle cases where Firebase is not initialized.
   FirebaseFirestore? _firestore;
+  
+  /// Google Sign-In client configured with OAuth credentials.
+  /// Uses server client ID from environment variables for web support.
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     serverClientId: dotenv.env['GOOGLE_OAUTH_CLIENT_ID'],
   );
 
+  /// Initializes the authentication service.
+  /// 
+  /// Attempts to get Firebase instances with graceful fallback
+  /// for development environments without Firebase configuration.
+  /// Errors are caught and logged in debug mode without throwing.
   AuthService() {
     try {
       _auth = FirebaseAuth.instance;
@@ -21,7 +55,17 @@ class AuthService {
     }
   }
 
-  // Stream of auth state changes
+  /// Stream that emits auth state changes.
+  /// 
+  /// Provides real-time updates when:
+  /// - User signs in
+  /// - User signs out
+  /// - User's auth token refreshes
+  /// 
+  /// Returns empty stream if Firebase Auth is not available.
+  /// Catches and logs errors in debug mode for resilience.
+  /// 
+  /// @return Stream emitting current User or null
   Stream<User?> get authStateChanges {
     if (_auth == null) {
       if (kDebugMode) print('Firebase Auth not available');
@@ -35,7 +79,16 @@ class AuthService {
     }
   }
 
-  // Get current user
+  /// Gets the currently authenticated Firebase user.
+  /// 
+  /// Returns null in the following cases:
+  /// - No user is signed in
+  /// - Firebase Auth is not available
+  /// - An error occurs accessing the current user
+  /// 
+  /// Errors are caught and logged in debug mode.
+  /// 
+  /// @return Current Firebase User or null
   User? get currentUser {
     if (_auth == null) {
       if (kDebugMode) print('Firebase Auth not available');
@@ -49,7 +102,21 @@ class AuthService {
     }
   }
 
-  // Get current user model
+  /// Retrieves the complete UserModel for the current user.
+  /// 
+  /// Fetches the user's profile data from Firestore based on
+  /// the current authentication state. This includes:
+  /// - User role (teacher/student/admin)
+  /// - Profile information
+  /// - Settings and preferences
+  /// 
+  /// Returns null if:
+  /// - No user is authenticated
+  /// - Firestore is not available
+  /// - User document doesn't exist
+  /// - An error occurs during fetch
+  /// 
+  /// @return UserModel instance or null
   Future<UserModel?> getCurrentUserModel() async {
     if (_firestore == null) {
       if (kDebugMode) print('Firestore not available');
@@ -71,7 +138,24 @@ class AuthService {
     }
   }
 
-  // Sign up with email and password only (without creating Firestore document)
+  /// Creates an authentication account without completing profile setup.
+  /// 
+  /// This method is used for the two-step registration process:
+  /// 1. Create Firebase Auth account (this method)
+  /// 2. Select role and complete profile (separate step)
+  /// 
+  /// Stores temporary user data in 'pending_users' collection
+  /// for later profile completion. This allows role selection
+  /// after initial account creation.
+  /// 
+  /// @param email User's email address
+  /// @param password User's chosen password
+  /// @param displayName Full display name
+  /// @param firstName User's first name
+  /// @param lastName User's last name
+  /// @return Firebase User if successful, null otherwise
+  /// @throws Exception if Firebase is not available
+  /// @throws String error message for auth failures
   Future<User?> signUpWithEmailOnly({
     required String email,
     required String password,
@@ -110,7 +194,25 @@ class AuthService {
     }
   }
 
-  // Sign up with email and password (creates both Auth and Firestore user)
+  /// Creates a complete user account with authentication and profile.
+  /// 
+  /// This method performs full user registration:
+  /// 1. Creates Firebase Auth account
+  /// 2. Creates user profile in Firestore
+  /// 3. Sets up role-specific fields
+  /// 
+  /// Automatically parses display name into first/last names
+  /// and configures role-specific fields like teacherId/studentId.
+  /// 
+  /// @param email User's email address
+  /// @param password User's chosen password
+  /// @param displayName Full display name
+  /// @param role User's role (teacher/student/admin)
+  /// @param parentEmail Parent's email (students only)
+  /// @param gradeLevel Student's grade level (students only)
+  /// @return Complete UserModel if successful, null otherwise
+  /// @throws Exception if Firebase is not available
+  /// @throws String error message for auth failures
   Future<UserModel?> signUpWithEmail({
     required String email,
     required String password,
@@ -167,7 +269,18 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
+  /// Authenticates a user with email and password.
+  /// 
+  /// Performs sign-in and automatically:
+  /// - Updates the user's last active timestamp
+  /// - Retrieves complete user profile from Firestore
+  /// - Returns full UserModel with role information
+  /// 
+  /// @param email User's email address
+  /// @param password User's password
+  /// @return UserModel if successful, null if user not found
+  /// @throws Exception if Firebase is not available
+  /// @throws String error message for auth failures
   Future<UserModel?> signInWithEmail({
     required String email,
     required String password,
@@ -193,7 +306,20 @@ class AuthService {
     }
   }
 
-  // Sign in with Google
+  /// Authenticates a user using Google OAuth.
+  /// 
+  /// Implements Google Sign-In flow:
+  /// 1. Triggers Google authentication popup
+  /// 2. Obtains OAuth credentials
+  /// 3. Signs in to Firebase with Google credential
+  /// 4. Checks if user profile exists
+  /// 
+  /// For new Google users, returns null to trigger
+  /// role selection flow. Existing users get their
+  /// complete profile returned.
+  /// 
+  /// @return UserModel for existing users, null for new users
+  /// @throws Exception if Firebase is not available or sign-in fails
   Future<UserModel?> signInWithGoogle() async {
     if (_auth == null || _firestore == null) {
       throw Exception('Firebase not available - cannot sign in with Google');
@@ -241,7 +367,22 @@ class AuthService {
     }
   }
 
-  // Complete Google sign up with role
+  /// Completes profile setup for Google-authenticated users.
+  /// 
+  /// Called after initial Google sign-in to:
+  /// - Set user role (teacher/student)
+  /// - Create complete user profile in Firestore
+  /// - Migrate any pending user data
+  /// - Configure role-specific fields
+  /// 
+  /// Handles both email signup users completing via Google
+  /// and pure Google sign-in users setting up profiles.
+  /// 
+  /// @param role Selected user role
+  /// @param parentEmail Parent's email (students only)
+  /// @param gradeLevel Student's grade level (students only)
+  /// @return Complete UserModel after profile creation
+  /// @throws Exception if profile creation fails
   Future<UserModel?> completeGoogleSignUp({
     required UserRole role,
     String? parentEmail,
@@ -302,7 +443,15 @@ class AuthService {
     }
   }
 
-  // Sign out
+  /// Signs out the current user from all auth providers.
+  /// 
+  /// Performs complete sign-out:
+  /// - Signs out from Firebase Auth
+  /// - Signs out from Google (if applicable)
+  /// - Clears all authentication state
+  /// 
+  /// Handles partial failures gracefully using Future.wait
+  /// to ensure all providers attempt sign-out.
   Future<void> signOut() async {
     final futures = <Future>[];
     if (_auth != null) futures.add(_auth!.signOut());
@@ -310,7 +459,16 @@ class AuthService {
     await Future.wait(futures);
   }
 
-  // Reset password
+  /// Sends a password reset email to the specified address.
+  /// 
+  /// Initiates Firebase's password reset flow:
+  /// - Validates email exists in system
+  /// - Sends reset link to email
+  /// - User clicks link to set new password
+  /// 
+  /// @param email Email address to send reset link to
+  /// @throws Exception if Firebase is not available
+  /// @throws String error message for invalid email or other failures
   Future<void> resetPassword(String email) async {
     if (_auth == null) {
       throw Exception('Firebase not available - cannot reset password');
@@ -323,7 +481,21 @@ class AuthService {
     }
   }
 
-  // Update user profile
+  /// Updates the current user's profile information.
+  /// 
+  /// Synchronizes changes across:
+  /// - Firebase Auth profile (display name, photo)
+  /// - Firestore user document
+  /// 
+  /// All parameters are optional - only provided fields
+  /// are updated. Automatically updates last active timestamp.
+  /// 
+  /// @param displayName New display name
+  /// @param firstName New first name
+  /// @param lastName New last name
+  /// @param photoURL New photo URL
+  /// @param updatePhoto Whether to update the photo URL
+  /// @throws Exception if update fails
   Future<void> updateProfile({
     String? displayName,
     String? firstName,
@@ -358,7 +530,16 @@ class AuthService {
     }
   }
 
-  // Update last active timestamp
+  /// Updates the user's last active timestamp in Firestore.
+  /// 
+  /// Private helper method called during sign-in to track
+  /// user activity. Uses server timestamp for consistency
+  /// across different client time zones.
+  /// 
+  /// Fails silently with debug logging if update fails
+  /// to avoid interrupting the sign-in flow.
+  /// 
+  /// @param uid User ID to update
   Future<void> _updateLastActive(String uid) async {
     if (_firestore == null) return;
     
@@ -371,7 +552,19 @@ class AuthService {
     }
   }
 
-  // Handle Firebase Auth exceptions
+  /// Converts Firebase Auth exceptions to user-friendly error messages.
+  /// 
+  /// Maps Firebase error codes to human-readable messages that
+  /// can be displayed in the UI. Covers all common auth errors:
+  /// - Registration errors (weak password, email in use)
+  /// - Sign-in errors (invalid credentials, disabled account)
+  /// - Network and operational errors
+  /// - Verification and OAuth errors
+  /// 
+  /// Falls back to generic message for unknown error codes.
+  /// 
+  /// @param e FirebaseAuthException to handle
+  /// @return User-friendly error message string
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':

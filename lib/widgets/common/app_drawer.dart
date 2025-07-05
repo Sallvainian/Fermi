@@ -155,6 +155,13 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _buildNavItem(
                     context,
+                    icon: Icons.forum_outlined,
+                    selectedIcon: Icons.forum,
+                    title: 'Discussion Boards',
+                    route: '/discussions',
+                  ),
+                  _buildNavItem(
+                    context,
                     icon: Icons.calendar_month_outlined,
                     selectedIcon: Icons.calendar_month,
                     title: 'Calendar',
@@ -223,7 +230,8 @@ class AppDrawer extends StatelessWidget {
     required String route,
   }) {
     final theme = Theme.of(context);
-    final currentRoute = GoRouterState.of(context).matchedLocation;
+    final router = GoRouter.of(context);
+    final currentRoute = router.routeInformationProvider.value.uri.path;
     final isSelected = currentRoute == route;
 
     return ListTile(
@@ -249,8 +257,14 @@ class AppDrawer extends StatelessWidget {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {
-        context.go(route);
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(); // Close drawer first
+        
+        // Use go() for dashboard to reset stack, push() for everything else
+        if (route == '/dashboard') {
+          context.go(route);
+        } else {
+          context.push(route);
+        }
       },
     );
   }

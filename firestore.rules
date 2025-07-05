@@ -122,5 +122,61 @@ service cloud.firestore {
           && request.auth.uid == resource.data.studentId;
       }
     }
+    
+    // Scheduled messages - users can only manage their own scheduled messages
+    match /scheduled_messages/{messageId} {
+      allow read: if request.auth != null 
+        && request.auth.uid == resource.data.message.senderId;
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.message.senderId;
+      allow delete: if request.auth != null 
+        && request.auth.uid == resource.data.message.senderId;
+      allow update: if request.auth != null 
+        && request.auth.uid == resource.data.message.senderId
+        && request.auth.uid == request.resource.data.message.senderId; // Can't change sender
+    }
+    
+    // Discussion boards - authenticated users can read, only teachers can create
+    match /discussion_boards/{boardId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null 
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+      allow update: if request.auth != null 
+        && resource.data.createdBy == request.auth.uid;
+      allow delete: if false; // Don't allow deletion
+      
+      // Discussion threads
+      match /threads/{threadId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update: if request.auth != null 
+          && resource.data.authorId == request.auth.uid;
+        allow delete: if request.auth != null 
+          && resource.data.authorId == request.auth.uid;
+        
+        // Thread replies
+        match /replies/{replyId} {
+          allow read: if request.auth != null;
+          allow create: if request.auth != null;
+          allow update: if request.auth != null 
+            && resource.data.authorId == request.auth.uid;
+          allow delete: if request.auth != null 
+            && resource.data.authorId == request.auth.uid;
+        }
+      }
+    }
+    
+    // Calendar events - users can read/write their own events and events they participate in
+    match /calendar_events/{eventId} {
+      allow read: if request.auth != null 
+        && (resource.data.createdBy == request.auth.uid 
+          || request.auth.uid in resource.data.participantIds);
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.createdBy;
+      allow update: if request.auth != null 
+        && resource.data.createdBy == request.auth.uid;
+      allow delete: if request.auth != null 
+        && resource.data.createdBy == request.auth.uid;
+    }
   }
 }

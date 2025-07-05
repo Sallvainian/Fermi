@@ -1,13 +1,47 @@
+/// Application theme configuration and utilities.
+/// 
+/// This module provides comprehensive theme configuration for both light and
+/// dark modes, including Material 3 design compliance, educational-specific
+/// color schemes, and utility methods for dynamic styling.
+library;
+
 import 'package:flutter/material.dart';
 
+/// Central theme configuration for the application.
+/// 
+/// This class provides complete theme management with:
+/// - Material 3 compliant light and dark themes
+/// - Educational-specific color schemes and utilities
+/// - Semantic color definitions for grades and priorities
+/// - Subject-specific color coding for visual organization
+/// - Custom component theming for consistency
+/// - Utility methods for dynamic color selection
+/// 
+/// The theme follows Material 3 design principles while
+/// incorporating educational context-specific styling.
 class AppTheme {
+  /// Primary brand color - Indigo for professional education feel.
   static const Color primaryColor = Color(0xFF3F51B5); // Indigo
+  
+  /// Secondary accent color - Teal for complementary contrast.
   static const Color secondaryColor = Color(0xFF009688); // Teal
+  
+  /// Error color for validation messages and alerts.
   static const Color errorColor = Color(0xFFE53935);
+  
+  /// Warning color for caution messages and notices.
   static const Color warningColor = Color(0xFFFF9800);
+  
+  /// Success color for positive feedback and confirmations.
   static const Color successColor = Color(0xFF4CAF50);
 
-  // Generate Material 3 color schemes
+  /// Generates Material 3 color scheme from primary color.
+  /// 
+  /// Creates a harmonious color palette following Material 3
+  /// design principles using the primary color as seed.
+  /// 
+  /// @param brightness Light or dark theme brightness
+  /// @return Generated color scheme
   static ColorScheme _createColorScheme(Brightness brightness) {
     return ColorScheme.fromSeed(
       seedColor: primaryColor,
@@ -15,6 +49,13 @@ class AppTheme {
     );
   }
 
+  /// Creates the light theme configuration.
+  /// 
+  /// Provides a clean, professional light theme suitable for
+  /// educational environments with high readability and
+  /// accessibility considerations.
+  /// 
+  /// @return Configured light theme data
   static ThemeData lightTheme() {
     final colorScheme = _createColorScheme(Brightness.light);
     
@@ -202,6 +243,14 @@ class AppTheme {
     );
   }
 
+  /// Creates the dark theme configuration.
+  /// 
+  /// Provides a sleek black dark theme optimized for low-light
+  /// environments with high contrast and modern Material 3
+  /// design principles. Features true black surfaces for
+  /// OLED displays and reduced eye strain.
+  /// 
+  /// @return Configured dark theme data
   static ThemeData darkTheme() {
     // Create a sleek black dark theme
     const surfaceBlack = Color(0xFF000000);
@@ -416,7 +465,11 @@ class AppTheme {
     );
   }
 
-  // Custom color extensions
+  /// Custom primary color material palette.
+  /// 
+  /// Full Material Color palette for the primary indigo color
+  /// with all standard Material Design color stops from 50-900.
+  /// Used for generating color variations and tonal palettes.
   static const MaterialColor customPrimary = MaterialColor(
     0xFF3F51B5,
     <int, Color>{
@@ -433,19 +486,35 @@ class AppTheme {
     },
   );
 
-  // Status colors for grades and assignments
+  /// Excellent grade color (A) - Green for outstanding performance.
   static const Color gradeA = Color(0xFF4CAF50); // Green
+  
+  /// Good grade color (B) - Light green for above average performance.
   static const Color gradeB = Color(0xFF8BC34A); // Light Green
+  
+  /// Average grade color (C) - Yellow for satisfactory performance.
   static const Color gradeC = Color(0xFFFFEB3B); // Yellow
+  
+  /// Below average grade color (D) - Orange for needs improvement.
   static const Color gradeD = Color(0xFFFF9800); // Orange
+  
+  /// Failing grade color (F) - Red for unsatisfactory performance.
   static const Color gradeF = Color(0xFFE53935); // Red
 
-  // Priority colors
+  /// High priority color - Red for urgent tasks and deadlines.
   static const Color priorityHigh = Color(0xFFE53935);
+  
+  /// Medium priority color - Orange for standard priority items.
   static const Color priorityMedium = Color(0xFFFF9800);
+  
+  /// Low priority color - Green for optional or future tasks.
   static const Color priorityLow = Color(0xFF4CAF50);
 
-  // Subject colors for visual organization
+  /// Subject-specific colors for visual organization and categorization.
+  /// 
+  /// Each subject gets a distinct color for easy visual identification
+  /// in schedules, assignments, and navigation. Colors are chosen for
+  /// accessibility and clear differentiation.
   static const List<Color> subjectColors = [
     Color(0xFF2196F3), // Blue - Mathematics
     Color(0xFF4CAF50), // Green - Science
@@ -457,12 +526,30 @@ class AppTheme {
     Color(0xFF009688), // Teal - Foreign Language
   ];
 
-  // Get color by subject index
+  /// Returns subject color by index with cycling behavior.
+  /// 
+  /// Uses modulo operation to cycle through available colors
+  /// when index exceeds the color list length. Ensures every
+  /// subject gets a consistent color assignment.
+  /// 
+  /// @param index Subject index or identifier
+  /// @return Color for the subject at the given index
   static Color getSubjectColor(int index) {
     return subjectColors[index % subjectColors.length];
   }
 
-  // Get grade color based on letter grade
+  /// Returns appropriate color for letter grade display.
+  /// 
+  /// Maps letter grades to semantic colors for visual feedback:
+  /// - A grades (A+, A, A-): Green (excellent)
+  /// - B grades (B+, B, B-): Light green (good)
+  /// - C grades (C+, C, C-): Yellow (average)
+  /// - D grades (D+, D, D-): Orange (below average)
+  /// - F grade: Red (failing)
+  /// - Other: Grey (ungraded/unknown)
+  /// 
+  /// @param grade Letter grade string (case-insensitive)
+  /// @return Semantic color for the grade
   static Color getGradeColor(String grade) {
     switch (grade.toUpperCase()) {
       case 'A':
@@ -488,7 +575,16 @@ class AppTheme {
     }
   }
 
-  // Get priority color
+  /// Returns appropriate color for priority level display.
+  /// 
+  /// Maps priority levels to semantic colors for visual urgency:
+  /// - "high": Red (urgent, immediate attention)
+  /// - "medium": Orange (standard priority)
+  /// - "low": Green (optional, future consideration)
+  /// - Other: Grey (unspecified priority)
+  /// 
+  /// @param priority Priority level string (case-insensitive)
+  /// @return Semantic color for the priority level
   static Color getPriorityColor(String priority) {
     switch (priority.toLowerCase()) {
       case 'high':

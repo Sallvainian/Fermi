@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/chat_provider.dart';
 import '../../models/chat_room.dart';
 import '../../models/user_model.dart';
+import '../../widgets/common/adaptive_layout.dart';
 
 class ClassSelectionScreen extends StatefulWidget {
   const ClassSelectionScreen({super.key});
@@ -151,10 +152,16 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
     final isTeacher =
         context.read<AuthProvider>().userModel?.role == UserRole.teacher;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select Class for Chat'),
-      ),
+    return AdaptiveLayout(
+      title: 'Select Class for Chat',
+      showBackButton: true,
+      onBackPressed: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/messages');
+        }
+      },
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null

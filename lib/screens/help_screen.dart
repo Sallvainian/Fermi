@@ -31,6 +31,7 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return AdaptiveLayout(
       title: 'Help & Support',
+      showBackButton: true,
       actions: [
         IconButton(
           icon: const Icon(Icons.contact_support),

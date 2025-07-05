@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../widgets/common/adaptive_layout.dart';
 import '../widgets/common/responsive_layout.dart';
+import '../providers/calendar_provider.dart';
+import '../providers/auth_provider.dart';
+import '../models/calendar_event.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -11,14 +15,20 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  DateTime _selectedDate = DateTime.now();
-  DateTime _focusedDate = DateTime.now();
-  String _selectedFilter = 'All';
+  EventType? _selectedFilter;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    
+    // Initialize calendar provider with current user
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = context.read<AuthProvider>().userModel?.uid;
+      if (userId != null) {
+        context.read<CalendarProvider>().initialize(userId);
+      }
+    });
   }
 
   @override
@@ -33,6 +43,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
 
     return AdaptiveLayout(
       title: 'Calendar',
+      showBackButton: true,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           _showCreateEventSheet(context);
@@ -48,104 +59,126 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
           Tab(text: 'Agenda'),
         ],
       ),
-      body: Column(
-        children: [
-          // Calendar Controls
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Month/Year Navigation
-                Expanded(
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _focusedDate = DateTime(
-                              _focusedDate.year,
-                              _focusedDate.month - 1,
-                            );
-                          });
-                        },
-                        icon: const Icon(Icons.chevron_left),
-                      ),
-                      Expanded(
-                        child: Text(
-                          _formatMonthYear(_focusedDate),
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _focusedDate = DateTime(
-                              _focusedDate.year,
-                              _focusedDate.month + 1,
-                            );
-                          });
-                        },
-                        icon: const Icon(Icons.chevron_right),
-                      ),
-                    ],
+      body: Consumer<CalendarProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (provider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Error: ${provider.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => provider.loadUserEvents(),
+                    child: const Text('Retry'),
                   ),
-                ),
-                // Filter Button
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: theme.colorScheme.outline),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: PopupMenuButton<String>(
-                    initialValue: _selectedFilter,
-                    onSelected: (value) {
-                      setState(() {
-                        _selectedFilter = value;
-                      });
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'All', child: Text('All Events')),
-                      const PopupMenuItem(value: 'Assignments', child: Text('Assignments')),
-                      const PopupMenuItem(value: 'Classes', child: Text('Classes')),
-                      const PopupMenuItem(value: 'Meetings', child: Text('Meetings')),
-                      const PopupMenuItem(value: 'Personal', child: Text('Personal')),
-                    ],
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ],
+              ),
+            );
+          }
+
+          return Column(
+            children: [
+              // Calendar Controls
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    // Month/Year Navigation
+                    Expanded(
                       child: Row(
                         children: [
-                          const Icon(Icons.filter_list, size: 20),
-                          const SizedBox(width: 8),
-                          Text(_selectedFilter),
-                          const Icon(Icons.arrow_drop_down),
+                          IconButton(
+                            onPressed: () => provider.navigatePrevious(),
+                            icon: const Icon(Icons.chevron_left),
+                          ),
+                          Expanded(
+                            child: Text(
+                              _formatMonthYear(provider.focusedDate),
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => provider.navigateNext(),
+                            icon: const Icon(Icons.chevron_right),
+                          ),
                         ],
                       ),
                     ),
-                  ),
+                    // Today Button
+                    TextButton(
+                      onPressed: () => provider.goToToday(),
+                      child: const Text('Today'),
+                    ),
+                    const SizedBox(width: 8),
+                    // Filter Button
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.colorScheme.outline),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: PopupMenuButton<EventType?>(
+                        initialValue: _selectedFilter,
+                        onSelected: (value) {
+                          setState(() {
+                            _selectedFilter = value;
+                          });
+                          provider.setFilterType(value);
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: null,
+                            child: Text('All Events'),
+                          ),
+                          ...EventType.values.map((type) => PopupMenuItem(
+                            value: type,
+                            child: Text(type.displayName),
+                          )),
+                        ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.filter_list, size: 20),
+                              const SizedBox(width: 8),
+                              Text(_selectedFilter?.displayName ?? 'All'),
+                              const Icon(Icons.arrow_drop_down),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          // Calendar Views
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildMonthView(),
-                _buildWeekView(),
-                _buildAgendaView(),
-              ],
-            ),
-          ),
-        ],
+              ),
+              // Calendar Views
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildMonthView(provider),
+                    _buildWeekView(provider),
+                    _buildAgendaView(provider),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildMonthView() {
+  Widget _buildMonthView(CalendarProvider provider) {
     return ResponsiveContainer(
       child: Column(
         children: [
@@ -153,7 +186,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
           _buildCalendarHeader(),
           // Calendar Grid
           Expanded(
-            child: _buildCalendarGrid(),
+            child: _buildCalendarGrid(provider),
           ),
         ],
       ),
@@ -184,8 +217,9 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildCalendarGrid() {
-    final firstDayOfMonth = DateTime(_focusedDate.year, _focusedDate.month, 1);
+  Widget _buildCalendarGrid(CalendarProvider provider) {
+    final focusedDate = provider.focusedDate;
+    final firstDayOfMonth = DateTime(focusedDate.year, focusedDate.month, 1);
     final firstDayOfCalendar = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday % 7));
     
     return GridView.builder(
@@ -199,36 +233,39 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
       itemCount: 42, // 6 weeks * 7 days
       itemBuilder: (context, index) {
         final date = firstDayOfCalendar.add(Duration(days: index));
-        final isCurrentMonth = date.month == _focusedDate.month;
+        final isCurrentMonth = date.month == focusedDate.month;
         final isToday = _isSameDay(date, DateTime.now());
-        final isSelected = _isSameDay(date, _selectedDate);
-        final events = _getEventsForDate(date);
+        final isSelected = _isSameDay(date, provider.selectedDate);
+        final events = provider.getEventsForDate(date);
+        final filteredEvents = _selectedFilter != null
+            ? events.where((e) => e.type == _selectedFilter).toList()
+            : events;
 
         return _buildCalendarDay(
+          provider: provider,
           date: date,
           isCurrentMonth: isCurrentMonth,
           isToday: isToday,
           isSelected: isSelected,
-          events: events,
+          events: filteredEvents,
         );
       },
     );
   }
 
   Widget _buildCalendarDay({
+    required CalendarProvider provider,
     required DateTime date,
     required bool isCurrentMonth,
     required bool isToday,
     required bool isSelected,
-    required List<Map<String, dynamic>> events,
+    required List<CalendarEvent> events,
   }) {
     final theme = Theme.of(context);
 
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _selectedDate = date;
-        });
+        provider.setSelectedDate(date);
         if (events.isNotEmpty) {
           _showDayEventsSheet(date, events);
         }
@@ -272,7 +309,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
                     width: 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: _getEventColor(event['type']),
+                      color: Color(int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000),
                       shape: BoxShape.circle,
                     ),
                   );
@@ -295,24 +332,25 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildWeekView() {
+  Widget _buildWeekView(CalendarProvider provider) {
     return ResponsiveContainer(
       child: Column(
         children: [
           // Week Header
-          _buildWeekHeader(),
+          _buildWeekHeader(provider),
           // Week Grid
           Expanded(
-            child: _buildWeekGrid(),
+            child: _buildWeekGrid(provider),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildWeekHeader() {
+  Widget _buildWeekHeader(CalendarProvider provider) {
     final theme = Theme.of(context);
-    final startOfWeek = _selectedDate.subtract(Duration(days: _selectedDate.weekday % 7));
+    final selectedDate = provider.selectedDate;
+    final startOfWeek = selectedDate.subtract(Duration(days: selectedDate.weekday % 7));
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -358,19 +396,20 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildWeekGrid() {
-    final startOfWeek = _selectedDate.subtract(Duration(days: _selectedDate.weekday % 7));
+  Widget _buildWeekGrid(CalendarProvider provider) {
+    final selectedDate = provider.selectedDate;
+    final startOfWeek = selectedDate.subtract(Duration(days: selectedDate.weekday % 7));
     
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: 24, // 24 hours
       itemBuilder: (context, hour) {
-        return _buildHourRow(hour, startOfWeek);
+        return _buildHourRow(provider, hour, startOfWeek);
       },
     );
   }
 
-  Widget _buildHourRow(int hour, DateTime startOfWeek) {
+  Widget _buildHourRow(CalendarProvider provider, int hour, DateTime startOfWeek) {
     final theme = Theme.of(context);
     
     return Container(
@@ -394,7 +433,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
             child: Row(
               children: List.generate(7, (dayIndex) {
                 final date = startOfWeek.add(Duration(days: dayIndex));
-                final events = _getEventsForDateAndHour(date, hour);
+                final events = _getEventsForDateAndHour(provider, date, hour);
                 
                 return Expanded(
                   child: Container(
@@ -416,9 +455,9 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildEventBlock(Map<String, dynamic> event) {
+  Widget _buildEventBlock(CalendarEvent event) {
     final theme = Theme.of(context);
-    final color = _getEventColor(event['type']);
+    final color = Color(int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
     
     return Container(
       margin: const EdgeInsets.all(1),
@@ -429,7 +468,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
         border: Border.all(color: color),
       ),
       child: Text(
-        event['title'],
+        event.title,
         style: theme.textTheme.bodySmall?.copyWith(
           color: color,
           fontWeight: FontWeight.w600,
@@ -440,25 +479,37 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
     );
   }
 
-  Widget _buildAgendaView() {
-    final events = _getAllEvents();
-    final groupedEvents = _groupEventsByDate(events);
+  Widget _buildAgendaView(CalendarProvider provider) {
+    final groupedEvents = provider.eventsByDate;
+    final dates = groupedEvents.keys.toList()..sort();
+    
+    if (_selectedFilter != null) {
+      // Filter dates that have events of the selected type
+      dates.removeWhere((date) {
+        final events = groupedEvents[date] ?? [];
+        return !events.any((event) => event.type == _selectedFilter);
+      });
+    }
     
     return ResponsiveContainer(
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: groupedEvents.length,
+        itemCount: dates.length,
         itemBuilder: (context, index) {
-          final date = groupedEvents.keys.elementAt(index);
-          final dayEvents = groupedEvents[date]!;
+          final date = dates[index];
+          var dayEvents = groupedEvents[date] ?? [];
           
-          return _buildAgendaDay(date, dayEvents);
+          if (_selectedFilter != null) {
+            dayEvents = dayEvents.where((e) => e.type == _selectedFilter).toList();
+          }
+          
+          return _buildAgendaDay(provider, date, dayEvents);
         },
       ),
     );
   }
 
-  Widget _buildAgendaDay(DateTime date, List<Map<String, dynamic>> events) {
+  Widget _buildAgendaDay(CalendarProvider provider, DateTime date, List<CalendarEvent> events) {
     final theme = Theme.of(context);
     final isToday = _isSameDay(date, DateTime.now());
     
@@ -498,20 +549,20 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
           ),
         ),
         // Events
-        ...events.map((event) => _buildAgendaEvent(event)),
+        ...events.map((event) => _buildAgendaEvent(provider, event)),
         const SizedBox(height: 16),
       ],
     );
   }
 
-  Widget _buildAgendaEvent(Map<String, dynamic> event) {
+  Widget _buildAgendaEvent(CalendarProvider provider, CalendarEvent event) {
     final theme = Theme.of(context);
-    final color = _getEventColor(event['type']);
+    final color = Color(int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
     
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        onTap: () => _showEventDetails(event),
+        onTap: () => _showEventDetails(provider, event),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -533,12 +584,12 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      event['title'],
+                      event.title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (event['time'] != null) ...[
+                    if (!event.isAllDay) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -549,7 +600,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            event['time'],
+                            _formatTimeRange(event),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -557,7 +608,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
                         ],
                       ),
                     ],
-                    if (event['location'] != null) ...[
+                    if (event.location != null) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -567,10 +618,13 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            event['location'],
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
+                          Expanded(
+                            child: Text(
+                              event.location!,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -587,7 +641,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  event['type'],
+                  event.type.displayName,
                   style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.w600,
@@ -631,144 +685,63 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
     return '${days[date.weekday % 7]}, ${months[date.month - 1]} ${date.day}';
   }
 
-  Color _getEventColor(String type) {
-    switch (type) {
-      case 'Assignment':
-        return Colors.red;
-      case 'Class':
-        return Colors.blue;
-      case 'Meeting':
-        return Colors.green;
-      case 'Personal':
-        return Colors.purple;
-      case 'Exam':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  String _formatTimeRange(CalendarEvent event) {
+    final startTime = TimeOfDay.fromDateTime(event.startTime);
+    if (event.endTime == null) {
+      return startTime.format(context);
     }
+    final endTime = TimeOfDay.fromDateTime(event.endTime!);
+    return '${startTime.format(context)} - ${endTime.format(context)}';
   }
 
-  // Sample Data Methods
-  List<Map<String, dynamic>> _getEventsForDate(DateTime date) {
-    final events = _getAllEvents();
+  List<CalendarEvent> _getEventsForDateAndHour(CalendarProvider provider, DateTime date, int hour) {
+    final events = provider.getEventsForDate(date);
     return events.where((event) {
-      final eventDate = event['date'] as DateTime;
-      return _isSameDay(eventDate, date);
+      if (event.isAllDay) return false;
+      return event.startTime.hour == hour;
     }).toList();
   }
 
-  List<Map<String, dynamic>> _getEventsForDateAndHour(DateTime date, int hour) {
-    final events = _getEventsForDate(date);
-    return events.where((event) {
-      final eventHour = event['hour'] as int?;
-      return eventHour == hour;
-    }).toList();
-  }
-
-  List<Map<String, dynamic>> _getAllEvents() {
-    final now = DateTime.now();
-    return [
-      {
-        'title': 'Math Quiz',
-        'type': 'Assignment',
-        'date': now.add(const Duration(days: 1)),
-        'time': '10:00 AM',
-        'location': 'Room 101',
-        'hour': 10,
-        'description': 'Algebra and geometry quiz covering chapters 5-6.',
-      },
-      {
-        'title': 'Physics Class',
-        'type': 'Class',
-        'date': now,
-        'time': '2:00 PM - 3:30 PM',
-        'location': 'Lab 203',
-        'hour': 14,
-        'description': 'Newton\'s laws of motion lab experiment.',
-      },
-      {
-        'title': 'Parent Meeting',
-        'type': 'Meeting',
-        'date': now.add(const Duration(days: 2)),
-        'time': '4:00 PM',
-        'location': 'Conference Room',
-        'hour': 16,
-        'description': 'Quarterly progress discussion.',
-      },
-      {
-        'title': 'Science Project Due',
-        'type': 'Assignment',
-        'date': now.add(const Duration(days: 5)),
-        'time': '11:59 PM',
-        'location': null,
-        'hour': null,
-        'description': 'Environmental science research project submission.',
-      },
-      {
-        'title': 'Chemistry Exam',
-        'type': 'Exam',
-        'date': now.add(const Duration(days: 7)),
-        'time': '9:00 AM - 11:00 AM',
-        'location': 'Exam Hall',
-        'hour': 9,
-        'description': 'Mid-term examination covering organic chemistry.',
-      },
-      {
-        'title': 'Study Group',
-        'type': 'Personal',
-        'date': now.add(const Duration(days: 3)),
-        'time': '3:00 PM',
-        'location': 'Library',
-        'hour': 15,
-        'description': 'Group study session for upcoming exams.',
-      },
-    ];
-  }
-
-  Map<DateTime, List<Map<String, dynamic>>> _groupEventsByDate(List<Map<String, dynamic>> events) {
-    final grouped = <DateTime, List<Map<String, dynamic>>>{};
-    
-    for (final event in events) {
-      final date = event['date'] as DateTime;
-      final dateKey = DateTime(date.year, date.month, date.day);
-      
-      if (!grouped.containsKey(dateKey)) {
-        grouped[dateKey] = [];
-      }
-      grouped[dateKey]!.add(event);
-    }
-    
-    // Sort events within each day by time
-    for (final dayEvents in grouped.values) {
-      dayEvents.sort((a, b) {
-        final aHour = a['hour'] as int? ?? 0;
-        final bHour = b['hour'] as int? ?? 0;
-        return aHour.compareTo(bHour);
-      });
-    }
-    
-    // Sort dates
-    final sortedEntries = grouped.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    
-    return Map.fromEntries(sortedEntries);
-  }
-
-  void _showDayEventsSheet(DateTime date, List<Map<String, dynamic>> events) {
+  void _showDayEventsSheet(DateTime date, List<CalendarEvent> events) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DayEventsSheet(date: date, events: events),
+      builder: (context) => DayEventsSheet(
+        date: date,
+        events: events,
+        onEventTap: (event) => _showEventDetails(context.read<CalendarProvider>(), event),
+      ),
     );
   }
 
-  void _showEventDetails(Map<String, dynamic> event) {
+  void _showEventDetails(CalendarProvider provider, CalendarEvent event) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => EventDetailSheet(event: event),
+      builder: (context) => EventDetailSheet(
+        event: event,
+        onEdit: () {
+          Navigator.pop(context);
+          _showEditEventSheet(provider, event);
+        },
+        onDelete: () async {
+          Navigator.pop(context);
+          try {
+            await provider.deleteEvent(event.id);
+            // ignore: use_build_context_synchronously
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Event deleted successfully')),
+            );
+          } catch (e) {
+            // ignore: use_build_context_synchronously
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error deleting event: $e')),
+            );
+          }
+        },
+      ),
     );
   }
 
@@ -777,7 +750,40 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const CreateEventSheet(),
+      builder: (context) => CreateEventSheet(
+        onEventCreated: (event) async {
+          final provider = context.read<CalendarProvider>();
+          try {
+            await provider.createEvent(
+              title: event['title'],
+              type: event['type'],
+              startTime: event['startTime'],
+              endTime: event['endTime'],
+              description: event['description'],
+              location: event['location'],
+              isAllDay: event['isAllDay'] ?? false,
+              hasReminder: event['hasReminder'] ?? false,
+              reminderMinutes: event['reminderMinutes'],
+            );
+            // ignore: use_build_context_synchronously
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Event created successfully')),
+            );
+          } catch (e) {
+            // ignore: use_build_context_synchronously
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error creating event: $e')),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  void _showEditEventSheet(CalendarProvider provider, CalendarEvent event) {
+    // TODO: Implement edit event sheet
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit functionality coming soon')),
     );
   }
 }
@@ -785,12 +791,14 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
 // Day Events Sheet
 class DayEventsSheet extends StatelessWidget {
   final DateTime date;
-  final List<Map<String, dynamic>> events;
+  final List<CalendarEvent> events;
+  final Function(CalendarEvent) onEventTap;
 
   const DayEventsSheet({
     super.key,
     required this.date,
     required this.events,
+    required this.onEventTap,
   });
 
   @override
@@ -861,16 +869,16 @@ class DayEventsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildEventCard(BuildContext context, Map<String, dynamic> event) {
+  Widget _buildEventCard(BuildContext context, CalendarEvent event) {
     final theme = Theme.of(context);
-    final color = _getEventColor(event['type']);
+    final color = Color(int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
           Navigator.pop(context);
-          _showEventDetails(context, event);
+          onEventTap(event);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -891,15 +899,15 @@ class DayEventsSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      event['title'],
+                      event.title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (event['time'] != null) ...[
+                    if (!event.isAllDay) ...[
                       const SizedBox(height: 4),
                       Text(
-                        event['time'],
+                        _formatTimeRange(context, event),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -915,7 +923,7 @@ class DayEventsSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  event['type'],
+                  event.type.displayName,
                   style: TextStyle(
                     color: color,
                     fontWeight: FontWeight.w600,
@@ -939,45 +947,33 @@ class DayEventsSheet extends StatelessWidget {
     return '${days[date.weekday % 7]}, ${months[date.month - 1]} ${date.day}';
   }
 
-  Color _getEventColor(String type) {
-    switch (type) {
-      case 'Assignment':
-        return Colors.red;
-      case 'Class':
-        return Colors.blue;
-      case 'Meeting':
-        return Colors.green;
-      case 'Personal':
-        return Colors.purple;
-      case 'Exam':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  String _formatTimeRange(BuildContext context, CalendarEvent event) {
+    final startTime = TimeOfDay.fromDateTime(event.startTime);
+    if (event.endTime == null) {
+      return startTime.format(context);
     }
-  }
-
-  void _showEventDetails(BuildContext context, Map<String, dynamic> event) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => EventDetailSheet(event: event),
-    );
+    final endTime = TimeOfDay.fromDateTime(event.endTime!);
+    return '${startTime.format(context)} - ${endTime.format(context)}';
   }
 }
 
 // Event Detail Sheet
 class EventDetailSheet extends StatelessWidget {
-  final Map<String, dynamic> event;
+  final CalendarEvent event;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const EventDetailSheet({
     super.key,
     required this.event,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final color = Color(int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
 
     return Container(
       decoration: BoxDecoration(
@@ -1024,12 +1020,36 @@ class EventDetailSheet extends StatelessWidget {
                     Row(
                       children: [
                         IconButton(
-                          onPressed: () {},
+                          onPressed: onEdit,
                           icon: const Icon(Icons.edit_outlined),
                           tooltip: 'Edit',
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Event'),
+                                content: const Text('Are you sure you want to delete this event?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      onDelete();
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: theme.colorScheme.error,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                           icon: const Icon(Icons.delete_outline),
                           tooltip: 'Delete',
                         ),
@@ -1048,7 +1068,7 @@ class EventDetailSheet extends StatelessWidget {
                     children: [
                       // Title
                       Text(
-                        event['title'],
+                        event.title,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -1058,27 +1078,44 @@ class EventDetailSheet extends StatelessWidget {
                       _buildDetailRow(
                         icon: Icons.category,
                         label: 'Type',
-                        value: event['type'],
-                        color: _getEventColor(event['type']),
+                        value: event.type.displayName,
+                        color: color,
                       ),
-                      if (event['time'] != null)
+                      if (!event.isAllDay)
                         _buildDetailRow(
                           icon: Icons.access_time,
                           label: 'Time',
-                          value: event['time'],
+                          value: _formatTimeRange(context, event),
                         ),
-                      if (event['location'] != null)
+                      if (event.location != null)
                         _buildDetailRow(
                           icon: Icons.location_on,
                           label: 'Location',
-                          value: event['location'],
+                          value: event.location!,
                         ),
                       _buildDetailRow(
                         icon: Icons.calendar_today,
                         label: 'Date',
-                        value: _formatDate(event['date']),
+                        value: _formatDate(event.startTime),
                       ),
-                      if (event['description'] != null) ...[
+                      if (event.recurrence != RecurrenceType.none)
+                        _buildDetailRow(
+                          icon: Icons.repeat,
+                          label: 'Recurrence',
+                          value: _getRecurrenceText(event),
+                        ),
+                      if (event.hasReminder && event.reminderMinutes != null)
+                        _buildDetailRow(
+                          icon: Icons.notifications,
+                          label: 'Reminder',
+                          value: _getReminderText(event.reminderMinutes!),
+                        ),
+                      _buildDetailRow(
+                        icon: Icons.person,
+                        label: 'Created by',
+                        value: event.createdByName,
+                      ),
+                      if (event.description != null) ...[
                         const SizedBox(height: 24),
                         Text(
                           'Description',
@@ -1094,7 +1131,7 @@ class EventDetailSheet extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            event['description'],
+                            event.description!,
                             style: theme.textTheme.bodyMedium,
                           ),
                         ),
@@ -1160,27 +1197,56 @@ class EventDetailSheet extends StatelessWidget {
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  Color _getEventColor(String type) {
-    switch (type) {
-      case 'Assignment':
-        return Colors.red;
-      case 'Class':
-        return Colors.blue;
-      case 'Meeting':
-        return Colors.green;
-      case 'Personal':
-        return Colors.purple;
-      case 'Exam':
-        return Colors.orange;
-      default:
-        return Colors.grey;
+  String _formatTimeRange(BuildContext context, CalendarEvent event) {
+    final startTime = TimeOfDay.fromDateTime(event.startTime);
+    if (event.endTime == null) {
+      return startTime.format(context);
+    }
+    final endTime = TimeOfDay.fromDateTime(event.endTime!);
+    return '${startTime.format(context)} - ${endTime.format(context)}';
+  }
+
+  String _getRecurrenceText(CalendarEvent event) {
+    switch (event.recurrence) {
+      case RecurrenceType.daily:
+        return 'Daily';
+      case RecurrenceType.weekly:
+        return 'Weekly on ${_getDayName(event.startTime.weekday)}';
+      case RecurrenceType.monthly:
+        return 'Monthly on day ${event.startTime.day}';
+      case RecurrenceType.custom:
+        return 'Custom';
+      case RecurrenceType.none:
+        return 'Does not repeat';
+    }
+  }
+
+  String _getDayName(int weekday) {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    return days[weekday - 1];
+  }
+
+  String _getReminderText(int minutes) {
+    if (minutes < 60) {
+      return '$minutes minutes before';
+    } else if (minutes < 1440) {
+      final hours = minutes ~/ 60;
+      return '$hours ${hours == 1 ? 'hour' : 'hours'} before';
+    } else {
+      final days = minutes ~/ 1440;
+      return '$days ${days == 1 ? 'day' : 'days'} before';
     }
   }
 }
 
 // Create Event Sheet
 class CreateEventSheet extends StatefulWidget {
-  const CreateEventSheet({super.key});
+  final Function(Map<String, dynamic>) onEventCreated;
+
+  const CreateEventSheet({
+    super.key,
+    required this.onEventCreated,
+  });
 
   @override
   State<CreateEventSheet> createState() => _CreateEventSheetState();
@@ -1190,9 +1256,13 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
-  String _selectedType = 'Personal';
+  EventType _selectedType = EventType.personal;
   DateTime _selectedDate = DateTime.now();
-  TimeOfDay? _selectedTime;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+  bool _isAllDay = false;
+  bool _hasReminder = false;
+  int _reminderMinutes = 60;
 
   @override
   void dispose() {
@@ -1264,18 +1334,16 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                   const SizedBox(height: 16),
 
                   // Type Dropdown
-                  DropdownButtonFormField<String>(
+                  DropdownButtonFormField<EventType>(
                     value: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Event Type',
                       border: OutlineInputBorder(),
                     ),
-                    items: [
-                      'Personal', 'Assignment', 'Class', 'Meeting', 'Exam'
-                    ].map((type) {
+                    items: EventType.values.map((type) {
                       return DropdownMenuItem(
                         value: type,
-                        child: Text(type),
+                        child: Text(type.displayName),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -1314,31 +1382,74 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Time Picker
-                  InkWell(
-                    onTap: () async {
-                      final picked = await showTimePicker(
-                        context: context,
-                        initialTime: _selectedTime ?? TimeOfDay.now(),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _selectedTime = picked;
-                        });
-                      }
+                  // All Day Switch
+                  SwitchListTile(
+                    title: const Text('All Day Event'),
+                    value: _isAllDay,
+                    onChanged: (value) {
+                      setState(() {
+                        _isAllDay = value;
+                        if (value) {
+                          _startTime = null;
+                          _endTime = null;
+                        }
+                      });
                     },
-                    child: InputDecorator(
-                      decoration: const InputDecoration(
-                        labelText: 'Time (Optional)',
-                        border: OutlineInputBorder(),
-                        suffixIcon: Icon(Icons.access_time),
-                      ),
-                      child: Text(
-                        _selectedTime?.format(context) ?? 'Select time',
+                  ),
+
+                  if (!_isAllDay) ...[
+                    // Start Time Picker
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: _startTime ?? TimeOfDay.now(),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _startTime = picked;
+                          });
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Start Time',
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.access_time),
+                        ),
+                        child: Text(
+                          _startTime?.format(context) ?? 'Select start time',
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+
+                    // End Time Picker
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showTimePicker(
+                          context: context,
+                          initialTime: _endTime ?? _startTime ?? TimeOfDay.now(),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _endTime = picked;
+                          });
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'End Time (Optional)',
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.access_time),
+                        ),
+                        child: Text(
+                          _endTime?.format(context) ?? 'Select end time',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Location Field
                   TextField(
@@ -1351,6 +1462,40 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Reminder Switch
+                  SwitchListTile(
+                    title: const Text('Set Reminder'),
+                    value: _hasReminder,
+                    onChanged: (value) {
+                      setState(() {
+                        _hasReminder = value;
+                      });
+                    },
+                  ),
+
+                  if (_hasReminder) ...[
+                    DropdownButtonFormField<int>(
+                      value: _reminderMinutes,
+                      decoration: const InputDecoration(
+                        labelText: 'Reminder Time',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 15, child: Text('15 minutes before')),
+                        DropdownMenuItem(value: 30, child: Text('30 minutes before')),
+                        DropdownMenuItem(value: 60, child: Text('1 hour before')),
+                        DropdownMenuItem(value: 120, child: Text('2 hours before')),
+                        DropdownMenuItem(value: 1440, child: Text('1 day before')),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _reminderMinutes = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Description Field
                   TextField(
@@ -1396,13 +1541,57 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                 Expanded(
                   child: FilledButton(
                     onPressed: () {
-                      // Create event logic
+                      if (_titleController.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter an event title'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      DateTime? startDateTime;
+                      DateTime? endDateTime;
+
+                      if (!_isAllDay && _startTime != null) {
+                        startDateTime = DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                          _startTime!.hour,
+                          _startTime!.minute,
+                        );
+
+                        if (_endTime != null) {
+                          endDateTime = DateTime(
+                            _selectedDate.year,
+                            _selectedDate.month,
+                            _selectedDate.day,
+                            _endTime!.hour,
+                            _endTime!.minute,
+                          );
+                        }
+                      } else {
+                        startDateTime = DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                        );
+                      }
+
+                      widget.onEventCreated({
+                        'title': _titleController.text,
+                        'type': _selectedType,
+                        'startTime': startDateTime,
+                        'endTime': endDateTime,
+                        'isAllDay': _isAllDay,
+                        'location': _locationController.text.isEmpty ? null : _locationController.text,
+                        'description': _descriptionController.text.isEmpty ? null : _descriptionController.text,
+                        'hasReminder': _hasReminder,
+                        'reminderMinutes': _hasReminder ? _reminderMinutes : null,
+                      });
+
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Event created successfully'),
-                        ),
-                      );
                     },
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

@@ -135,6 +135,16 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/messages');
+            }
+          },
+        ),
         title: const Text('Select User'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),

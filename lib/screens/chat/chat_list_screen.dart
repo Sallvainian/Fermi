@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/chat_room.dart';
+import '../../widgets/common/adaptive_layout.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -36,24 +37,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Messages'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {
-              _showSearchDialog();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.group_add),
-            onPressed: () {
-              _showNewChatDialog(context);
-            },
-          ),
-        ],
-      ),
+    return AdaptiveLayout(
+      title: 'Messages',
+      showBackButton: true,
+      onBackPressed: () => context.go('/dashboard'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            _showSearchDialog();
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.group_add),
+          onPressed: () {
+            _showNewChatDialog(context);
+          },
+        ),
+      ],
       body: Consumer<ChatProvider>(
         builder: (context, chatProvider, child) {
           if (chatProvider.error != null) {

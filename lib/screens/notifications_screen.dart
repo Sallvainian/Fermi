@@ -33,6 +33,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
 
     return AdaptiveLayout(
       title: 'Notifications',
+      showBackButton: true,
       actions: [
         IconButton(
           icon: const Icon(Icons.settings),

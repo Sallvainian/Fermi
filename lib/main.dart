@@ -1,3 +1,17 @@
+/// Main entry point for the Teacher Dashboard Flutter application.
+/// 
+/// This application provides a comprehensive education management platform
+/// for teachers and students, built with Flutter and Firebase.
+/// 
+/// Features:
+/// - User authentication with role-based access (teacher/student)
+/// - Assignment management and submission tracking
+/// - Real-time messaging and chat functionality
+/// - Discussion boards for class interactions
+/// - Grade management and reporting
+/// - Responsive design for mobile and tablet devices
+library;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,11 +22,14 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'core/service_locator.dart';
+import 'services/logger_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/assignment_provider.dart';
 import 'providers/student_assignment_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/chat_provider.dart';
+import 'providers/discussion_provider.dart';
+import 'providers/calendar_provider.dart';
 import 'models/user_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
@@ -34,13 +51,33 @@ import 'screens/chat/chat_detail_screen.dart';
 import 'screens/chat/user_selection_screen.dart';
 import 'screens/chat/group_creation_screen.dart';
 import 'screens/chat/class_selection_screen.dart';
+import 'screens/discussions/discussion_boards_screen.dart';
+import 'screens/discussions/discussion_board_detail_screen.dart';
+import 'screens/calendar_screen.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_typography.dart';
 
+/// Global flag to track Firebase initialization status.
+/// Used throughout the app to check if Firebase services are available.
 bool _firebaseInitialized = false;
 
+/// Public getter for Firebase initialization status.
+/// Returns true if Firebase was successfully initialized, false otherwise.
 bool get isFirebaseInitialized => _firebaseInitialized;
 
+/// Application entry point that initializes Firebase and required services.
+/// 
+/// Initialization sequence:
+/// 1. Ensures Flutter widget binding is initialized
+/// 2. Loads environment variables from .env file
+/// 3. Initializes Firebase with platform-specific options
+/// 4. Configures Firestore offline persistence (non-web platforms)
+/// 5. Sets up dependency injection via service locator
+/// 6. Initializes Crashlytics for error reporting (non-web platforms)
+/// 7. Launches the main application widget
+/// 
+/// Handles initialization failures gracefully, allowing the app to run
+/// even if Firebase initialization fails (with limited functionality).
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -62,7 +99,7 @@ void main() async {
       );
     }
     
-    // Initialize service locator
+    // Initialize service locator BEFORE running the app
     await setupServiceLocator();
     
     // Initialize Crashlytics
@@ -79,11 +116,34 @@ void main() async {
   } catch (e) {
     _firebaseInitialized = false;
     // Firebase initialization failed - app will handle gracefully
+    LoggerService.error('Firebase initialization error', tag: 'Main', error: e);
+    
+    // Still need to setup service locator even if Firebase fails
+    try {
+      await setupServiceLocator();
+    } catch (setupError) {
+      LoggerService.error('Service locator setup error', tag: 'Main', error: setupError);
+    }
   }
 
   runApp(const TeacherDashboardApp());
 }
 
+/// Root widget of the Teacher Dashboard application.
+/// 
+/// This widget:
+/// - Sets up the provider state management architecture
+/// - Configures the app's theme (light/dark mode support)
+/// - Initializes the routing system with authentication guards
+/// - Provides global access to authentication and other providers
+/// 
+/// Uses MultiProvider to inject the following providers:
+/// - [ThemeProvider]: Manages app theme and dark mode preferences
+/// - [AuthProvider]: Handles user authentication state
+/// - [AssignmentProvider]: Manages assignment data for teachers
+/// - [StudentAssignmentProvider]: Manages assignment data for students
+/// - [ChatProvider]: Handles real-time messaging functionality
+/// - [DiscussionProvider]: Manages discussion board interactions
 class TeacherDashboardApp extends StatelessWidget {
   const TeacherDashboardApp({super.key});
 
@@ -96,6 +156,8 @@ class TeacherDashboardApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AssignmentProvider()),
         ChangeNotifierProvider(create: (_) => StudentAssignmentProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
+        ChangeNotifierProvider(create: (_) => DiscussionProvider()),
+        ChangeNotifierProvider(create: (_) => CalendarProvider()),
         // Gradebook provider will be added here
       ],
       child: Builder(
@@ -124,6 +186,21 @@ class TeacherDashboardApp extends StatelessWidget {
     );
   }
 
+  /// Creates and configures the application's routing system.
+  /// 
+  /// This method sets up:
+  /// - Authentication-based route guards
+  /// - Role-based dashboard routing (teacher vs student)
+  /// - Nested route structures for feature modules
+  /// - Deep linking support for all screens
+  /// 
+  /// Route protection logic:
+  /// - Unauthenticated users are redirected to login
+  /// - Authenticated users cannot access auth screens
+  /// - Google sign-in users are directed to role selection if needed
+  /// 
+  /// @param authProvider The authentication provider for route guards
+  /// @return Configured GoRouter instance
   GoRouter _createRouter(AuthProvider authProvider) {
     return GoRouter(
       initialLocation: '/auth/login',
@@ -248,6 +325,21 @@ class TeacherDashboardApp extends StatelessWidget {
           ],
         ),
         GoRoute(
+          path: '/discussions',
+          builder: (context, state) => const DiscussionBoardsScreen(),
+        ),
+        GoRoute(
+          path: '/discussions/:boardId',
+          builder: (context, state) {
+            final boardId = state.pathParameters['boardId']!;
+            final boardTitle = state.uri.queryParameters['title'] ?? 'Discussion Board';
+            return DiscussionBoardDetailScreen(
+              boardId: boardId,
+              boardTitle: boardTitle,
+            );
+          },
+        ),
+        GoRoute(
           path: '/chat/user-selection',
           builder: (context, state) => const UserSelectionScreen(),
         ),
@@ -268,8 +360,7 @@ class TeacherDashboardApp extends StatelessWidget {
         ),
         GoRoute(
           path: '/calendar',
-          builder: (context, state) =>
-              const PlaceholderScreen(title: 'Calendar'),
+          builder: (context, state) => const CalendarScreen(),
         ),
         GoRoute(
           path: '/notifications',
@@ -300,7 +391,19 @@ class TeacherDashboardApp extends StatelessWidget {
   }
 }
 
-// Temporary Dashboard Screen
+/// Temporary fallback dashboard screen for admin users or unspecified roles.
+/// 
+/// This screen is displayed when:
+/// - User role is neither teacher nor student (e.g., admin users)
+/// - User role cannot be determined
+/// 
+/// Features:
+/// - Displays user welcome message with name
+/// - Shows current user role
+/// - Provides logout functionality
+/// 
+/// This is a temporary implementation that should be replaced with
+/// proper admin dashboard functionality in future iterations.
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -351,6 +454,19 @@ class DashboardScreen extends StatelessWidget {
 }
 
 
+/// Generic placeholder screen for features under development.
+/// 
+/// This reusable widget displays a consistent "under construction" message
+/// for screens that haven't been implemented yet. It helps maintain
+/// navigation flow during development while clearly indicating to users
+/// that the feature is not yet available.
+/// 
+/// Usage:
+/// ```dart
+/// PlaceholderScreen(title: 'Calendar')
+/// ```
+/// 
+/// @param title The title to display in the app bar and content
 class PlaceholderScreen extends StatelessWidget {
   final String title;
 

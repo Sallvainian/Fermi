@@ -33,6 +33,7 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
 
     return AdaptiveLayout(
       title: 'Messages',
+      showBackButton: true,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           _showComposeMessage(context);

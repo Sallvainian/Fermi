@@ -54,3 +54,23 @@ android/java_pid*.hprof
 /.cursor/
 /.gemini/
 /.claude/
+
+# MCP configuration with sensitive data
+.mcp.json
+
+# Debug logs
+pglite-debug.log
+*.log
+
+# Personal scripts and tools
+launch_app.sh
+
+# Temporary images (root directory only)
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+
+# Android build artifacts
+android/android/
+android/init.gradle

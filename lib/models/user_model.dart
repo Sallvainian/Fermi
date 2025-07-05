@@ -1,28 +1,77 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Enumeration representing the different user roles in the system.
+/// 
+/// Each user must have one of these roles which determines:
+/// - Access permissions and available features
+/// - Dashboard layout and navigation options
+/// - Data visibility and modification rights
 enum UserRole { teacher, student, admin }
 
+/// Core user model representing authenticated users in the system.
+/// 
+/// This model serves as the central user representation throughout the app,
+/// containing both common user properties and role-specific fields.
+/// 
+/// The model supports three user types:
+/// 1. **Teachers**: Can create classes, assignments, and manage students
+/// 2. **Students**: Can view assignments, submit work, and check grades
+/// 3. **Admins**: Have system-wide access (future implementation)
+/// 
+/// Role-specific fields are nullable to allow a single model to represent
+/// all user types while maintaining type safety.
 class UserModel {
+  /// Unique identifier from Firebase Authentication
   final String uid;
+  
+  /// User's email address (used for authentication)
   final String email;
+  
+  /// Full display name shown in the UI
   final String displayName;
+  
+  /// User's first name
   final String firstName;
+  
+  /// User's last name
   final String lastName;
+  
+  /// User's role in the system (optional for new/unconfigured users)
   final UserRole? role; // Made optional
+  
+  /// URL to user's profile photo (optional)
   final String? photoURL;
+  
+  /// Timestamp when the user account was created
   final DateTime createdAt;
+  
+  /// Timestamp of user's last activity
   final DateTime lastActive;
+  
+  /// Whether the user account is active
   final bool isActive;
 
   // Teacher-specific fields
+  /// Unique teacher identifier (e.g., employee ID)
   final String? teacherId;
+  
+  /// List of class IDs that this teacher manages
   final List<String>? classIds;
+  
+  /// Teacher's department (e.g., "Mathematics", "Science")
   final String? department;
 
   // Student-specific fields
+  /// Unique student identifier (e.g., student ID number)
   final String? studentId;
+  
+  /// Student's current grade level (1-12)
   final int? gradeLevel;
+  
+  /// Parent/guardian email for notifications
   final String? parentEmail;
+  
+  /// List of class IDs that this student is enrolled in
   final List<String>? enrolledClassIds;
 
   UserModel({
@@ -46,10 +95,23 @@ class UserModel {
   });
 
   // Convenience getters
+  /// Alias for displayName for backward compatibility
   String get name => displayName;
+  
+  /// Alias for photoURL for consistent naming convention
   String? get photoUrl => photoURL;
 
-  // Factory constructor to create UserModel from Firestore document
+  /// Factory constructor to create UserModel from Firestore document.
+  /// 
+  /// Handles data validation and transformation including:
+  /// - Legacy data migration (splitting displayName into firstName/lastName)
+  /// - Type conversions for timestamps
+  /// - Null safety for optional fields
+  /// - Role enumeration parsing
+  /// 
+  /// @param doc Firestore document snapshot containing user data
+  /// @return Parsed UserModel instance
+  /// @throws Exception if required fields are missing
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
@@ -97,7 +159,15 @@ class UserModel {
     );
   }
 
-  // Convert UserModel to Map for Firestore
+  /// Converts the UserModel instance to a Map for Firestore storage.
+  /// 
+  /// This method serializes the model data for Firebase Firestore persistence.
+  /// Only non-null role-specific fields are included to minimize storage usage.
+  /// 
+  /// Date fields are converted to Firestore Timestamp format.
+  /// Role enum is converted to string representation without the enum prefix.
+  /// 
+  /// @return Map containing all user data ready for Firestore document update
   Map<String, dynamic> toFirestore() {
     return {
       'email': email,
@@ -119,7 +189,29 @@ class UserModel {
     };
   }
 
-  // Create a copy with updated fields
+  /// Creates a copy of the UserModel with updated fields.
+  /// 
+  /// This method follows the immutable data pattern, creating a new instance
+  /// with selective field updates while preserving unchanged values.
+  /// 
+  /// Only fields provided as parameters will be updated in the new instance.
+  /// All other fields retain their original values from the current instance.
+  /// 
+  /// Note: The uid, email, role, and createdAt fields cannot be changed
+  /// through this method as they represent immutable user properties.
+  /// 
+  /// @param displayName New display name (optional)
+  /// @param firstName New first name (optional)
+  /// @param lastName New last name (optional)
+  /// @param photoURL New photo URL (optional)
+  /// @param lastActive New last active timestamp (optional)
+  /// @param isActive New active status (optional)
+  /// @param classIds New list of class IDs for teachers (optional)
+  /// @param department New department for teachers (optional)
+  /// @param gradeLevel New grade level for students (optional)
+  /// @param parentEmail New parent email for students (optional)
+  /// @param enrolledClassIds New list of enrolled classes for students (optional)
+  /// @return New UserModel instance with updated fields
   UserModel copyWith({
     String? displayName,
     String? firstName,
@@ -154,8 +246,19 @@ class UserModel {
     );
   }
 
+  /// Checks if the user has the teacher role.
+  /// @return true if user role is teacher, false otherwise
   bool get isTeacher => role == UserRole.teacher;
+  
+  /// Checks if the user has the student role.
+  /// @return true if user role is student, false otherwise
   bool get isStudent => role == UserRole.student;
+  
+  /// Checks if the user has the admin role.
+  /// @return true if user role is admin, false otherwise
   bool get isAdmin => role == UserRole.admin;
+  
+  /// Checks if the user has any assigned role.
+  /// @return true if role is not null, false if no role assigned
   bool get hasRole => role != null;
 }

@@ -1,16 +1,55 @@
+/// Chat service for managing real-time messaging in the education platform.
+/// 
+/// This service provides comprehensive chat functionality including
+/// direct messages, group chats, and class-wide communication channels.
+library;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/message.dart';
 import '../models/chat_room.dart';
 
+/// Core service for managing chat rooms and messages in Firestore.
+/// 
+/// This service handles:
+/// - Direct messaging between users
+/// - Group chat creation and management
+/// - Real-time message streaming
+/// - Read receipts and unread counts
+/// - Message search functionality
+/// - Chat room lifecycle management
+/// 
+/// All operations require authentication and enforce
+/// user-specific access controls.
 class ChatService {
+  /// Firestore instance for database operations.
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  /// Firebase Auth instance for user authentication.
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get current user ID
+  /// Gets the current authenticated user's ID.
+  /// 
+  /// Returns null if no user is signed in.
+  /// 
+  /// @return Current user's UID or null
   String? get currentUserId => _auth.currentUser?.uid;
 
-  // Create or get direct chat room
+  /// Creates or retrieves a direct chat room between two users.
+  /// 
+  /// For direct chats, generates a consistent room ID by sorting
+  /// user IDs alphabetically. This ensures the same room is used
+  /// regardless of who initiates the chat.
+  /// 
+  /// If the room doesn't exist, creates it with both participants'
+  /// information. The current user's role is hardcoded as 'teacher'
+  /// (TODO: fetch from user profile).
+  /// 
+  /// @param otherUserId ID of the other participant
+  /// @param otherUserName Display name of the other participant
+  /// @param otherUserRole Role of the other participant (teacher/student)
+  /// @return ChatRoom instance for the direct chat
+  /// @throws Exception if user is not authenticated
   Future<ChatRoom> createOrGetDirectChat(String otherUserId, String otherUserName, String otherUserRole) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
@@ -57,7 +96,22 @@ class ChatService {
     return ChatRoom.fromFirestore(newDoc);
   }
 
-  // Create group/class chat room
+  /// Creates a new group or class chat room.
+  /// 
+  /// Supports creating chat rooms for:
+  /// - Groups of users (custom participant lists)
+  /// - Class-wide communication (linked to a class ID)
+  /// 
+  /// The creator must be authenticated and will automatically
+  /// be included in the participant list.
+  /// 
+  /// @param name Display name for the chat room
+  /// @param type Chat type ('group' or 'class')
+  /// @param participantIds List of user IDs who can access the chat
+  /// @param participants List of participant info objects
+  /// @param classId Optional class ID for class-specific chats
+  /// @return Created ChatRoom instance
+  /// @throws Exception if user is not authenticated
   Future<ChatRoom> createGroupChat({
     required String name,
     required String type,
@@ -88,7 +142,15 @@ class ChatService {
     return ChatRoom.fromFirestore(newDoc);
   }
 
-  // Get user's chat rooms
+  /// Streams all chat rooms for the current user.
+  /// 
+  /// Returns a real-time stream of chat rooms where the
+  /// current user is a participant. Rooms are ordered by
+  /// last message time (most recent first).
+  /// 
+  /// Returns empty stream if user is not authenticated.
+  /// 
+  /// @return Stream of ChatRoom lists, updated in real-time
   Stream<List<ChatRoom>> getUserChatRooms() {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return Stream.value([]);
@@ -103,7 +165,14 @@ class ChatService {
             .toList());
   }
 
-  // Get messages for a chat room
+  /// Streams messages for a specific chat room.
+  /// 
+  /// Returns a real-time stream of messages ordered by
+  /// timestamp (newest first). This stream updates automatically
+  /// when new messages are added or existing messages change.
+  /// 
+  /// @param chatRoomId ID of the chat room to get messages from
+  /// @return Stream of Message lists, updated in real-time
   Stream<List<Message>> getChatMessages(String chatRoomId) {
     return _firestore
         .collection('chat_rooms')
@@ -116,7 +185,20 @@ class ChatService {
             .toList());
   }
 
-  // Send a message
+  /// Sends a new message to a chat room.
+  /// 
+  /// Creates a message with the current user as sender and
+  /// adds it to the chat room's messages subcollection.
+  /// Also updates the chat room's last message metadata.
+  /// 
+  /// The sender's role is hardcoded as 'teacher'
+  /// (TODO: fetch from user profile).
+  /// 
+  /// @param chatRoomId Target chat room ID
+  /// @param content Text content of the message
+  /// @param attachmentUrl Optional URL for file attachments
+  /// @param attachmentType Optional attachment MIME type
+  /// @throws Exception if user is not authenticated
   Future<void> sendMessage({
     required String chatRoomId,
     required String content,
@@ -152,7 +234,16 @@ class ChatService {
     });
   }
 
-  // Mark messages as read
+  /// Marks all unread messages in a chat room as read.
+  /// 
+  /// Updates all messages that:
+  /// - Are marked as unread
+  /// - Were not sent by the current user
+  /// 
+  /// Also resets the unread count for the chat room.
+  /// Uses batch operations for efficiency.
+  /// 
+  /// @param chatRoomId Chat room to mark messages in
   Future<void> markMessagesAsRead(String chatRoomId) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return;
@@ -180,7 +271,13 @@ class ChatService {
     await batch.commit();
   }
 
-  // Delete a message
+  /// Deletes a specific message from a chat room.
+  /// 
+  /// Permanently removes the message from Firestore.
+  /// This operation cannot be undone.
+  /// 
+  /// @param chatRoomId Chat room containing the message
+  /// @param messageId ID of the message to delete
   Future<void> deleteMessage(String chatRoomId, String messageId) async {
     await _firestore
         .collection('chat_rooms')
@@ -190,7 +287,16 @@ class ChatService {
         .delete();
   }
 
-  // Leave a chat room (for group chats)
+  /// Removes the current user from a chat room.
+  /// 
+  /// For group chats only - removes the user from both
+  /// the participantIds array and the participants list.
+  /// The user's role is hardcoded as 'teacher'
+  /// (TODO: fetch from user profile).
+  /// 
+  /// Direct chats should not use this method.
+  /// 
+  /// @param chatRoomId ID of the chat room to leave
   Future<void> leaveChatRoom(String chatRoomId) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return;
@@ -208,7 +314,19 @@ class ChatService {
     });
   }
 
-  // Search messages in a chat room
+  /// Searches for messages within a chat room.
+  /// 
+  /// Performs a case-insensitive search on:
+  /// - Message content
+  /// - Sender names
+  /// 
+  /// Results are sorted by timestamp (newest first).
+  /// Note: This implementation loads all messages into memory,
+  /// which may not scale well for large chat histories.
+  /// 
+  /// @param chatRoomId Chat room to search in
+  /// @param query Search term to match
+  /// @return List of matching messages
   Future<List<Message>> searchMessages(String chatRoomId, String query) async {
     final querySnapshot = await _firestore
         .collection('chat_rooms')

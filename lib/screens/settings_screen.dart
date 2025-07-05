@@ -60,6 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return AdaptiveLayout(
       title: 'Settings',
+      showBackButton: true,
       body: ResponsiveContainer(
         child: ListView(
           padding: const EdgeInsets.all(16),

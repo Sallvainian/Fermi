@@ -1,5 +1,20 @@
+/// Grade model for managing student assessment scores and feedback.
+/// 
+/// This module contains data models for grades and grade statistics,
+/// supporting comprehensive grade management in the education platform.
+library;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// Enumeration representing the lifecycle states of a grade.
+/// 
+/// Each grade progresses through various states:
+/// - [draft]: Grade is being prepared but not finalized
+/// - [pending]: Awaiting grading (submission received)
+/// - [graded]: Grade has been assigned
+/// - [returned]: Grade has been shared with student
+/// - [revised]: Grade has been updated after initial grading
+/// - [notSubmitted]: No submission received (grade placeholder)
 enum GradeStatus {
   draft,
   pending,
@@ -9,24 +24,70 @@ enum GradeStatus {
   notSubmitted
 }
 
+/// Core grade model representing student assessment results.
+/// 
+/// This model encapsulates comprehensive grading data including:
+/// - Score information (points earned, percentage, letter grade)
+/// - Teacher feedback and comments
+/// - Rubric-based scoring details
+/// - Grade lifecycle tracking
+/// - Attachment support for annotated work
+/// 
+/// Grades are linked to specific assignments, students, and classes,
+/// providing a complete assessment record for academic tracking.
 class Grade {
+  /// Unique identifier for the grade record
   final String id;
+  
+  /// ID of the assignment being graded
   final String assignmentId;
+  
+  /// ID of the student receiving the grade
   final String studentId;
+  
+  /// Cached student name for display purposes
   final String studentName;
+  
+  /// ID of the teacher who assigned the grade
   final String teacherId;
+  
+  /// ID of the class this grade belongs to
   final String classId;
+  
+  /// Points earned by the student
   final double pointsEarned;
+  
+  /// Total points possible for the assignment
   final double pointsPossible;
+  
+  /// Calculated percentage score (0-100)
   final double percentage;
+  
+  /// Optional letter grade representation (A, B, C, D, F)
   final String? letterGrade;
+  
+  /// Teacher's feedback and comments on the submission
   final String? feedback;
+  
+  /// Current status in the grading lifecycle
   final GradeStatus status;
+  
+  /// Timestamp when the grade was assigned
   final DateTime? gradedAt;
+  
+  /// Timestamp when the grade was returned to student
   final DateTime? returnedAt;
+  
+  /// Timestamp when the grade record was created
   final DateTime createdAt;
+  
+  /// Timestamp of last modification (mutable for updates)
   DateTime updatedAt;
+  
+  /// Optional rubric scores as key-value pairs (criterion -> score)
   final Map<String, dynamic>? rubricScores;
+  
+  /// URLs to attached files (annotated submissions, feedback docs)
   final List<String>? attachmentUrls;
 
   Grade({
@@ -50,6 +111,16 @@ class Grade {
     this.attachmentUrls,
   });
 
+  /// Factory constructor to create Grade from Firestore document.
+  /// 
+  /// Handles comprehensive data parsing including:
+  /// - Timestamp conversions for date fields
+  /// - Numeric type casting with safe defaults
+  /// - Status enum parsing using enum name matching
+  /// - Complex type handling (maps, lists)
+  /// 
+  /// @param doc Firestore document snapshot containing grade data
+  /// @return Parsed Grade instance
   factory Grade.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return Grade(
@@ -83,6 +154,15 @@ class Grade {
     );
   }
 
+  /// Converts the Grade instance to a Map for Firestore storage.
+  /// 
+  /// Serializes all grade data with special handling for:
+  /// - DateTime fields to Firestore Timestamps
+  /// - Status enum to string using .name property
+  /// - Server timestamps for created/updated fields
+  /// - Preservation of complex types (maps, lists)
+  /// 
+  /// @return Map containing all grade data for Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'assignmentId': assignmentId,
@@ -105,6 +185,18 @@ class Grade {
     };
   }
 
+  /// Creates a copy of the Grade with updated fields.
+  /// 
+  /// Follows immutable data pattern for state management.
+  /// Useful for:
+  /// - Updating scores after revision
+  /// - Adding teacher feedback
+  /// - Changing grade status
+  /// - Attaching rubric scores
+  /// 
+  /// All parameters are optional - only provided fields will be updated.
+  /// 
+  /// @return New Grade instance with updated fields
   Grade copyWith({
     String? id,
     String? assignmentId,
@@ -147,7 +239,17 @@ class Grade {
     );
   }
 
-  // Calculate letter grade based on percentage
+  /// Calculates letter grade based on percentage score.
+  /// 
+  /// Uses standard grading scale:
+  /// - A: 90% and above
+  /// - B: 80-89%
+  /// - C: 70-79%
+  /// - D: 60-69%
+  /// - F: Below 60%
+  /// 
+  /// @param percentage Score as a percentage (0-100)
+  /// @return Letter grade (A, B, C, D, or F)
   static String calculateLetterGrade(double percentage) {
     if (percentage >= 90) return 'A';
     if (percentage >= 80) return 'B';
@@ -156,20 +258,48 @@ class Grade {
     return 'F';
   }
 
-  // Calculate percentage from points
+  /// Calculates percentage score from points earned and possible.
+  /// 
+  /// Handles division by zero safely by returning 0 when
+  /// points possible is 0.
+  /// 
+  /// @param earned Points earned by student
+  /// @param possible Total points possible
+  /// @return Percentage score (0-100)
   static double calculatePercentage(double earned, double possible) {
     if (possible == 0) return 0;
     return (earned / possible) * 100;
   }
 }
 
-// Grade statistics for a class or student
+/// Statistical analysis model for grade collections.
+/// 
+/// This model provides comprehensive statistics for a set of grades,
+/// useful for:
+/// - Class performance analysis
+/// - Student progress tracking
+/// - Grade distribution visualization
+/// - Academic reporting
+/// 
+/// Calculates common statistical measures and provides
+/// letter grade distribution for visual representation.
 class GradeStatistics {
+  /// Average (mean) percentage of all grades
   final double average;
+  
+  /// Median percentage (middle value when sorted)
   final double median;
+  
+  /// Highest percentage score in the set
   final double highest;
+  
+  /// Lowest percentage score in the set
   final double lowest;
+  
+  /// Total number of grades analyzed
   final int totalGrades;
+  
+  /// Distribution of letter grades (letter -> count)
   final Map<String, int> letterGradeDistribution;
 
   GradeStatistics({
@@ -181,6 +311,18 @@ class GradeStatistics {
     required this.letterGradeDistribution,
   });
 
+  /// Factory constructor to calculate statistics from a list of grades.
+  /// 
+  /// Performs comprehensive statistical analysis including:
+  /// - Mean calculation
+  /// - Median determination (handles even/odd counts)
+  /// - Range identification (highest/lowest)
+  /// - Letter grade distribution counting
+  /// 
+  /// Returns zero-valued statistics for empty grade lists.
+  /// 
+  /// @param grades List of Grade objects to analyze
+  /// @return Calculated GradeStatistics instance
   factory GradeStatistics.fromGrades(List<Grade> grades) {
     if (grades.isEmpty) {
       return GradeStatistics(
