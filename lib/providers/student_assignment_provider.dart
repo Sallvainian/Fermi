@@ -7,6 +7,9 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import '../main.dart';
 import '../models/assignment.dart';
 import '../models/submission.dart';
 import '../models/grade.dart';
@@ -66,6 +69,9 @@ class StudentAssignment {
   /// Points earned for this assignment.
   double? get earnedPoints => grade?.pointsEarned;
   
+  /// Percentage score for this assignment.
+  double? get percentage => grade?.percentage;
+  
   /// Letter grade representation.
   String? get letterGrade => grade?.letterGrade ?? 
     (grade != null ? Grade.calculateLetterGrade(grade!.percentage) : null);
@@ -122,8 +128,6 @@ class StudentAssignmentProvider with ChangeNotifier {
   /// Current student identifier.
   String? _currentStudentId;
   
-  /// Optional class filter.
-  String? _currentClassId;
   
   // Stream subscriptions
   
@@ -133,6 +137,7 @@ class StudentAssignmentProvider with ChangeNotifier {
   /// Stream controller for broadcasting combined data.
   final StreamController<List<StudentAssignment>> _studentAssignmentsController = 
       StreamController<List<StudentAssignment>>.broadcast();
+  
   
   // Getters
   
@@ -146,7 +151,25 @@ class StudentAssignmentProvider with ChangeNotifier {
   String get error => _error;
   
   /// Stream of assignment updates.
-  Stream<List<StudentAssignment>> get assignmentsStream => _studentAssignmentsController.stream;
+  Stream<List<StudentAssignment>> get assignmentsStream {
+    // Create a new stream that emits current data immediately
+    return Stream<List<StudentAssignment>>.multi((controller) {
+      // Emit current assignments immediately
+      controller.add(_assignments);
+      
+      // Then listen to future updates
+      final subscription = _studentAssignmentsController.stream.listen(
+        controller.add,
+        onError: controller.addError,
+        onDone: controller.close,
+      );
+      
+      // Clean up subscription when done
+      controller.onCancel = () {
+        subscription.cancel();
+      };
+    });
+  }
   
   // Filtered lists
   
@@ -175,7 +198,16 @@ class StudentAssignmentProvider with ChangeNotifier {
   /// @param classId Optional class filter
   Future<void> initializeForStudent(String studentId, {String? classId}) async {
     _currentStudentId = studentId;
-    _currentClassId = classId;
+    
+    // If Firebase is not initialized, emit empty data immediately
+    if (!isFirebaseInitialized) {
+      _assignments = [];
+      _isLoading = false;
+      notifyListeners();
+      _studentAssignmentsController.add([]);
+      return;
+    }
+    
     await setupAssignmentsStream();
   }
 
@@ -199,22 +231,33 @@ class StudentAssignmentProvider with ChangeNotifier {
       // Cancel existing subscription if any
       await _assignmentsSubscription?.cancel();
 
-      // Get all classes for the student if no specific class is provided
+      // Get student document to get enrolled classes
+      debugPrint('[StudentAssignmentProvider] Getting student document for userId: $_currentStudentId');
+      final student = await _studentRepository.getStudentByUserId(_currentStudentId!);
+      debugPrint('[StudentAssignmentProvider] Student found: ${student != null}');
+      
       List<String> classIds = [];
-      if (_currentClassId != null) {
-        classIds = [_currentClassId!];
+      if (student != null) {
+        debugPrint('[StudentAssignmentProvider] Student ID: ${student.id}');
+        debugPrint('[StudentAssignmentProvider] Student name: ${student.displayName}');
+        classIds = student.classIds;
+        debugPrint('[StudentAssignmentProvider] Student classIds: $classIds');
       } else {
-        // Get student document to get enrolled classes
-        final student = await _studentRepository.getStudentByUserId(_currentStudentId!);
-        if (student != null) {
-          classIds = student.classIds;
-        }
+        debugPrint('[StudentAssignmentProvider] No student document found for userId: $_currentStudentId');
+        // Student document doesn't exist yet, emit empty list
+        _assignments = [];
+        _isLoading = false;
+        notifyListeners();
+        _studentAssignmentsController.add([]);
+        return;
       }
 
       if (classIds.isEmpty) {
         _assignments = [];
         _isLoading = false;
         notifyListeners();
+        // Emit empty list to stream so UI updates
+        _studentAssignmentsController.add([]);
         return;
       }
 
@@ -231,6 +274,8 @@ class StudentAssignmentProvider with ChangeNotifier {
           _error = 'Error loading assignments: $error';
           _isLoading = false;
           notifyListeners();
+          // Also emit error to the stream controller
+          _studentAssignmentsController.addError(error);
         },
       );
     } catch (e) {
@@ -277,43 +322,61 @@ class StudentAssignmentProvider with ChangeNotifier {
     // Subscribe to assignments stream
     final assignmentsSubscription = _assignmentRepository
         .getClassAssignmentsForMultipleClasses(classIds)
-        .listen((assignments) {
-          final now = DateTime.now();
-          latestAssignments = assignments
-              .where((assignment) {
-                // Only show published assignments that are active or completed
-                return assignment.isPublished &&
-                    (assignment.status == AssignmentStatus.active ||
-                     assignment.status == AssignmentStatus.completed) &&
-                    (assignment.publishAt == null || assignment.publishAt!.isBefore(now));
-              })
-              .toList();
-          combineAndEmit();
-        });
+        .listen(
+          (assignments) {
+            final now = DateTime.now();
+            latestAssignments = assignments
+                .where((assignment) {
+                  // Only show published assignments that are active or completed
+                  return assignment.isPublished &&
+                      (assignment.status == AssignmentStatus.active ||
+                       assignment.status == AssignmentStatus.completed) &&
+                      (assignment.publishAt == null || assignment.publishAt!.isBefore(now));
+                })
+                .toList();
+            combineAndEmit();
+          },
+          onError: (error) {
+            // Forward error to the controller
+            controller.addError(error);
+          },
+        );
 
     // Subscribe to submissions stream
     final submissionsSubscription = _submissionRepository
         .getStudentSubmissions(_currentStudentId!)
-        .listen((submissions) {
-          final submissionMap = <String, Submission>{};
-          for (final submission in submissions) {
-            submissionMap[submission.assignmentId] = submission;
-          }
-          latestSubmissions = submissionMap;
-          combineAndEmit();
-        });
+        .listen(
+          (submissions) {
+            final submissionMap = <String, Submission>{};
+            for (final submission in submissions) {
+              submissionMap[submission.assignmentId] = submission;
+            }
+            latestSubmissions = submissionMap;
+            combineAndEmit();
+          },
+          onError: (error) {
+            // Forward error to the controller
+            controller.addError(error);
+          },
+        );
 
     // Subscribe to grades stream
     final gradesSubscription = _gradeRepository
         .getStudentGrades(_currentStudentId!)
-        .listen((grades) {
-          final gradeMap = <String, Grade>{};
-          for (final grade in grades) {
-            gradeMap[grade.assignmentId] = grade;
-          }
-          latestGrades = gradeMap;
-          combineAndEmit();
-        });
+        .listen(
+          (grades) {
+            final gradeMap = <String, Grade>{};
+            for (final grade in grades) {
+              gradeMap[grade.assignmentId] = grade;
+            }
+            latestGrades = gradeMap;
+            combineAndEmit();
+          },
+          onError: (error) {
+            // Forward error to the controller
+            controller.addError(error);
+          },
+        );
 
     // Clean up subscriptions when the controller is closed
     controller.onCancel = () {
@@ -328,31 +391,53 @@ class StudentAssignmentProvider with ChangeNotifier {
   /// Submits an assignment for grading.
   /// 
   /// Creates a submission record and updates local state immediately.
-  /// Currently supports text content submissions. File attachments
-  /// are parameters for future implementation.
+  /// Supports both text content and file uploads. Files are uploaded
+  /// to Firebase Storage before creating the submission record.
   /// 
   /// @param assignmentId Assignment to submit
   /// @param studentName Student's display name
   /// @param textContent Text-based submission content
-  /// @param fileUrl Future: attached file URL
-  /// @param fileName Future: attached file name
+  /// @param file Optional file attachment
   /// @return true if submission successful
   Future<bool> submitAssignment({
     required String assignmentId,
     required String studentName,
     String? textContent,
-    String? fileUrl,
-    String? fileName,
+    PlatformFile? file,
   }) async {
     if (_currentStudentId == null) return false;
 
     try {
-      final submission = await _submissionRepository.submitTextContent(
-        assignmentId: assignmentId,
-        studentId: _currentStudentId!,
-        studentName: studentName,
-        textContent: textContent ?? '',
-      );
+      Submission submission;
+      
+      // If file is provided, upload it first
+      if (file != null && file.bytes != null) {
+        // Upload file to Firebase Storage
+        final storageRef = FirebaseStorage.instance.ref();
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+        final fileRef = storageRef.child('submissions/$assignmentId/$_currentStudentId/$fileName');
+        
+        // Upload the file
+        final uploadTask = await fileRef.putData(file.bytes!);
+        final fileUrl = await uploadTask.ref.getDownloadURL();
+        
+        // Submit with file
+        submission = await _submissionRepository.submitFile(
+          assignmentId: assignmentId,
+          studentId: _currentStudentId!,
+          studentName: studentName,
+          fileUrl: fileUrl,
+          fileName: file.name,
+        );
+      } else {
+        // Submit with text content only
+        submission = await _submissionRepository.submitTextContent(
+          assignmentId: assignmentId,
+          studentId: _currentStudentId!,
+          studentName: studentName,
+          textContent: textContent ?? '',
+        );
+      }
 
       // Update local state
       final index = _assignments.indexWhere((a) => a.assignment.id == assignmentId);
@@ -371,6 +456,21 @@ class StudentAssignmentProvider with ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Loads assignment details if not already loaded.
+  /// 
+  /// Ensures assignment data is available for submission screen.
+  /// This is useful when navigating directly to submission screen.
+  /// 
+  /// @param assignmentId Assignment to load
+  Future<void> loadAssignmentDetails(String assignmentId) async {
+    // Check if assignment is already loaded
+    final existing = getAssignmentById(assignmentId);
+    if (existing != null) return;
+    
+    // If not loaded, trigger a refresh
+    await refresh();
   }
 
   /// Retrieves a specific assignment by ID.

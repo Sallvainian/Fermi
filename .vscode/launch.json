@@ -33,12 +33,6 @@
             "deviceId": "chrome",
             "args": ["--web-port", "3000"]
         },
-        {
-            "name": "Debug Android",
-            "request": "launch",
-            "type": "dart",
-            "program": "lib/main.dart",
-            "deviceId": "android"
-        }
+        
     ]
 }

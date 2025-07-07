@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import '../../main.dart';
 import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/common/error_aware_stream_builder.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/student_assignment_provider.dart';
 import '../../models/assignment.dart';
@@ -18,6 +21,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
   final _searchController = TextEditingController();
   String _selectedSubject = 'All Subjects';
   String _sortBy = 'Due Date';
+  Future<void>? _initializationFuture;
   
   @override
   void initState() {
@@ -27,10 +31,11 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
     // Initialize the provider with student data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = context.read<AuthProvider>();
-      final studentProvider = context.read<StudentAssignmentProvider>();
-      
       if (authProvider.userModel != null) {
-        studentProvider.initializeForStudent(authProvider.userModel!.uid);
+        _initializationFuture = context
+            .read<StudentAssignmentProvider>()
+            .initializeForStudent(authProvider.userModel!.uid);
+        setState(() {});
       }
     });
   }
@@ -45,7 +50,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final studentProvider = context.read<StudentAssignmentProvider>();
+    final studentProvider = context.watch<StudentAssignmentProvider>();
 
     return AdaptiveLayout(
       title: 'Assignments',
@@ -59,179 +64,189 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
           Tab(text: 'All'),
         ],
       ),
-      body: StreamBuilder<List<StudentAssignment>>(
-        stream: studentProvider.assignmentsStream,
+      body: FutureBuilder<void>(
+        future: _initializationFuture,
         builder: (context, snapshot) {
-          // Handle connection state
-          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          
-          // Handle error state
+
           if (snapshot.hasError) {
+            return Center(
+              child: Text('Error initializing assignments: ${snapshot.error}'),
+            );
+          }
+
+          // Check if Firebase is initialized
+          if (!isFirebaseInitialized) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.error_outline,
+                    Icons.cloud_off,
                     size: 64,
                     color: theme.colorScheme.error,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Error loading assignments',
-                    style: theme.textTheme.headlineSmall,
+                    'Firebase not available',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    snapshot.error.toString(),
-                    style: theme.textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton.icon(
-                    onPressed: () => studentProvider.refresh(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+                    'Running in offline mode',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
             );
           }
           
-          // Use data from stream or provider
-          final assignments = snapshot.data ?? studentProvider.assignments;
-          
-          return Column(
-        children: [
-          // Search and Filters
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search assignments...',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _searchController.clear();
-                              });
-                            },
-                          )
-                        : null,
-                    border: const OutlineInputBorder(),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+          return ErrorAwareStreamBuilder<List<StudentAssignment>>(
+            stream: studentProvider.assignmentsStream,
+            onRetry: () => studentProvider.refresh(),
+            // Don't check if data is empty - let tabs handle their own empty states
+            builder: (context, assignments) {
+              return Column(
+                children: [
+                  // Search and Filters
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        // Search Bar
+                        TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Search assignments...',
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      setState(() {
+                                        _searchController.clear();
+                                      });
+                                    },
+                                  )
+                                : null,
+                            border: const OutlineInputBorder(),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                          ),
+                          onChanged: (value) => setState(() {}),
+                        ),
+                        const SizedBox(height: 12),
+                        // Filter Row
+                        Row(
+                          children: [
+                            // Subject Filter
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: theme.colorScheme.outline),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: _selectedSubject,
+                                    isExpanded: true,
+                                    items: _getSubjectsList(assignments).map((subject) {
+                                      return DropdownMenuItem(
+                                        value: subject,
+                                        child: Text(subject),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _selectedSubject = value!;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Sort Dropdown
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: theme.colorScheme.outline),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: _sortBy,
+                                  items: [
+                                    'Due Date',
+                                    'Subject',
+                                    'Priority',
+                                    'Points',
+                                  ].map((sort) {
+                                    return DropdownMenuItem(
+                                      value: sort,
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.sort, size: 18),
+                                          const SizedBox(width: 8),
+                                          Text(sort),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _sortBy = value!;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  onChanged: (value) => setState(() {}),
-                ),
-                const SizedBox(height: 12),
-                // Filter Row
-                Row(
-                  children: [
-                    // Subject Filter
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: theme.colorScheme.outline),
-                          borderRadius: BorderRadius.circular(8),
+                  // Assignments List
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildAssignmentsList(
+                          _filterAssignments(_getPendingAssignments(assignments)),
+                          emptyMessage: 'No pending assignments! 🎉',
+                          emptyIcon: Icons.celebration_outlined,
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedSubject,
-                            isExpanded: true,
-                            items: _getSubjectsList(assignments).map((subject) {
-                              return DropdownMenuItem(
-                                value: subject,
-                                child: Text(subject),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedSubject = value!;
-                              });
-                            },
-                          ),
+                        _buildAssignmentsList(
+                          _filterAssignments(_getSubmittedAssignments(assignments)),
+                          emptyMessage: 'No assignments waiting for grades',
+                          emptyIcon: Icons.hourglass_empty,
                         ),
-                      ),
+                        _buildAssignmentsList(
+                          _filterAssignments(_getGradedAssignments(assignments)),
+                          emptyMessage: 'No graded assignments yet',
+                          emptyIcon: Icons.grade_outlined,
+                        ),
+                        _buildAssignmentsList(
+                          _filterAssignments(assignments),
+                          emptyMessage: 'No assignments yet',
+                          emptyIcon: Icons.assignment_outlined,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    // Sort Dropdown
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.colorScheme.outline),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _sortBy,
-                          items: [
-                            'Due Date',
-                            'Subject',
-                            'Priority',
-                            'Points',
-                          ].map((sort) {
-                            return DropdownMenuItem(
-                              value: sort,
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.sort, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text(sort),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _sortBy = value!;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Assignments List
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildAssignmentsList(
-                  _filterAssignments(_getPendingAssignments(assignments)),
-                  emptyMessage: 'No pending assignments',
-                ),
-                _buildAssignmentsList(
-                  _filterAssignments(_getSubmittedAssignments(assignments)),
-                  emptyMessage: 'No submitted assignments',
-                ),
-                _buildAssignmentsList(
-                  _filterAssignments(_getGradedAssignments(assignments)),
-                  emptyMessage: 'No graded assignments',
-                ),
-                _buildAssignmentsList(
-                  _filterAssignments(assignments),
-                  emptyMessage: 'No assignments',
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
+                  ),
+                ],
+              );
+            },
+          );
         },
       ),
     );
@@ -295,22 +310,27 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
     return filtered;
   }
 
-  Widget _buildAssignmentsList(List<StudentAssignment> assignments, {required String emptyMessage}) {
+  Widget _buildAssignmentsList(
+    List<StudentAssignment> assignments, {
+    required String emptyMessage,
+    IconData emptyIcon = Icons.assignment_outlined,
+  }) {
     if (assignments.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.assignment_outlined,
+              emptyIcon,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+              color: Theme.of(context).colorScheme.primary.withAlpha(102),
             ),
             const SizedBox(height: 16),
             Text(
               emptyMessage,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -394,7 +414,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: priorityColor.withValues(alpha: 0.1),
+                      color: priorityColor.withAlpha(26),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -417,7 +437,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
+                      color: statusColor.withAlpha(26),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -493,10 +513,18 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
                   if (!studentAssignment.isSubmitted && !studentAssignment.isOverdue)
                     TextButton.icon(
                       onPressed: () {
-                        _showSubmissionDialog(studentAssignment);
+                        context.push('/student/assignments/${studentAssignment.assignment.id}/submit');
                       },
                       icon: const Icon(Icons.upload, size: 18),
                       label: const Text('Submit'),
+                    ),
+                  if (studentAssignment.isSubmitted)
+                    TextButton.icon(
+                      onPressed: () {
+                        context.push('/student/assignments/${studentAssignment.assignment.id}/submit');
+                      },
+                      icon: const Icon(Icons.description, size: 18),
+                      label: const Text('View Submission'),
                     ),
                   if (studentAssignment.isGraded && studentAssignment.feedback != null)
                     TextButton.icon(
@@ -530,7 +558,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -662,87 +690,6 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
     );
   }
 
-  void _showSubmissionDialog(StudentAssignment studentAssignment) {
-    final textController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Submit "${studentAssignment.assignment.title}"'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your submission below:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: textController,
-              decoration: const InputDecoration(
-                labelText: 'Submission Content',
-                hintText: 'Type your answer or paste your work here...',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-              ),
-              maxLines: 5,
-              minLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.icon(
-            onPressed: () async {
-              if (textController.text.trim().isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please enter your submission'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-              
-              final authProvider = context.read<AuthProvider>();
-              final studentProvider = context.read<StudentAssignmentProvider>();
-              final navigator = Navigator.of(context);
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              
-              final success = await studentProvider.submitAssignment(
-                assignmentId: studentAssignment.assignment.id,
-                studentName: authProvider.userModel?.displayName ?? 'Student',
-                textContent: textController.text.trim(),
-              );
-              
-              if (mounted) {
-                navigator.pop();
-                
-                if (success) {
-                  scaffoldMessenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Assignment submitted successfully'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                } else {
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to submit: ${studentProvider.error}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            icon: const Icon(Icons.upload),
-            label: const Text('Submit'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showFeedbackDialog(StudentAssignment studentAssignment) {
     showDialog(
       context: context,
@@ -817,7 +764,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(77),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -958,7 +905,7 @@ class AssignmentDetailSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

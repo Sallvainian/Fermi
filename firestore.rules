@@ -1,6 +1,17 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function to check if user is THE teacher (you)
+    function isTheTeacher() {
+      return request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+    
+    // Helper function to check if user is a student
+    function isStudent() {
+      return request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
     // Users collection
     match /users/{userId} {
       // Any authenticated user can read user profiles (for chat user selection)
@@ -14,18 +25,23 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Classes - authenticated users can read, only creator can write
+    // Classes - students can read their classes, only teacher can write
     match /classes/{classId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null 
-        && resource.data.teacherId == request.auth.uid;
+      // Students can read classes they're enrolled in, teacher can read all
+      allow read: if request.auth != null && 
+        (isTheTeacher() || 
+         (isStudent() && request.auth.uid in resource.data.studentIds));
+      
+      // Only THE teacher can create, update, or delete classes
+      allow create: if isTheTeacher();
+      allow update, delete: if isTheTeacher();
       
       // Nested collections in classes
       match /{document=**} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null 
-          && get(/databases/$(database)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
+        allow read: if request.auth != null && 
+          (isTheTeacher() || 
+           (isStudent() && request.auth.uid in get(/databases/$(database)/documents/classes/$(classId)).data.studentIds));
+        allow write: if isTheTeacher();
       }
     }
     
@@ -69,44 +85,61 @@ service cloud.firestore {
       }
     }
     
-    // Assignments - authenticated users can read, only teacher can write
+    // Assignments - students can read their class assignments, only teacher can write
     match /assignments/{assignmentId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null 
-        && resource.data.teacherId == request.auth.uid;
+      // Students can read assignments for classes they're enrolled in
+      allow read: if request.auth != null && 
+        (isTheTeacher() || 
+         (isStudent() && request.auth.uid in get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.studentIds));
+      
+      // Only THE teacher can create, update, or delete assignments
+      allow create: if isTheTeacher();
+      allow update, delete: if isTheTeacher();
     }
     
-    // Grades - students can read their own, teachers can read/write all
+    // Grades - students can read their own, only THE teacher can write
     match /grades/{gradeId} {
-      allow read: if request.auth != null 
-        && (request.auth.uid == resource.data.studentId 
-          || request.auth.uid == resource.data.teacherId);
-      allow create, update: if request.auth != null 
-        && request.auth.uid == request.resource.data.teacherId;
-      allow delete: if request.auth != null 
-        && request.auth.uid == resource.data.teacherId;
+      // Students can only read their own grades, teacher can read all
+      allow read: if request.auth != null && 
+        (isTheTeacher() || 
+         (isStudent() && request.auth.uid == resource.data.studentId));
+      
+      // Only THE teacher can create, update, or delete grades
+      allow create, update, delete: if isTheTeacher();
     }
     
-    // Submissions - students can create/update their own, teachers can read all
+    // Collection group queries for grades (needed for analytics)
+    match /{path=**}/grades/{gradeId} {
+      allow read: if request.auth != null && isTheTeacher();
+    }
+    
+    // Submissions - students can read/write their own, teacher can read all
     match /submissions/{submissionId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.studentId;
-      allow update: if request.auth != null 
-        && request.auth.uid == resource.data.studentId 
-        && resource.data.submittedAt == null; // Can't update after submission
+      // Students can read their own submissions, teacher can read all
+      allow read: if request.auth != null && 
+        (isTheTeacher() || 
+         (isStudent() && request.auth.uid == resource.data.studentId));
+      
+      // Students can create their own submissions
+      allow create: if isStudent() && 
+        request.auth.uid == request.resource.data.studentId;
+      
+      // Students can update their own submissions only if not yet submitted
+      allow update: if isStudent() && 
+        request.auth.uid == resource.data.studentId && 
+        resource.data.submittedAt == null;
+        
+      // Only teacher can delete submissions
+      allow delete: if isTheTeacher();
     }
     
-    // Announcements - any authenticated user can read, only creator can write
+    // Announcements - students can read, only teacher can write
     match /announcements/{announcementId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null 
-        && resource.data.authorId == request.auth.uid;
+      allow create, update, delete: if isTheTeacher();
     }
     
-    // Games - any authenticated user can read, only creator can write
+    // Games - any authenticated user can read and create, only creator can update/delete
     match /games/{gameId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
@@ -136,11 +169,10 @@ service cloud.firestore {
         && request.auth.uid == request.resource.data.message.senderId; // Can't change sender
     }
     
-    // Discussion boards - authenticated users can read, only teachers can create
+    // Discussion boards - teacher creates boards, all users can read
     match /discussion_boards/{boardId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null 
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+      allow create: if isTheTeacher();
       allow update: if request.auth != null 
         && resource.data.createdBy == request.auth.uid;
       allow delete: if false; // Don't allow deletion
@@ -166,7 +198,7 @@ service cloud.firestore {
       }
     }
     
-    // Calendar events - users can read/write their own events and events they participate in
+    // Calendar events - users can create/manage their own events, view if participants
     match /calendar_events/{eventId} {
       allow read: if request.auth != null 
         && (resource.data.createdBy == request.auth.uid 
@@ -177,6 +209,28 @@ service cloud.firestore {
         && resource.data.createdBy == request.auth.uid;
       allow delete: if request.auth != null 
         && resource.data.createdBy == request.auth.uid;
+    }
+    
+    // Students collection - for student-specific data
+    match /students/{studentId} {
+      // Students can read their own data (by userId field), teacher can read all
+      allow read: if request.auth != null && 
+        (isTheTeacher() || 
+         (isStudent() && (request.auth.uid == studentId || 
+          request.auth.uid == resource.data.userId)));
+      
+      // Students can update their own profile data
+      allow update: if isStudent() && 
+        (request.auth.uid == studentId || request.auth.uid == resource.data.userId);
+      
+      // Only teacher can create or delete student records
+      allow create, delete: if isTheTeacher();
+    }
+    
+    // Teachers collection - for teacher-specific data
+    match /teachers/{teacherId} {
+      // Only the teacher can read/write their own data
+      allow read, write: if isTheTeacher() && request.auth.uid == teacherId;
     }
   }
 }

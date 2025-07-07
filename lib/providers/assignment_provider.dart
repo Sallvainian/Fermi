@@ -446,6 +446,91 @@ class AssignmentProvider with ChangeNotifier {
     }
   }
   
+  /// Gets a single assignment by ID.
+  /// 
+  /// Retrieves assignment from repository or cache.
+  /// 
+  /// @param assignmentId Assignment to retrieve
+  /// @return Assignment object or null if not found
+  Future<Assignment?> getAssignmentById(String assignmentId) async {
+    try {
+      // First check if it's in local cache
+      final cachedAssignment = _teacherAssignments.firstWhere(
+        (a) => a.id == assignmentId,
+        orElse: () => Assignment(
+          id: '',
+          title: '',
+          description: '',
+          instructions: '',
+          type: AssignmentType.other,
+          status: AssignmentStatus.draft,
+          category: '',
+          classId: '',
+          teacherId: '',
+          teacherName: '',
+          totalPoints: 0,
+          maxPoints: 0,
+          dueDate: DateTime.now(),
+          isPublished: false,
+          allowLateSubmissions: false,
+          latePenaltyPercentage: 0,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
+      
+      if (cachedAssignment.id.isNotEmpty) {
+        return cachedAssignment;
+      }
+      
+      // Otherwise fetch from repository
+      return await _assignmentRepository.getAssignment(assignmentId);
+    } catch (e) {
+      _setError(e.toString());
+      return null;
+    }
+  }
+  
+  /// Updates assignment status (active, completed, archived).
+  /// 
+  /// Changes assignment workflow status and updates local cache.
+  /// 
+  /// @param assignmentId Assignment to update
+  /// @param status New status to apply
+  /// @return true if update successful
+  Future<bool> updateAssignmentStatus(String assignmentId, AssignmentStatus status) async {
+    _setLoading(true);
+    try {
+      // Get the current assignment
+      final assignment = await _assignmentRepository.getAssignment(assignmentId);
+      if (assignment == null) {
+        throw Exception('Assignment not found');
+      }
+      
+      // Update status
+      final updatedAssignment = assignment.copyWith(
+        status: status,
+        updatedAt: DateTime.now(),
+      );
+      
+      await _assignmentRepository.updateAssignment(assignmentId, updatedAssignment);
+      
+      // Update local list
+      final index = _teacherAssignments.indexWhere((a) => a.id == assignmentId);
+      if (index != -1) {
+        _teacherAssignments[index] = updatedAssignment;
+        notifyListeners();
+      }
+      
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setError(e.toString());
+      _setLoading(false);
+      return false;
+    }
+  }
+
   /// Archives an assignment to hide from active lists.
   /// 
   /// Archived assignments:

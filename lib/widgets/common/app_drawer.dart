@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/user_model.dart';
+import 'favorites_nav_bar.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -42,7 +43,9 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    user?.displayName ?? 'User',
+                    (user?.displayName?.isNotEmpty == true) 
+                        ? user!.displayName 
+                        : 'User',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -177,6 +180,26 @@ class AppDrawer extends StatelessWidget {
 
                   const Divider(height: 32),
 
+                  // Customize Navigation
+                  ListTile(
+                    leading: const Icon(Icons.tune),
+                    title: const Text('Customize Navigation'),
+                    subtitle: const Text('Choose your favorite shortcuts'),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    onTap: () {
+                      Navigator.of(context).pop(); // Close drawer
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => const NavigationCustomizationSheet(),
+                      );
+                    },
+                  ),
+
                   _buildNavItem(
                     context,
                     icon: Icons.settings_outlined,
@@ -190,6 +213,15 @@ class AppDrawer extends StatelessWidget {
                     selectedIcon: Icons.help,
                     title: 'Help & Support',
                     route: '/help',
+                  ),
+                  
+                  // Temporary debug option
+                  _buildNavItem(
+                    context,
+                    icon: Icons.bug_report_outlined,
+                    selectedIcon: Icons.bug_report,
+                    title: 'Update Display Name',
+                    route: '/debug/update-name',
                   ),
                 ],
               ),

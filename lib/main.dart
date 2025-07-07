@@ -12,6 +12,7 @@
 /// - Responsive design for mobile and tablet devices
 library;
 
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -30,6 +31,8 @@ import 'providers/theme_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/discussion_provider.dart';
 import 'providers/calendar_provider.dart';
+import 'providers/grade_analytics_provider.dart';
+import 'providers/navigation_provider.dart';
 import 'models/user_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
@@ -38,14 +41,19 @@ import 'screens/auth/forgot_password_screen.dart';
 import 'screens/teacher/teacher_dashboard_screen.dart';
 import 'screens/teacher/classes/classes_screen.dart';
 import 'screens/teacher/gradebook/gradebook_screen.dart';
+import 'screens/teacher/grade_analytics_screen.dart';
 import 'screens/teacher/assignments_screen.dart';
 import 'screens/teacher/assignments/assignment_create_screen.dart';
+import 'screens/teacher/assignments/assignment_detail_screen.dart';
+import 'screens/teacher/assignments/assignment_edit_screen.dart';
 import 'screens/student/student_dashboard_screen.dart';
 import 'screens/student/courses_screen.dart';
 import 'screens/student/grades_screen.dart';
 import 'screens/student/assignments_screen.dart';
+import 'screens/student/assignment_submission_screen.dart';
 import 'screens/crashlytics_test_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/debug/update_display_name_screen.dart';
 import 'screens/chat/chat_list_screen.dart';
 import 'screens/chat/chat_detail_screen.dart';
 import 'screens/chat/user_selection_screen.dart';
@@ -78,55 +86,67 @@ bool get isFirebaseInitialized => _firebaseInitialized;
 /// 
 /// Handles initialization failures gracefully, allowing the app to run
 /// even if Firebase initialization fails (with limited functionality).
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  // Run app in a zone to catch all uncaught errors
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+      // Load environment variables
+      await dotenv.load(fileName: ".env");
 
-  // Initialize Firebase properly
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    _firebaseInitialized = true;
-    
-    // Enable Firestore offline persistence
-    if (!kIsWeb) {
-      FirebaseFirestore.instance.settings = const Settings(
-        persistenceEnabled: true,
-        cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-      );
-    }
-    
-    // Initialize service locator BEFORE running the app
-    await setupServiceLocator();
-    
-    // Initialize Crashlytics
-    if (!kIsWeb) {
-      // Pass all uncaught "fatal" errors from the framework to Crashlytics
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+      // Initialize Firebase properly
+      try {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        _firebaseInitialized = true;
+        
+        // Enable Firestore offline persistence
+        if (!kIsWeb) {
+          FirebaseFirestore.instance.settings = const Settings(
+            persistenceEnabled: true,
+            cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+          );
+        }
+        
+        // Initialize service locator BEFORE running the app
+        await setupServiceLocator();
+        
+        // Initialize Crashlytics
+        if (!kIsWeb) {
+          // Pass all uncaught "fatal" errors from the framework to Crashlytics
+          FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+          
+          // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+          PlatformDispatcher.instance.onError = (error, stack) {
+            FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+            return true;
+          };
+        }
+      } catch (e) {
+        _firebaseInitialized = false;
+        // Firebase initialization failed - app will handle gracefully
+        LoggerService.error('Firebase initialization error', tag: 'Main', error: e);
+        
+        // Still need to setup service locator even if Firebase fails
+        try {
+          await setupServiceLocator();
+        } catch (setupError) {
+          LoggerService.error('Service locator setup error', tag: 'Main', error: setupError);
+        }
+      }
       
-      // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-    }
-  } catch (e) {
-    _firebaseInitialized = false;
-    // Firebase initialization failed - app will handle gracefully
-    LoggerService.error('Firebase initialization error', tag: 'Main', error: e);
-    
-    // Still need to setup service locator even if Firebase fails
-    try {
-      await setupServiceLocator();
-    } catch (setupError) {
-      LoggerService.error('Service locator setup error', tag: 'Main', error: setupError);
-    }
-  }
-
-  runApp(const TeacherDashboardApp());
+      runApp(const TeacherDashboardApp());
+    },
+    (error, stack) {
+      // Log error but don't crash the app
+      LoggerService.error('Uncaught error in app', tag: 'Main', error: error);
+      if (!kIsWeb && _firebaseInitialized) {
+        FirebaseCrashlytics.instance.recordError(error, stack);
+      }
+    },
+  );
 }
 
 /// Root widget of the Teacher Dashboard application.
@@ -158,7 +178,8 @@ class TeacherDashboardApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => DiscussionProvider()),
         ChangeNotifierProvider(create: (_) => CalendarProvider()),
-        // Gradebook provider will be added here
+        ChangeNotifierProvider(create: (_) => GradeAnalyticsProvider()),
+        ChangeNotifierProvider(create: (_) => NavigationProvider()),
       ],
       child: Builder(
         builder: (context) {
@@ -274,6 +295,13 @@ class TeacherDashboardApp extends StatelessWidget {
           builder: (context, state) => const GradebookScreen(),
         ),
         GoRoute(
+          path: '/teacher/analytics',
+          builder: (context, state) {
+            final classId = state.uri.queryParameters['classId'];
+            return GradeAnalyticsScreen(classId: classId);
+          },
+        ),
+        GoRoute(
           path: '/teacher/assignments',
           builder: (context, state) => const TeacherAssignmentsScreen(),
           routes: [
@@ -285,8 +313,17 @@ class TeacherDashboardApp extends StatelessWidget {
               path: ':assignmentId',
               builder: (context, state) {
                 final assignmentId = state.pathParameters['assignmentId']!;
-                return PlaceholderScreen(title: 'Assignment: $assignmentId');
+                return AssignmentDetailScreen(assignmentId: assignmentId);
               },
+              routes: [
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) {
+                    final assignmentId = state.pathParameters['assignmentId']!;
+                    return AssignmentEditScreen(assignmentId: assignmentId);
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -294,6 +331,12 @@ class TeacherDashboardApp extends StatelessWidget {
           path: '/teacher/students',
           builder: (context, state) =>
               const PlaceholderScreen(title: 'Students'),
+        ),
+        
+        // Debug route
+        GoRoute(
+          path: '/debug/update-name',
+          builder: (context, state) => const UpdateDisplayNameScreen(),
         ),
 
         // Student Routes
@@ -304,6 +347,15 @@ class TeacherDashboardApp extends StatelessWidget {
         GoRoute(
           path: '/student/assignments',
           builder: (context, state) => const StudentAssignmentsScreen(),
+          routes: [
+            GoRoute(
+              path: ':assignmentId/submit',
+              builder: (context, state) {
+                final assignmentId = state.pathParameters['assignmentId']!;
+                return AssignmentSubmissionScreen(assignmentId: assignmentId);
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: '/student/grades',

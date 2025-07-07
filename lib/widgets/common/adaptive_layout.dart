@@ -7,10 +7,15 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'app_drawer.dart';
 import 'bottom_nav_bar.dart';
+import 'favorites_nav_bar.dart';
 import 'responsive_layout.dart';
 import '../../theme/app_spacing.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/navigation_provider.dart';
 
 /// Adaptive layout wrapper that switches between mobile and desktop layouts.
 /// 
@@ -118,6 +123,16 @@ class AdaptiveLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Set the role in NavigationProvider based on current user
+    final authProvider = context.watch<AuthProvider>();
+    final navigationProvider = context.read<NavigationProvider>();
+    
+    // Update navigation role when user changes
+    if (authProvider.userModel != null) {
+      final role = authProvider.userModel!.role.toString().split('.').last.toLowerCase();
+      navigationProvider.setRole(role);
+    }
+    
     return ResponsiveLayoutBuilder(
       builder: (context, screenSize) {
         if (screenSize == ScreenSize.mobile) {
@@ -128,7 +143,15 @@ class AdaptiveLayout extends StatelessWidget {
               leading: showBackButton
                   ? IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+                      onPressed: onBackPressed ?? () {
+                        // Use GoRouter instead of Navigator for better navigation control
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          // If we can't pop, go to the dashboard
+                          context.go('/dashboard');
+                        }
+                      },
                     )
                   : null,
               title: Text(title),
@@ -143,7 +166,7 @@ class AdaptiveLayout extends StatelessWidget {
               child: body,
             ),
             // Bottom navigation for mobile-first navigation pattern
-            bottomNavigationBar: showBottomNavigation ? const BottomNavBar() : null,
+            bottomNavigationBar: showBottomNavigation ? const FavoritesNavBar() : null,
             floatingActionButton: floatingActionButton,
           );
         } else {

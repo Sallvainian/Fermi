@@ -430,15 +430,21 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
+                  isExpanded: true,
                   value: _selectedCourseId,
                   decoration: const InputDecoration(
                     labelText: 'Course',
                     border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: _courses
                       .map((course) => DropdownMenuItem(
                             value: course.id,
-                            child: Text(course.name),
+                            child: Text(
+                              course.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ))
                       .toList(),
                   onChanged: (value) {
@@ -451,10 +457,13 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
+                  isExpanded: true,
                   value: _selectedFilter,
                   decoration: const InputDecoration(
                     labelText: 'Status',
                     border: OutlineInputBorder(),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: ['All', 'Graded', 'Submitted', 'Missing']
                       .map((filter) => DropdownMenuItem(

@@ -329,7 +329,7 @@ class TeacherDashboardScreen extends StatelessWidget {
           title: 'View Reports',
           subtitle: 'Class performance analytics',
           onTap: () {
-            // TODO: Navigate to reports
+            context.go('/teacher/analytics');
           },
         ),
         _buildActionCard(
