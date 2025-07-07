@@ -5,6 +5,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_compress/video_compress.dart';
+import 'package:video_player/video_player.dart';
 import 'dart:io';
 import '../../providers/chat_provider.dart';
 import '../../models/message.dart';
@@ -359,8 +361,56 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ),
       );
     }
+    
+    if (message.attachmentType == 'video' && message.attachmentUrl != null) {
+      return GestureDetector(
+        onTap: () => _viewFullScreenVideo(message.attachmentUrl!),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          constraints: const BoxConstraints(
+            maxHeight: 200,
+            maxWidth: 300,
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // Video thumbnail placeholder
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black87,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Center(
+                    child: Icon(
+                      Icons.video_library,
+                      color: Colors.white.withValues(alpha: 0.5),
+                      size: 48,
+                    ),
+                  ),
+                ),
+              ),
+              // Play button
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(8),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-    // Fallback for non-image attachments
+    // Fallback for non-image/video attachments
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(8),
@@ -372,7 +422,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            message.attachmentType == 'image' ? Icons.image : Icons.attach_file,
+            _getAttachmentIcon(message.attachmentType),
             size: 20,
           ),
           const SizedBox(width: 8),
@@ -380,6 +430,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ],
       ),
     );
+  }
+
+  IconData _getAttachmentIcon(String? type) {
+    switch (type) {
+      case 'image':
+        return Icons.image;
+      case 'video':
+        return Icons.videocam;
+      default:
+        return Icons.attach_file;
+    }
   }
 
   Widget _buildMessageInput(BuildContext context) {
@@ -583,6 +644,23 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 _pickImage(ImageSource.camera);
               },
             ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.video_library),
+              title: const Text('Video from Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickVideo(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Record Video'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickVideo(ImageSource.camera);
+              },
+            ),
           ],
         ),
       ),
@@ -636,7 +714,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       // Upload to Firebase Storage
       final Reference storageRef = FirebaseStorage.instance
           .ref()
-          .child('chat_images')
+          .child('chat_media')
           .child(widget.chatRoomId)
           .child(fileName);
 
@@ -679,6 +757,109 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
+  Future<void> _pickVideo(ImageSource source) async {
+    try {
+      final XFile? video = await _imagePicker.pickVideo(
+        source: source,
+        maxDuration: const Duration(minutes: 10),
+      );
+
+      if (video != null) {
+        await _uploadAndSendVideo(File(video.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking video: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadAndSendVideo(File videoFile) async {
+    // Validate file size (100MB limit)
+    const int maxSizeBytes = 100 * 1024 * 1024;
+    if (videoFile.lengthSync() > maxSizeBytes) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Video is too large. Maximum size is 100MB')),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+      _uploadProgress = 0.0;
+    });
+
+    try {
+      // Compress video
+      await VideoCompress.setLogLevel(0);
+      final MediaInfo? compressedVideo = await VideoCompress.compressVideo(
+        videoFile.path,
+        quality: VideoQuality.MediumQuality,
+        deleteOrigin: false,
+        includeAudio: true,
+      );
+
+      if (compressedVideo == null || compressedVideo.file == null) {
+        throw Exception('Video compression failed');
+      }
+
+      final File compressedFile = compressedVideo.file!;
+
+      // Create unique filename
+      final String fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${compressedFile.path.split('/').last}';
+
+      // Upload to Firebase Storage
+      final Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child('chat_media')
+          .child(widget.chatRoomId)
+          .child(fileName);
+
+      final UploadTask uploadTask = storageRef.putFile(compressedFile);
+
+      // Monitor upload progress
+      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        setState(() {
+          _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
+        });
+      });
+
+      // Wait for upload to complete
+      final TaskSnapshot taskSnapshot = await uploadTask;
+      final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+
+      // Send message with video attachment
+      if (mounted) {
+        await context.read<ChatProvider>().sendMessage(
+              content: _messageController.text.trim().isEmpty
+                  ? 'Sent a video'
+                  : _messageController.text.trim(),
+              attachmentUrl: downloadUrl,
+              attachmentType: 'video',
+            );
+
+        _messageController.clear();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload video: $e')),
+        );
+      }
+    } finally {
+      setState(() {
+        _isUploading = false;
+        _uploadProgress = 0.0;
+      });
+    }
+  }
+
   void _viewFullScreenImage(String imageUrl) {
     showDialog(
       context: context,
@@ -703,6 +884,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _viewFullScreenVideo(String videoUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _VideoPlayerScreen(videoUrl: videoUrl),
       ),
     );
   }
@@ -935,5 +1125,144 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ),
       ),
     );
+  }
+}
+
+class _VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+
+  const _VideoPlayerScreen({required this.videoUrl});
+
+  @override
+  State<_VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+      ..initialize().then((_) {
+        setState(() {
+          _isInitialized = true;
+          _controller.play();
+        });
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
+        child: _isInitialized
+            ? AspectRatio(
+                aspectRatio: _controller.value.aspectRatio,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    VideoPlayer(_controller),
+                    _VideoControlsOverlay(controller: _controller),
+                    VideoProgressIndicator(
+                      _controller,
+                      allowScrubbing: true,
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ],
+                ),
+              )
+            : const CircularProgressIndicator(),
+      ),
+    );
+  }
+}
+
+class _VideoControlsOverlay extends StatelessWidget {
+  final VideoPlayerController controller;
+
+  const _VideoControlsOverlay({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        controller.value.isPlaying ? controller.pause() : controller.play();
+      },
+      child: Stack(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 50),
+            reverseDuration: const Duration(milliseconds: 200),
+            child: controller.value.isPlaying
+                ? const SizedBox.shrink()
+                : Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 100.0,
+                        semanticLabel: 'Play',
+                      ),
+                    ),
+                  ),
+          ),
+          Positioned(
+            bottom: 50,
+            left: 16,
+            right: 16,
+            child: Row(
+              children: [
+                ValueListenableBuilder(
+                  valueListenable: controller,
+                  builder: (context, VideoPlayerValue value, child) {
+                    return Text(
+                      _formatDuration(value.position),
+                      style: const TextStyle(color: Colors.white),
+                    );
+                  },
+                ),
+                const Spacer(),
+                ValueListenableBuilder(
+                  valueListenable: controller,
+                  builder: (context, VideoPlayerValue value, child) {
+                    return Text(
+                      _formatDuration(value.duration),
+                      style: const TextStyle(color: Colors.white),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(duration.inHours);
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
   }
 }
