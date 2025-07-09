@@ -1,77 +1,87 @@
-# Miscellaneous
+# Flutter/Dart specific
+.dart_tool/
+.pub/
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE specific
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+.atom/
+.history
+.svn/
+
+# Build artifacts
+app.*.symbols
+app.*.map.json
+
+# Android specific
+/android/app/debug.keystore
+/android/local.properties
+/android/.gradle/
+/android/app/build/
+/android/build/
+/android/app/google-services.json
+*.jks
+
+# iOS specific
+/ios/Flutter/App.framework
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/flutter_export_environment.sh
+/ios/Pods/
+/ios/Runner/GoogleService-Info.plist
+/ios/.symlinks/
+/ios/Flutter/.last_build_id
+/ios/Runner.xcworkspace/xcshareddata/
+/ios/Runner.xcodeproj/xcshareddata/
+/ios/Runner.xcodeproj/project.xcworkspace/
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+*.xcscmblueprint
+*.xccheckout
+*.xcscheme
+xcuserdata/
+
+# macOS specific
+/macos/Flutter/ephemeral
+/macos/Pods/
+/macos/.symlinks/
+
+# Linux specific
+/linux/flutter/ephemeral
+
+# Windows specific
+/windows/flutter/ephemeral
+
+# General
 *.class
 *.log
 *.pyc
 *.swp
-.DS_Store
-.atom/
-.build/
+*.lock
+*.snapshot
+*~
 .buildlog/
-.history
-.svn/
-.swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
+# Sensitive & Environment files
+.env*
+*.env
+secrets.json
+google-services.json
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-flutter/
-*:Zone.Identifier
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-android/java_pid*.hprof
-/.cursor/
-/.gemini/
-/.claude/
-
-# MCP configuration with sensitive data
-.mcp.json
-
-# Debug logs
-pglite-debug.log
-*.log
-
-# Personal scripts and tools
-launch_app.sh
-
-# Temporary images (root directory only)
-/*.png
-/*.jpg
-/*.jpeg
-/*.gif
-
-# Android build artifacts
-android/android/
-android/init.gradle
-/android/app/debug.keystore
+# User-specific generated files
+.claude/
+.cursor/
+.gemini/
+devtools_options.yaml
