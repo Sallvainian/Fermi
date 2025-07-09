@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/common/adaptive_layout.dart';
 import '../widgets/common/responsive_layout.dart';
+import '../providers/notification_provider.dart';
+import '../models/notification_model.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -17,7 +21,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    // Initialize notifications provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotificationProvider>().initialize();
+    });
   }
 
   @override
@@ -79,7 +87,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                         vertical: 12,
                       ),
                     ),
-                    onChanged: (value) => setState(() {}),
+                    onChanged: (value) {
+                      context.read<NotificationProvider>().updateSearchQuery(value);
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -94,6 +104,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     onSelected: (value) {
                       setState(() {
                         _selectedFilter = value;
+                        context.read<NotificationProvider>().updateFilter(value);
                       });
                     },
                     itemBuilder: (context) => [
@@ -136,167 +147,136 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
   }
 
   Widget _buildAllNotifications() {
-    final notifications = [
-      {
-        'id': '1',
-        'type': 'grade',
-        'title': 'New Grade Posted',
-        'message': 'Your grade for Calculus Quiz 3 has been posted: A-',
-        'time': DateTime.now().subtract(const Duration(minutes: 30)),
-        'isRead': false,
-        'priority': 'normal',
-        'actionData': {'courseId': '1', 'assignmentId': '1'},
+    return Consumer<NotificationProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (provider.error.isNotEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(provider.error),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => provider.initialize(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final notifications = provider.getNotificationsByTab('all');
+        if (notifications.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.notifications_none,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No notifications',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        return _buildNotificationsList(notifications);
       },
-      {
-        'id': '2',
-        'type': 'assignment',
-        'title': 'Assignment Due Tomorrow',
-        'message': 'Biology Lab Report is due tomorrow at 11:59 PM',
-        'time': DateTime.now().subtract(const Duration(hours: 2)),
-        'isRead': false,
-        'priority': 'high',
-        'actionData': {'assignmentId': '2'},
-      },
-      {
-        'id': '3',
-        'type': 'message',
-        'title': 'New Message from Ms. Johnson',
-        'message': 'Regarding your Science project submission...',
-        'time': DateTime.now().subtract(const Duration(hours: 4)),
-        'isRead': true,
-        'priority': 'normal',
-        'actionData': {'messageId': '3'},
-      },
-      {
-        'id': '4',
-        'type': 'system',
-        'title': 'Schedule Update',
-        'message': 'Physics class has been moved to Room 205 for tomorrow',
-        'time': DateTime.now().subtract(const Duration(hours: 6)),
-        'isRead': true,
-        'priority': 'normal',
-        'actionData': null,
-      },
-      {
-        'id': '5',
-        'type': 'grade',
-        'title': 'Grade Updated',
-        'message': 'Your Creative Writing essay grade has been updated to A',
-        'time': DateTime.now().subtract(const Duration(days: 1)),
-        'isRead': true,
-        'priority': 'normal',
-        'actionData': {'courseId': '3', 'assignmentId': '5'},
-      },
-      {
-        'id': '6',
-        'type': 'assignment',
-        'title': 'Assignment Reminder',
-        'message': 'Renaissance Essay due in 3 days - World History',
-        'time': DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-        'isRead': false,
-        'priority': 'medium',
-        'actionData': {'assignmentId': '6'},
-      },
-      {
-        'id': '7',
-        'type': 'system',
-        'title': 'Maintenance Notice',
-        'message': 'System maintenance scheduled for this weekend',
-        'time': DateTime.now().subtract(const Duration(days: 2)),
-        'isRead': true,
-        'priority': 'low',
-        'actionData': null,
-      },
-    ];
-
-    return _buildNotificationsList(notifications);
+    );
   }
 
   Widget _buildUnreadNotifications() {
-    final notifications = [
-      {
-        'id': '1',
-        'type': 'grade',
-        'title': 'New Grade Posted',
-        'message': 'Your grade for Calculus Quiz 3 has been posted: A-',
-        'time': DateTime.now().subtract(const Duration(minutes: 30)),
-        'isRead': false,
-        'priority': 'normal',
-        'actionData': {'courseId': '1', 'assignmentId': '1'},
+    return Consumer<NotificationProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final notifications = provider.getNotificationsByTab('unread');
+        if (notifications.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.mark_email_read,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'All caught up!',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'No unread notifications',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        return _buildNotificationsList(notifications);
       },
-      {
-        'id': '2',
-        'type': 'assignment',
-        'title': 'Assignment Due Tomorrow',
-        'message': 'Biology Lab Report is due tomorrow at 11:59 PM',
-        'time': DateTime.now().subtract(const Duration(hours: 2)),
-        'isRead': false,
-        'priority': 'high',
-        'actionData': {'assignmentId': '2'},
-      },
-      {
-        'id': '6',
-        'type': 'assignment',
-        'title': 'Assignment Reminder',
-        'message': 'Renaissance Essay due in 3 days - World History',
-        'time': DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-        'isRead': false,
-        'priority': 'medium',
-        'actionData': {'assignmentId': '6'},
-      },
-    ];
-
-    return _buildNotificationsList(notifications);
+    );
   }
 
   Widget _buildAcademicNotifications() {
-    final notifications = [
-      {
-        'id': '1',
-        'type': 'grade',
-        'title': 'New Grade Posted',
-        'message': 'Your grade for Calculus Quiz 3 has been posted: A-',
-        'time': DateTime.now().subtract(const Duration(minutes: 30)),
-        'isRead': false,
-        'priority': 'normal',
-        'actionData': {'courseId': '1', 'assignmentId': '1'},
+    return Consumer<NotificationProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final notifications = provider.getNotificationsByTab('academic');
+        if (notifications.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.school_outlined,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No academic notifications',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        return _buildNotificationsList(notifications);
       },
-      {
-        'id': '2',
-        'type': 'assignment',
-        'title': 'Assignment Due Tomorrow',
-        'message': 'Biology Lab Report is due tomorrow at 11:59 PM',
-        'time': DateTime.now().subtract(const Duration(hours: 2)),
-        'isRead': false,
-        'priority': 'high',
-        'actionData': {'assignmentId': '2'},
-      },
-      {
-        'id': '5',
-        'type': 'grade',
-        'title': 'Grade Updated',
-        'message': 'Your Creative Writing essay grade has been updated to A',
-        'time': DateTime.now().subtract(const Duration(days: 1)),
-        'isRead': true,
-        'priority': 'normal',
-        'actionData': {'courseId': '3', 'assignmentId': '5'},
-      },
-      {
-        'id': '6',
-        'type': 'assignment',
-        'title': 'Assignment Reminder',
-        'message': 'Renaissance Essay due in 3 days - World History',
-        'time': DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-        'isRead': false,
-        'priority': 'medium',
-        'actionData': {'assignmentId': '6'},
-      },
-    ];
-
-    return _buildNotificationsList(notifications);
+    );
   }
 
-  Widget _buildNotificationsList(List<Map<String, dynamic>> notifications) {
+  Widget _buildNotificationsList(List<NotificationModel> notifications) {
     return ResponsiveContainer(
       child: ListView.builder(
         itemCount: notifications.length,
@@ -308,47 +288,64 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     );
   }
 
-  Widget _buildNotificationCard(Map<String, dynamic> notification) {
+  Widget _buildNotificationCard(NotificationModel notification) {
     final theme = Theme.of(context);
-    final isUnread = !(notification['isRead'] as bool);
+    final isUnread = !notification.isRead;
     
     Color typeColor;
     IconData typeIcon;
-    switch (notification['type']) {
-      case 'grade':
+    switch (notification.type) {
+      case NotificationType.grade:
         typeColor = Colors.green;
         typeIcon = Icons.grade;
         break;
-      case 'assignment':
+      case NotificationType.assignment:
         typeColor = Colors.blue;
         typeIcon = Icons.assignment;
         break;
-      case 'message':
+      case NotificationType.message:
         typeColor = Colors.orange;
         typeIcon = Icons.message;
         break;
-      case 'system':
+      case NotificationType.system:
         typeColor = Colors.purple;
         typeIcon = Icons.info;
         break;
-      default:
-        typeColor = Colors.grey;
-        typeIcon = Icons.notifications;
+      case NotificationType.calendar:
+        typeColor = Colors.indigo;
+        typeIcon = Icons.calendar_month;
+        break;
+      case NotificationType.announcement:
+        typeColor = Colors.red;
+        typeIcon = Icons.campaign;
+        break;
+      case NotificationType.discussion:
+        typeColor = Colors.teal;
+        typeIcon = Icons.forum;
+        break;
+      case NotificationType.submission:
+        typeColor = Colors.deepOrange;
+        typeIcon = Icons.upload_file;
+        break;
     }
 
     Color priorityColor;
-    switch (notification['priority']) {
-      case 'high':
+    switch (notification.priority) {
+      case NotificationPriority.urgent:
+        priorityColor = Colors.red[700]!;
+        break;
+      case NotificationPriority.high:
         priorityColor = Colors.red;
         break;
-      case 'medium':
+      case NotificationPriority.medium:
         priorityColor = Colors.orange;
         break;
-      case 'low':
+      case NotificationPriority.low:
         priorityColor = Colors.green;
         break;
-      default:
+      case NotificationPriority.normal:
         priorityColor = Colors.grey;
+        break;
     }
 
     return Card(
@@ -384,7 +381,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       size: 20,
                     ),
                   ),
-                  if (notification['priority'] == 'high')
+                  if (notification.priority == NotificationPriority.high || 
+                      notification.priority == NotificationPriority.urgent)
                     Positioned(
                       top: 0,
                       right: 0,
@@ -415,7 +413,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       children: [
                         Expanded(
                           child: Text(
-                            notification['title'],
+                            notification.title,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
                             ),
@@ -423,7 +421,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                           ),
                         ),
                         Text(
-                          _formatNotificationTime(notification['time']),
+                          _formatNotificationTime(notification.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
@@ -434,7 +432,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     const SizedBox(height: 4),
                     // Message
                     Text(
-                      notification['message'],
+                      notification.message,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                         fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
@@ -447,13 +445,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     Row(
                       children: [
                         _buildNotificationTag(
-                          notification['type'].toString().toUpperCase(),
+                          notification.type.name.toUpperCase(),
                           typeColor,
                         ),
-                        if (notification['priority'] != 'normal') ...[ 
+                        if (notification.priority != NotificationPriority.normal) ...[ 
                           const SizedBox(width: 8),
                           _buildNotificationTag(
-                            notification['priority'].toString().toUpperCase(),
+                            notification.priority.name.toUpperCase(),
                             priorityColor,
                           ),
                         ],
@@ -536,27 +534,39 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     }
   }
 
-  void _handleNotificationTap(Map<String, dynamic> notification) {
+  void _handleNotificationTap(NotificationModel notification) {
+    final provider = context.read<NotificationProvider>();
+    
     // Mark as read if unread
-    if (!(notification['isRead'] as bool)) {
-      setState(() {
-        notification['isRead'] = true;
-      });
+    if (!notification.isRead) {
+      provider.markAsRead(notification.id);
     }
 
     // Handle different notification types
-    switch (notification['type']) {
-      case 'grade':
-        _navigateToGrades(notification['actionData']);
+    switch (notification.type) {
+      case NotificationType.grade:
+        _navigateToGrades(notification.actionData);
         break;
-      case 'assignment':
-        _navigateToAssignments(notification['actionData']);
+      case NotificationType.assignment:
+        _navigateToAssignments(notification.actionData);
         break;
-      case 'message':
-        _navigateToMessages(notification['actionData']);
+      case NotificationType.message:
+        _navigateToMessages(notification.actionData);
         break;
-      case 'system':
+      case NotificationType.system:
         _showSystemNotificationDetails(notification);
+        break;
+      case NotificationType.calendar:
+        context.go('/calendar');
+        break;
+      case NotificationType.announcement:
+        // TODO: Navigate to announcements
+        break;
+      case NotificationType.discussion:
+        context.go('/discussions');
+        break;
+      case NotificationType.submission:
+        _navigateToAssignments(notification.actionData);
         break;
     }
   }
@@ -588,12 +598,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     );
   }
 
-  void _showSystemNotificationDetails(Map<String, dynamic> notification) {
+  void _showSystemNotificationDetails(NotificationModel notification) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(notification['title']),
-        content: Text(notification['message']),
+        title: Text(notification.title),
+        content: Text(notification.message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -604,18 +614,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     );
   }
 
-  void _handleNotificationAction(String action, Map<String, dynamic> notification) {
+  void _handleNotificationAction(String action, NotificationModel notification) {
+    final provider = context.read<NotificationProvider>();
+    
     switch (action) {
       case 'mark_read':
-        setState(() {
-          notification['isRead'] = !notification['isRead'];
-        });
+        if (notification.isRead) {
+          provider.markAsUnread(notification.id);
+        } else {
+          provider.markAsRead(notification.id);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              notification['isRead'] 
-                  ? 'Marked as read' 
-                  : 'Marked as unread',
+              notification.isRead 
+                  ? 'Marked as unread' 
+                  : 'Marked as read',
             ),
           ),
         );
@@ -626,7 +640,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     }
   }
 
-  void _showDeleteConfirmation(Map<String, dynamic> notification) {
+  void _showDeleteConfirmation(NotificationModel notification) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -640,7 +654,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Remove notification from list
+              context.read<NotificationProvider>().deleteNotification(notification.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Notification deleted'),

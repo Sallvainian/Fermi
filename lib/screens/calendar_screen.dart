@@ -5,6 +5,7 @@ import '../widgets/common/responsive_layout.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/calendar_event.dart';
+import '../services/device_calendar_service.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -20,7 +21,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
     
     // Initialize calendar provider with current user
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -764,6 +765,7 @@ class _CalendarScreenState extends State<CalendarScreen> with SingleTickerProvid
               isAllDay: event['isAllDay'] ?? false,
               hasReminder: event['hasReminder'] ?? false,
               reminderMinutes: event['reminderMinutes'],
+              syncToDeviceCalendar: event['syncToDeviceCalendar'] ?? false,
             );
             // ignore: use_build_context_synchronously
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1020,6 +1022,57 @@ class EventDetailSheet extends StatelessWidget {
                     Row(
                       children: [
                         IconButton(
+                          onPressed: () async {
+                            // Show dialog to sync to device calendar
+                            final shouldSync = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Sync to Device Calendar'),
+                                content: const Text('Do you want to add this event to your device calendar?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Sync'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            
+                            if (shouldSync == true) {
+                              try {
+                                final deviceCalendarService = DeviceCalendarService();
+                                final success = await deviceCalendarService.syncEventToDevice(event);
+                                
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success 
+                                          ? 'Event synced to device calendar' 
+                                          : 'Failed to sync event to device calendar'
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error syncing event: $e'),
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                          icon: const Icon(Icons.sync),
+                          tooltip: 'Sync to Device Calendar',
+                        ),
+                        IconButton(
                           onPressed: onEdit,
                           icon: const Icon(Icons.edit_outlined),
                           tooltip: 'Edit',
@@ -1214,11 +1267,18 @@ class EventDetailSheet extends StatelessWidget {
         return 'Weekly on ${_getDayName(event.startTime.weekday)}';
       case RecurrenceType.monthly:
         return 'Monthly on day ${event.startTime.day}';
+      case RecurrenceType.yearly:
+        return 'Yearly on ${_formatMonthDay(event.startTime)}';
       case RecurrenceType.custom:
         return 'Custom';
       case RecurrenceType.none:
         return 'Does not repeat';
     }
+  }
+  
+  String _formatMonthDay(DateTime date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}';
   }
 
   String _getDayName(int weekday) {
@@ -1263,6 +1323,7 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
   bool _isAllDay = false;
   bool _hasReminder = false;
   int _reminderMinutes = 60;
+  bool _syncToDeviceCalendar = false;
 
   @override
   void dispose() {
@@ -1497,6 +1558,19 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                     const SizedBox(height: 16),
                   ],
 
+                  // Device Calendar Sync Switch
+                  SwitchListTile(
+                    title: const Text('Sync to Device Calendar'),
+                    subtitle: const Text('Add this event to your device calendar'),
+                    value: _syncToDeviceCalendar,
+                    onChanged: (value) {
+                      setState(() {
+                        _syncToDeviceCalendar = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
                   // Description Field
                   TextField(
                     controller: _descriptionController,
@@ -1589,6 +1663,7 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                         'description': _descriptionController.text.isEmpty ? null : _descriptionController.text,
                         'hasReminder': _hasReminder,
                         'reminderMinutes': _hasReminder ? _reminderMinutes : null,
+                        'syncToDeviceCalendar': _syncToDeviceCalendar,
                       });
 
                       Navigator.pop(context);

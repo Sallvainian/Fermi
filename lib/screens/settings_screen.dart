@@ -772,10 +772,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           size: 24,
         ),
       ),
-      children: [
-        const Text('A comprehensive educational management platform for students and teachers.'),
-        const SizedBox(height: 16),
-        const Text('Built with Flutter and Firebase.'),
+      children: const [
+        Text('A comprehensive educational management platform for students and teachers.'),
+        SizedBox(height: 16),
+        Text('Built with Flutter and Firebase.'),
       ],
     );
   }

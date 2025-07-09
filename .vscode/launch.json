@@ -32,7 +32,6 @@
             "program": "lib/main.dart",
             "deviceId": "chrome",
             "args": ["--web-port", "3000"]
-        },
-        
+        }
     ]
 }

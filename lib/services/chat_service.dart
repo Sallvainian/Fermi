@@ -250,15 +250,20 @@ class ChatService {
 
     final batch = _firestore.batch();
     
-    final unreadMessages = await _firestore
+    // Get all unread messages and filter in memory to avoid complex index
+    final allUnreadMessages = await _firestore
         .collection('chat_rooms')
         .doc(chatRoomId)
         .collection('messages')
         .where('isRead', isEqualTo: false)
-        .where('senderId', isNotEqualTo: currentUser.uid)
         .get();
+        
+    // Filter out current user's messages
+    final unreadMessages = allUnreadMessages.docs
+        .where((doc) => doc.data()['senderId'] != currentUser.uid)
+        .toList();
 
-    for (final doc in unreadMessages.docs) {
+    for (final doc in unreadMessages) {
       batch.update(doc.reference, {'isRead': true});
     }
 

@@ -8,11 +8,11 @@
 /// - Password reset functionality
 library;
 
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/user_model.dart';
 
 /// Core authentication service handling all auth-related operations.
@@ -35,10 +35,9 @@ class AuthService {
   /// Nullable to handle cases where Firebase is not initialized.
   FirebaseFirestore? _firestore;
   
-  /// Google Sign-In client configured with OAuth credentials.
-  /// Uses server client ID from environment variables for web support.
+  /// Google Sign-In instance.
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    serverClientId: dotenv.env['GOOGLE_OAUTH_CLIENT_ID'],
+    clientId: kIsWeb ? '218352465432-g9u6sl8orf9f7iiv955241h7r5kb0qh5.apps.googleusercontent.com' : null,
   );
 
   /// Initializes the authentication service.
@@ -54,6 +53,7 @@ class AuthService {
       if (kDebugMode) print('Firebase not available: $e');
     }
   }
+  
 
   /// Stream that emits auth state changes.
   /// 
@@ -326,18 +326,47 @@ class AuthService {
     }
     
     try {
-      // Trigger the authentication flow
+      // For web platform, authentication is handled via Firebase Auth redirect
+      if (kIsWeb) {
+        // Use Firebase Auth's built-in Google provider for web
+        final googleProvider = GoogleAuthProvider();
+        final userCredential = await _auth!.signInWithPopup(googleProvider);
+        
+        if (userCredential.user == null) {
+          throw Exception('Failed to sign in with Google');
+        }
+
+        // Check if user exists in Firestore
+        final userDoc = await _firestore!
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (!userDoc.exists) {
+          // New user - need to set role
+          return null; // Will handle role selection in UI
+        }
+
+        // Update last active
+        await _updateLastActive(userCredential.user!.uid);
+
+        return UserModel.fromFirestore(userDoc);
+      }
+      
+      // For mobile platforms, use the standard sign-in flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null; // User cancelled
+      
+      if (googleUser == null) {
+        throw Exception('Google Sign-In was cancelled');
+      }
 
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = 
-          await googleUser.authentication;
-
-      // Create a new credential
+      // Get authentication details from the account (this is a Future in v6.x)
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      
+      // Create a new credential using both idToken and accessToken
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
       );
 
       // Sign in to Firebase
@@ -455,7 +484,8 @@ class AuthService {
   Future<void> signOut() async {
     final futures = <Future>[];
     if (_auth != null) futures.add(_auth!.signOut());
-    futures.add(_googleSignIn.signOut());
+    // Sign out from Google using disconnect (clears cached auth)
+    futures.add(_googleSignIn.disconnect());
     await Future.wait(futures);
   }
 

@@ -487,18 +487,22 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
   @override
   Future<void> markMessagesAsRead(String chatRoomId) async {
     try {
-      // Get unread messages
-      final unreadMessages = await _firestore
+      // Get all delivered messages and filter in memory to avoid complex index
+      final deliveredMessages = await _firestore
           .collection('chat_rooms')
           .doc(chatRoomId)
           .collection('messages')
           .where('status', isEqualTo: MessageStatus.delivered.name)
-          .where('senderId', isNotEqualTo: _currentUserId)
           .get();
+          
+      // Filter out current user's messages
+      final unreadMessages = deliveredMessages.docs
+          .where((doc) => doc.data()['senderId'] != _currentUserId)
+          .toList();
 
       // Batch update to read status
       final batch = _firestore.batch();
-      for (final doc in unreadMessages.docs) {
+      for (final doc in unreadMessages) {
         batch.update(doc.reference, {
           'status': MessageStatus.read.name,
           'readAt': FieldValue.serverTimestamp(),
@@ -512,7 +516,7 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
         'unreadCounts.$_currentUserId': 0,
       });
       
-      LoggerService.info('Marked ${unreadMessages.size} messages as read', tag: _tag);
+      LoggerService.info('Marked ${unreadMessages.length} messages as read', tag: _tag);
     } catch (e) {
       LoggerService.error('Failed to mark messages as read', tag: _tag, error: e);
       rethrow;

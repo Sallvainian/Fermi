@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
@@ -23,6 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
     // Clear error when user starts typing
     _emailController.addListener(_clearError);
     _passwordController.addListener(_clearError);
+    
+    // On web, listen for Google Sign-In events
+    if (kIsWeb) {
+      _listenToGoogleSignInEvents();
+    }
   }
 
   @override
@@ -37,6 +43,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (authProvider.errorMessage != null) {
       authProvider.clearError();
     }
+  }
+  
+  void _listenToGoogleSignInEvents() {
+    // For web, Google Sign-In is handled by button click
+    // No need for additional listeners
   }
 
   Future<void> _signIn() async {
@@ -66,6 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -205,13 +217,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Google Sign In
+                  // Google Sign In - use same button for all platforms
                   OutlinedButton.icon(
                     onPressed: _signInWithGoogle,
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(56),
                     ),
-                    icon: const Icon(Icons.g_mobiledata, size: 24),
+                    icon: Image.network(
+                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                      height: 24,
+                      width: 24,
+                      errorBuilder: (context, error, stackTrace) => 
+                        const Icon(Icons.g_mobiledata, size: 24),
+                    ),
                     label: const Text('Continue with Google'),
                   ),
                   const SizedBox(height: 24),

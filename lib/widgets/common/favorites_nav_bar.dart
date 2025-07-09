@@ -27,14 +27,15 @@ class FavoritesNavBar extends StatelessWidget {
         ),
       );
     }
-    
+
     if (favoriteItems.isEmpty) {
       // Fallback to default navigation
       return const BottomNavBar();
     }
 
     // Find current index
-    int currentIndex = favoriteItems.indexWhere((item) => item.route == currentRoute);
+    int currentIndex =
+        favoriteItems.indexWhere((item) => item.route == currentRoute);
     if (currentIndex == -1) currentIndex = 0;
 
     return GestureDetector(
@@ -43,7 +44,7 @@ class FavoritesNavBar extends StatelessWidget {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withAlpha(26),
               blurRadius: 4,
               offset: const Offset(0, -2),
             ),
@@ -55,12 +56,14 @@ class FavoritesNavBar extends StatelessWidget {
             // Subtle hint bar with pulsing animation on first use
             _HintBar(),
             BottomNavigationBar(
-              items: favoriteItems.map((item) => BottomNavigationBarItem(
-                icon: Icon(item.icon),
-                activeIcon: Icon(item.activeIcon),
-                label: item.title,
-                tooltip: item.title,
-              )).toList(),
+              items: favoriteItems
+                  .map((item) => BottomNavigationBarItem(
+                        icon: Icon(item.icon),
+                        activeIcon: Icon(item.activeIcon),
+                        label: item.title,
+                        tooltip: item.title,
+                      ))
+                  .toList(),
               currentIndex: currentIndex,
               type: BottomNavigationBarType.fixed,
               onTap: (index) {
@@ -69,7 +72,8 @@ class FavoritesNavBar extends StatelessWidget {
                 }
               },
               selectedItemColor: Theme.of(context).colorScheme.primary,
-              unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+              unselectedItemColor:
+                  Theme.of(context).colorScheme.onSurfaceVariant,
               showUnselectedLabels: true,
               selectedFontSize: 12,
               unselectedFontSize: 12,
@@ -79,7 +83,7 @@ class FavoritesNavBar extends StatelessWidget {
       ),
     );
   }
-  
+
   void _showCustomizationSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -99,9 +103,9 @@ class CustomizeNavFab extends StatelessWidget {
     return FloatingActionButton.small(
       onPressed: () => _showCustomizationSheet(context),
       tooltip: 'Customize Navigation',
-      child: const Icon(Icons.edit),
       backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
       foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+      child: const Icon(Icons.edit),
     );
   }
 
@@ -120,10 +124,12 @@ class NavigationCustomizationSheet extends StatefulWidget {
   const NavigationCustomizationSheet({super.key});
 
   @override
-  State<NavigationCustomizationSheet> createState() => _NavigationCustomizationSheetState();
+  State<NavigationCustomizationSheet> createState() =>
+      _NavigationCustomizationSheetState();
 }
 
-class _NavigationCustomizationSheetState extends State<NavigationCustomizationSheet> {
+class _NavigationCustomizationSheetState
+    extends State<NavigationCustomizationSheet> {
   late List<String> _tempFavorites;
   String _selectedCategory = 'all';
 
@@ -139,7 +145,7 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
     final navProvider = context.watch<NavigationProvider>();
     final theme = Theme.of(context);
     final availableItems = navProvider.availableItems;
-    
+
     // Get categories
     final categories = {'all': 'All'};
     for (final item in availableItems) {
@@ -149,7 +155,9 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
     // Filter items by category
     final filteredItems = _selectedCategory == 'all'
         ? availableItems
-        : availableItems.where((item) => item.category == _selectedCategory).toList();
+        : availableItems
+            .where((item) => item.category == _selectedCategory)
+            .toList();
 
     return Container(
       constraints: BoxConstraints(
@@ -167,11 +175,11 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: theme.colorScheme.onSurfaceVariant.withAlpha(102),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          
+
           // Header
           Padding(
             padding: const EdgeInsets.all(16),
@@ -204,7 +212,7 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
               ],
             ),
           ),
-          
+
           // Current favorites preview
           Container(
             height: 80,
@@ -229,9 +237,9 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
               }),
             ),
           ),
-          
+
           const Divider(height: 1),
-          
+
           // Category filter
           Container(
             height: 40,
@@ -256,7 +264,7 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
               }).toList(),
             ),
           ),
-          
+
           // Available items
           Expanded(
             child: ListView.builder(
@@ -265,14 +273,14 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
               itemBuilder: (context, index) {
                 final item = filteredItems[index];
                 final isFavorite = _tempFavorites.contains(item.id);
-                
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
                     leading: Icon(
                       isFavorite ? item.activeIcon : item.icon,
-                      color: isFavorite 
-                          ? theme.colorScheme.primary 
+                      color: isFavorite
+                          ? theme.colorScheme.primary
                           : theme.colorScheme.onSurfaceVariant,
                     ),
                     title: Text(item.title),
@@ -301,7 +309,7 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
               },
             ),
           ),
-          
+
           // Save button
           Container(
             padding: const EdgeInsets.all(16),
@@ -369,7 +377,7 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
 
   void _saveFavorites(BuildContext context) async {
     final navProvider = context.read<NavigationProvider>();
-    
+
     // Update favorites
     for (int i = 0; i < _tempFavorites.length; i++) {
       if (i < navProvider.favoriteIds.length) {
@@ -378,12 +386,13 @@ class _NavigationCustomizationSheetState extends State<NavigationCustomizationSh
         await navProvider.addFavorite(_tempFavorites[i]);
       }
     }
-    
+
     // Remove extras
     while (navProvider.favoriteIds.length > _tempFavorites.length) {
       await navProvider.removeFavorite(navProvider.favoriteIds.last);
     }
-    
+
+    if (!mounted) return;
     Navigator.of(context).pop();
   }
 }
@@ -401,7 +410,7 @@ class _FavoriteSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -456,12 +465,12 @@ class _EmptySlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.3),
+          color: theme.colorScheme.outline.withAlpha(77),
           width: 2,
           style: BorderStyle.solid,
         ),
@@ -470,7 +479,7 @@ class _EmptySlot extends StatelessWidget {
       child: Center(
         child: Icon(
           Icons.add,
-          color: theme.colorScheme.outline.withOpacity(0.5),
+          color: theme.colorScheme.outline.withAlpha(128),
         ),
       ),
     );
@@ -483,7 +492,8 @@ class _HintBar extends StatefulWidget {
   State<_HintBar> createState() => _HintBarState();
 }
 
-class _HintBarState extends State<_HintBar> with SingleTickerProviderStateMixin {
+class _HintBarState extends State<_HintBar>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
   bool _hasBeenShown = false;
@@ -495,7 +505,7 @@ class _HintBarState extends State<_HintBar> with SingleTickerProviderStateMixin 
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    
+
     _animation = Tween<double>(
       begin: 0.1,
       end: 0.3,
@@ -511,7 +521,7 @@ class _HintBarState extends State<_HintBar> with SingleTickerProviderStateMixin 
   Future<void> _loadHintStatus() async {
     final prefs = await SharedPreferences.getInstance();
     _hasBeenShown = prefs.getBool('nav_hint_shown') ?? false;
-    
+
     if (!_hasBeenShown) {
       _controller.repeat(reverse: true);
       // Mark as shown after first display
@@ -528,16 +538,16 @@ class _HintBarState extends State<_HintBar> with SingleTickerProviderStateMixin 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     if (_hasBeenShown) {
       // Just show a static subtle bar
       return Container(
         width: double.infinity,
         height: 2,
-        color: theme.colorScheme.primary.withOpacity(0.1),
+        color: theme.colorScheme.primary.withAlpha(26),
       );
     }
-    
+
     // Show animated hint for first-time users
     return AnimatedBuilder(
       animation: _animation,
@@ -545,7 +555,7 @@ class _HintBarState extends State<_HintBar> with SingleTickerProviderStateMixin 
         return Container(
           width: double.infinity,
           height: 3,
-          color: theme.colorScheme.primary.withOpacity(_animation.value),
+          color: theme.colorScheme.primary.withAlpha((255 * _animation.value).round()),
         );
       },
     );

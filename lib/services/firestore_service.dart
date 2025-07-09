@@ -5,8 +5,8 @@
 /// in the education platform.
 library;
 
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'logger_service.dart';
 
 /// Generic Firestore service to handle common CRUD operations.
 /// 
@@ -65,7 +65,7 @@ class FirestoreService<T> {
       final docRef = await collection.add(data);
       return docRef.id;
     } catch (e) {
-      if (kDebugMode) print('Error creating document: $e');
+      LoggerService.error('Error creating document', error: e);
       rethrow;
     }
   }
@@ -82,7 +82,7 @@ class FirestoreService<T> {
     try {
       await collection.doc(id).set(data);
     } catch (e) {
-      if (kDebugMode) print('Error creating document with ID: $e');
+      LoggerService.error('Error creating document with ID', error: e);
       rethrow;
     }
   }
@@ -102,7 +102,7 @@ class FirestoreService<T> {
       if (!doc.exists) return null;
       return fromFirestore(doc);
     } catch (e) {
-      if (kDebugMode) print('Error getting document: $e');
+      LoggerService.error('Error getting document', error: e);
       rethrow;
     }
   }
@@ -120,7 +120,7 @@ class FirestoreService<T> {
       final snapshot = await collection.get();
       return snapshot.docs.map((doc) => fromFirestore(doc)).toList();
     } catch (e) {
-      if (kDebugMode) print('Error getting all documents: $e');
+      LoggerService.error('Error getting all documents', error: e);
       rethrow;
     }
   }
@@ -138,7 +138,7 @@ class FirestoreService<T> {
     try {
       await collection.doc(id).update(data);
     } catch (e) {
-      if (kDebugMode) print('Error updating document: $e');
+      LoggerService.error('Error updating document', error: e);
       rethrow;
     }
   }
@@ -154,7 +154,7 @@ class FirestoreService<T> {
     try {
       await collection.doc(id).delete();
     } catch (e) {
-      if (kDebugMode) print('Error deleting document: $e');
+      LoggerService.error('Error deleting document', error: e);
       rethrow;
     }
   }
@@ -221,7 +221,7 @@ class FirestoreService<T> {
       return query.snapshots().map((snapshot) =>
           snapshot.docs.map((doc) => fromFirestore(doc)).toList());
     } catch (e) {
-      if (kDebugMode) print('Error querying documents: $e');
+      LoggerService.error('Error querying documents', error: e);
       rethrow;
     }
   }
@@ -242,7 +242,7 @@ class FirestoreService<T> {
       }
       await batch.commit();
     } catch (e) {
-      if (kDebugMode) print('Error deleting multiple documents: $e');
+      LoggerService.error('Error deleting multiple documents', error: e);
       rethrow;
     }
   }
@@ -260,7 +260,7 @@ class FirestoreService<T> {
       final doc = await collection.doc(id).get();
       return doc.exists;
     } catch (e) {
-      if (kDebugMode) print('Error checking document existence: $e');
+      LoggerService.error('Error checking document existence', error: e);
       rethrow;
     }
   }

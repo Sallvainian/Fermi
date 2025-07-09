@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/nav_item.dart';
+import './logger_service.dart';
 
 /// Service for managing navigation items and favorites
 class NavigationService {
@@ -161,7 +162,7 @@ class NavigationService {
         return List<String>.from(json.decode(favoritesJson));
       }
     } catch (e) {
-      print('Error loading favorites: $e');
+      LoggerService.error('Error loading favorites', tag: 'NavigationService', error: e);
     }
     return [];
   }
@@ -174,7 +175,7 @@ class NavigationService {
       final limitedFavorites = favoriteIds.take(maxFavorites).toList();
       return await prefs.setString(_favoritesKey, json.encode(limitedFavorites));
     } catch (e) {
-      print('Error saving favorites: $e');
+      LoggerService.error('Error saving favorites', tag: 'NavigationService', error: e);
       return false;
     }
   }

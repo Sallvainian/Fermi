@@ -58,6 +58,9 @@ enum RecurrenceType {
   /// Repeats monthly on same date
   monthly,
   
+  /// Repeats yearly on same date
+  yearly,
+  
   /// Custom recurrence pattern
   custom;
   
@@ -337,6 +340,9 @@ class CalendarEvent {
         
       case RecurrenceType.monthly:
         return date.day == startTime.day;
+        
+      case RecurrenceType.yearly:
+        return date.month == startTime.month && date.day == startTime.day;
         
       case RecurrenceType.custom:
         // Handle custom recurrence logic based on recurrenceDetails

@@ -261,38 +261,6 @@ class AppTypography {
     height: 1.43,
   );
 
-  /// Button text style for action buttons.
-  /// 
-  /// Used for text within button components.
-  static const TextStyle buttonText = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 14,
-    fontWeight: medium,
-    height: 1.43,
-    letterSpacing: 0.1,
-  );
-
-  /// Caption text style for explanatory text.
-  /// 
-  /// Used for captions, hints, and helper text.
-  static const TextStyle caption = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 12,
-    fontWeight: regular,
-    height: 1.33,
-    letterSpacing: 0.4,
-  );
-
-  /// Overline text style for category labels.
-  /// 
-  /// Used for category indicators and small labels.
-  static const TextStyle overline = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 10,
-    fontWeight: medium,
-    height: 1.6,
-    letterSpacing: 1.5,
-  );
 
   /// Creates a Material 3 text theme with semantic colors.
   /// 

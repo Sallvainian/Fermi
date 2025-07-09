@@ -27,9 +27,7 @@
     "dart.debugExternalPackageLibraries": false,
     
     // Firebase and Flutter debugging
-    "dart.flutterAdditionalArgs": [
-        "--enable-experiment=non-nullable"
-    ],
+    "dart.flutterAdditionalArgs": [],
     
     // File associations
     "files.associations": {
@@ -49,5 +47,9 @@
     
     // Performance
     "dart.previewFlutterUiGuides": true,
-    "dart.previewFlutterUiGuidesCustomTracking": true
+    "dart.previewFlutterUiGuidesCustomTracking": true,
+    "sonarlint.connectedMode.project": {
+        "connectionId": "sallvainian",
+        "projectKey": "Sallvainian_teacher-dashboard-flutter-firebase"
+    }
 }

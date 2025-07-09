@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/user_model.dart';
+import '../../models/chat_room.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/auth_provider.dart' as app_auth;
 
@@ -105,20 +106,30 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
         }
       } else {
         // Create new chat room
-        final participants = {
-          currentUser.uid: currentUser.displayName,
-          otherUser.uid: otherUser.displayName,
-        };
+        final participantIds = [currentUser.uid, otherUser.uid];
+        final participantInfoList = [
+          ParticipantInfo(
+            id: currentUser.uid,
+            name: currentUser.displayName,
+            role: 'user',
+          ),
+          ParticipantInfo(
+            id: otherUser.uid,
+            name: otherUser.displayName,
+            role: 'user',
+          ),
+        ];
 
-        final chatRoomId = await chatProvider.createChatRoom(
+        final chatRoom = await chatProvider.createGroupChat(
           name: otherUser.displayName,
           type: 'direct',
-          participants: participants,
+          participantIds: participantIds,
+          participants: participantInfoList,
         );
 
-        if (chatRoomId != null && mounted) {
+        if (mounted) {
           Navigator.pop(context); // Close loading dialog
-          context.go('/chat/$chatRoomId');
+          context.go('/chat/${chatRoom.id}');
         }
       }
     } catch (e) {

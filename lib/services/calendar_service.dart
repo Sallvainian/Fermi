@@ -9,6 +9,8 @@ import '../models/calendar_event.dart';
 import '../repositories/calendar_repository.dart';
 import '../repositories/user_repository.dart';
 import '../repositories/class_repository.dart';
+import 'notification_service.dart';
+import 'device_calendar_service.dart';
 
 /// Service for managing calendar operations.
 /// 
@@ -48,6 +50,7 @@ class CalendarService {
     bool hasReminder = false,
     int? reminderMinutes,
     String? colorHex,
+    bool syncToDeviceCalendar = false,
   }) async {
     // Get creator details
     final creator = await _userRepository.getUserById(createdBy);
@@ -92,7 +95,21 @@ class CalendarService {
       updatedAt: DateTime.now(),
     );
     
-    return await _calendarRepository.createEvent(event);
+    final createdEvent = await _calendarRepository.createEvent(event);
+    
+    // Schedule notification if reminder is enabled
+    if (createdEvent.hasReminder) {
+      final notificationService = NotificationService();
+      await notificationService.scheduleEventReminder(createdEvent);
+    }
+    
+    // Sync to device calendar if requested
+    if (syncToDeviceCalendar) {
+      final deviceCalendarService = DeviceCalendarService();
+      await deviceCalendarService.syncEventToDevice(createdEvent);
+    }
+    
+    return createdEvent;
   }
   
   /// Updates an existing event with permission check.
@@ -106,7 +123,19 @@ class CalendarService {
       throw Exception('Insufficient permissions to edit this event');
     }
     
-    return await _calendarRepository.updateEvent(event);
+    final updatedEvent = await _calendarRepository.updateEvent(event);
+    
+    // Update notification if reminder settings changed
+    final notificationService = NotificationService();
+    // Cancel old notification
+    await notificationService.cancelNotification(event.id.hashCode);
+    
+    // Schedule new one if reminder is enabled
+    if (updatedEvent.hasReminder) {
+      await notificationService.scheduleEventReminder(updatedEvent);
+    }
+    
+    return updatedEvent;
   }
   
   /// Deletes an event with permission check.
@@ -118,6 +147,10 @@ class CalendarService {
     }
     
     await _calendarRepository.deleteEvent(eventId);
+    
+    // Cancel notification if scheduled
+    final notificationService = NotificationService();
+    await notificationService.cancelNotification(eventId.hashCode);
   }
   
   /// Creates a recurring class event.

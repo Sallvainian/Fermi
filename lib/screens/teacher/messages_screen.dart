@@ -17,7 +17,7 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
   }
 
   @override

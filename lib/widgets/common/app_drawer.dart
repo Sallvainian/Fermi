@@ -43,8 +43,8 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    (user?.displayName?.isNotEmpty == true) 
-                        ? user!.displayName 
+                    (user?.displayName.isNotEmpty == true)
+                        ? user!.displayName
                         : 'User',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -67,7 +67,8 @@ class AppDrawer extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      user?.role.toString().split('.').last.toUpperCase() ?? 'USER',
+                      user?.role.toString().split('.').last.toUpperCase() ??
+                          'USER',
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
@@ -185,17 +186,19 @@ class AppDrawer extends StatelessWidget {
                     leading: const Icon(Icons.tune),
                     title: const Text('Customize Navigation'),
                     subtitle: const Text('Choose your favorite shortcuts'),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                     onTap: () {
-                      Navigator.of(context).pop(); // Close drawer
+                      Scaffold.of(context).closeDrawer(); // Close drawer
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (context) => const NavigationCustomizationSheet(),
+                        builder: (context) =>
+                            const NavigationCustomizationSheet(),
                       );
                     },
                   ),
@@ -214,7 +217,7 @@ class AppDrawer extends StatelessWidget {
                     title: 'Help & Support',
                     route: '/help',
                   ),
-                  
+
                   // Temporary debug option
                   _buildNavItem(
                     context,
@@ -243,8 +246,8 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ),
                 onTap: () {
+                  Scaffold.of(context).closeDrawer();
                   authProvider.signOut();
-                  Navigator.of(context).pop();
                 },
               ),
             ),
@@ -283,20 +286,20 @@ class AppDrawer extends StatelessWidget {
         ),
       ),
       selected: isSelected,
-      selectedTileColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+      selectedTileColor:
+          theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {
-        Navigator.of(context).pop(); // Close drawer first
+        // Close drawer using Scaffold
+        Scaffold.of(context).closeDrawer();
         
-        // Use go() for dashboard to reset stack, push() for everything else
-        if (route == '/dashboard') {
+        // Navigate to the route after drawer closes
+        Future.delayed(const Duration(milliseconds: 200), () {
           context.go(route);
-        } else {
-          context.push(route);
-        }
+        });
       },
     );
   }

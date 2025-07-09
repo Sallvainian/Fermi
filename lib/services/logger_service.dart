@@ -42,6 +42,9 @@ class LoggerService {
   
   /// Private constructor for singleton pattern.
   LoggerService._internal();
+  
+  /// Minimum log level to display (can be configured via environment)
+  static LogLevel minimumLogLevel = kDebugMode ? LogLevel.info : LogLevel.warning;
 
   /// Logs a debug message (only in debug mode).
   /// 
@@ -125,6 +128,13 @@ class LoggerService {
     dynamic error,
     StackTrace? stackTrace,
   }) {
+    // Skip logging if below minimum level
+    final levelIndex = LogLevel.values.indexOf(level);
+    final minLevelIndex = LogLevel.values.indexOf(minimumLogLevel);
+    if (levelIndex < minLevelIndex) {
+      return;
+    }
+    
     final timestamp = DateTime.now().toIso8601String();
     final levelStr = level.toString().split('.').last.toUpperCase();
     final tagStr = tag != null ? '[$tag] ' : '';

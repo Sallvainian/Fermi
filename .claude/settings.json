@@ -1,40 +1,15 @@
 {
+  "permissions": {
+    "deny": [
+      "Bash(flutter run)",
+      "Bash(flutter run *)"
+    ]
+  },
   "hooks": {
-    "post-tool-use": [
+    "post_task": [
       {
-        "matcher": {
-          "toolName": "^(write_file|replace)$"
-        },
-        "command": "if [[ \"{{file_path}}\" == *.dart ]]; then flutter analyze; fi",
-        "showOutput": true,
-        "description": "Run flutter analyze after a .dart file is modified."
-      },
-      {
-        "matcher": {
-          "toolName": "^(write_file|replace)$"
-        },
-        "command": "if [[ \"{{file_path}}\" == *.dart ]]; then dart format {{file_path}}; fi",
-        "showOutput": true,
-        "description": "Run dart format on any modified .dart file."
-      },
-      {
-        "matcher": {
-          "toolName": "^(write_file|replace)$"
-        },
-        "command": "if [[ \"{{file_path}}\" == lib/*.dart || \"{{file_path}}\" == lib/**/*.dart ]]; then TEST_FILE=$(echo {{file_path}} | sed 's|^lib/|test/|' | sed 's|\\.dart|_test.dart|'); if [ -f \"$TEST_FILE\" ]; then echo \"Running corresponding test: $TEST_FILE\"; flutter test \"$TEST_FILE\"; else echo \"No corresponding test file found for {{file_path}}\"; fi; fi",
-        "showOutput": true,
-        "description": "Run the corresponding test file after a .dart file in lib/ is modified."
-      },
-      {
-        "matcher": {
-          "toolName": "^(write_file|replace)$",
-          "arguments": {
-            "file_path": "pubspec.yaml"
-          }
-        },
-        "command": "flutter pub get",
-        "showOutput": true,
-        "description": "Run 'flutter pub get' after pubspec.yaml is modified."
+        "command": "flutter analyze",
+        "description": "Run flutter analyze after edits."
       }
     ]
   }

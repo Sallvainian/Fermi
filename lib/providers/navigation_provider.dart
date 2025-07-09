@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/scheduler.dart';
+import '../services/logger_service.dart';
 import '../services/navigation_service.dart';
 import '../models/nav_item.dart';
 
@@ -7,6 +9,7 @@ class NavigationProvider extends ChangeNotifier {
   List<String> _favoriteIds = [];
   bool _isLoading = false;
   String _currentRole = 'student';
+  bool _initialized = false;
 
   List<String> get favoriteIds => _favoriteIds;
   bool get isLoading => _isLoading;
@@ -15,13 +18,15 @@ class NavigationProvider extends ChangeNotifier {
   List<NavItem> get availableItems => NavigationService.getItemsForRole(_currentRole);
 
   NavigationProvider() {
-    _loadFavorites();
+    // Initialize with default favorites to avoid empty state
+    _favoriteIds = NavigationService.getDefaultFavorites(_currentRole);
   }
 
   /// Set the current user role
   void setRole(String role) {
-    if (_currentRole != role) {
+    if (_currentRole != role || !_initialized) {
       _currentRole = role;
+      _initialized = true;
       _loadFavorites();
     }
   }
@@ -29,7 +34,12 @@ class NavigationProvider extends ChangeNotifier {
   /// Load favorites from storage
   Future<void> _loadFavorites() async {
     _isLoading = true;
-    notifyListeners();
+    
+    // Notify listeners immediately if not in build phase
+    // Otherwise, the async operation will naturally defer the notification
+    if (WidgetsBinding.instance.schedulerPhase != SchedulerPhase.persistentCallbacks) {
+      notifyListeners();
+    }
 
     try {
       final savedFavorites = await NavigationService.loadFavorites();
@@ -59,11 +69,13 @@ class NavigationProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print('Error loading favorites: $e');
+      LoggerService.error('Error loading favorites', tag: 'NavigationProvider', error: e);
       _favoriteIds = NavigationService.getDefaultFavorites(_currentRole);
     }
 
     _isLoading = false;
+    
+    // Always notify listeners here since we're in an async callback
     notifyListeners();
   }
 

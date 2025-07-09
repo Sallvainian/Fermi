@@ -74,3 +74,4 @@ launch_app.sh
 # Android build artifacts
 android/android/
 android/init.gradle
+/android/app/debug.keystore

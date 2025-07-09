@@ -164,6 +164,7 @@ class CalendarProvider with ChangeNotifier {
     bool hasReminder = false,
     int? reminderMinutes,
     String? colorHex,
+    bool syncToDeviceCalendar = false,
   }) async {
     if (_currentUserId == null) return;
     
@@ -185,6 +186,7 @@ class CalendarProvider with ChangeNotifier {
         hasReminder: hasReminder,
         reminderMinutes: reminderMinutes,
         colorHex: colorHex ?? calendarService.getSuggestedColor(type),
+        syncToDeviceCalendar: syncToDeviceCalendar,
       );
       
       // Events will update via stream

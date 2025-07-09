@@ -8,6 +8,7 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/assignment.dart';
 import '../models/grade.dart';
+import 'notification_service.dart';
 
 /// Core service for managing assignments and grades in Firestore.
 /// 
@@ -55,7 +56,13 @@ class AssignmentService {
   Future<Assignment> createAssignment(Assignment assignment) async {
     try {
       final docRef = await _assignmentsCollection.add(assignment.toFirestore());
-      return assignment.copyWith(id: docRef.id);
+      final createdAssignment = assignment.copyWith(id: docRef.id);
+      
+      // Schedule notification reminder for due date
+      final notificationService = NotificationService();
+      await notificationService.scheduleAssignmentReminder(createdAssignment);
+      
+      return createdAssignment;
     } catch (e) {
       // Error creating assignment: $e
       rethrow;

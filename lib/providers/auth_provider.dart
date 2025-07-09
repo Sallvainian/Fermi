@@ -45,7 +45,7 @@ enum AuthStatus {
 /// complete user profiles with roles in Firestore.
 class AuthProvider extends ChangeNotifier {
   /// Repository for authentication operations.
-  late final AuthRepository _authRepository;
+  AuthRepository? _authRepository;
   
   /// Current authentication status.
   AuthStatus _status = AuthStatus.uninitialized;
@@ -77,15 +77,26 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   
   /// Firebase Auth user instance.
-  User? get firebaseUser => _authRepository.currentUser;
+  User? get firebaseUser => _authRepository?.currentUser;
 
   /// Creates auth provider and initializes auth state monitoring.
   /// 
   /// Retrieves the auth repository from dependency injection
   /// and sets up real-time auth state listeners.
   AuthProvider() {
-    _authRepository = getIt<AuthRepository>();
-    _initializeAuth();
+    try {
+      _authRepository = getIt<AuthRepository>();
+      _initializeAuth();
+    } catch (e, stackTrace) {
+      // If getIt fails, catch it to prevent provider creation failure
+      if (kDebugMode) {
+        print('AuthProvider initialization failed: $e');
+        print(stackTrace);
+      }
+      _status = AuthStatus.error;
+      _errorMessage = 'Failed to initialize authentication service. Please restart the app.';
+      // Don't call notifyListeners() in constructor
+    }
   }
 
   /// Sets up Firebase Auth state monitoring.
@@ -98,14 +109,19 @@ class AuthProvider extends ChangeNotifier {
   /// 
   /// Falls back gracefully if Firebase is not initialized.
   void _initializeAuth() {
+    if (_authRepository == null) {
+      // Repository initialization failed, already in error state
+      return;
+    }
+    
     try {
-      _authRepository.authStateChanges.listen((User? user) async {
+      _authRepository!.authStateChanges.listen((User? user) async {
         if (user == null) {
           _status = AuthStatus.unauthenticated;
           _userModel = null;
         } else {
           // Try to get user model from Firestore
-          final userModel = await _authRepository.getCurrentUserModel();
+          final userModel = await _authRepository!.getCurrentUserModel();
           if (userModel != null) {
             _userModel = userModel;
             _status = AuthStatus.authenticated;
@@ -146,11 +162,16 @@ class AuthProvider extends ChangeNotifier {
     required String firstName,
     required String lastName,
   }) async {
+    if (_authRepository == null) {
+      _setError('Authentication service not available.');
+      return false;
+    }
+    
     try {
       _setLoading(true);
       _clearError();
 
-      final user = await _authRepository.signUpWithEmailOnly(
+      final user = await _authRepository!.signUpWithEmailOnly(
         email: email,
         password: password,
         displayName: displayName,
@@ -197,7 +218,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authRepository.signUpWithEmail(
+      final userModel = await _authRepository!.signUpWithEmail(
         email: email,
         password: password,
         displayName: displayName,
@@ -237,7 +258,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authRepository.signInWithEmail(
+      final userModel = await _authRepository!.signInWithEmail(
         email: email,
         password: password,
       );
@@ -265,11 +286,16 @@ class AuthProvider extends ChangeNotifier {
   /// 
   /// @return true if Google sign in successful
   Future<bool> signInWithGoogle() async {
+    if (_authRepository == null) {
+      _setError('Authentication service not available.');
+      return false;
+    }
+    
     try {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authRepository.signInWithGoogle();
+      final userModel = await _authRepository!.signInWithGoogle();
 
       if (userModel != null) {
         _userModel = userModel;
@@ -309,7 +335,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authRepository.completeGoogleSignUp(
+      final userModel = await _authRepository!.completeGoogleSignUp(
         role: role,
         parentEmail: parentEmail,
         gradeLevel: gradeLevel,
@@ -340,7 +366,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     try {
       _setLoading(true);
-      await _authRepository.signOut();
+      await _authRepository!.signOut();
       _userModel = null;
       _status = AuthStatus.unauthenticated;
       notifyListeners();
@@ -362,7 +388,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       _setLoading(true);
       _clearError();
-      await _authRepository.resetPassword(email);
+      await _authRepository!.resetPassword(email);
       return true;
     } catch (e) {
       _setError(e.toString());
@@ -394,7 +420,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      await _authRepository.updateProfile(
+      await _authRepository!.updateProfile(
         displayName: displayName,
         firstName: firstName,
         lastName: lastName,
@@ -403,7 +429,7 @@ class AuthProvider extends ChangeNotifier {
       );
 
       // Refresh user model
-      _userModel = await _authRepository.getCurrentUserModel();
+      _userModel = await _authRepository!.getCurrentUserModel();
       notifyListeners();
       return true;
     } catch (e) {
@@ -427,7 +453,7 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      final userModel = await _authRepository.completeGoogleSignUp(
+      final userModel = await _authRepository!.completeGoogleSignUp(
         role: role,
       );
 

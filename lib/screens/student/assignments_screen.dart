@@ -26,7 +26,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: 0);
     
     // Initialize the provider with student data
     WidgetsBinding.instance.addPostFrameCallback((_) {

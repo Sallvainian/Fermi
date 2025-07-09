@@ -1,5 +1,5 @@
 /// Adaptive layout system for responsive navigation and content presentation.
-/// 
+///
 /// This module provides platform-aware layout components that automatically
 /// adapt between mobile and desktop/tablet layouts, handling navigation
 /// patterns, spacing, and UI structure for optimal user experience across
@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'app_drawer.dart';
-import 'bottom_nav_bar.dart';
 import 'favorites_nav_bar.dart';
 import 'responsive_layout.dart';
 import '../../theme/app_spacing.dart';
@@ -18,11 +17,11 @@ import '../../providers/auth_provider.dart';
 import '../../providers/navigation_provider.dart';
 
 /// Adaptive layout wrapper that switches between mobile and desktop layouts.
-/// 
+///
 /// This widget provides automatic layout adaptation based on screen size:
 /// - **Mobile Layout**: Standard Scaffold with drawer, bottom navigation, and mobile spacing
 /// - **Desktop/Tablet Layout**: Permanent side navigation with expanded content area
-/// 
+///
 /// Key Features:
 /// - Automatic responsive breakpoint detection
 /// - Conditional navigation drawer display (slide-out mobile, permanent desktop)
@@ -32,12 +31,12 @@ import '../../providers/navigation_provider.dart';
 /// - Support for floating action buttons and custom app bar actions
 /// - Back button handling with custom callbacks
 /// - Optional navigation components for different screen contexts
-/// 
+///
 /// Layout Behavior:
 /// - Mobile (< 768px): Drawer slides from left, bottom nav visible, compact spacing
 /// - Tablet/Desktop (≥ 768px): Permanent drawer sidebar, no bottom nav, generous spacing
 /// - Maintains consistent theme integration and accessibility
-/// 
+///
 /// Usage:
 /// ```dart
 /// AdaptiveLayout(
@@ -51,54 +50,54 @@ import '../../providers/navigation_provider.dart';
 class AdaptiveLayout extends StatelessWidget {
   /// Main content widget to display in the layout body.
   final Widget body;
-  
+
   /// Title text displayed in the app bar across all screen sizes.
   final String title;
-  
+
   /// Optional action widgets for the app bar (typically IconButtons).
-  /// 
+  ///
   /// Displayed in the trailing section of the app bar.
   /// Common actions include settings, search, or context menus.
   final List<Widget>? actions;
-  
+
   /// Whether to show the navigation drawer/sidebar.
-  /// 
+  ///
   /// When true, displays slide-out drawer on mobile and permanent
   /// sidebar on desktop/tablet. Defaults to true.
   final bool showNavigationDrawer;
-  
+
   /// Whether to show bottom navigation bar on mobile layouts.
-  /// 
+  ///
   /// Defaults to true. Bottom navigation is always hidden on
   /// desktop/tablet layouts regardless of this setting.
   final bool showBottomNavigation;
-  
+
   /// Optional floating action button to display.
-  /// 
+  ///
   /// Positioned consistently across both mobile and desktop layouts
   /// following Material Design guidelines.
   final Widget? floatingActionButton;
-  
+
   /// Optional bottom widget for the app bar (typically TabBar).
-  /// 
+  ///
   /// Extends the app bar downward and maintains consistent
   /// behavior across responsive layouts.
   final PreferredSizeWidget? bottom;
-  
+
   /// Whether to show back button instead of menu/drawer toggle.
-  /// 
+  ///
   /// When true, replaces the drawer toggle with a back arrow.
   /// Useful for detail views and nested navigation screens.
   final bool showBackButton;
-  
+
   /// Custom callback for back button press handling.
-  /// 
+  ///
   /// If not provided, defaults to Navigator.pop() behavior.
   /// Use for custom navigation logic or route management.
   final VoidCallback? onBackPressed;
 
   /// Creates an adaptive layout with responsive navigation.
-  /// 
+  ///
   /// @param body Main content widget (required)
   /// @param title App bar title text (required)
   /// @param actions Optional app bar action widgets
@@ -123,16 +122,20 @@ class AdaptiveLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Set the role in NavigationProvider based on current user
+    // Get providers
     final authProvider = context.watch<AuthProvider>();
-    final navigationProvider = context.read<NavigationProvider>();
     
-    // Update navigation role when user changes
+    // Schedule role update after build completes
     if (authProvider.userModel != null) {
       final role = authProvider.userModel!.role.toString().split('.').last.toLowerCase();
-      navigationProvider.setRole(role);
+      // Use a microtask to ensure this happens after the current build
+      Future.microtask(() {
+        if (context.mounted) {
+          context.read<NavigationProvider>().setRole(role);
+        }
+      });
     }
-    
+
     return ResponsiveLayoutBuilder(
       builder: (context, screenSize) {
         if (screenSize == ScreenSize.mobile) {
@@ -143,15 +146,16 @@ class AdaptiveLayout extends StatelessWidget {
               leading: showBackButton
                   ? IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: onBackPressed ?? () {
-                        // Use GoRouter instead of Navigator for better navigation control
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          // If we can't pop, go to the dashboard
-                          context.go('/dashboard');
-                        }
-                      },
+                      onPressed: onBackPressed ??
+                          () {
+                            // Use GoRouter instead of Navigator for better navigation control
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              // If we can't pop, go to the dashboard
+                              context.go('/dashboard');
+                            }
+                          },
                     )
                   : null,
               title: Text(title),
@@ -159,14 +163,17 @@ class AdaptiveLayout extends StatelessWidget {
               bottom: bottom,
             ),
             // Conditional drawer display (hidden when showing back button)
-            drawer: showNavigationDrawer && !showBackButton ? const AppDrawer() : null,
+            drawer: showNavigationDrawer && !showBackButton
+                ? const AppDrawer()
+                : null,
             // Content area with mobile-optimized padding
             body: ResponsivePadding(
               mobile: const EdgeInsets.all(AppSpacing.md),
               child: body,
             ),
             // Bottom navigation for mobile-first navigation pattern
-            bottomNavigationBar: showBottomNavigation ? const FavoritesNavBar() : null,
+            bottomNavigationBar:
+                showBottomNavigation ? const FavoritesNavBar() : null,
             floatingActionButton: floatingActionButton,
           );
         } else {
@@ -184,17 +191,26 @@ class AdaptiveLayout extends StatelessWidget {
                 Expanded(
                   child: Column(
                     children: [
+                      // AppBar with proper constraints for TabBar
                       AppBar(
                         // Back button handling for desktop layout
                         leading: showBackButton
                             ? IconButton(
                                 icon: const Icon(Icons.arrow_back),
-                                onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
+                                onPressed: onBackPressed ??
+                                    () {
+                                      if (context.canPop()) {
+                                        context.pop();
+                                      } else {
+                                        context.go('/dashboard');
+                                      }
+                                    },
                               )
                             : null,
                         title: Text(title),
                         actions: actions,
-                        automaticallyImplyLeading: false, // Disable default drawer toggle
+                        automaticallyImplyLeading:
+                            false, // Disable default drawer toggle
                         bottom: bottom,
                       ),
                       // Content area with desktop-optimized spacing
@@ -218,56 +234,3 @@ class AdaptiveLayout extends StatelessWidget {
   }
 }
 
-/// Legacy responsive builder for backward compatibility.
-/// 
-/// This widget provides a simplified boolean-based responsive builder
-/// that maintains compatibility with older code patterns. It maps the
-/// modern ScreenSize enumeration to a simple wide/narrow screen distinction.
-/// 
-/// **Deprecated**: Use ResponsiveLayoutBuilder with ScreenSize enum instead
-/// for more precise responsive control and better semantic meaning.
-/// 
-/// Features:
-/// - Simplified boolean responsive logic (isWideScreen)
-/// - Backward compatibility with existing responsive code
-/// - Automatic mapping from ScreenSize to boolean
-/// - Maintains consistent breakpoint behavior
-/// 
-/// Usage:
-/// ```dart
-/// ResponsiveBuilder(
-///   builder: (context, isWideScreen) {
-///     if (isWideScreen) {
-///       return DesktopLayout();
-///     }
-///     return MobileLayout();
-///   },
-/// )
-/// ```
-@Deprecated('Use ResponsiveLayoutBuilder with ScreenSize enum for better responsive control')
-class ResponsiveBuilder extends StatelessWidget {
-  /// Builder function that receives boolean screen size indicator.
-  /// 
-  /// Called with isWideScreen=true for tablet/desktop layouts
-  /// and isWideScreen=false for mobile layouts.
-  final Widget Function(BuildContext context, bool isWideScreen) builder;
-
-  /// Creates a legacy responsive builder.
-  /// 
-  /// @param builder Function to build widget based on screen width
-  const ResponsiveBuilder({
-    super.key,
-    required this.builder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ResponsiveLayoutBuilder(
-      builder: (context, screenSize) {
-        // Map modern ScreenSize enum to legacy boolean
-        final isWideScreen = screenSize != ScreenSize.mobile;
-        return builder(context, isWideScreen);
-      },
-    );
-  }
-}

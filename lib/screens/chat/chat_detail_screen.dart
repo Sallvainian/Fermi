@@ -103,6 +103,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.phone),
+            onPressed: () => _startCall(context, false),
+            tooltip: 'Voice Call',
+          ),
+          IconButton(
+            icon: const Icon(Icons.videocam),
+            onPressed: () => _startCall(context, true),
+            tooltip: 'Video Call',
+          ),
+          IconButton(
             icon: const Icon(Icons.info_outline),
             onPressed: () => _showChatInfo(context),
           ),
@@ -590,6 +600,39 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ),
       ),
     );
+  }
+
+  void _startCall(BuildContext context, bool isVideoCall) {
+    final chatProvider = context.read<ChatProvider>();
+    final chatRoom = chatProvider.currentChatRoom;
+    
+    if (chatRoom == null) return;
+    
+    // For direct chats, find the other participant
+    if (chatRoom.type == 'direct') {
+      final otherParticipant = chatRoom.participants.firstWhere(
+        (p) => p.id != FirebaseAuth.instance.currentUser?.uid,
+      );
+      
+      // Navigate to call screen
+      context.push(
+        '/call',
+        extra: {
+          'receiverId': otherParticipant.id,
+          'receiverName': otherParticipant.name,
+          'receiverPhotoUrl': '', // TODO: Get photo URL from user profile
+          'isVideoCall': isVideoCall,
+          'chatRoomId': chatRoom.id,
+        },
+      );
+    } else {
+      // For group calls, show participant selection or use a different approach
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Group calls are not supported yet'),
+        ),
+      );
+    }
   }
 
   void _leaveChatRoom(BuildContext context) {
