@@ -199,4 +199,35 @@ abstract class ClassRepository extends BaseRepository {
   /// @return List of active classes
   /// @throws Exception if retrieval fails
   Future<List<ClassModel>> getActiveClasses(String teacherId, String academicYear);
+  
+  /// Finds a class by its enrollment code.
+  /// 
+  /// Used for student enrollment via code entry.
+  /// Only returns active classes with valid codes.
+  /// 
+  /// @param enrollmentCode The enrollment code to search for
+  /// @return Class instance or null if not found
+  /// @throws Exception if search fails
+  Future<ClassModel?> getClassByEnrollmentCode(String enrollmentCode);
+  
+  /// Enrolls a student using an enrollment code.
+  /// 
+  /// Validates the enrollment code and adds the student
+  /// to the class if capacity allows.
+  /// 
+  /// @param studentId Student to enroll
+  /// @param enrollmentCode Class enrollment code
+  /// @return The enrolled class model
+  /// @throws Exception if enrollment fails
+  Future<ClassModel> enrollWithCode(String studentId, String enrollmentCode);
+  
+  /// Generates a new enrollment code for a class.
+  /// 
+  /// Creates a unique 6-character alphanumeric code
+  /// and updates the class record.
+  /// 
+  /// @param classId Class to generate code for
+  /// @return The new enrollment code
+  /// @throws Exception if generation fails
+  Future<String> regenerateEnrollmentCode(String classId);
 }

@@ -16,11 +16,14 @@ import '../screens/teacher/assignments_screen.dart';
 import '../screens/teacher/assignments/assignment_create_screen.dart';
 import '../screens/teacher/assignments/assignment_detail_screen.dart';
 import '../screens/teacher/assignments/assignment_edit_screen.dart';
+import '../screens/teacher/students_screen.dart';
 import '../screens/student/student_dashboard_screen.dart';
 import '../screens/student/courses_screen.dart';
 import '../screens/student/grades_screen.dart';
 import '../screens/student/assignments_screen.dart';
 import '../screens/student/assignment_submission_screen.dart';
+import '../screens/student/enrollment_screen.dart';
+import '../screens/student/notifications_screen.dart' as student_notifications;
 import '../screens/crashlytics_test_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/debug/update_display_name_screen.dart';
@@ -36,7 +39,10 @@ import '../screens/discussions/discussion_board_detail_screen.dart';
 import '../screens/calendar_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/common/dashboard_screen.dart';
-import '../screens/common/placeholder_screen.dart';
+import '../screens/contact_support_screen.dart';
+import '../screens/games/jeopardy_screen.dart';
+import '../screens/games/jeopardy_play_screen.dart';
+import '../screens/games/jeopardy_create_screen.dart';
 
 /// App router configuration
 class AppRouter {
@@ -144,7 +150,31 @@ class AppRouter {
     ),
     GoRoute(
       path: '/teacher/students',
-      builder: (context, state) => const PlaceholderScreen(title: 'Students'),
+      builder: (context, state) => const TeacherStudentsScreen(),
+    ),
+    GoRoute(
+      path: '/teacher/games/jeopardy',
+      builder: (context, state) => const JeopardyScreen(),
+      routes: [
+        GoRoute(
+          path: 'create',
+          builder: (context, state) => const JeopardyCreateScreen(),
+        ),
+        GoRoute(
+          path: ':gameId/edit',
+          builder: (context, state) {
+            final gameId = state.pathParameters['gameId']!;
+            return JeopardyCreateScreen(gameId: gameId);
+          },
+        ),
+        GoRoute(
+          path: ':gameId/play',
+          builder: (context, state) {
+            final gameId = state.pathParameters['gameId']!;
+            return JeopardyPlayScreen(gameId: gameId);
+          },
+        ),
+      ],
     ),
   ];
   
@@ -170,6 +200,14 @@ class AppRouter {
     GoRoute(
       path: '/student/grades',
       builder: (context, state) => const StudentGradesScreen(),
+    ),
+    GoRoute(
+      path: '/student/enroll',
+      builder: (context, state) => const EnrollmentScreen(),
+    ),
+    GoRoute(
+      path: '/student/notifications',
+      builder: (context, state) => const student_notifications.StudentNotificationsScreen(),
     ),
   ];
   
@@ -260,8 +298,8 @@ class AppRouter {
       builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
-      path: '/help',
-      builder: (context, state) => const PlaceholderScreen(title: 'Help & Support'),
+      path: '/contact-support',
+      builder: (context, state) => const ContactSupportScreen(),
     ),
     GoRoute(
       path: '/crashlytics-test',

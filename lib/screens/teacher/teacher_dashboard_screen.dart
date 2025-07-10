@@ -2,14 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/class_provider.dart';
 import '../../models/user_model.dart';
+import '../../models/class_model.dart';
 import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/common/common_widgets.dart';
 import '../../theme/app_spacing.dart';
-import '../../services/test_service.dart';
+import '../../theme/app_theme.dart';
 
-class TeacherDashboardScreen extends StatelessWidget {
+class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
+
+  @override
+  State<TeacherDashboardScreen> createState() => _TeacherDashboardScreenState();
+}
+
+class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadTeacherClasses();
+  }
+
+  void _loadTeacherClasses() {
+    final authProvider = context.read<AuthProvider>();
+    final classProvider = context.read<ClassProvider>();
+    final teacherId = authProvider.userModel?.uid;
+    
+    if (teacherId != null) {
+      classProvider.loadTeacherClasses(teacherId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,17 +105,21 @@ class TeacherDashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              const SizedBox(height: 16),
+
+              // Quick Stats - Smaller section
+              _buildQuickStats(context),
               const SizedBox(height: 24),
 
-              // Quick Stats
+              // My Classes
               Text(
-                  'Quick Overview',
+                  'My Classes',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
-              _buildQuickStatsGrid(context),
+              _buildClassesSection(context),
               const SizedBox(height: AppSpacing.lg),
 
               // Recent Activity
@@ -121,87 +149,279 @@ class TeacherDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickStatsGrid(BuildContext context) {
-    return ResponsiveGrid(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mobileColumns: 2,
-      tabletColumns: 4,
-      desktopColumns: 4,
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
-      childAspectRatio: 1.2, // Reduced from 1.5 to give more height
+  Widget _buildQuickStats(BuildContext context) {
+    final classProvider = context.watch<ClassProvider>();
+    final teacherClasses = classProvider.teacherClasses;
+    final totalStudents = teacherClasses.fold<int>(0, (sum, classModel) => sum + classModel.studentCount);
+    
+    return SizedBox(
+      height: 80,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          _buildCompactStatCard(
+            context,
+            icon: Icons.class_,
+            title: 'Classes',
+            value: '${teacherClasses.length}',
+            color: Colors.blue,
+            onTap: () => context.go('/teacher/classes'),
+          ),
+          const SizedBox(width: 12),
+          _buildCompactStatCard(
+            context,
+            icon: Icons.people,
+            title: 'Students',
+            value: '$totalStudents',
+            color: Colors.green,
+            onTap: () => context.go('/teacher/students'),
+          ),
+          const SizedBox(width: 12),
+          _buildCompactStatCard(
+            context,
+            icon: Icons.assignment,
+            title: 'Assignments',
+            value: '23',
+            color: Colors.orange,
+            onTap: () => context.go('/teacher/assignments'),
+          ),
+          const SizedBox(width: 12),
+          _buildCompactStatCard(
+            context,
+            icon: Icons.grade,
+            title: 'To Grade',
+            value: '8',
+            color: Colors.red,
+            onTap: () => context.go('/teacher/gradebook'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassesSection(BuildContext context) {
+    final classProvider = context.watch<ClassProvider>();
+    
+    if (classProvider.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    
+    final teacherClasses = classProvider.teacherClasses;
+    
+    if (teacherClasses.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(
+                  Icons.class_outlined,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No Classes Yet',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Create your first class to get started',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go('/teacher/classes'),
+                  child: const Text('Create a Class'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Show max 4 classes on dashboard
+    final displayClasses = teacherClasses.take(4).toList();
+    
+    return Column(
       children: [
-        _buildStatCard(
-          context,
-          icon: Icons.class_,
-          title: 'Classes',
-          value: '5',
-          color: Colors.blue,
-        ),
-        _buildStatCard(
-          context,
-          icon: Icons.people,
-          title: 'Students',
-          value: '127',
-          color: Colors.green,
-        ),
-        _buildStatCard(
-          context,
-          icon: Icons.assignment,
-          title: 'Assignments',
-          value: '23',
-          color: Colors.orange,
-        ),
-        _buildStatCard(
-          context,
-          icon: Icons.grade,
-          title: 'To Grade',
-          value: '8',
-          color: Colors.red,
-        ),
+        ...displayClasses.map((course) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildClassCard(context, course),
+        )),
+        if (teacherClasses.length > 4) ...[
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => context.go('/teacher/classes'),
+              child: Text('View All ${teacherClasses.length} Classes'),
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildStatCard(
+  Widget _buildClassCard(BuildContext context, ClassModel course) {
+    final theme = Theme.of(context);
+    final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
+    final color = AppTheme.subjectColors[colorIndex];
+    
+    return AppCard(
+      onTap: () => _navigateToClass(context, course),
+      child: Row(
+        children: [
+          // Color indicator
+          Container(
+            width: 4,
+            height: 60,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          
+          // Class info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  course.subject,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8.0,
+                  children: [
+                    if (course.room != null)
+                      _buildInfoChip(Icons.room, course.room!),
+                    if (course.schedule != null)
+                      _buildInfoChip(Icons.schedule, course.schedule!),
+                    _buildInfoChip(Icons.people, '${course.studentCount} students'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Arrow icon
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToClass(BuildContext context, ClassModel course) {
+    // Set the selected class in the provider
+    context.read<ClassProvider>().setSelectedClass(course);
+    // Navigate to classes screen with selected class
+    context.go('/teacher/classes');
+  }
+
+  Widget _buildCompactStatCard(
     BuildContext context, {
     required IconData icon,
     required String title,
     required String value,
     required Color color,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
     
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 32,
-              color: color,
+    return SizedBox(
+      width: 120,
+      child: Card(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: color,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      value,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            Text(
-              title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String text) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -307,15 +527,6 @@ class TeacherDashboardScreen extends StatelessWidget {
         ),
         _buildActionCard(
           context,
-          icon: Icons.bug_report,
-          title: 'Test Crashlytics',
-          subtitle: 'Test crash reporting',
-          onTap: () {
-            context.go('/crashlytics-test');
-          },
-        ),
-        _buildActionCard(
-          context,
           icon: Icons.chat,
           title: 'Message Parents',
           subtitle: 'Send updates and announcements',
@@ -352,22 +563,11 @@ class TeacherDashboardScreen extends StatelessWidget {
         ),
         _buildActionCard(
           context,
-          icon: Icons.storage,
-          title: 'Test Write DB',
-          subtitle: 'Test Firestore write',
-          onTap: () async {
-            final testService = TestService();
-            await testService.testWriteData();
-          },
-        ),
-        _buildActionCard(
-          context,
-          icon: Icons.search,
-          title: 'Test Read DB',
-          subtitle: 'Test Firestore read',
-          onTap: () async {
-            final testService = TestService();
-            await testService.testReadData();
+          icon: Icons.grid_view_rounded,
+          title: 'Jeopardy Games',
+          subtitle: 'Create and play quiz games',
+          onTap: () {
+            context.go('/teacher/games/jeopardy');
           },
         ),
       ],

@@ -11,6 +11,7 @@ import 'grade_analytics_provider.dart';
 import 'navigation_provider.dart';
 import 'call_provider.dart';
 import 'notification_provider.dart';
+import 'class_provider.dart';
 
 /// Centralized provider configuration
 class AppProviders {
@@ -19,6 +20,7 @@ class AppProviders {
     return [
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ChangeNotifierProvider(create: (_) => ClassProvider()),
       ChangeNotifierProvider(create: (_) => AssignmentProvider()),
       ChangeNotifierProvider(create: (_) => StudentAssignmentProvider()),
       ChangeNotifierProvider(create: (_) => ChatProvider()),

@@ -158,11 +158,6 @@ class _GradebookScreenState extends State<GradebookScreen> {
             onPressed: _showExportDialog,
             tooltip: 'Export Grades',
           ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _showAddAssignmentDialog,
-            tooltip: 'Add Assignment',
-          ),
         ],
       ),
       body: Column(
@@ -617,28 +612,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
   }
 
   void _showAddAssignmentDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Assignment'),
-        content: const Text('Assignment creation dialog would appear here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Feature coming soon!')),
-              );
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
-    );
+    // Navigate to the assignment creation screen
+    context.go('/teacher/assignments/create');
   }
 
   void _showExportDialog() {

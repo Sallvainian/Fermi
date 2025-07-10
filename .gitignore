@@ -6,6 +6,9 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 
+# Java heap dumps
+*.hprof
+
 # IDE specific
 .idea/
 .vscode/

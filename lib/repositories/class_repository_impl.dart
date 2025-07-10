@@ -6,6 +6,7 @@
 /// class management.
 library;
 
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/class_model.dart';
 import '../models/user_model.dart';
@@ -58,16 +59,54 @@ class ClassRepositoryImpl extends FirestoreRepository<ClassModel>
   @override
   Future<String> createClass(ClassModel classModel) async {
     try {
+      // Generate unique enrollment code
+      String? enrollmentCode;
+      if (classModel.enrollmentCode == null) {
+        enrollmentCode = await _generateUniqueEnrollmentCode();
+      }
+      
       final classWithTimestamp = classModel.copyWith(
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         studentIds: [],
+        enrollmentCode: enrollmentCode ?? classModel.enrollmentCode,
       );
       return await create(classWithTimestamp);
     } catch (e) {
       LoggerService.error('Failed to create class', tag: tag, error: e);
       rethrow;
     }
+  }
+  
+  /// Generates a unique enrollment code for a new class.
+  /// 
+  /// Internal helper method that creates codes without
+  /// updating existing classes.
+  /// 
+  /// @return A unique 6-character enrollment code
+  /// @throws Exception if unable to generate unique code
+  Future<String> _generateUniqueEnrollmentCode() async {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const codeLength = 6;
+    const maxAttempts = 100;
+    
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+      final random = Random();
+      final code = String.fromCharCodes(
+        Iterable.generate(
+          codeLength,
+          (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+        ),
+      );
+      
+      // Check if code already exists
+      final existing = await getClassByEnrollmentCode(code);
+      if (existing == null) {
+        return code;
+      }
+    }
+    
+    throw Exception('Unable to generate unique enrollment code');
   }  
   /// Retrieves a class by its unique identifier.
   /// 
@@ -434,6 +473,136 @@ class ClassRepositoryImpl extends FirestoreRepository<ClassModel>
       LoggerService.info('Enrolled ${studentIds.length} students in class $classId', tag: tag);
     } catch (e) {
       LoggerService.error('Failed to enroll multiple students', tag: tag, error: e);
+      rethrow;
+    }
+  }
+  
+  /// Finds a class by its enrollment code.
+  /// 
+  /// Searches for active classes with the specified enrollment code.
+  /// Enrollment codes are unique across all active classes.
+  /// 
+  /// @param enrollmentCode The enrollment code to search for
+  /// @return Class instance or null if not found
+  /// @throws Exception if search fails
+  @override
+  Future<ClassModel?> getClassByEnrollmentCode(String enrollmentCode) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('classes')
+          .where('enrollmentCode', isEqualTo: enrollmentCode)
+          .where('isActive', isEqualTo: true)
+          .limit(1)
+          .get();
+      
+      if (querySnapshot.docs.isEmpty) {
+        return null;
+      }
+      
+      return ClassModel.fromFirestore(querySnapshot.docs.first);
+    } catch (e) {
+      LoggerService.error('Failed to get class by enrollment code', tag: tag, error: e);
+      rethrow;
+    }
+  }
+  
+  /// Enrolls a student using an enrollment code.
+  /// 
+  /// Validates the enrollment code, checks class capacity,
+  /// and adds the student to the class if allowed.
+  /// 
+  /// @param studentId Student to enroll
+  /// @param enrollmentCode Class enrollment code
+  /// @return The enrolled class model
+  /// @throws Exception if enrollment fails
+  @override
+  Future<ClassModel> enrollWithCode(String studentId, String enrollmentCode) async {
+    try {
+      // Find class by enrollment code
+      final classModel = await getClassByEnrollmentCode(enrollmentCode);
+      
+      if (classModel == null) {
+        throw Exception('Invalid enrollment code');
+      }
+      
+      // Check if student is already enrolled
+      if (classModel.studentIds.contains(studentId)) {
+        throw Exception('Student is already enrolled in this class');
+      }
+      
+      // Check if class is full
+      if (classModel.isFull) {
+        throw Exception('Class is at maximum capacity');
+      }
+      
+      // Enroll the student
+      await addStudent(classModel.id, studentId);
+      
+      // Return updated class model
+      final updatedClass = await getClass(classModel.id);
+      if (updatedClass == null) {
+        throw Exception('Failed to retrieve updated class');
+      }
+      
+      LoggerService.info('Enrolled student $studentId in class ${classModel.name} via code', tag: tag);
+      return updatedClass;
+      
+    } catch (e) {
+      LoggerService.error('Failed to enroll with code', tag: tag, error: e);
+      rethrow;
+    }
+  }
+  
+  /// Generates a new enrollment code for a class.
+  /// 
+  /// Creates a unique 6-character alphanumeric code
+  /// and updates the class record. Ensures uniqueness
+  /// by checking against existing codes.
+  /// 
+  /// @param classId Class to generate code for
+  /// @return The new enrollment code
+  /// @throws Exception if generation fails
+  @override
+  Future<String> regenerateEnrollmentCode(String classId) async {
+    try {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude ambiguous characters
+      const codeLength = 6;
+      const maxAttempts = 100;
+      
+      String? newCode;
+      bool isUnique = false;
+      
+      // Generate unique code
+      for (int attempt = 0; attempt < maxAttempts && !isUnique; attempt++) {
+        // Generate random code
+        final random = Random();
+        newCode = String.fromCharCodes(
+          Iterable.generate(
+            codeLength,
+            (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+          ),
+        );
+        
+        // Check if code already exists
+        final existing = await getClassByEnrollmentCode(newCode);
+        isUnique = existing == null;
+      }
+      
+      if (!isUnique || newCode == null) {
+        throw Exception('Unable to generate unique enrollment code');
+      }
+      
+      // Update class with new code
+      await _firestore.collection('classes').doc(classId).update({
+        'enrollmentCode': newCode,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      LoggerService.info('Generated new enrollment code for class $classId', tag: tag);
+      return newCode;
+      
+    } catch (e) {
+      LoggerService.error('Failed to regenerate enrollment code', tag: tag, error: e);
       rethrow;
     }
   }

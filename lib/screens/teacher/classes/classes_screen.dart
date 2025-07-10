@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../widgets/common/common_widgets.dart';
+import '../../../widgets/teacher/create_class_dialog.dart';
 import '../../../theme/app_theme.dart';
+import '../../../models/class_model.dart';
+import '../../../providers/class_provider.dart';
+import '../../../providers/auth_provider.dart';
 
 class ClassesScreen extends StatefulWidget {
   const ClassesScreen({super.key});
@@ -12,139 +18,115 @@ class ClassesScreen extends StatefulWidget {
 
 class _ClassesScreenState extends State<ClassesScreen> {
   String _searchQuery = '';
-  final bool _isLoading = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    // Load classes when the screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadClasses();
+    });
+  }
+  
+  Future<void> _loadClasses() async {
+    final authProvider = context.read<AuthProvider>();
+    final classProvider = context.read<ClassProvider>();
+    
+    if (authProvider.userModel != null) {
+      await classProvider.loadTeacherClasses(authProvider.userModel!.uid);
+    }
+  }
 
-  // Hardcoded class data for demonstration
-  final List<ClassData> _classes = [
-    ClassData(
-      id: '1',
-      name: 'Advanced Mathematics',
-      subject: 'Mathematics',
-      studentCount: 28,
-      schedule: 'Mon, Wed, Fri - 9:00 AM',
-      room: 'Room 204',
-      gradeLevel: '11th Grade',
-      averageGrade: 'B+',
-      nextAssignment: 'Calculus Quiz - Due Tomorrow',
-      recentActivity: '3 new submissions',
-      color: AppTheme.subjectColors[0], // Blue for Math
-    ),
-    ClassData(
-      id: '2',
-      name: 'Biology Lab',
-      subject: 'Science',
-      studentCount: 24,
-      schedule: 'Tue, Thu - 2:00 PM',
-      room: 'Lab 105',
-      gradeLevel: '10th Grade',
-      averageGrade: 'A-',
-      nextAssignment: 'Cell Division Report - Due Friday',
-      recentActivity: '5 students need feedback',
-      color: AppTheme.subjectColors[1], // Green for Science
-    ),
-    ClassData(
-      id: '3',
-      name: 'Creative Writing',
-      subject: 'English',
-      studentCount: 22,
-      schedule: 'Mon, Wed - 11:00 AM',
-      room: 'Room 108',
-      gradeLevel: '9th Grade',
-      averageGrade: 'B',
-      nextAssignment: 'Poetry Assignment - Due Next Week',
-      recentActivity: '2 late submissions',
-      color: AppTheme.subjectColors[2], // Orange for English
-    ),
-    ClassData(
-      id: '4',
-      name: 'World History',
-      subject: 'Social Studies',
-      studentCount: 30,
-      schedule: 'Daily - 1:00 PM',
-      room: 'Room 302',
-      gradeLevel: '10th Grade',
-      averageGrade: 'B-',
-      nextAssignment: 'Renaissance Essay - Due Monday',
-      recentActivity: '12 graded papers ready',
-      color: AppTheme.subjectColors[3], // Purple for History
-    ),
-    ClassData(
-      id: '5',
-      name: 'AP Physics',
-      subject: 'Physics',
-      studentCount: 18,
-      schedule: 'Mon, Wed, Fri - 3:00 PM',
-      room: 'Lab 203',
-      gradeLevel: '12th Grade',
-      averageGrade: 'A',
-      nextAssignment: 'Quantum Mechanics Test - Next Friday',
-      recentActivity: 'All caught up',
-      color: AppTheme.subjectColors[1], // Green for Science
-    ),
-  ];
+  Color _getSubjectColor(String subject) {
+    // Map subjects to consistent colors
+    final subjectMap = {
+      'Mathematics': AppTheme.subjectColors[0],
+      'Science': AppTheme.subjectColors[1],
+      'Biology': AppTheme.subjectColors[1],
+      'Chemistry': AppTheme.subjectColors[1],
+      'Physics': AppTheme.subjectColors[1],
+      'English': AppTheme.subjectColors[2],
+      'Social Studies': AppTheme.subjectColors[3],
+      'History': AppTheme.subjectColors[3],
+      'Computer Science': AppTheme.subjectColors[4],
+      'Art': AppTheme.subjectColors[5],
+      'Music': AppTheme.subjectColors[6],
+      'Physical Education': AppTheme.subjectColors[7],
+    };
+    
+    return subjectMap[subject] ?? AppTheme.subjectColors[0];
+  }
 
-  List<ClassData> get _filteredClasses {
-    if (_searchQuery.isEmpty) return _classes;
-    return _classes.where((classData) {
-      return classData.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             classData.subject.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             classData.gradeLevel.toLowerCase().contains(_searchQuery.toLowerCase());
+  List<ClassModel> _getFilteredClasses(List<ClassModel> classes) {
+    if (_searchQuery.isEmpty) return classes;
+    return classes.where((classModel) {
+      return classModel.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+             classModel.subject.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+             classModel.gradeLevel.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
-          tooltip: 'Back to Dashboard',
-        ),
-        title: const Text('My Classes'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
+    return Consumer<ClassProvider>(
+      builder: (context, classProvider, _) {
+        final filteredClasses = _getFilteredClasses(classProvider.teacherClasses);
+        
+        return Scaffold(
+          appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/dashboard'),
+              tooltip: 'Back to Dashboard',
+            ),
+            title: const Text('My Classes'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: _showCreateClassDialog,
+                tooltip: 'Add Class',
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              // Header with stats
+              _buildStatsHeader(classProvider),
+              
+              // Search bar
+              _buildSearchBar(),
+              
+              // Classes list
+              Expanded(
+                child: classProvider.isLoading
+                    ? const EmptyState(
+                        icon: Icons.class_,
+                        title: 'Loading Classes',
+                        message: 'Please wait...',
+                        isLoading: true,
+                      )
+                    : filteredClasses.isEmpty
+                        ? _searchQuery.isNotEmpty
+                            ? EmptyState.noSearchResults(searchTerm: _searchQuery)
+                            : const EmptyState.noClasses()
+                        : _buildClassesList(filteredClasses),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
             onPressed: _showCreateClassDialog,
-            tooltip: 'Add Class',
+            child: const Icon(Icons.add),
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Header with stats
-          _buildStatsHeader(),
-          
-          // Search bar
-          _buildSearchBar(),
-          
-          // Classes list
-          Expanded(
-            child: _isLoading
-                ? const EmptyState(
-                    icon: Icons.class_,
-                    title: 'Loading Classes',
-                    message: 'Please wait...',
-                    isLoading: true,
-                  )
-                : _filteredClasses.isEmpty
-                    ? _searchQuery.isNotEmpty
-                        ? EmptyState.noSearchResults(searchTerm: _searchQuery)
-                        : const EmptyState.noClasses()
-                    : _buildClassesList(),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateClassDialog,
-        child: const Icon(Icons.add),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildStatsHeader() {
-    final totalStudents = _classes.fold<int>(0, (sum, classData) => sum + classData.studentCount);
-    final avgGradePoints = _calculateAverageGradePoints();
+  Widget _buildStatsHeader(ClassProvider classProvider) {
+    final classes = classProvider.teacherClasses;
+    final totalStudents = classes.fold<int>(0, (sum, classModel) => sum + classModel.studentCount);
+    // For now, we'll use a placeholder for average grade since we don't have grade data yet
+    const avgGrade = 'B+';
     
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -153,7 +135,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
           Expanded(
             child: StatCard(
               title: 'Classes',
-              value: '${_classes.length}',
+              value: '${classes.length}',
               icon: Icons.class_,
               subtitle: 'Active',
             ),
@@ -171,9 +153,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
           Expanded(
             child: StatCard(
               title: 'Avg Grade',
-              value: _getLetterGrade(avgGradePoints),
+              value: avgGrade,
               icon: Icons.grade,
-              valueColor: AppTheme.getGradeColor(_getLetterGrade(avgGradePoints)),
+              valueColor: AppTheme.getGradeColor(avgGrade),
               subtitle: 'Overall',
             ),
           ),
@@ -219,20 +201,20 @@ class _ClassesScreenState extends State<ClassesScreen> {
     );
   }
 
-  Widget _buildClassesList() {
+  Widget _buildClassesList(List<ClassModel> classes) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _filteredClasses.length,
+      itemCount: classes.length,
       itemBuilder: (context, index) {
-        final classData = _filteredClasses[index];
-        return _buildClassCard(classData);
+        final classModel = classes[index];
+        return _buildClassCard(classModel);
       },
     );
   }
 
-  Widget _buildClassCard(ClassData classData) {
+  Widget _buildClassCard(ClassModel classModel) {
     return AppCard(
-      onTap: () => _navigateToClassDetail(classData),
+      onTap: () => _navigateToClassDetail(classModel),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -243,7 +225,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
                 width: 4,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: classData.color,
+                  color: _getSubjectColor(classModel.subject),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -253,13 +235,13 @@ class _ClassesScreenState extends State<ClassesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      classData.name,
+                      classModel.name,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      '${classData.subject} • ${classData.gradeLevel}',
+                      '${classModel.subject} • ${classModel.gradeLevel}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
@@ -267,7 +249,32 @@ class _ClassesScreenState extends State<ClassesScreen> {
                   ],
                 ),
               ),
-              StatusBadge.grade(grade: classData.averageGrade),
+              // Enrollment code badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.qr_code,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      classModel.enrollmentCode ?? 'No Code',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
           
@@ -278,56 +285,33 @@ class _ClassesScreenState extends State<ClassesScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildInfoChip(Icons.people, '${classData.studentCount} students'),
-              _buildInfoChip(Icons.room, classData.room),
-              _buildInfoChip(Icons.schedule, classData.schedule),
+              _buildInfoChip(Icons.people, '${classModel.studentCount} students'),
+              if (classModel.room != null) _buildInfoChip(Icons.room, classModel.room!),
+              if (classModel.schedule != null) _buildInfoChip(Icons.schedule, classModel.schedule!),
             ],
           ),
           
           const SizedBox(height: 12),
           
-          // Next assignment
-          if (classData.nextAssignment != null) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.assignment,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
+          // Action buttons row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () => _copyEnrollmentCode(classModel.enrollmentCode ?? ''),
+                icon: const Icon(Icons.copy, size: 16),
+                label: const Text('Copy Code'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    classData.nextAssignment!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-          ],
-          
-          // Recent activity
-          if (classData.recentActivity != null) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.notifications,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  classData.recentActivity!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(width: 8),
+              FilledButton.tonal(
+                onPressed: () => _navigateToClassDetail(classModel),
+                child: const Text('View Details'),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -360,56 +344,24 @@ class _ClassesScreenState extends State<ClassesScreen> {
     );
   }
 
-  double _calculateAverageGradePoints() {
-    if (_classes.isEmpty) return 0.0;
+  void _copyEnrollmentCode(String code) {
+    if (code.isEmpty) return;
     
-    double totalPoints = 0;
-    for (final classData in _classes) {
-      totalPoints += _gradeToPoints(classData.averageGrade);
-    }
-    return totalPoints / _classes.length;
-  }
-
-  double _gradeToPoints(String grade) {
-    switch (grade.toUpperCase()) {
-      case 'A+': return 4.3;
-      case 'A': return 4.0;
-      case 'A-': return 3.7;
-      case 'B+': return 3.3;
-      case 'B': return 3.0;
-      case 'B-': return 2.7;
-      case 'C+': return 2.3;
-      case 'C': return 2.0;
-      case 'C-': return 1.7;
-      case 'D+': return 1.3;
-      case 'D': return 1.0;
-      case 'D-': return 0.7;
-      case 'F': return 0.0;
-      default: return 0.0;
-    }
-  }
-
-  String _getLetterGrade(double points) {
-    if (points >= 4.2) return 'A+';
-    if (points >= 3.85) return 'A';
-    if (points >= 3.5) return 'A-';
-    if (points >= 3.15) return 'B+';
-    if (points >= 2.85) return 'B';
-    if (points >= 2.5) return 'B-';
-    if (points >= 2.15) return 'C+';
-    if (points >= 1.85) return 'C';
-    if (points >= 1.5) return 'C-';
-    if (points >= 1.15) return 'D+';
-    if (points >= 0.85) return 'D';
-    if (points >= 0.5) return 'D-';
-    return 'F';
-  }
-
-  void _navigateToClassDetail(ClassData classData) {
-    // TODO: Navigate to class detail screen
+    Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Opening ${classData.name}...'),
+        content: Text('Enrollment code $code copied to clipboard'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _navigateToClassDetail(ClassModel classModel) {
+    // TODO: Navigate to class detail screen
+    // For now, we'll show a snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Opening ${classModel.name}...'),
         action: SnackBarAction(
           label: 'OK',
           onPressed: () {},
@@ -421,54 +373,12 @@ class _ClassesScreenState extends State<ClassesScreen> {
   void _showCreateClassDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create New Class'),
-        content: const Text('Class creation dialog would appear here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Feature coming soon!')),
-              );
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
-    );
+      builder: (context) => const CreateClassDialog(),
+    ).then((result) {
+      if (result == true) {
+        // Class was created successfully, reload data
+        _loadClasses();
+      }
+    });
   }
-}
-
-// Data model for class information
-class ClassData {
-  final String id;
-  final String name;
-  final String subject;
-  final int studentCount;
-  final String schedule;
-  final String room;
-  final String gradeLevel;
-  final String averageGrade;
-  final String? nextAssignment;
-  final String? recentActivity;
-  final Color color;
-
-  ClassData({
-    required this.id,
-    required this.name,
-    required this.subject,
-    required this.studentCount,
-    required this.schedule,
-    required this.room,
-    required this.gradeLevel,
-    required this.averageGrade,
-    this.nextAssignment,
-    this.recentActivity,
-    required this.color,
-  });
 }

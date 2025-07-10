@@ -5,7 +5,8 @@ import '../widgets/common/responsive_layout.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/calendar_event.dart';
-import '../services/device_calendar_service.dart';
+import '../services/device_calendar_service_interface.dart';
+import '../services/device_calendar_service_factory.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -1044,14 +1045,14 @@ class EventDetailSheet extends StatelessWidget {
                             
                             if (shouldSync == true) {
                               try {
-                                final deviceCalendarService = DeviceCalendarService();
-                                final success = await deviceCalendarService.syncEventToDevice(event);
+                                final deviceCalendarService = DeviceCalendarServiceFactory.create();
+                                final eventId = await deviceCalendarService.addCalendarEvent(event: event);
                                 
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        success 
+                                        eventId != null
                                           ? 'Event synced to device calendar' 
                                           : 'Failed to sync event to device calendar'
                                       ),

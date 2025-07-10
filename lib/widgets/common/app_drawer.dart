@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/navigation_provider.dart';
 import '../../models/user_model.dart';
 import 'favorites_nav_bar.dart';
 
@@ -84,6 +85,23 @@ class AppDrawer extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
+                  // Quick Access Favorites Section
+                  _buildFavoritesSection(context),
+                  
+                  const Divider(height: 32),
+                  
+                  // All Navigation Items
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      'All Navigation',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  
                   _buildNavItem(
                     context,
                     icon: Icons.dashboard_outlined,
@@ -212,10 +230,10 @@ class AppDrawer extends StatelessWidget {
                   ),
                   _buildNavItem(
                     context,
-                    icon: Icons.help_outline,
-                    selectedIcon: Icons.help,
-                    title: 'Help & Support',
-                    route: '/help',
+                    icon: Icons.contact_support_outlined,
+                    selectedIcon: Icons.contact_support,
+                    title: 'Contact Support',
+                    route: '/contact-support',
                   ),
 
                   // Temporary debug option
@@ -301,6 +319,107 @@ class AppDrawer extends StatelessWidget {
           context.go(route);
         });
       },
+    );
+  }
+  
+  Widget _buildFavoritesSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final navigationProvider = context.watch<NavigationProvider>();
+    final favoriteItems = navigationProvider.favoriteItems;
+    
+    if (favoriteItems.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(
+            children: [
+              Text(
+                'Quick Access',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.star,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
+            ],
+          ),
+        ),
+        
+        // Favorites Grid
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 2.5,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: favoriteItems.length,
+            itemBuilder: (context, index) {
+              final item = favoriteItems[index];
+              final router = GoRouter.of(context);
+              final currentRoute = router.routeInformationProvider.value.uri.path;
+              final isSelected = currentRoute == item.route;
+              
+              return Material(
+                color: isSelected 
+                    ? theme.colorScheme.primaryContainer
+                    : theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () {
+                    Scaffold.of(context).closeDrawer();
+                    Future.delayed(const Duration(milliseconds: 200), () {
+                      context.go(item.route);
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isSelected ? item.activeIcon : item.icon,
+                          size: 20,
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

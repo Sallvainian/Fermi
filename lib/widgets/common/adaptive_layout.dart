@@ -189,39 +189,33 @@ class AdaptiveLayout extends StatelessWidget {
                   ),
                 // Main content area with app bar and content
                 Expanded(
-                  child: Column(
-                    children: [
-                      // AppBar with proper constraints for TabBar
-                      AppBar(
-                        // Back button handling for desktop layout
-                        leading: showBackButton
-                            ? IconButton(
-                                icon: const Icon(Icons.arrow_back),
-                                onPressed: onBackPressed ??
-                                    () {
-                                      if (context.canPop()) {
-                                        context.pop();
-                                      } else {
-                                        context.go('/dashboard');
-                                      }
-                                    },
-                              )
-                            : null,
-                        title: Text(title),
-                        actions: actions,
-                        automaticallyImplyLeading:
-                            false, // Disable default drawer toggle
-                        bottom: bottom,
-                      ),
-                      // Content area with desktop-optimized spacing
-                      Expanded(
-                        child: ResponsivePadding(
-                          tablet: const EdgeInsets.all(AppSpacing.lg),
-                          desktop: const EdgeInsets.all(AppSpacing.xl),
-                          child: body,
-                        ),
-                      ),
-                    ],
+                  child: Scaffold(
+                    appBar: AppBar(
+                      // Back button handling for desktop layout
+                      leading: showBackButton
+                          ? IconButton(
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed: onBackPressed ??
+                                  () {
+                                    if (context.canPop()) {
+                                      context.pop();
+                                    } else {
+                                      context.go('/dashboard');
+                                    }
+                                  },
+                            )
+                          : null,
+                      title: Text(title),
+                      actions: actions,
+                      automaticallyImplyLeading:
+                          false, // Disable default drawer toggle
+                      bottom: bottom,
+                    ),
+                    body: ResponsivePadding(
+                      tablet: const EdgeInsets.all(AppSpacing.lg),
+                      desktop: const EdgeInsets.all(AppSpacing.xl),
+                      child: body,
+                    ),
                   ),
                 ),
               ],

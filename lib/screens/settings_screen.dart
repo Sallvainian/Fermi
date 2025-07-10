@@ -27,8 +27,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _dateFormat = 'MM/dd/yyyy';
   
   // Privacy Settings
-  bool _dataCollection = true;
-  bool _analytics = true;
+  final bool _dataCollection = true;
+  final bool _analytics = true;
   bool _crashReporting = true;
   
   // Academic Settings
@@ -286,26 +286,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               icon: Icons.storage,
               children: [
                 _buildSwitchTile(
-                  title: 'Data Collection',
-                  subtitle: 'Allow anonymous usage data collection',
-                  value: _dataCollection,
-                  onChanged: (value) {
-                    setState(() {
-                      _dataCollection = value;
-                    });
-                  },
-                ),
-                _buildSwitchTile(
-                  title: 'Analytics',
-                  subtitle: 'Help improve the app with usage analytics',
-                  value: _analytics,
-                  onChanged: (value) {
-                    setState(() {
-                      _analytics = value;
-                    });
-                  },
-                ),
-                _buildSwitchTile(
                   title: 'Crash Reporting',
                   subtitle: 'Automatically report app crashes',
                   value: _crashReporting,
@@ -337,18 +317,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'Support & About',
               icon: Icons.help,
               children: [
-                _buildActionTile(
-                  title: 'Help Center',
-                  subtitle: 'Get help and support',
-                  icon: Icons.help_center,
-                  onTap: () => _showFeatureComingSoon(),
-                ),
-                _buildActionTile(
-                  title: 'Contact Support',
-                  subtitle: 'Reach out to our support team',
-                  icon: Icons.contact_support,
-                  onTap: _showContactSupport,
-                ),
                 _buildActionTile(
                   title: 'Send Feedback',
                   subtitle: 'Share your thoughts and suggestions',
@@ -659,55 +627,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showContactSupport() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Contact Support'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Choose how you\'d like to contact support:'),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.email),
-              title: const Text('Email'),
-              subtitle: const Text('support@teacherdashboard.edu'),
-              onTap: () {
-                Navigator.pop(context);
-                _showFeatureComingSoon();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.phone),
-              title: const Text('Phone'),
-              subtitle: const Text('1-800-TEACHER'),
-              onTap: () {
-                Navigator.pop(context);
-                _showFeatureComingSoon();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.chat),
-              title: const Text('Live Chat'),
-              subtitle: const Text('Available 9 AM - 5 PM EST'),
-              onTap: () {
-                Navigator.pop(context);
-                _showFeatureComingSoon();
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showFeedbackDialog() {
     showDialog(

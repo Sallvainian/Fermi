@@ -28,13 +28,23 @@ service cloud.firestore {
     // Classes - students can read their classes, only teacher can write
     match /classes/{classId} {
       // Students can read classes they're enrolled in, teacher can read all
+      // Also allow students to read any class when searching by enrollment code
       allow read: if request.auth != null && 
         (isTheTeacher() || 
-         (isStudent() && request.auth.uid in resource.data.studentIds));
+         (isStudent() && request.auth.uid in resource.data.studentIds) ||
+         isStudent());
       
-      // Only THE teacher can create, update, or delete classes
+      // Only THE teacher can create classes
       allow create: if isTheTeacher();
-      allow update, delete: if isTheTeacher();
+      
+      // Allow updates if teacher OR if student is enrolling (adding their ID to studentIds)
+      allow update: if isTheTeacher() || 
+        (isStudent() && 
+         request.auth.uid in request.resource.data.studentIds &&
+         request.resource.data.studentIds.hasAll(resource.data.studentIds));
+         
+      // Only THE teacher can delete classes
+      allow delete: if isTheTeacher();
       
       // Nested collections in classes
       match /{document=**} {
@@ -298,6 +308,19 @@ service cloud.firestore {
       // Users can delete their own notifications
       allow delete: if request.auth != null && 
         request.auth.uid == resource.data.userId;
+    }
+    
+    // Bug reports collection
+    match /bug_reports/{reportId} {
+      // Only teachers can read bug reports (for admin purposes)
+      allow read: if isTheTeacher();
+      
+      // Any authenticated user can create a bug report
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+      
+      // Users cannot update or delete bug reports once submitted
+      allow update, delete: if false;
     }
   }
 }

@@ -1,41 +1,30 @@
-/// This file is deprecated and kept only for reference.
-/// 
-/// Use the platform-specific implementations instead:
-/// - device_calendar_service_interface.dart - The interface
-/// - device_calendar_service_factory.dart - The factory
-/// - device_calendar_service_mobile.dart - Mobile implementation
-/// - device_calendar_service_web.dart - Web implementation
-/// 
-/// Example usage:
-/// ```dart
-/// final service = DeviceCalendarServiceFactory.create();
-/// await service.addCalendarEvent(event: myEvent);
-/// ```
-library;
-
 import 'dart:io';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/calendar_event.dart';
 import '../models/assignment.dart';
 import '../services/logger_service.dart';
+import 'device_calendar_service_interface.dart';
 
-/// DEPRECATED: Use DeviceCalendarServiceFactory.create() instead
-/// Service for syncing events with device calendar
-@Deprecated('Use DeviceCalendarServiceFactory.create() instead')
-class DeviceCalendarService {
-  static final DeviceCalendarService _instance = DeviceCalendarService._internal();
-  factory DeviceCalendarService() => _instance;
-  DeviceCalendarService._internal() {
-    tzdata.initializeTimeZones();
+/// Factory function for conditional imports
+DeviceCalendarServiceInterface getDeviceCalendarService() {
+  return DeviceCalendarServiceMobile();
+}
+
+/// Mobile implementation of device calendar service
+class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
+  static final DeviceCalendarServiceMobile _instance = DeviceCalendarServiceMobile._internal();
+  factory DeviceCalendarServiceMobile() => _instance;
+  DeviceCalendarServiceMobile._internal() {
+    tz.initializeTimeZones();
   }
 
   final DeviceCalendarPlugin _deviceCalendarPlugin = DeviceCalendarPlugin();
   String? _defaultCalendarId;
   
-  /// Check and request calendar permissions
+  @override
   Future<bool> requestPermissions() async {
     try {
       // Request calendar permission
@@ -58,8 +47,8 @@ class DeviceCalendarService {
     }
   }
   
-  /// Get list of device calendars
-  Future<List<Calendar>> getDeviceCalendars() async {
+  @override
+  Future<List<dynamic>> getDeviceCalendars() async {
     try {
       final hasPermission = await requestPermissions();
       if (!hasPermission) return [];
@@ -78,16 +67,17 @@ class DeviceCalendarService {
   }
   
   /// Get or create default calendar for the app
-  Future<String?> getOrCreateDefaultCalendar() async {
+  Future<String?> _getOrCreateDefaultCalendar() async {
     try {
       if (_defaultCalendarId != null) {
         return _defaultCalendarId;
       }
       
       final calendars = await getDeviceCalendars();
+      final calendarList = calendars.cast<Calendar>();
       
       // Look for existing app calendar
-      final appCalendar = calendars.firstWhere(
+      final appCalendar = calendarList.firstWhere(
         (cal) => cal.name == 'Teacher Dashboard',
         orElse: () => Calendar(name: '', id: ''),
       );
@@ -100,7 +90,7 @@ class DeviceCalendarService {
       // Create new calendar if not found
       if (Platform.isAndroid) {
         // On Android, use the first writable calendar
-        final writableCalendar = calendars.firstWhere(
+        final writableCalendar = calendarList.firstWhere(
           (cal) => cal.isReadOnly == false,
           orElse: () => Calendar(name: '', id: ''),
         );
@@ -112,9 +102,9 @@ class DeviceCalendarService {
       } else if (Platform.isIOS) {
         // On iOS, we can create a new calendar
         // For now, use the default calendar
-        final defaultCalendar = calendars.firstWhere(
+        final defaultCalendar = calendarList.firstWhere(
           (cal) => cal.isDefault == true,
-          orElse: () => calendars.isNotEmpty ? calendars.first : Calendar(name: '', id: ''),
+          orElse: () => calendarList.isNotEmpty ? calendarList.first : Calendar(name: '', id: ''),
         );
         
         if (defaultCalendar.id?.isNotEmpty == true) {
@@ -131,19 +121,22 @@ class DeviceCalendarService {
     }
   }
   
-  /// Sync calendar event to device calendar
-  Future<bool> syncEventToDevice(CalendarEvent event) async {
+  @override
+  Future<String?> addCalendarEvent({
+    required CalendarEvent event,
+    String? calendarId,
+  }) async {
     try {
-      final calendarId = await getOrCreateDefaultCalendar();
-      if (calendarId == null) {
+      final finalCalendarId = calendarId ?? await _getOrCreateDefaultCalendar();
+      if (finalCalendarId == null) {
         LoggerService.warning('No calendar available for sync', 
             tag: 'DeviceCalendarService');
-        return false;
+        return null;
       }
       
       // Create device event
       final deviceEvent = Event(
-        calendarId,
+        finalCalendarId,
         eventId: event.id,
         title: event.title,
         description: event.description,
@@ -177,32 +170,35 @@ class DeviceCalendarService {
       if (result?.isSuccess == true) {
         LoggerService.info('Event synced to device calendar: ${event.title}', 
             tag: 'DeviceCalendarService');
-        return true;
+        return result!.data;
       }
       
       LoggerService.warning('Failed to sync event to device calendar', 
           tag: 'DeviceCalendarService');
-      return false;
+      return null;
     } catch (e) {
       LoggerService.error('Error syncing event to device calendar', 
           tag: 'DeviceCalendarService', error: e);
-      return false;
+      return null;
     }
   }
   
-  /// Sync assignment to device calendar
-  Future<bool> syncAssignmentToDevice(Assignment assignment) async {
+  @override
+  Future<String?> addAssignmentToCalendar({
+    required Assignment assignment,
+    String? calendarId,
+  }) async {
     try {
-      final calendarId = await getOrCreateDefaultCalendar();
-      if (calendarId == null) {
+      final finalCalendarId = calendarId ?? await _getOrCreateDefaultCalendar();
+      if (finalCalendarId == null) {
         LoggerService.warning('No calendar available for sync', 
             tag: 'DeviceCalendarService');
-        return false;
+        return null;
       }
       
       // Create device event for assignment
       final deviceEvent = Event(
-        calendarId,
+        finalCalendarId,
         eventId: 'assignment_${assignment.id}',
         title: 'Due: ${assignment.title}',
         description: assignment.description,
@@ -221,26 +217,86 @@ class DeviceCalendarService {
       if (result?.isSuccess == true) {
         LoggerService.info('Assignment synced to device calendar: ${assignment.title}', 
             tag: 'DeviceCalendarService');
-        return true;
+        return result!.data;
       }
       
       LoggerService.warning('Failed to sync assignment to device calendar', 
           tag: 'DeviceCalendarService');
-      return false;
+      return null;
     } catch (e) {
       LoggerService.error('Error syncing assignment to device calendar', 
+          tag: 'DeviceCalendarService', error: e);
+      return null;
+    }
+  }
+  
+  @override
+  Future<bool> updateCalendarEvent({
+    required String eventId,
+    required CalendarEvent event,
+    String? calendarId,
+  }) async {
+    try {
+      final finalCalendarId = calendarId ?? await _getOrCreateDefaultCalendar();
+      if (finalCalendarId == null) return false;
+      
+      // Create updated device event
+      final deviceEvent = Event(
+        finalCalendarId,
+        eventId: eventId,
+        title: event.title,
+        description: event.description,
+        start: tz.TZDateTime.from(event.startTime, tz.local),
+        end: event.endTime != null 
+            ? tz.TZDateTime.from(event.endTime!, tz.local)
+            : tz.TZDateTime.from(event.startTime.add(const Duration(hours: 1)), tz.local),
+        allDay: event.isAllDay,
+      );
+      
+      // Set location if available
+      if (event.location != null) {
+        deviceEvent.location = event.location;
+      }
+      
+      // Add reminder if enabled
+      if (event.hasReminder && event.reminderMinutes != null) {
+        deviceEvent.reminders = [
+          Reminder(minutes: event.reminderMinutes!),
+        ];
+      }
+      
+      // Add recurrence if applicable
+      if (event.recurrence != RecurrenceType.none) {
+        deviceEvent.recurrenceRule = _createRecurrenceRule(event);
+      }
+      
+      // Update event
+      final result = await _deviceCalendarPlugin.createOrUpdateEvent(deviceEvent);
+      
+      if (result?.isSuccess == true) {
+        LoggerService.info('Event updated in device calendar: ${event.title}', 
+            tag: 'DeviceCalendarService');
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      LoggerService.error('Error updating event in device calendar', 
           tag: 'DeviceCalendarService', error: e);
       return false;
     }
   }
   
-  /// Remove event from device calendar
-  Future<bool> removeEventFromDevice(String eventId) async {
+  @override
+  Future<bool> deleteCalendarEvent({
+    required String eventId,
+    String? calendarId,
+  }) async {
     try {
-      final calendarId = await getOrCreateDefaultCalendar();
-      if (calendarId == null) return false;
+      final finalCalendarId = calendarId ?? await _getOrCreateDefaultCalendar();
+      if (finalCalendarId == null) return false;
       
-      final result = await _deviceCalendarPlugin.deleteEvent(calendarId, eventId);
+      final result = await _deviceCalendarPlugin.deleteEvent(finalCalendarId, eventId);
       
       if (result.isSuccess) {
         LoggerService.info('Event removed from device calendar: $eventId', 
@@ -283,5 +339,4 @@ class DeviceCalendarService {
       endDate: event.recurrenceEndDate,
     );
   }
-  
 }

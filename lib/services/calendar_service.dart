@@ -10,7 +10,8 @@ import '../repositories/calendar_repository.dart';
 import '../repositories/user_repository.dart';
 import '../repositories/class_repository.dart';
 import 'notification_service.dart';
-import 'device_calendar_service.dart';
+import 'device_calendar_service_interface.dart';
+import 'device_calendar_service_factory.dart';
 
 /// Service for managing calendar operations.
 /// 
@@ -105,8 +106,8 @@ class CalendarService {
     
     // Sync to device calendar if requested
     if (syncToDeviceCalendar) {
-      final deviceCalendarService = DeviceCalendarService();
-      await deviceCalendarService.syncEventToDevice(createdEvent);
+      final deviceCalendarService = DeviceCalendarServiceFactory.create();
+      await deviceCalendarService.addCalendarEvent(event: createdEvent);
     }
     
     return createdEvent;

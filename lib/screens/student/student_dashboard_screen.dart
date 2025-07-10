@@ -2,13 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/class_provider.dart';
 import '../../models/user_model.dart';
+import '../../models/class_model.dart';
 import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
+import '../../widgets/common/common_widgets.dart';
 import '../../theme/app_spacing.dart';
+import '../../theme/app_theme.dart';
 
-class StudentDashboardScreen extends StatelessWidget {
+class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
+
+  @override
+  State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
+}
+
+class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadStudentClasses();
+  }
+
+  void _loadStudentClasses() {
+    final authProvider = context.read<AuthProvider>();
+    final classProvider = context.read<ClassProvider>();
+    final studentId = authProvider.userModel?.uid;
+    
+    if (studentId != null) {
+      classProvider.loadStudentClasses(studentId);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +47,7 @@ class StudentDashboardScreen extends StatelessWidget {
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
-            // TODO: Navigate to notifications
+            context.go('/student/notifications');
           },
         ),
         IconButton(
@@ -80,17 +105,21 @@ class StudentDashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+              const SizedBox(height: 16),
+
+              // Quick Stats - Smaller section
+              _buildQuickStats(context),
               const SizedBox(height: 24),
 
-              // Academic Overview
+              // My Classes
               Text(
-                  'Academic Overview',
+                  'My Classes',
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
-              _buildAcademicOverviewGrid(context),
+              _buildClassesSection(context),
               const SizedBox(height: AppSpacing.lg),
 
               // Upcoming Assignments
@@ -120,51 +149,198 @@ class StudentDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAcademicOverviewGrid(BuildContext context) {
-    return ResponsiveGrid(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mobileColumns: 2,
-      tabletColumns: 4,
-      desktopColumns: 4,
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
-      childAspectRatio: 1.2,
+  Widget _buildQuickStats(BuildContext context) {
+    final classProvider = context.watch<ClassProvider>();
+    final enrolledClasses = classProvider.studentClasses;
+    
+    return SizedBox(
+      height: 80,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        children: [
+          _buildCompactStatCard(
+            context,
+            icon: Icons.book,
+            title: 'Courses',
+            value: '${enrolledClasses.length}',
+            color: Colors.blue,
+            onTap: () => context.go('/student/courses'),
+          ),
+          const SizedBox(width: 12),
+          _buildCompactStatCard(
+            context,
+            icon: Icons.assignment,
+            title: 'Assignments',
+            value: '12',
+            color: Colors.orange,
+            onTap: () => context.go('/student/assignments'),
+          ),
+          const SizedBox(width: 12),
+          _buildCompactStatCard(
+            context,
+            icon: Icons.schedule,
+            title: 'Due Soon',
+            value: '3',
+            color: Colors.red,
+          ),
+          const SizedBox(width: 12),
+          _buildCompactStatCard(
+            context,
+            icon: Icons.trending_up,
+            title: 'GPA',
+            value: '3.8',
+            color: Colors.green,
+            onTap: () => context.go('/student/grades'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassesSection(BuildContext context) {
+    final classProvider = context.watch<ClassProvider>();
+    
+    if (classProvider.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    
+    final enrolledClasses = classProvider.studentClasses;
+    
+    if (enrolledClasses.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(
+            child: Column(
+              children: [
+                Icon(
+                  Icons.school_outlined,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No Classes Yet',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Join a class to get started',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go('/student/enroll'),
+                  child: const Text('Join a Class'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // Show max 4 classes on dashboard
+    final displayClasses = enrolledClasses.take(4).toList();
+    
+    return Column(
       children: [
-        _buildOverviewCard(
-          context,
-          icon: Icons.book,
-          title: 'Courses',
-          value: '6',
-          color: Colors.blue,
-          onTap: () => context.go('/student/courses'),
-        ),
-        _buildOverviewCard(
-          context,
-          icon: Icons.assignment,
-          title: 'Assignments',
-          value: '12',
-          color: Colors.orange,
-        ),
-        _buildOverviewCard(
-          context,
-          icon: Icons.schedule,
-          title: 'Due Soon',
-          value: '3',
-          color: Colors.red,
-        ),
-        _buildOverviewCard(
-          context,
-          icon: Icons.trending_up,
-          title: 'GPA',
-          value: '3.8',
-          color: Colors.green,
-        ),
+        ...displayClasses.map((course) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _buildClassCard(context, course),
+        )),
+        if (enrolledClasses.length > 4) ...[
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => context.go('/student/courses'),
+              child: Text('View All ${enrolledClasses.length} Classes'),
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildOverviewCard(
+  Widget _buildClassCard(BuildContext context, ClassModel course) {
+    final theme = Theme.of(context);
+    final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
+    final color = AppTheme.subjectColors[colorIndex];
+    
+    return AppCard(
+      onTap: () => _navigateToClass(context, course),
+      child: Row(
+        children: [
+          // Color indicator
+          Container(
+            width: 4,
+            height: 60,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          
+          // Class info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  course.subject,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8.0,
+                  children: [
+                    if (course.room != null)
+                      _buildInfoChip(Icons.room, course.room!),
+                    if (course.schedule != null)
+                      _buildInfoChip(Icons.schedule, course.schedule!),
+                    _buildInfoChip(Icons.school, course.gradeLevel),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          
+          // Arrow icon
+          Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToClass(BuildContext context, ClassModel course) {
+    // Set the selected class in the provider
+    context.read<ClassProvider>().setSelectedClass(course);
+    // Navigate to class detail or assignments
+    context.go('/student/courses'); // You can change this to a specific class detail route
+  }
+
+  Widget _buildCompactStatCard(
     BuildContext context, {
     required IconData icon,
     required String title,
@@ -174,43 +350,76 @@ class StudentDashboardScreen extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
     
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 28,
-                color: color,
-              ),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  value,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
+    return SizedBox(
+      width: 120,
+      child: Card(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: color,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      value,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
+                const SizedBox(height: 4),
+                Text(
                   title,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String text) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -74,14 +74,18 @@ dependencies:
   
   # Notifications
   flutter_local_notifications: ^19.3.0
-  timezone:
+  timezone: ^0.10.0
   
   # Calendar sync
-  device_calendar:
+  device_calendar: ^4.3.2
   
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   rxdart: ^0.28.0
+
+# Dependency overrides to resolve version conflicts
+dependency_overrides:
+  timezone: ^0.10.0
 
 dev_dependencies:
   flutter_test:

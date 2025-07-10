@@ -70,6 +70,9 @@ class ClassModel {
   /// Optional maximum number of students allowed in the class
   final int? maxStudents;
   
+  /// Unique enrollment code for students to join the class
+  final String? enrollmentCode;
+  
   /// Flexible settings map for class-specific configurations
   final Map<String, dynamic>? settings;
 
@@ -90,6 +93,7 @@ class ClassModel {
     required this.academicYear,
     required this.semester,
     this.maxStudents,
+    this.enrollmentCode,
     this.settings,
   });
 
@@ -124,6 +128,7 @@ class ClassModel {
       academicYear: data['academicYear'] ?? '',
       semester: data['semester'] ?? '',
       maxStudents: data['maxStudents'],
+      enrollmentCode: data['enrollmentCode'],
       settings: data['settings'],
     );
   }
@@ -153,6 +158,7 @@ class ClassModel {
       'academicYear': academicYear,
       'semester': semester,
       'maxStudents': maxStudents,
+      'enrollmentCode': enrollmentCode,
       'settings': settings,
     };
   }
@@ -186,6 +192,7 @@ class ClassModel {
     String? academicYear,
     String? semester,
     int? maxStudents,
+    String? enrollmentCode,
     Map<String, dynamic>? settings,
   }) {
     return ClassModel(
@@ -205,6 +212,7 @@ class ClassModel {
       academicYear: academicYear ?? this.academicYear,
       semester: semester ?? this.semester,
       maxStudents: maxStudents ?? this.maxStudents,
+      enrollmentCode: enrollmentCode ?? this.enrollmentCode,
       settings: settings ?? this.settings,
     );
   }
