@@ -1,9 +1,0 @@
-{
-    "recommendations": [
-        "dart-code.dart-code",
-        "dart-code.flutter",
-        "ms-vscode.vscode-json",
-        "redhat.vscode-yaml",
-        "bradlc.vscode-tailwindcss"
-    ]
-}
