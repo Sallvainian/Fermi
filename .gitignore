@@ -88,3 +88,43 @@ google-services.json
 .cursor/
 .gemini/
 devtools_options.yaml
+
+# Project-specific files not for public repo
+PROJECT_TODOS.md
+CLAUDE.md
+launch_app.sh
+.mcp.json
+
+# Android build artifacts
+android/init.gradle
+android/gradle.properties
+android/build/
+
+# VS Code / Cursor
+.vscode/
+.cursor/
+
+# Private/local environment files
+.env
+.env.*
+*.env
+.firebaserc
+
+# Firebase emulator
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+emulator-debug.log
+firebase-export-*
+
+# Test coverage
+coverage/
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+.~*
