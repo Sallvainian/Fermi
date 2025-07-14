@@ -24,7 +24,6 @@ import '../screens/student/assignments_screen.dart';
 import '../screens/student/assignment_submission_screen.dart';
 import '../screens/student/enrollment_screen.dart';
 import '../screens/student/notifications_screen.dart' as student_notifications;
-import '../screens/crashlytics_test_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/debug/update_display_name_screen.dart';
 import '../screens/chat/chat_list_screen.dart';
@@ -300,10 +299,6 @@ class AppRouter {
     GoRoute(
       path: '/contact-support',
       builder: (context, state) => const ContactSupportScreen(),
-    ),
-    GoRoute(
-      path: '/crashlytics-test',
-      builder: (context, state) => const CrashlyticsTestScreen(),
     ),
     GoRoute(
       path: '/debug/update-name',

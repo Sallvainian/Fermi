@@ -8,6 +8,7 @@ import '../../models/class_model.dart';
 import '../../widgets/common/adaptive_layout.dart';
 import '../../widgets/common/responsive_layout.dart';
 import '../../widgets/common/common_widgets.dart';
+import '../../widgets/dashboard/online_users_card.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_theme.dart';
 
@@ -131,6 +132,20 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
               const SizedBox(height: AppSpacing.md),
               _buildRecentActivityCard(context),
+              const SizedBox(height: AppSpacing.lg),
+              
+              // Online Users
+              Text(
+                  'Online Users',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              const SizedBox(height: AppSpacing.md),
+              SizedBox(
+                height: 300,
+                child: OnlineUsersCard(),
+              ),
               const SizedBox(height: AppSpacing.lg),
 
               // Quick Actions

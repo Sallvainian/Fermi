@@ -11,6 +11,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../repositories/auth_repository.dart';
 import '../core/service_locator.dart';
+import '../services/presence_service.dart';
 
 /// Enumeration of possible authentication states.
 /// 
@@ -46,6 +47,9 @@ enum AuthStatus {
 class AuthProvider extends ChangeNotifier {
   /// Repository for authentication operations.
   AuthRepository? _authRepository;
+  
+  /// Presence service for online status tracking.
+  final PresenceService _presenceService = PresenceService();
   
   /// Current authentication status.
   AuthStatus _status = AuthStatus.uninitialized;
@@ -119,12 +123,22 @@ class AuthProvider extends ChangeNotifier {
         if (user == null) {
           _status = AuthStatus.unauthenticated;
           _userModel = null;
+          // Clean up presence when user logs out
+          await _presenceService.cleanupPresence();
         } else {
           // Try to get user model from Firestore
           final userModel = await _authRepository!.getCurrentUserModel();
           if (userModel != null) {
             _userModel = userModel;
             _status = AuthStatus.authenticated;
+            // Initialize presence for ALL authenticated users with their full data
+            _presenceService.initializePresence(userData: {
+              'displayName': userModel.displayName,
+              'firstName': userModel.firstName,
+              'lastName': userModel.lastName,
+              'role': userModel.role?.name ?? 'student',
+              'photoURL': userModel.photoURL,
+            });
           } else {
             // User exists in Auth but not in Firestore (Google sign-in needs role)
             _status = AuthStatus.authenticating;

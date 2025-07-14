@@ -20,7 +20,6 @@ import '../services/auth_service.dart';
 import '../services/assignment_service.dart';
 import '../services/chat_service.dart';
 import '../services/submission_service.dart';
-import '../services/test_service.dart';
 import '../services/logger_service.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/auth_repository_impl.dart';
@@ -138,8 +137,6 @@ Future<void> setupServiceLocator() async {
     () => SubmissionService(firestore: getIt<FirebaseFirestore>()),
   );
   
-  getIt.registerFactory<TestService>(() => TestService());
-  
   getIt.registerFactory<CalendarService>(
     () => CalendarService(
       getIt<CalendarRepository>(),
@@ -192,7 +189,6 @@ extension ServiceLocatorExtension on GetIt {
   AssignmentService get assignmentService => get<AssignmentService>();
   ChatService get chatService => get<ChatService>();
   SubmissionService get submissionService => get<SubmissionService>();
-  TestService get testService => get<TestService>();
   CalendarService get calendarService => get<CalendarService>();
   LoggerService get loggerService => get<LoggerService>();
 }
