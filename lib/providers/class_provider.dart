@@ -125,6 +125,8 @@ class ClassProvider with ChangeNotifier {
   /// @throws Exception if loading fails
   Future<void> loadTeacherClasses(String teacherId) async {
     _setLoading(true);
+    notifyListeners();  // Safe here, as it's before async
+    
     try {
       _teacherClassesSubscription?.cancel();
       
@@ -132,16 +134,22 @@ class ClassProvider with ChangeNotifier {
         (classList) {
           _teacherClasses = classList;
           _setLoading(false);
-          notifyListeners();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
+      notifyListeners();  // Safe here
     }
   }
   
@@ -154,6 +162,8 @@ class ClassProvider with ChangeNotifier {
   /// @throws Exception if loading fails
   Future<void> loadStudentClasses(String studentId) async {
     _setLoading(true);
+    notifyListeners();
+    
     try {
       _studentClassesSubscription?.cancel();
       
@@ -161,16 +171,22 @@ class ClassProvider with ChangeNotifier {
         (classList) {
           _studentClasses = classList;
           _setLoading(false);
-          notifyListeners();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
+      notifyListeners();
     }
   }
   
@@ -183,6 +199,8 @@ class ClassProvider with ChangeNotifier {
   /// @throws Exception if loading fails
   Future<void> loadClassStudents(String classId) async {
     _setLoading(true);
+    notifyListeners();
+    
     try {
       _classStudentsSubscription?.cancel();
       
@@ -190,16 +208,22 @@ class ClassProvider with ChangeNotifier {
         (studentList) {
           _classStudents = studentList;
           _setLoading(false);
-          notifyListeners();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
+      notifyListeners();
     }
   }
   
@@ -212,13 +236,16 @@ class ClassProvider with ChangeNotifier {
   /// @return true if creation successful
   Future<bool> createClass(ClassModel classModel) async {
     _setLoading(true);
+    notifyListeners();
     try {
       await _classRepository.createClass(classModel);
       _setLoading(false);
+      notifyListeners();
       return true;
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
+      notifyListeners();
       return false;
     }
   }
@@ -287,10 +314,12 @@ class ClassProvider with ChangeNotifier {
       }
       
       _setLoading(false);
+      notifyListeners();
       return true;
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
+      notifyListeners();
       return false;
     }
   }
@@ -515,7 +544,7 @@ class ClassProvider with ChangeNotifier {
   /// @param classModel Class to select or null to clear
   void setSelectedClass(ClassModel? classModel) {
     _selectedClass = classModel;
-    notifyListeners();
+    notifyListeners();  // This is safe - called from user interaction
   }
   
   /// Searches for students not enrolled in selected class.
@@ -617,7 +646,7 @@ class ClassProvider with ChangeNotifier {
   /// @param loading New loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();
+    // Removed notifyListeners() here - will handle manually in sensitive areas
   }
   
   /// Sets error message and notifies listeners.
@@ -625,7 +654,7 @@ class ClassProvider with ChangeNotifier {
   /// @param error Error description or null
   void _setError(String? error) {
     _error = error;
-    notifyListeners();
+    // Removed notifyListeners() here - will handle manually in sensitive areas
   }
   
   /// Clears error message and notifies UI.
@@ -633,7 +662,7 @@ class ClassProvider with ChangeNotifier {
   /// Called after user acknowledges error.
   void clearError() {
     _error = null;
-    notifyListeners();
+    notifyListeners();  // This is safe - called by user interaction
   }
   
   /// Clears all cached data.
@@ -647,7 +676,7 @@ class ClassProvider with ChangeNotifier {
     _selectedClass = null;
     _isLoading = false;
     _error = null;
-    notifyListeners();
+    notifyListeners();  // This is safe - called on logout
   }
   
   /// Cleans up resources when provider is disposed.

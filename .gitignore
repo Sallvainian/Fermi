@@ -100,14 +100,12 @@ android/init.gradle
 android/gradle.properties
 android/build/
 
-# VS Code / Cursor
-.vscode/
-.cursor/
+# Code analysis tools
+.sonarlint/
 
 # Private/local environment files
 .env
 .env.*
-*.env
 .firebaserc
 
 # Firebase emulator
@@ -126,5 +124,9 @@ coverage/
 *.temp
 *.bak
 *.backup
-*~
 .~*
+
+# Windows nul file issue
+nul
+*/nul
+web/nul

@@ -7,6 +7,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../firebase_options.dart';
 import '../services/logger_service.dart';
 import '../services/notification_service.dart';
+import '../services/performance_service.dart';
+import '../services/google_sign_in_service.dart';
 import 'service_locator.dart';
 
 /// Handles all app initialization tasks
@@ -24,6 +26,14 @@ class AppInitializer {
     
     // Initialize Firebase
     await _initializeFirebase();
+    
+    // Initialize Google Sign In (early in the startup)
+    await _initializeGoogleSignIn();
+    
+    // Initialize performance monitoring (after Firebase)
+    if (_firebaseInitialized) {
+      await _initializePerformanceMonitoring();
+    }
     
     // Setup service locator
     await _setupServiceLocator();
@@ -93,6 +103,16 @@ class AppInitializer {
     }
   }
   
+  /// Initialize performance monitoring
+  static Future<void> _initializePerformanceMonitoring() async {
+    try {
+      await PerformanceService().initialize();
+      LoggerService.info('Performance monitoring initialized', tag: 'AppInitializer');
+    } catch (e) {
+      LoggerService.error('Performance monitoring initialization error', tag: 'AppInitializer', error: e);
+    }
+  }
+  
   /// Initialize notification service
   static Future<void> _initializeNotifications() async {
     try {
@@ -115,6 +135,18 @@ class AppInitializer {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;
     };
+  }
+  
+  /// Initialize Google Sign In service
+  static Future<void> _initializeGoogleSignIn() async {
+    try {
+      // Initialize with required scopes
+      // In google_sign_in 7.x, this is async and calls GoogleSignIn.instance.initialize()
+      await GoogleSignInService().initialize();
+      LoggerService.info('Google Sign In initialized', tag: 'AppInitializer');
+    } catch (e) {
+      LoggerService.error('Google Sign In initialization error', tag: 'AppInitializer', error: e);
+    }
   }
   
   /// Handle uncaught errors in the app

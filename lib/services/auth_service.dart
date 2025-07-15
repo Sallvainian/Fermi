@@ -14,6 +14,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
+import 'google_sign_in_service.dart';
 
 /// Core authentication service handling all auth-related operations.
 /// 
@@ -35,10 +36,8 @@ class AuthService {
   /// Nullable to handle cases where Firebase is not initialized.
   FirebaseFirestore? _firestore;
   
-  /// Google Sign-In instance.
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: kIsWeb ? '218352465432-g9u6sl8orf9f7iiv955241h7r5kb0qh5.apps.googleusercontent.com' : null,
-  );
+  /// Google Sign-In service instance.
+  final GoogleSignInService _googleSignInService = GoogleSignInService();
 
   /// Initializes the authentication service.
   /// 
@@ -326,7 +325,7 @@ class AuthService {
     }
     
     try {
-      // For web platform, authentication is handled via Firebase Auth redirect
+      // For web platform, use Firebase Auth's OAuth flow
       if (kIsWeb) {
         // Use Firebase Auth's built-in Google provider for web
         final googleProvider = GoogleAuthProvider();
@@ -353,20 +352,28 @@ class AuthService {
         return UserModel.fromFirestore(userDoc);
       }
       
-      // For mobile platforms, use the standard sign-in flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // For desktop platforms (Windows/Linux), google_sign_in is not supported
+      // We'll need to implement a different approach for desktop
+      if (!_googleSignInService.isPlatformSupported) {
+        throw Exception('Google Sign-In is not supported on this platform. Please use email/password authentication or run as a web app.');
+      }
+      
+      // For mobile platforms (Android/iOS/macOS), use the GoogleSignInService
+      final GoogleSignInAccount? googleUser = await _googleSignInService.signIn();
       
       if (googleUser == null) {
         throw Exception('Google Sign-In was cancelled');
       }
 
-      // Get authentication details from the account (this is a Future in v6.x)
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      // Get authentication details from the account
+      // In google_sign_in 7.x, authentication property is synchronous
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       
-      // Create a new credential using both idToken and accessToken
+      // Create a new credential using idToken
+      // Note: In 7.x, access tokens are obtained separately via authorization
       final credential = GoogleAuthProvider.credential(
         idToken: googleAuth.idToken,
-        accessToken: googleAuth.accessToken,
+        // accessToken is no longer available here - use authorization if needed
       );
 
       // Sign in to Firebase
@@ -484,8 +491,19 @@ class AuthService {
   Future<void> signOut() async {
     final futures = <Future>[];
     if (_auth != null) futures.add(_auth!.signOut());
+    
     // Sign out from Google using disconnect (clears cached auth)
-    futures.add(_googleSignIn.disconnect());
+    // Only attempt this on platforms that support google_sign_in
+    if (_googleSignInService.isPlatformSupported) {
+      try {
+        // In 7.x, disconnect returns Future<void>
+        futures.add(_googleSignInService.disconnect());
+      } catch (e) {
+        // Handle case where GoogleSignIn is not initialized
+        if (kDebugMode) print('Google sign out error: $e');
+      }
+    }
+    
     await Future.wait(futures);
   }
 
