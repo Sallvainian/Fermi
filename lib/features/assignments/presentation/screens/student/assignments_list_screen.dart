@@ -5,7 +5,7 @@ import '../../../../../main.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../../shared/widgets/common/error_aware_stream_builder.dart';
-import '../../../../../shared/providers/auth_provider.dart';
+import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/student_assignment_provider.dart';
 import '../../../domain/models/assignment.dart';
 

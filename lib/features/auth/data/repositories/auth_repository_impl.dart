@@ -6,9 +6,9 @@
 library;
 
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/user_model.dart';
+import '../../../../shared/models/user_model.dart';
 import '../services/auth_service.dart';
-import 'auth_repository.dart';
+import '../../domain/repositories/auth_repository.dart';
 
 /// Concrete authentication repository implementation.
 /// 
