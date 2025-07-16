@@ -5,7 +5,7 @@ import 'assignment_provider.dart';
 import 'student_assignment_provider.dart';
 import 'theme_provider.dart';
 import 'chat_provider.dart';
-import 'discussion_provider.dart';
+import '../features/discussions/presentation/providers/discussion_provider.dart';
 import 'calendar_provider.dart';
 import 'grade_analytics_provider.dart';
 import 'navigation_provider.dart';

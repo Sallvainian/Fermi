@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../providers/discussion_provider.dart';
-import 'create_thread_dialog.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../providers/discussion_provider.dart';
+import '../widgets/create_thread_dialog.dart';
 import 'thread_detail_screen.dart';
 
 class DiscussionBoardDetailScreen extends StatefulWidget {

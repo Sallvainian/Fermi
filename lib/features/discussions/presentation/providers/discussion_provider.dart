@@ -8,10 +8,10 @@ library;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/discussion_board.dart';
-import '../repositories/discussion_repository.dart';
-import '../core/service_locator.dart';
-import '../services/logger_service.dart';
+import '../../domain/models/discussion_board.dart';
+import '../../domain/repositories/discussion_repository.dart';
+import '../../../../shared/core/service_locator.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Provider managing discussion boards and threads.
 /// 

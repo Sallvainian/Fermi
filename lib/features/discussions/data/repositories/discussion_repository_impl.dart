@@ -7,11 +7,11 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/discussion_board.dart';
-import '../services/logger_service.dart';
-import '../services/firestore_service.dart';
-import 'discussion_repository.dart';
-import 'firestore_repository.dart';
+import '../../domain/models/discussion_board.dart';
+import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/services/firestore_service.dart';
+import '../../domain/repositories/discussion_repository.dart';
+import '../../../../shared/repositories/firestore_repository.dart';
 
 /// Firestore-based implementation of DiscussionRepository.
 /// 

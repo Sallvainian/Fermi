@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../models/discussion_board.dart';
-import '../../models/user_model.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/discussion_provider.dart';
-import 'create_board_dialog.dart';
+import '../../domain/models/discussion_board.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../providers/auth_provider.dart';
+import '../providers/discussion_provider.dart';
+import '../widgets/create_board_dialog.dart';
 
 class DiscussionBoardsScreen extends StatefulWidget {
   const DiscussionBoardsScreen({super.key});

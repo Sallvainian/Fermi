@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../widgets/common/adaptive_layout.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
 
 class ThreadDetailScreen extends StatefulWidget {
   final String threadId;
