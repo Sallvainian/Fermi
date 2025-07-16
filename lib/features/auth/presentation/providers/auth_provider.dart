@@ -9,10 +9,10 @@ library;
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/user_model.dart';
-import '../repositories/auth_repository.dart';
-import '../core/service_locator.dart';
-import '../services/presence_service.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../domain/repositories/auth_repository.dart';
+import '../../../../shared/core/service_locator.dart';
+import '../../../student/data/services/presence_service.dart';
 
 /// Enumeration of possible authentication states.
 /// 

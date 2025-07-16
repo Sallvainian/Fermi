@@ -5,7 +5,7 @@ import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../domain/models/assignment.dart';
 import '../../../../../shared/models/user_model.dart';
-import '../../../../../shared/providers/auth_provider.dart';
+import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/assignment_provider.dart';
 
 class TeacherAssignmentsScreen extends StatefulWidget {
