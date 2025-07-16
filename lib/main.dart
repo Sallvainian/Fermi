@@ -8,13 +8,13 @@ library;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'core/app_initializer.dart';
-import 'providers/auth_provider.dart';
-import 'providers/theme_provider.dart';
-import 'providers/app_providers.dart';
-import 'routing/app_router.dart';
-import 'theme/app_theme.dart';
-import 'theme/app_typography.dart';
+import 'shared/core/app_initializer.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
+import 'shared/providers/theme_provider.dart';
+import 'shared/core/app_providers.dart';
+import 'shared/routing/app_router.dart';
+import 'shared/theme/app_theme.dart';
+import 'shared/theme/app_typography.dart';
 
 /// Public getter for Firebase initialization status.
 bool get isFirebaseInitialized => AppInitializer.isFirebaseInitialized;
