@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../models/student.dart';
-import '../../services/student_service.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../widgets/common/responsive_layout.dart';
+import '../../../domain/models/student.dart';
+import '../../../data/services/student_service.dart';
+import '../../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../../shared/widgets/common/responsive_layout.dart';
 
 class TeacherStudentsScreen extends StatefulWidget {
   const TeacherStudentsScreen({super.key});

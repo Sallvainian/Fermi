@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../widgets/common/responsive_layout.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../shared/widgets/common/responsive_layout.dart';
 
 class StudentMessagesScreen extends StatefulWidget {
   const StudentMessagesScreen({super.key});

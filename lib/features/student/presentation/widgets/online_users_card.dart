@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../services/presence_service.dart';
+import '../../data/services/presence_service.dart';
 
 class OnlineUsersCard extends StatelessWidget {
   final PresenceService _presenceService = PresenceService();

@@ -6,8 +6,8 @@
 library;
 
 import '../models/student.dart';
-import '../models/grade.dart';
-import 'base_repository.dart';
+import '../../../grades/domain/models/grade.dart';
+import '../../../../shared/repositories/base_repository.dart';
 
 /// Abstract repository defining student management operations.
 /// 

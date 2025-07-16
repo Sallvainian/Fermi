@@ -5,7 +5,7 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/student.dart';
+import '../../domain/models/student.dart';
 
 /// Core service for managing students in Firestore.
 /// 

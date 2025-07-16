@@ -7,12 +7,12 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/student.dart';
-import '../models/grade.dart';
-import '../models/class_model.dart';
-import '../repositories/student_repository.dart';
-import '../repositories/class_repository.dart';
-import '../core/service_locator.dart';
+import '../../domain/models/student.dart';
+import '../../../grades/domain/models/grade.dart';
+import '../../../classes/domain/models/class_model.dart';
+import '../../domain/repositories/student_repository.dart';
+import '../../../classes/domain/repositories/class_repository.dart';
+import '../../../../shared/core/service_locator.dart';
 
 /// Provider managing student state and operations.
 /// 

@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'logger_service.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class PresenceService {
   final FirebaseAuth _auth = FirebaseAuth.instance;

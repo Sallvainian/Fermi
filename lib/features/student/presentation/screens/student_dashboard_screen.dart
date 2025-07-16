@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/class_provider.dart';
-import '../../models/user_model.dart';
-import '../../models/class_model.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../widgets/common/responsive_layout.dart';
-import '../../widgets/common/common_widgets.dart';
-import '../../theme/app_spacing.dart';
-import '../../theme/app_theme.dart';
+import '../../../../shared/providers/auth_provider.dart';
+import '../../../classes/presentation/providers/class_provider.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../../classes/domain/models/class_model.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../shared/widgets/common/responsive_layout.dart';
+import '../../../../shared/widgets/common/common_widgets.dart';
+import '../../../../shared/theme/app_spacing.dart';
+import '../../../../shared/theme/app_theme.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
