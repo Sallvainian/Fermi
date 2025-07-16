@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../domain/models/discussion_board.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../../../../providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/discussion_provider.dart';
 import '../widgets/create_board_dialog.dart';
 

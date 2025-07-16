@@ -7,7 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/class_provider.dart';
-import '../../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Dialog for creating a new class with form validation.
 /// 

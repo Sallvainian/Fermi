@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../providers/chat_provider.dart';
-import '../../../../shared/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/chat_room.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 

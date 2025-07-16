@@ -11,7 +11,7 @@ import '../../domain/models/message.dart';
 import '../../domain/models/chat_room.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../../../../shared/core/service_locator.dart';
-import '../../../../shared/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Provider managing chat rooms and messages.
 /// 

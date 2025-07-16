@@ -2,9 +2,9 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/grade_analytics.dart';
 import '../../domain/models/grade.dart';
-import '../../../../shared/models/assignment.dart';
-import '../../../../shared/models/student.dart';
-import '../../../../shared/models/submission.dart';
+import '../../../assignments/domain/models/assignment.dart';
+import '../../../student/domain/models/student.dart';
+import '../../../assignments/domain/models/submission.dart';
 
 class GradeAnalyticsService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

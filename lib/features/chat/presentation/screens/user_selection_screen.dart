@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../domain/models/chat_room.dart';
 import '../providers/chat_provider.dart';
-import '../../../../shared/providers/auth_provider.dart' as app_auth;
+import '../../../auth/presentation/providers/auth_provider.dart' as app_auth;
 
 class UserSelectionScreen extends StatefulWidget {
   const UserSelectionScreen({super.key});
