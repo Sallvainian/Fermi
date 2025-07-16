@@ -8,12 +8,12 @@ library;
 
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/class_model.dart';
-import '../models/user_model.dart';
-import '../services/firestore_service.dart';
-import '../services/logger_service.dart';
-import 'class_repository.dart';
-import 'firestore_repository.dart';
+import '../../domain/models/class_model.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../../../shared/services/firestore_service.dart';
+import '../../../../shared/services/logger_service.dart';
+import '../../domain/repositories/class_repository.dart';
+import '../../../../shared/repositories/firestore_repository.dart';
 
 /// Firestore-based implementation of ClassRepository.
 /// 

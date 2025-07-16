@@ -7,11 +7,11 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/class_model.dart';
-import '../models/student.dart';
-import '../repositories/class_repository.dart';
-import '../repositories/student_repository.dart';
-import '../core/service_locator.dart';
+import '../../domain/models/class_model.dart';
+import '../../../student/domain/models/student.dart';
+import '../../domain/repositories/class_repository.dart';
+import '../../../student/domain/repositories/student_repository.dart';
+import '../../../../shared/core/service_locator.dart';
 
 /// Provider managing class state and enrollment operations.
 /// 

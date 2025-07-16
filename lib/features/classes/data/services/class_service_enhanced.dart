@@ -6,12 +6,12 @@ library;
 
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/class_model.dart';
-import 'logger_service.dart';
-import 'performance_service.dart';
-import 'cache_service.dart';
-import 'retry_service.dart';
-import 'validation_service.dart';
+import '../../domain/models/class_model.dart';
+import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/services/performance_service.dart';
+import '../../../../shared/services/cache_service.dart';
+import '../../../../shared/services/retry_service.dart';
+import '../../../../shared/services/validation_service.dart';
 
 /// Enhanced service class for managing educational classes with performance monitoring.
 /// 

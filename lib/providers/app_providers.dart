@@ -11,7 +11,7 @@ import 'grade_analytics_provider.dart';
 import 'navigation_provider.dart';
 import 'call_provider.dart';
 import 'notification_provider.dart';
-import 'class_provider.dart';
+import '../features/classes/presentation/providers/class_provider.dart';
 
 /// Centralized provider configuration
 class AppProviders {

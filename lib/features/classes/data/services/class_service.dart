@@ -6,8 +6,8 @@ library;
 
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/class_model.dart';
-import 'logger_service.dart';
+import '../../domain/models/class_model.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Service class for managing educational classes in Firestore.
 /// 

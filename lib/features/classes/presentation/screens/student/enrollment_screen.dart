@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/class_provider.dart';
-import '../../theme/app_spacing.dart';
-import '../../widgets/common/adaptive_layout.dart';
+import '../../../../../shared/theme/app_spacing.dart';
+import '../../../../../shared/widgets/common/adaptive_layout.dart';
 
 /// Screen for students to enroll in classes using enrollment codes.
 /// 

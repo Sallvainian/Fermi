@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/class_provider.dart';
-import '../../models/class_model.dart';
-import '../../widgets/common/common_widgets.dart';
-import '../../theme/app_theme.dart';
+import '../../../domain/models/class_model.dart';
+import '../../../../../shared/widgets/common/common_widgets.dart';
+import '../../../../../shared/theme/app_theme.dart';
 
 class StudentCoursesScreen extends StatefulWidget {
   const StudentCoursesScreen({super.key});
