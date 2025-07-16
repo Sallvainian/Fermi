@@ -5,7 +5,6 @@ import '../widgets/common/responsive_layout.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/calendar_event.dart';
-import '../services/device_calendar_service_interface.dart';
 import '../services/device_calendar_service_factory.dart';
 
 class CalendarScreen extends StatefulWidget {

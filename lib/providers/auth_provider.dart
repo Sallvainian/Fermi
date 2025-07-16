@@ -6,6 +6,7 @@
 /// and profile management.
 library;
 
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
@@ -62,6 +63,9 @@ class AuthProvider extends ChangeNotifier {
   
   /// Loading state for async operations.
   bool _isLoading = false;
+  
+  /// Auth state subscription
+  StreamSubscription<User?>? _authStateSubscription;
 
   // Getters
   
@@ -119,7 +123,7 @@ class AuthProvider extends ChangeNotifier {
     }
     
     try {
-      _authRepository!.authStateChanges.listen((User? user) async {
+      _authStateSubscription = _authRepository!.authStateChanges.listen((User? user) async {
         if (user == null) {
           _status = AuthStatus.unauthenticated;
           _userModel = null;
@@ -131,14 +135,8 @@ class AuthProvider extends ChangeNotifier {
           if (userModel != null) {
             _userModel = userModel;
             _status = AuthStatus.authenticated;
-            // Initialize presence for ALL authenticated users with their full data
-            _presenceService.initializePresence(userData: {
-              'displayName': userModel.displayName,
-              'firstName': userModel.firstName,
-              'lastName': userModel.lastName,
-              'role': userModel.role?.name ?? 'student',
-              'photoURL': userModel.photoURL,
-            });
+            // Initialize presence for ALL authenticated users with their role
+            _presenceService.initializePresence(userRole: userModel.role?.name ?? 'student');
           } else {
             // User exists in Auth but not in Firestore (Google sign-in needs role)
             _status = AuthStatus.authenticating;
@@ -280,6 +278,8 @@ class AuthProvider extends ChangeNotifier {
       if (userModel != null) {
         _userModel = userModel;
         _status = AuthStatus.authenticated;
+        // Update presence with role when signing in
+        await _presenceService.updateUserPresence(true, userRole: userModel.role?.toString().split('.').last);
         notifyListeners();
         return true;
       }
@@ -314,6 +314,8 @@ class AuthProvider extends ChangeNotifier {
       if (userModel != null) {
         _userModel = userModel;
         _status = AuthStatus.authenticated;
+        // Update presence with role when signing in with Google
+        await _presenceService.updateUserPresence(true, userRole: userModel.role?.toString().split('.').last);
         notifyListeners();
         return true;
       } else if (firebaseUser != null) {
@@ -520,5 +522,22 @@ class AuthProvider extends ChangeNotifier {
   void clearError() {
     _clearError();
     notifyListeners();
+  }
+  
+  /// Properly dispose of resources when provider is removed.
+  /// 
+  /// Cancels auth state subscription and cleans up presence tracking
+  /// to prevent memory leaks and ensure proper resource cleanup.
+  @override
+  void dispose() {
+    // Cancel auth state subscription
+    _authStateSubscription?.cancel();
+    _authStateSubscription = null;
+    
+    // Clean up presence tracking
+    _presenceService.cleanupPresence();
+    
+    // Call parent dispose
+    super.dispose();
   }
 }

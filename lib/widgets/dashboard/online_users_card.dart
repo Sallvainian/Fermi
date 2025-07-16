@@ -4,7 +4,9 @@ import '../../services/presence_service.dart';
 class OnlineUsersCard extends StatelessWidget {
   final PresenceService _presenceService = PresenceService();
   
-  OnlineUsersCard({super.key});
+  final bool excludeSelf;
+  
+  OnlineUsersCard({super.key, this.excludeSelf = true});
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +40,7 @@ class OnlineUsersCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           StreamBuilder<List<OnlineUser>>(
-            stream: _presenceService.getOnlineUsers(),
+            stream: _presenceService.getOnlineUsers(excludeSelf: excludeSelf),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 // Handle error state
@@ -162,9 +164,16 @@ class OnlineUsersCard extends StatelessWidget {
   }
   
   String _getStatusText(OnlineUser user) {
-    // Show role and status
-    final roleText = user.role.substring(0, 1).toUpperCase() + user.role.substring(1);
-    return '$roleText • Active now';
+    // Show role and activity status
+    final role = user.role ?? 'user';
+    final roleText = role.substring(0, 1).toUpperCase() + role.substring(1);
+    
+    // Use the relative time helper from the model
+    if (user.isActive) {
+      return '$roleText • Active now';
+    } else {
+      return '$roleText • ${user.relativeTime}';
+    }
   }
   
   Widget _buildUserAvatar(ThemeData theme, OnlineUser user) {

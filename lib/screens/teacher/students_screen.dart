@@ -1492,71 +1492,13 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color) {
-    final theme = Theme.of(context);
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
 
-  Color _getActivityColor(DateTime lastActive) {
-    final now = DateTime.now();
-    final difference = now.difference(lastActive);
-    
-    if (difference.inHours < 1) {
-      return Colors.green;
-    } else if (difference.inDays < 1) {
-      return Colors.yellow[700]!;
-    } else if (difference.inDays < 3) {
-      return Colors.orange;
-    } else {
-      return Colors.red;
-    }
-  }
 
-  String _formatLastActive(DateTime lastActive) {
-    final now = DateTime.now();
-    final difference = now.difference(lastActive);
-    
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inHours < 1) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inDays < 1) {
-      return '${difference.inHours}h ago';
-    } else {
-      return '${difference.inDays}d ago';
-    }
-  }
 
   Color _getGPAColor(double gpa) {
     if (gpa >= 3.5) return Colors.green;
     if (gpa >= 3.0) return Colors.blue;
     if (gpa >= 2.5) return Colors.orange;
-    return Colors.red;
-  }
-
-  Color _getAttendanceColor(int attendance) {
-    if (attendance >= 90) return Colors.green;
-    if (attendance >= 80) return Colors.blue;
-    if (attendance >= 70) return Colors.orange;
     return Colors.red;
   }
 
@@ -1952,19 +1894,6 @@ class StudentDetailSheet extends StatelessWidget {
     );
   }
 
-  Color _getGPAColor(double gpa) {
-    if (gpa >= 3.5) return Colors.green;
-    if (gpa >= 3.0) return Colors.blue;
-    if (gpa >= 2.5) return Colors.orange;
-    return Colors.red;
-  }
-
-  Color _getAttendanceColor(int attendance) {
-    if (attendance >= 90) return Colors.green;
-    if (attendance >= 80) return Colors.blue;
-    if (attendance >= 70) return Colors.orange;
-    return Colors.red;
-  }
 }
 
 // Add Student Sheet

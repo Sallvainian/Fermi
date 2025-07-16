@@ -42,15 +42,15 @@ dependencies:
   firebase_database: ^11.3.9
   
   # Authentication
-  google_sign_in: ^6.2.1
-  google_sign_in_web: ^0.12.4+2
+  google_sign_in: ^7.1.0
+  google_sign_in_web: ^1.0.0
   google_identity_services_web: ^0.3.1+1 
   
   # State Management
   provider: ^6.1.2
   
   # Charts and Data Visualization
-  fl_chart: ^0.68.0
+  fl_chart: ^1.0.0
   
   # UI & Navigation
   go_router: ^16.0.0
@@ -73,9 +73,9 @@ dependencies:
   flutter_webrtc: ^0.14.2
   permission_handler: ^12.0.1
   
-  # Notifications
-  flutter_local_notifications: ^19.3.0
-  timezone: ^0.10.0
+  # Notifications - Removed for Windows compatibility
+  # flutter_local_notifications: ^19.3.0
+  # timezone: ^0.10.0
   
   # Calendar sync
   device_calendar: ^4.3.2
@@ -85,6 +85,7 @@ dependencies:
   rxdart: ^0.28.0
 
 # Dependency overrides to resolve version conflicts
+  timezone: any
 dependency_overrides:
   timezone: ^0.10.0
 

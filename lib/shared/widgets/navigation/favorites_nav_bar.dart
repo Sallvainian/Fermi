@@ -392,8 +392,9 @@ class _NavigationCustomizationSheetState
       await navProvider.removeFavorite(navProvider.favoriteIds.last);
     }
 
-    if (!mounted) return;
-    Navigator.of(context).pop();
+    if (mounted && context.mounted) {
+      Navigator.of(context).pop();
+    }
   }
 }
 

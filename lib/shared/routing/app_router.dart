@@ -39,9 +39,9 @@ import '../screens/calendar_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/common/dashboard_screen.dart';
 import '../screens/contact_support_screen.dart';
-import '../screens/games/jeopardy_screen.dart';
-import '../screens/games/jeopardy_play_screen.dart';
-import '../screens/games/jeopardy_create_screen.dart';
+import '../../features/games/presentation/screens/jeopardy_screen.dart';
+import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
+import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
 
 /// App router configuration
 class AppRouter {

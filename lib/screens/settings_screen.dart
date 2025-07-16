@@ -27,8 +27,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _dateFormat = 'MM/dd/yyyy';
   
   // Privacy Settings
-  final bool _dataCollection = true;
-  final bool _analytics = true;
   bool _crashReporting = true;
   
   // Academic Settings

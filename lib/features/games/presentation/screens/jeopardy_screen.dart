@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../models/jeopardy_game.dart';
-import '../../widgets/common/adaptive_layout.dart';
+import '../../domain/models/jeopardy_game.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
 
 class JeopardyScreen extends StatefulWidget {
   const JeopardyScreen({super.key});
@@ -133,7 +133,7 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
             Icon(
               Icons.grid_view_rounded,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -146,7 +146,7 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
             Text(
               'Create your first Jeopardy game',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 24),
@@ -239,7 +239,7 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
                     Text(
                       'Updated ${_formatDate(game.updatedAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
                     ),
                   ],

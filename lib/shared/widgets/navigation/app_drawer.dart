@@ -316,7 +316,9 @@ class AppDrawer extends StatelessWidget {
         
         // Navigate to the route after drawer closes
         Future.delayed(const Duration(milliseconds: 200), () {
-          context.go(route);
+          if (context.mounted) {
+            context.go(route);
+          }
         });
       },
     );
@@ -383,7 +385,9 @@ class AppDrawer extends StatelessWidget {
                   onTap: () {
                     Scaffold.of(context).closeDrawer();
                     Future.delayed(const Duration(milliseconds: 200), () {
-                      context.go(item.route);
+                      if (context.mounted) {
+                        context.go(item.route);
+                      }
                     });
                   },
                   borderRadius: BorderRadius.circular(12),

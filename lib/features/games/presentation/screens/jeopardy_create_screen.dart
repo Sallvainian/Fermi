@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../models/jeopardy_game.dart';
-import '../../widgets/common/adaptive_layout.dart';
+import '../../domain/models/jeopardy_game.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
 
 class JeopardyCreateScreen extends StatefulWidget {
   final String? gameId;
@@ -144,8 +144,6 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   }
 
   Widget _buildCategorySection(int categoryIndex, JeopardyCategory category) {
-    final theme = Theme.of(context);
-    
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(

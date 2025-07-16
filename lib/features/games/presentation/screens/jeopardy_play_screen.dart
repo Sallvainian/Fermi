@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:math';
-import '../../models/jeopardy_game.dart';
+import '../../domain/models/jeopardy_game.dart';
 
 class JeopardyPlayScreen extends StatefulWidget {
   final String gameId;
@@ -21,10 +21,8 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   JeopardyQuestion? _selectedQuestion;
   JeopardyCategory? _selectedCategory;
   JeopardyPlayer? _currentPlayer;
-  bool _showingQuestion = false;
   bool _showingAnswer = false;
   bool _gameStarted = false;
-  bool _showingFinalJeopardy = false;
   final Map<String, int> _finalJeopardyWagers = {};
   final Map<String, String> _finalJeopardyAnswers = {};
   bool _showingDailyDouble = false;
@@ -228,8 +226,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   Widget _buildPlayerSetupTile(JeopardyPlayer player) {
-    final theme = Theme.of(context);
-    
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
@@ -324,7 +320,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                   color: theme.colorScheme.surfaceContainerHighest,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -368,7 +364,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                   color: theme.colorScheme.surfaceContainerHighest,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 4,
                       offset: const Offset(0, -2),
                     ),
@@ -388,7 +384,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildGameBoard() {
     final theme = Theme.of(context);
-    final categoryCount = _game.categories.length;
     
     return Column(
       children: [
@@ -458,7 +453,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isAnswered
-                  ? theme.colorScheme.outline.withOpacity(0.3)
+                  ? theme.colorScheme.outline.withValues(alpha: 0.3)
                   : theme.colorScheme.primary,
               width: 2,
             ),
@@ -468,7 +463,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               isAnswered ? '' : '\$${question.points}',
               style: theme.textTheme.headlineMedium?.copyWith(
                 color: isAnswered
-                    ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
+                    ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
                     : theme.colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.bold,
               ),
@@ -499,7 +494,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               border: Border.all(
                 color: isCurrentPlayer
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outline.withOpacity(0.3),
+                    : theme.colorScheme.outline.withValues(alpha: 0.3),
                 width: 2,
               ),
             ),
@@ -535,7 +530,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     }
     
     return Container(
-      color: Colors.black.withOpacity(0.9),
+      color: Colors.black.withValues(alpha: 0.9),
       child: Center(
         child: Container(
           margin: const EdgeInsets.all(32),
@@ -658,7 +653,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     setState(() {
       _selectedQuestion = question;
       _selectedCategory = category;
-      _showingQuestion = true;
       _showingAnswer = false;
       
       // Check if it's a Daily Double
@@ -681,7 +675,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     setState(() {
       _selectedQuestion = null;
       _selectedCategory = null;
-      _showingQuestion = false;
       _showingAnswer = false;
       _showingDailyDouble = false;
       _dailyDoubleWager = 0;
@@ -712,7 +705,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       // Close question overlay
       _selectedQuestion = null;
       _selectedCategory = null;
-      _showingQuestion = false;
       _showingAnswer = false;
     });
     
@@ -737,7 +729,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       // Close question overlay
       _selectedQuestion = null;
       _selectedCategory = null;
-      _showingQuestion = false;
       _showingAnswer = false;
     });
     
@@ -829,7 +820,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     final maxWager = max(_dailyDoublePlayer!.score, 1000);
     
     return Container(
-      color: Colors.black.withOpacity(0.9),
+      color: Colors.black.withValues(alpha: 0.9),
       child: Center(
         child: Container(
           margin: const EdgeInsets.all(32),
@@ -865,7 +856,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               Text(
                 'Maximum wager: \$$maxWager',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                 ),
               ),
               const SizedBox(height: 24),
@@ -938,7 +929,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       // Close question overlay
       _selectedQuestion = null;
       _selectedCategory = null;
-      _showingQuestion = false;
       _showingAnswer = false;
       _showingDailyDouble = false;
       _dailyDoubleWager = 0;
@@ -950,10 +940,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
   
   void _startFinalJeopardy() {
-    setState(() {
-      _showingFinalJeopardy = true;
-    });
-    
     _showFinalJeopardyDialog();
   }
   

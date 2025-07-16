@@ -2,14 +2,16 @@
 .dart_tool/
 .pub/
 .pub-cache/
-build/
 .flutter-plugins
 .flutter-plugins-dependencies
+**/build/  # Consolidated all build ignores
 
-# Java heap dumps
+# General build artifacts
+app.*.symbols
+app.*.map.json
 *.hprof
 
-# IDE specific
+# IDE/Editor specific (trim if you don't use these)
 .idea/
 .vscode/
 *.iml
@@ -19,32 +21,20 @@ build/
 .atom/
 .history
 .svn/
+.sonarlint/
 
-# Build artifacts
-app.*.symbols
-app.*.map.json
-
-# Android specific
-/android/app/debug.keystore
-/android/local.properties
-/android/.gradle/
-/android/app/build/
-/android/build/
-/android/app/google-services.json
-*.jks
-
-# iOS specific
-/ios/Flutter/App.framework
-/ios/Flutter/Flutter.framework
-/ios/Flutter/Generated.xcconfig
-/ios/Flutter/flutter_export_environment.sh
-/ios/Pods/
-/ios/Runner/GoogleService-Info.plist
-/ios/.symlinks/
-/ios/Flutter/.last_build_id
-/ios/Runner.xcworkspace/xcshareddata/
-/ios/Runner.xcodeproj/xcshareddata/
-/ios/Runner.xcodeproj/project.xcworkspace/
+# Platform-specific ephemerals/generated (consolidated)
+**/flutter/ephemeral
+**/Pods/
+**/.symlinks/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh
+**/Flutter/.last_build_id
+**/Runner.xcworkspace/xcshareddata/
+**/Runner.xcodeproj/xcshareddata/
+**/Runner.xcodeproj/project.xcworkspace/
 *.mode1v3
 *.mode2v3
 *.moved-aside
@@ -53,20 +43,20 @@ app.*.map.json
 *.xcscmblueprint
 *.xccheckout
 *.xcscheme
-xcuserdata/
+xcuserdata/  # Made global
 
-# macOS specific
-/macos/Flutter/ephemeral
-/macos/Pods/
-/macos/.symlinks/
+# Android specific
+/android/app/debug.keystore
+/android/local.properties
+/android/.gradle/
+*.jks
+android/init.gradle
+android/gradle.properties
 
-# Linux specific
-/linux/flutter/ephemeral
+# iOS specific
+/ios/Runner/GoogleService-Info.plist
 
-# Windows specific
-/windows/flutter/ephemeral
-
-# General
+# General artifacts
 *.class
 *.log
 *.pyc
@@ -76,57 +66,41 @@ xcuserdata/
 *~
 .buildlog/
 migrate_working_dir/
-
-# Sensitive & Environment files
-.env*
-*.env
-secrets.json
-google-services.json
-
-# User-specific generated files
-.claude/
-.cursor/
-.gemini/
-devtools_options.yaml
-
-# Project-specific files not for public repo
-PROJECT_TODOS.md
-CLAUDE.md
-launch_app.sh
-.mcp.json
-
-# Android build artifacts
-android/init.gradle
-android/gradle.properties
-android/build/
-
-# Code analysis tools
-.sonarlint/
-
-# Private/local environment files
-.env
-.env.*
-.firebaserc
-
-# Firebase emulator
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-emulator-debug.log
-firebase-export-*
-
-# Test coverage
-coverage/
-*.lcov
-
-# Temporary files
 *.tmp
 *.temp
 *.bak
 *.backup
 .~*
 
-# Windows nul file issue
+# Sensitive/Environment files (critical for public repo—keep these!)
+.env*
+*.env
+secrets.json
+google-services.json
+GoogleService-Info.plist
+.firebaserc
+**/firebase.json  # Added for Firebase CLI configs
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+emulator-debug.log
+firebase-export-*
+
+# Test/Coverage
+coverage/
+*.lcov
+
+# Personal/project-specific (keep for your workflow; safe in personal repo)
+PROJECT_TODOS.md
+CLAUDE.md
+launch_app.sh
+.mcp.json
+.claude/
+.cursor/
+.gemini/
+devtools_options.yaml
+
+# Windows-specific (keep if on Windows)
 nul
 */nul
 web/nul

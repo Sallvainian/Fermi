@@ -7,7 +7,6 @@ library;
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/class_model.dart';
-import '../core/di/locator.dart';
 import 'logger_service.dart';
 
 /// Service class for managing educational classes in Firestore.
@@ -20,7 +19,6 @@ import 'logger_service.dart';
 /// - Handling class updates and archival
 class ClassService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final LoggerService _logger = getIt<LoggerService>();
   
   /// Collection reference for classes in Firestore
   CollectionReference<Map<String, dynamic>> get _classesCollection => 
@@ -51,11 +49,11 @@ class ClassService {
       // Return class with generated ID
       final createdClass = classWithCode.copyWith(id: docRef.id);
       
-      _logger.info('Created class: ${createdClass.name} with enrollment code: $enrollmentCode');
+      LoggerService.info('Created class: ${createdClass.name} with enrollment code: $enrollmentCode');
       return createdClass;
       
     } catch (e) {
-      _logger.error('Error creating class', error: e);
+      LoggerService.error('Error creating class', error: e);
       rethrow;
     }
   }
@@ -77,11 +75,11 @@ class ClassService {
           .doc(classModel.id)
           .update(updatedClass.toFirestore());
       
-      _logger.info('Updated class: ${classModel.name}');
+      LoggerService.info('Updated class: ${classModel.name}');
       return updatedClass;
       
     } catch (e) {
-      _logger.error('Error updating class', error: e);
+      LoggerService.error('Error updating class', error: e);
       rethrow;
     }
   }
@@ -95,9 +93,9 @@ class ClassService {
   Future<void> deleteClass(String classId) async {
     try {
       await _classesCollection.doc(classId).delete();
-      _logger.info('Deleted class: $classId');
+      LoggerService.info('Deleted class: $classId');
     } catch (e) {
-      _logger.error('Error deleting class', error: e);
+      LoggerService.error('Error deleting class', error: e);
       rethrow;
     }
   }
@@ -114,9 +112,9 @@ class ClassService {
         'isActive': false,
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
-      _logger.info('Archived class: $classId');
+      LoggerService.info('Archived class: $classId');
     } catch (e) {
-      _logger.error('Error archiving class', error: e);
+      LoggerService.error('Error archiving class', error: e);
       rethrow;
     }
   }
@@ -135,7 +133,7 @@ class ClassService {
       
       return ClassModel.fromFirestore(doc);
     } catch (e) {
-      _logger.error('Error getting class by ID', error: e);
+      LoggerService.error('Error getting class by ID', error: e);
       rethrow;
     }
   }
@@ -160,7 +158,7 @@ class ClassService {
       
       return ClassModel.fromFirestore(querySnapshot.docs.first);
     } catch (e) {
-      _logger.error('Error getting class by enrollment code', error: e);
+      LoggerService.error('Error getting class by enrollment code', error: e);
       rethrow;
     }
   }
@@ -189,7 +187,7 @@ class ClassService {
               .map((doc) => ClassModel.fromFirestore(doc))
               .toList());
     } catch (e) {
-      _logger.error('Error getting classes by teacher', error: e);
+      LoggerService.error('Error getting classes by teacher', error: e);
       rethrow;
     }
   }
@@ -218,7 +216,7 @@ class ClassService {
               .map((doc) => ClassModel.fromFirestore(doc))
               .toList());
     } catch (e) {
-      _logger.error('Error getting classes by student', error: e);
+      LoggerService.error('Error getting classes by student', error: e);
       rethrow;
     }
   }
@@ -262,11 +260,11 @@ class ClassService {
           .doc(classModel.id)
           .update({'studentIds': updatedStudentIds});
       
-      _logger.info('Enrolled student $studentId in class ${classModel.name}');
+      LoggerService.info('Enrolled student $studentId in class ${classModel.name}');
       return updatedClass;
       
     } catch (e) {
-      _logger.error('Error enrolling student', error: e);
+      LoggerService.error('Error enrolling student', error: e);
       rethrow;
     }
   }
@@ -292,9 +290,9 @@ class ClassService {
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
       
-      _logger.info('Unenrolled student $studentId from class ${classModel.name}');
+      LoggerService.info('Unenrolled student $studentId from class ${classModel.name}');
     } catch (e) {
-      _logger.error('Error unenrolling student', error: e);
+      LoggerService.error('Error unenrolling student', error: e);
       rethrow;
     }
   }
@@ -312,11 +310,11 @@ class ClassService {
         'updatedAt': Timestamp.fromDate(DateTime.now()),
       });
       
-      _logger.info('Regenerated enrollment code for class $classId');
+      LoggerService.info('Regenerated enrollment code for class $classId');
       return newCode;
       
     } catch (e) {
-      _logger.error('Error regenerating enrollment code', error: e);
+      LoggerService.error('Error regenerating enrollment code', error: e);
       rethrow;
     }
   }
@@ -383,7 +381,7 @@ class ClassService {
       };
       
     } catch (e) {
-      _logger.error('Error getting teacher class stats', error: e);
+      LoggerService.error('Error getting teacher class stats', error: e);
       rethrow;
     }
   }
