@@ -8,7 +8,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/signup_screen.dart';
 import '../screens/auth/role_selection_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
-import '../screens/teacher/teacher_dashboard_screen.dart';
+import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/classes/presentation/screens/teacher/classes_screen.dart';
 import '../../features/grades/presentation/screens/teacher/gradebook_screen.dart';
 import '../../features/grades/presentation/screens/teacher/grade_analytics_screen.dart';

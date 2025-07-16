@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../widgets/common/responsive_layout.dart';
-import '../../models/assignment.dart';
-import '../../models/user_model.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/assignment_provider.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../shared/widgets/common/responsive_layout.dart';
+import '../../../../models/assignment.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../../../providers/auth_provider.dart';
+import '../../../../providers/assignment_provider.dart';
 
 class TeacherAssignmentsScreen extends StatefulWidget {
   const TeacherAssignmentsScreen({super.key});
