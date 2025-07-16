@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../services/webrtc_service.dart';
-import '../models/call.dart';
-import '../services/logger_service.dart';
+import '../../data/services/webrtc_service.dart';
+import '../../domain/models/call.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class CallProvider extends ChangeNotifier {
   static const String _tag = 'CallProvider';

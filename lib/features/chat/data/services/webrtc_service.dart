@@ -3,8 +3,8 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
-import '../models/call.dart';
-import 'logger_service.dart';
+import '../../domain/models/call.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class WebRTCService {
   static const String _tag = 'WebRTCService';

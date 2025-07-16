@@ -3,10 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../models/user_model.dart';
-import '../../models/chat_room.dart';
-import '../../providers/chat_provider.dart';
-import '../../providers/auth_provider.dart' as app_auth;
+import '../../../../shared/models/user_model.dart';
+import '../../domain/models/chat_room.dart';
+import '../providers/chat_provider.dart';
+import '../../../../shared/providers/auth_provider.dart' as app_auth;
 
 class UserSelectionScreen extends StatefulWidget {
   const UserSelectionScreen({super.key});

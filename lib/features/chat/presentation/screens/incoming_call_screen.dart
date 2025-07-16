@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../models/call.dart';
-import '../../services/webrtc_service.dart';
+import '../../domain/models/call.dart';
+import '../../data/services/webrtc_service.dart';
 
 class IncomingCallScreen extends StatefulWidget {
   final Call call;

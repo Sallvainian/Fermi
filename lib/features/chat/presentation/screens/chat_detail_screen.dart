@@ -8,9 +8,9 @@ import 'package:go_router/go_router.dart';
 import 'package:video_compress/video_compress.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:io';
-import '../../providers/chat_provider.dart';
-import '../../models/message.dart';
-import '../../services/scheduled_messages_service.dart';
+import '../providers/chat_provider.dart';
+import '../../domain/models/message.dart';
+import '../../data/services/scheduled_messages_service.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   final String chatRoomId;

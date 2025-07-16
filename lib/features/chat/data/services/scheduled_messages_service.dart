@@ -7,8 +7,8 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/message.dart';
-import 'logger_service.dart';
+import '../../domain/models/message.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Core service for scheduling and managing future message delivery.
 /// 

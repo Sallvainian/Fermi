@@ -7,12 +7,12 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/message.dart';
-import '../models/chat_room.dart';
-import '../services/firestore_service.dart';
-import '../services/logger_service.dart';
-import 'chat_repository.dart';
-import 'firestore_repository.dart';
+import '../../domain/models/message.dart';
+import '../../domain/models/chat_room.dart';
+import '../../../../shared/services/firestore_service.dart';
+import '../../../../shared/services/logger_service.dart';
+import '../../domain/repositories/chat_repository.dart';
+import '../../../../shared/repositories/firestore_repository.dart';
 
 /// Firestore-based implementation of ChatRepository.
 /// 

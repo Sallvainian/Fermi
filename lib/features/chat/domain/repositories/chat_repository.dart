@@ -7,7 +7,7 @@ library;
 
 import '../models/message.dart';
 import '../models/chat_room.dart';
-import 'base_repository.dart';
+import '../../../../shared/repositories/base_repository.dart';
 
 /// Abstract repository defining chat and messaging operations.
 /// 

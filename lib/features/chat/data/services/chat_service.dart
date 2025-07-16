@@ -6,8 +6,8 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/message.dart';
-import '../models/chat_room.dart';
+import '../../domain/models/message.dart';
+import '../../domain/models/chat_room.dart';
 
 /// Core service for managing chat rooms and messages in Firestore.
 /// 

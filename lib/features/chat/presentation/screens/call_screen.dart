@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../../services/webrtc_service.dart';
-import '../../models/call.dart';
+import '../../data/services/webrtc_service.dart';
+import '../../domain/models/call.dart';
 import 'dart:async';
 
 class CallScreen extends StatefulWidget {
