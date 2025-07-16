@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/calendar_event.dart';
-import '../models/assignment.dart';
-import '../models/notification.dart' as app_notification;
-import '../services/logger_service.dart';
+import '../../../calendar/domain/models/calendar_event.dart';
+import '../../../../models/assignment.dart';
+import '../../domain/models/notification.dart' as app_notification;
+import '../../../../shared/services/logger_service.dart';
 
 /// Service for managing local notifications and reminders
 /// Windows-compatible stub implementation
