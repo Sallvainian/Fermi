@@ -7,10 +7,10 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/grade.dart';
-import '../repositories/grade_repository.dart';
-import '../repositories/assignment_repository.dart';
-import '../core/service_locator.dart';
+import '../../domain/models/grade.dart';
+import '../../domain/repositories/grade_repository.dart';
+import '../../../../shared/repositories/assignment_repository.dart';
+import '../../../../shared/core/service_locator.dart';
 
 /// Provider managing grade state and operations.
 /// 

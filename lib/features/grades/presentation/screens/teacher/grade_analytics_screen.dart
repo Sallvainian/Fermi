@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/grade_analytics_provider.dart';
-import '../../models/grade_analytics.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../widgets/common/responsive_layout.dart';
+import '../../../domain/models/grade_analytics.dart';
+import '../../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../../shared/widgets/common/responsive_layout.dart';
 
 class GradeAnalyticsScreen extends StatefulWidget {
   final String? classId;

@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import '../models/grade_analytics.dart';
-import '../services/grade_analytics_service.dart';
+import '../../domain/models/grade_analytics.dart';
+import '../../data/services/grade_analytics_service.dart';
 
 class GradeAnalyticsProvider with ChangeNotifier {
   final GradeAnalyticsService _analyticsService = GradeAnalyticsService();

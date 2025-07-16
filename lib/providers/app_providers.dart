@@ -7,7 +7,7 @@ import 'theme_provider.dart';
 import 'chat_provider.dart';
 import '../features/discussions/presentation/providers/discussion_provider.dart';
 import 'calendar_provider.dart';
-import 'grade_analytics_provider.dart';
+import '../features/grades/presentation/providers/grade_analytics_provider.dart';
 import 'navigation_provider.dart';
 import 'call_provider.dart';
 import 'notification_provider.dart';

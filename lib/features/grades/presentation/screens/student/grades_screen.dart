@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../widgets/common/common_widgets.dart';
-import '../../theme/app_theme.dart';
+import '../../../../../shared/widgets/common/common_widgets.dart';
+import '../../../../../shared/theme/app_theme.dart';
 
 class StudentGradesScreen extends StatefulWidget {
   const StudentGradesScreen({super.key});
