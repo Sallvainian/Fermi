@@ -6,7 +6,7 @@
 library;
 
 import '../models/assignment.dart';
-import 'base_repository.dart';
+import '../../../../shared/repositories/base_repository.dart';
 
 /// Abstract repository defining assignment management operations.
 /// 

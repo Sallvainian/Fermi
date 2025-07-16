@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../models/assignment.dart';
-import '../../models/submission.dart';
-import '../../providers/auth_provider.dart';
+import '../../../domain/models/assignment.dart';
+import '../../../domain/models/submission.dart';
+import '../../../../../shared/providers/auth_provider.dart';
 import '../../providers/student_assignment_provider.dart';
-import '../../widgets/common/adaptive_layout.dart';
-import '../../widgets/common/responsive_layout.dart';
+import '../../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../../shared/widgets/common/responsive_layout.dart';
 
 class AssignmentSubmissionScreen extends StatefulWidget {
   final String assignmentId;

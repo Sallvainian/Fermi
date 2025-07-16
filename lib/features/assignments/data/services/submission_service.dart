@@ -6,7 +6,7 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/submission.dart';
+import '../../domain/models/submission.dart';
 
 /// Core service for handling student assignment submissions.
 /// 

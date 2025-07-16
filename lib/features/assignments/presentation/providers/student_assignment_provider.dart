@@ -9,15 +9,15 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import '../main.dart';
-import '../models/assignment.dart';
-import '../models/submission.dart';
-import '../models/grade.dart';
-import '../repositories/assignment_repository.dart';
-import '../repositories/submission_repository.dart';
-import '../repositories/grade_repository.dart';
-import '../repositories/student_repository.dart';
-import '../core/service_locator.dart';
+import '../../../../main.dart';
+import '../../domain/models/assignment.dart';
+import '../../domain/models/submission.dart';
+import '../../../grades/domain/models/grade.dart';
+import '../../domain/repositories/assignment_repository.dart';
+import '../../domain/repositories/submission_repository.dart';
+import '../../../grades/domain/repositories/grade_repository.dart';
+import '../../../student/domain/repositories/student_repository.dart';
+import '../../../../shared/core/service_locator.dart';
 
 /// Combined model for student assignment view.
 /// 

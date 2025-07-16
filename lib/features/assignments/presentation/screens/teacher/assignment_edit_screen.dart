@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../models/assignment.dart';
-import '../../../providers/assignment_provider.dart';
-import '../../../widgets/common/adaptive_layout.dart';
-import '../../../widgets/common/responsive_layout.dart';
+import '../../../domain/models/assignment.dart';
+import '../../providers/assignment_provider.dart';
+import '../../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../../shared/widgets/common/responsive_layout.dart';
 
 class AssignmentEditScreen extends StatefulWidget {
   final String assignmentId;

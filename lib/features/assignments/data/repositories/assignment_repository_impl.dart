@@ -7,11 +7,11 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/assignment.dart';
-import '../services/firestore_service.dart';
-import '../services/logger_service.dart';
-import 'assignment_repository.dart';
-import 'firestore_repository.dart';
+import '../../domain/models/assignment.dart';
+import '../../../../shared/services/firestore_service.dart';
+import '../../../../shared/services/logger_service.dart';
+import '../../domain/repositories/assignment_repository.dart';
+import '../../../../shared/repositories/firestore_repository.dart';
 
 /// Firestore-based implementation of AssignmentRepository.
 /// 
