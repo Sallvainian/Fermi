@@ -1,5 +1,5 @@
 import '../../domain/models/calendar_event.dart';
-import '../../../../models/assignment.dart';
+import '../../../assignments/domain/models/assignment.dart';
 import '../../../../shared/services/logger_service.dart';
 import 'device_calendar_service_interface.dart';
 

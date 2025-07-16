@@ -6,8 +6,8 @@
 library;
 
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/user_model.dart';
-import 'base_repository.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../../../shared/repositories/base_repository.dart';
 
 /// Abstract repository defining authentication operations.
 /// 

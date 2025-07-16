@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../widgets/common/adaptive_layout.dart';
-import '../widgets/common/responsive_layout.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../shared/widgets/common/responsive_layout.dart';
 import '../providers/notification_provider.dart';
-import '../models/notification_model.dart';
+import '../../domain/models/notification_model.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});

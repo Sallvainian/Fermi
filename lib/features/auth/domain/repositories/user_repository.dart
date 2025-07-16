@@ -5,7 +5,7 @@
 /// data in the educational platform.
 library;
 
-import '../models/user_model.dart';
+import '../../../../shared/models/user_model.dart';
 
 /// Repository interface for user operations.
 /// 

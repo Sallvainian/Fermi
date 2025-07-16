@@ -4,7 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../../domain/models/calendar_event.dart';
-import '../../../../models/assignment.dart';
+import '../../../assignments/domain/models/assignment.dart';
 import '../../../../shared/services/logger_service.dart';
 import 'device_calendar_service_interface.dart';
 

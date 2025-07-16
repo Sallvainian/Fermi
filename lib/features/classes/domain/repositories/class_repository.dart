@@ -6,8 +6,8 @@
 library;
 
 import '../models/class_model.dart';
-import '../models/user_model.dart';
-import 'base_repository.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../../../shared/repositories/base_repository.dart';
 
 /// Abstract repository defining class management operations.
 /// 

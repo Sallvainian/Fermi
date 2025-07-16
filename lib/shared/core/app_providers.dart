@@ -1,16 +1,16 @@
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
-import 'auth_provider.dart';
-import 'assignment_provider.dart';
-import 'student_assignment_provider.dart';
-import 'theme_provider.dart';
-import 'chat_provider.dart';
-import '../features/discussions/presentation/providers/discussion_provider.dart';
-import 'calendar_provider.dart';
-import '../features/grades/presentation/providers/grade_analytics_provider.dart';
-import 'navigation_provider.dart';
-import 'call_provider.dart';
-import 'notification_provider.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/assignments/presentation/providers/assignment_provider.dart';
+import '../../features/assignments/presentation/providers/student_assignment_provider.dart';
+import '../providers/theme_provider.dart';
+import '../../features/chat/presentation/providers/chat_provider.dart';
+import '../../features/discussions/presentation/providers/discussion_provider.dart';
+import '../../features/calendar/presentation/providers/calendar_provider.dart';
+import '../../features/grades/presentation/providers/grade_analytics_provider.dart';
+import '../providers/navigation_provider.dart';
+import '../../features/chat/presentation/providers/call_provider.dart';
+import '../../features/notifications/presentation/providers/notification_provider.dart';
 import '../features/classes/presentation/providers/class_provider.dart';
 
 /// Centralized provider configuration

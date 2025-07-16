@@ -1,5 +1,5 @@
 import '../../domain/models/calendar_event.dart';
-import '../../../../models/assignment.dart';
+import '../../../assignments/domain/models/assignment.dart';
 
 /// Abstract interface for device calendar service
 abstract class DeviceCalendarServiceInterface {

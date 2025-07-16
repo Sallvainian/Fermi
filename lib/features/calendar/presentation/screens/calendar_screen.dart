@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../shared/widgets/common/responsive_layout.dart';
 import '../providers/calendar_provider.dart';
-import '../../../../providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/calendar_event.dart';
 import '../../data/services/device_calendar_service_factory.dart';
 

@@ -13,7 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../models/user_model.dart';
+import '../../../../shared/models/user_model.dart';
 import 'google_sign_in_service.dart';
 
 /// Core authentication service handling all auth-related operations.
