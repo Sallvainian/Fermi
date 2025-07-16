@@ -3,9 +3,9 @@ import 'package:device_calendar/device_calendar.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import '../models/calendar_event.dart';
-import '../models/assignment.dart';
-import '../services/logger_service.dart';
+import '../../domain/models/calendar_event.dart';
+import '../../../../models/assignment.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'device_calendar_service_interface.dart';
 
 /// Factory function for conditional imports

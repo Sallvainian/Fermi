@@ -1,6 +1,6 @@
-import '../models/calendar_event.dart';
-import '../models/assignment.dart';
-import '../services/logger_service.dart';
+import '../../domain/models/calendar_event.dart';
+import '../../../../models/assignment.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'device_calendar_service_interface.dart';
 
 /// Factory function for conditional imports

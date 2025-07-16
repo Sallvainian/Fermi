@@ -7,9 +7,9 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/calendar_event.dart';
-import '../services/calendar_service.dart';
-import '../core/service_locator.dart';
+import '../../domain/models/calendar_event.dart';
+import '../../data/services/calendar_service.dart';
+import '../../../../shared/core/service_locator.dart';
 
 /// Provider for managing calendar state.
 /// 

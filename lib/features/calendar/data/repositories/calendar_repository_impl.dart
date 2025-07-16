@@ -6,8 +6,8 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/calendar_event.dart';
-import 'calendar_repository.dart';
+import '../../domain/models/calendar_event.dart';
+import '../../domain/repositories/calendar_repository.dart';
 
 /// Firebase implementation of CalendarRepository.
 /// 

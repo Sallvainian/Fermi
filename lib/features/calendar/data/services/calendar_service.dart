@@ -5,11 +5,11 @@
 /// business rules for educational calendar management.
 library;
 
-import '../models/calendar_event.dart';
-import '../repositories/calendar_repository.dart';
-import '../repositories/user_repository.dart';
-import '../repositories/class_repository.dart';
-import 'notification_service.dart';
+import '../../domain/models/calendar_event.dart';
+import '../../domain/repositories/calendar_repository.dart';
+import '../../../../repositories/user_repository.dart';
+import '../../../../repositories/class_repository.dart';
+import '../../../../services/notification_service.dart';
 import 'device_calendar_service_factory.dart';
 
 /// Service for managing calendar operations.

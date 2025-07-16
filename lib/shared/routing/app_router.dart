@@ -35,7 +35,7 @@ import '../screens/chat/call_screen.dart';
 import '../screens/chat/incoming_call_screen.dart';
 import '../screens/discussions/discussion_boards_screen.dart';
 import '../screens/discussions/discussion_board_detail_screen.dart';
-import '../screens/calendar_screen.dart';
+import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/common/dashboard_screen.dart';
 import '../screens/contact_support_screen.dart';
