@@ -8,7 +8,7 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/assignment.dart';
 import '../../../grades/domain/models/grade.dart';
-import '../../../../shared/services/notification_service.dart';
+import '../../../notifications/data/services/notification_service.dart';
 
 /// Core service for managing assignments and grades in Firestore.
 /// 

@@ -9,11 +9,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'app_drawer.dart';
-import 'favorites_nav_bar.dart';
+import '../navigation/app_drawer.dart';
+import '../navigation/favorites_nav_bar.dart';
 import 'responsive_layout.dart';
 import '../../theme/app_spacing.dart';
-import '../../providers/auth_provider.dart';
+import '../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/navigation_provider.dart';
 
 /// Adaptive layout wrapper that switches between mobile and desktop layouts.

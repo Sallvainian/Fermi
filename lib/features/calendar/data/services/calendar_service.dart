@@ -7,8 +7,8 @@ library;
 
 import '../../domain/models/calendar_event.dart';
 import '../../domain/repositories/calendar_repository.dart';
-import '../../../../repositories/user_repository.dart';
-import '../../../../repositories/class_repository.dart';
+import '../../../auth/domain/repositories/user_repository.dart';
+import '../../../classes/domain/repositories/class_repository.dart';
 import '../../../notifications/data/services/notification_service.dart';
 import 'device_calendar_service_factory.dart';
 
