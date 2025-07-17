@@ -4,11 +4,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import '../firebase_options.dart';
+import '../../config/firebase_options.dart';
 import '../services/logger_service.dart';
-import '../services/notification_service.dart';
+import '../../features/notifications/data/services/notification_service.dart';
 import '../services/performance_service.dart';
-import '../services/google_sign_in_service.dart';
+import '../../features/auth/data/services/google_sign_in_service.dart';
 import 'service_locator.dart';
 
 /// Handles all app initialization tasks

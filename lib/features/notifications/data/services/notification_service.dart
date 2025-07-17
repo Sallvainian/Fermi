@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../calendar/domain/models/calendar_event.dart';
-import '../../../../models/assignment.dart';
+import '../../../assignments/domain/models/assignment.dart';
 import '../../domain/models/notification.dart' as app_notification;
 import '../../../../shared/services/logger_service.dart';
 

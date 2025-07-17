@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 
 /// Debug screen to update user display name
 class UpdateDisplayNameScreen extends StatefulWidget {

@@ -12,7 +12,7 @@ import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dar
 import '../../features/classes/presentation/screens/teacher/classes_screen.dart';
 import '../../features/grades/presentation/screens/teacher/gradebook_screen.dart';
 import '../../features/grades/presentation/screens/teacher/grade_analytics_screen.dart';
-import '../../features/assignments/presentation/screens/teacher/assignments_list_screen.dart';
+import '../../features/assignments/presentation/screens/teacher/assignments_list_screen.dart' as teacher_assignments;
 import '../../features/assignments/presentation/screens/teacher/assignment_create_screen.dart';
 import '../../features/assignments/presentation/screens/teacher/assignment_detail_screen.dart';
 import '../../features/assignments/presentation/screens/teacher/assignment_edit_screen.dart';
@@ -20,12 +20,12 @@ import '../../features/student/presentation/screens/teacher/students_screen.dart
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 import '../../features/classes/presentation/screens/student/courses_screen.dart';
 import '../../features/grades/presentation/screens/student/grades_screen.dart';
-import '../../features/assignments/presentation/screens/student/assignments_list_screen.dart';
+import '../../features/assignments/presentation/screens/student/assignments_list_screen.dart' as student_assignments;
 import '../../features/assignments/presentation/screens/student/assignment_submission_screen.dart';
 import '../../features/classes/presentation/screens/student/enrollment_screen.dart';
 import '../../features/notifications/presentation/screens/student_notifications_screen.dart' as student_notifications;
 import '../screens/settings_screen.dart';
-import '../screens/debug/update_display_name_screen.dart';
+import '../screens/debug/debug/update_display_name_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/user_selection_screen.dart';
@@ -37,7 +37,7 @@ import '../../features/discussions/presentation/screens/discussion_boards_screen
 import '../../features/discussions/presentation/screens/discussion_board_detail_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
-import '../screens/common/dashboard_screen.dart';
+import '../screens/common/common/dashboard_screen.dart';
 import '../screens/contact_support_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
@@ -123,7 +123,7 @@ class AppRouter {
     ),
     GoRoute(
       path: '/teacher/assignments',
-      builder: (context, state) => const TeacherAssignmentsListScreen(),
+      builder: (context, state) => const teacher_assignments.TeacherAssignmentsScreen(),
       routes: [
         GoRoute(
           path: 'create',
@@ -185,7 +185,7 @@ class AppRouter {
     ),
     GoRoute(
       path: '/student/assignments',
-      builder: (context, state) => const StudentAssignmentsListScreen(),
+      builder: (context, state) => const student_assignments.StudentAssignmentsScreen(),
       routes: [
         GoRoute(
           path: ':assignmentId/submit',

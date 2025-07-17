@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
-import '../providers/auth_provider.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/common/adaptive_layout.dart';
 import '../widgets/common/responsive_layout.dart';

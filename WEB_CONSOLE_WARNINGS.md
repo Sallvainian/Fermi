@@ -39,13 +39,46 @@ The console warnings you see are **normal in development** and don't indicate pr
 
 #### `Cross-Origin-Opener-Policy policy would block`
 - **Source**: Google's OAuth popup handling
-- **Why it appears**: Security policy differences between your app and Google
-- **Impact**: None - sign-in still completes successfully
-- **Fix**: Can add headers in production (see below)
+- **Why it appears**: COOP (Cross-Origin-Opener-Policy) isolates popups from opener window
+- **Impact**: Non-fatal - sign-in still completes, but popups may not auto-close
+- **Security Context**: COOP prevents attacks like tabnabbing and data exfiltration
+- **Fix Options**:
+  1. **Ignore if non-blocking** (current approach - safe for development)
+  2. **Use postMessage API** for production (recommended - see below)
+  3. **NOT recommended**: Setting COOP: unsafe-none (reduces security)
 
-### 2. 🛠️ Optional Production Optimizations
+### 2. 🛠️ Production Solutions
 
-If deploying to production, you can add these headers to reduce warnings:
+#### Recommended: PostMessage API for Cross-Origin Communication
+
+For production Flutter web apps using Firebase Auth, implement secure popup communication:
+
+**Flutter Web Integration** (using dart:js):
+```dart
+import 'dart:js' as js;
+
+// Listen for auth popup completion
+void setupAuthListener() {
+  js.context['window'].callMethod('addEventListener', ['message', 
+    js.allowInterop((event) {
+      // Verify origin for security
+      if (event['origin'] == 'https://accounts.google.com') {
+        if (event['data']['type'] == 'auth-complete') {
+          // Handle auth completion
+          print('Auth completed');
+        }
+      }
+    })
+  ]);
+}
+```
+
+**Security Considerations**:
+- Always validate message origin to prevent spoofing
+- Use unique message IDs for race condition handling
+- Check for Firebase SDK updates that may fix upstream
+
+#### Alternative: COOP Headers (Less Flexible)
 
 **Firebase Hosting** (firebase.json):
 ```json
@@ -62,7 +95,7 @@ If deploying to production, you can add these headers to reduce warnings:
 }
 ```
 
-**Other servers**: See web_server_config.md
+**Note**: This doesn't fully resolve Google domain COOP restrictions
 
 ### 3. 🚀 Development Tips
 
@@ -76,4 +109,13 @@ To minimize warnings during development:
 
 ## Conclusion
 
-These warnings are cosmetic issues in development mode. Your authentication is working correctly. No code changes are needed.
+These warnings are mostly cosmetic in development mode. Your authentication is working correctly despite the COOP warning.
+
+**For Production**:
+- Consider implementing postMessage API for better popup UX (auto-closing)
+- Keep Firebase SDK updated for potential upstream fixes
+- Monitor for new COOP values like `restrict-properties` that may offer better trade-offs
+
+**For Development**:
+- Safe to ignore these warnings if auth is functioning
+- Focus on actual functionality rather than console noise
