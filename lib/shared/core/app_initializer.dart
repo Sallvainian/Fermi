@@ -9,6 +9,7 @@ import '../services/logger_service.dart';
 import '../../features/notifications/data/services/notification_service.dart';
 import '../services/performance_service.dart';
 import '../../features/auth/data/services/google_sign_in_service.dart';
+import '../../features/auth/data/services/web_auth_helper_interface.dart';
 import 'service_locator.dart';
 
 /// Handles all app initialization tasks
@@ -29,6 +30,11 @@ class AppInitializer {
     
     // Initialize Google Sign In (early in the startup)
     await _initializeGoogleSignIn();
+    
+    // Initialize web auth helper for COOP warning fix
+    if (kIsWeb) {
+      _initializeWebAuthHelper();
+    }
     
     // Initialize performance monitoring (after Firebase)
     if (_firebaseInitialized) {
@@ -146,6 +152,16 @@ class AppInitializer {
       LoggerService.info('Google Sign In initialized', tag: 'AppInitializer');
     } catch (e) {
       LoggerService.error('Google Sign In initialization error', tag: 'AppInitializer', error: e);
+    }
+  }
+  
+  /// Initialize web auth helper for COOP warning prevention
+  static void _initializeWebAuthHelper() {
+    try {
+      WebAuthHelper().initialize();
+      LoggerService.info('Web Auth Helper initialized', tag: 'AppInitializer');
+    } catch (e) {
+      LoggerService.error('Web Auth Helper initialization error', tag: 'AppInitializer', error: e);
     }
   }
   
