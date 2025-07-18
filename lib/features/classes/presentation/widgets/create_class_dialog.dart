@@ -29,7 +29,7 @@ class CreateClassDialog extends StatefulWidget {
 class _CreateClassDialogState extends State<CreateClassDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _subjectController = TextEditingController();
+  final _schoolController = TextEditingController();
   final _roomController = TextEditingController();
   final _periodController = TextEditingController();
   
@@ -47,7 +47,7 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
   @override
   void dispose() {
     _nameController.dispose();
-    _subjectController.dispose();
+    _schoolController.dispose();
     _roomController.dispose();
     _periodController.dispose();
     super.dispose();
@@ -82,9 +82,11 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
       
       final success = await classProvider.createClassFromParams(
         name: _nameController.text.trim(),
-        subject: _subjectController.text.trim(),
+        subject: _nameController.text.trim(), // Use class name as subject
         gradeLevel: _selectedGradeLevel,
-        description: null,
+        description: _schoolController.text.trim().isEmpty 
+            ? null 
+            : 'School: ${_schoolController.text.trim()}',
         room: _roomController.text.trim().isEmpty 
             ? null 
             : _roomController.text.trim(),
@@ -127,13 +129,26 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
     final screenHeight = MediaQuery.of(context).size.height;
     final maxDialogHeight = screenHeight * 0.95; // Use 95% of screen height max
     
+    final isWeb = Theme.of(context).platform == TargetPlatform.windows || 
+                   Theme.of(context).platform == TargetPlatform.macOS || 
+                   Theme.of(context).platform == TargetPlatform.linux;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Make dialog wider on web - 800px or 80% of screen width
+    final dialogWidth = isWeb 
+        ? (screenWidth > 1000 ? 800.0 : screenWidth * 0.8)
+        : (screenWidth > 500 ? 500.0 : screenWidth * 0.9);
+    
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isWeb ? 40 : 16, 
+        vertical: 16
+      ),
       child: Container(
-        width: 500,
+        width: dialogWidth,
         constraints: BoxConstraints(
           maxHeight: maxDialogHeight,
-          maxWidth: MediaQuery.of(context).size.width * 0.9,
+          maxWidth: dialogWidth,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -188,23 +203,17 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                         ),
                         const SizedBox(height: 12),
                         
-                        // Subject and Grade Level
+                        // School and Grade Level
                         Row(
                           children: [
                             Expanded(
                               child: TextFormField(
-                                controller: _subjectController,
+                                controller: _schoolController,
                                 decoration: const InputDecoration(
-                                  labelText: 'Subject*',
-                                  hintText: 'e.g., Mathematics, Science',
-                                  prefixIcon: Icon(Icons.subject),
+                                  labelText: 'School',
+                                  hintText: 'e.g., Lincoln Middle School',
+                                  prefixIcon: Icon(Icons.school),
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Please enter a subject';
-                                  }
-                                  return null;
-                                },
                                 textCapitalization: TextCapitalization.words,
                               ),
                             ),

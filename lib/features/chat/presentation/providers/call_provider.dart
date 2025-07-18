@@ -3,6 +3,8 @@ import 'dart:async';
 import '../../data/services/webrtc_service.dart';
 import '../../domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../notifications/data/services/notification_service.dart';
+import '../../../notifications/data/services/firebase_messaging_service.dart';
 
 class CallProvider extends ChangeNotifier {
   static const String _tag = 'CallProvider';
@@ -12,10 +14,12 @@ class CallProvider extends ChangeNotifier {
   Call? _currentCall;
   Call? _incomingCall;
   StreamSubscription? _incomingCallSubscription;
+  bool _isNavigationInProgress = false;
   
   Call? get currentCall => _currentCall;
   Call? get incomingCall => _incomingCall;
   bool get hasIncomingCall => _incomingCall != null;
+  bool get isNavigationInProgress => _isNavigationInProgress;
 
   CallProvider() {
     _initialize();
@@ -25,6 +29,8 @@ class CallProvider extends ChangeNotifier {
     try {
       await _webrtcService.initialize();
       _listenForIncomingCalls();
+      _setupNotificationHandlers();
+      _setupFirebaseMessagingHandlers();
     } catch (e) {
       LoggerService.error('Failed to initialize call provider', tag: _tag, error: e);
     }
@@ -74,6 +80,7 @@ class CallProvider extends ChangeNotifier {
       await _webrtcService.acceptCall(callId);
       _currentCall = _webrtcService.currentCallState;
       _incomingCall = null;
+      _isNavigationInProgress = false;
       notifyListeners();
     } catch (e) {
       LoggerService.error('Failed to accept call', tag: _tag, error: e);
@@ -85,6 +92,7 @@ class CallProvider extends ChangeNotifier {
     try {
       await _webrtcService.rejectCall(callId);
       _incomingCall = null;
+      _isNavigationInProgress = false;
       notifyListeners();
     } catch (e) {
       LoggerService.error('Failed to reject call', tag: _tag, error: e);
@@ -105,10 +113,82 @@ class CallProvider extends ChangeNotifier {
 
   void dismissIncomingCall() {
     _incomingCall = null;
+    _isNavigationInProgress = false;
+    notifyListeners();
+  }
+
+  void setNavigationInProgress(bool inProgress) {
+    _isNavigationInProgress = inProgress;
     notifyListeners();
   }
 
   WebRTCService get webrtcService => _webrtcService;
+
+  void _setupNotificationHandlers() {
+    final notificationService = NotificationService();
+    
+    // Handle call accepted from notification
+    notificationService.onCallAccepted = (callId) {
+      LoggerService.info('Call accepted from notification: $callId', tag: _tag);
+      acceptCall(callId);
+    };
+    
+    // Handle call declined from notification
+    notificationService.onCallDeclined = (callId) {
+      LoggerService.info('Call declined from notification: $callId', tag: _tag);
+      rejectCall(callId);
+    };
+  }
+  
+  void _setupFirebaseMessagingHandlers() {
+    final messagingService = FirebaseMessagingService();
+    
+    // Handle incoming VoIP call from FCM
+    messagingService.onIncomingCall = (call) {
+      LoggerService.info('Incoming VoIP call from FCM: ${call.callerName}', tag: _tag);
+      _incomingCall = call;
+      notifyListeners();
+      
+      // Show notification
+      final notificationService = NotificationService();
+      notificationService.showIncomingCall(call);
+    };
+  }
+  
+  Future<String> startCallWithNotification({
+    required String receiverId,
+    required String receiverName,
+    required String receiverPhotoUrl,
+    required bool isVideoCall,
+    String? chatRoomId,
+  }) async {
+    try {
+      // Start the call
+      final callId = await startCall(
+        receiverId: receiverId,
+        receiverName: receiverName,
+        receiverPhotoUrl: receiverPhotoUrl,
+        isVideoCall: isVideoCall,
+        chatRoomId: chatRoomId,
+      );
+      
+      // Send push notification to receiver
+      final messagingService = FirebaseMessagingService();
+      await messagingService.sendCallNotification(
+        receiverId: receiverId,
+        callId: callId,
+        callerName: _webrtcService.currentUserName,
+        isVideo: isVideoCall,
+        callerPhotoUrl: _webrtcService.currentUserPhoto,
+        chatRoomId: chatRoomId,
+      );
+      
+      return callId;
+    } catch (e) {
+      LoggerService.error('Failed to start call with notification', tag: _tag, error: e);
+      rethrow;
+    }
+  }
 
   @override
   void dispose() {

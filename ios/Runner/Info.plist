@@ -45,5 +45,23 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	
+	<!-- WebRTC Permissions -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow microphone access for voice and video calls</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Allow camera access for video calls</string>
+	
+	<!-- Background modes for VoIP -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>voip</string>
+		<string>remote-notification</string>
+		<string>processing</string>
+	</array>
+	
+	<!-- Photo Library Access (for profile pictures) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow access to photo library to select profile pictures</string>
 </dict>
 </plist>

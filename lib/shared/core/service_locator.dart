@@ -42,6 +42,8 @@ import '../../features/calendar/data/repositories/calendar_repository_impl.dart'
 import '../../features/auth/domain/repositories/user_repository.dart';
 import '../../features/auth/data/repositories/user_repository_impl.dart';
 import '../../features/calendar/data/services/calendar_service.dart';
+import '../../features/games/domain/repositories/jeopardy_repository.dart';
+import '../../features/games/data/repositories/firebase_jeopardy_repository.dart';
 
 /// Global instance of the GetIt service locator.
 /// This provides access to registered dependencies throughout the app.
@@ -127,6 +129,10 @@ Future<void> setupServiceLocator() async {
     () => UserRepositoryImpl(getIt<FirebaseFirestore>()),
   );
   
+  getIt.registerLazySingleton<JeopardyRepository>(
+    () => FirebaseJeopardyRepository(firestore: getIt<FirebaseFirestore>()),
+  );
+  
   // Register services with dependencies
   getIt.registerFactory<AssignmentService>(
     () => AssignmentService(firestore: getIt<FirebaseFirestore>()),
@@ -191,4 +197,5 @@ extension ServiceLocatorExtension on GetIt {
   SubmissionService get submissionService => get<SubmissionService>();
   CalendarService get calendarService => get<CalendarService>();
   LoggerService get loggerService => get<LoggerService>();
+  JeopardyRepository get jeopardyRepository => get<JeopardyRepository>();
 }

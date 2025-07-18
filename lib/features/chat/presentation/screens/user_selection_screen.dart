@@ -39,27 +39,36 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
       final currentUserId = FirebaseAuth.instance.currentUser?.uid;
       if (currentUserId == null) return;
 
-      // First, let's get all users to see what we have
-      final allUsersSnapshot =
-          await FirebaseFirestore.instance.collection('users').get();
+      // Get users with optimized query - limit to avoid loading too many at once
+      final allUsersSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .limit(50) // Limit to avoid loading all users at once
+          .get();
 
-      // Filter out current user manually
-      final users = allUsersSnapshot.docs
-          .where((doc) => doc.id != currentUserId)
-          .map((doc) {
-        return UserModel.fromFirestore(doc);
-      }).toList();
+      // Filter out current user and process in chunks to avoid blocking UI
+      final users = <UserModel>[];
+      for (final doc in allUsersSnapshot.docs) {
+        if (doc.id != currentUserId) {
+          users.add(UserModel.fromFirestore(doc));
+        }
+        // Yield control back to the UI thread after every 10 users
+        if (users.length % 10 == 0) {
+          await Future.delayed(Duration.zero);
+        }
+      }
 
-      setState(() {
-        _users = users;
-        _filteredUsers = users;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
       if (mounted) {
+        setState(() {
+          _users = users;
+          _filteredUsers = users;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading users: $e')),
         );
@@ -200,15 +209,11 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                     final user = _filteredUsers[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: user.photoURL != null
-                            ? NetworkImage(user.photoURL!)
+                        backgroundImage: user.photoURL != null 
+                            ? NetworkImage(user.photoURL!) 
                             : null,
-                        child: user.photoURL == null
-                            ? Text(
-                                user.displayName.isNotEmpty
-                                    ? user.displayName[0].toUpperCase()
-                                    : '?',
-                              )
+                        child: user.photoURL == null 
+                            ? Text(user.displayName.isNotEmpty ? user.displayName[0] : '?')
                             : null,
                       ),
                       title: Text(user.displayName),

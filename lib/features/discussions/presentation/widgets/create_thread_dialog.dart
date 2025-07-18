@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/discussion_provider.dart';
 
 class CreateThreadDialog extends StatefulWidget {
   final String boardId;
@@ -133,15 +135,65 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
     );
   }
 
-  void _createThread() {
+  void _createThread() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Implement thread creation
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Thread posted successfully'),
+      final discussionProvider = context.read<DiscussionProvider>();
+      
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
         ),
       );
+      
+      try {
+        // Create the thread with the provided information
+        final threadId = await discussionProvider.createThread(
+          boardId: widget.boardId,
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          tags: _selectedTags,
+        );
+        
+        // Remove loading dialog
+        if (mounted) Navigator.pop(context);
+        
+        if (threadId != null && mounted) {
+          // Close the dialog
+          Navigator.pop(context);
+          
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Thread posted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (mounted) {
+          // Show error if thread creation failed
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(discussionProvider.error ?? 'Failed to create thread'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        // Remove loading dialog if still showing
+        if (mounted) Navigator.pop(context);
+        
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error creating thread: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
 import '../../domain/models/chat_room.dart';
@@ -233,7 +234,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
                     leading: CircleAvatar(
                       backgroundColor: theme.colorScheme.primaryContainer,
                       backgroundImage: user.photoUrl != null
-                          ? NetworkImage(user.photoUrl!)
+                          ? CachedNetworkImageProvider(user.photoUrl!)
                           : null,
                       child: user.photoUrl == null
                           ? Text(

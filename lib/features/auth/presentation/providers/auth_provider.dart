@@ -13,6 +13,7 @@ import '../../../../shared/models/user_model.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../../../shared/core/service_locator.dart';
 import '../../../student/data/services/presence_service.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Enumeration of possible authentication states.
 /// 
@@ -97,10 +98,7 @@ class AuthProvider extends ChangeNotifier {
       _initializeAuth();
     } catch (e, stackTrace) {
       // If getIt fails, catch it to prevent provider creation failure
-      if (kDebugMode) {
-        print('AuthProvider initialization failed: $e');
-        print(stackTrace);
-      }
+      LoggerService.error('AuthProvider initialization failed', tag: 'AuthProvider', error: e, stackTrace: stackTrace);
       _status = AuthStatus.error;
       _errorMessage = 'Failed to initialize authentication service. Please restart the app.';
       // Don't call notifyListeners() in constructor
@@ -146,9 +144,7 @@ class AuthProvider extends ChangeNotifier {
       });
     } catch (e) {
       // Firebase not initialized - set to unauthenticated for development
-      if (kDebugMode) {
-        print('Firebase Auth not available: $e');
-      }
+      LoggerService.debug('Firebase Auth not available', tag: 'AuthProvider');
       _status = AuthStatus.unauthenticated;
       _userModel = null;
       notifyListeners();

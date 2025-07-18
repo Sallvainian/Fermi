@@ -350,6 +350,47 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
+  /// Toggles mute status for notifications in a chat room.
+  /// 
+  /// Adds or removes current user from mutedUsers list.
+  /// Updates Firestore directly assuming repository method.
+  /// 
+  /// @param chatRoomId Chat room to toggle mute for
+  Future<void> toggleMute(String chatRoomId) async {
+    final currentUserId = _authProvider.userModel?.uid;
+    if (currentUserId == null) return;
+
+    try {
+      final chatRoom = await getChatRoom(chatRoomId);
+      if (chatRoom == null) return;
+
+      final mutedUsers = List<String>.from(chatRoom.mutedUsers);
+      if (mutedUsers.contains(currentUserId)) {
+        mutedUsers.remove(currentUserId);
+      } else {
+        mutedUsers.add(currentUserId);
+      }
+
+      // Assuming _chatRepository has updateChatRoom, or implement directly
+      final updatedChatRoom = chatRoom.copyWith(mutedUsers: mutedUsers);
+await _chatRepository.updateChatRoom(chatRoomId, updatedChatRoom);
+final index = _chatRooms.indexWhere((room) => room.id == chatRoomId);
+if (index != -1) {
+  _chatRooms[index] = updatedChatRoom;
+}
+
+      // Update local state if current
+      if (_currentChatRoom?.id == chatRoomId) {
+        _currentChatRoom = chatRoom.copyWith(mutedUsers: mutedUsers);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+
   /// Legacy wrapper for chat room creation.
   /// 
   /// Converts map-based participant format to structured

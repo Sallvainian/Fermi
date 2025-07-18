@@ -1,4 +1,6 @@
 rules_version = '2';
+// DEVELOPMENT VERSION - More permissive rules for emulator testing
+// TODO: Revert to production rules before deployment
 service cloud.firestore {
   match /databases/{database}/documents {
     // Helper function to check if user is THE teacher (you)
@@ -268,19 +270,22 @@ service cloud.firestore {
     
     // Calls collection - for video/voice calls
     match /calls/{callId} {
-      // Only participants can read call data
-      allow read: if request.auth != null && 
-        (request.auth.uid == resource.data.callerId || 
-         request.auth.uid == resource.data.receiverId);
+      // DEVELOPMENT: Allow any authenticated user to query calls (for WebRTC service cleanup)
+      // This includes querying for calls with status == 'ringing'
+      allow read: if request.auth != null;
       
       // Only authenticated users can create calls where they are the caller
       allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.callerId;
       
-      // Only participants can update call status
+      // Allow participants to update call status, including cleanup operations
+      // This includes updating status, endedAt, duration, and endReason fields
       allow update: if request.auth != null && 
         (request.auth.uid == resource.data.callerId || 
-         request.auth.uid == resource.data.receiverId);
+         request.auth.uid == resource.data.receiverId) &&
+        // Allow cleanup operations for stale calls
+        (request.resource.data.status in ['ended', 'rejected', 'missed'] || 
+         resource.data.status == 'ringing');
       
       // ICE candidates subcollection
       match /candidates/{userId}/candidates/{candidateId} {
@@ -308,6 +313,11 @@ service cloud.firestore {
       // Users can delete their own notifications
       allow delete: if request.auth != null && 
         request.auth.uid == resource.data.userId;
+    }
+    
+    // FCM tokens - users can manage their own tokens
+    match /fcm_tokens/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
     // Bug reports collection

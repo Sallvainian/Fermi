@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -88,7 +89,7 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
       }
       
       // Create new calendar if not found
-      if (Platform.isAndroid) {
+      if (!kIsWeb && Platform.isAndroid) {
         // On Android, use the first writable calendar
         final writableCalendar = calendarList.firstWhere(
           (cal) => cal.isReadOnly == false,
@@ -99,7 +100,7 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
           _defaultCalendarId = writableCalendar.id;
           return _defaultCalendarId;
         }
-      } else if (Platform.isIOS) {
+      } else if (!kIsWeb && Platform.isIOS) {
         // On iOS, we can create a new calendar
         // For now, use the default calendar
         final defaultCalendar = calendarList.firstWhere(

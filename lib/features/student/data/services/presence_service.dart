@@ -85,11 +85,17 @@ class PresenceService {
       return Stream.value([]);
     }
     
-    return database.ref('presence').onValue.map((event) {
+    return database.ref('presence').onValue.map((DatabaseEvent event) {
       final List<OnlineUser> onlineUsers = [];
       
-      if (event.snapshot.value != null) {
-        final data = event.snapshot.value as Map<dynamic, dynamic>;
+      if (event.snapshot.exists && event.snapshot.value != null) {
+        // Safely handle the data conversion
+        final rawData = event.snapshot.value;
+        if (rawData is! Map) {
+          LoggerService.error('Unexpected presence data format: ${rawData.runtimeType}');
+          return onlineUsers;
+        }
+        final data = Map<dynamic, dynamic>.from(rawData);
         
         data.forEach((key, value) {
           // Filter out offline users and optionally self
@@ -133,7 +139,7 @@ class PresenceService {
       return Stream.value(false);
     }
     
-    return database.ref('presence/$uid/online').onValue.map((event) {
+    return database.ref('presence/$uid/online').onValue.map((DatabaseEvent event) {
       return event.snapshot.value as bool? ?? false;
     }).handleError((error) {
       LoggerService.error('Error fetching user online status', error: error);
@@ -147,7 +153,7 @@ class PresenceService {
       return Stream.value(null);
     }
     
-    return database.ref('presence/$uid/lastSeen').onValue.map((event) {
+    return database.ref('presence/$uid/lastSeen').onValue.map((DatabaseEvent event) {
       final timestamp = event.snapshot.value as int?;
       return timestamp != null 
           ? DateTime.fromMillisecondsSinceEpoch(timestamp)
@@ -192,11 +198,17 @@ class PresenceService {
       return Stream.value({});
     }
     
-    return database.ref('presence').onValue.map((event) {
+    return database.ref('presence').onValue.map((DatabaseEvent event) {
       final Map<String, int> roleCounts = {};
       
-      if (event.snapshot.value != null) {
-        final data = event.snapshot.value as Map<dynamic, dynamic>;
+      if (event.snapshot.exists && event.snapshot.value != null) {
+        // Safely handle the data conversion
+        final rawData = event.snapshot.value;
+        if (rawData is! Map) {
+          LoggerService.error('Unexpected presence data format: ${rawData.runtimeType}');
+          return roleCounts;
+        }
+        final data = Map<dynamic, dynamic>.from(rawData);
         
         data.forEach((key, value) {
           if (value['online'] == true) {

@@ -3,6 +3,7 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
 
@@ -12,13 +13,28 @@ class WebRTCService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   
-  // WebRTC configuration
+  // WebRTC configuration with Unified Plan semantics
   final Map<String, dynamic> _configuration = {
     'iceServers': [
+      // STUN servers for discovering public IP
       {'urls': 'stun:stun.l.google.com:19302'},
       {'urls': 'stun:stun1.l.google.com:19302'},
       {'urls': 'stun:stun2.l.google.com:19302'},
-    ]
+      // TURN servers for NAT traversal (essential for ~20-30% of users)
+      {
+        'urls': [
+          'turn:openrelay.metered.ca:80',
+          'turn:openrelay.metered.ca:443',
+          'turn:openrelay.metered.ca:443?transport=tcp',
+        ],
+        'username': 'openrelayproject',
+        'credential': 'openrelayproject',
+      },
+      // TODO: Replace with your own TURN server for production
+      // Example: Twilio, Xirsys, or self-hosted coturn
+    ],
+    'sdpSemantics': 'unified-plan', // Use modern Unified Plan semantics
+    'iceCandidatePoolSize': 10, // Pre-gather candidates for faster connection
   };
 
   final Map<String, dynamic> _offerSdpConstraints = {
@@ -33,13 +49,18 @@ class WebRTCService {
   RTCPeerConnection? _peerConnection;
   MediaStream? _localStream;
   MediaStream? _remoteStream;
-  RTCVideoRenderer localRenderer = RTCVideoRenderer();
-  RTCVideoRenderer remoteRenderer = RTCVideoRenderer();
+  RTCVideoRenderer? _localRenderer;
+  RTCVideoRenderer? _remoteRenderer;
+  
+  // Getters for backward compatibility
+  RTCVideoRenderer get localRenderer => _localRenderer ??= RTCVideoRenderer();
+  RTCVideoRenderer get remoteRenderer => _remoteRenderer ??= RTCVideoRenderer();
   
   // Call state
   String? _currentCallId;
   Call? _currentCall;
   bool _isCaller = false;
+  bool _isEndingCall = false;
   
   // Callbacks
   Function(MediaStream stream)? onLocalStream;
@@ -56,22 +77,100 @@ class WebRTCService {
   String get currentUserPhoto => _auth.currentUser?.photoURL ?? '';
 
   Future<void> initialize() async {
-    await localRenderer.initialize();
-    await remoteRenderer.initialize();
-    LoggerService.info('WebRTC service initialized', tag: _tag);
+    // Don't initialize renderers here - will do it conditionally based on call type
+    LoggerService.debug('WebRTC service initialized', tag: _tag);
+    
+    // Clean up any stale calls on startup
+    await _cleanupStaleCalls();
+  }
+  
+  // Clean up stale calls that were never ended properly
+  Future<void> _cleanupStaleCalls() async {
+    try {
+      // Find all calls where the current user is involved and still ringing
+      final staleCalls = await _firestore
+          .collection('calls')
+          .where('status', isEqualTo: CallStatus.ringing.name)
+          .get();
+      
+      for (final doc in staleCalls.docs) {
+        final callData = doc.data();
+        final callId = doc.id;
+        
+        // Check if this call involves the current user
+        if (callData['callerId'] == currentUserId || callData['receiverId'] == currentUserId) {
+          // Check if call is stale (older than 60 seconds)
+          final startedAt = (callData['startedAt'] as Timestamp?)?.toDate();
+          if (startedAt != null) {
+            final callAge = DateTime.now().difference(startedAt).inSeconds;
+            if (callAge > 60) {
+              // Mark as missed/ended
+              await doc.reference.update({
+                'status': CallStatus.ended.name,
+                'endedAt': FieldValue.serverTimestamp(),
+                'endReason': 'stale_cleanup',
+              });
+              LoggerService.info('Cleaned up stale call: $callId (${callAge}s old)', tag: _tag);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      LoggerService.error('Failed to cleanup stale calls', tag: _tag, error: e);
+    }
+  }
+  
+  Future<void> _initializeRenderersForVideo() async {
+    if (_localRenderer == null) {
+      _localRenderer = RTCVideoRenderer();
+      await _localRenderer!.initialize();
+    }
+    if (_remoteRenderer == null) {
+      _remoteRenderer = RTCVideoRenderer();
+      await _remoteRenderer!.initialize();
+    }
+    LoggerService.debug('Video renderers initialized', tag: _tag);
   }
 
   Future<void> dispose() async {
     await _cleanUp();
-    localRenderer.dispose();
-    remoteRenderer.dispose();
-    _callStateController.close();
-    LoggerService.info('WebRTC service disposed', tag: _tag);
+    await _disposeRenderers();
+    await _callStateController.close();
+    LoggerService.debug('WebRTC service disposed', tag: _tag);
+  }
+  
+  Future<void> _disposeRenderers() async {
+    if (_localRenderer != null) {
+      _localRenderer!.srcObject = null;
+      await _localRenderer!.dispose();
+      _localRenderer = null;
+    }
+    if (_remoteRenderer != null) {
+      _remoteRenderer!.srcObject = null;
+      await _remoteRenderer!.dispose();
+      _remoteRenderer = null;
+    }
+    LoggerService.debug('Video renderers disposed', tag: _tag);
   }
 
   Future<MediaStream> _getUserMedia(bool isVideoCall) async {
+    // Request permissions before accessing media
+    final permissions = await _requestMediaPermissions(isVideoCall);
+    if (!permissions) {
+      throw Exception('Media permissions denied');
+    }
+    
+    // Optimize audio constraints for voice calls
+    final Map<String, dynamic> audioConstraints = {
+      'echoCancellation': true,
+      'noiseSuppression': true,
+      'autoGainControl': true,
+      'sampleRate': 48000,
+      'channelCount': 1, // Mono audio for bandwidth efficiency
+    };
+    
     final Map<String, dynamic> mediaConstraints = {
-      'audio': true,
+      'audio': isVideoCall ? true : audioConstraints, // Use optimized settings for voice-only
       'video': isVideoCall
           ? {
               'facingMode': 'user',
@@ -86,13 +185,54 @@ class WebRTCService {
       return stream;
     } catch (e) {
       LoggerService.error('Failed to get user media', tag: _tag, error: e);
-      rethrow;
+      throw Exception('Failed to access camera/microphone: ${e.toString()}');
+    }
+  }
+  
+  Future<bool> _requestMediaPermissions(bool isVideoCall) async {
+    try {
+      // Request microphone permission (always needed)
+      var micStatus = await Permission.microphone.status;
+      if (!micStatus.isGranted) {
+        micStatus = await Permission.microphone.request();
+        if (!micStatus.isGranted) {
+          LoggerService.error('Microphone permission denied', tag: _tag);
+          return false;
+        }
+      }
+      
+      // Request camera permission if video call
+      if (isVideoCall) {
+        var cameraStatus = await Permission.camera.status;
+        if (!cameraStatus.isGranted) {
+          cameraStatus = await Permission.camera.request();
+          if (!cameraStatus.isGranted) {
+            LoggerService.error('Camera permission denied', tag: _tag);
+            return false;
+          }
+        }
+      }
+      
+      LoggerService.info('Media permissions granted for ${isVideoCall ? "video" : "voice"} call', tag: _tag);
+      return true;
+    } catch (e) {
+      LoggerService.error('Failed to request media permissions', error: e, tag: _tag);
+      return false;
     }
   }
 
   Future<void> _createPeerConnection() async {
     try {
-      _peerConnection = await createPeerConnection(_configuration);
+      // Create configuration optimized for call type
+      final config = Map<String, dynamic>.from(_configuration);
+      
+      // For voice-only calls, optimize bandwidth and CPU usage
+      if (_currentCall?.type == CallType.voice) {
+        config['bundlePolicy'] = 'max-bundle'; // Bundle all media in a single transport
+        config['rtcpMuxPolicy'] = 'require'; // Reduce port usage
+      }
+      
+      _peerConnection = await createPeerConnection(config);
       
       _peerConnection!.onIceCandidate = (RTCIceCandidate candidate) {
         if (_currentCallId != null) {
@@ -106,21 +246,29 @@ class WebRTCService {
         }
       };
 
-      _peerConnection!.onAddStream = (MediaStream stream) {
-        _remoteStream = stream;
-        remoteRenderer.srcObject = stream;
-        onRemoteStream?.call(stream);
+      // Use modern onTrack instead of deprecated onAddStream
+      _peerConnection!.onTrack = (RTCTrackEvent event) {
+        if (event.track.kind == 'video' || event.track.kind == 'audio') {
+          if (event.streams.isNotEmpty) {
+            _remoteStream = event.streams[0];
+            // Only set srcObject if this is a video call and renderer is initialized
+            if (_currentCall?.type == CallType.video && _remoteRenderer != null) {
+              _remoteRenderer!.srcObject = _remoteStream;
+            }
+            onRemoteStream?.call(_remoteStream!);
+          }
+        }
       };
 
       _peerConnection!.onConnectionState = (RTCPeerConnectionState state) {
-        LoggerService.info('Connection state: $state', tag: _tag);
+        LoggerService.debug('Connection state: $state', tag: _tag);
         if (state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected ||
             state == RTCPeerConnectionState.RTCPeerConnectionStateFailed) {
           endCall();
         }
       };
 
-      LoggerService.info('Peer connection created', tag: _tag);
+      LoggerService.debug('Peer connection created', tag: _tag);
     } catch (e) {
       LoggerService.error('Failed to create peer connection', tag: _tag, error: e);
       rethrow;
@@ -137,19 +285,31 @@ class WebRTCService {
     try {
       _isCaller = true;
       
+      // Initialize renderers if video call
+      if (isVideoCall) {
+        await _initializeRenderersForVideo();
+      }
+      
       // Get user media
       _localStream = await _getUserMedia(isVideoCall);
-      localRenderer.srcObject = _localStream;
+      if (isVideoCall && _localRenderer != null) {
+        _localRenderer!.srcObject = _localStream;
+      }
       onLocalStream?.call(_localStream!);
       
       // Create peer connection
       await _createPeerConnection();
-      _peerConnection!.addStream(_localStream!);
+      
+      // Add tracks individually (modern approach for Unified Plan)
+      _localStream!.getTracks().forEach((track) {
+        _peerConnection!.addTrack(track, _localStream!);
+      });
       
       // Create call document
       final callRef = _firestore.collection('calls').doc();
       _currentCallId = callRef.id;
       
+      final now = DateTime.now();
       final call = Call(
         id: _currentCallId!,
         callerId: currentUserId,
@@ -160,17 +320,26 @@ class WebRTCService {
         receiverPhotoUrl: receiverPhotoUrl,
         type: isVideoCall ? CallType.video : CallType.voice,
         status: CallStatus.ringing,
-        startedAt: DateTime.now(),
+        startedAt: now,
         chatRoomId: chatRoomId,
+        expireAt: now.add(const Duration(hours: 1)), // TTL: auto-cleanup after 1 hour
       );
       
       await callRef.set(call.toMap());
       _currentCall = call;
-      _callStateController.add(call);
+      if (!_callStateController.isClosed) {
+        _callStateController.add(call);
+      }
       onCallStateChanged?.call(call);
       
       // Create offer
       final offer = await _peerConnection!.createOffer(_offerSdpConstraints);
+      
+      // For voice calls, prefer Opus codec for better quality
+      if (!isVideoCall) {
+        offer.sdp = _preferOpusCodec(offer.sdp!);
+      }
+      
       await _peerConnection!.setLocalDescription(offer);
       
       await callRef.update({
@@ -198,7 +367,9 @@ class WebRTCService {
             
             if (_currentCall != null) {
               _currentCall = _currentCall!.copyWith(status: status);
-              _callStateController.add(_currentCall);
+              if (!_callStateController.isClosed) {
+                _callStateController.add(_currentCall);
+              }
               onCallStateChanged?.call(_currentCall!);
               
               if (status == CallStatus.rejected || status == CallStatus.ended) {
@@ -212,7 +383,7 @@ class WebRTCService {
       // Listen for ICE candidates
       _listenForRemoteCandidates();
       
-      LoggerService.info('Call started: $_currentCallId', tag: _tag);
+      LoggerService.debug('Call started: $_currentCallId', tag: _tag);
       return _currentCallId!;
     } catch (e) {
       LoggerService.error('Failed to start call', tag: _tag, error: e);
@@ -234,14 +405,26 @@ class WebRTCService {
       
       _currentCall = Call.fromMap(callDoc.data()!, callId);
       
+      // Initialize renderers if video call
+      final isVideoCall = _currentCall!.type == CallType.video;
+      if (isVideoCall) {
+        await _initializeRenderersForVideo();
+      }
+      
       // Get user media
-      _localStream = await _getUserMedia(_currentCall!.type == CallType.video);
-      localRenderer.srcObject = _localStream;
+      _localStream = await _getUserMedia(isVideoCall);
+      if (isVideoCall && _localRenderer != null) {
+        _localRenderer!.srcObject = _localStream;
+      }
       onLocalStream?.call(_localStream!);
       
       // Create peer connection
       await _createPeerConnection();
-      _peerConnection!.addStream(_localStream!);
+      
+      // Add tracks individually (modern approach for Unified Plan)
+      _localStream!.getTracks().forEach((track) {
+        _peerConnection!.addTrack(track, _localStream!);
+      });
       
       // Set remote description from offer
       final offer = RTCSessionDescription(
@@ -252,6 +435,12 @@ class WebRTCService {
       
       // Create answer
       final answer = await _peerConnection!.createAnswer();
+      
+      // For voice calls, prefer Opus codec for better quality
+      if (!isVideoCall) {
+        answer.sdp = _preferOpusCodec(answer.sdp!);
+      }
+      
       await _peerConnection!.setLocalDescription(answer);
       
       // Update call document
@@ -261,13 +450,15 @@ class WebRTCService {
       });
       
       _currentCall = _currentCall!.copyWith(status: CallStatus.accepted);
-      _callStateController.add(_currentCall);
+      if (!_callStateController.isClosed) {
+        _callStateController.add(_currentCall);
+      }
       onCallStateChanged?.call(_currentCall!);
       
       // Listen for ICE candidates
       _listenForRemoteCandidates();
       
-      LoggerService.info('Call accepted: $callId', tag: _tag);
+      LoggerService.debug('Call accepted: $callId', tag: _tag);
     } catch (e) {
       LoggerService.error('Failed to accept call', tag: _tag, error: e);
       await _cleanUp();
@@ -280,16 +471,24 @@ class WebRTCService {
       await _firestore.collection('calls').doc(callId).update({
         'status': CallStatus.rejected.name,
         'endedAt': FieldValue.serverTimestamp(),
+        'endReason': 'rejected',
+        'expireAt': FieldValue.serverTimestamp(), // Immediate cleanup for rejected calls
       });
       
       await _cleanUp();
-      LoggerService.info('Call rejected: $callId', tag: _tag);
+      LoggerService.debug('Call rejected: $callId', tag: _tag);
     } catch (e) {
       LoggerService.error('Failed to reject call', tag: _tag, error: e);
     }
   }
 
   Future<void> endCall() async {
+    // Prevent duplicate executions
+    if (_isEndingCall) {
+      return;
+    }
+    _isEndingCall = true;
+    
     try {
       if (_currentCallId != null) {
         final endTime = DateTime.now();
@@ -301,13 +500,17 @@ class WebRTCService {
           'status': CallStatus.ended.name,
           'endedAt': FieldValue.serverTimestamp(),
           'duration': duration,
+          'endReason': 'user_ended',
+          'expireAt': FieldValue.serverTimestamp(), // Immediate cleanup for ended calls
         });
       }
       
       await _cleanUp();
-      LoggerService.info('Call ended', tag: _tag);
+      LoggerService.debug('Call ended', tag: _tag);
     } catch (e) {
       LoggerService.error('Failed to end call', tag: _tag, error: e);
+    } finally {
+      _isEndingCall = false;
     }
   }
 
@@ -381,14 +584,18 @@ class WebRTCService {
       await _peerConnection?.close();
       _peerConnection = null;
       
-      localRenderer.srcObject = null;
-      remoteRenderer.srcObject = null;
+      // Dispose renderers after call ends
+      await _disposeRenderers();
       
       _currentCallId = null;
       _currentCall = null;
       _isCaller = false;
+      _isEndingCall = false;
       
-      _callStateController.add(null);
+      // Only emit event if controller is not closed
+      if (!_callStateController.isClosed) {
+        _callStateController.add(null);
+      }
     } catch (e) {
       LoggerService.error('Error during cleanup', tag: _tag, error: e);
     }
@@ -403,7 +610,72 @@ class WebRTCService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Call.fromMap(doc.data(), doc.id))
+            .where((call) {
+              // Filter out stale calls (older than 60 seconds)
+              final callAge = DateTime.now().difference(call.startedAt).inSeconds;
+              if (callAge > 60) {
+                LoggerService.debug('Filtering out stale call: ${call.id} (${callAge}s old)', tag: _tag);
+                // Mark stale call as missed
+                _markCallAsMissed(call.id);
+                return false;
+              }
+              return true;
+            })
             .toList())
         .expand((calls) => calls);
+  }
+  
+  // Mark stale call as missed
+  Future<void> _markCallAsMissed(String callId) async {
+    try {
+      await _firestore.collection('calls').doc(callId).update({
+        'status': CallStatus.ended.name,
+        'endedAt': FieldValue.serverTimestamp(),
+        'endReason': 'missed',
+        'expireAt': FieldValue.serverTimestamp(), // Immediate cleanup for missed calls
+      });
+      LoggerService.debug('Marked stale call as missed: $callId', tag: _tag);
+    } catch (e) {
+      LoggerService.error('Failed to mark call as missed', tag: _tag, error: e);
+    }
+  }
+  
+  // Prefer Opus codec for better voice quality
+  String _preferOpusCodec(String sdp) {
+    // Extract Opus codec line
+    final lines = sdp.split('\r\n');
+    int opusPayload = -1;
+    
+    // Find Opus codec payload type
+    for (final line in lines) {
+      if (line.contains('opus/48000')) {
+        final match = RegExp(r'a=rtpmap:(\d+)').firstMatch(line);
+        if (match != null) {
+          opusPayload = int.parse(match.group(1)!);
+          break;
+        }
+      }
+    }
+    
+    if (opusPayload == -1) return sdp; // Opus not found
+    
+    // Reorder m=audio line to prefer Opus
+    final newLines = <String>[];
+    for (final line in lines) {
+      if (line.startsWith('m=audio')) {
+        final parts = line.split(' ');
+        final payloads = parts.sublist(3);
+        
+        // Move Opus to front
+        payloads.remove(opusPayload.toString());
+        payloads.insert(0, opusPayload.toString());
+        
+        newLines.add('${parts[0]} ${parts[1]} ${parts[2]} ${payloads.join(' ')}');
+      } else {
+        newLines.add(line);
+      }
+    }
+    
+    return newLines.join('\r\n');
   }
 }

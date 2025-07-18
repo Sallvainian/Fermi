@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
@@ -373,7 +374,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             radius: 30,
             backgroundColor: Theme.of(context).colorScheme.primary,
             backgroundImage: user?.photoURL != null && user!.photoURL!.isNotEmpty
-                ? NetworkImage(user.photoURL!)
+                ? CachedNetworkImageProvider(user.photoURL!)
                 : null,
             child: user?.photoURL == null || user!.photoURL!.isEmpty
                 ? const Icon(

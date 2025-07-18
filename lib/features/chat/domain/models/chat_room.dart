@@ -61,6 +61,9 @@ class ChatRoom {
   /// User ID who created the chat room
   final String? createdBy;
 
+  /// List of user IDs who have muted this chat
+  final List<String> mutedUsers;
+
   ChatRoom({
     required this.id,
     required this.name,
@@ -76,6 +79,7 @@ class ChatRoom {
     required this.createdAt,
     this.updatedAt,
     this.createdBy,
+    this.mutedUsers = const [],
   });
 
   /// Factory constructor to create ChatRoom from Firestore document.
@@ -113,6 +117,7 @@ class ChatRoom {
           ? (data['updatedAt'] as Timestamp).toDate()
           : null,
       createdBy: data['createdBy'],
+      mutedUsers: List<String>.from(data['mutedUsers'] ?? []),
     );
   }
 
@@ -143,7 +148,50 @@ class ChatRoom {
           ? Timestamp.fromDate(updatedAt!)
           : null,
       'createdBy': createdBy,
+      'mutedUsers': mutedUsers,
     };
+  }
+
+  /// Gets the display name for this chat room from the perspective of a specific user.
+  /// 
+  /// For direct chats, this returns the name of the OTHER participant.
+  /// For group and class chats, this returns the chat room's name.
+  /// 
+  /// @param currentUserId The ID of the user viewing the chat
+  /// @return The display name for the chat room
+  String getDisplayName(String currentUserId) {
+    if (type == 'direct' && participants.length >= 2) {
+      // For direct chats, show the other participant's name
+      final otherParticipant = participants.firstWhere(
+        (p) => p.id != currentUserId,
+        orElse: () => participants.first,
+      );
+      return otherParticipant.name;
+    }
+    
+    // For group and class chats, use the chat room name
+    return name;
+  }
+
+  /// Gets the display photo URL for this chat room from the perspective of a specific user.
+  /// 
+  /// For direct chats, this returns the photo URL of the OTHER participant.
+  /// For group and class chats, this returns null (groups don't have photos).
+  /// 
+  /// @param currentUserId The ID of the user viewing the chat
+  /// @return The photo URL for the chat room, or null
+  String? getDisplayPhotoUrl(String currentUserId) {
+    if (type == 'direct' && participants.length >= 2) {
+      // For direct chats, show the other participant's photo
+      final otherParticipant = participants.firstWhere(
+        (p) => p.id != currentUserId,
+        orElse: () => participants.first,
+      );
+      return otherParticipant.photoUrl;
+    }
+    
+    // Group and class chats don't have individual photos
+    return null;
   }
 
   /// Creates a copy of the ChatRoom with updated fields.
@@ -173,6 +221,7 @@ class ChatRoom {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createdBy,
+    List<String>? mutedUsers,
   }) {
     return ChatRoom(
       id: id ?? this.id,
@@ -189,6 +238,7 @@ class ChatRoom {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdBy: createdBy ?? this.createdBy,
+      mutedUsers: mutedUsers ?? this.mutedUsers,
     );
   }
 }

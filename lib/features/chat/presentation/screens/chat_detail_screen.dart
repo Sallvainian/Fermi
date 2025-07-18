@@ -11,6 +11,7 @@ import 'dart:io';
 import '../providers/chat_provider.dart';
 import '../../domain/models/message.dart';
 import '../../data/services/scheduled_messages_service.dart';
+import '../../../auth/presentation/providers/auth_provider.dart' as app_auth;
 
 class ChatDetailScreen extends StatefulWidget {
   final String chatRoomId;
@@ -88,10 +89,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         title: Consumer<ChatProvider>(
           builder: (context, chatProvider, child) {
             final chatRoom = chatProvider.currentChatRoom;
+            final authProvider = context.read<app_auth.AuthProvider>();
+            final currentUserId = authProvider.userModel?.uid ?? '';
+            
+            final displayName = chatRoom?.getDisplayName(currentUserId) ?? 'Chat';
+            
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(chatRoom?.name ?? 'Chat'),
+                Text(displayName),
                 if (chatRoom != null && chatRoom.type != 'direct')
                   Text(
                     '${chatRoom.participantIds.length} participants',
@@ -120,7 +126,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             onSelected: (value) {
               switch (value) {
                 case 'search':
-                  // TODO: Implement search in chat
+                  final chatProvider = context.read<ChatProvider>();
+                  showSearch(
+                    context: context,
+                    delegate: ChatSearchDelegate(messages: chatProvider.currentMessages),
+                  );
                   break;
                 case 'mute':
                   // TODO: Implement mute notifications
@@ -1307,5 +1317,62 @@ class _VideoControlsOverlay extends StatelessWidget {
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+  }
+}
+
+class ChatSearchDelegate extends SearchDelegate<Message?> {
+  final List<Message> messages;
+
+  ChatSearchDelegate({required this.messages});
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildSearchResults();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildSearchResults();
+  }
+
+  Widget _buildSearchResults() {
+    final results = messages.where((message) =>
+        message.content.toLowerCase().contains(query.toLowerCase())).toList();
+
+    return ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        final message = results[index];
+        return ListTile(
+          title: Text(message.content),
+          subtitle: Text(DateFormat('MMM d, h:mm a').format(message.timestamp)),
+          onTap: () {
+            close(context, message);
+          },
+        );
+      },
+    );
   }
 }

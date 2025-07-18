@@ -12,6 +12,7 @@ import '../providers/navigation_provider.dart';
 import '../../features/chat/presentation/providers/call_provider.dart';
 import '../../features/notifications/presentation/providers/notification_provider.dart';
 import '../../features/classes/presentation/providers/class_provider.dart';
+import '../../features/games/presentation/providers/jeopardy_provider.dart';
 
 /// Centralized provider configuration
 class AppProviders {
@@ -30,6 +31,7 @@ class AppProviders {
       ChangeNotifierProvider(create: (_) => NavigationProvider()),
       ChangeNotifierProvider(create: (_) => CallProvider()),
       ChangeNotifierProvider(create: (_) => NotificationProvider()),
+      ChangeNotifierProvider(create: (_) => JeopardyProvider()),
     ];
   }
 }

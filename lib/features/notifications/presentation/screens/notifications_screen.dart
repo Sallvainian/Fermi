@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../shared/models/user_model.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../shared/widgets/common/responsive_layout.dart';
@@ -560,7 +562,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         context.go('/calendar');
         break;
       case NotificationType.announcement:
-        // TODO: Navigate to announcements
+        // Navigate to discussions board where announcements are typically posted
+        if (notification.actionData != null && notification.actionData!['boardId'] != null) {
+          context.go('/discussions/${notification.actionData!['boardId']}');
+        } else {
+          context.go('/discussions');
+        }
         break;
       case NotificationType.discussion:
         context.go('/discussions');
@@ -572,30 +579,61 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
   }
 
   void _navigateToGrades(Map<String, dynamic>? actionData) {
-    // TODO: Navigate to grades screen with specific course/assignment
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening grades...'),
-      ),
-    );
+    // Check if user is a teacher or student and navigate accordingly
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isTeacher = authProvider.userModel?.role == UserRole.teacher;
+    
+    if (actionData != null && actionData['assignmentId'] != null) {
+      // Navigate to specific assignment's grades
+      if (isTeacher) {
+        context.go('/teacher/gradebook?assignmentId=${actionData['assignmentId']}');
+      } else {
+        // For students, just go to their grades page
+        context.go('/student/grades');
+      }
+    } else if (actionData != null && actionData['classId'] != null) {
+      // Navigate to specific class grades
+      if (isTeacher) {
+        context.go('/teacher/gradebook?classId=${actionData['classId']}');
+      } else {
+        context.go('/student/grades');
+      }
+    } else {
+      // Navigate to general grades page
+      context.go(isTeacher ? '/teacher/gradebook' : '/student/grades');
+    }
   }
 
   void _navigateToAssignments(Map<String, dynamic>? actionData) {
-    // TODO: Navigate to assignments screen with specific assignment
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening assignments...'),
-      ),
-    );
+    // Check if user is a teacher or student and navigate accordingly
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isTeacher = authProvider.userModel?.role == UserRole.teacher;
+    
+    if (actionData != null && actionData['assignmentId'] != null) {
+      // Navigate to specific assignment
+      if (isTeacher) {
+        context.go('/teacher/assignments/${actionData['assignmentId']}');
+      } else {
+        // For students, go to submission page
+        context.go('/student/assignments/${actionData['assignmentId']}/submit');
+      }
+    } else {
+      // Navigate to general assignments page
+      context.go(isTeacher ? '/teacher/assignments' : '/student/assignments');
+    }
   }
 
   void _navigateToMessages(Map<String, dynamic>? actionData) {
-    // TODO: Navigate to messages screen with specific message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening messages...'),
-      ),
-    );
+    if (actionData != null && actionData['chatRoomId'] != null) {
+      // Navigate to specific chat room
+      context.go('/messages/${actionData['chatRoomId']}');
+    } else if (actionData != null && actionData['userId'] != null) {
+      // Navigate to create new chat with specific user
+      context.go('/messages', extra: {'userId': actionData['userId']});
+    } else {
+      // Navigate to general messages page
+      context.go('/messages');
+    }
   }
 
   void _showSystemNotificationDetails(NotificationModel notification) {

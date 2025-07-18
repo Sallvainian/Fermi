@@ -94,12 +94,18 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                       children: [
                         // Class Filter
                         ChoiceChip(
-                          label: Text(_selectedClass),
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.class_, size: 18),
+                              const SizedBox(width: 8),
+                              Text(_selectedClass),
+                            ],
+                          ),
                           selected: true,
                           onSelected: (_) {
                             _showClassFilterDialog();
                           },
-                          avatar: const Icon(Icons.class_, size: 18),
                         ),
                         // Status Filter
                         ..._buildStatusChips(),

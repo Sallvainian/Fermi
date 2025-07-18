@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Service class that manages Google Sign In using the singleton pattern.
 /// 
@@ -56,17 +57,13 @@ class GoogleSignInService {
   /// Note: On Windows/Linux, this is a no-op as google_sign_in is not supported
   Future<void> initialize() async {
     if (_isInitialized) {
-      if (kDebugMode) {
-        print('GoogleSignInService already initialized');
-      }
+      LoggerService.debug('GoogleSignInService already initialized', tag: 'GoogleSignInService');
       return;
     }
 
     // Check platform support
     if (!isPlatformSupported) {
-      if (kDebugMode) {
-        print('GoogleSignInService: Platform not supported for google_sign_in. Will use Firebase Auth OAuth flow.');
-      }
+      LoggerService.debug('Platform not supported for google_sign_in. Will use Firebase Auth OAuth flow.', tag: 'GoogleSignInService');
       _isInitialized = true; // Mark as initialized even on unsupported platforms
       return;
     }
@@ -84,20 +81,14 @@ class GoogleSignInService {
           GoogleSignInAuthenticationEventSignOut() => null,
         };
         
-        if (kDebugMode) {
-          print('Google Sign In auth event: ${_currentUser?.email ?? "signed out"}');
-        }
+        LoggerService.debug('Google Sign In auth event: ${_currentUser?.email ?? "signed out"}', tag: 'GoogleSignInService');
       });
       
       _isInitialized = true;
       
-      if (kDebugMode) {
-        print('GoogleSignInService initialized');
-      }
+      LoggerService.debug('GoogleSignInService initialized', tag: 'GoogleSignInService');
     } catch (e) {
-      if (kDebugMode) {
-        print('GoogleSignInService initialization error: $e');
-      }
+      LoggerService.error('GoogleSignInService initialization error', tag: 'GoogleSignInService', error: e);
       rethrow;
     }
   }
@@ -115,9 +106,7 @@ class GoogleSignInService {
     }
     
     if (!isPlatformSupported) {
-      if (kDebugMode) {
-        print('Google sign in not supported on this platform. Use Firebase Auth OAuth flow instead.');
-      }
+      LoggerService.debug('Google sign in not supported on this platform. Use Firebase Auth OAuth flow instead.', tag: 'GoogleSignInService');
       return null;
     }
     
@@ -125,9 +114,7 @@ class GoogleSignInService {
       final account = await GoogleSignIn.instance.authenticate();
       return account;
     } catch (e) {
-      if (kDebugMode) {
-        print('Google sign in error: $e');
-      }
+      LoggerService.error('Google sign in error', tag: 'GoogleSignInService', error: e);
       rethrow;
     }
   }
@@ -143,18 +130,14 @@ class GoogleSignInService {
     }
     
     if (!isPlatformSupported) {
-      if (kDebugMode) {
-        print('Google sign out not needed on this platform (handled by Firebase Auth)');
-      }
+      LoggerService.debug('Google sign out not needed on this platform (handled by Firebase Auth)', tag: 'GoogleSignInService');
       return;
     }
     
     try {
       await GoogleSignIn.instance.signOut();
     } catch (e) {
-      if (kDebugMode) {
-        print('Google sign out error: $e');
-      }
+      LoggerService.error('Google sign out error', tag: 'GoogleSignInService', error: e);
       rethrow;
     }
   }
@@ -170,18 +153,14 @@ class GoogleSignInService {
     }
     
     if (!isPlatformSupported) {
-      if (kDebugMode) {
-        print('Google disconnect not needed on this platform (handled by Firebase Auth)');
-      }
+      LoggerService.debug('Google disconnect not needed on this platform (handled by Firebase Auth)', tag: 'GoogleSignInService');
       return;
     }
     
     try {
       await GoogleSignIn.instance.disconnect();
     } catch (e) {
-      if (kDebugMode) {
-        print('Google disconnect error: $e');
-      }
+      LoggerService.error('Google disconnect error', tag: 'GoogleSignInService', error: e);
       rethrow;
     }
   }
@@ -200,9 +179,7 @@ class GoogleSignInService {
     }
     
     if (!isPlatformSupported) {
-      if (kDebugMode) {
-        print('Google silent sign in not supported on this platform');
-      }
+      LoggerService.debug('Google silent sign in not supported on this platform', tag: 'GoogleSignInService');
       return null;
     }
     
@@ -210,9 +187,7 @@ class GoogleSignInService {
       final account = await GoogleSignIn.instance.attemptLightweightAuthentication();
       return account;
     } catch (e) {
-      if (kDebugMode) {
-        print('Google silent sign in error: $e');
-      }
+      LoggerService.error('Google silent sign in error', tag: 'GoogleSignInService', error: e);
       rethrow;
     }
   }
@@ -248,9 +223,7 @@ class GoogleSignInService {
     }
     
     if (!isPlatformSupported) {
-      if (kDebugMode) {
-        print('Google scope request not supported on this platform');
-      }
+      LoggerService.debug('Google scope request not supported on this platform', tag: 'GoogleSignInService');
       return false;
     }
     
@@ -258,14 +231,10 @@ class GoogleSignInService {
       // In 7.x, scopes are configured before authentication
       // To request new scopes, typically need to sign out and sign in again
       // with the updated scopes configuration
-      if (kDebugMode) {
-        print('Note: In google_sign_in 7.x, scopes should be configured before authentication');
-      }
+      LoggerService.debug('Note: In google_sign_in 7.x, scopes should be configured before authentication', tag: 'GoogleSignInService');
       return false;
     } catch (e) {
-      if (kDebugMode) {
-        print('Request scopes error: $e');
-      }
+      LoggerService.error('Request scopes error', tag: 'GoogleSignInService', error: e);
       rethrow;
     }
   }

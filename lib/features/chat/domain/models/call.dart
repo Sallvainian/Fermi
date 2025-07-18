@@ -17,6 +17,7 @@ class Call {
   final DateTime? endedAt;
   final int? duration; // in seconds
   final String? chatRoomId;
+  final DateTime? expireAt; // TTL field for automatic cleanup
 
   Call({
     required this.id,
@@ -32,6 +33,7 @@ class Call {
     this.endedAt,
     this.duration,
     this.chatRoomId,
+    this.expireAt,
   });
 
   factory Call.fromMap(Map<String, dynamic> map, String id) {
@@ -57,6 +59,9 @@ class Call {
           : null,
       duration: map['duration'],
       chatRoomId: map['chatRoomId'],
+      expireAt: map['expireAt'] != null 
+          ? (map['expireAt'] as Timestamp).toDate() 
+          : null,
     );
   }
 
@@ -74,8 +79,14 @@ class Call {
       'endedAt': endedAt != null ? Timestamp.fromDate(endedAt!) : null,
       'duration': duration,
       'chatRoomId': chatRoomId,
+      'expireAt': expireAt != null ? Timestamp.fromDate(expireAt!) : null,
     };
   }
+
+  // Convenience getters for compatibility
+  bool get isVideo => type == CallType.video;
+  String get calleeId => receiverId;
+  String? get callerPhotoURL => callerPhotoUrl;
 
   Call copyWith({
     String? id,
@@ -91,6 +102,7 @@ class Call {
     DateTime? endedAt,
     int? duration,
     String? chatRoomId,
+    DateTime? expireAt,
   }) {
     return Call(
       id: id ?? this.id,
@@ -106,6 +118,7 @@ class Call {
       endedAt: endedAt ?? this.endedAt,
       duration: duration ?? this.duration,
       chatRoomId: chatRoomId ?? this.chatRoomId,
+      expireAt: expireAt ?? this.expireAt,
     );
   }
 }

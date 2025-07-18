@@ -44,7 +44,7 @@ class LoggerService {
   LoggerService._internal();
   
   /// Minimum log level to display (can be configured via environment)
-  static LogLevel minimumLogLevel = kDebugMode ? LogLevel.info : LogLevel.warning;
+  static LogLevel minimumLogLevel = kDebugMode ? LogLevel.warning : LogLevel.warning;
 
   /// Logs a debug message (only in debug mode).
   /// 

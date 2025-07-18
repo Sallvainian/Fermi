@@ -15,6 +15,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../shared/models/user_model.dart';
 import 'google_sign_in_service.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Core authentication service handling all auth-related operations.
 /// 
@@ -49,7 +50,7 @@ class AuthService {
       _auth = FirebaseAuth.instance;
       _firestore = FirebaseFirestore.instance;
     } catch (e) {
-      if (kDebugMode) print('Firebase not available: $e');
+      LoggerService.debug('Firebase not available', tag: 'AuthService');
     }
   }
   
@@ -67,13 +68,13 @@ class AuthService {
   /// @return Stream emitting current User or null
   Stream<User?> get authStateChanges {
     if (_auth == null) {
-      if (kDebugMode) print('Firebase Auth not available');
+      LoggerService.debug('Firebase Auth not available', tag: 'AuthService');
       return Stream.value(null);
     }
     try {
       return _auth!.authStateChanges();
     } catch (e) {
-      if (kDebugMode) print('Firebase Auth error: $e');
+      LoggerService.debug('Firebase Auth error', tag: 'AuthService');
       return Stream.value(null);
     }
   }
@@ -90,13 +91,13 @@ class AuthService {
   /// @return Current Firebase User or null
   User? get currentUser {
     if (_auth == null) {
-      if (kDebugMode) print('Firebase Auth not available');
+      LoggerService.debug('Firebase Auth not available', tag: 'AuthService');
       return null;
     }
     try {
       return _auth!.currentUser;
     } catch (e) {
-      if (kDebugMode) print('Firebase Auth error: $e');
+      LoggerService.debug('Firebase Auth error', tag: 'AuthService');
       return null;
     }
   }
@@ -118,7 +119,7 @@ class AuthService {
   /// @return UserModel instance or null
   Future<UserModel?> getCurrentUserModel() async {
     if (_firestore == null) {
-      if (kDebugMode) print('Firestore not available');
+      LoggerService.debug('Firestore not available', tag: 'AuthService');
       return null;
     }
     
@@ -132,7 +133,7 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      if (kDebugMode) print('Error getting user model: $e');
+      LoggerService.debug('Error getting user model', tag: 'AuthService');
       return null;
     }
   }
@@ -371,8 +372,14 @@ class AuthService {
       
       // Create a new credential using idToken
       // Note: In 7.x, access tokens are obtained separately via authorization
+      // Ensure idToken is not null before creating credential
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        throw Exception('Failed to get Google authentication token');
+      }
+      
       final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
+        idToken: idToken,
         // accessToken is no longer available here - use authorization if needed
       );
 
@@ -398,7 +405,7 @@ class AuthService {
 
       return UserModel.fromFirestore(userDoc);
     } catch (e) {
-      if (kDebugMode) print('Google sign in error: $e');
+      LoggerService.debug('Google sign in error', tag: 'AuthService');
       rethrow;
     }
   }
@@ -429,16 +436,24 @@ class AuthService {
 
     try {
       // Check if we have pending user data (from email signup)
+      // Handle potential null email case more safely
+      final userEmail = user.email;
+      if (userEmail == null) {
+        throw Exception('User email is required for profile completion');
+      }
+      
       String firstName = '';
       String lastName = '';
-      String displayName = user.displayName ?? user.email!.split('@')[0];
+      String displayName = user.displayName ?? userEmail.split('@')[0];
       
       final pendingUserDoc = await _firestore!.collection('pending_users').doc(user.uid).get();
       if (pendingUserDoc.exists) {
-        final pendingData = pendingUserDoc.data() as Map<String, dynamic>;
-        firstName = pendingData['firstName'] ?? '';
-        lastName = pendingData['lastName'] ?? '';
-        displayName = pendingData['displayName'] ?? displayName;
+        final pendingData = pendingUserDoc.data();
+        if (pendingData != null) {
+          firstName = pendingData['firstName'] as String? ?? '';
+          lastName = pendingData['lastName'] as String? ?? '';
+          displayName = pendingData['displayName'] as String? ?? displayName;
+        }
         
         // Delete the pending user data
         await _firestore!.collection('pending_users').doc(user.uid).delete();
@@ -453,7 +468,7 @@ class AuthService {
       
       final userModel = UserModel(
         uid: user.uid,
-        email: user.email!,
+        email: userEmail,
         displayName: displayName,
         firstName: firstName,
         lastName: lastName,
@@ -474,7 +489,7 @@ class AuthService {
 
       return userModel;
     } catch (e) {
-      if (kDebugMode) print('Error completing Google sign up: $e');
+      LoggerService.debug('Error completing Google sign up', tag: 'AuthService');
       rethrow;
     }
   }
@@ -500,7 +515,7 @@ class AuthService {
         futures.add(_googleSignInService.disconnect());
       } catch (e) {
         // Handle case where GoogleSignIn is not initialized
-        if (kDebugMode) print('Google sign out error: $e');
+        LoggerService.debug('Google sign out error', tag: 'AuthService');
       }
     }
     
@@ -573,7 +588,7 @@ class AuthService {
 
       await _firestore!.collection('users').doc(user.uid).update(updates);
     } catch (e) {
-      if (kDebugMode) print('Error updating profile: $e');
+      LoggerService.debug('Error updating profile', tag: 'AuthService');
       rethrow;
     }
   }
@@ -596,7 +611,7 @@ class AuthService {
         'lastActive': FieldValue.serverTimestamp(),
       });
     } catch (e) {
-      if (kDebugMode) print('Error updating last active: $e');
+      LoggerService.debug('Error updating last active', tag: 'AuthService');
     }
   }
 

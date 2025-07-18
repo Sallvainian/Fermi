@@ -1,7 +1,9 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'dart:math';
+import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
+import '../providers/jeopardy_provider.dart';
 
 class JeopardyPlayScreen extends StatefulWidget {
   final String gameId;
@@ -16,13 +18,14 @@ class JeopardyPlayScreen extends StatefulWidget {
 }
 
 class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
-  late JeopardyGame _game;
+  JeopardyGame? _game;
   final List<JeopardyPlayer> _players = [];
   JeopardyQuestion? _selectedQuestion;
   JeopardyCategory? _selectedCategory;
   JeopardyPlayer? _currentPlayer;
   bool _showingAnswer = false;
   bool _gameStarted = false;
+  bool _isLoading = true;
   final Map<String, int> _finalJeopardyWagers = {};
   final Map<String, String> _finalJeopardyAnswers = {};
   bool _showingDailyDouble = false;
@@ -36,96 +39,24 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     _initializePlayers();
   }
 
-  void _loadGame() {
-    // Mock data - in real app, load from Firebase
-    // Create categories with questions
-    final categories = [
-        JeopardyCategory(
-          name: 'Presidents',
-          questions: [
-            JeopardyQuestion(question: 'First president of the United States', answer: 'Who is George Washington?', points: 100),
-            JeopardyQuestion(question: 'President during the Civil War', answer: 'Who is Abraham Lincoln?', points: 200),
-            JeopardyQuestion(question: 'President who served 4 terms', answer: 'Who is Franklin D. Roosevelt?', points: 300),
-            JeopardyQuestion(question: 'Youngest elected president', answer: 'Who is John F. Kennedy?', points: 400),
-            JeopardyQuestion(question: 'First president to resign', answer: 'Who is Richard Nixon?', points: 500),
-          ],
-        ),
-        JeopardyCategory(
-          name: 'Wars',
-          questions: [
-            JeopardyQuestion(question: 'War fought from 1861-1865', answer: 'What is the Civil War?', points: 100),
-            JeopardyQuestion(question: 'War that began with Pearl Harbor', answer: 'What is World War II?', points: 200),
-            JeopardyQuestion(question: 'War for American independence', answer: 'What is the Revolutionary War?', points: 300),
-            JeopardyQuestion(question: 'Cold War opponent of the USA', answer: 'What is the Soviet Union?', points: 400),
-            JeopardyQuestion(question: 'War sparked by 9/11 attacks', answer: 'What is the War on Terror?', points: 500),
-          ],
-        ),
-        JeopardyCategory(
-          name: 'Documents',
-          questions: [
-            JeopardyQuestion(question: 'Supreme law of the land', answer: 'What is the Constitution?', points: 100),
-            JeopardyQuestion(question: 'First 10 amendments', answer: 'What is the Bill of Rights?', points: 200),
-            JeopardyQuestion(question: 'Document that declared independence', answer: 'What is the Declaration of Independence?', points: 300),
-            JeopardyQuestion(question: 'Document that ended slavery', answer: 'What is the Emancipation Proclamation?', points: 400),
-            JeopardyQuestion(question: 'Treaty that ended WWI', answer: 'What is the Treaty of Versailles?', points: 500),
-          ],
-        ),
-        JeopardyCategory(
-          name: 'Landmarks',
-          questions: [
-            JeopardyQuestion(question: 'Lady with a torch in NY Harbor', answer: 'What is the Statue of Liberty?', points: 100),
-            JeopardyQuestion(question: 'Faces carved in South Dakota', answer: 'What is Mount Rushmore?', points: 200),
-            JeopardyQuestion(question: 'Home of the President', answer: 'What is the White House?', points: 300),
-            JeopardyQuestion(question: 'Monument to Lincoln in DC', answer: 'What is the Lincoln Memorial?', points: 400),
-            JeopardyQuestion(question: 'Symbol of westward expansion', answer: 'What is the Gateway Arch?', points: 500),
-          ],
-        ),
-        JeopardyCategory(
-          name: 'Famous Americans',
-          questions: [
-            JeopardyQuestion(question: 'I have a dream speech', answer: 'Who is Martin Luther King Jr.?', points: 100),
-            JeopardyQuestion(question: 'First woman to fly solo across Atlantic', answer: 'Who is Amelia Earhart?', points: 200),
-            JeopardyQuestion(question: 'Inventor of the light bulb', answer: 'Who is Thomas Edison?', points: 300),
-            JeopardyQuestion(question: 'Author of Poor Richard\'s Almanack', answer: 'Who is Benjamin Franklin?', points: 400),
-            JeopardyQuestion(question: 'First American in space', answer: 'Who is Alan Shepard?', points: 500),
-          ],
-        ),
-      ];
-      
-    // Randomly assign 2 Daily Doubles
-    // TEMP: Hardcoded for testing - Presidents $100 (top-left) and Wars $400
-    categories[0].questions[0] = categories[0].questions[0].copyWith(isDailyDouble: true); // Presidents $100 (TOP-LEFT)
-    categories[1].questions[3] = categories[1].questions[3].copyWith(isDailyDouble: true); // Wars $400
+  void _loadGame() async {
+    final jeopardyProvider = context.read<JeopardyProvider>();
+    final loadedGame = await jeopardyProvider.loadGame(widget.gameId);
     
-    // Original random code (commented for testing):
-    // final random = Random();
-    // int dailyDoublesAssigned = 0;
-    // 
-    // while (dailyDoublesAssigned < 2) {
-    //   final categoryIndex = random.nextInt(categories.length);
-    //   final questionIndex = random.nextInt(categories[categoryIndex].questions.length);
-    //   
-    //   if (!categories[categoryIndex].questions[questionIndex].isDailyDouble) {
-    //     categories[categoryIndex].questions[questionIndex] = categories[categoryIndex].questions[questionIndex].copyWith(
-    //       isDailyDouble: true,
-    //     );
-    //     dailyDoublesAssigned++;
-    //   }
-    // }
-    
-    _game = JeopardyGame(
-      id: widget.gameId,
-      title: 'American History Jeopardy',
-      teacherId: 'teacher1',
-      categories: categories,
-      finalJeopardy: FinalJeopardyData(
-        category: 'U.S. History',
-        question: 'This founding father never lived in the White House, though he presided over its design and construction',
-        answer: 'Who is George Washington?',
-      ),
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+    if (loadedGame != null) {
+      setState(() {
+        _game = loadedGame;
+        _isLoading = false;
+      });
+    } else {
+      // Handle error - game not found
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Game not found')),
+        );
+        context.pop();
+      }
+    }
   }
 
   void _initializePlayers() {
@@ -135,6 +66,36 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
+    if (_game == null) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              const Text('Failed to load game'),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => context.pop(),
+                child: const Text('Go Back'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -171,7 +132,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             
             // Game title
             Text(
-              _game.title,
+              _game?.title ?? '',
               style: theme.textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
@@ -335,7 +296,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                       ),
                       Expanded(
                         child: Text(
-                          _game.title,
+                          _game?.title ?? '',
                           style: theme.textTheme.headlineSmall,
                           textAlign: TextAlign.center,
                         ),
@@ -391,7 +352,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         SizedBox(
           height: 80,
           child: Row(
-            children: _game.categories.map((category) => Expanded(
+            children: (_game?.categories ?? []).map((category) => Expanded(
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
@@ -420,7 +381,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         // Questions grid
         Expanded(
           child: Row(
-            children: _game.categories.map((category) => Expanded(
+            children: (_game?.categories ?? []).map((category) => Expanded(
               child: Column(
                 children: category.questions.map((question) => Expanded(
                   child: Container(
@@ -690,10 +651,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       player.score += _selectedQuestion!.points;
       
       // Mark question as answered
-      final categoryIndex = _game.categories.indexOf(_selectedCategory!);
-      if (categoryIndex != -1) {
-        final questionIndex = _game.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
-        _game.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
+      final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
+      if (categoryIndex != -1 && _game != null) {
+        final questionIndex = _game!.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
+        _game!.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
           isAnswered: true,
           answeredBy: player.id,
         );
@@ -717,10 +678,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     
     setState(() {
       // Mark question as answered with no winner
-      final categoryIndex = _game.categories.indexOf(_selectedCategory!);
-      if (categoryIndex != -1) {
-        final questionIndex = _game.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
-        _game.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
+      final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
+      if (categoryIndex != -1 && _game != null) {
+        final questionIndex = _game!.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
+        _game!.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
           isAnswered: true,
           answeredBy: 'none',
         );
@@ -737,11 +698,11 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _checkGameComplete() {
-    final allAnswered = _game.categories.every(
+    final allAnswered = _game?.categories.every(
       (cat) => cat.questions.every((q) => q.isAnswered),
-    );
+    ) ?? false;
     
-    if (allAnswered && _game.finalJeopardy != null) {
+    if (allAnswered && _game?.finalJeopardy != null) {
       _startFinalJeopardy();
     } else if (allAnswered) {
       _showGameComplete();
@@ -914,10 +875,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       }
       
       // Mark question as answered
-      final categoryIndex = _game.categories.indexOf(_selectedCategory!);
-      if (categoryIndex != -1) {
-        final questionIndex = _game.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
-        _game.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
+      final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
+      if (categoryIndex != -1 && _game != null) {
+        final questionIndex = _game!.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
+        _game!.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
           isAnswered: true,
           answeredBy: _dailyDoublePlayer!.id,
         );
@@ -948,7 +909,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => _FinalJeopardyDialog(
-        game: _game,
+        game: _game!,
         players: _players,
         onComplete: (wagers, answers) {
           setState(() {
@@ -979,9 +940,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Question: ${_game.finalJeopardy!.question}'),
+            Text('Question: ${_game?.finalJeopardy?.question ?? ''}'),
             const SizedBox(height: 8),
-            Text('Answer: ${_game.finalJeopardy!.answer}'),
+            Text('Answer: ${_game?.finalJeopardy?.answer ?? ''}'),
             const SizedBox(height: 16),
             ..._players.map((player) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),

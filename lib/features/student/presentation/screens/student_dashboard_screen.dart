@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../classes/presentation/providers/class_provider.dart';
+import '../../../chat/presentation/providers/call_provider.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../classes/domain/models/class_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
@@ -22,7 +23,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _loadStudentClasses();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStudentClasses();
+    });
   }
 
   void _loadStudentClasses() {
@@ -38,8 +41,23 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final callProvider = context.watch<CallProvider>();
     final user = authProvider.userModel;
     final theme = Theme.of(context);
+
+    // Handle incoming calls
+    if (callProvider.hasIncomingCall && 
+        callProvider.incomingCall != null &&
+        !callProvider.isNavigationInProgress) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        callProvider.setNavigationInProgress(true);
+        context.push('/incoming-call', extra: callProvider.incomingCall).then((_) {
+          // Reset navigation state after call screen is popped
+          callProvider.setNavigationInProgress(false);
+          // Optional: Add any post-call logic here
+        });
+      });
+    }
 
     return AdaptiveLayout(
       title: 'Student Dashboard',

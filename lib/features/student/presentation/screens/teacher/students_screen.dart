@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../domain/models/student.dart';
 import '../../../data/services/student_service.dart';
+import '../../../../../features/classes/domain/models/class_model.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
+import '../../../../../shared/widgets/preview/preview_example_wrapper.dart';
+import '../../../../../shared/widgets/preview/example_badge.dart';
+import '../../../../../shared/example/example_repository.dart';
 
 class TeacherStudentsScreen extends StatefulWidget {
   const TeacherStudentsScreen({super.key});
@@ -11,7 +15,8 @@ class TeacherStudentsScreen extends StatefulWidget {
   State<TeacherStudentsScreen> createState() => _TeacherStudentsScreenState();
 }
 
-class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with SingleTickerProviderStateMixin {
+class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
   final _studentService = StudentService();
@@ -110,19 +115,23 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                       });
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'All', child: Text('All Grades')),
+                      const PopupMenuItem(
+                          value: 'All', child: Text('All Grades')),
                       const PopupMenuItem(value: '9', child: Text('Grade 9')),
                       const PopupMenuItem(value: '10', child: Text('Grade 10')),
                       const PopupMenuItem(value: '11', child: Text('Grade 11')),
                       const PopupMenuItem(value: '12', child: Text('Grade 12')),
                     ],
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
                           const Icon(Icons.grade, size: 20),
                           const SizedBox(width: 8),
-                          Text(_selectedGrade == 'All' ? 'Grade' : 'G$_selectedGrade'),
+                          Text(_selectedGrade == 'All'
+                              ? 'Grade'
+                              : 'G$_selectedGrade'),
                           const Icon(Icons.arrow_drop_down),
                         ],
                       ),
@@ -144,13 +153,18 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                       });
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'All', child: Text('All Students')),
-                      const PopupMenuItem(value: 'Active', child: Text('Active')),
-                      const PopupMenuItem(value: 'Inactive', child: Text('Inactive')),
-                      const PopupMenuItem(value: 'Recent', child: Text('Recently Added')),
+                      const PopupMenuItem(
+                          value: 'All', child: Text('All Students')),
+                      const PopupMenuItem(
+                          value: 'Active', child: Text('Active')),
+                      const PopupMenuItem(
+                          value: 'Inactive', child: Text('Inactive')),
+                      const PopupMenuItem(
+                          value: 'Recent', child: Text('Recently Added')),
                     ],
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -183,412 +197,429 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
   }
 
   Widget _buildAllStudents() {
-    // Mock students data
-    final mockStudents = [
-      Student(
-        id: 'student_001',
-        userId: 'user_001',
-        email: 'sarah.johnson@school.edu',
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        displayName: 'Sarah Johnson',
-        gradeLevel: 12,
-        parentEmail: 'johnson.parents@email.com',
-        classIds: ['class_001', 'class_002', 'class_003'],
-        createdAt: DateTime.now().subtract(const Duration(days: 30)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_002',
-        userId: 'user_002',
-        email: 'michael.chen@school.edu',
-        firstName: 'Michael',
-        lastName: 'Chen',
-        displayName: 'Michael Chen',
-        gradeLevel: 11,
-        parentEmail: 'chen.family@email.com',
-        classIds: ['class_001', 'class_003'],
-        createdAt: DateTime.now().subtract(const Duration(days: 45)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 5)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_003',
-        userId: 'user_003',
-        email: 'emma.williams@school.edu',
-        firstName: 'Emma',
-        lastName: 'Williams',
-        displayName: 'Emma Williams',
-        gradeLevel: 12,
-        parentEmail: 'williams.parents@email.com',
-        classIds: ['class_002', 'class_004'],
-        createdAt: DateTime.now().subtract(const Duration(days: 60)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_004',
-        userId: 'user_004',
-        email: 'david.kumar@school.edu',
-        firstName: 'David',
-        lastName: 'Kumar',
-        displayName: 'David Kumar',
-        gradeLevel: 10,
-        parentEmail: 'kumar.parents@email.com',
-        classIds: ['class_001', 'class_002', 'class_003', 'class_004'],
-        createdAt: DateTime.now().subtract(const Duration(days: 20)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 3)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_005',
-        userId: 'user_005',
-        email: 'jessica.martinez@school.edu',
-        firstName: 'Jessica',
-        lastName: 'Martinez',
-        displayName: 'Jessica Martinez',
-        gradeLevel: 11,
-        parentEmail: 'martinez.family@email.com',
-        classIds: ['class_002', 'class_003'],
-        createdAt: DateTime.now().subtract(const Duration(days: 90)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 7)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_006',
-        userId: 'user_006',
-        email: 'alex.thompson@school.edu',
-        firstName: 'Alex',
-        lastName: 'Thompson',
-        displayName: 'Alex Thompson',
-        gradeLevel: 9,
-        parentEmail: null,
-        classIds: ['class_001', 'class_004'],
-        createdAt: DateTime.now().subtract(const Duration(days: 5)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_007',
-        userId: 'user_007',
-        email: 'sophia.garcia@school.edu',
-        firstName: 'Sophia',
-        lastName: 'Garcia',
-        displayName: 'Sophia Garcia',
-        gradeLevel: 10,
-        parentEmail: 'garcia.parents@email.com',
-        classIds: ['class_003'],
-        createdAt: DateTime.now().subtract(const Duration(days: 15)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 10)),
-        isActive: false,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_008',
-        userId: 'user_008',
-        email: 'james.wilson@school.edu',
-        firstName: 'James',
-        lastName: 'Wilson',
-        displayName: 'James Wilson',
-        gradeLevel: 12,
-        parentEmail: 'wilson.family@email.com',
-        classIds: ['class_001', 'class_002', 'class_003'],
-        createdAt: DateTime.now().subtract(const Duration(days: 100)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 4)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_009',
-        userId: 'user_009',
-        email: 'olivia.brown@school.edu',
-        firstName: 'Olivia',
-        lastName: 'Brown',
-        displayName: 'Olivia Brown',
-        gradeLevel: 9,
-        parentEmail: 'brown.parents@email.com',
-        classIds: ['class_004'],
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-        updatedAt: DateTime.now().subtract(const Duration(hours: 12)),
-        isActive: true,
-        photoURL: null,
-      ),
-      Student(
-        id: 'student_010',
-        userId: 'user_010',
-        email: 'ethan.davis@school.edu',
-        firstName: 'Ethan',
-        lastName: 'Davis',
-        displayName: 'Ethan Davis',
-        gradeLevel: 11,
-        parentEmail: 'davis.family@email.com',
-        classIds: ['class_001', 'class_002'],
-        createdAt: DateTime.now().subtract(const Duration(days: 40)),
-        updatedAt: DateTime.now().subtract(const Duration(days: 6)),
-        isActive: true,
-        photoURL: null,
-      ),
-    ];
+    // Get example students from repository
+    final exampleStudents =
+        ExampleRepository.of<Student>(ExampleDomain.students);
 
-    final filteredStudents = _filterStudents(mockStudents);
+    // For now, simulate that we have no real data (empty state)
+    // In a real app, this would come from a provider or service
+    final List<Student> realStudents = []; // Simulating empty real data
 
-    if (filteredStudents.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.school_outlined, size: 48, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text('No students found'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _showAddStudentSheet(context),
-              child: const Text('Add First Student'),
+    return PreviewExampleWrapper<Student>(
+      realData: realStudents,
+      exampleData: exampleStudents,
+      isLoading: false, // Set to true if loading from service
+      builder: (context, students, isExample) {
+        final filteredStudents = _filterStudents(students);
+
+        if (filteredStudents.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.school_outlined, size: 48, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  isExample
+                      ? 'No example students available'
+                      : 'No students found',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isExample
+                      ? 'Example data could not be loaded'
+                      : 'Try adjusting your filters or add your first student',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _showAddStudentSheet(context),
+                  child: Text(
+                      isExample ? 'Add Real Student' : 'Add First Student'),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    return ResponsiveContainer(
-      child: ListView.builder(
-        itemCount: filteredStudents.length,
-        itemBuilder: (context, index) {
-          final student = filteredStudents[index];
-          return _buildStudentCard(student);
-        },
-      ),
+        return ResponsiveContainer(
+          child: ListView.builder(
+            itemCount: filteredStudents.length,
+            itemBuilder: (context, index) {
+              final student = filteredStudents[index];
+              return _buildStudentCard(student, isExample: isExample);
+            },
+          ),
+        );
+      },
+      onExampleTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            icon: const Icon(Icons.info_outline),
+            title: const Text('Example Students'),
+            content: const Text(
+              'These are example students to show you how the app works. '
+              'Add your own students to replace these examples.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Got it'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showAddStudentSheet(context);
+                },
+                child: const Text('Add Student'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildClassesView() {
     final theme = Theme.of(context);
-    
-    // Mock data for classes
-    final classes = [
-      {
-        'id': 'class_001',
-        'name': 'Math 101 - Section A',
-        'subject': 'Mathematics',
-        'grade': 10,
-        'students': 28,
-        'room': 'Room 204',
-        'schedule': 'Mon, Wed, Fri - 9:00 AM',
-        'color': Colors.blue,
-      },
-      {
-        'id': 'class_002',
-        'name': 'Environmental Science',
-        'subject': 'Science',
-        'grade': 11,
-        'students': 25,
-        'room': 'Lab 3',
-        'schedule': 'Tue, Thu - 10:30 AM',
-        'color': Colors.green,
-      },
-      {
-        'id': 'class_003',
-        'name': 'Physics Honors',
-        'subject': 'Physics',
-        'grade': 12,
-        'students': 18,
-        'room': 'Lab 1',
-        'schedule': 'Mon, Wed, Fri - 2:00 PM',
-        'color': Colors.purple,
-      },
-      {
-        'id': 'class_004',
-        'name': 'Chemistry 101',
-        'subject': 'Chemistry',
-        'grade': 10,
-        'students': 30,
-        'room': 'Lab 2',
-        'schedule': 'Tue, Thu - 1:00 PM',
-        'color': Colors.orange,
-      },
-    ];
 
-    return ResponsiveContainer(
-      child: Column(
-        children: [
-          // Class Statistics
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+    // Get example classes from repository
+    final exampleClasses =
+        ExampleRepository.of<ClassModel>(ExampleDomain.classes);
+
+    // For now, simulate that we have no real data (empty state)
+    // In a real app, this would come from a provider or service
+    final List<ClassModel> realClasses = []; // Simulating empty real data
+
+    return PreviewExampleWrapper<ClassModel>(
+      realData: realClasses,
+      exampleData: exampleClasses,
+      isLoading: false, // Set to true if loading from service
+      builder: (context, classes, isExample) {
+        if (classes.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Total Classes',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${classes.length}',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                const Icon(Icons.class_outlined, size: 48, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  isExample
+                      ? 'No example classes available'
+                      : 'No classes found',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Total Students',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${classes.fold(0, (sum, c) => sum + (c['students'] as int))}',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.secondary,
-                            ),
-                          ),
-                        ],
+                const SizedBox(height: 8),
+                Text(
+                  isExample
+                      ? 'Example data could not be loaded'
+                      : 'Create your first class to get started',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                    ),
-                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    // TODO: Navigate to add class screen
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Add class feature coming soon'),
+                      ),
+                    );
+                  },
+                  child: Text(
+                      isExample ? 'Create Real Class' : 'Create First Class'),
                 ),
               ],
             ),
-          ),
-          // Classes List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: classes.length,
-              itemBuilder: (context, index) {
-                final classData = classes[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Opening ${classData['name']}'),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          // Class Icon
-                          Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: (classData['color'] as Color).withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.class_,
-                              color: classData['color'] as Color,
-                              size: 28,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          // Class Info
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  classData['name'] as String,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${classData['subject']} • Grade ${classData['grade']}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.people_outline,
-                                      size: 16,
+          );
+        }
+
+        return ResponsiveContainer(
+          child: Column(
+            children: [
+              // Class Statistics
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Total Classes',
+                                    style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${classData['students']} students',
-                                      style: theme.textTheme.bodySmall,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Icon(
-                                      Icons.location_on_outlined,
-                                      size: 16,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      classData['room'] as String,
-                                      style: theme.textTheme.bodySmall,
-                                    ),
+                                  ),
+                                  if (isExample) ...[
+                                    const SizedBox(width: 8),
+                                    const ExampleBadge.compact(),
                                   ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${classes.length}',
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  classData['schedule'] as String,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.primary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          // Arrow
-                          const Icon(Icons.arrow_forward_ios, size: 16),
-                        ],
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Total Students',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  if (isExample) ...[
+                                    const SizedBox(width: 8),
+                                    const ExampleBadge.compact(),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${classes.fold(0, (sum, c) => sum + c.studentIds.length)}',
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Classes List
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: classes.length,
+                  itemBuilder: (context, index) {
+                    final classModel = classes[index];
+                    return _buildClassCard(classModel, isExample: isExample);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      onExampleTap: () {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            icon: const Icon(Icons.info_outline),
+            title: const Text('Example Classes'),
+            content: const Text(
+              'These are example classes to show you how the app works. '
+              'Create your own classes to replace these examples.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Got it'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  // TODO: Navigate to add class screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Add class feature coming soon'),
+                    ),
+                  );
+                },
+                child: const Text('Create Class'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildClassCard(ClassModel classModel, {bool isExample = false}) {
+    final theme = Theme.of(context);
+
+    // Define colors for different subjects
+    final subjectColors = {
+      'Mathematics': Colors.blue,
+      'Science': Colors.green,
+      'Physics': Colors.purple,
+      'Chemistry': Colors.orange,
+      'English': Colors.red,
+      'History': Colors.brown,
+    };
+
+    final subjectColor = subjectColors[classModel.subject] ?? Colors.grey;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: isExample
+            ? () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    icon: const Icon(Icons.info_outline),
+                    title: const Text('Example Class'),
+                    content: Text(
+                      'This is example class "${classModel.name}" to show you how the app works. '
+                      'Create your own classes to replace these examples.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Got it'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          // TODO: Navigate to add class screen
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Create class feature coming soon'),
+                            ),
+                          );
+                        },
+                        child: const Text('Create Class'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Opening ${classModel.name}'),
                   ),
                 );
               },
-            ),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Class Icon
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: subjectColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.class_,
+                  color: subjectColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Class Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            classModel.name,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (isExample) const ExampleBadge.compact(),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${classModel.subject} • ${classModel.gradeLevel}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${classModel.studentIds.length} students',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        const SizedBox(width: 12),
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          classModel.room ?? 'No room',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      classModel.schedule ?? 'No schedule',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Arrow
+              const Icon(Icons.arrow_forward_ios, size: 16),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildPerformanceView() {
     final theme = Theme.of(context);
-    
+
     // Mock performance data
     final performanceData = [
       {
@@ -871,7 +902,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
 
   Widget _buildReportsView() {
     final theme = Theme.of(context);
-    
+
     // Mock report data
     final reports = [
       {
@@ -992,7 +1023,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: (report['color'] as Color).withValues(alpha: 0.1),
+                              color: (report['color'] as Color)
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -1021,13 +1053,16 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.primaryContainer,
+                                        color:
+                                            theme.colorScheme.primaryContainer,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
                                         report['type'] as String,
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onPrimaryContainer,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: theme
+                                              .colorScheme.onPrimaryContainer,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -1035,8 +1070,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                                     const SizedBox(width: 8),
                                     Text(
                                       _formatDate(report['date'] as DateTime),
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -1051,21 +1088,24 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                                 case 'download':
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Downloading ${report['title']}...'),
+                                      content: Text(
+                                          'Downloading ${report['title']}...'),
                                     ),
                                   );
                                   break;
                                 case 'share':
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Sharing ${report['title']}...'),
+                                      content:
+                                          Text('Sharing ${report['title']}...'),
                                     ),
                                   );
                                   break;
                                 case 'delete':
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('Deleting ${report['title']}...'),
+                                      content: Text(
+                                          'Deleting ${report['title']}...'),
                                     ),
                                   );
                                   break;
@@ -1096,9 +1136,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                                 value: 'delete',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.delete, size: 20, color: Colors.red),
+                                    Icon(Icons.delete,
+                                        size: 20, color: Colors.red),
                                     SizedBox(width: 8),
-                                    Text('Delete', style: TextStyle(color: Colors.red)),
+                                    Text('Delete',
+                                        style: TextStyle(color: Colors.red)),
                                   ],
                                 ),
                               ),
@@ -1121,7 +1163,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       return 'Today';
     } else if (difference.inDays == 1) {
@@ -1239,15 +1281,19 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                       children: [
                         Text(
                           report['title'] as String,
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                         Text(
                           'Generated on ${_formatDate(report['date'] as DateTime)}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
                         ),
                       ],
                     ),
@@ -1265,8 +1311,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                     Text(
                       'Report Summary',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -1321,16 +1367,18 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
       final query = _searchController.text.toLowerCase();
       filtered = filtered.where((student) {
         return student.displayName.toLowerCase().contains(query) ||
-               student.email.toLowerCase().contains(query) ||
-               student.firstName.toLowerCase().contains(query) ||
-               student.lastName.toLowerCase().contains(query);
+            student.email.toLowerCase().contains(query) ||
+            student.firstName.toLowerCase().contains(query) ||
+            student.lastName.toLowerCase().contains(query);
       }).toList();
     }
 
     // Filter by grade
     if (_selectedGrade != 'All') {
       final gradeLevel = int.parse(_selectedGrade);
-      filtered = filtered.where((student) => student.gradeLevel == gradeLevel).toList();
+      filtered = filtered
+          .where((student) => student.gradeLevel == gradeLevel)
+          .toList();
     }
 
     // Filter by status
@@ -1344,7 +1392,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
           break;
         case 'Recent':
           final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
-          filtered = filtered.where((student) => student.createdAt.isAfter(sevenDaysAgo)).toList();
+          filtered = filtered
+              .where((student) => student.createdAt.isAfter(sevenDaysAgo))
+              .toList();
           break;
       }
     }
@@ -1352,14 +1402,41 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
     return filtered;
   }
 
-  Widget _buildStudentCard(Student student) {
+  Widget _buildStudentCard(Student student, {bool isExample = false}) {
     final theme = Theme.of(context);
     final isActive = student.isActive;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: InkWell(
-        onTap: () => _showStudentDetails(student),
+        onTap: isExample
+            ? () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    icon: const Icon(Icons.info_outline),
+                    title: const Text('Example Student'),
+                    content: Text(
+                      'This is example student "${student.displayName}" to show you how the app works. '
+                      'Add your own students to replace these examples.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Got it'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          _showAddStudentSheet(context);
+                        },
+                        child: const Text('Add Student'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            : () => _showStudentDetails(student),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -1367,7 +1444,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
             children: [
               // Student Avatar
               CircleAvatar(
-                backgroundColor: isActive 
+                backgroundColor: isActive
                     ? theme.colorScheme.primary.withValues(alpha: 0.1)
                     : Colors.grey.withValues(alpha: 0.1),
                 child: student.photoURL != null
@@ -1379,13 +1456,16 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Icon(
                             Icons.school,
-                            color: isActive ? theme.colorScheme.primary : Colors.grey,
+                            color: isActive
+                                ? theme.colorScheme.primary
+                                : Colors.grey,
                           ),
                         ),
                       )
                     : Icon(
                         Icons.school,
-                        color: isActive ? theme.colorScheme.primary : Colors.grey,
+                        color:
+                            isActive ? theme.colorScheme.primary : Colors.grey,
                       ),
               ),
               const SizedBox(width: 12),
@@ -1408,9 +1488,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -1470,30 +1552,34 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> with Sing
                 ),
               ),
               const SizedBox(width: 8),
-              // Actions
-              PopupMenuButton<String>(
-                onSelected: (value) => _handleStudentAction(value, student),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'view', child: Text('View Details')),
-                  const PopupMenuItem(value: 'edit', child: Text('Edit Student')),
-                  const PopupMenuItem(value: 'message', child: Text('Send Message')),
-                  const PopupMenuItem(value: 'parent', child: Text('Contact Parent')),
-                  PopupMenuItem(
-                    value: isActive ? 'deactivate' : 'activate',
-                    child: Text(isActive ? 'Deactivate' : 'Activate'),
-                  ),
-                ],
-                child: const Icon(Icons.more_vert),
-              ),
+              // Actions or Example Badge
+              if (isExample)
+                const ExampleBadge.compact()
+              else
+                PopupMenuButton<String>(
+                  onSelected: (value) => _handleStudentAction(value, student),
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                        value: 'view', child: Text('View Details')),
+                    const PopupMenuItem(
+                        value: 'edit', child: Text('Edit Student')),
+                    const PopupMenuItem(
+                        value: 'message', child: Text('Send Message')),
+                    const PopupMenuItem(
+                        value: 'parent', child: Text('Contact Parent')),
+                    PopupMenuItem(
+                      value: isActive ? 'deactivate' : 'activate',
+                      child: Text(isActive ? 'Deactivate' : 'Activate'),
+                    ),
+                  ],
+                  child: const Icon(Icons.more_vert),
+                ),
             ],
           ),
         ),
       ),
     );
   }
-
-
-
 
   Color _getGPAColor(double gpa) {
     if (gpa >= 3.5) return Colors.green;
@@ -1674,7 +1760,8 @@ class StudentDetailSheet extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1698,10 +1785,15 @@ class StudentDetailSheet extends StatelessWidget {
                                     width: 64,
                                     height: 64,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Text(
-                                      student.displayName.split(' ').map((n) => n[0]).join(),
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Text(
+                                      student.displayName
+                                          .split(' ')
+                                          .map((n) => n[0])
+                                          .join(),
                                       style: TextStyle(
-                                        color: theme.colorScheme.onPrimaryContainer,
+                                        color: theme
+                                            .colorScheme.onPrimaryContainer,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 20,
                                       ),
@@ -1709,7 +1801,10 @@ class StudentDetailSheet extends StatelessWidget {
                                   ),
                                 )
                               : Text(
-                                  student.displayName.split(' ').map((n) => n[0]).join(),
+                                  student.displayName
+                                      .split(' ')
+                                      .map((n) => n[0])
+                                      .join(),
                                   style: TextStyle(
                                     color: theme.colorScheme.onPrimaryContainer,
                                     fontWeight: FontWeight.bold,
@@ -1749,11 +1844,14 @@ class StudentDetailSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildContactRow(Icons.email, 'Student Email', student.email),
+                    _buildContactRow(
+                        Icons.email, 'Student Email', student.email),
                     if (student.parentEmail != null)
-                      _buildContactRow(Icons.family_restroom, 'Parent Email', student.parentEmail!)
+                      _buildContactRow(Icons.family_restroom, 'Parent Email',
+                          student.parentEmail!)
                     else
-                      _buildContactRow(Icons.family_restroom, 'Parent Email', 'Not provided'),
+                      _buildContactRow(Icons.family_restroom, 'Parent Email',
+                          'Not provided'),
                     const SizedBox(height: 24),
 
                     // Academic Performance
@@ -1808,7 +1906,8 @@ class StudentDetailSheet extends StatelessWidget {
                               // TODO: Navigate to class details
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Class details for $classId coming soon'),
+                                  content: Text(
+                                      'Class details for $classId coming soon'),
                                 ),
                               );
                             },
@@ -1820,7 +1919,8 @@ class StudentDetailSheet extends StatelessWidget {
                         child: ListTile(
                           leading: Icon(Icons.info_outline),
                           title: Text('No classes enrolled'),
-                          subtitle: Text('Student is not enrolled in any classes'),
+                          subtitle:
+                              Text('Student is not enrolled in any classes'),
                         ),
                       ),
 
@@ -1865,7 +1965,8 @@ class StudentDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildPerformanceCard(String label, String value, IconData icon, Color color) {
+  Widget _buildPerformanceCard(
+      String label, String value, IconData icon, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1893,7 +1994,6 @@ class StudentDetailSheet extends StatelessWidget {
       ),
     );
   }
-
 }
 
 // Add Student Sheet
@@ -1962,7 +2062,8 @@ class _AddStudentSheetState extends State<AddStudentSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Student "${createdStudent.displayName}" added successfully'),
+            content: Text(
+                'Student "${createdStudent.displayName}" added successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -2004,7 +2105,8 @@ class _AddStudentSheetState extends State<AddStudentSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -2037,142 +2139,144 @@ class _AddStudentSheetState extends State<AddStudentSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                  // First Name Field
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'First Name',
-                      hintText: 'Enter first name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
+                    // First Name Field
+                    TextFormField(
+                      controller: _firstNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'First Name',
+                        hintText: 'Enter first name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter first name';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter first name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Last Name Field
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Last Name',
-                      hintText: 'Enter last name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person_outline),
+                    // Last Name Field
+                    TextFormField(
+                      controller: _lastNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Last Name',
+                        hintText: 'Enter last name',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter last name';
+                        }
+                        return null;
+                      },
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter last name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Email Field
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Student Email',
-                      hintText: 'student@example.com',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter student email';
-                      }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
-                        return 'Please enter a valid email address';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Parent Email Field
-                  TextFormField(
-                    controller: _parentEmailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Parent Email (Optional)',
-                      hintText: 'parent@example.com',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.family_restroom),
-                    ),
-                    validator: (value) {
-                      if (value != null && value.trim().isNotEmpty) {
-                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
+                    // Email Field
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Student Email',
+                        hintText: 'student@example.com',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter student email';
+                        }
+                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                            .hasMatch(value.trim())) {
                           return 'Please enter a valid email address';
                         }
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Grade Dropdown
-                  DropdownButtonFormField<String>(
-                    value: _selectedGrade,
-                    decoration: const InputDecoration(
-                      labelText: 'Grade Level',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.school),
+                        return null;
+                      },
                     ),
-                    items: ['9', '10', '11', '12'].map((grade) {
-                      return DropdownMenuItem(
-                        value: grade,
-                        child: Text('Grade $grade'),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedGrade = value!;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Classes Selection
-                  Text(
-                    'Assign to Classes',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    // Parent Email Field
+                    TextFormField(
+                      controller: _parentEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Parent Email (Optional)',
+                        hintText: 'parent@example.com',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.family_restroom),
+                      ),
+                      validator: (value) {
+                        if (value != null && value.trim().isNotEmpty) {
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                              .hasMatch(value.trim())) {
+                            return 'Please enter a valid email address';
+                          }
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      'Math 101 - Section A',
-                      'Environmental Science',
-                      'Physics Honors',
-                      'Chemistry 101',
-                    ].map((className) {
-                      final isSelected = _selectedClasses.contains(className);
-                      return FilterChip(
-                        label: Text(className),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _selectedClasses.add(className);
-                            } else {
-                              _selectedClasses.remove(className);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
+                    const SizedBox(height: 16),
 
-                  const SizedBox(height: 32),
+                    // Grade Dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedGrade,
+                      decoration: const InputDecoration(
+                        labelText: 'Grade Level',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.school),
+                      ),
+                      items: ['9', '10', '11', '12'].map((grade) {
+                        return DropdownMenuItem(
+                          value: grade,
+                          child: Text('Grade $grade'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedGrade = value!;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Classes Selection
+                    Text(
+                      'Assign to Classes',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        'Math 101 - Section A',
+                        'Environmental Science',
+                        'Physics Honors',
+                        'Chemistry 101',
+                      ].map((className) {
+                        final isSelected = _selectedClasses.contains(className);
+                        return FilterChip(
+                          label: Text(className),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedClasses.add(className);
+                              } else {
+                                _selectedClasses.remove(className);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -2215,7 +2319,8 @@ class _AddStudentSheetState extends State<AddStudentSheet> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
                         : const Text('Add Student'),
@@ -2290,7 +2395,8 @@ class _EditStudentSheetState extends State<EditStudentSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -2366,7 +2472,8 @@ class _EditStudentSheetState extends State<EditStudentSheet> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter email';
                         }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
                           return 'Please enter a valid email';
                         }
                         return null;
@@ -2384,7 +2491,8 @@ class _EditStudentSheetState extends State<EditStudentSheet> {
                       ),
                       validator: (value) {
                         if (value != null && value.isNotEmpty) {
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                              .hasMatch(value)) {
                             return 'Please enter a valid email';
                           }
                         }
@@ -2475,7 +2583,8 @@ class _EditStudentSheetState extends State<EditStudentSheet> {
       final updatedStudent = widget.student.copyWith(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
-        displayName: '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+        displayName:
+            '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
         email: _emailController.text.trim(),
         parentEmail: _parentEmailController.text.trim().isEmpty
             ? null

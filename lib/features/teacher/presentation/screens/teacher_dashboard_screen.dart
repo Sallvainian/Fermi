@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../classes/presentation/providers/class_provider.dart';
+import '../../../chat/presentation/providers/call_provider.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../classes/domain/models/class_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
@@ -41,8 +42,23 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final callProvider = context.watch<CallProvider>();
     final user = authProvider.userModel;
     final theme = Theme.of(context);
+
+    // Handle incoming calls
+    if (callProvider.hasIncomingCall && 
+        callProvider.incomingCall != null &&
+        !callProvider.isNavigationInProgress) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        callProvider.setNavigationInProgress(true);
+        context.push('/incoming-call', extra: callProvider.incomingCall).then((_) {
+          // Reset navigation state after call screen is popped
+          callProvider.setNavigationInProgress(false);
+          // Optional: Add any post-call logic here
+        });
+      });
+    }
 
     return AdaptiveLayout(
       title: 'Teacher Dashboard',
@@ -50,7 +66,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
-            // TODO: Navigate to notifications
+            context.go('/notifications');
           },
         ),
         IconButton(
@@ -530,7 +546,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           title: 'Create Assignment',
           subtitle: 'Add new homework or project',
           onTap: () {
-            // TODO: Navigate to create assignment
+            context.go('/teacher/assignments/create');
           },
         ),
         _buildActionCard(
@@ -539,7 +555,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           title: 'Grade Work',
           subtitle: 'Review student submissions',
           onTap: () {
-            // TODO: Navigate to grading
+            context.go('/teacher/gradebook');
           },
         ),
         _buildActionCard(
@@ -566,7 +582,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           title: 'Schedule Event',
           subtitle: 'Add to class calendar',
           onTap: () {
-            // TODO: Navigate to calendar
+            context.go('/calendar');
           },
         ),
         _buildActionCard(
@@ -575,7 +591,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           title: 'Export Data',
           subtitle: 'Download gradebook backup',
           onTap: () {
-            // TODO: Export functionality
+            _showExportDialog(context);
           },
         ),
         _buildActionCard(
@@ -662,5 +678,67 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     
     // Default fallback
     return 'Teacher!';
+  }
+
+  void _showExportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export Data'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Select data to export:'),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.grade),
+              title: const Text('Gradebook Data'),
+              subtitle: const Text('Export all grades as CSV'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Gradebook export will be available soon'),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.people),
+              title: const Text('Student List'),
+              subtitle: const Text('Export student roster as CSV'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Student list export will be available soon'),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment),
+              title: const Text('Assignments'),
+              subtitle: const Text('Export assignment details as CSV'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Assignment export will be available soon'),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
   }
 }

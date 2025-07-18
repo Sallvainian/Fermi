@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/chat_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/chat_room.dart';
@@ -81,7 +82,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
           final chatRooms = _searchQuery.isEmpty
               ? allChatRooms
               : allChatRooms.where((room) {
-                  return room.name
+                  final authProvider = context.read<AuthProvider>();
+                  final currentUserId = authProvider.userModel?.uid ?? '';
+                  final displayName = room.getDisplayName(currentUserId);
+                  
+                  return displayName
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase()) ||
                       (room.lastMessage
@@ -143,23 +148,34 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Widget _buildChatRoomTile(BuildContext context, ChatRoom chatRoom) {
     final theme = Theme.of(context);
     final hasUnread = chatRoom.unreadCount > 0;
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.userModel?.uid ?? '';
+    
+    // Get the display name and photo for this chat room from current user's perspective
+    final displayName = chatRoom.getDisplayName(currentUserId);
+    final displayPhotoUrl = chatRoom.getDisplayPhotoUrl(currentUserId);
 
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.primaryContainer,
-        child: Text(
-          chatRoom.name.isNotEmpty ? chatRoom.name[0].toUpperCase() : '?',
-          style: TextStyle(
-            color: theme.colorScheme.onPrimaryContainer,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        backgroundImage: displayPhotoUrl != null
+            ? CachedNetworkImageProvider(displayPhotoUrl)
+            : null,
+        child: displayPhotoUrl == null
+            ? Text(
+                displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                style: TextStyle(
+                  color: theme.colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            : null,
       ),
       title: Row(
         children: [
           Expanded(
             child: Text(
-              chatRoom.name,
+              displayName,
               style: TextStyle(
                 fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
               ),

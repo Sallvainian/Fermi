@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../providers/jeopardy_provider.dart';
 
 class JeopardyScreen extends StatefulWidget {
   const JeopardyScreen({super.key});
@@ -12,65 +14,16 @@ class JeopardyScreen extends StatefulWidget {
 
 class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
-  // Mock data for demonstration
-  final List<JeopardyGame> _myGames = [
-    JeopardyGame(
-      id: 'game1',
-      title: 'American History Jeopardy',
-      teacherId: 'teacher1',
-      categories: [
-        JeopardyCategory(
-          name: 'Presidents',
-          questions: [
-            JeopardyQuestion(question: 'First president of the United States', answer: 'Who is George Washington?', points: 100),
-            JeopardyQuestion(question: 'President during the Civil War', answer: 'Who is Abraham Lincoln?', points: 200),
-            JeopardyQuestion(question: 'President who served 4 terms', answer: 'Who is Franklin D. Roosevelt?', points: 300),
-            JeopardyQuestion(question: 'Youngest elected president', answer: 'Who is John F. Kennedy?', points: 400),
-            JeopardyQuestion(question: 'First president to resign', answer: 'Who is Richard Nixon?', points: 500),
-          ],
-        ),
-        JeopardyCategory(
-          name: 'Wars',
-          questions: [
-            JeopardyQuestion(question: 'War fought from 1861-1865', answer: 'What is the Civil War?', points: 100),
-            JeopardyQuestion(question: 'War that began with Pearl Harbor', answer: 'What is World War II?', points: 200),
-            JeopardyQuestion(question: 'War for American independence', answer: 'What is the Revolutionary War?', points: 300),
-            JeopardyQuestion(question: 'Cold War opponent of the USA', answer: 'What is the Soviet Union?', points: 400),
-            JeopardyQuestion(question: 'War sparked by 9/11 attacks', answer: 'What is the War on Terror?', points: 500),
-          ],
-        ),
-      ],
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-      isPublic: true,
-    ),
-    JeopardyGame(
-      id: 'game2',
-      title: 'Math Concepts Review',
-      teacherId: 'teacher1',
-      categories: [
-        JeopardyCategory(
-          name: 'Algebra',
-          questions: [
-            JeopardyQuestion(question: 'Value of x in: 2x + 4 = 10', answer: 'What is 3?', points: 100),
-            JeopardyQuestion(question: 'Slope of y = 3x + 2', answer: 'What is 3?', points: 200),
-            JeopardyQuestion(question: 'Quadratic formula', answer: 'What is x = (-b ± √(b²-4ac))/2a?', points: 300),
-            JeopardyQuestion(question: 'Factor: x² - 4', answer: 'What is (x+2)(x-2)?', points: 400),
-            JeopardyQuestion(question: 'Solution to |x| = 5', answer: 'What is x = 5 or x = -5?', points: 500),
-          ],
-        ),
-      ],
-      createdAt: DateTime.now().subtract(const Duration(days: 14)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 14)),
-      isPublic: false,
-    ),
-  ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
+    
+    // Initialize the Jeopardy provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<JeopardyProvider>().initialize();
+    });
   }
 
   @override
@@ -125,7 +78,33 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
   }
 
   Widget _buildMyGamesTab() {
-    if (_myGames.isEmpty) {
+    return Consumer<JeopardyProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (provider.error != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: ${provider.error}'),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => provider.initialize(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        final myGames = provider.teacherGames;
+        
+        if (myGames.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -158,29 +137,38 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
           ],
         ),
       );
-    }
+        }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _myGames.length,
-      itemBuilder: (context, index) => _buildGameCard(_myGames[index]),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: myGames.length,
+          itemBuilder: (context, index) => _buildGameCard(myGames[index]),
+        );
+      },
     );
   }
 
   Widget _buildPublicGamesTab() {
-    // Show public games that other teachers have shared
-    final publicGames = _myGames.where((game) => game.isPublic).toList();
-    
-    if (publicGames.isEmpty) {
-      return const Center(
-        child: Text('No public games available'),
-      );
-    }
+    return Consumer<JeopardyProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final publicGames = provider.publicGames;
+        
+        if (publicGames.isEmpty) {
+          return const Center(
+            child: Text('No public games available'),
+          );
+        }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: publicGames.length,
-      itemBuilder: (context, index) => _buildGameCard(publicGames[index]),
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: publicGames.length,
+          itemBuilder: (context, index) => _buildGameCard(publicGames[index]),
+        );
+      },
     );
   }
 
@@ -301,18 +289,10 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
         context.go('/teacher/games/jeopardy/${game.id}/edit');
         break;
       case 'duplicate':
-        // TODO: Implement duplicate
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Duplicate feature coming soon')),
-        );
+        _duplicateGame(game);
         break;
       case 'share':
-        // TODO: Toggle public/private
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(game.isPublic ? 'Made private' : 'Made public'),
-          ),
-        );
+        _togglePublicStatus(game);
         break;
       case 'delete':
         _showDeleteConfirmation(game);
@@ -332,11 +312,23 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
             child: const Text('Cancel'),
           ),
           FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // TODO: Delete game
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Deleted "${game.title}"')),
+            onPressed: () async {
+              // Capture context-dependent values before async operations
+              final navigator = Navigator.of(context);
+              final provider = context.read<JeopardyProvider>();
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              
+              navigator.pop();
+              final success = await provider.deleteGame(game.id);
+              if (!mounted) return;
+              
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text(success 
+                    ? 'Deleted "${game.title}"' 
+                    : 'Failed to delete game'),
+                  backgroundColor: success ? null : Colors.red,
+                ),
               );
             },
             child: const Text('Delete'),
@@ -344,5 +336,54 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
         ],
       ),
     );
+  }
+  
+  void _togglePublicStatus(JeopardyGame game) async {
+    final provider = context.read<JeopardyProvider>();
+    final success = await provider.togglePublicStatus(game.id, !game.isPublic);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success 
+            ? (game.isPublic ? 'Made private' : 'Made public') 
+            : 'Failed to update game visibility'),
+          backgroundColor: success ? null : Colors.red,
+        ),
+      );
+    }
+  }
+  
+  void _duplicateGame(JeopardyGame game) async {
+    final provider = context.read<JeopardyProvider>();
+    
+    // Create a copy with a new title
+    final duplicatedGame = JeopardyGame(
+      id: '',
+      title: 'Copy of ${game.title}',
+      teacherId: game.teacherId,
+      categories: game.categories,
+      finalJeopardy: game.finalJeopardy,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      isPublic: false,
+    );
+    
+    final gameId = await provider.createGame(duplicatedGame);
+    
+    if (mounted) {
+      if (gameId != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Game duplicated successfully')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to duplicate game'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../providers/jeopardy_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class JeopardyCreateScreen extends StatefulWidget {
   final String? gameId;
@@ -20,6 +23,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   final _titleController = TextEditingController();
   late JeopardyGame _game;
   bool _isEditing = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -28,35 +32,34 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
     _loadOrCreateGame();
   }
 
-  void _loadOrCreateGame() {
+  void _loadOrCreateGame() async {
+    final authProvider = context.read<AuthProvider>();
+    final jeopardyProvider = context.read<JeopardyProvider>();
+    final currentUserId = authProvider.userModel?.uid ?? '';
+    
     if (_isEditing) {
-      // Load existing game - mock data
-      _game = JeopardyGame(
-        id: widget.gameId!,
-        title: 'American History Jeopardy',
-        teacherId: 'teacher1',
-        categories: [
-          JeopardyCategory(
-            name: 'Presidents',
-            questions: [
-              JeopardyQuestion(question: 'First president of the United States', answer: 'Who is George Washington?', points: 100),
-              JeopardyQuestion(question: 'President during the Civil War', answer: 'Who is Abraham Lincoln?', points: 200),
-              JeopardyQuestion(question: 'President who served 4 terms', answer: 'Who is Franklin D. Roosevelt?', points: 300),
-              JeopardyQuestion(question: 'Youngest elected president', answer: 'Who is John F. Kennedy?', points: 400),
-              JeopardyQuestion(question: 'First president to resign', answer: 'Who is Richard Nixon?', points: 500),
-            ],
-          ),
-        ],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-      _titleController.text = _game.title;
+      // Load existing game from Firebase
+      final loadedGame = await jeopardyProvider.loadGame(widget.gameId!);
+      if (loadedGame != null) {
+        setState(() {
+          _game = loadedGame;
+          _titleController.text = _game.title;
+        });
+      } else {
+        // Handle error - game not found
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Game not found')),
+          );
+          context.pop();
+        }
+      }
     } else {
       // Create new game with default structure
       _game = JeopardyGame(
         id: '',
         title: '',
-        teacherId: 'teacher1', // Get from auth
+        teacherId: currentUserId,
         categories: [
           JeopardyCategory(
             name: 'Category 1',
@@ -88,8 +91,14 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       showBackButton: true,
       actions: [
         TextButton(
-          onPressed: _saveGame,
-          child: const Text('Save'),
+          onPressed: _isLoading ? null : _saveGame,
+          child: _isLoading 
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
         ),
       ],
       body: Form(
@@ -301,7 +310,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
     });
   }
 
-  void _saveGame() {
+  void _saveGame() async {
     if (_formKey.currentState!.validate()) {
       // Validate all questions have content
       bool hasEmptyQuestions = false;
@@ -327,9 +336,15 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         return;
       }
       
-      // Save game
+      setState(() {
+        _isLoading = true;
+      });
+      
+      final jeopardyProvider = context.read<JeopardyProvider>();
+      
+      // Prepare game data
       _game = JeopardyGame(
-        id: _game.id.isEmpty ? DateTime.now().millisecondsSinceEpoch.toString() : _game.id,
+        id: _game.id,
         title: _titleController.text,
         teacherId: _game.teacherId,
         categories: _game.categories,
@@ -338,15 +353,38 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         isPublic: _game.isPublic,
       );
       
-      // TODO: Save to Firebase
+      // Save to Firebase
+      bool success = false;
+      if (_isEditing) {
+        success = await jeopardyProvider.updateGame(_game.id, _game);
+      } else {
+        final gameId = await jeopardyProvider.createGame(_game);
+        success = gameId != null;
+      }
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isEditing ? 'Game updated!' : 'Game created!'),
-        ),
-      );
+      setState(() {
+        _isLoading = false;
+      });
       
-      context.pop();
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_isEditing ? 'Game updated!' : 'Game created!'),
+            ),
+          );
+          context.pop();
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to save game. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 }

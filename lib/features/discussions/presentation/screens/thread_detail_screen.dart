@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../providers/discussion_provider.dart';
 
 class ThreadDetailScreen extends StatefulWidget {
   final String threadId;
   final String threadTitle;
+  final String boardId;
 
   const ThreadDetailScreen({
     super.key,
     required this.threadId,
     required this.threadTitle,
+    required this.boardId,
   });
 
   @override
@@ -470,19 +474,70 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
     );
   }
 
-  void _postReply() {
+  void _postReply() async {
     if (_replyController.text.trim().isNotEmpty) {
-      // TODO: Implement reply posting
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Reply posted successfully'),
+      final discussionProvider = context.read<DiscussionProvider>();
+      
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
         ),
       );
-      setState(() {
-        _isReplying = false;
-        _replyingTo = null;
-        _replyController.clear();
-      });
+      
+      try {
+        // Create the reply
+        final replyId = await discussionProvider.createReply(
+          boardId: widget.boardId,
+          threadId: widget.threadId,
+          content: _replyController.text.trim(),
+          replyToId: null, // If replying to a specific reply, this would be set
+          replyToAuthor: _replyingTo, // The name of the person being replied to
+        );
+        
+        // Remove loading dialog
+        if (mounted) Navigator.pop(context);
+        
+        if (replyId != null && mounted) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Reply posted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          
+          // Clear the reply UI
+          setState(() {
+            _isReplying = false;
+            _replyingTo = null;
+            _replyController.clear();
+          });
+        } else if (mounted) {
+          // Show error if reply creation failed
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(discussionProvider.error ?? 'Failed to post reply'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        // Remove loading dialog if still showing
+        if (mounted) Navigator.pop(context);
+        
+        // Show error message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error posting reply: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
     }
   }
 

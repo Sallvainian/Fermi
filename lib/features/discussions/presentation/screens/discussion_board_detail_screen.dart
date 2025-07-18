@@ -162,6 +162,7 @@ class _DiscussionBoardDetailScreenState
               builder: (context) => ThreadDetailScreen(
                 threadId: 'temp-id',
                 threadTitle: title,
+                boardId: widget.boardId,
               ),
             ),
           );

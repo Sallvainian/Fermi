@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/call.dart';
 import '../../data/services/webrtc_service.dart';
 
@@ -111,7 +112,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                       radius: 80,
                       backgroundColor: Colors.white24,
                       backgroundImage: widget.call.callerPhotoUrl.isNotEmpty
-                          ? NetworkImage(widget.call.callerPhotoUrl)
+                          ? CachedNetworkImageProvider(widget.call.callerPhotoUrl)
                           : null,
                       child: widget.call.callerPhotoUrl.isEmpty
                           ? Text(

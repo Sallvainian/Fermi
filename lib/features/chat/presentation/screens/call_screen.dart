@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/services/webrtc_service.dart';
 import '../../domain/models/call.dart';
 import 'dart:async';
@@ -29,23 +31,47 @@ class CallScreen extends StatefulWidget {
 
 class _CallScreenState extends State<CallScreen> {
   final WebRTCService _webrtcService = WebRTCService();
+  final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
+  final RTCVideoRenderer _remoteRenderer = RTCVideoRenderer();
   
   bool _isMuted = false;
   bool _isVideoEnabled = true;
   bool _isSpeakerOn = false;
   bool _isConnecting = true;
+  bool _renderersInitialized = false;
   Timer? _callTimer;
   Duration _callDuration = Duration.zero;
 
   @override
   void initState() {
     super.initState();
-    _initCall();
+    _initRenderers();
+  }
+  
+  Future<void> _initRenderers() async {
+    try {
+      await _localRenderer.initialize();
+      await _remoteRenderer.initialize();
+      setState(() {
+        _renderersInitialized = true;
+      });
+      _initCall();
+    } catch (e) {
+      debugPrint('Renderer init failed: $e');
+      if (mounted) {
+        context.pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to initialize video renderers')),
+        );
+      }
+    }
   }
 
   @override
   void dispose() {
     _callTimer?.cancel();
+    _localRenderer.dispose();
+    _remoteRenderer.dispose();
     _webrtcService.dispose();
     super.dispose();
   }
@@ -63,7 +89,7 @@ class _CallScreenState extends State<CallScreen> {
 
     if (statuses[Permission.microphone]!.isDenied ||
         (widget.isVideoCall && statuses[Permission.camera]!.isDenied)) {
-      Navigator.pop(context);
+      context.pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Camera and microphone permissions are required for calls'),
@@ -77,16 +103,16 @@ class _CallScreenState extends State<CallScreen> {
     
     // Set up callbacks
     _webrtcService.onLocalStream = (stream) {
-      if (!mounted) return;
+      if (!mounted || !_renderersInitialized) return;
       setState(() {
-        _webrtcService.localRenderer.srcObject = stream;
+        _localRenderer.srcObject = stream;
       });
     };
     
     _webrtcService.onRemoteStream = (stream) {
-      if (!mounted) return;
+      if (!mounted || !_renderersInitialized) return;
       setState(() {
-        _webrtcService.remoteRenderer.srcObject = stream;
+        _remoteRenderer.srcObject = stream;
         _isConnecting = false;
       });
     };
@@ -99,9 +125,7 @@ class _CallScreenState extends State<CallScreen> {
         } else if (call.status == CallStatus.ended || 
                    call.status == CallStatus.rejected) {
           _callTimer?.cancel();
-          if (mounted) {
-            Navigator.pop(context);
-          }
+          // Navigation is handled in _endCall() method to prevent double pop
         }
       });
     };
@@ -162,9 +186,15 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   void _endCall() async {
+    // Cancel timer immediately to prevent further updates
+    _callTimer?.cancel();
+    
+    // End the call and wait for cleanup
     await _webrtcService.endCall();
+    
+    // Navigate back using GoRouter
     if (!mounted) return;
-    Navigator.pop(context);
+    context.pop();
   }
 
   String _formatDuration(Duration duration) {
@@ -185,17 +215,25 @@ class _CallScreenState extends State<CallScreen> {
           // Remote video/avatar
           if (isVideoCall)
             Positioned.fill(
-              child: RTCVideoView(
-                _webrtcService.remoteRenderer,
-                objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                placeholderBuilder: (context) => Center(
-                  child: _buildUserAvatar(
-                    widget.receiverName ?? 'User',
-                    widget.receiverPhotoUrl,
-                    size: 120,
+              child: _renderersInitialized 
+                ? RTCVideoView(
+                    _remoteRenderer,
+                    objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                    placeholderBuilder: (context) => Center(
+                      child: _buildUserAvatar(
+                        widget.receiverName ?? 'User',
+                        widget.receiverPhotoUrl,
+                        size: 120,
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: _buildUserAvatar(
+                      widget.receiverName ?? 'User',
+                      widget.receiverPhotoUrl,
+                      size: 120,
+                    ),
                   ),
-                ),
-              ),
             )
           else
             Center(
@@ -215,11 +253,18 @@ class _CallScreenState extends State<CallScreen> {
               height: 160,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: RTCVideoView(
-                  _webrtcService.localRenderer,
-                  objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
-                  mirror: true,
-                ),
+                child: _renderersInitialized
+                  ? RTCVideoView(
+                      _localRenderer,
+                      objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
+                      mirror: true,
+                    )
+                  : Container(
+                      color: Colors.black54,
+                      child: const Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                    ),
               ),
             ),
           
@@ -350,7 +395,7 @@ class _CallScreenState extends State<CallScreen> {
       radius: size / 2,
       backgroundColor: Theme.of(context).primaryColor,
       backgroundImage: photoUrl != null && photoUrl.isNotEmpty
-          ? NetworkImage(photoUrl)
+          ? CachedNetworkImageProvider(photoUrl)
           : null,
       child: photoUrl == null || photoUrl.isEmpty
           ? Text(
