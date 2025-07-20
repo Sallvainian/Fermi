@@ -32,20 +32,20 @@ dependencies:
     sdk: flutter
 
   # Firebase Core - Required for all Firebase services
-  firebase_core: ^3.15.1 
+  firebase_core: ^2.24.2
   
   # Firebase Services
-  firebase_auth: ^5.6.2
-  cloud_firestore: ^5.6.11
-  firebase_storage: ^12.4.9
-  firebase_crashlytics: ^4.3.9
-  firebase_database: ^11.3.9
-  firebase_messaging: ^15.2.9
+  firebase_auth: ^4.15.3
+  cloud_firestore: ^4.13.6
+  firebase_storage: ^11.5.6
+  firebase_crashlytics: ^3.4.8
+  firebase_database: ^10.3.8
+  firebase_messaging: ^14.7.9
   
   # Authentication
-  google_sign_in: ^7.1.1
-  google_sign_in_web: ^1.0.0
-  google_identity_services_web: ^0.3.1+1 
+  google_sign_in: ^5.2.0
+  google_sign_in_web: ^0.10.2
+  google_identity_services_web: ^0.2.1 
   
   # Web support
   web: 1.1.1
@@ -88,15 +88,15 @@ dependencies:
   flutter_callkit_incoming: ^2.0.3
   
   # Calendar sync
-  device_calendar: ^4.3.2
+  device_calendar: ^3.1.0
   
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  rxdart: ^0.28.0
+  rxdart: ^0.27.7
 
 # Dependency overrides to resolve version conflicts
-# dependency_overrides:
-#   timezone: ^0.10.0
+dependency_overrides:
+  google_sign_in_ios: 5.7.6
 
 dev_dependencies:
   flutter_test:

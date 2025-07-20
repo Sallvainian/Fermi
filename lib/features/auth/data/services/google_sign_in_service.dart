@@ -6,16 +6,14 @@ import '../../../../shared/services/logger_service.dart';
 
 /// Service class that manages Google Sign In using the singleton pattern.
 /// 
-/// This service wraps the GoogleSignIn singleton instance and provides
+/// This service wraps the GoogleSignIn instance and provides
 /// a centralized way to manage authentication with Google.
 /// 
-/// In google_sign_in 7.x:
-/// - GoogleSignIn is now a singleton (GoogleSignIn.instance)
-/// - Must call initialize() before any other operations
-/// - signIn() → authenticate()
-/// - signInSilently() → attemptLightweightAuthentication()
-/// - currentUser getter → authenticationEvents stream
-/// - Authentication (ID tokens) and Authorization (access tokens) are separate
+/// Using google_sign_in 5.4.4:
+/// - GoogleSignIn is created with configuration
+/// - signIn() method for interactive sign-in
+/// - signInSilently() for silent sign-in
+/// - currentUser property for the current signed-in user
 class GoogleSignInService {
   // Private constructor for singleton pattern
   GoogleSignInService._internal();
@@ -31,11 +29,11 @@ class GoogleSignInService {
   // Track initialization status
   bool _isInitialized = false;
   
-  // Current user from the authentication events stream
-  GoogleSignInAccount? _currentUser;
+  // GoogleSignIn instance
+  GoogleSignIn? _googleSignIn;
   
-  // Stream subscription for authentication events
-  StreamSubscription<GoogleSignInAuthenticationEvent>? _authEventSubscription;
+  // Stream subscription for user changes
+  StreamSubscription<GoogleSignInAccount?>? _userSubscription;
   
   /// Whether the service has been initialized
   bool get isInitialized => _isInitialized;
@@ -52,9 +50,6 @@ class GoogleSignInService {
   /// 
   /// This must be called once before using any other methods.
   /// Typically called from main() or during app initialization.
-  /// 
-  /// In google_sign_in 7.x, this calls GoogleSignIn.instance.initialize()
-  /// Note: On Windows/Linux, this is a no-op as google_sign_in is not supported
   Future<void> initialize() async {
     if (_isInitialized) {
       LoggerService.debug('GoogleSignInService already initialized', tag: 'GoogleSignInService');
@@ -69,19 +64,17 @@ class GoogleSignInService {
     }
 
     try {
-      // Initialize the GoogleSignIn singleton
-      await GoogleSignIn.instance.initialize();
+      // Create GoogleSignIn instance with configuration
+      _googleSignIn = GoogleSignIn(
+        scopes: [
+          'email',
+          'profile',
+        ],
+      );
       
-      // Listen to authentication events to track current user
-      // In 7.x, GoogleSignInAuthenticationEvent is a sealed class
-      _authEventSubscription = GoogleSignIn.instance.authenticationEvents.listen((event) {
-        // Use pattern matching to handle the sealed class
-        _currentUser = switch (event) {
-          GoogleSignInAuthenticationEventSignIn() => event.user,
-          GoogleSignInAuthenticationEventSignOut() => null,
-        };
-        
-        LoggerService.debug('Google Sign In auth event: ${_currentUser?.email ?? "signed out"}', tag: 'GoogleSignInService');
+      // Listen to user changes
+      _userSubscription = _googleSignIn!.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+        LoggerService.debug('Google Sign In user changed: ${account?.email ?? "signed out"}', tag: 'GoogleSignInService');
       });
       
       _isInitialized = true;
@@ -97,9 +90,6 @@ class GoogleSignInService {
   /// 
   /// Triggers the Google sign-in flow and returns the signed-in account.
   /// Returns null if the user cancels the sign-in.
-  /// 
-  /// In google_sign_in 7.x, this uses authenticate() instead of signIn()
-  /// On unsupported platforms (Windows/Linux), returns null - use Firebase Auth instead
   Future<GoogleSignInAccount?> signIn() async {
     if (!_isInitialized) {
       throw StateError('GoogleSignInService not initialized. Call initialize() first.');
@@ -111,7 +101,7 @@ class GoogleSignInService {
     }
     
     try {
-      final account = await GoogleSignIn.instance.authenticate();
+      final account = await _googleSignIn!.signIn();
       return account;
     } catch (e) {
       LoggerService.error('Google sign in error', tag: 'GoogleSignInService', error: e);
@@ -122,8 +112,6 @@ class GoogleSignInService {
   /// Sign out from Google.
   /// 
   /// Signs out the current Google user.
-  /// In 7.x, this returns Future&lt;void&gt; instead of Future&lt;GoogleSignInAccount?&gt;
-  /// On unsupported platforms (Windows/Linux), this is a no-op
   Future<void> signOut() async {
     if (!_isInitialized) {
       throw StateError('GoogleSignInService not initialized. Call initialize() first.');
@@ -135,7 +123,7 @@ class GoogleSignInService {
     }
     
     try {
-      await GoogleSignIn.instance.signOut();
+      await _googleSignIn!.signOut();
     } catch (e) {
       LoggerService.error('Google sign out error', tag: 'GoogleSignInService', error: e);
       rethrow;
@@ -145,8 +133,6 @@ class GoogleSignInService {
   /// Disconnect from Google.
   /// 
   /// Signs out and disconnects the Google account, clearing cached authentication.
-  /// In 7.x, this returns Future&lt;void&gt; instead of Future&lt;GoogleSignInAccount?&gt;
-  /// On unsupported platforms (Windows/Linux), this is a no-op
   Future<void> disconnect() async {
     if (!_isInitialized) {
       throw StateError('GoogleSignInService not initialized. Call initialize() first.');
@@ -158,21 +144,17 @@ class GoogleSignInService {
     }
     
     try {
-      await GoogleSignIn.instance.disconnect();
+      await _googleSignIn!.disconnect();
     } catch (e) {
       LoggerService.error('Google disconnect error', tag: 'GoogleSignInService', error: e);
       rethrow;
     }
   }
 
-  /// Attempt lightweight authentication (silent sign in).
+  /// Attempt silent sign in.
   /// 
   /// Attempts to sign in a previously authenticated user without interaction.
   /// Returns null if no previously authenticated user is available.
-  /// 
-  /// In google_sign_in 7.x, this uses attemptLightweightAuthentication()
-  /// instead of signInSilently()
-  /// On unsupported platforms (Windows/Linux), returns null
   Future<GoogleSignInAccount?> signInSilently() async {
     if (!_isInitialized) {
       throw StateError('GoogleSignInService not initialized. Call initialize() first.');
@@ -184,7 +166,7 @@ class GoogleSignInService {
     }
     
     try {
-      final account = await GoogleSignIn.instance.attemptLightweightAuthentication();
+      final account = await _googleSignIn!.signInSilently();
       return account;
     } catch (e) {
       LoggerService.error('Google silent sign in error', tag: 'GoogleSignInService', error: e);
@@ -195,12 +177,11 @@ class GoogleSignInService {
   /// Get the current signed-in account.
   /// 
   /// Returns null if no user is signed in.
-  /// In 7.x, currentUser is tracked via authenticationEvents stream
   GoogleSignInAccount? get currentUser {
-    if (!_isInitialized) {
+    if (!_isInitialized || _googleSignIn == null) {
       return null;
     }
-    return _currentUser;
+    return _googleSignIn!.currentUser;
   }
 
   /// Check if a user is currently signed in.
@@ -211,12 +192,6 @@ class GoogleSignInService {
   /// Request scopes from the user.
   /// 
   /// This is needed for accessing Google APIs beyond basic profile.
-  /// In google_sign_in 7.x, scopes should be requested during sign-in
-  /// by configuring them in GoogleSignIn.instance before authentication.
-  /// 
-  /// If you need additional scopes after sign-in, you may need to
-  /// re-authenticate the user with the new scopes.
-  /// On unsupported platforms (Windows/Linux), returns false
   Future<bool> requestScopes(List<String> scopes) async {
     if (!_isInitialized) {
       throw StateError('GoogleSignInService not initialized. Call initialize() first.');
@@ -228,11 +203,8 @@ class GoogleSignInService {
     }
     
     try {
-      // In 7.x, scopes are configured before authentication
-      // To request new scopes, typically need to sign out and sign in again
-      // with the updated scopes configuration
-      LoggerService.debug('Note: In google_sign_in 7.x, scopes should be configured before authentication', tag: 'GoogleSignInService');
-      return false;
+      final result = await _googleSignIn!.requestScopes(scopes);
+      return result;
     } catch (e) {
       LoggerService.error('Request scopes error', tag: 'GoogleSignInService', error: e);
       rethrow;
@@ -241,7 +213,7 @@ class GoogleSignInService {
 
   /// Clean up resources
   void dispose() {
-    _authEventSubscription?.cancel();
-    _authEventSubscription = null;
+    _userSubscription?.cancel();
+    _userSubscription = null;
   }
 }
