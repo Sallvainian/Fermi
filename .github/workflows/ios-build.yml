@@ -102,7 +102,7 @@ jobs:
           mv ios-build.tar.gz ../../../
           
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: success()
         with:
           name: ios-build-${{ github.sha }}
@@ -110,7 +110,7 @@ jobs:
           retention-days: 7
           
       - name: Upload Podfile.lock
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: podfile-lock-${{ github.sha }}

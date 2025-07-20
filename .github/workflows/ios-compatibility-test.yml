@@ -193,7 +193,7 @@ jobs:
           fi
           
       - name: Upload compatibility report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: compatibility-xcode-${{ matrix.xcode }}-macos-${{ matrix.os }}
@@ -201,7 +201,7 @@ jobs:
           retention-days: 30
           
       - name: Upload build logs on failure
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: failed-build-logs-xcode-${{ matrix.xcode }}
@@ -220,7 +220,7 @@ jobs:
     if: always()
     steps:
       - name: Download all reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: reports
           
@@ -264,7 +264,7 @@ jobs:
           cat compatibility-matrix.md >> $GITHUB_STEP_SUMMARY
           
       - name: Upload compatibility matrix
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: compatibility-matrix
           path: compatibility-matrix.md
