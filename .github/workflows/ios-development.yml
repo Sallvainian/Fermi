@@ -6,7 +6,7 @@ on:
       flutter_version:
         description: 'Flutter version'
         required: false
-        default: '3.24.0'
+        default: '3.32.7'
         type: string
       xcode_version:
         description: 'Xcode version (e.g., 15.2, 14.3.1, latest)'

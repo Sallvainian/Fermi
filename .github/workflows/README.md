@@ -40,8 +40,8 @@ This directory contains GitHub Actions workflows for building the Flutter iOS ap
 1. Go to Actions tab → iOS Development Build
 2. Click "Run workflow"
 3. Select options:
-   - Flutter version (default: 3.24.0)
-   - Xcode version (default: latest)
+   - Flutter version (default: 3.32.7)
+   - Xcode version (default: 15.2)
    - Build type (debug/profile/release)
 
 ### Testing Xcode Compatibility

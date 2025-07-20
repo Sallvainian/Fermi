@@ -19,7 +19,7 @@ on:
   workflow_dispatch:
 
 env:
-  FLUTTER_VERSION: '3.24.0'
+  FLUTTER_VERSION: '3.32.7'
   XCODE_VERSION: '15.2'
   
 jobs:

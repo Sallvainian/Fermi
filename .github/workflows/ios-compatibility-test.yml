@@ -20,29 +20,29 @@ jobs:
           # macOS 12 runners
           - os: macos-12
             xcode: '14.0.1'
-            flutter: '3.24.0'
+            flutter: '3.32.7'
           - os: macos-12
             xcode: '14.2'
-            flutter: '3.24.0'
+            flutter: '3.32.7'
             
           # macOS 13 runners  
           - os: macos-13
             xcode: '14.3.1'
-            flutter: '3.24.0'
+            flutter: '3.32.7'
           - os: macos-13
             xcode: '15.0.1'
-            flutter: '3.24.0'
+            flutter: '3.32.7'
           - os: macos-13
             xcode: '15.2'
-            flutter: '3.24.0'
+            flutter: '3.32.7'
             
           # Latest macOS runner
           - os: macos-latest
             xcode: '15.2'
-            flutter: '3.24.0'
+            flutter: '3.32.7'
           - os: macos-latest
             xcode: 'latest'
-            flutter: '3.24.0'
+            flutter: '3.32.7'
     
     steps:
       - name: Checkout code
