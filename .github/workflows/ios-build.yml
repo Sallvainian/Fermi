@@ -55,13 +55,14 @@ jobs:
           channel: 'stable'
           cache: true
       
-      - name: Cache CocoaPods
-        uses: actions/cache@v3
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
+      # Disabled CocoaPods cache to ensure clean builds
+      # - name: Cache CocoaPods
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ios/Pods
+      #     key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pods-
       
       - name: Cache pub dependencies
         uses: actions/cache@v3
@@ -82,12 +83,25 @@ jobs:
             chmod +x scripts/patch_flutter_webrtc.sh
           fi
           
+      - name: Clean iOS build environment
+        working-directory: ios
+        run: |
+          # Remove any existing pods and lock files
+          rm -rf Pods
+          rm -rf .symlinks
+          rm -f Podfile.lock
+          
+          # Clean pod cache
+          pod cache clean --all
+          
+          # Deintegrate existing pods
+          pod deintegrate || true
+          
       - name: Pod install
         working-directory: ios
         run: |
-          pod cache clean --all
           pod repo update
-          pod install --repo-update
+          pod install --repo-update --verbose
       
       - name: Build iOS (no signing)
         run: |
