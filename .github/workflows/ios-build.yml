@@ -106,15 +106,12 @@ jobs:
       - name: Pod install
         working-directory: ios
         run: |
-          # Skip repo update for faster builds
-          # Use CDN which is much faster than cloning the entire Specs repo
+          # Install pods quietly
+          pod install --silent
           
-          # Install pods without repo update
-          pod install --verbose
-          
-          # Verify GoogleUtilities installation
-          echo "Checking for GoogleUtilities_NSData module..."
-          find Pods -name "*GoogleUtilities*" -type d | head -20
+          # Quick verification
+          echo "Verifying pod installation..."
+          ls -la Pods/ | head -10
           
       - name: Create module maps for Firebase pods
         working-directory: ios
