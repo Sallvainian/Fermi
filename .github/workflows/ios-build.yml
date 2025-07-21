@@ -106,11 +106,11 @@ jobs:
       - name: Pod install
         working-directory: ios
         run: |
-          # Update pod repo
-          pod repo update --verbose
+          # Skip repo update for faster builds
+          # Use CDN which is much faster than cloning the entire Specs repo
           
-          # Install pods with verbose output
-          pod install --repo-update --verbose
+          # Install pods without repo update
+          pod install --verbose
           
           # Verify GoogleUtilities installation
           echo "Checking for GoogleUtilities_NSData module..."
