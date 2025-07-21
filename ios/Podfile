@@ -31,7 +31,7 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
-  use_frameworks! :linkage => :static
+  use_frameworks!
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
@@ -41,18 +41,6 @@ target 'Runner' do
   
   # Force compatible versions for Xcode 13.2.1
   pod 'SDWebImage', '5.18.0'
-  
-  # Explicitly include GoogleUtilities and its subspecs to fix module issues
-  pod 'GoogleUtilities', :modular_headers => true
-  pod 'GoogleUtilities/NSData+zlib', :modular_headers => true
-  pod 'GoogleUtilities/Reachability', :modular_headers => true
-  pod 'GoogleUtilities/AppDelegateSwizzler', :modular_headers => true
-  pod 'GoogleUtilities/Environment', :modular_headers => true
-  pod 'GoogleUtilities/ISASwizzler', :modular_headers => true
-  pod 'GoogleUtilities/Logger', :modular_headers => true
-  pod 'GoogleUtilities/MethodSwizzler', :modular_headers => true
-  pod 'GoogleUtilities/Network', :modular_headers => true
-  pod 'GoogleUtilities/UserDefaults', :modular_headers => true
 end
 
 # Force dependency resolution to use compatible versions
@@ -122,23 +110,27 @@ post_install do |installer|
     end
   end
   
-  # Create module maps for Firebase pods if they don't exist
-  firebase_pods = ['GoogleUtilities', 'FirebaseCoreInternal', 'FirebaseSharedSwift', 'FirebaseAuth', 'FirebaseCore']
-  firebase_pods.each do |pod_name|
-    target = installer.pods_project.targets.find { |t| t.name == pod_name }
-    if target
-      module_map_path = "#{installer.sandbox.pod_dir(pod_name)}/module.modulemap"
-      unless File.exist?(module_map_path)
-        puts "Creating module map for #{pod_name}..."
-        module_content = <<-MODULEMAP
-module #{pod_name} {
-  umbrella header "#{pod_name}-umbrella.h"
+  # Fix GoogleUtilities_NSData module issue specifically
+  google_utils_target = installer.pods_project.targets.find { |t| t.name == 'GoogleUtilities' }
+  if google_utils_target
+    google_utils_pod_dir = installer.sandbox.pod_dir('GoogleUtilities')
+    
+    # Create specific module map for GoogleUtilities_NSData
+    nsdata_module_path = "#{google_utils_pod_dir}/GoogleUtilities_NSData.modulemap"
+    puts "Creating GoogleUtilities_NSData module map at #{nsdata_module_path}..."
+    
+    nsdata_module_content = <<-MODULEMAP
+module GoogleUtilities_NSData {
+  header "GoogleUtilities/GULNSData+zlib.h"
   export *
-  module * { export * }
 }
 MODULEMAP
-        File.write(module_map_path, module_content)
-      end
+    File.write(nsdata_module_path, nsdata_module_content)
+    
+    # Update build settings to include this module map
+    google_utils_target.build_configurations.each do |config|
+      config.build_settings['MODULEMAP_FILE'] = "$(PODS_ROOT)/GoogleUtilities/GoogleUtilities_NSData.modulemap"
+      config.build_settings['DEFINES_MODULE'] = 'YES'
     end
   end
   

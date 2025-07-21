@@ -2,71 +2,34 @@
 
 echo "Creating module maps for Firebase pods..."
 
-# Array of Firebase pods that need module maps
-FIREBASE_PODS=(
-  "GoogleUtilities"
-  "FirebaseCoreInternal"
-  "FirebaseSharedSwift"
-  "FirebaseAuth"
-  "FirebaseCore"
-)
-
-# Create GoogleUtilities_NSData module map specifically
-NSDATA_MODULE_DIR="Pods/GoogleUtilities"
-NSDATA_MODULE_MAP="$NSDATA_MODULE_DIR/GoogleUtilities_NSData.modulemap"
-
-if [ -d "$NSDATA_MODULE_DIR" ]; then
+# Create GoogleUtilities_NSData module map specifically - this is what Firebase expects
+GOOGLE_UTILS_DIR="Pods/GoogleUtilities"
+if [ -d "$GOOGLE_UTILS_DIR" ]; then
   echo "Creating GoogleUtilities_NSData module map..."
-  cat > "$NSDATA_MODULE_MAP" << EOF
-module GoogleUtilities_NSData {
-  header "NSData+zlib/Public/GoogleUtilities/GULNSData+zlib.h"
-  export *
-}
-EOF
-fi
-
-# Create module maps for each pod
-for POD_NAME in "${FIREBASE_PODS[@]}"; do
-  POD_DIR="Pods/$POD_NAME"
-  MODULE_MAP="$POD_DIR/module.modulemap"
   
-  if [ -d "$POD_DIR" ]; then
-    echo "Creating module map for $POD_NAME..."
-    
-    # Create a basic module map
-    cat > "$MODULE_MAP" << EOF
-module $POD_NAME {
-  umbrella header "$POD_NAME-umbrella.h"
+  # Find the actual header location
+  NSDATA_HEADER=""
+  if [ -f "$GOOGLE_UTILS_DIR/GoogleUtilities/GULNSData+zlib.h" ]; then
+    NSDATA_HEADER="GoogleUtilities/GULNSData+zlib.h"
+  elif [ -f "$GOOGLE_UTILS_DIR/NSData+zlib/Public/GoogleUtilities/GULNSData+zlib.h" ]; then
+    NSDATA_HEADER="NSData+zlib/Public/GoogleUtilities/GULNSData+zlib.h"
+  else
+    # Search for it
+    NSDATA_HEADER=$(find "$GOOGLE_UTILS_DIR" -name "GULNSData+zlib.h" | head -1 | sed "s|$GOOGLE_UTILS_DIR/||")
+  fi
+  
+  if [ -n "$NSDATA_HEADER" ]; then
+    cat > "$GOOGLE_UTILS_DIR/GoogleUtilities_NSData.modulemap" << EOF
+module GoogleUtilities_NSData {
+  header "$NSDATA_HEADER"
   export *
-  module * { export * }
 }
 EOF
-    
-    # If umbrella header doesn't exist, create it
-    UMBRELLA_HEADER="$POD_DIR/$POD_NAME-umbrella.h"
-    if [ ! -f "$UMBRELLA_HEADER" ]; then
-      echo "Creating umbrella header for $POD_NAME..."
-      
-      # Find all public headers
-      HEADERS=$(find "$POD_DIR" -name "*.h" -type f | grep -v "Private" | head -20)
-      
-      # Create umbrella header
-      cat > "$UMBRELLA_HEADER" << EOF
-#ifdef __OBJC__
-#import <Foundation/Foundation.h>
-EOF
-      
-      # Add imports for each header
-      for HEADER in $HEADERS; do
-        HEADER_NAME=$(basename "$HEADER")
-        echo "#import \"$HEADER_NAME\"" >> "$UMBRELLA_HEADER"
-      done
-      
-      echo "#endif" >> "$UMBRELLA_HEADER"
-    fi
+    echo "Created GoogleUtilities_NSData module map with header: $NSDATA_HEADER"
   else
-    echo "Warning: Pod directory $POD_DIR not found"
+    echo "ERROR: Could not find GULNSData+zlib.h header"
+    find "$GOOGLE_UTILS_DIR" -name "*.h" | grep -i nsdata
   fi
-done
+fi
 
 echo "Module maps creation completed!"
