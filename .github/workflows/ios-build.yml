@@ -83,6 +83,11 @@ jobs:
             chmod +x scripts/patch_flutter_webrtc.sh
           fi
           
+      - name: Update CocoaPods
+        run: |
+          gem install cocoapods
+          pod --version
+          
       - name: Clean iOS build environment
         working-directory: ios
         run: |
@@ -90,6 +95,7 @@ jobs:
           rm -rf Pods
           rm -rf .symlinks
           rm -f Podfile.lock
+          rm -rf ~/Library/Caches/CocoaPods
           
           # Clean pod cache
           pod cache clean --all
@@ -100,8 +106,15 @@ jobs:
       - name: Pod install
         working-directory: ios
         run: |
-          pod repo update
+          # Update pod repo
+          pod repo update --verbose
+          
+          # Install pods with verbose output
           pod install --repo-update --verbose
+          
+          # Verify GoogleUtilities installation
+          echo "Checking for GoogleUtilities_NSData module..."
+          find Pods -name "*GoogleUtilities*" -type d | head -20
           
       - name: Create module maps for Firebase pods
         working-directory: ios

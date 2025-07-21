@@ -4,6 +4,9 @@ platform :ios, '16.0'
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# Use GitHub Specs repo as fallback to avoid CDN issues
+source 'https://github.com/CocoaPods/Specs.git'
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
@@ -39,9 +42,17 @@ target 'Runner' do
   # Force compatible versions for Xcode 13.2.1
   pod 'SDWebImage', '5.18.0'
   
-  # Explicitly include GoogleUtilities to fix module issues
+  # Explicitly include GoogleUtilities and its subspecs to fix module issues
   pod 'GoogleUtilities', :modular_headers => true
   pod 'GoogleUtilities/NSData+zlib', :modular_headers => true
+  pod 'GoogleUtilities/Reachability', :modular_headers => true
+  pod 'GoogleUtilities/AppDelegateSwizzler', :modular_headers => true
+  pod 'GoogleUtilities/Environment', :modular_headers => true
+  pod 'GoogleUtilities/ISASwizzler', :modular_headers => true
+  pod 'GoogleUtilities/Logger', :modular_headers => true
+  pod 'GoogleUtilities/MethodSwizzler', :modular_headers => true
+  pod 'GoogleUtilities/Network', :modular_headers => true
+  pod 'GoogleUtilities/UserDefaults', :modular_headers => true
 end
 
 # Force dependency resolution to use compatible versions

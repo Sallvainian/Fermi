@@ -11,6 +11,20 @@ FIREBASE_PODS=(
   "FirebaseCore"
 )
 
+# Create GoogleUtilities_NSData module map specifically
+NSDATA_MODULE_DIR="Pods/GoogleUtilities"
+NSDATA_MODULE_MAP="$NSDATA_MODULE_DIR/GoogleUtilities_NSData.modulemap"
+
+if [ -d "$NSDATA_MODULE_DIR" ]; then
+  echo "Creating GoogleUtilities_NSData module map..."
+  cat > "$NSDATA_MODULE_MAP" << EOF
+module GoogleUtilities_NSData {
+  header "NSData+zlib/Public/GoogleUtilities/GULNSData+zlib.h"
+  export *
+}
+EOF
+fi
+
 # Create module maps for each pod
 for POD_NAME in "${FIREBASE_PODS[@]}"; do
   POD_DIR="Pods/$POD_NAME"
