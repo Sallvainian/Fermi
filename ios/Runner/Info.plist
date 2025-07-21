@@ -39,7 +39,52 @@
 		<string>voip</string>
 		<string>remote-notification</string>
 		<string>processing</string>
+		<string>fetch</string>
+		<string>audio</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Allow location access to provide location-based features</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Allow location access to provide location-based features even in background</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Allow Face ID for secure authentication</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Allow access to contacts to find other users</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Allow access to calendar to schedule events</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Allow Bluetooth access to connect with accessories</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>This app collects data to provide a better user experience</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>mailto</string>
+		<string>tel</string>
+		<string>sms</string>
+		<string>https</string>
+		<string>http</string>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	<key>UIRequiresFullScreen</key>
+	<false/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDefault</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

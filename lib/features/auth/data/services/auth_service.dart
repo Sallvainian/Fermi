@@ -367,8 +367,8 @@ class AuthService {
       }
 
       // Get authentication details from the account
-      // In google_sign_in 7.x, authentication property is synchronous
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      // In google_sign_in 7.x, authentication property is asynchronous
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       
       // Create a new credential using idToken
       // Note: In 7.x, access tokens are obtained separately via authorization

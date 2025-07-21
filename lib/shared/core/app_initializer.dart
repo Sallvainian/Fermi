@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
@@ -207,32 +205,6 @@ class AppInitializer {
     }
   }
   
-  /// Configure Firebase emulators for development
-  static Future<void> _configureFirebaseEmulators() async {
-    try {
-      const String host = '10.0.2.2'; // Android emulator localhost
-      
-      LoggerService.info('Starting Firebase emulator configuration...', tag: 'AppInitializer');
-      
-      // Note: There's no way to check if emulators are already configured
-      // Calling useAuthEmulator multiple times will throw an error
-      
-      await FirebaseAuth.instance.useAuthEmulator(host, 9099);
-      LoggerService.info('Auth emulator configured at $host:9099', tag: 'AppInitializer');
-      
-      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
-      LoggerService.info('Firestore emulator configured at $host:8080', tag: 'AppInitializer');
-      
-      await FirebaseStorage.instance.useStorageEmulator(host, 9199);
-      LoggerService.info('Storage emulator configured at $host:9199', tag: 'AppInitializer');
-      
-      LoggerService.info('All Firebase emulators configured successfully', tag: 'AppInitializer');
-      
-    } catch (e) {
-      LoggerService.error('Failed to configure Firebase emulators', tag: 'AppInitializer', error: e);
-      rethrow; // Ensure we see the error
-    }
-  }
   
   /// Handle uncaught errors in the app
   static void handleError(Object error, StackTrace stack) {
