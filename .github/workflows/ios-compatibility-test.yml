@@ -109,7 +109,7 @@ jobs:
         id: pod_install
         working-directory: ios
         run: |
-          pod install --repo-update
+          pod install
         continue-on-error: true
         
       - name: Attempt iOS build (Debug Simulator)

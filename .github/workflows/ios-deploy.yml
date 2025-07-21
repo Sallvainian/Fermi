@@ -137,8 +137,7 @@ jobs:
         working-directory: ios
         run: |
           pod cache clean --all
-          pod repo update
-          pod install --repo-update
+          pod install
       
       - name: Build iOS app
         env:
