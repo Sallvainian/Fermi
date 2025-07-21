@@ -102,6 +102,12 @@ jobs:
         run: |
           pod repo update
           pod install --repo-update --verbose
+          
+      - name: Create module maps for Firebase pods
+        working-directory: ios
+        run: |
+          chmod +x create_module_maps.sh
+          ./create_module_maps.sh
       
       - name: Build iOS (no signing)
         run: |

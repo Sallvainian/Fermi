@@ -1,4 +1,3 @@
-
 /// Main entry point for the Teacher Dashboard Flutter application.
 /// 
 /// This application provides a comprehensive education management platform

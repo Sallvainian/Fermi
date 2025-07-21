@@ -91,7 +91,9 @@ post_install do |installer|
         config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
         config.build_settings['DEFINES_MODULE'] = 'YES'
-        config.build_settings['MODULEMAP_FILE'] = '$(SRCROOT)/$(PRODUCT_NAME)/module.modulemap'
+        # Generate module maps for Firebase pods
+        config.build_settings['GENERATE_MODULEMAP'] = 'YES'
+        config.build_settings['MODULE_MAP_PATH'] = '$(PODS_ROOT)/$(PRODUCT_MODULE_NAME)/module.modulemap'
       end
       
       # Fix GoogleUtilities_NSData module issue
@@ -106,6 +108,26 @@ post_install do |installer|
       # Silence all warnings for pod targets
       config.build_settings['WARNING_CFLAGS'] = '-w'
       config.build_settings['INHIBIT_ALL_WARNINGS'] = 'YES'
+    end
+  end
+  
+  # Create module maps for Firebase pods if they don't exist
+  firebase_pods = ['GoogleUtilities', 'FirebaseCoreInternal', 'FirebaseSharedSwift', 'FirebaseAuth', 'FirebaseCore']
+  firebase_pods.each do |pod_name|
+    target = installer.pods_project.targets.find { |t| t.name == pod_name }
+    if target
+      module_map_path = "#{installer.sandbox.pod_dir(pod_name)}/module.modulemap"
+      unless File.exist?(module_map_path)
+        puts "Creating module map for #{pod_name}..."
+        module_content = <<-MODULEMAP
+module #{pod_name} {
+  umbrella header "#{pod_name}-umbrella.h"
+  export *
+  module * { export * }
+}
+MODULEMAP
+        File.write(module_map_path, module_content)
+      end
     end
   end
   
