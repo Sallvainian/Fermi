@@ -1,13 +1,14 @@
 /// Web implementation for notification permissions
 library;
 
+import 'dart:js_interop';
 import 'package:web/web.dart' as web;
 
 class WebNotification {
   static bool get supported {
     // Check if Notification API is available
     try {
-      return web.window.getProperty('Notification') != null;
+      return web.Notification.permission.isNotEmpty;
     } catch (e) {
       return false;
     }
@@ -15,11 +16,7 @@ class WebNotification {
   
   static String? get permission {
     try {
-      final notification = web.window.getProperty('Notification');
-      if (notification != null) {
-        return notification.getProperty('permission')?.toString();
-      }
-      return null;
+      return web.Notification.permission;
     } catch (e) {
       return null;
     }
@@ -27,17 +24,9 @@ class WebNotification {
   
   static Future<String> requestPermission() async {
     try {
-      final notification = web.window.getProperty('Notification');
-      if (notification != null) {
-        final requestPermission = notification.getProperty('requestPermission');
-        if (requestPermission != null) {
-          final promise = requestPermission.callAsFunction();
-          // Wait for the promise to resolve
-          await Future.delayed(const Duration(milliseconds: 100));
-          return permission ?? 'denied';
-        }
-      }
-      return 'denied';
+      final jsPromise = web.Notification.requestPermission();
+      final permission = await jsPromise.toDart;
+      return permission.toDart;
     } catch (e) {
       return 'denied';
     }

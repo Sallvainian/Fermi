@@ -32,20 +32,20 @@ dependencies:
     sdk: flutter
 
   # Firebase Core - Required for all Firebase services
-  firebase_core: ^2.24.2
+  firebase_core: ^3.15.0
   
   # Firebase Services
-  firebase_auth: ^4.15.3
-  cloud_firestore: ^4.13.6
-  firebase_storage: ^11.5.6
-  firebase_crashlytics: ^3.4.8
-  firebase_database: ^10.3.8
-  firebase_messaging: ^14.7.9
+  firebase_auth: ^5.6.1
+  cloud_firestore: ^5.6.10
+  firebase_storage: ^12.4.8
+  firebase_crashlytics: ^4.3.8
+  firebase_database: ^11.3.8
+  firebase_messaging: ^15.2.8
   
   # Authentication
-  google_sign_in: ^5.2.0
-  google_sign_in_web: ^0.10.2
-  google_identity_services_web: ^0.2.1 
+  google_sign_in: ^6.2.1
+  google_sign_in_web: ^0.12.1
+  google_identity_services_web: ^0.2.1+1 
   
   # Web support
   web: 1.1.1
@@ -58,6 +58,7 @@ dependencies:
   
   # UI & Navigation
   go_router: ^16.0.0
+  smooth_page_indicator: ^1.2.0+3
   
   # Utilities
   intl: ^0.20.0
@@ -70,7 +71,7 @@ dependencies:
   file_picker: ^10.2.0
   
   # Image caching for performance
-  cached_network_image: ^3.3.1
+  cached_network_image: ^3.4.1
   
   # Video support
   video_player: ^2.8.2
@@ -85,18 +86,17 @@ dependencies:
   timezone: ^0.9.4
   
   # Call UI for mobile platforms (iOS CallKit, Android ConnectionService)
-  flutter_callkit_incoming: ^2.0.3
+  flutter_callkit_incoming: ^2.5.4
   
   # Calendar sync
-  device_calendar: ^3.1.0
+  device_calendar: ^4.3.3
   
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
-  rxdart: ^0.27.7
+  rxdart: ^0.28.0
 
 # Dependency overrides to resolve version conflicts
-dependency_overrides:
-  google_sign_in_ios: 5.7.6
+
 
 dev_dependencies:
   flutter_test:

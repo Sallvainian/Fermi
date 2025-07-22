@@ -5,11 +5,17 @@ import '../../../../../features/classes/domain/models/class_model.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../../shared/widgets/preview/preview_example_wrapper.dart';
-import '../../../../../shared/widgets/preview/example_badge.dart';
+import '../../../../../shared/widgets/common/preview_button.dart';
+import '../../widgets/preview_dialog.dart';
 import '../../../../../shared/example/example_repository.dart';
 
 class TeacherStudentsScreen extends StatefulWidget {
-  const TeacherStudentsScreen({super.key});
+  final bool isPreviewMode;
+  
+  const TeacherStudentsScreen({
+    super.key,
+    this.isPreviewMode = false,
+  });
 
   @override
   State<TeacherStudentsScreen> createState() => _TeacherStudentsScreenState();
@@ -43,6 +49,26 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
     return AdaptiveLayout(
       title: 'Students',
       showBackButton: true,
+      actions: [
+        IconButton(
+          onPressed: () => showPreviewDialog(context),
+          icon: const Icon(Icons.preview),
+          tooltip: 'Preview Full Features',
+        ),
+        Container(
+          margin: const EdgeInsets.only(right: 8),
+          child: FilledButton.icon(
+            onPressed: () => showPreviewDialog(context),
+            icon: const Icon(Icons.play_circle_outline, size: 20),
+            label: const Text('Demo'),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+          ),
+        ),
+      ],
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           _showAddStudentSheet(context);
@@ -201,9 +227,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
     final exampleStudents =
         ExampleRepository.of<Student>(ExampleDomain.students);
 
-    // For now, simulate that we have no real data (empty state)
-    // In a real app, this would come from a provider or service
-    final List<Student> realStudents = []; // Simulating empty real data
+    // In preview mode, show a rich set of mock data
+    // Otherwise, show empty state (simulating no real data)
+    final List<Student> realStudents = widget.isPreviewMode 
+        ? _generatePreviewStudents() 
+        : []; // In real app, this would come from a provider or service
 
     return PreviewExampleWrapper<Student>(
       realData: realStudents,
@@ -291,9 +319,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
     final exampleClasses =
         ExampleRepository.of<ClassModel>(ExampleDomain.classes);
 
-    // For now, simulate that we have no real data (empty state)
-    // In a real app, this would come from a provider or service
-    final List<ClassModel> realClasses = []; // Simulating empty real data
+    // In preview mode, show a rich set of mock data
+    // Otherwise, show empty state (simulating no real data)
+    final List<ClassModel> realClasses = widget.isPreviewMode 
+        ? _generatePreviewClasses() 
+        : []; // In real app, this would come from a provider or service
 
     return PreviewExampleWrapper<ClassModel>(
       realData: realClasses,
@@ -365,7 +395,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                                   ),
                                   if (isExample) ...[
                                     const SizedBox(width: 8),
-                                    const ExampleBadge.compact(),
+                                    PreviewButton(
+                                      isCompact: true,
+                                      onPressed: () => showPreviewDialog(context),
+                                    ),
                                   ],
                                 ],
                               ),
@@ -400,7 +433,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                                   ),
                                   if (isExample) ...[
                                     const SizedBox(width: 8),
-                                    const ExampleBadge.compact(),
+                                    PreviewButton(
+                                      isCompact: true,
+                                      onPressed: () => showPreviewDialog(context),
+                                    ),
                                   ],
                                 ],
                               ),
@@ -561,7 +597,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                             ),
                           ),
                         ),
-                        if (isExample) const ExampleBadge.compact(),
+                        if (isExample) PreviewButton(
+                          isCompact: true,
+                          onPressed: () => showPreviewDialog(context),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -1402,6 +1441,99 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
     return filtered;
   }
 
+  // Generate preview data for demonstration
+  List<Student> _generatePreviewStudents() {
+    final now = DateTime.now();
+    final firstNames = ['Sarah', 'Mike', 'Emma', 'Alex', 'Lily', 'James', 'Sophia', 'Daniel', 'Olivia', 'Ryan', 
+                       'Noah', 'Ava', 'Ethan', 'Isabella', 'Mason', 'Mia', 'Lucas', 'Charlotte', 'Oliver', 'Amelia'];
+    final lastNames = ['Johnson', 'Chen', 'Davis', 'Martinez', 'Wilson', 'Brown', 'Taylor', 'Anderson', 'Thomas', 'Garcia',
+                      'Rodriguez', 'Lee', 'Walker', 'Hall', 'Allen', 'Young', 'King', 'Wright', 'Lopez', 'Hill'];
+    
+    return List.generate(30, (index) {
+      final firstName = firstNames[index % firstNames.length];
+      final lastName = lastNames[(index + 3) % lastNames.length];
+      final gradeLevel = 9 + (index % 4);
+      
+      return Student(
+        id: 'preview_student_$index',
+        userId: 'preview_user_$index',
+        firstName: firstName,
+        lastName: lastName,
+        displayName: '$firstName $lastName',
+        email: '${firstName.toLowerCase()}.${lastName.toLowerCase()}@school.edu',
+        gradeLevel: gradeLevel,
+        parentEmail: 'parent.${lastName.toLowerCase()}@email.com',
+        classIds: List.generate(3 + (index % 3), (i) => 'preview_class_${(index + i) % 8}'),
+        createdAt: now.subtract(Duration(days: 180 - index)),
+        updatedAt: now.subtract(Duration(hours: index * 2)),
+        isActive: index % 10 != 9, // 90% active
+        metadata: {
+          'overallGrade': 70 + (index % 30).toDouble(),
+          'attendanceRate': 0.85 + (index % 15) * 0.01,
+          'lastActive': now.subtract(Duration(hours: index)).toIso8601String(),
+          'status': index % 10 == 9 ? 'Inactive' : 'Active',
+        },
+      );
+    });
+  }
+
+  List<ClassModel> _generatePreviewClasses() {
+    final now = DateTime.now();
+    final subjects = ['Mathematics', 'Science', 'English', 'History', 'Physics', 'Chemistry', 'Biology', 'Geography',
+                     'Art', 'Music', 'Physical Education', 'Computer Science'];
+    final rooms = ['201', '102', '305', '415', 'Lab A', 'Lab B', 'Studio 1', 'Room 12', 'Gym', 'Music Room', 'Art Studio', 'Computer Lab'];
+    
+    return List.generate(12, (index) {
+      final subject = subjects[index % subjects.length];
+      final studentCount = 18 + (index * 2) % 12;
+      
+      return ClassModel(
+        id: 'preview_class_$index',
+        teacherId: 'teacher_1',
+        name: _getPreviewClassName(subject, index),
+        subject: subject,
+        description: 'A comprehensive course covering fundamental and advanced topics in $subject',
+        gradeLevel: '${9 + (index % 4)}',
+        room: rooms[index % rooms.length],
+        schedule: _getPreviewSchedule(index),
+        studentIds: List.generate(studentCount, (i) => 'preview_student_$i'),
+        createdAt: now.subtract(const Duration(days: 90)),
+        isActive: true,
+        academicYear: '2024-2025',
+        semester: 'Spring',
+        maxStudents: studentCount + 8,
+        enrollmentCode: '${subject.substring(0, 3).toUpperCase()}-${100 + index}',
+      );
+    });
+  }
+
+  String _getPreviewClassName(String subject, int index) {
+    switch (subject) {
+      case 'Mathematics':
+        return ['Algebra II', 'Geometry', 'Pre-Calculus', 'Statistics'][index % 4];
+      case 'Science':
+        return ['Biology', 'Chemistry', 'Physics', 'Environmental Science'][index % 4];
+      case 'English':
+        return ['Literature', 'Composition', 'Creative Writing', 'World Literature'][index % 4];
+      case 'History':
+        return ['World History', 'US History', 'European History', 'Ancient Civilizations'][index % 4];
+      default:
+        return '$subject ${['Intro', 'Advanced', 'Honors', 'AP'][index % 4]}';
+    }
+  }
+
+  String _getPreviewSchedule(int index) {
+    final schedules = [
+      'Mon, Wed, Fri • 8:00 AM',
+      'Tue, Thu • 9:30 AM',
+      'Daily • 11:00 AM',
+      'Mon, Wed, Fri • 1:00 PM',
+      'Tue, Thu • 2:30 PM',
+      'Mon, Tue, Thu • 10:00 AM',
+    ];
+    return schedules[index % schedules.length];
+  }
+
   Widget _buildStudentCard(Student student, {bool isExample = false}) {
     final theme = Theme.of(context);
     final isActive = student.isActive;
@@ -1552,9 +1684,12 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                 ),
               ),
               const SizedBox(width: 8),
-              // Actions or Example Badge
+              // Actions or Preview Button
               if (isExample)
-                const ExampleBadge.compact()
+                PreviewButton(
+                  isCompact: true,
+                  onPressed: () => showPreviewDialog(context),
+                )
               else
                 PopupMenuButton<String>(
                   onSelected: (value) => _handleStudentAction(value, student),

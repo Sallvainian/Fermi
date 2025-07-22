@@ -9,7 +9,7 @@ import '../../../../shared/services/logger_service.dart';
 /// This service wraps the GoogleSignIn instance and provides
 /// a centralized way to manage authentication with Google.
 /// 
-/// Using google_sign_in 5.4.4:
+/// Using google_sign_in 6.2.1:
 /// - GoogleSignIn is created with configuration
 /// - signIn() method for interactive sign-in
 /// - signInSilently() for silent sign-in
@@ -29,11 +29,11 @@ class GoogleSignInService {
   // Track initialization status
   bool _isInitialized = false;
   
-  // GoogleSignIn instance
+  // GoogleSignIn instance  
   GoogleSignIn? _googleSignIn;
   
-  // Stream subscription for user changes
-  StreamSubscription<GoogleSignInAccount?>? _userSubscription;
+  // Stream subscription for authentication events
+  StreamSubscription? _authSubscription;
   
   /// Whether the service has been initialized
   bool get isInitialized => _isInitialized;
@@ -50,7 +50,7 @@ class GoogleSignInService {
   /// 
   /// This must be called once before using any other methods.
   /// Typically called from main() or during app initialization.
-  Future<void> initialize() async {
+  void initialize() {
     if (_isInitialized) {
       LoggerService.debug('GoogleSignInService already initialized', tag: 'GoogleSignInService');
       return;
@@ -64,7 +64,7 @@ class GoogleSignInService {
     }
 
     try {
-      // Create GoogleSignIn instance with configuration
+      // Initialize GoogleSignIn instance with configuration  
       _googleSignIn = GoogleSignIn(
         scopes: [
           'email',
@@ -72,9 +72,9 @@ class GoogleSignInService {
         ],
       );
       
-      // Listen to user changes
-      _userSubscription = _googleSignIn!.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
-        LoggerService.debug('Google Sign In user changed: ${account?.email ?? "signed out"}', tag: 'GoogleSignInService');
+      // Listen to authentication events
+      _authSubscription = _googleSignIn!.onCurrentUserChanged.listen((GoogleSignInAccount? account) {
+        LoggerService.debug('Google Sign In auth event: ${account?.email ?? "signed out"}', tag: 'GoogleSignInService');
       });
       
       _isInitialized = true;
@@ -101,8 +101,7 @@ class GoogleSignInService {
     }
     
     try {
-      final account = await _googleSignIn!.signIn();
-      return account;
+      return await _googleSignIn!.signIn();
     } catch (e) {
       LoggerService.error('Google sign in error', tag: 'GoogleSignInService', error: e);
       rethrow;
@@ -166,8 +165,7 @@ class GoogleSignInService {
     }
     
     try {
-      final account = await _googleSignIn!.signInSilently();
-      return account;
+      return await _googleSignIn!.signInSilently();
     } catch (e) {
       LoggerService.error('Google silent sign in error', tag: 'GoogleSignInService', error: e);
       rethrow;
@@ -203,8 +201,7 @@ class GoogleSignInService {
     }
     
     try {
-      final result = await _googleSignIn!.requestScopes(scopes);
-      return result;
+      return await _googleSignIn!.requestScopes(scopes);
     } catch (e) {
       LoggerService.error('Request scopes error', tag: 'GoogleSignInService', error: e);
       rethrow;
@@ -213,7 +210,7 @@ class GoogleSignInService {
 
   /// Clean up resources
   void dispose() {
-    _userSubscription?.cancel();
-    _userSubscription = null;
+    _authSubscription?.cancel();
+    _authSubscription = null;
   }
 }

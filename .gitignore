@@ -5,6 +5,11 @@
 .flutter-plugins
 .flutter-plugins-dependencies
 **/build/  # Consolidated all build ignores
+/build
+build/
+.snapshots/
+.vercel/
+.metadata
 
 # General build artifacts
 app.*.symbols

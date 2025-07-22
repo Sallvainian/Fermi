@@ -187,8 +187,8 @@ class AppInitializer {
   static Future<void> _initializeGoogleSignIn() async {
     try {
       // Initialize with required scopes
-      // In google_sign_in 7.x, this is async and calls GoogleSignIn.instance.initialize()
-      await GoogleSignInService().initialize();
+      // In google_sign_in 6.x, this is synchronous  
+      GoogleSignInService().initialize();
       LoggerService.info('Google Sign In initialized', tag: 'AppInitializer');
     } catch (e) {
       LoggerService.error('Google Sign In initialization error', tag: 'AppInitializer', error: e);
