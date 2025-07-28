@@ -5,6 +5,7 @@ import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider.dart';
 import '../widgets/create_thread_dialog.dart';
 import 'thread_detail_screen.dart';
+import '../../domain/models/discussion_board.dart';
 
 class DiscussionBoardDetailScreen extends StatefulWidget {
   final String boardId;
@@ -21,13 +22,12 @@ class DiscussionBoardDetailScreen extends StatefulWidget {
       _DiscussionBoardDetailScreenState();
 }
 
-class _DiscussionBoardDetailScreenState
-    extends State<DiscussionBoardDetailScreen> {
-  
+class _DiscussionBoardDetailScreenState extends State<DiscussionBoardDetailScreen> {
+  String _sortType = 'recent';
+
   @override
   void initState() {
     super.initState();
-    // Load threads when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DiscussionProvider>().loadBoardThreads(widget.boardId);
     });
@@ -41,7 +41,9 @@ class _DiscussionBoardDetailScreenState
       actions: [
         PopupMenuButton<String>(
           onSelected: (value) {
-            // TODO: Implement sorting functionality
+            setState(() {
+              _sortType = value;
+            });
           },
           itemBuilder: (context) => [
             const PopupMenuItem(
@@ -86,57 +88,48 @@ class _DiscussionBoardDetailScreenState
   }
 
   Widget _buildThreadsList() {
-    // Sample threads data
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      children: [
-        _buildThreadCard(
-          title: 'Tips for the upcoming midterm exam',
-          author: 'Sarah Johnson',
-          authorRole: 'student',
-          content:
-              'Hey everyone! I was wondering if anyone has good study strategies for the midterm...',
-          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-          replyCount: 15,
-          likeCount: 23,
-          isPinned: true,
-        ),
-        const SizedBox(height: 12),
-        _buildThreadCard(
-          title: 'Question about Assignment 3',
-          author: 'Mike Chen',
-          authorRole: 'student',
-          content:
-              'I\'m stuck on problem 5. Can someone explain the approach without giving away the answer?',
-          createdAt: DateTime.now().subtract(const Duration(days: 1)),
-          replyCount: 8,
-          likeCount: 5,
-        ),
-        const SizedBox(height: 12),
-        _buildThreadCard(
-          title: 'Study group for Chapter 7',
-          author: 'Emily Davis',
-          authorRole: 'student',
-          content:
-              'Anyone interested in forming a study group for Chapter 7? We could meet in the library...',
-          createdAt: DateTime.now().subtract(const Duration(days: 2)),
-          replyCount: 12,
-          likeCount: 18,
-          tags: ['Study Group'],
-        ),
-        const SizedBox(height: 12),
-        _buildThreadCard(
-          title: 'Resources for extra practice',
-          author: 'Prof. Smith',
-          authorRole: 'teacher',
-          content:
-              'I\'ve compiled some additional practice problems that might help with your preparation...',
-          createdAt: DateTime.now().subtract(const Duration(days: 3)),
-          replyCount: 6,
-          likeCount: 32,
-          tags: ['Resources'],
-        ),
-      ],
+    return Consumer<DiscussionProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final threads = provider.getBoardThreads(widget.boardId);
+        if (threads.isEmpty) {
+          return const Center(child: Text('No threads yet. Start one!'));
+        }
+
+        List<DiscussionThread> sortedThreads = List.from(threads);
+        switch (_sortType) {
+          case 'recent':
+            sortedThreads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            break;
+          case 'popular':
+            sortedThreads.sort((a, b) => b.likeCount.compareTo(a.likeCount));
+            break;
+          case 'active':
+            sortedThreads.sort((a, b) => b.replyCount.compareTo(a.replyCount));
+            break;
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: sortedThreads.length,
+          itemBuilder: (context, index) {
+            final thread = sortedThreads[index];
+            return _buildThreadCard(
+              title: thread.title,
+              author: thread.authorName,
+              authorRole: thread.authorRole,
+              content: thread.content,
+              createdAt: thread.createdAt,
+              replyCount: thread.replyCount,
+              likeCount: thread.likeCount,
+              isPinned: thread.isPinned,
+              tags: thread.tags,
+            );
+          },
+        );
+      },
     );
   }
 

@@ -69,6 +69,9 @@ class CallProvider extends ChangeNotifier {
       notifyListeners();
       
       return callId;
+    } on WebRTCException catch (e) {
+      LoggerService.error('WebRTC error starting call: ${e.userFriendlyMessage}', tag: _tag, error: e);
+      rethrow;
     } catch (e) {
       LoggerService.error('Failed to start call', tag: _tag, error: e);
       rethrow;
@@ -82,6 +85,9 @@ class CallProvider extends ChangeNotifier {
       _incomingCall = null;
       _isNavigationInProgress = false;
       notifyListeners();
+    } on WebRTCException catch (e) {
+      LoggerService.error('WebRTC error accepting call: ${e.userFriendlyMessage}', tag: _tag, error: e);
+      rethrow;
     } catch (e) {
       LoggerService.error('Failed to accept call', tag: _tag, error: e);
       rethrow;

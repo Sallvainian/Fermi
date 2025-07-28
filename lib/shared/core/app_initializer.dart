@@ -3,10 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
-import '../../config/firebase_options.dart';
+import '../../config/firebase_options_env.dart';
 import '../services/logger_service.dart';
 import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
@@ -97,7 +98,7 @@ class AppInitializer {
       }
       
       await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
+        options: EnvironmentFirebaseOptions.currentPlatform,
       );
       _firebaseInitialized = true;
       
@@ -110,6 +111,18 @@ class AppInitializer {
           persistenceEnabled: true,
           cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
         );
+      }
+      
+      // Initialize Firebase Realtime Database
+      try {
+        final database = FirebaseDatabase.instance;
+        if (!kIsWeb) {
+          // Enable offline persistence for Realtime Database
+          database.setPersistenceEnabled(true);
+        }
+        LoggerService.info('Firebase Realtime Database initialized', tag: 'AppInitializer');
+      } catch (e) {
+        LoggerService.warning('Firebase Realtime Database initialization error: $e', tag: 'AppInitializer');
       }
     } catch (e) {
       _firebaseInitialized = false;

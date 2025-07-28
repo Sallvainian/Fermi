@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../data/services/presence_service.dart';
 
 class OnlineUsersCard extends StatelessWidget {
@@ -158,7 +159,9 @@ class OnlineUsersCard extends StatelessWidget {
         ),
       ),
       onTap: () {
-        // TODO: Navigate to user profile or start chat
+        // Navigate to messages to start a chat with this user
+        context.go('/messages');
+        // TODO: When direct chat creation is implemented, pass userId as parameter
       },
     );
   }

@@ -559,7 +559,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           onTap: () {
                             Navigator.pop(context);
-                            // TODO: Navigate to assignments
+                            context.push('/assignments', extra: {'courseId': course.id});
                           },
                         ),
                         ListTile(
@@ -568,7 +568,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           onTap: () {
                             Navigator.pop(context);
-                            // TODO: Navigate to grades
+                            context.push('/grades', extra: {'courseId': course.id});
                           },
                         ),
                         ListTile(
@@ -577,7 +577,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           onTap: () {
                             Navigator.pop(context);
-                            // TODO: Navigate to discussion
+                            context.push('/discussions', extra: {'courseId': course.id});
                           },
                         ),
                       ],

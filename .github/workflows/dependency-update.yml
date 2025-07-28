@@ -1,0 +1,174 @@
+name: Dependency Update
+
+on:
+  schedule:
+    # Run every Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: "3.24.5"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+          
+      - name: Get current dependencies
+        run: |
+          flutter pub get
+          flutter pub deps --json > deps-before.json
+          
+      - name: Update dependencies
+        run: |
+          # Update Flutter SDK
+          flutter upgrade
+          
+          # Update all dependencies to latest compatible versions
+          flutter pub upgrade --major-versions
+          
+          # Get updated dependencies
+          flutter pub deps --json > deps-after.json
+          
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet pubspec.lock; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Run tests
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          flutter analyze --no-fatal-infos
+          flutter test
+          
+      - name: Generate update report
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          cat > update-report.md << 'EOF'
+          ## Dependency Update Report
+          
+          ### Updated Packages
+          
+          EOF
+          
+          # Parse and compare dependency versions
+          flutter pub outdated --json | jq -r '.packages[] | select(.isUpgradable == true) | "- **\(.package)**: \(.current.version) → \(.upgradable.version)"' >> update-report.md || echo "No updates available" >> update-report.md
+          
+          cat >> update-report.md << 'EOF'
+          
+          ### Security Information
+          
+          All dependencies have been updated to their latest compatible versions.
+          Please review the changes and ensure they don't introduce breaking changes.
+          
+          ### Testing
+          
+          - ✅ Code analysis passed
+          - ✅ All tests passed
+          
+          ### Next Steps
+          
+          1. Review the dependency changes
+          2. Test the application thoroughly
+          3. Merge if everything works correctly
+          EOF
+          
+      - name: Create Pull Request
+        if: steps.check_changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: update dependencies'
+          title: '🔄 Weekly Dependency Update'
+          body-path: update-report.md
+          branch: deps/weekly-update
+          delete-branch: true
+          labels: |
+            dependencies
+            automated
+          assignees: |
+            ${{ github.repository_owner }}
+          reviewers: |
+            ${{ github.repository_owner }}
+
+  # Check for Flutter SDK updates
+  check-flutter-update:
+    name: Check Flutter SDK Update
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Get latest Flutter version
+        id: flutter_version
+        run: |
+          # Get latest stable Flutter version
+          LATEST_VERSION=$(curl -s https://api.github.com/repos/flutter/flutter/releases | jq -r '.[] | select(.prerelease == false) | .tag_name' | head -1)
+          echo "latest_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: ${{ env.FLUTTER_VERSION }}"
+          echo "Latest version: $LATEST_VERSION"
+          
+      - name: Check if update needed
+        id: check_update
+        run: |
+          CURRENT="${{ env.FLUTTER_VERSION }}"
+          LATEST="${{ steps.flutter_version.outputs.latest_version }}"
+          
+          if [ "$CURRENT" != "$LATEST" ]; then
+            echo "update_needed=true" >> $GITHUB_OUTPUT
+            echo "Flutter SDK update available: $CURRENT → $LATEST"
+          else
+            echo "update_needed=false" >> $GITHUB_OUTPUT
+            echo "Flutter SDK is up to date"
+          fi
+          
+      - name: Create Flutter update issue
+        if: steps.check_update.outputs.update_needed == 'true'
+        uses: actions/create-issue@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          title: '🎯 Flutter SDK Update Available'
+          body: |
+            A new Flutter SDK version is available!
+            
+            **Current version**: ${{ env.FLUTTER_VERSION }}
+            **Latest version**: ${{ steps.flutter_version.outputs.latest_version }}
+            
+            ### Update Instructions
+            
+            1. Update the `FLUTTER_VERSION` environment variable in all workflow files
+            2. Test the application with the new Flutter version
+            3. Update any version-specific code if needed
+            
+            ### Resources
+            
+            - [Flutter Release Notes](https://flutter.dev/docs/development/tools/sdk/release-notes)
+            - [Migration Guide](https://flutter.dev/docs/release/breaking-changes)
+          labels: |
+            flutter-sdk
+            maintenance
+          assignees: |
+            ${{ github.repository_owner }}

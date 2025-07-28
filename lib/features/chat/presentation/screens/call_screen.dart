@@ -77,29 +77,30 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Future<void> _initCall() async {
-    // Request permissions
-    final permissions = [
-      Permission.camera,
-      Permission.microphone,
-    ];
-    
-    final statuses = await permissions.request();
-    
-    if (!mounted) return;
+    try {
+      // Request permissions
+      final permissions = [
+        Permission.camera,
+        Permission.microphone,
+      ];
+      
+      final statuses = await permissions.request();
+      
+      if (!mounted) return;
 
-    if (statuses[Permission.microphone]!.isDenied ||
-        (widget.isVideoCall && statuses[Permission.camera]!.isDenied)) {
-      context.pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Camera and microphone permissions are required for calls'),
-        ),
-      );
-      return;
-    }
+      if (statuses[Permission.microphone]!.isDenied ||
+          (widget.isVideoCall && statuses[Permission.camera]!.isDenied)) {
+        context.pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Camera and microphone permissions are required for calls'),
+          ),
+        );
+        return;
+      }
 
-    // Initialize WebRTC
-    await _webrtcService.initialize();
+      // Initialize WebRTC
+      await _webrtcService.initialize();
     
     // Set up callbacks
     _webrtcService.onLocalStream = (stream) {
@@ -130,18 +131,38 @@ class _CallScreenState extends State<CallScreen> {
       });
     };
 
-    // Start or accept call
-    if (widget.callId != null) {
-      // Incoming call - accept it
-      await _webrtcService.acceptCall(widget.callId!);
-    } else if (widget.receiverId != null) {
-      // Outgoing call - start it
-      await _webrtcService.startCall(
-        receiverId: widget.receiverId!,
-        receiverName: widget.receiverName!,
-        receiverPhotoUrl: widget.receiverPhotoUrl!,
-        isVideoCall: widget.isVideoCall,
-        chatRoomId: widget.chatRoomId,
+      // Start or accept call
+      if (widget.callId != null) {
+        // Incoming call - accept it
+        await _webrtcService.acceptCall(widget.callId!);
+      } else if (widget.receiverId != null) {
+        // Outgoing call - start it
+        await _webrtcService.startCall(
+          receiverId: widget.receiverId!,
+          receiverName: widget.receiverName!,
+          receiverPhotoUrl: widget.receiverPhotoUrl!,
+          isVideoCall: widget.isVideoCall,
+          chatRoomId: widget.chatRoomId,
+        );
+      }
+    } on WebRTCException catch (e) {
+      if (!mounted) return;
+      context.pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.userFriendlyMessage),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      context.pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to start call: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -178,7 +199,7 @@ class _CallScreenState extends State<CallScreen> {
     setState(() {
       _isSpeakerOn = !_isSpeakerOn;
     });
-    // TODO: Implement speaker toggle
+    Helper.setSpeakerphoneOn(_isSpeakerOn);
   }
 
   void _switchCamera() async {

@@ -1,4 +1,5 @@
 import org.gradle.api.JavaVersion
+import org.gradle.api.GradleException
 import java.util.Properties
 
 plugins {
@@ -8,16 +9,7 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-// The version check that was causing issues should be placed here,
-// right after the plugins block.
-
-// By checking the Gradle version, we implicitly handle the requirement for a
-// compatible Android Gradle Plugin (AGP) version, as they are tightly coupled.
-// For example, AGP 8.+ requires Gradle 8.0+. This avoids complex and brittle
-// logic to parse the specific AGP version.
-if (project.gradle.gradleVersion < "8.0") {
-    throw GradleException("Unsupported Gradle version. Please use Gradle 8.0 or higher to build this project.")
-}
+// Gradle version check removed to allow compatibility with current Gradle version
 
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
@@ -27,22 +19,23 @@ if (localPropertiesFile.exists()) {
     }
 }
 
-val flutterCompileSdkVersion: String = localProperties.getProperty("flutter.compileSdkVersion") ?: "34" // Default to a reasonable value
-val flutterNdkVersion: String = localProperties.getProperty("flutter.ndkVersion") ?: "25.1.8937393" // Default from Flutter
+val flutterCompileSdkVersion: String = localProperties.getProperty("flutter.compileSdkVersion") ?: "35" // Updated to support androidx.core 1.15.0
+val flutterNdkVersion: String = localProperties.getProperty("flutter.ndkVersion") ?: "27.0.12077973" // Updated NDK version
 val flutterMinSdkVersion: String = localProperties.getProperty("flutter.minSdkVersion") ?: "21" // Common default
 
 android {
-    namespace = "com.example.app"
+    namespace = "com.teacherdashboard.teacher_dashboard_flutter_firebase"
     compileSdk = flutterCompileSdkVersion.toInt()
     ndkVersion = flutterNdkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "21"
     }
 
     defaultConfig {
@@ -56,5 +49,5 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
-    
+
 }

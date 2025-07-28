@@ -1,80 +1,144 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Temporary: Allow all authenticated users to read/write
-    // TODO: Remove this after testing
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null;
+    // ========================================
+    // STORAGE RULES - PRODUCTION VERSION
+    // ========================================
+    // Note: Storage rules cannot query Firestore. We use a combination of:
+    // 1. Auth token info (uid, custom claims for role)
+    // 2. Path-based access control
+    // 3. Request metadata validation
+    
+    // Helper function to check if user has teacher role
+    // Requires custom claim 'role' to be set via Admin SDK
+    function isTeacher() {
+      return request.auth != null && 
+        request.auth.token.role == 'teacher';
     }
     
-    // User profile images - users can read/write their own
-    match /users/{userId}/profile/{allPaths=**} {
-      allow read: if true; // Profile images are public
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
     
-    // Class materials - teachers can upload, students can read
-    match /classes/{classId}/materials/{allPaths=**} {
-      allow read: if request.auth != null && hasClassAccess(classId);
-      allow write: if request.auth != null && isTeacherOfClass(classId);
+    // Helper function to validate image files
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*') &&
+        request.resource.size < 10 * 1024 * 1024; // 10MB max
     }
     
-    // Student submissions - students can upload their own, teachers can read
-    match /classes/{classId}/submissions/{studentId}/{allPaths=**} {
-      allow read: if request.auth != null && 
-        (request.auth.uid == studentId || isTeacherOfClass(classId));
-      allow write: if request.auth != null && request.auth.uid == studentId;
+    // Helper function to validate document files
+    function isValidDocument() {
+      return (request.resource.contentType.matches('application/pdf') ||
+              request.resource.contentType.matches('application/.*document.*') ||
+              request.resource.contentType.matches('text/.*')) &&
+        request.resource.size < 50 * 1024 * 1024; // 50MB max
     }
     
-    // Shared files - based on file permissions in Firestore
-    match /shared/{fileId}/{allPaths=**} {
-      allow read: if request.auth != null && hasFilePermission(fileId, 'read');
-      allow write: if request.auth != null && hasFilePermission(fileId, 'write');
+    // ========================================
+    // USER PROFILE IMAGES
+    // ========================================
+    // Path: /users/{userId}/profile/{fileName}
+    // Users can only upload their own profile images
+    match /users/{userId}/profile/{fileName} {
+      allow read: if isAuthenticated(); // Profile images are semi-public
+      allow write: if isAuthenticated() && 
+        request.auth.uid == userId &&
+        isValidImage();
     }
     
-    // Chat attachments - conversation participants only
-    match /conversations/{conversationId}/attachments/{allPaths=**} {
-      allow read, write: if request.auth != null && 
-        isConversationParticipant(conversationId);
+    // ========================================
+    // CLASS MATERIALS (Teacher Uploads)
+    // ========================================
+    // Path: /classes/{classId}/materials/{fileName}
+    // Only teachers can upload, authenticated users can read
+    // Note: Students need classId to access, providing basic access control
+    match /classes/{classId}/materials/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacher() &&
+        isValidDocument();
     }
     
-    // Chat media (images and videos) - organized by chat room
+    // ========================================
+    // STUDENT SUBMISSIONS
+    // ========================================
+    // Path: /classes/{classId}/submissions/{studentId}/{fileName}
+    // Students can only upload to their own folder, teachers can read all
+    match /classes/{classId}/submissions/{studentId}/{fileName} {
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == studentId || isTeacher());
+      allow create: if isAuthenticated() && 
+        request.auth.uid == studentId &&
+        isValidDocument();
+      allow update: if isAuthenticated() && 
+        request.auth.uid == studentId &&
+        isValidDocument();
+      allow delete: if isTeacher();
+    }
+    
+    // ========================================
+    // CHAT MEDIA
+    // ========================================
+    // Path: /chat_media/{chatRoomId}/{fileName}
+    // Authenticated users can upload/read (they need roomId to access)
     match /chat_media/{chatRoomId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && request.resource.size < 100 * 1024 * 1024 // 100MB limit
-        && (request.resource.contentType.matches('image/.*') || 
-            request.resource.contentType.matches('video/.*'));
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        request.resource.size < 100 * 1024 * 1024 && // 100MB limit
+        (request.resource.contentType.matches('image/.*') || 
+         request.resource.contentType.matches('video/.*') ||
+         request.resource.contentType.matches('audio/.*') ||
+         request.resource.contentType.matches('application/pdf'));
     }
     
-    // Game assets - teachers can upload, all can read
+    // ========================================
+    // GAME ASSETS
+    // ========================================
+    // Path: /games/{gameId}/{allPaths=**}
+    // Teachers upload, all authenticated users can read
     match /games/{gameId}/{allPaths=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && hasRole('teacher');
+      allow read: if isAuthenticated();
+      allow write: if isTeacher() &&
+        request.resource.size < 50 * 1024 * 1024; // 50MB limit
     }
     
-    // Helper functions
-    function hasRole(role) {
-      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == role;
+    // ========================================
+    // SHARED FILES (Collaborative Documents)
+    // ========================================
+    // Path: /shared/{classId}/{fileName}
+    // Teachers can upload, authenticated users can read
+    // Note: More complex permissions would require Cloud Functions
+    match /shared/{classId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isTeacher() &&
+        isValidDocument();
     }
     
-    function hasClassAccess(classId) {
-      let classData = firestore.get(/databases/(default)/documents/classes/$(classId)).data;
-      return request.auth.uid == classData.teacherId || 
-             request.auth.uid in classData.studentIds;
+    // ========================================
+    // CONVERSATION ATTACHMENTS (Legacy)
+    // ========================================
+    // Path: /conversations/{conversationId}/attachments/{fileName}
+    // Authenticated users can read/write (they need conversationId)
+    match /conversations/{conversationId}/attachments/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() &&
+        request.resource.size < 25 * 1024 * 1024; // 25MB limit
     }
     
-    function isTeacherOfClass(classId) {
-      return firestore.get(/databases/(default)/documents/classes/$(classId)).data.teacherId == request.auth.uid;
+    // ========================================
+    // TEMPORARY UPLOADS
+    // ========================================
+    // Path: /temp/{userId}/{fileName}
+    // Users can upload temp files (auto-cleaned by lifecycle rules)
+    match /temp/{userId}/{fileName} {
+      allow read, write: if isAuthenticated() && 
+        request.auth.uid == userId &&
+        request.resource.size < 100 * 1024 * 1024; // 100MB limit
     }
     
-    function hasFilePermission(fileId, permission) {
-      let fileData = firestore.get(/databases/(default)/documents/files/$(fileId)).data;
-      return request.auth.uid in fileData.permissions[permission];
-    }
-    
-    function isConversationParticipant(conversationId) {
-      return request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants;
+    // Catch-all: Deny any other paths
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

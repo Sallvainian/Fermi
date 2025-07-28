@@ -8,7 +8,9 @@ class WebNotification {
   static bool get supported {
     // Check if Notification API is available
     try {
-      return web.Notification.permission.isNotEmpty;
+      // Just try to access permission - if it throws, notifications aren't supported
+      web.Notification.permission;
+      return true;
     } catch (e) {
       return false;
     }
@@ -24,9 +26,14 @@ class WebNotification {
   
   static Future<String> requestPermission() async {
     try {
+      // requestPermission() returns JSPromise<JSString>
       final jsPromise = web.Notification.requestPermission();
-      final permission = await jsPromise.toDart;
-      return permission.toDart;
+      
+      // Convert JSPromise<JSString> to Future<JSString> using .toDart
+      final jsString = await jsPromise.toDart;
+      
+      // Convert JSString to Dart String using .toDart
+      return jsString.toDart;
     } catch (e) {
       return 'denied';
     }

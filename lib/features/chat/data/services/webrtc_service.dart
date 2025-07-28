@@ -7,6 +7,42 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
 
+// WebRTC Error Types for better error handling
+enum WebRTCErrorType {
+  deviceNotFound,
+  deviceInUse,
+  permissionDenied,
+  callTimeout,
+  unknown,
+}
+
+// Custom WebRTC Exception class
+class WebRTCException implements Exception {
+  final String message;
+  final WebRTCErrorType type;
+  
+  const WebRTCException(this.message, this.type);
+  
+  @override
+  String toString() => 'WebRTCException: $message';
+  
+  // User-friendly error messages
+  String get userFriendlyMessage {
+    switch (type) {
+      case WebRTCErrorType.deviceNotFound:
+        return message;
+      case WebRTCErrorType.deviceInUse:
+        return message;
+      case WebRTCErrorType.permissionDenied:
+        return message;
+      case WebRTCErrorType.callTimeout:
+        return 'Call timeout. The recipient did not answer.';
+      case WebRTCErrorType.unknown:
+        return 'An unexpected error occurred. Please try again.';
+    }
+  }
+}
+
 class WebRTCService {
   static const String _tag = 'WebRTCService';
   
@@ -20,18 +56,16 @@ class WebRTCService {
       {'urls': 'stun:stun.l.google.com:19302'},
       {'urls': 'stun:stun1.l.google.com:19302'},
       {'urls': 'stun:stun2.l.google.com:19302'},
-      // TURN servers for NAT traversal (essential for ~20-30% of users)
+      // Custom TURN server for production - replace with your server details
       {
         'urls': [
-          'turn:openrelay.metered.ca:80',
-          'turn:openrelay.metered.ca:443',
-          'turn:openrelay.metered.ca:443?transport=tcp',
+          'turn:your-turn-server-domain:3478?transport=udp',
+          'turn:your-turn-server-domain:3478?transport=tcp',
+          'turns:your-turn-server-domain:5349?transport=tcp',
         ],
-        'username': 'openrelayproject',
-        'credential': 'openrelayproject',
+        'username': 'your-username',
+        'credential': 'your-credential',
       },
-      // TODO: Replace with your own TURN server for production
-      // Example: Twilio, Xirsys, or self-hosted coturn
     ],
     'sdpSemantics': 'unified-plan', // Use modern Unified Plan semantics
     'iceCandidatePoolSize': 10, // Pre-gather candidates for faster connection
@@ -61,6 +95,10 @@ class WebRTCService {
   Call? _currentCall;
   bool _isCaller = false;
   bool _isEndingCall = false;
+  Timer? _callTimeoutTimer;
+  
+  // Call timeout duration (30 seconds)
+  static const Duration _callTimeoutDuration = Duration(seconds: 30);
   
   // Callbacks
   Function(MediaStream stream)? onLocalStream;
@@ -157,7 +195,7 @@ class WebRTCService {
     // Request permissions before accessing media
     final permissions = await _requestMediaPermissions(isVideoCall);
     if (!permissions) {
-      throw Exception('Media permissions denied');
+      throw WebRTCException('Media permissions denied', WebRTCErrorType.permissionDenied);
     }
     
     // Optimize audio constraints for voice calls
@@ -185,7 +223,39 @@ class WebRTCService {
       return stream;
     } catch (e) {
       LoggerService.error('Failed to get user media', tag: _tag, error: e);
-      throw Exception('Failed to access camera/microphone: ${e.toString()}');
+      
+      // Parse specific error types for better user experience
+      final errorString = e.toString().toLowerCase();
+      
+      if (errorString.contains('could not start video source') || 
+          errorString.contains('no video capture device found') ||
+          errorString.contains('requested device not found')) {
+        throw WebRTCException(
+          isVideoCall 
+            ? 'No webcam detected. Please connect a camera or switch to voice call.'
+            : 'No microphone detected. Please connect a microphone.',
+          WebRTCErrorType.deviceNotFound
+        );
+      } else if (errorString.contains('device in use') || 
+                 errorString.contains('could not start audio source')) {
+        throw WebRTCException(
+          isVideoCall
+            ? 'Camera is being used by another application. Please close other apps using the camera and try again.'
+            : 'Microphone is being used by another application. Please close other apps using the microphone and try again.',
+          WebRTCErrorType.deviceInUse
+        );
+      } else if (errorString.contains('permission denied') || 
+                 errorString.contains('not allowed')) {
+        throw WebRTCException(
+          'Camera and microphone access denied. Please allow access in your browser settings.',
+          WebRTCErrorType.permissionDenied
+        );
+      } else {
+        throw WebRTCException(
+          'Failed to access camera/microphone: ${e.toString()}',
+          WebRTCErrorType.unknown
+        );
+      }
     }
   }
   
@@ -373,6 +443,7 @@ class WebRTCService {
               onCallStateChanged?.call(_currentCall!);
               
               if (status == CallStatus.rejected || status == CallStatus.ended) {
+                _cancelCallTimeoutTimer(); // Cancel timeout when call ends
                 await endCall();
               }
             }
@@ -382,6 +453,9 @@ class WebRTCService {
       
       // Listen for ICE candidates
       _listenForRemoteCandidates();
+      
+      // Start call timeout timer
+      _startCallTimeoutTimer();
       
       LoggerService.debug('Call started: $_currentCallId', tag: _tag);
       return _currentCallId!;
@@ -458,6 +532,9 @@ class WebRTCService {
       // Listen for ICE candidates
       _listenForRemoteCandidates();
       
+      // Cancel timeout timer since call was accepted
+      _cancelCallTimeoutTimer();
+      
       LoggerService.debug('Call accepted: $callId', tag: _tag);
     } catch (e) {
       LoggerService.error('Failed to accept call', tag: _tag, error: e);
@@ -468,6 +545,9 @@ class WebRTCService {
 
   Future<void> rejectCall(String callId) async {
     try {
+      // Cancel timeout timer since call is being rejected
+      _cancelCallTimeoutTimer();
+      
       await _firestore.collection('calls').doc(callId).update({
         'status': CallStatus.rejected.name,
         'endedAt': FieldValue.serverTimestamp(),
@@ -567,8 +647,49 @@ class WebRTCService {
     });
   }
 
+  // Start call timeout timer
+  void _startCallTimeoutTimer() {
+    _cancelCallTimeoutTimer(); // Cancel any existing timer
+    
+    _callTimeoutTimer = Timer(_callTimeoutDuration, () async {
+      if (_currentCall?.status == CallStatus.ringing) {
+        LoggerService.info('Call timeout reached, ending call', tag: _tag);
+        
+        // Update call status to timeout
+        if (_currentCallId != null) {
+          await _firestore.collection('calls').doc(_currentCallId).update({
+            'status': CallStatus.ended.name,
+            'endedAt': FieldValue.serverTimestamp(),
+            'endReason': 'timeout',
+            'expireAt': FieldValue.serverTimestamp(),
+          });
+        }
+        
+        // Update local call state
+        if (_currentCall != null) {
+          _currentCall = _currentCall!.copyWith(status: CallStatus.ended);
+          if (!_callStateController.isClosed) {
+            _callStateController.add(_currentCall);
+          }
+          onCallStateChanged?.call(_currentCall!);
+        }
+        
+        await _cleanUp();
+      }
+    });
+  }
+  
+  // Cancel call timeout timer
+  void _cancelCallTimeoutTimer() {
+    _callTimeoutTimer?.cancel();
+    _callTimeoutTimer = null;
+  }
+
   Future<void> _cleanUp() async {
     try {
+      // Cancel timeout timer
+      _cancelCallTimeoutTimer();
+      
       _localStream?.getTracks().forEach((track) {
         track.stop();
       });

@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import '../../domain/models/calendar_event.dart';
 import '../../data/services/calendar_service.dart';
 import '../../../../shared/core/service_locator.dart';
+// import 'package:ical/ical.dart'; // Temporarily disabled due to null safety issues
 
 /// Provider for managing calendar state.
 /// 
@@ -240,9 +241,56 @@ class CalendarProvider with ChangeNotifier {
   }
   
   /// Gets events for export/sharing.
+  /// Note: Basic iCalendar export implementation. Consider upgrading to a dedicated
+  /// iCalendar package when null-safe options become available for enhanced features.
   String exportEventsToICS() {
-    // TODO: Implement iCalendar format export
-    return '';
+    final buffer = StringBuffer();
+    
+    // Basic iCalendar format
+    buffer.writeln('BEGIN:VCALENDAR');
+    buffer.writeln('VERSION:2.0');
+    buffer.writeln('PRODID:-//Teacher Dashboard//EN');
+    
+    for (final event in _allEvents) {
+      buffer.writeln('BEGIN:VEVENT');
+      buffer.writeln('UID:${event.id}');
+      buffer.writeln('SUMMARY:${event.title}');
+      if (event.description != null && event.description!.isNotEmpty) {
+        buffer.writeln('DESCRIPTION:${event.description}');
+      }
+      buffer.writeln('DTSTART:${_formatDateTime(event.startTime)}');
+      if (event.endTime != null) {
+        buffer.writeln('DTEND:${_formatDateTime(event.endTime!)}');
+      }
+      if (event.location != null && event.location!.isNotEmpty) {
+        buffer.writeln('LOCATION:${event.location}');
+      }
+      buffer.writeln('STATUS:CONFIRMED');
+      
+      // Add basic recurrence rule if needed
+      if (event.recurrence != RecurrenceType.none) {
+        buffer.writeln('RRULE:FREQ=${_mapRecurrenceToString(event.recurrence)}');
+      }
+      
+      buffer.writeln('END:VEVENT');
+    }
+    
+    buffer.writeln('END:VCALENDAR');
+    return buffer.toString();
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return dateTime.toUtc().toIso8601String().replaceAll(RegExp(r'[:-]'), '').replaceAll('.000Z', 'Z');
+  }
+
+  String _mapRecurrenceToString(RecurrenceType type) {
+    switch (type) {
+      case RecurrenceType.daily: return 'DAILY';
+      case RecurrenceType.weekly: return 'WEEKLY';
+      case RecurrenceType.monthly: return 'MONTHLY';
+      case RecurrenceType.yearly: return 'YEARLY';
+      default: return 'DAILY';
+    }
   }
   
   /// Navigates to previous period based on view.

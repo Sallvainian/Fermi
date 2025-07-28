@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../domain/models/student.dart';
 import '../../../data/services/student_service.dart';
 import '../../../../../features/classes/domain/models/class_model.dart';
@@ -355,12 +356,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    // TODO: Navigate to add class screen
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Add class feature coming soon'),
-                      ),
-                    );
+                    // Navigate to classes screen where users can create classes
+                    context.go('/teacher/classes');
                   },
                   child: Text(
                       isExample ? 'Create Real Class' : 'Create First Class'),
@@ -489,12 +486,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
               FilledButton(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  // TODO: Navigate to add class screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Add class feature coming soon'),
-                    ),
-                  );
+                  // Navigate to classes screen where users can create classes
+                  context.go('/teacher/classes');
                 },
                 child: const Text('Create Class'),
               ),
@@ -542,12 +535,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                       FilledButton(
                         onPressed: () {
                           Navigator.of(context).pop();
-                          // TODO: Navigate to add class screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Create class feature coming soon'),
-                            ),
-                          );
+                          // Navigate to classes screen where users can create classes
+                          context.go('/teacher/classes');
                         },
                         child: const Text('Create Class'),
                       ),
@@ -2038,13 +2027,9 @@ class StudentDetailSheet extends StatelessWidget {
                             subtitle: const Text('Click to view class details'),
                             trailing: const Icon(Icons.arrow_forward_ios),
                             onTap: () {
-                              // TODO: Navigate to class details
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      'Class details for $classId coming soon'),
-                                ),
-                              );
+                              // Navigate to classes screen
+                              // TODO: When class detail screen is implemented, navigate directly to it
+                              context.go('/teacher/classes');
                             },
                           ),
                         );

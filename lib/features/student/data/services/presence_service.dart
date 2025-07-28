@@ -85,7 +85,7 @@ class PresenceService {
       return Stream.value([]);
     }
     
-    return database.ref('presence').onValue.map((DatabaseEvent event) {
+    return database.ref('presence').onValue.map((event) {
       final List<OnlineUser> onlineUsers = [];
       
       if (event.snapshot.exists && event.snapshot.value != null) {
@@ -139,7 +139,7 @@ class PresenceService {
       return Stream.value(false);
     }
     
-    return database.ref('presence/$uid/online').onValue.map((DatabaseEvent event) {
+    return database.ref('presence/$uid/online').onValue.map((event) {
       return event.snapshot.value as bool? ?? false;
     }).handleError((error) {
       LoggerService.error('Error fetching user online status', error: error);
@@ -153,7 +153,7 @@ class PresenceService {
       return Stream.value(null);
     }
     
-    return database.ref('presence/$uid/lastSeen').onValue.map((DatabaseEvent event) {
+    return database.ref('presence/$uid/lastSeen').onValue.map((event) {
       final timestamp = event.snapshot.value as int?;
       return timestamp != null 
           ? DateTime.fromMillisecondsSinceEpoch(timestamp)
@@ -198,7 +198,7 @@ class PresenceService {
       return Stream.value({});
     }
     
-    return database.ref('presence').onValue.map((DatabaseEvent event) {
+    return database.ref('presence').onValue.map((event) {
       final Map<String, int> roleCounts = {};
       
       if (event.snapshot.exists && event.snapshot.value != null) {

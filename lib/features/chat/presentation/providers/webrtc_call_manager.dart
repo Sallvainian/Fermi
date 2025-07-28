@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/services/webrtc_service.dart';
 import '../../data/services/webrtc_signaling_service.dart';
 import '../../domain/models/call.dart';
@@ -13,6 +14,7 @@ class WebRTCCallManager extends ChangeNotifier {
   
   final WebRTCService _webrtcService = WebRTCService();
   final WebRTCSignalingService _signalingService = WebRTCSignalingService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // WebRTC configuration
   final Map<String, dynamic> _configuration = {
@@ -68,6 +70,7 @@ class WebRTCCallManager extends ChangeNotifier {
     required String calleeId,
     required bool isVideo,
     String? calleeName,
+    String? chatRoomId,
   }) async {
     try {
       _isCaller = true;
@@ -99,6 +102,17 @@ class WebRTCCallManager extends ChangeNotifier {
       // Send offer through signaling
       await _signalingService.sendOffer(callId, offer);
       
+      // Fetch receiver photo URL
+      String receiverPhotoUrl = '';
+      try {
+        final receiverDoc = await _firestore.collection('users').doc(calleeId).get();
+        if (receiverDoc.exists) {
+          receiverPhotoUrl = receiverDoc.data()?['photoUrl'] ?? '';
+        }
+      } catch (e) {
+        LoggerService.error('Failed to fetch receiver photo', error: e, tag: _tag);
+      }
+
       // Update current call
       _currentCall = Call(
         id: callId,
@@ -107,11 +121,11 @@ class WebRTCCallManager extends ChangeNotifier {
         callerPhotoUrl: _webrtcService.currentUserPhoto,
         receiverId: calleeId,
         receiverName: calleeName ?? 'Unknown',
-        receiverPhotoUrl: '', // TODO: Get receiver photo URL
+        receiverPhotoUrl: receiverPhotoUrl,
         type: isVideo ? CallType.video : CallType.voice,
         status: CallStatus.ringing,
         startedAt: DateTime.now(),
-        chatRoomId: null, // TODO: Add chatRoomId if available
+        chatRoomId: chatRoomId, // Pass provided chatRoomId
       );
       
       notifyListeners();

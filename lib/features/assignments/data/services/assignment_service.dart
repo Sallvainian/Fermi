@@ -6,9 +6,9 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/models/assignment.dart';
-import '../../../grades/domain/models/grade.dart';
-import '../../../notifications/data/services/notification_service.dart';
+import 'package:teacher_dashboard_flutter/features/assignments/domain/models/assignment.dart';
+import 'package:teacher_dashboard_flutter/features/grades/domain/models/grade.dart';
+import 'package:teacher_dashboard_flutter/features/notifications/data/services/notification_service.dart';
 
 /// Core service for managing assignments and grades in Firestore.
 /// 
@@ -81,7 +81,9 @@ class AssignmentService {
   Future<Assignment?> getAssignment(String assignmentId) async {
     try {
       final doc = await _assignmentsCollection.doc(assignmentId).get();
-      if (!doc.exists) return null;
+      if (!doc.exists) {
+        return null;
+      }
       return Assignment.fromFirestore(doc);
     } catch (e) {
       // Error getting assignment: $e
@@ -549,7 +551,7 @@ class AssignmentService {
 
       final grades = studentsSnapshot.docs.map((studentDoc) {
         final studentData = studentDoc.data();
-        final studentName = studentData['displayName'] ?? 'Unknown Student';
+        final studentName = (studentData['displayName'] as String?) ?? 'Unknown Student';
         return Grade(
           id: '', // Will be set during batch creation
           assignmentId: assignmentId,

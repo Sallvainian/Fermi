@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
@@ -110,12 +111,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.phone),
-            onPressed: () => _startCall(context, false),
+            onPressed: () => _startCall(false),
             tooltip: 'Voice Call',
           ),
           IconButton(
             icon: const Icon(Icons.videocam),
-            onPressed: () => _startCall(context, true),
+            onPressed: () => _startCall(true),
             tooltip: 'Video Call',
           ),
           IconButton(
@@ -133,7 +134,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   );
                   break;
                 case 'mute':
-                  // TODO: Implement mute notifications
+                  _toggleMuteNotifications();
                   break;
                 case 'leave':
                   _leaveChatRoom(context);
@@ -612,7 +613,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  void _startCall(BuildContext context, bool isVideoCall) {
+  Future<void> _startCall(bool isVideoCall) async {
     final chatProvider = context.read<ChatProvider>();
     final chatRoom = chatProvider.currentChatRoom;
     
@@ -624,24 +625,32 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         (p) => p.id != FirebaseAuth.instance.currentUser?.uid,
       );
       
+      // Fetch receiver's photo URL from Firestore
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(otherParticipant.id).get();
+      final receiverPhotoUrl = userDoc.data()?['photoUrl'] ?? '';
+      
       // Navigate to call screen
-      context.push(
-        '/call',
-        extra: {
-          'receiverId': otherParticipant.id,
-          'receiverName': otherParticipant.name,
-          'receiverPhotoUrl': '', // TODO: Get photo URL from user profile
-          'isVideoCall': isVideoCall,
-          'chatRoomId': chatRoom.id,
-        },
-      );
+      if (mounted) {
+        context.push(
+          '/call',
+          extra: {
+            'receiverId': otherParticipant.id,
+            'receiverName': otherParticipant.name,
+            'receiverPhotoUrl': receiverPhotoUrl,
+            'isVideoCall': isVideoCall,
+            'chatRoomId': chatRoom.id,
+          },
+        );
+      }
     } else {
       // For group calls, show participant selection or use a different approach
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Group calls are not supported yet'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Group calls are not supported yet'),
+          ),
+        );
+      }
     }
   }
 
@@ -671,6 +680,32 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _toggleMuteNotifications() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    List<String> mutedChats = List<String>.from(userDoc.data()?['mutedChats'] ?? []);
+
+    final isCurrentlyMuted = mutedChats.contains(widget.chatRoomId);
+
+    if (isCurrentlyMuted) {
+      mutedChats.remove(widget.chatRoomId);
+    } else {
+      mutedChats.add(widget.chatRoomId);
+    }
+
+    await FirebaseFirestore.instance.collection('users').doc(userId).update({'mutedChats': mutedChats});
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isCurrentlyMuted ? 'Notifications unmuted' : 'Notifications muted'),
+        ),
+      );
+    }
   }
 
   void _showAttachmentOptions() {
@@ -1197,13 +1232,13 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-      ..initialize().then((_) {
-        setState(() {
-          _isInitialized = true;
-          _controller.play();
-        });
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    _controller.initialize().then((_) {
+      setState(() {
+        _isInitialized = true;
+        _controller.play();
       });
+    });
   }
 
   @override

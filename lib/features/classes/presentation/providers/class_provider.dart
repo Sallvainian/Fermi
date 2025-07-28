@@ -127,11 +127,13 @@ class ClassProvider with ChangeNotifier {
     _setLoading(true);
     notifyListeners();  // Safe here, as it's before async
     
+    
     try {
       _teacherClassesSubscription?.cancel();
       
       _teacherClassesSubscription = _classRepository.getTeacherClasses(teacherId).listen(
         (classList) {
+          
           _teacherClasses = classList;
           _setLoading(false);
           WidgetsBinding.instance.addPostFrameCallback((_) {

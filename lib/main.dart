@@ -7,6 +7,7 @@ library;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mcp_toolkit/mcp_toolkit.dart';
 import 'shared/core/app_initializer.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'shared/providers/theme_provider.dart';
@@ -24,9 +25,15 @@ Future<void> main() async {
   await runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      MCPToolkitBinding.instance
+        ..initialize()
+        ..initializeFlutterToolkit();
       runApp(const InitializationWrapper());
     },
-    AppInitializer.handleError,
+    (error, stack) {
+      MCPToolkitBinding.instance.handleZoneError(error, stack);
+      AppInitializer.handleError(error, stack);
+    },
   );
 }
 

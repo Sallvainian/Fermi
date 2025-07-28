@@ -27,6 +27,7 @@ app.*.map.json
 .history
 .svn/
 .sonarlint/
+.grok/
 
 # Platform-specific ephemerals/generated (consolidated)
 **/flutter/ephemeral
@@ -54,6 +55,7 @@ xcuserdata/  # Made global
 /android/app/debug.keystore
 /android/local.properties
 /android/.gradle/
+/android/app/bin/
 *.jks
 android/init.gradle
 android/gradle.properties
@@ -80,6 +82,7 @@ migrate_working_dir/
 # Sensitive/Environment files (critical for public repo—keep these!)
 .env*
 *.env
+.envs/
 secrets.json
 google-services.json
 GoogleService-Info.plist
@@ -90,6 +93,7 @@ firestore-debug.log
 ui-debug.log
 emulator-debug.log
 firebase-export-*
+web/firebase-config.js  # Generated from .env, contains sensitive data
 
 # Test/Coverage
 coverage/

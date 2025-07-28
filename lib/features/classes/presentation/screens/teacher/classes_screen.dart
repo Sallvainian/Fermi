@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../widgets/create_class_dialog.dart';
+import '../../widgets/edit_class_dialog.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/class_model.dart';
 import '../../providers/class_provider.dart';
@@ -297,6 +298,11 @@ class _ClassesScreenState extends State<ClassesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
+              IconButton(
+                onPressed: () => _showEditClassDialog(classModel),
+                icon: const Icon(Icons.edit),
+                tooltip: 'Edit Class',
+              ),
               TextButton.icon(
                 onPressed: () => _copyEnrollmentCode(classModel.enrollmentCode ?? ''),
                 icon: const Icon(Icons.copy, size: 16),
@@ -357,17 +363,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
   }
 
   void _navigateToClassDetail(ClassModel classModel) {
-    // TODO: Navigate to class detail screen
-    // For now, we'll show a snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening ${classModel.name}...'),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {},
-        ),
-      ),
-    );
+    context.push('/class/${classModel.id}');
   }
 
   void _showCreateClassDialog() {
@@ -377,6 +373,18 @@ class _ClassesScreenState extends State<ClassesScreen> {
     ).then((result) {
       if (result == true) {
         // Class was created successfully, reload data
+        _loadClasses();
+      }
+    });
+  }
+
+  void _showEditClassDialog(ClassModel classModel) {
+    showDialog(
+      context: context,
+      builder: (context) => EditClassDialog(classModel: classModel),
+    ).then((result) {
+      if (result == true) {
+        // Class was updated or deleted successfully, reload data
         _loadClasses();
       }
     });

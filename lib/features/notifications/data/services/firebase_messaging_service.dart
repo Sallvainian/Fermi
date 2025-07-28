@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'notification_service.dart';
 import '../../../chat/domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
@@ -71,6 +72,9 @@ class FirebaseMessagingService {
   factory FirebaseMessagingService() => _instance;
   FirebaseMessagingService._internal();
   
+  /// Navigation callback for handling navigation from notifications
+  void Function(String route, {Map<String, dynamic>? params})? _navigationCallback;
+  
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -130,6 +134,11 @@ class FirebaseMessagingService {
     }
   }
   
+  /// Set navigation callback for handling navigation from notifications
+  void setNavigationCallback(void Function(String route, {Map<String, dynamic>? params}) callback) {
+    _navigationCallback = callback;
+  }
+  
   /// Request notification permissions
   Future<void> _requestPermissions() async {
     if (kIsWeb) {
@@ -163,7 +172,12 @@ class FirebaseMessagingService {
       
       if (kIsWeb) {
         // Web requires VAPID key - get from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
-        const vapidKey = 'BOjhbAUKihT8cj0S6RqK-JvgtA5C-BLRifWimw-93Fz0AmS_52g2YB6bDK2EduEcUTkxljLhG6YuKpDfE9pm2QI';
+        final vapidKey = dotenv.env['FIREBASE_VAPID_KEY'] ?? '';
+        
+        if (vapidKey.isEmpty) {
+          LoggerService.error('FIREBASE_VAPID_KEY not found in environment variables');
+          return;
+        }
         
         try {
           // Use VAPID key for web FCM token generation
@@ -261,10 +275,11 @@ class FirebaseMessagingService {
       // Call should already be shown, just log
       LoggerService.info('Opened app from VoIP call notification', tag: 'FirebaseMessagingService');
     } else if (message.data['type'] == 'chat') {
-      // TODO: Navigate to chat screen
+      // Navigate to chat screen
       final chatRoomId = message.data['chatRoomId'];
-      if (chatRoomId != null) {
+      if (chatRoomId != null && _navigationCallback != null) {
         LoggerService.info('Navigate to chat: $chatRoomId', tag: 'FirebaseMessagingService');
+        _navigationCallback!('/messages/chat/$chatRoomId', params: {'chatRoomId': chatRoomId});
       }
     }
   }
@@ -395,7 +410,7 @@ class FirebaseMessagingService {
     try {
       if (kIsWeb) {
         // Use VAPID key for web
-        const vapidKey = 'BOjhbAUKihT8cj0S6RqK-JvgtA5C-BLRifWimw-93Fz0AmS_52g2YB6bDK2EduEcUTkxljLhG6YuKpDfE9pm2QI';
+        final vapidKey = dotenv.env['FIREBASE_VAPID_KEY'] ?? '';
         
         try {
           return await _messaging.getToken(vapidKey: vapidKey);

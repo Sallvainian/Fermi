@@ -47,6 +47,7 @@ class CalendarService {
     bool isAllDay = false,
     RecurrenceType recurrence = RecurrenceType.none,
     DateTime? recurrenceEndDate,
+    Map<String, dynamic>? recurrenceDetails,
     bool hasReminder = false,
     int? reminderMinutes,
     String? colorHex,
@@ -89,6 +90,7 @@ class CalendarService {
       colorHex: colorHex,
       recurrence: recurrence,
       recurrenceEndDate: recurrenceEndDate,
+      recurrenceDetails: recurrenceDetails,
       hasReminder: hasReminder,
       reminderMinutes: reminderMinutes,
       createdAt: DateTime.now(),
@@ -165,13 +167,12 @@ class CalendarService {
     required DateTime semesterEndDate,
     String? location,
   }) async {
-    // TODO: Implement custom recurrence details for weekly class schedule
-    // final recurrenceDetails = {
-    //   'type': 'weekly_class',
-    //   'weekdays': weekdays,
-    //   'originalStartTime': classStartTime.toIso8601String(),
-    //   'originalEndTime': classEndTime.toIso8601String(),
-    // };
+    final recurrenceDetails = {
+      'type': 'weekly_class',
+      'weekdays': weekdays,
+      'originalStartTime': classStartTime.toIso8601String(),
+      'originalEndTime': classEndTime.toIso8601String(),
+    };
     
     return await createEvent(
       title: className,
@@ -185,6 +186,7 @@ class CalendarService {
       recurrenceEndDate: semesterEndDate,
       hasReminder: true,
       reminderMinutes: 15,
+      recurrenceDetails: recurrenceDetails,  // Add this line
     );
   }
   

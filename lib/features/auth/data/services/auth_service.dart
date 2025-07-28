@@ -367,12 +367,11 @@ class AuthService {
       }
 
       // Get authentication details from the account
-      // In google_sign_in 6.x, authentication property is asynchronous  
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      // In google_sign_in 7.x, authentication property is synchronous  
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
       
-      // Create a new credential using idToken and accessToken  
+      // Create a new credential using idToken only (accessToken not available in v7)
       final idToken = googleAuth.idToken;
-      final accessToken = googleAuth.accessToken;
       
       if (idToken == null) {
         throw Exception('Failed to get Google authentication token');
@@ -380,7 +379,7 @@ class AuthService {
       
       final credential = GoogleAuthProvider.credential(
         idToken: idToken,
-        accessToken: accessToken,
+        // accessToken is not available in google_sign_in v7.x
       );
 
       // Sign in to Firebase
