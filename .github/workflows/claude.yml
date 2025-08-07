@@ -53,8 +53,10 @@ jobs:
           allowed_tools: "Bash(flutter analyze),Bash(flutter test),Bash(flutter pub get),Bash(dart format --set-exit-if-changed .),Bash(dart fix"
           
           # Optional: Add custom instructions for Claude to customize its behavior for your project
-          # custom_instructions: |
-          #   Follow our coding standards
+          custom_instructions: |
+            Follow Flutter best practices and Material Design guidelines
+            Ensure proper error handling for Firebase operations
+            Use consistent state management patterns
           #   Ensure all new code has tests
           #   Use TypeScript for new files
           
