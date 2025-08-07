@@ -42,11 +42,20 @@ jobs:
           
           # Direct prompt for automated review (no @claude mention needed)
           direct_prompt: |
+            Flutter/Firebase Specific Instructions:
+            Review this Flutter/Firebase PR for bugs and security issues, focusing on:
+            - Widget lifecycle and state management issues
+            - Firebase security rules and data validation
+            - Proper error handling in async operations
+            - Memory leaks in StatefulWidgets
+            For each issue: identify root cause, explain briefly, suggest fix (workaround vs root cause solution). 
+            General Instructions: 
             Please review this pull request and look specifically for bugs and security issues. If you do find issues, 
             for each issue identify the root cause of the issue and briefly explain the issue. Suggest fixes making sure 
             to note whether or not each fix is a workaround or a fix that is aimed at resolving the root cause. If there 
             are multiple make a list, highlight issues that are related in your list. Only provide feedback on potential 
-            bugs/issues, the information about them I told you to collect, and security issues. Be concise and to the point and be constructive and helpful in your feedback.
+            bugs/issues, the information about them I told you to collect, and security issues. Be concise and to the point 
+            and be constructive and helpful in your feedback.
 
           # Optional: Use sticky comments to make Claude reuse the same comment on subsequent pushes to the same PR
           # use_sticky_comment: true
