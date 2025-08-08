@@ -155,6 +155,12 @@ jobs:
           name: android-staging-aab
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
+          
+      - name: Clean up sensitive files
+        if: always()
+        run: |
+          rm -f android/app/upload-keystore.jks
+          rm -f android/key.properties
 
   # Deploy iOS to TestFlight
   deploy-ios:
