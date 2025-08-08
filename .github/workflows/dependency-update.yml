@@ -106,7 +106,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check_changes.outputs.has_changes == 'true'
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: 'chore: update dependencies'
@@ -156,29 +156,28 @@ jobs:
 
       - name: Create Flutter update issue
         if: steps.check_update.outputs.update_needed == 'true'
-        uses: actions/create-issue@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
         with:
-          title: '🎯 Flutter SDK Update Available'
-          body: |
-            A new Flutter SDK version is available!
-
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🎯 Flutter SDK Update Available',
+              body: `A new Flutter SDK version is available!
+            
             **Current version**: ${{ env.FLUTTER_VERSION }}
             **Latest version**: ${{ steps.flutter_version.outputs.latest_version }}
-
+            
             ### Update Instructions
-
-            1. Update the `FLUTTER_VERSION` environment variable in all workflow files
+            
+            1. Update the \`FLUTTER_VERSION\` environment variable in all workflow files
             2. Test the application with the new Flutter version
             3. Update any version-specific code if needed
-
+            
             ### Resources
-
+            
             - [Flutter Release Notes](https://flutter.dev/docs/development/tools/sdk/release-notes)
-            - [Migration Guide](https://flutter.dev/docs/release/breaking-changes)
-          labels: |
-            flutter-sdk
-            maintenance
-          assignees: |
-            ${{ github.repository_owner }}
+            - [Migration Guide](https://flutter.dev/docs/release/breaking-changes)`,
+              labels: ['flutter-sdk', 'maintenance'],
+              assignees: ['${{ github.repository_owner }}']
+            })
