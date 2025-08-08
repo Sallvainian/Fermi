@@ -1,4 +1,6 @@
-import '../../features/auth/presentation/providers/auth_provider.dart';
+// Import the AuthProvider from the unified providers directory. This avoids
+// duplicating AuthStatus and ensures tests reference the same provider.
+import '../../features/auth/providers/auth_provider.dart';
 
 /// Compute the appropriate redirect based on authentication state.
 ///

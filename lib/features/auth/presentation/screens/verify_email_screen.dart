@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+// Import the AuthProvider from the common providers directory. The original
+// relative import assumed the provider lived under `auth/providers`, not
+// `auth/presentation/providers`. Updating the path here ensures the screen
+// references the unified provider.
 import '../../providers/auth_provider.dart';
 
 /// Screen that prompts the user to verify their email address.

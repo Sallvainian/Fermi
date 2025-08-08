@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/user_model.dart';
 import '../../features/chat/domain/models/call.dart';
-import '../../features/auth/presentation/providers/auth_provider.dart';
+import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/role_selection_screen.dart';

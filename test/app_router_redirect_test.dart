@@ -1,7 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 
+// Use the firebase package name because the test environment registers
+// the code under `teacher_dashboard_flutter_firebase`. Import the
+// redirect helper and the unified AuthProvider from their new
+// locations.
 import 'package:teacher_dashboard_flutter_firebase/shared/routing/auth_redirect.dart';
-import 'package:teacher_dashboard_flutter_firebase/features/auth/presentation/providers/auth_provider.dart';
+import 'package:teacher_dashboard_flutter_firebase/features/auth/providers/auth_provider.dart';
 
 void main() {
   group('computeAuthRedirect', () {
