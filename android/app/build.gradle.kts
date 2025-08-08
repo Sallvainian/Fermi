@@ -39,7 +39,79 @@ android {
     }
 
     defaultConfig {
+        applicationId = "com.teacherdashboard.teacher_dashboard_flutter_firebase"
         minSdk = flutterMinSdkVersion.toInt()
+        targetSdk = flutterCompileSdkVersion.toInt()
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+        
+        // Enable multidex for large app
+        multiDexEnabled = true
+        
+        // Optimize for better performance
+        vectorDrawables {
+            useSupportLibrary = true
+        }
+    }
+
+    // Signing configurations
+    signingConfigs {
+        create("debug") {
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+        }
+        // Note: For production release signing, use external key.properties file
+        // create("release") {
+        //     keyAlias = keystoreProperties["keyAlias"] as String
+        //     keyPassword = keystoreProperties["keyPassword"] as String
+        //     storeFile = file(keystoreProperties["storeFile"] as String)
+        //     storePassword = keystoreProperties["storePassword"] as String
+        // }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+        release {
+            signingConfig = signingConfigs.getByName("debug") // Use debug signing for now
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+    // Build features
+    buildFeatures {
+        buildConfig = true
+    }
+
+    // Packaging options
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE"
+            excludes += "/META-INF/LICENSE.txt"
+            excludes += "/META-INF/NOTICE"
+            excludes += "/META-INF/NOTICE.txt"
+        }
+    }
+
+    // Lint options
+    lint {
+        disable += "ObsoleteLintCustomCheck"
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 

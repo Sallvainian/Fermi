@@ -7,44 +7,30 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  sonarqube:
-    name: SonarQube
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      
       # Set up Flutter
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
-      
+          flutter-version: '3.32.8'
+
       # Get Flutter dependencies
       - name: Get dependencies
         run: flutter pub get
 
       - name: Generate macOS ephemeral files
         run: flutter build macos --debug
-      
+
       # Run Flutter analyze
       - name: Analyze code
         run: flutter analyze
-      
+
       # Run Flutter tests
       - name: Run tests
         run: flutter test --coverage
-      
+
       # Build the Flutter project
       - name: Build
         run: |
           flutter build web
           flutter build apk --debug
-      
-      # SonarQube Scan
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+

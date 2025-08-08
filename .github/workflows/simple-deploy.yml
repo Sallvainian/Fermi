@@ -1,0 +1,48 @@
+name: Simple Deploy
+
+# Only run when you push to main - keep it simple
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Get the code
+    - uses: actions/checkout@v4
+    
+    # Set up Flutter
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.x'
+        channel: stable
+    
+    # Install dependencies
+    - run: flutter pub get
+    
+    # Build for Web (easiest to deploy)
+    - name: Build Web
+      run: flutter build web --release
+    
+    # Deploy to Firebase Hosting (simplest hosting solution)
+    - name: Deploy to Firebase
+      uses: FirebaseExtended/action-hosting-deploy@v0
+      with:
+        repoToken: '${{ secrets.GITHUB_TOKEN }}'
+        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+        channelId: live
+        projectId: '${{ secrets.FIREBASE_PROJECT_ID }}'
+    
+    # Build Android APK for download
+    - name: Build Android APK
+      run: flutter build apk --release
+    
+    # Upload APK as artifact so you can download it
+    - name: Save APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release
+        path: build/app/outputs/flutter-apk/app-release.apk

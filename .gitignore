@@ -112,4 +112,4 @@ devtools_options.yaml
 # Windows-specific (keep if on Windows)
 nul
 */nul
-web/nul
+web/nul!/build/

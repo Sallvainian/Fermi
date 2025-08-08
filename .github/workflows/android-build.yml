@@ -1,0 +1,135 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.x'
+  JAVA_VERSION: '21'
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: ${{ env.JAVA_VERSION }}
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ env.FLUTTER_VERSION }}
+        channel: stable
+        cache: true
+        
+    - name: Create .env file
+      run: |
+        cat << EOF > .env
+        FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+        FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+        FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+        FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}
+        FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}
+        FIREBASE_APP_ID_WEB=${{ secrets.FIREBASE_APP_ID_WEB }}
+        FIREBASE_APP_ID_ANDROID=${{ secrets.FIREBASE_APP_ID_ANDROID }}
+        FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }}
+        IOS_BUNDLE_ID=${{ secrets.IOS_BUNDLE_ID }}
+        GOOGLE_CLOUD_PROJECT=${{ secrets.GOOGLE_CLOUD_PROJECT }}
+        FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }}
+        EOF
+        
+    - name: Get Flutter dependencies
+      run: flutter pub get
+      
+    - name: Run code generation
+      run: flutter pub run build_runner build --delete-conflicting-outputs
+      
+    - name: Run tests
+      run: flutter test
+      
+    - name: Run Flutter doctor
+      run: flutter doctor -v
+      
+    - name: Build debug APK
+      if: github.event_name == 'pull_request'
+      run: flutter build apk --debug
+      
+    - name: Build release APK
+      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+      run: flutter build apk --release
+      
+    - name: Build Android App Bundle (AAB)
+      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+      run: flutter build appbundle --release
+      
+    - name: Upload debug APK artifact
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
+        retention-days: 7
+        
+    - name: Upload release APK artifact
+      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+        
+    - name: Upload AAB artifact
+      if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-aab
+        path: build/app/outputs/bundle/release/app-release.aab
+        retention-days: 30
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          build/app/outputs/flutter-apk/app-release.apk
+          build/app/outputs/bundle/release/app-release.aab
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Optional: Static code analysis
+  analyze:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ env.FLUTTER_VERSION }}
+        channel: stable
+        cache: true
+        
+    - name: Get Flutter dependencies
+      run: flutter pub get
+      
+    - name: Run Flutter analyze
+      run: flutter analyze
+      
+    - name: Check Dart formatting
+      run: dart format --set-exit-if-changed .
