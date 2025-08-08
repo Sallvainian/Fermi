@@ -61,7 +61,7 @@ jobs:
       run: flutter test
       
     - name: Build web app
-      run: flutter build web --web-renderer canvaskit --release
+      run: flutter build web --web-renderer canvaskit --release --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
       
     - name: Install Functions dependencies
       run: |

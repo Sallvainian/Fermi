@@ -63,15 +63,15 @@ jobs:
       
     - name: Build debug APK
       if: github.event_name == 'pull_request'
-      run: flutter build apk --debug
+      run: flutter build apk --debug --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
       
     - name: Build release APK
       if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-      run: flutter build apk --release
+      run: flutter build apk --release --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
       
     - name: Build Android App Bundle (AAB)
       if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/')
-      run: flutter build appbundle --release
+      run: flutter build appbundle --release --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
       
     - name: Upload debug APK artifact
       if: github.event_name == 'pull_request'

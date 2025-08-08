@@ -153,7 +153,7 @@ jobs:
           echo "FIREBASE_PROJECT_ID=placeholder" >> .env
           
       - name: Build ${{ matrix.target }}
-        run: ${{ matrix.build_command }}
+        run: ${{ matrix.build_command }} --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
         
       - name: Upload ${{ matrix.target }} artifacts
         uses: actions/upload-artifact@v4

@@ -15,6 +15,21 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
+  // Get API key from environment variables with fallback for local development
+  static String get _apiKey {
+    const key = String.fromEnvironment('FIREBASE_API_KEY');
+    // Only use fallback in debug mode for local development
+    if (key.isEmpty && kDebugMode) {
+      // This fallback should only be used in development
+      // In production, the API key must be provided via environment variables
+      return 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac';
+    }
+    if (key.isEmpty) {
+      throw Exception('FIREBASE_API_KEY environment variable is not set');
+    }
+    return key;
+  }
+
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       return web;
@@ -37,8 +52,8 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac',
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: _apiKey,
     appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
@@ -47,8 +62,8 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
   );
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: _apiKey,
     appId: '1:218352465432:android:a7d591b9db6bef6038b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
@@ -56,8 +71,8 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
   );
 
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac',
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey: _apiKey,
     appId: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
@@ -66,8 +81,8 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
   );
 
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac',
+  static FirebaseOptions get macos => FirebaseOptions(
+    apiKey: _apiKey,
     appId: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
@@ -76,8 +91,8 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
   );
 
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac',
+  static FirebaseOptions get windows => FirebaseOptions(
+    apiKey: _apiKey,
     appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
@@ -86,8 +101,8 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
   );
 
-  static const FirebaseOptions linux = FirebaseOptions(
-    apiKey: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac',
+  static FirebaseOptions get linux => FirebaseOptions(
+    apiKey: _apiKey,
     appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
