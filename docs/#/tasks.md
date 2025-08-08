@@ -263,8 +263,23 @@ Note: Estimates are based on current code inspection (routes, screens, providers
   - [ ] Steps to reach MVP
     - [ ] Harden redirect logic (unauth → auth → role selection → dashboard) and add tests
     - [ ] Enforce email verification on protected routes and show resend UI
+    - [ ] Enforce permission system (role-based + custom claims) on protected routes with tests
+    - [ ] Improve auth error UX (clear messages, retry, resend email verification)
     - [ ] Implement Remember Me (explicit persistence toggle) and ensure logout clears all state
     - [ ] Verify custom claims: on first login set role, refresh token, and re-read claims
+
+### Navigation & Routing
+- [ ] Overall status (~60%)
+  - [ ] What works now
+    - [ ] GoRouter integrated with auth guards and role-based routes
+  - [ ] Known issues / quality
+    - [ ] Deep linking not fully wired for all core flows
+    - [ ] Back-stack edge cases can occur (e.g., email verification, role selection)
+    - [ ] Inconsistent screen transitions across platforms
+  - [ ] Steps to reach MVP
+    - [ ] Implement deep linking across core screens (auth, dashboards, classes, assignments)
+    - [ ] Verify route guards and back-stack edge cases (unauth → auth → role selection → dashboard; email verification)
+    - [ ] Standardize screen transitions for a consistent feel
 
 ### Core Dashboard
 - [ ] Overall status (~70%)
@@ -279,7 +294,22 @@ Note: Estimates are based on current code inspection (routes, screens, providers
   - [ ] Steps to reach MVP
     - [ ] Consolidate a single nav pattern per role (+ bottom nav for phone, rail for tablet)
     - [ ] Wire favorites into dashboard; ensure all tiles navigate to detail screens
-    - [ ] Add simple responsive breakpoints for tablet layout
+    - [ ] Add responsive breakpoints for tablet/desktop layouts
+    - [ ] Standardize loading / empty / error / success states across major screens
+    - [ ] Accessibility pass (contrast, semantics, larger text support)
+
+### Class Management
+- [ ] Overall status (~70%)
+  - [ ] What works now
+    - [ ] Classes list and Class detail screens exist (teacher + student course/enrollment)
+    - [ ] ClassProvider and repository/services implemented (including enhanced service)
+  - [ ] Known issues / quality
+    - [ ] Archiving/duplication/schedule not implemented
+    - [ ] Add-students flow UX may be incomplete; form validation gaps
+  - [ ] Steps to reach MVP
+    - [ ] Create/edit class form with validation (name, subject, schedule basics)
+    - [ ] Add/remove students to class (picker backed by Firestore)
+    - [ ] Implement simple archiving (boolean flag + filtered views)
 
 ### Student Management
 - [ ] Overall status (~60%)
@@ -306,19 +336,6 @@ Note: Estimates are based on current code inspection (routes, screens, providers
   - [ ] Steps to reach MVP
     - [ ] Simple file browser: upload/download/list/delete with confirmation
     - [ ] Enforce size/type limits; basic preview for common types (images/pdf when feasible)
-
-### Class Management
-- [ ] Overall status (~70%)
-  - [ ] What works now
-    - [ ] Classes list and Class detail screens exist (teacher + student course/enrollment)
-    - [ ] ClassProvider and repository/services implemented (including enhanced service)
-  - [ ] Known issues / quality
-    - [ ] Archiving/duplication/schedule not implemented
-    - [ ] Add-students flow UX may be incomplete; form validation gaps
-  - [ ] Steps to reach MVP
-    - [ ] Create/edit class form with validation (name, subject, schedule basics)
-    - [ ] Add/remove students to class (picker backed by Firestore)
-    - [ ] Implement simple archiving (boolean flag + filtered views)
 
 ### Assignment System
 - [ ] Overall status (~75%)
@@ -369,6 +386,7 @@ Note: Estimates are based on current code inspection (routes, screens, providers
   - [ ] Steps to reach MVP
     - [ ] Reliable 1:1 and group chat with typing indicator and unread counts
     - [ ] Simple announcement broadcast to class
+    - [ ] Announcements: pin/unpin items; mark as read/unread
 
 ### Calendar & Scheduling
 - [ ] Overall status (~65%)
@@ -397,6 +415,19 @@ Note: Estimates are based on current code inspection (routes, screens, providers
   - [ ] Steps to reach MVP
     - [ ] Simple signaling (Firestore or Functions), mic/cam toggle, stable 1:1 call flow
 
+### Data & Performance
+- [ ] Overall status (~30%)
+  - [ ] What works now
+    - [ ] Firestore queries in place for core lists; some indexes exist
+  - [ ] Known issues / quality
+    - [ ] Missing indexes for several top queries; risk of slow queries or failures
+    - [ ] No consistent pagination/lazy loading; limited caching
+    - [ ] Query hotspots not documented
+  - [ ] Steps to reach MVP
+    - [ ] Define and create Firestore indexes for top queries (classes, assignments, submissions, chat)
+    - [ ] Query optimization guidelines and hotspots audit
+    - [ ] Add pagination/lazy loading and basic caching where lists can grow
+
 ### Technical Debt & Maintenance (Cross-cutting)
 - [ ] Overall status (~50%)
   - [ ] What works now
@@ -405,51 +436,19 @@ Note: Estimates are based on current code inspection (routes, screens, providers
     - [ ] Limited automated tests; CI/CD not configured; crash reporting present but needs verification
   - [ ] Steps to reach MVP
     - [ ] Add smoke tests for auth/navigation
+    - [ ] CRUD happy‑path tests per module (Students, Classes, Assignments)
+    - [ ] Form validation widget tests (required fields, error copy)
     - [ ] Wire CI for analyze/test on PR; basic crash/metrics verification task
 
-
----
-
-## Additions from plan.md review
-
-The following items were added after comparing with Claude's plan.md to ensure nothing critical is missed.
-
-### Navigation & Routing
-- [ ] Implement deep linking across core screens (auth, dashboards, classes, assignments)
-- [ ] Verify route guards and back-stack edge cases (unauth → auth → role selection → dashboard; email verification)
-- [ ] Standardize screen transitions for a consistent feel
-
-### Authentication & Permissions
-- [ ] Enforce permission system (role-based + custom claims) on protected routes with tests
-- [ ] Improve auth error UX (clear messages, retry, resend email verification)
-- [ ] Add "Remember Me" toggle with explicit persistence control
-
-### UI/UX Quality
-- [ ] Standardize loading / empty / error / success states across major screens
-- [ ] Accessibility pass (contrast, semantics, larger text support)
-- [ ] Responsive breakpoints for tablet/desktop layouts
-
-### Data & Performance
-- [ ] Define and create Firestore indexes for top queries (classes, assignments, submissions, chat)
-- [ ] Query optimization guidelines and hotspots audit
-- [ ] Add pagination/lazy loading and basic caching where lists can grow
-
-### Announcements
-- [ ] Add pin/unpin items
-- [ ] Support mark as read/unread
-
-### Testing
-- [ ] CRUD happy‑path tests per module (Students, Classes, Assignments)
-- [ ] Auth & navigation smoke tests (including redirects and guards)
-- [ ] Form validation widget tests (required fields, error copy)
-
 ### Deployment & Release
-- [ ] Firebase Hosting pipeline for web (build + deploy)
-- [ ] Android release checklist (APK/AAB, signing, versioning)
-- [ ] iOS submission checklist (optional; focus Android/Web first)
-- [ ] Production environment config (.env, flavors) and secrets handling
-- [ ] Monitoring verification playbook (Crashlytics logs, performance metrics)
-- [ ] Create user guide and short demo video for onboarding
+- [ ] Overall status (~20%)
+  - [ ] Steps to reach MVP
+    - [ ] Firebase Hosting pipeline for web (build + deploy)
+    - [ ] Android release checklist (APK/AAB, signing, versioning)
+    - [ ] iOS submission checklist (optional; focus Android/Web first)
+    - [ ] Production environment config (.env, flavors) and secrets handling
+    - [ ] Monitoring verification playbook (Crashlytics logs, performance metrics)
+    - [ ] Create user guide for onboarding
 
 ### MVP Validation Checklists
 - [ ] Phase 1: login/logout, role-based dashboard, guarded navigation, no crashes
@@ -460,7 +459,6 @@ The following items were added after comparing with Claude's plan.md to ensure n
 - [ ] < 3s initial load on target devices
 - [ ] 80% test coverage for core flows (auth, navigation, CRUD)
 - [ ] Zero critical bugs at release
-
 
 ### Risk Management & Post-Launch
 - [ ] Risk mitigation playbooks

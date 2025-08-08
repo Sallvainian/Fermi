@@ -5,6 +5,16 @@ on:
     # Run every Monday at 9 AM UTC
     - cron: '0 9 * * 1'
   workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of update'
+        required: false
+        type: choice
+        options:
+          - minor
+          - major
+          - patch
+        default: minor
 
 env:
   FLUTTER_VERSION: "3.32.8"
