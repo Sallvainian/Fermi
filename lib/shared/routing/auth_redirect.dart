@@ -1,0 +1,58 @@
+import '../../features/auth/presentation/providers/auth_provider.dart';
+
+/// Compute the appropriate redirect based on authentication state.
+///
+/// This top‑level function encapsulates the routing rules for handling
+/// unauthenticated users, users who still need to select a role, and users
+/// who must verify their email address. It can be unit tested in
+/// isolation without pulling in UI dependencies or `go_router` types.
+///
+/// * [isAuthenticated] indicates whether the user is fully authenticated
+///   (i.e. `AuthStatus.authenticated`).
+/// * [status] is the full `AuthStatus` from the provider; `authenticating`
+///   indicates that the user still needs to select a role.
+/// * [emailVerified] reflects whether the currently signed‑in user's
+///   email has been verified via Firebase.
+/// * [matchedLocation] is the current route path being requested.
+///
+/// Returns a string path to redirect to, or `null` if no redirect is
+/// necessary.
+String? computeAuthRedirect({
+  required bool isAuthenticated,
+  required AuthStatus status,
+  required bool emailVerified,
+  required String matchedLocation,
+}) {
+  final bool isAuthRoute = matchedLocation.startsWith('/auth');
+  final bool unauthenticated = !isAuthenticated;
+  final bool needsRoleSelection = status == AuthStatus.authenticating;
+  final bool needsEmailVerification =
+      isAuthenticated && !needsRoleSelection && !emailVerified;
+
+  if (unauthenticated) {
+    if (!isAuthRoute) {
+      return '/auth/login';
+    }
+    return null;
+  }
+
+  if (needsRoleSelection) {
+    if (matchedLocation != '/auth/role-selection') {
+      return '/auth/role-selection';
+    }
+    return null;
+  }
+
+  if (needsEmailVerification) {
+    if (matchedLocation != '/auth/verify-email') {
+      return '/auth/verify-email';
+    }
+    return null;
+  }
+
+  if (isAuthRoute) {
+    return '/dashboard';
+  }
+
+  return null;
+}
