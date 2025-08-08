@@ -82,6 +82,9 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _isLoading;
 
+  /// Whether the user has chosen to persist their authentication session.
+  bool _rememberMe = false;
+
   AuthProvider({AuthRepository? repository, AuthStatus initialStatus = AuthStatus.uninitialized, UserModel? userModel})
       : _authRepository = repository,
         _status = initialStatus,
@@ -103,8 +106,28 @@ class AuthProvider extends ChangeNotifier {
   /// Whether an authentication operation is in progress.
   bool get isLoading => _isLoading;
 
+  /// Sets a new error message and notifies listeners. Use this to
+  /// surface authentication errors to the UI.
+  void setError(String message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
   /// Whether the user is fully authenticated.
   bool get isAuthenticated => _status == AuthStatus.authenticated;
+
+  /// Whether the current session should be persisted across app launches.
+  bool get rememberMe => _rememberMe;
+
+  /// Sets the persistence of the authentication session. When set to
+  /// `true`, the provider will keep the current user in memory and
+  /// indicate to any underlying repository that the session should be
+  /// persisted. In this stub implementation it simply stores the flag
+  /// locally.
+  void setRememberMe(bool value) {
+    _rememberMe = value;
+    notifyListeners();
+  }
 
   /// Clears any existing error message.
   void clearError() {
@@ -121,6 +144,13 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     await Future.delayed(const Duration(milliseconds: 10));
+    // Basic validation: ensure email and password are provided. In a real
+    // implementation this would call FirebaseAuth and handle errors.
+    if (email.isEmpty || password.isEmpty) {
+      _isLoading = false;
+      setError('Email and password are required.');
+      return;
+    }
     _status = AuthStatus.authenticated;
     _userModel = UserModel(uid: 'uid', email: email);
     _authRepository?.currentUser = User(emailVerified: false, email: email);
@@ -164,6 +194,11 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     await Future.delayed(const Duration(milliseconds: 10));
+    if (email.isEmpty || password.isEmpty) {
+      _isLoading = false;
+      setError('Email and password are required.');
+      return;
+    }
     _status = AuthStatus.authenticated;
     _userModel = UserModel(uid: 'uid', email: email);
     _authRepository?.currentUser = User(emailVerified: false, email: email);
@@ -194,6 +229,7 @@ class AuthProvider extends ChangeNotifier {
     _status = AuthStatus.unauthenticated;
     _userModel = null;
     _authRepository?.currentUser = null;
+    _rememberMe = false;
     _isLoading = false;
     notifyListeners();
   }
@@ -213,6 +249,22 @@ class AuthProvider extends ChangeNotifier {
       await user.reload();
       // In a real implementation the repository would refresh its local
       // reference to the user here.
+      notifyListeners();
+    }
+  }
+
+  /// Refreshes custom claims and updates the local user model.
+  ///
+  /// In a production environment this would retrieve custom claims from
+  /// Firebase Auth and update the user's role or other permissions.
+  Future<void> refreshCustomClaims() async {
+    // Simulate an asynchronous refresh.
+    await Future.delayed(const Duration(milliseconds: 10));
+    if (_userModel != null && _userModel!.role == null) {
+      // Default to student if no role is set. In the real app this would
+      // come from the server. After updating, notify listeners so the
+      // routing logic can react.
+      _userModel = _userModel!.copyWith(role: UserRole.student);
       notifyListeners();
     }
   }

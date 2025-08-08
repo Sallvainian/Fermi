@@ -15,6 +15,7 @@ void main() {
         status: AuthStatus.unauthenticated,
         emailVerified: false,
         matchedLocation: '/teacher/classes',
+        role: null,
       );
       expect(result, '/auth/login');
     });
@@ -25,6 +26,7 @@ void main() {
         status: AuthStatus.unauthenticated,
         emailVerified: false,
         matchedLocation: '/auth/login',
+        role: null,
       );
       expect(result, isNull);
     });
@@ -35,6 +37,7 @@ void main() {
         status: AuthStatus.authenticated,
         emailVerified: true,
         matchedLocation: '/auth/login',
+        role: UserRole.teacher,
       );
       expect(result, '/dashboard');
     });
@@ -45,6 +48,7 @@ void main() {
         status: AuthStatus.authenticating,
         emailVerified: false,
         matchedLocation: '/dashboard',
+        role: null,
       );
       expect(result, '/auth/role-selection');
     });
@@ -55,6 +59,7 @@ void main() {
         status: AuthStatus.authenticating,
         emailVerified: false,
         matchedLocation: '/auth/role-selection',
+        role: null,
       );
       expect(result, isNull);
     });
@@ -65,6 +70,7 @@ void main() {
         status: AuthStatus.authenticating,
         emailVerified: false,
         matchedLocation: '/auth/signup',
+        role: null,
       );
       expect(result, '/auth/role-selection');
     });
@@ -75,6 +81,7 @@ void main() {
         status: AuthStatus.authenticated,
         emailVerified: true,
         matchedLocation: '/auth/role-selection',
+        role: UserRole.teacher,
       );
       expect(result, '/dashboard');
     });
@@ -85,6 +92,7 @@ void main() {
         status: AuthStatus.uninitialized,
         emailVerified: false,
         matchedLocation: '/teacher/grades',
+        role: null,
       );
       expect(result, '/auth/login');
     });
@@ -95,6 +103,7 @@ void main() {
         status: AuthStatus.error,
         emailVerified: false,
         matchedLocation: '/student/courses',
+        role: null,
       );
       expect(result, '/auth/login');
     });
@@ -105,6 +114,7 @@ void main() {
         status: AuthStatus.authenticated,
         emailVerified: false,
         matchedLocation: '/teacher/classes',
+        role: UserRole.teacher,
       );
       expect(result, '/auth/verify-email');
     });
@@ -115,6 +125,7 @@ void main() {
         status: AuthStatus.authenticated,
         emailVerified: false,
         matchedLocation: '/auth/verify-email',
+        role: UserRole.teacher,
       );
       expect(result, isNull);
     });
@@ -125,6 +136,29 @@ void main() {
         status: AuthStatus.authenticated,
         emailVerified: true,
         matchedLocation: '/auth/verify-email',
+        role: UserRole.teacher,
+      );
+      expect(result, '/dashboard');
+    });
+
+    test('Teacher user accessing student route is redirected to dashboard', () {
+      final result = computeAuthRedirect(
+        isAuthenticated: true,
+        status: AuthStatus.authenticated,
+        emailVerified: true,
+        matchedLocation: '/student/courses',
+        role: UserRole.teacher,
+      );
+      expect(result, '/dashboard');
+    });
+
+    test('Student user accessing teacher route is redirected to dashboard', () {
+      final result = computeAuthRedirect(
+        isAuthenticated: true,
+        status: AuthStatus.authenticated,
+        emailVerified: true,
+        matchedLocation: '/teacher/classes',
+        role: UserRole.student,
       );
       expect(result, '/dashboard');
     });

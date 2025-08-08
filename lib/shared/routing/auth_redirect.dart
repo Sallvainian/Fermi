@@ -1,6 +1,7 @@
 // Import the AuthProvider from the unified providers directory. This avoids
 // duplicating AuthStatus and ensures tests reference the same provider.
 import '../../features/auth/providers/auth_provider.dart';
+import '../models/user_model.dart';
 
 /// Compute the appropriate redirect based on authentication state.
 ///
@@ -24,6 +25,7 @@ String? computeAuthRedirect({
   required AuthStatus status,
   required bool emailVerified,
   required String matchedLocation,
+  UserRole? role,
 }) {
   final bool isAuthRoute = matchedLocation.startsWith('/auth');
   final bool unauthenticated = !isAuthenticated;
@@ -50,6 +52,16 @@ String? computeAuthRedirect({
       return '/auth/verify-email';
     }
     return null;
+  }
+
+  // Role‑based route protection. Once the user is fully authenticated and
+  // email verified, restrict access to routes based on their assigned role.
+  // Teacher routes start with `/teacher`; student routes start with `/student`.
+  if (matchedLocation.startsWith('/teacher') && role != null && role != UserRole.teacher) {
+    return '/dashboard';
+  }
+  if (matchedLocation.startsWith('/student') && role != null && role != UserRole.student) {
+    return '/dashboard';
   }
 
   if (isAuthRoute) {

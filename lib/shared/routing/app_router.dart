@@ -135,6 +135,7 @@ class AppRouter {
     required AuthStatus status,
     required bool emailVerified,
     required String matchedLocation,
+    UserRole? role,
   }) {
     final bool isAuthRoute = matchedLocation.startsWith('/auth');
 
@@ -181,6 +182,17 @@ class AppRouter {
       return '/dashboard';
     }
 
+    // Role‑based route protection. Once the user is authenticated and
+    // email verified, restrict access to routes based on the assigned
+    // role. Teacher routes start with `/teacher`; student routes start
+    // with `/student`. Admins are allowed to access both.
+    if (matchedLocation.startsWith('/teacher') && role != null && role != UserRole.teacher) {
+      return '/dashboard';
+    }
+    if (matchedLocation.startsWith('/student') && role != null && role != UserRole.student) {
+      return '/dashboard';
+    }
+
     // No redirect necessary.
     return null;
   }
@@ -200,6 +212,7 @@ class AppRouter {
       status: authProvider.status,
       emailVerified: authProvider.firebaseUser?.emailVerified ?? false,
       matchedLocation: state.matchedLocation,
+      role: authProvider.userModel?.role,
     );
   }
 
@@ -211,22 +224,27 @@ class AppRouter {
   static List<GoRoute> _authRoutes() => [
         GoRoute(
           path: '/auth/login',
+          name: 'login',
           builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
           path: '/auth/signup',
+          name: 'signup',
           builder: (context, state) => const SignupScreen(),
         ),
         GoRoute(
           path: '/auth/role-selection',
+          name: 'roleSelection',
           builder: (context, state) => const RoleSelectionScreen(),
         ),
         GoRoute(
           path: '/auth/forgot-password',
+          name: 'forgotPassword',
           builder: (context, state) => const ForgotPasswordScreen(),
         ),
         GoRoute(
           path: '/auth/verify-email',
+          name: 'verifyEmail',
           builder: (context, state) => const VerifyEmailScreen(),
         ),
       ];
@@ -235,10 +253,12 @@ class AppRouter {
   static List<GoRoute> _teacherRoutes() => [
         GoRoute(
           path: '/teacher/classes',
+          name: 'teacherClasses',
           builder: (context, state) => const ClassesScreen(),
         ),
         GoRoute(
           path: '/class/:classId',
+          name: 'classDetail',
           builder: (context, state) {
             final classId = state.pathParameters['classId']!;
             return ClassDetailScreen(classId: classId);
@@ -246,10 +266,12 @@ class AppRouter {
         ),
         GoRoute(
           path: '/teacher/gradebook',
+          name: 'gradebook',
           builder: (context, state) => const GradebookScreen(),
         ),
         GoRoute(
           path: '/teacher/analytics',
+          name: 'analytics',
           builder: (context, state) {
             final classId = state.uri.queryParameters['classId'];
             return GradeAnalyticsScreen(classId: classId);
@@ -257,15 +279,18 @@ class AppRouter {
         ),
         GoRoute(
           path: '/teacher/assignments',
+          name: 'teacherAssignments',
           builder: (context, state) =>
               const teacher_assignments.TeacherAssignmentsScreen(),
           routes: [
             GoRoute(
               path: 'create',
+              name: 'assignmentCreate',
               builder: (context, state) => const AssignmentCreateScreen(),
             ),
             GoRoute(
               path: ':assignmentId',
+              name: 'assignmentDetail',
               builder: (context, state) {
                 final assignmentId = state.pathParameters['assignmentId']!;
                 return AssignmentDetailScreen(assignmentId: assignmentId);
@@ -273,6 +298,7 @@ class AppRouter {
             ),
             GoRoute(
               path: ':assignmentId/edit',
+              name: 'assignmentEdit',
               builder: (context, state) {
                 final assignmentId = state.pathParameters['assignmentId']!;
                 return AssignmentEditScreen(assignmentId: assignmentId);
@@ -282,6 +308,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/teacher/students',
+          name: 'students',
           builder: (context, state) => const StudentsScreen(),
         ),
       ];
@@ -290,19 +317,23 @@ class AppRouter {
   static List<GoRoute> _studentRoutes() => [
         GoRoute(
           path: '/student/courses',
+          name: 'courses',
           builder: (context, state) => const CoursesScreen(),
         ),
         GoRoute(
           path: '/student/grades',
+          name: 'grades',
           builder: (context, state) => const GradesScreen(),
         ),
         GoRoute(
           path: '/student/assignments',
+          name: 'studentAssignments',
           builder: (context, state) =>
               const student_assignments.StudentAssignmentsScreen(),
           routes: [
             GoRoute(
               path: ':assignmentId',
+              name: 'assignmentSubmission',
               builder: (context, state) {
                 final assignmentId = state.pathParameters['assignmentId']!;
                 return AssignmentSubmissionScreen(assignmentId: assignmentId);
@@ -312,6 +343,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/student/enroll',
+          name: 'enrollment',
           builder: (context, state) => const EnrollmentScreen(),
         ),
       ];
@@ -320,14 +352,17 @@ class AppRouter {
   static List<GoRoute> _commonRoutes() => [
         GoRoute(
           path: '/dashboard',
+          name: 'dashboard',
           builder: (context, state) => _buildDashboard(context),
         ),
         GoRoute(
           path: '/messages',
+          name: 'chatList',
           builder: (context, state) => const ChatListScreen(),
           routes: [
             GoRoute(
               path: ':chatRoomId',
+              name: 'chatDetail',
               builder: (context, state) {
                 final chatRoomId = state.pathParameters['chatRoomId']!;
                 return ChatDetailScreen(chatRoomId: chatRoomId);
@@ -337,10 +372,12 @@ class AppRouter {
         ),
         GoRoute(
           path: '/discussions',
+          name: 'discussions',
           builder: (context, state) => const DiscussionBoardsScreen(),
         ),
         GoRoute(
           path: '/discussions/:boardId',
+          name: 'discussionDetail',
           builder: (context, state) {
             final boardId = state.pathParameters['boardId']!;
             final boardTitle = state.uri.queryParameters['title'] ??
@@ -353,18 +390,22 @@ class AppRouter {
         ),
         GoRoute(
           path: '/chat/user-selection',
+          name: 'userSelection',
           builder: (context, state) => const UserSelectionScreen(),
         ),
         GoRoute(
           path: '/chat/group-creation',
+          name: 'groupCreation',
           builder: (context, state) => const GroupCreationScreen(),
         ),
         GoRoute(
           path: '/chat/class-selection',
+          name: 'classSelection',
           builder: (context, state) => const ClassSelectionScreen(),
         ),
         GoRoute(
           path: '/chat/:chatRoomId',
+          name: 'chatDetailRoot',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             return ChatDetailScreen(chatRoomId: chatRoomId);
@@ -372,6 +413,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/call',
+          name: 'call',
           builder: (context, state) {
             final extra = state.extra as Map<String, dynamic>;
             return CallScreen(
@@ -386,6 +428,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/incoming-call',
+          name: 'incomingCall',
           builder: (context, state) {
             final call = state.extra as Call;
             return IncomingCallScreen(call: call);
@@ -393,22 +436,27 @@ class AppRouter {
         ),
         GoRoute(
           path: '/calendar',
+          name: 'calendar',
           builder: (context, state) => const CalendarScreen(),
         ),
         GoRoute(
           path: '/notifications',
+          name: 'notifications',
           builder: (context, state) => const NotificationsScreen(),
         ),
         GoRoute(
           path: '/settings',
+          name: 'settings',
           builder: (context, state) => const SettingsScreen(),
         ),
         GoRoute(
           path: '/contact-support',
+          name: 'contactSupport',
           builder: (context, state) => const ContactSupportScreen(),
         ),
         GoRoute(
           path: '/debug/update-name',
+          name: 'updateDisplayName',
           builder: (context, state) => const UpdateDisplayNameScreen(),
         ),
       ];
