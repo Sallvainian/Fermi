@@ -5,9 +5,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:async';
-import '../../config/firebase_options_env.dart';
+import '../../config/firebase_options.dart';
 import '../services/logger_service.dart';
 import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
@@ -26,9 +25,6 @@ class AppInitializer {
   /// Initialize all app dependencies
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
-    
-    // Load environment variables
-    await _loadEnvironment();
     
     // Initialize Firebase
     await _initializeFirebase();
@@ -70,15 +66,6 @@ class AppInitializer {
     }
   }
   
-  /// Load environment variables
-  static Future<void> _loadEnvironment() async {
-    try {
-      await dotenv.load(fileName: ".env");
-    } catch (e) {
-      LoggerService.info('Failed to load .env file', tag: 'AppInitializer');
-    }
-  }
-  
   /// Initialize Firebase services
   static Future<void> _initializeFirebase() async {
     try {
@@ -97,8 +84,9 @@ class AppInitializer {
         return;
       }
       
+      // Use simple Firebase initialization with DefaultFirebaseOptions
       await Firebase.initializeApp(
-        options: EnvironmentFirebaseOptions.currentPlatform,
+        options: DefaultFirebaseOptions.currentPlatform,
       );
       _firebaseInitialized = true;
       

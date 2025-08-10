@@ -1,0 +1,2 @@
+C:/Users/frank/Projects/teacher-dashboard-flutter-firebase/android/app/.cxx/Debug/2bj2s292/x86/CMakeFiles/edit_cache.dir
+C:/Users/frank/Projects/teacher-dashboard-flutter-firebase/android/app/.cxx/Debug/2bj2s292/x86/CMakeFiles/rebuild_cache.dir

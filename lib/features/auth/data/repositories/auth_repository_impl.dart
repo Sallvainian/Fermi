@@ -63,12 +63,14 @@ class AuthRepositoryImpl extends AuthRepository {
     required String displayName,
     UserRole? role,
     String? parentEmail,
-    int? gradeLevel,
+    String? gradeLevel,
   }) =>
       _authService.signUpWithEmail(
         email: email,
         password: password,
         displayName: displayName,
+        firstName: displayName.split(' ').first,
+        lastName: displayName.split(' ').length > 1 ? displayName.split(' ').skip(1).join(' ') : '',
         role: role,
         parentEmail: parentEmail,
         gradeLevel: gradeLevel,
@@ -90,7 +92,7 @@ class AuthRepositoryImpl extends AuthRepository {
   Future<UserModel?> completeGoogleSignUp({
     required UserRole role,
     String? parentEmail,
-    int? gradeLevel,
+    String? gradeLevel,
   }) =>
       _authService.completeGoogleSignUp(
         role: role,

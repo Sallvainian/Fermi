@@ -85,7 +85,7 @@ abstract class AuthRepository extends BaseRepository {
     required String displayName,
     UserRole? role,
     String? parentEmail,
-    int? gradeLevel,
+    String? gradeLevel,
   });
   
   /// Signs in an existing user with email and password.
@@ -126,7 +126,7 @@ abstract class AuthRepository extends BaseRepository {
   Future<UserModel?> completeGoogleSignUp({
     required UserRole role,
     String? parentEmail,
-    int? gradeLevel,
+    String? gradeLevel,
   });
   
   /// Signs out the current user.

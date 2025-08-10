@@ -20,14 +20,14 @@ gradle.projectsLoaded {
 // Hook into the dependency resolution to override the JDK image transform
 gradle.allprojects { project ->
     project.afterEvaluate {
-        project.configurations.all { config ->
+        project.configurations.configureEach { config ->
             config.resolutionStrategy.dependencySubstitution {
                 // This is a hook point where we could substitute dependencies if needed
             }
         }
 
         // Register a transform action if needed
-        if (project.plugins.hasPlugin('com.android.application') || 
+        if (project.plugins.hasPlugin('com.android.application') ||
             project.plugins.hasPlugin('com.android.library') ||
             project.plugins.hasPlugin('com.android.dynamic-feature')) {
 

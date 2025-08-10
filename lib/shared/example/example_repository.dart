@@ -42,7 +42,8 @@ class ExampleRepository {
   static final List<Student> _exampleStudents = [
     Student(
       id: 'example_student_1',
-      userId: 'example_user_1',
+      uid: 'example_user_1',
+      username: 'eexample01',
       firstName: 'Emma',
       lastName: 'Example',
       displayName: 'Emma Example',
@@ -56,7 +57,8 @@ class ExampleRepository {
     ),
     Student(
       id: 'example_student_2',
-      userId: 'example_user_2',
+      uid: 'example_user_2',
+      username: 'msample02',
       firstName: 'Marcus',
       lastName: 'Sample',
       displayName: 'Marcus Sample',
@@ -70,7 +72,8 @@ class ExampleRepository {
     ),
     Student(
       id: 'example_student_3',
-      userId: 'example_user_3',
+      uid: 'example_user_3',
+      username: 'ademo03',
       firstName: 'Aisha',
       lastName: 'Demo',
       displayName: 'Aisha Demo',
@@ -84,7 +87,8 @@ class ExampleRepository {
     ),
     Student(
       id: 'example_student_4',
-      userId: 'example_user_4',
+      uid: 'example_user_4',
+      username: 'dpreview04',
       firstName: 'David',
       lastName: 'Preview',
       displayName: 'David Preview',
@@ -98,7 +102,8 @@ class ExampleRepository {
     ),
     Student(
       id: 'example_student_5',
-      userId: 'example_user_5',
+      uid: 'example_user_5',
+      username: 'stest05',
       firstName: 'Sophie',
       lastName: 'Test',
       displayName: 'Sophie Test',

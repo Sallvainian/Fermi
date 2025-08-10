@@ -203,10 +203,27 @@ class ClassRepositoryImpl extends FirestoreRepository<ClassModel>
   @override
   Future<void> addStudent(String classId, String studentId) async {
     try {
-      await _firestore.collection('classes').doc(classId).update({
+      // Use a batch to update both class and student documents atomically
+      final batch = _firestore.batch();
+      
+      // Update class document
+      final classRef = _firestore.collection('classes').doc(classId);
+      batch.update(classRef, {
         'studentIds': FieldValue.arrayUnion([studentId]),
+        'studentCount': FieldValue.increment(1),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      
+      // Update student document to add this class to their classIds
+      final studentRef = _firestore.collection('students').doc(studentId);
+      batch.update(studentRef, {
+        'classIds': FieldValue.arrayUnion([classId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      // Commit the batch
+      await batch.commit();
+      
       LoggerService.info('Added student $studentId to class $classId', tag: tag);
     } catch (e) {
       LoggerService.error('Failed to add student to class', tag: tag, error: e);
@@ -224,10 +241,27 @@ class ClassRepositoryImpl extends FirestoreRepository<ClassModel>
   @override
   Future<void> removeStudent(String classId, String studentId) async {
     try {
-      await _firestore.collection('classes').doc(classId).update({
+      // Use a batch to update both class and student documents atomically
+      final batch = _firestore.batch();
+      
+      // Update class document
+      final classRef = _firestore.collection('classes').doc(classId);
+      batch.update(classRef, {
         'studentIds': FieldValue.arrayRemove([studentId]),
+        'studentCount': FieldValue.increment(-1),
         'updatedAt': FieldValue.serverTimestamp(),
       });
+      
+      // Update student document to remove this class from their classIds
+      final studentRef = _firestore.collection('students').doc(studentId);
+      batch.update(studentRef, {
+        'classIds': FieldValue.arrayRemove([classId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      // Commit the batch
+      await batch.commit();
+      
       LoggerService.info('Removed student $studentId from class $classId', tag: tag);
     } catch (e) {
       LoggerService.error('Failed to remove student from class', tag: tag, error: e);

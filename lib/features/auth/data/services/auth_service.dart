@@ -217,9 +217,11 @@ class AuthService {
     required String email,
     required String password,
     required String displayName,
+    required String firstName,
+    required String lastName,
     UserRole? role,
     String? parentEmail,
-    int? gradeLevel,
+    String? gradeLevel,
   }) async {
     if (_auth == null || _firestore == null) {
       throw Exception('Firebase not available - cannot sign up');
@@ -236,11 +238,6 @@ class AuthService {
 
       // Update display name
       await credential.user!.updateDisplayName(displayName);
-
-      // Parse first and last names from displayName
-      final nameParts = displayName.split(' ');
-      final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-      final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
       
       // Create user document in Firestore
       final userModel = UserModel(
@@ -262,6 +259,28 @@ class AuthService {
           .collection('users')
           .doc(credential.user!.uid)
           .set(userModel.toFirestore());
+
+      // If the user is a student, also create a document in the students collection
+      if (role == UserRole.student) {
+        final studentData = {
+          'uid': credential.user!.uid,
+          'email': email,
+          'displayName': displayName,
+          'firstName': firstName,
+          'lastName': lastName,
+          'gradeLevel': gradeLevel,
+          'parentEmail': parentEmail,
+          'isActive': true,
+          'classIds': [], // Empty array, will be populated when student enrolls in classes
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+        
+        await _firestore!
+            .collection('students')
+            .doc(credential.user!.uid)
+            .set(studentData);
+      }
 
       return userModel;
     } on FirebaseAuthException catch (e) {
@@ -428,7 +447,7 @@ class AuthService {
   Future<UserModel?> completeGoogleSignUp({
     required UserRole role,
     String? parentEmail,
-    int? gradeLevel,
+    String? gradeLevel,
   }) async {
     final user = currentUser;
     if (user == null) return null;
@@ -485,6 +504,28 @@ class AuthService {
           .collection('users')
           .doc(user.uid)
           .set(userModel.toFirestore());
+
+      // If the user is a student, also create a document in the students collection
+      if (role == UserRole.student) {
+        final studentData = {
+          'uid': user.uid,
+          'email': userEmail,
+          'displayName': displayName,
+          'firstName': firstName,
+          'lastName': lastName,
+          'gradeLevel': gradeLevel,
+          'parentEmail': parentEmail,
+          'isActive': true,
+          'classIds': [], // Empty array, will be populated when student enrolls in classes
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+        
+        await _firestore!
+            .collection('students')
+            .doc(user.uid)
+            .set(studentData);
+      }
 
       return userModel;
     } catch (e) {

@@ -1395,7 +1395,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
       final query = _searchController.text.toLowerCase();
       filtered = filtered.where((student) {
         return student.displayName.toLowerCase().contains(query) ||
-            student.email.toLowerCase().contains(query) ||
+            (student.email?.toLowerCase().contains(query) ?? false) ||
             student.firstName.toLowerCase().contains(query) ||
             student.lastName.toLowerCase().contains(query);
       }).toList();
@@ -1445,7 +1445,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
       
       return Student(
         id: 'preview_student_$index',
-        userId: 'preview_user_$index',
+        uid: 'preview_user_$index',
+        username: '${firstName[0].toLowerCase()}${lastName.toLowerCase()}${index.toString().padLeft(2, '0')}',
         firstName: firstName,
         lastName: lastName,
         displayName: '$firstName $lastName',
@@ -1629,7 +1630,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                     const SizedBox(height: 4),
                     // Email
                     Text(
-                      student.email,
+                      student.email ?? student.username,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1969,7 +1970,7 @@ class StudentDetailSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     _buildContactRow(
-                        Icons.email, 'Student Email', student.email),
+                        Icons.email, 'Student Email', student.email ?? student.username),
                     if (student.parentEmail != null)
                       _buildContactRow(Icons.family_restroom, 'Parent Email',
                           student.parentEmail!)
@@ -2161,10 +2162,14 @@ class _AddStudentSheetState extends State<AddStudentSheet> {
       final gradeLevel = int.parse(_selectedGrade);
       final now = DateTime.now();
 
+      // Generate a username from the name
+      final username = '${firstName[0].toLowerCase()}${lastName.toLowerCase()}${DateTime.now().millisecondsSinceEpoch % 100}'.replaceAll(' ', '');
+      
       final newStudent = Student(
         id: '', // Will be set by Firestore
-        userId: '', // Will be set when user account is created
-        email: email,
+        uid: '', // Will be set when user account is created
+        username: username,
+        email: email.isEmpty ? null : email,
         firstName: firstName,
         lastName: lastName,
         displayName: '$firstName $lastName',
@@ -2483,7 +2488,7 @@ class _EditStudentSheetState extends State<EditStudentSheet> {
     super.initState();
     _firstNameController.text = widget.student.firstName;
     _lastNameController.text = widget.student.lastName;
-    _emailController.text = widget.student.email;
+    _emailController.text = widget.student.email ?? '';
     _parentEmailController.text = widget.student.parentEmail ?? '';
     _selectedGrade = widget.student.gradeLevel.toString();
   }

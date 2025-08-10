@@ -75,27 +75,54 @@ class UserModel {
     this.role,
   });
 
-  /// Creates a new [UserModel] from a Firestore document map.
+  /// Creates a new [UserModel] from Firestore data or snapshot.
   ///
-  /// Only the fields defined on this model are extracted from the map.
-  /// Unknown fields are ignored. If [uid] is missing, an empty string
-  /// will be used.
-  factory UserModel.fromFirestore(Map<String, dynamic> data) {
+  /// Accepts either a `Map<String, dynamic>`, a `DocumentSnapshot`, or a
+  /// `QueryDocumentSnapshot`. When a snapshot is provided, the method
+  /// extracts the underlying data map via `.data()` and falls back to
+  /// the document `id` when `uid` is not present.
+  factory UserModel.fromFirestore(dynamic dataOrSnapshot) {
+    Map<String, dynamic> data = const {};
+    String? docId;
+
+    // Attempt to handle different input types without importing Firestore
+    // types explicitly. This keeps the model usable in pure Dart contexts.
+    if (dataOrSnapshot is Map<String, dynamic>) {
+      data = dataOrSnapshot;
+    } else {
+      try {
+        final dynamic snapshot = dataOrSnapshot;
+        final dynamic raw = snapshot.data();
+        if (raw is Map<String, dynamic>) {
+          data = raw;
+        }
+        // Try to read `id` property from snapshot for uid fallback
+        final dynamic maybeId = snapshot.id;
+        if (maybeId is String && maybeId.isNotEmpty) {
+          docId = maybeId;
+        }
+      } catch (_) {
+        // Ignore and use empty map
+      }
+    }
+
+    String? asString(dynamic v) => v is String ? v : null;
+
     return UserModel(
-      uid: data['uid'] ?? '',
-      email: data['email'] as String?,
-      displayName: data['displayName'] as String?,
-      firstName: data['firstName'] as String?,
-      lastName: data['lastName'] as String?,
-      photoURL: data['photoURL'] as String? ?? data['photoUrl'] as String?,
-      parentEmail: data['parentEmail'] as String?,
-      teacherId: data['teacherId'] as String?,
-      studentId: data['studentId'] as String?,
-      gradeLevel: data['gradeLevel'] as String?,
+      uid: asString(data['uid']) ?? docId ?? '',
+      email: asString(data['email']),
+      displayName: asString(data['displayName']),
+      firstName: asString(data['firstName']),
+      lastName: asString(data['lastName']),
+      photoURL: asString(data['photoURL']) ?? asString(data['photoUrl']),
+      parentEmail: asString(data['parentEmail']),
+      teacherId: asString(data['teacherId']),
+      studentId: asString(data['studentId']),
+      gradeLevel: asString(data['gradeLevel']),
       enrolledClassIds: (data['enrolledClassIds'] as List?)?.cast<String>(),
       createdAt: data['createdAt'] is DateTime ? data['createdAt'] as DateTime? : null,
       lastActive: data['lastActive'] is DateTime ? data['lastActive'] as DateTime? : null,
-      role: _roleFromString(data['role'] as String?),
+      role: _roleFromString(asString(data['role'])),
     );
   }
 
@@ -172,12 +199,16 @@ class UserModel {
     if (displayName != null && displayName!.isNotEmpty) {
       return displayName!;
     }
-    final nameParts = [firstName, lastName].where((e) => e != null && e!.isNotEmpty).toList();
+    final nameParts = [firstName, lastName].where((e) => e != null && e.isNotEmpty).toList();
     if (nameParts.isNotEmpty) {
       return nameParts.join(' ');
     }
     return email ?? '';
   }
+
+  /// Backwards-compatible `name` getter used by some UI widgets.
+  /// Returns [safeDisplayName].
+  String get name => safeDisplayName;
 
   /// Helper to convert a role string into a [UserRole] enum.
   static UserRole? _roleFromString(String? role) {

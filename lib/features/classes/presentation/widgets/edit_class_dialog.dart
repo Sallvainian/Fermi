@@ -335,21 +335,16 @@ class _EditClassDialogState extends State<EditClassDialog> {
     });
 
     try {
+      // ignore: use_build_context_synchronously
       final classProvider = context.read<ClassProvider>();
-      // ignore: use_build_context_synchronously
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-      // ignore: use_build_context_synchronously
-      final navigator = Navigator.of(context);
       await classProvider.deleteClass(widget.classModel.id);
 
       if (mounted) {
-        // ignore: use_build_context_synchronously
-        navigator.pop(true);
+        Navigator.of(context).pop(true);
       }
 
       if (mounted) {
-        // ignore: use_build_context_synchronously
-        scaffoldMessenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Class "${widget.classModel.name}" deleted successfully'),
             backgroundColor: Colors.green,

@@ -80,8 +80,8 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredUsers = _users.where((user) {
-        final name = user.displayName.toLowerCase();
-        final email = user.email.toLowerCase();
+        final name = user.displayName?.toLowerCase() ?? '';
+        final email = user.email?.toLowerCase() ?? '';
         return name.contains(query) || email.contains(query);
       }).toList();
     });
@@ -119,18 +119,18 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
         final participantInfoList = [
           ParticipantInfo(
             id: currentUser.uid,
-            name: currentUser.displayName,
+            name: currentUser.displayName ?? '',
             role: 'user',
           ),
           ParticipantInfo(
             id: otherUser.uid,
-            name: otherUser.displayName,
+            name: otherUser.displayName ?? '',
             role: 'user',
           ),
         ];
 
         final chatRoom = await chatProvider.createGroupChat(
-          name: otherUser.displayName,
+          name: otherUser.displayName ?? '',
           type: 'direct',
           participantIds: participantIds,
           participants: participantInfoList,
@@ -213,11 +213,11 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                             ? NetworkImage(user.photoURL!) 
                             : null,
                         child: user.photoURL == null 
-                            ? Text(user.displayName.isNotEmpty ? user.displayName[0] : '?')
+                            ? Text(user.displayName?.isNotEmpty == true ? user.displayName![0] : '?')
                             : null,
                       ),
-                      title: Text(user.displayName),
-                      subtitle: Text(user.email),
+                      title: Text(user.displayName ?? 'Unknown User'),
+                      subtitle: Text(user.email ?? ''),
                       trailing: Chip(
                         label: Text(
                           user.role?.toString().split('.').last ?? 'user',

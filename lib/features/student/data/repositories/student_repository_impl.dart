@@ -300,7 +300,7 @@ class StudentRepositoryImpl extends FirestoreRepository<Student> implements Stud
       return allStudents.where((student) {
         return student.firstName.toLowerCase().contains(lowercaseQuery) ||
                student.lastName.toLowerCase().contains(lowercaseQuery) ||
-               student.email.toLowerCase().contains(lowercaseQuery) ||
+               (student.email?.toLowerCase().contains(lowercaseQuery) ?? false) ||
                student.displayName.toLowerCase().contains(lowercaseQuery);
       }).toList();
     } catch (e) {

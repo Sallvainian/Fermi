@@ -252,7 +252,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                 radius: 28,
                                 backgroundColor: _getAvatarColor(index),
                                 child: Text(
-                                  student.displayName.split(' ').map((n) => n[0]).take(2).join(),
+                                  student.displayName?.split(' ').map((n) => n[0]).take(2).join() ?? '?',
                                   style: TextStyle(
                                     color: theme.colorScheme.onPrimary,
                                     fontWeight: FontWeight.bold,
@@ -284,7 +284,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  student.displayName,
+                                  student.displayName ?? 'Unknown Student',
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -313,7 +313,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
-                                        student.email,
+                                        student.email ?? '',
                                         style: theme.textTheme.bodySmall?.copyWith(
                                           color: theme.colorScheme.onSurfaceVariant,
                                         ),
@@ -1432,7 +1432,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         createdAt: now.subtract(const Duration(days: 180)),
         lastActive: now.subtract(const Duration(hours: 2)),
         studentId: 'STU001',
-        gradeLevel: 10,
+        gradeLevel: '10',
       ),
       UserModel(
         uid: '2',
@@ -1444,7 +1444,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         createdAt: now.subtract(const Duration(days: 200)),
         lastActive: now.subtract(const Duration(hours: 1)),
         studentId: 'STU002',
-        gradeLevel: 10,
+        gradeLevel: '10',
       ),
       UserModel(
         uid: '3',
@@ -1456,7 +1456,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         createdAt: now.subtract(const Duration(days: 150)),
         lastActive: now.subtract(const Duration(hours: 3)),
         studentId: 'STU003',
-        gradeLevel: 11,
+        gradeLevel: '11',
       ),
       UserModel(
         uid: '4',
@@ -1468,7 +1468,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         createdAt: now.subtract(const Duration(days: 170)),
         lastActive: now.subtract(const Duration(minutes: 30)),
         studentId: 'STU004',
-        gradeLevel: 10,
+        gradeLevel: '10',
       ),
     ];
   }

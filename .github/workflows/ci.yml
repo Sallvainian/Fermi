@@ -19,25 +19,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          
+
       - name: Cache pub dependencies
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: ${{ runner.os }}-pub-
-          
+
       - name: Get dependencies
         run: flutter pub get
-        
+
       - name: Analyze code
         run: flutter analyze --fatal-warnings
-        
+
       - name: Check formatting
         run: dart format --set-exit-if-changed .
 
@@ -49,25 +49,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          
+
       - name: Cache pub dependencies
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: ${{ runner.os }}-pub-
-          
+
       - name: Get dependencies
         run: flutter pub get
-        
+
       - name: Run tests with coverage
         run: flutter test --coverage
-        
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
@@ -83,25 +83,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          
+
       - name: Cache pub dependencies
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: ${{ runner.os }}-pub-
-          
+
       - name: Get dependencies
         run: flutter pub get
-        
+
       - name: Build web
-        run: flutter build web --release --web-renderer html --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
-        
+        run: flutter build web --release --web-renderer html
+
       - name: Upload web build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -118,25 +118,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-          
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          
+
       - name: Cache pub dependencies
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: ${{ runner.os }}-pub-
-          
+
       - name: Cache Gradle dependencies
         uses: actions/cache@v4
         with:
@@ -145,23 +145,23 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
-          
+
       - name: Get dependencies
         run: flutter pub get
-        
+
       - name: Build APK
-        run: flutter build apk --release --split-per-abi --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
-        
+        run: flutter build apk --release --split-per-abi
+
       - name: Build App Bundle
-        run: flutter build appbundle --release --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
-        
+        run: flutter build appbundle --release
+
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
           path: build/app/outputs/flutter-apk/*.apk
           retention-days: 7
-          
+
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
@@ -178,45 +178,52 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           architecture: x64
-          
+
       - name: Cache pub dependencies
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: ${{ runner.os }}-pub-
-          
+
       - name: Cache CocoaPods
         uses: actions/cache@v4
         with:
           path: ios/Pods
           key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
           restore-keys: ${{ runner.os }}-pods-
-          
+
       - name: Get dependencies
         run: flutter pub get
-        
+
       - name: Install CocoaPods dependencies
         run: |
           cd ios
           pod install --repo-update
           cd ..
-          
+
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign
-        
+
       - name: Upload iOS build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ios-build
           path: build/ios/iphoneos
           retention-days: 7
+
+      - name: iOS Build Action
+        uses: yukiarrr/ios-build-action@v1.12.0
+        with:
+          project-path: ios/Runner.xcodeproj
+          code-signing-identity: ""
+          team-id: ""
 
   # Summary job for branch protection
   ci-success:

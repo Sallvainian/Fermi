@@ -90,8 +90,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                           radius: 32,
                           backgroundColor: theme.colorScheme.primary,
                           child: Text(
-                            user?.displayName.isNotEmpty == true
-                                ? user!.displayName[0].toUpperCase()
+                            user?.displayName?.isNotEmpty == true
+                                ? user!.displayName![0].toUpperCase()
                                 : 'S',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               color: theme.colorScheme.onPrimary,
@@ -614,26 +614,20 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   
   String _getUserFirstName(UserModel? user, AuthProvider authProvider) {
     // Try firstName field first
-    if (user?.firstName.isNotEmpty == true) {
+    if (user?.firstName?.isNotEmpty == true) {
       return '${user!.firstName}!';
     }
     
     // Try displayName from user model
-    if (user?.displayName.isNotEmpty == true) {
-      final nameParts = user!.displayName.split(' ');
+    if (user?.displayName?.isNotEmpty == true) {
+      final nameParts = user!.displayName!.split(' ');
       if (nameParts.isNotEmpty) {
         return '${nameParts.first}!';
       }
     }
     
-    // Try Firebase Auth displayName
-    final firebaseUser = authProvider.firebaseUser;
-    if (firebaseUser?.displayName?.isNotEmpty == true) {
-      final nameParts = firebaseUser!.displayName!.split(' ');
-      if (nameParts.isNotEmpty) {
-        return '${nameParts.first}!';
-      }
-    }
+    // Firebase User doesn't have displayName getter anymore
+    // UserModel should be the single source of truth for user data
     
     // Default fallback
     return 'Student!';
