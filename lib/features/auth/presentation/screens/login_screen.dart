@@ -54,25 +54,25 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.signInWithEmail(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
+    await authProvider.signInWithEmail(
+      _emailController.text.trim(),
+      _passwordController.text,
     );
 
-    if (success && mounted) {
+    if (authProvider.isAuthenticated && mounted) {
       context.go('/dashboard');
     }
   }
 
   Future<void> _signInWithGoogle() async {
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.signInWithGoogle();
+    await authProvider.signInWithGoogle();
 
-    if (success && mounted) {
+    if (mounted) {
       if (authProvider.status == AuthStatus.authenticating) {
         // Need role selection
         context.go('/auth/role-selection');
-      } else {
+      } else if (authProvider.isAuthenticated) {
         context.go('/dashboard');
       }
     }

@@ -4,13 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 // the code under `teacher_dashboard_flutter_firebase`. Import the
 // redirect helper and the unified AuthProvider from their new
 // locations.
-import 'package:teacher_dashboard_flutter_firebase/shared/routing/auth_redirect.dart';
-import 'package:teacher_dashboard_flutter_firebase/features/auth/providers/auth_provider.dart';
+import 'package:teacher_dashboard_flutter/shared/routing/app_router.dart';
+import 'package:teacher_dashboard_flutter/features/auth/presentation/providers/auth_provider.dart';
+import 'package:teacher_dashboard_flutter/shared/models/user_model.dart';
 
 void main() {
-  group('computeAuthRedirect', () {
+  group('AppRouter.computeRedirect', () {
     test('Unauthenticated user accessing protected route is redirected to login', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: false,
         status: AuthStatus.unauthenticated,
         emailVerified: false,
@@ -21,7 +22,7 @@ void main() {
     });
 
     test('Unauthenticated user accessing auth route is allowed', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: false,
         status: AuthStatus.unauthenticated,
         emailVerified: false,
@@ -32,7 +33,7 @@ void main() {
     });
 
     test('Authenticated user accessing auth route is redirected to dashboard', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticated,
         emailVerified: true,
@@ -43,7 +44,7 @@ void main() {
     });
 
     test('User needing role selection redirected to role selection', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticating,
         emailVerified: false,
@@ -54,7 +55,7 @@ void main() {
     });
 
     test('User needing role selection stays on role selection', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticating,
         emailVerified: false,
@@ -65,7 +66,7 @@ void main() {
     });
 
     test('User needing role selection accessing other auth route is redirected to role selection', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticating,
         emailVerified: false,
@@ -76,7 +77,7 @@ void main() {
     });
 
     test('Fully authenticated user accessing role selection is redirected to dashboard', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticated,
         emailVerified: true,
@@ -87,7 +88,7 @@ void main() {
     });
 
     test('Uninitialized status treated as unauthenticated and redirected to login', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: false,
         status: AuthStatus.uninitialized,
         emailVerified: false,
@@ -98,7 +99,7 @@ void main() {
     });
 
     test('Error status treated as unauthenticated and redirected to login', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: false,
         status: AuthStatus.error,
         emailVerified: false,
@@ -109,7 +110,7 @@ void main() {
     });
 
     test('Authenticated user with unverified email is redirected to verify email', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticated,
         emailVerified: false,
@@ -120,7 +121,7 @@ void main() {
     });
 
     test('Authenticated user with unverified email can access verify email route', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticated,
         emailVerified: false,
@@ -131,7 +132,7 @@ void main() {
     });
 
     test('Authenticated user with verified email accessing verify email route is redirected to dashboard', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticated,
         emailVerified: true,
@@ -142,7 +143,7 @@ void main() {
     });
 
     test('Teacher user accessing student route is redirected to dashboard', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticated,
         emailVerified: true,
@@ -153,7 +154,7 @@ void main() {
     });
 
     test('Student user accessing teacher route is redirected to dashboard', () {
-      final result = computeAuthRedirect(
+      final result = AppRouter.computeRedirect(
         isAuthenticated: true,
         status: AuthStatus.authenticated,
         emailVerified: true,

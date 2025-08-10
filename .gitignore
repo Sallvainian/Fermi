@@ -101,7 +101,7 @@ coverage/
 
 # Personal/project-specific (keep for your workflow; safe in personal repo)
 PROJECT_TODOS.md
-CLAUDE.md
+# CLAUDE.md - Now tracked for AI assistant context
 launch_app.sh
 .mcp.json
 .claude/
@@ -113,3 +113,10 @@ devtools_options.yaml
 nul
 */nul
 web/nul!/build/
+
+# Claude Code IDE generated directories
+.clode/
+.claude-snapshots/
+.claude-checkpoints/
+.worktrees/
+!/.trae/

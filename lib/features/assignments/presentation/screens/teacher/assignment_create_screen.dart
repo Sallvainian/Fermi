@@ -129,7 +129,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
         category: _selectedType.name.toUpperCase(),
         classId: widget.classId ?? '',
         teacherId: user.uid,
-        teacherName: user.displayName,
+        teacherName: user.displayName ?? 'Unknown Teacher',
         totalPoints: double.parse(_maxPointsController.text),
         maxPoints: double.parse(_maxPointsController.text),
         dueDate: _combineDateAndTime(),

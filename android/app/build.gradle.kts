@@ -19,7 +19,7 @@ if (localPropertiesFile.exists()) {
     }
 }
 
-val flutterCompileSdkVersion: String = localProperties.getProperty("flutter.compileSdkVersion") ?: "35" // Updated to support androidx.core 1.15.0
+val flutterCompileSdkVersion: String = localProperties.getProperty("flutter.compileSdkVersion") ?: "36" // Updated to support androidx.core 1.15.0
 val flutterNdkVersion: String = localProperties.getProperty("flutter.ndkVersion") ?: "27.0.12077973" // Updated NDK version
 val flutterMinSdkVersion: String = localProperties.getProperty("flutter.minSdkVersion") ?: "21" // Common default
 
@@ -56,7 +56,7 @@ android {
 
     // Signing configurations
     signingConfigs {
-        create("debug") {
+        getByName("debug") {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
             storeFile = file("debug.keystore")
@@ -121,5 +121,7 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
-
+    
+    // Fix FFmpeg Kit dependency resolution
+    implementation("com.arthenica:ffmpeg-kit-https:6.0-2.LTS")
 }

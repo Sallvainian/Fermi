@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../student/domain/models/student.dart';
 import '../../domain/models/class_model.dart';
 import '../providers/class_provider.dart';
+import 'create_student_dialog.dart';
 
 class EnrollStudentsDialog extends StatefulWidget {
   final ClassModel classModel;
@@ -112,6 +113,18 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
     }
   }
 
+  void _showCreateNewStudentDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => CreateStudentDialog(classModel: widget.classModel),
+    ).then((result) {
+      if (result == true && mounted) {
+        // Close this dialog and return success to reload students
+        Navigator.of(context).pop(true);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -179,6 +192,12 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
         ),
       ),
       actions: [
+        OutlinedButton.icon(
+          onPressed: () => _showCreateNewStudentDialog(),
+          icon: const Icon(Icons.person_add_alt, size: 18),
+          label: const Text('Create New'),
+        ),
+        const Spacer(),
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
           child: const Text('Cancel'),
@@ -294,7 +313,7 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
             });
           },
           title: Text(student.displayName),
-          subtitle: Text(student.email),
+          subtitle: Text(student.email ?? student.username),
           secondary: CircleAvatar(
             backgroundColor: Theme.of(context).colorScheme.primaryContainer,
             child: Text(

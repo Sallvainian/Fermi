@@ -24,9 +24,9 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.userModel;
     if (user != null) {
-      _displayNameController.text = user.displayName;
-      _firstNameController.text = user.firstName;
-      _lastNameController.text = user.lastName;
+      _displayNameController.text = user.displayName ?? '';
+      _firstNameController.text = user.firstName ?? '';
+      _lastNameController.text = user.lastName ?? '';
     }
   }
 
@@ -45,29 +45,21 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final success = await authProvider.updateProfile(
+      await authProvider.updateProfile(
         displayName: _displayNameController.text.trim(),
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
       );
 
       if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile updated successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.of(context).pop();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to update profile'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        // updateProfile returns void, so just assume success if no exception
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {

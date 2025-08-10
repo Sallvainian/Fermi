@@ -33,8 +33,8 @@ class AppDrawer extends StatelessWidget {
                     radius: 30,
                     backgroundColor: theme.colorScheme.primary,
                     child: Text(
-                      user?.displayName.isNotEmpty == true
-                          ? user!.displayName[0].toUpperCase()
+                      user?.displayName?.isNotEmpty == true
+                          ? user!.displayName![0].toUpperCase()
                           : 'U',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: theme.colorScheme.onPrimary,
@@ -44,8 +44,8 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    (user?.displayName.isNotEmpty == true)
-                        ? user!.displayName
+                    (user?.displayName?.isNotEmpty == true)
+                        ? user!.displayName!
                         : 'User',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,

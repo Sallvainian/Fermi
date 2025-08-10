@@ -38,7 +38,6 @@ jobs:
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'web' || github.event.inputs.platform == 'all'))
     environment:
       name: ${{ github.event.inputs.environment || 'staging' }}
-      url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -62,8 +61,7 @@ jobs:
         run: |
           flutter build web --release \
             --web-renderer html \
-            --dart-define=ENVIRONMENT=${{ github.event.inputs.environment || 'staging' }} \
-            --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+            --dart-define=ENVIRONMENT=${{ github.event.inputs.environment || 'staging' }}
             
       - name: Deploy to Firebase Hosting
         id: deploy
@@ -138,8 +136,7 @@ jobs:
       - name: Build App Bundle
         run: |
           flutter build appbundle --release \
-            --dart-define=ENVIRONMENT=${{ github.event.inputs.environment || 'production' }} \
-            --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}
+            --dart-define=ENVIRONMENT=${{ github.event.inputs.environment || 'production' }}
             
       - name: Upload to Google Play Console
         if: github.event.inputs.environment != 'staging'
@@ -241,7 +238,6 @@ jobs:
         run: |
           flutter build ipa --release \
             --dart-define=ENVIRONMENT=${{ github.event.inputs.environment || 'production' }} \
-            --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
             --export-options-plist=ios/ExportOptions.plist
             
       - name: Upload to TestFlight
@@ -281,7 +277,7 @@ jobs:
       - name: Run smoke tests
         run: |
           # Simple health check
-          URL="${{ needs.deploy-web.outputs.url || 'https://teacher-dashboard-flutter.web.app' }}"
+          URL="https://teacher-dashboard-flutter.web.app"
           response=$(curl -s -o /dev/null -w "%{http_code}" "$URL")
           if [ $response -eq 200 ]; then
             echo "✅ Deployment successful - site is accessible"

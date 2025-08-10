@@ -26,7 +26,7 @@ import '../../features/grades/presentation/screens/student/grades_screen.dart';
 import '../../features/assignments/presentation/screens/student/assignments_list_screen.dart' as student_assignments;
 import '../../features/assignments/presentation/screens/student/assignment_submission_screen.dart';
 import '../../features/classes/presentation/screens/student/enrollment_screen.dart';
-import '../../features/notifications/presentation/screens/student_notifications_screen.dart' as student_notifications;
+// import '../../features/notifications/presentation/screens/student_notifications_screen.dart' as student_notifications;
 import '../screens/settings_screen.dart';
 import '../screens/debug/debug/update_display_name_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
@@ -42,9 +42,9 @@ import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../screens/common/common/dashboard_screen.dart';
 import '../screens/contact_support_screen.dart';
-import '../../features/games/presentation/screens/jeopardy_screen.dart';
-import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
-import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
+// import '../../features/games/presentation/screens/jeopardy_screen.dart';
+// import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
+// import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
 
 /// Application router configuration using GoRouter for declarative navigation.
 ///
@@ -309,7 +309,7 @@ class AppRouter {
         GoRoute(
           path: '/teacher/students',
           name: 'students',
-          builder: (context, state) => const StudentsScreen(),
+          builder: (context, state) => const TeacherStudentsScreen(),
         ),
       ];
 
@@ -318,12 +318,12 @@ class AppRouter {
         GoRoute(
           path: '/student/courses',
           name: 'courses',
-          builder: (context, state) => const CoursesScreen(),
+          builder: (context, state) => const StudentCoursesScreen(),
         ),
         GoRoute(
           path: '/student/grades',
           name: 'grades',
-          builder: (context, state) => const GradesScreen(),
+          builder: (context, state) => const StudentGradesScreen(),
         ),
         GoRoute(
           path: '/student/assignments',

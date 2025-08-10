@@ -58,15 +58,22 @@ class _SignupScreenState extends State<SignupScreen> {
     final lastName = _lastNameController.text.trim();
     final displayName = '$firstName $lastName'.trim();
     
-    final success = await authProvider.signUpWithEmailOnly(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      displayName: displayName,
-      firstName: firstName,
-      lastName: lastName,
+    // First sign up with email and password
+    await authProvider.signUpWithEmailOnly(
+      _emailController.text.trim(),
+      _passwordController.text,
     );
 
-    if (success && mounted) {
+    // Then update the profile with additional information
+    if (authProvider.isAuthenticated) {
+      await authProvider.updateProfile(
+        displayName: displayName,
+        firstName: firstName,
+        lastName: lastName,
+      );
+    }
+
+    if (authProvider.isAuthenticated && mounted) {
       // Router will automatically redirect to role selection
       // No need to manually navigate - handled by main.dart redirect logic
     }

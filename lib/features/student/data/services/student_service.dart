@@ -198,7 +198,7 @@ class StudentService {
       
       return allStudents.where((student) {
         return student.displayName.toLowerCase().contains(queryLower) ||
-               student.email.toLowerCase().contains(queryLower) ||
+               (student.email?.toLowerCase().contains(queryLower) ?? false) ||
                student.firstName.toLowerCase().contains(queryLower) ||
                student.lastName.toLowerCase().contains(queryLower);
       }).toList();

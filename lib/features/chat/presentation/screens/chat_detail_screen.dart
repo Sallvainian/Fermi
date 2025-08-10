@@ -6,9 +6,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
-import 'package:video_compress/video_compress.dart';
+import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+import 'package:ffmpeg_kit_flutter/return_code.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+
 import '../providers/chat_provider.dart';
 import '../../domain/models/message.dart';
 import '../../data/services/scheduled_messages_service.dart';
@@ -245,23 +248,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       dateText = DateFormat('EEEE, MMMM d').format(date);
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        children: [
-          const Expanded(child: Divider()),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              dateText,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            dateText,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const Expanded(child: Divider()),
-        ],
+        ),
       ),
     );
   }
@@ -883,20 +885,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     });
 
     try {
-      // Compress video
-      await VideoCompress.setLogLevel(0);
-      final MediaInfo? compressedVideo = await VideoCompress.compressVideo(
-        videoFile.path,
-        quality: VideoQuality.MediumQuality,
-        deleteOrigin: false,
-        includeAudio: true,
-      );
+      // Compress video using ffmpeg
+      final Directory tempDir = await getTemporaryDirectory();
+      final String outputPath = '${tempDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      
+      // FFmpeg command for video compression
+      final command = '-i ${videoFile.path} -c:v libx264 -crf 28 -preset fast -c:a aac -b:a 128k $outputPath';
+      
+      await FFmpegKit.execute(command).then((session) async {
+        final returnCode = await session.getReturnCode();
+        
+        if (!ReturnCode.isSuccess(returnCode)) {
+          throw Exception('Video compression failed');
+        }
+      });
 
-      if (compressedVideo == null || compressedVideo.file == null) {
-        throw Exception('Video compression failed');
-      }
-
-      final File compressedFile = compressedVideo.file!;
+      final File compressedFile = File(outputPath);
 
       // Create unique filename
       final String fileName =

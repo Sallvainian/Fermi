@@ -4,7 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'notification_service.dart';
 import '../../../chat/domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
@@ -172,7 +172,7 @@ class FirebaseMessagingService {
       
       if (kIsWeb) {
         // Web requires VAPID key - get from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
-        final vapidKey = dotenv.env['FIREBASE_VAPID_KEY'] ?? '';
+        const vapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
         
         if (vapidKey.isEmpty) {
           LoggerService.error('FIREBASE_VAPID_KEY not found in environment variables');
@@ -410,7 +410,7 @@ class FirebaseMessagingService {
     try {
       if (kIsWeb) {
         // Use VAPID key for web
-        final vapidKey = dotenv.env['FIREBASE_VAPID_KEY'] ?? '';
+        const vapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
         
         try {
           return await _messaging.getToken(vapidKey: vapidKey);

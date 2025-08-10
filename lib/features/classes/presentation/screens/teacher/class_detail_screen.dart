@@ -422,7 +422,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase();
       return student.displayName.toLowerCase().contains(query) ||
-             student.email.toLowerCase().contains(query);
+             (student.email?.toLowerCase().contains(query) ?? false);
     }).toList();
 
     return Column(
@@ -518,7 +518,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                   ),
                 ),
                 Text(
-                  student.email,
+                  student.email ?? student.username,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -695,12 +695,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       context: context,
       builder: (context) => EnrollStudentsDialog(classModel: _classModel!),
     ).then((result) {
-      if (result == true) {
+      if (result == true && mounted) {
         // Reload students
         context.read<ClassProvider>().loadClassStudents(widget.classId);
       }
     });
   }
+
 
   Future<void> _removeStudent(String? studentId, ClassProvider classProvider) async {
     if (studentId == null) return;

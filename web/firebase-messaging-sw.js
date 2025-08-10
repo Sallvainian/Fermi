@@ -1,9 +1,17 @@
 importScripts("https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/9.10.0/firebase-messaging-compat.js");
-importScripts("/firebase-config.js");
 
 // Initialize the Firebase app in the service worker
-// Firebase configuration is loaded from firebase-config.js
+// Firebase configuration - hardcoded since service workers can't import Dart files
+const firebaseConfig = {
+  apiKey: "AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac",
+  authDomain: "teacher-dashboard-flutterfire.firebaseapp.com",
+  projectId: "teacher-dashboard-flutterfire",
+  storageBucket: "teacher-dashboard-flutterfire.firebasestorage.app",
+  messagingSenderId: "218352465432",
+  appId: "1:218352465432:web:6e1c0fa4f21416df38b56d",
+  databaseURL: "https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com"
+};
 
 firebase.initializeApp(firebaseConfig);
 

@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 import '../../../shared/models/user_model.dart';
+import '../domain/repositories/auth_repository.dart';
+import '../data/repositories/auth_repository_impl.dart';
+import '../data/services/auth_service.dart';
 
 /// Enumeration describing the current authentication state.
 ///
@@ -29,44 +33,8 @@ enum AuthStatus {
   error,
 }
 
-/// Minimal stand‑in for a Firebase Auth user.
-///
-/// This class exposes only the subset of properties and methods that
-/// are referenced by the routing and verification logic. In a real
-/// implementation this would wrap a `firebase_auth.User` instance.
-class User {
-  /// Whether the user's email has been verified.
-  bool emailVerified;
-
-  /// The email address of the user, or null if unknown.
-  final String? email;
-
-  User({required this.emailVerified, this.email});
-
-  /// Sends a verification email. No‑op in this stub.
-  Future<void> sendEmailVerification() async {
-    // In tests this can be overridden or stubbed to simulate sending a
-    // verification email.
-    return;
-  }
-
-  /// Reloads the user data from the authentication backend. No‑op in this
-  /// stub.
-  Future<void> reload() async {
-    // In tests this can be overridden or stubbed to simulate refreshing
-    // authentication state.
-    return;
-  }
-}
-
-/// Minimal authentication repository used by the provider.
-///
-/// The real application wraps FirebaseAuth and Firestore operations in a
-/// repository. This stub exposes only the currently signed in user so
-/// that the provider can surface it to the UI layer.
-class AuthRepository {
-  User? currentUser;
-}
+// Using Firebase Auth User directly
+typedef User = firebase_auth.User;
 
 /// Simplified authentication provider for routing and verification.
 ///
@@ -86,7 +54,7 @@ class AuthProvider extends ChangeNotifier {
   bool _rememberMe = false;
 
   AuthProvider({AuthRepository? repository, AuthStatus initialStatus = AuthStatus.uninitialized, UserModel? userModel})
-      : _authRepository = repository,
+      : _authRepository = repository ?? AuthRepositoryImpl(AuthService()),
         _status = initialStatus,
         _userModel = userModel,
         _isLoading = false;
@@ -97,8 +65,8 @@ class AuthProvider extends ChangeNotifier {
   /// The currently signed in user model, or null if unauthenticated.
   UserModel? get userModel => _userModel;
 
-  /// The Firebase Auth user (stubbed), or null if not signed in.
-  User? get firebaseUser => _authRepository?.currentUser;
+  /// The Firebase Auth user, or null if not signed in.
+  firebase_auth.User? get firebaseUser => firebase_auth.FirebaseAuth.instance.currentUser;
 
   /// A human‑readable error message, if an authentication error occurred.
   String? get errorMessage => _errorMessage;
@@ -137,106 +105,193 @@ class AuthProvider extends ChangeNotifier {
 
   /// Signs in the user with an email and password.
   ///
-  /// This stub simply marks the status as [AuthStatus.authenticated] and
-  /// creates a blank [UserModel]. In a real implementation this would
-  /// perform a Firebase sign‑in and fetch the user profile from Firestore.
+  /// Calls Firebase Auth to authenticate the user and fetch their profile
+  /// from Firestore.
   Future<void> signInWithEmail(String email, String password) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 10));
-    // Basic validation: ensure email and password are provided. In a real
-    // implementation this would call FirebaseAuth and handle errors.
+    
+    // Basic validation
     if (email.isEmpty || password.isEmpty) {
       _isLoading = false;
       setError('Email and password are required.');
       return;
     }
-    _status = AuthStatus.authenticated;
-    _userModel = UserModel(uid: 'uid', email: email);
-    _authRepository?.currentUser = User(emailVerified: false, email: email);
-    _isLoading = false;
-    notifyListeners();
+    
+    try {
+      // Call the real Firebase authentication
+      final userModel = await _authRepository?.signInWithEmail(
+        email: email,
+        password: password,
+      );
+      
+      if (userModel != null) {
+        _userModel = userModel;
+        _status = AuthStatus.authenticated;
+      } else {
+        throw Exception('Sign in failed');
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _status = AuthStatus.unauthenticated;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Signs in the user with Google.
   ///
-  /// In this stub the user is placed in the [AuthStatus.authenticating]
-  /// state to simulate the need for role selection. The caller must
-  /// subsequently call [completeGoogleSignUp] to finalize the flow.
+  /// For new users, returns null and sets status to authenticating
+  /// to trigger role selection. For existing users, signs them in
+  /// directly with their stored profile.
   Future<void> signInWithGoogle() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 10));
-    _status = AuthStatus.authenticating;
-    _authRepository?.currentUser = User(emailVerified: false);
-    _isLoading = false;
-    notifyListeners();
+    
+    try {
+      // Call the real Google Sign-In
+      final userModel = await _authRepository?.signInWithGoogle();
+      
+      if (userModel != null) {
+        // Existing user - sign them in directly
+        _userModel = userModel;
+        _status = AuthStatus.authenticated;
+      } else {
+        // New user - need role selection
+        _status = AuthStatus.authenticating;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _status = AuthStatus.unauthenticated;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Completes the Google sign‑in by assigning a role and finishing
   /// profile setup.
-  Future<void> completeGoogleSignUp({required UserRole role}) async {
+  Future<void> completeGoogleSignUp({required UserRole role, String? parentEmail, String? gradeLevel}) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 10));
-    _userModel = UserModel(uid: 'uid', role: role);
-    _status = AuthStatus.authenticated;
-    _isLoading = false;
-    notifyListeners();
+    
+    try {
+      // Call the real repository to complete Google sign-up
+      final userModel = await _authRepository?.completeGoogleSignUp(
+        role: role,
+        parentEmail: parentEmail,
+        gradeLevel: gradeLevel,
+      );
+      
+      if (userModel != null) {
+        _userModel = userModel;
+        _status = AuthStatus.authenticated;
+      } else {
+        throw Exception('Failed to complete Google sign-up');
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _status = AuthStatus.unauthenticated;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Registers a new user with an email and password.
   ///
-  /// This stub sets the status to [AuthStatus.authenticated] and creates
-  /// a blank [UserModel]. In a real implementation this would write the
-  /// user profile to Firestore.
+  /// Creates a new user account in Firebase Auth and writes their
+  /// profile to Firestore.
   Future<void> signUpWithEmailOnly(String email, String password) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 10));
+    
     if (email.isEmpty || password.isEmpty) {
       _isLoading = false;
       setError('Email and password are required.');
       return;
     }
-    _status = AuthStatus.authenticated;
-    _userModel = UserModel(uid: 'uid', email: email);
-    _authRepository?.currentUser = User(emailVerified: false, email: email);
-    _isLoading = false;
-    notifyListeners();
+    
+    try {
+      // Call the real Firebase sign-up
+      final userModel = await _authRepository?.signUpWithEmail(
+        email: email,
+        password: password,
+        displayName: email.split('@')[0], // Use email prefix as display name
+        role: UserRole.student, // Default role for email-only signup
+      );
+      
+      if (userModel != null) {
+        _userModel = userModel;
+        _status = AuthStatus.authenticated;
+      } else {
+        throw Exception('Sign up failed');
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _status = AuthStatus.unauthenticated;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Updates the user profile with new display name or names.
   Future<void> updateProfile({String? displayName, String? firstName, String? lastName}) async {
     if (_userModel == null) return;
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 10));
-    _userModel = _userModel!.copyWith(
-      displayName: displayName ?? _userModel!.displayName,
-      firstName: firstName ?? _userModel!.firstName,
-      lastName: lastName ?? _userModel!.lastName,
-    );
-    _isLoading = false;
-    notifyListeners();
+    
+    try {
+      // Call the real Firebase update
+      await _authRepository?.updateProfile(
+        displayName: displayName,
+        firstName: firstName,
+        lastName: lastName,
+      );
+      
+      // Update local model
+      _userModel = _userModel!.copyWith(
+        displayName: displayName ?? _userModel!.displayName,
+        firstName: firstName ?? _userModel!.firstName,
+        lastName: lastName ?? _userModel!.lastName,
+      );
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Signs the user out.
   Future<void> signOut() async {
     _isLoading = true;
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 10));
-    _status = AuthStatus.unauthenticated;
-    _userModel = null;
-    _authRepository?.currentUser = null;
-    _rememberMe = false;
-    _isLoading = false;
-    notifyListeners();
+    
+    try {
+      // Call the real Firebase sign-out
+      await _authRepository?.signOut();
+      _status = AuthStatus.unauthenticated;
+      _userModel = null;
+      _rememberMe = false;
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Sends a verification email to the currently signed in user.
   Future<void> sendEmailVerification() async {
-    final user = _authRepository?.currentUser;
+    final user = firebase_auth.FirebaseAuth.instance.currentUser;
     if (user != null && !user.emailVerified) {
       await user.sendEmailVerification();
     }
@@ -244,28 +299,31 @@ class AuthProvider extends ChangeNotifier {
 
   /// Reloads the current user to refresh authentication data.
   Future<void> reloadUser() async {
-    final user = _authRepository?.currentUser;
+    final user = firebase_auth.FirebaseAuth.instance.currentUser;
     if (user != null) {
       await user.reload();
-      // In a real implementation the repository would refresh its local
-      // reference to the user here.
+      // Refresh user model from repository
+      final currentUser = await _authRepository?.getCurrentUserModel();
+      if (currentUser != null) {
+        _userModel = currentUser;
+      }
       notifyListeners();
     }
   }
 
   /// Refreshes custom claims and updates the local user model.
   ///
-  /// In a production environment this would retrieve custom claims from
-  /// Firebase Auth and update the user's role or other permissions.
+  /// Retrieves custom claims from Firebase Auth and updates the user's role.
   Future<void> refreshCustomClaims() async {
-    // Simulate an asynchronous refresh.
-    await Future.delayed(const Duration(milliseconds: 10));
-    if (_userModel != null && _userModel!.role == null) {
-      // Default to student if no role is set. In the real app this would
-      // come from the server. After updating, notify listeners so the
-      // routing logic can react.
-      _userModel = _userModel!.copyWith(role: UserRole.student);
-      notifyListeners();
+    try {
+      // Get fresh user data from repository
+      final currentUser = await _authRepository?.getCurrentUserModel();
+      if (currentUser != null) {
+        _userModel = currentUser;
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silently fail - custom claims refresh is not critical
     }
   }
 }

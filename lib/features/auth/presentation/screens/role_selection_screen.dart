@@ -13,12 +13,16 @@ class RoleSelectionScreen extends StatefulWidget {
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   UserRole? _selectedRole;
   final _teacherPasswordController = TextEditingController();
+  final _parentEmailController = TextEditingController();
+  final _gradeLevelController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
   @override
   void dispose() {
     _teacherPasswordController.dispose();
+    _parentEmailController.dispose();
+    _gradeLevelController.dispose();
     super.dispose();
   }
 
@@ -52,13 +56,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final success = await authProvider.completeGoogleSignUp(
+      await authProvider.completeGoogleSignUp(
         role: _selectedRole!,
-        parentEmail: null,
-        gradeLevel: null,
+        parentEmail: _selectedRole == UserRole.student ? _parentEmailController.text.trim() : null,
+        gradeLevel: _selectedRole == UserRole.student ? _gradeLevelController.text.trim() : null,
       );
 
-      if (success && mounted) {
+      if (authProvider.isAuthenticated && mounted) {
         // Navigation will be handled by the AuthProvider state change
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

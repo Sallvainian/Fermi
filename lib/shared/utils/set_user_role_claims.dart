@@ -18,22 +18,23 @@ class UserRoleClaims {
     try {
       // Call the cloud function
       final callable = _functions.httpsCallable('setRoleClaim');
-      final result = await callable.call({
+      await callable.call({
         'uid': uid,
         'role': role,
       });
 
-      print('Role claim set successfully: ${result.data['message']}');
+      // Role claim set successfully
+      // Result data available if needed for debugging
 
       // If setting claim for current user, refresh their token
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null && currentUser.uid == uid) {
         // Force token refresh to get new custom claims
         await currentUser.getIdToken(true);
-        print('User token refreshed with new claims');
+        // User token refreshed with new claims
       }
     } catch (e) {
-      print('Error setting role claim: $e');
+      // Error setting role claim: $e
       rethrow;
     }
   }
@@ -51,7 +52,7 @@ class UserRoleClaims {
 
       return claims?['role'] == role;
     } catch (e) {
-      print('Error checking role claim: $e');
+      // Error checking role claim: $e
       return false;
     }
   }
@@ -65,7 +66,7 @@ class UserRoleClaims {
       final idTokenResult = await user.getIdTokenResult();
       return idTokenResult.claims?['role'] as String?;
     } catch (e) {
-      print('Error getting user role: $e');
+      // Error getting user role: $e
       return null;
     }
   }

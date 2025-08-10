@@ -83,7 +83,7 @@ class CalendarService {
       isAllDay: isAllDay,
       location: location,
       createdBy: createdBy,
-      createdByName: creator.displayName,
+      createdByName: creator.displayName ?? 'Unknown',
       classId: classId,
       assignmentId: assignmentId,
       participantIds: participantIds,

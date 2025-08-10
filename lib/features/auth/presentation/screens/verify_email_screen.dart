@@ -16,7 +16,7 @@ import '../../providers/auth_provider.dart';
 /// check whether the verification has been completed. Once the email is
 /// verified, navigating away is automatically handled by the router.
 class VerifyEmailScreen extends StatefulWidget {
-  const VerifyEmailScreen({Key? key}) : super(key: key);
+  const VerifyEmailScreen({super.key});
 
   @override
   State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
@@ -60,10 +60,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       // explicitly call context.go here to ensure that when the
       // verification is complete and the user is still on this page,
       // they are sent to the dashboard.
+      if (!mounted) return;
+      
       if (context.read<AuthProvider>().firebaseUser?.emailVerified ?? false) {
-        if (mounted) {
-          context.go('/dashboard');
-        }
+        context.go('/dashboard');
       }
     } catch (e) {
       setState(() {

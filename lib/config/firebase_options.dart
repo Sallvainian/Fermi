@@ -15,21 +15,6 @@ import 'package:flutter/foundation.dart'
 /// );
 /// ```
 class DefaultFirebaseOptions {
-  // Get API key from environment variables with fallback for local development
-  static String get _apiKey {
-    const key = String.fromEnvironment('FIREBASE_API_KEY');
-    // Only use fallback in debug mode for local development
-    if (key.isEmpty && kDebugMode) {
-      // This fallback should only be used in development
-      // In production, the API key must be provided via environment variables
-      return 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac';
-    }
-    if (key.isEmpty) {
-      throw Exception('FIREBASE_API_KEY environment variable is not set');
-    }
-    return key;
-  }
-
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
       return web;
@@ -52,62 +37,103 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static FirebaseOptions get web => FirebaseOptions(
-    apiKey: _apiKey,
-    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+  static FirebaseOptions web = FirebaseOptions(
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY', 
+        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+    appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
+        defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
+    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: '218352465432'),
+    projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
+        defaultValue: 'teacher-dashboard-flutterfire'),
+    authDomain: const String.fromEnvironment('FIREBASE_AUTH_DOMAIN',
+        defaultValue: 'teacher-dashboard-flutterfire.firebaseapp.com'),
+    storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
+        defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
+    databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
+        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 
-  static FirebaseOptions get android => FirebaseOptions(
-    apiKey: _apiKey,
-    appId: '1:218352465432:android:a7d591b9db6bef6038b56d',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+  static FirebaseOptions android = FirebaseOptions(
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
+        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+    appId: const String.fromEnvironment('FIREBASE_APP_ID_ANDROID',
+        defaultValue: '1:218352465432:android:a7d591b9db6bef6038b56d'),
+    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: '218352465432'),
+    projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
+        defaultValue: 'teacher-dashboard-flutterfire'),
+    storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
+        defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
+    databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
+        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 
-  static FirebaseOptions get ios => FirebaseOptions(
-    apiKey: _apiKey,
-    appId: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
-    iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
+  static FirebaseOptions ios = FirebaseOptions(
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
+        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+    appId: const String.fromEnvironment('FIREBASE_APP_ID_IOS',
+        defaultValue: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99'),
+    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: '218352465432'),
+    projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
+        defaultValue: 'teacher-dashboard-flutterfire'),
+    storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
+        defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
+    databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
+        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+    iosBundleId: const String.fromEnvironment('IOS_BUNDLE_ID',
+        defaultValue: 'com.teacherdashboard.teacherDashboardFlutter'),
   );
 
-  static FirebaseOptions get macos => FirebaseOptions(
-    apiKey: _apiKey,
-    appId: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
-    iosBundleId: 'com.teacherdashboard.teacherDashboardFlutter',
+  static FirebaseOptions macos = FirebaseOptions(
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
+        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+    appId: const String.fromEnvironment('FIREBASE_APP_ID_IOS',
+        defaultValue: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99'),
+    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: '218352465432'),
+    projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
+        defaultValue: 'teacher-dashboard-flutterfire'),
+    storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
+        defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
+    databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
+        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+    iosBundleId: const String.fromEnvironment('IOS_BUNDLE_ID',
+        defaultValue: 'com.teacherdashboard.teacherDashboardFlutter'),
   );
 
-  static FirebaseOptions get windows => FirebaseOptions(
-    apiKey: _apiKey,
-    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+  static FirebaseOptions windows = FirebaseOptions(
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
+        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+    appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
+        defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
+    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: '218352465432'),
+    projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
+        defaultValue: 'teacher-dashboard-flutterfire'),
+    authDomain: const String.fromEnvironment('FIREBASE_AUTH_DOMAIN',
+        defaultValue: 'teacher-dashboard-flutterfire.firebaseapp.com'),
+    storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
+        defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
+    databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
+        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 
-  static FirebaseOptions get linux => FirebaseOptions(
-    apiKey: _apiKey,
-    appId: '1:218352465432:web:6e1c0fa4f21416df38b56d',
-    messagingSenderId: '218352465432',
-    projectId: 'teacher-dashboard-flutterfire',
-    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+  static FirebaseOptions linux = FirebaseOptions(
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
+        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+    appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
+        defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
+    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+        defaultValue: '218352465432'),
+    projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
+        defaultValue: 'teacher-dashboard-flutterfire'),
+    authDomain: const String.fromEnvironment('FIREBASE_AUTH_DOMAIN',
+        defaultValue: 'teacher-dashboard-flutterfire.firebaseapp.com'),
+    storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
+        defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
+    databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
+        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 }
