@@ -74,15 +74,15 @@ dependencies:
   cached_network_image: ^3.4.1
 
   # Video support
-  video_player: ^2.10.0
+  video_player: ^2.9.1
   video_compress: ^3.1.3  # Most popular & stable: 717 likes, 107k downloads, native code
 
   # WebRTC for video/voice calling
   flutter_webrtc: ^1.0.0
-  permission_handler: ^12.0.1
+  permission_handler: ^11.3.1
 
   # Notifications - Re-enabled with desktop support
-  flutter_local_notifications: ^18.0.1
+  flutter_local_notifications: ^17.2.3
   timezone: ^0.9.4
 
   # Call UI for mobile platforms (iOS CallKit, Android ConnectionService)
@@ -98,7 +98,7 @@ dependencies:
 
 # Dependency overrides to resolve version conflicts
 dependency_overrides:
-  js: ^0.7.2  # Force to latest version before discontinuation
+  js: ^0.7.1  # Force to latest version before discontinuation
   path_provider: ^2.1.5
   path: ^1.9.1
 
