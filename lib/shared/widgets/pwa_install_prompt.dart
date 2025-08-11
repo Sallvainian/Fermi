@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:html' as html;
+import 'dart:js_util' as js_util;
 
 class PWAInstallPrompt extends StatefulWidget {
   const PWAInstallPrompt({super.key});
@@ -29,7 +30,7 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
     
     // Check if app is already installed (running in standalone mode)
     final isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
-        html.window.navigator.standalone == true;
+        (js_util.getProperty(html.window.navigator, 'standalone') == true);
 
     setState(() {
       _isIOSSafari = kIsWeb && isIOS && isSafari;
@@ -346,7 +347,7 @@ class PWAUtils {
     
     return html.window.matchMedia('(display-mode: standalone)').matches ||
         html.window.matchMedia('(display-mode: fullscreen)').matches ||
-        html.window.navigator.standalone == true;
+        (js_util.getProperty(html.window.navigator, 'standalone') == true);
   }
   
   static bool get isIOS {
