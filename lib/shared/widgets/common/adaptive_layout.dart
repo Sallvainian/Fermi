@@ -166,10 +166,12 @@ class AdaptiveLayout extends StatelessWidget {
             drawer: showNavigationDrawer && !showBackButton
                 ? const AppDrawer()
                 : null,
-            // Content area with mobile-optimized padding
-            body: ResponsivePadding(
-              mobile: const EdgeInsets.all(AppSpacing.md),
-              child: body,
+            // Content area with mobile-optimized padding and safe area handling
+            body: SafeArea(
+              child: ResponsivePadding(
+                mobile: const EdgeInsets.all(AppSpacing.md),
+                child: body,
+              ),
             ),
             // Bottom navigation for mobile-first navigation pattern
             bottomNavigationBar:
@@ -211,10 +213,12 @@ class AdaptiveLayout extends StatelessWidget {
                           false, // Disable default drawer toggle
                       bottom: bottom,
                     ),
-                    body: ResponsivePadding(
-                      tablet: const EdgeInsets.all(AppSpacing.lg),
-                      desktop: const EdgeInsets.all(AppSpacing.xl),
-                      child: body,
+                    body: SafeArea(
+                      child: ResponsivePadding(
+                        tablet: const EdgeInsets.all(AppSpacing.lg),
+                        desktop: const EdgeInsets.all(AppSpacing.xl),
+                        child: body,
+                      ),
                     ),
                   ),
                 ),
