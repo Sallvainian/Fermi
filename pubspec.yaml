@@ -121,7 +121,7 @@ dev_dependencies:
   import_sorter: ^4.6.0
 
   # Testing tools
-  mockito: ^5.5.0
+  mockito: ^5.4.4
   faker: ^2.2.0
 
 
