@@ -15,6 +15,7 @@ import 'shared/routing/app_router.dart';
 import 'shared/theme/app_theme.dart';
 import 'shared/theme/app_typography.dart';
 import 'shared/widgets/splash_screen.dart';
+import 'shared/widgets/pwa_update_notifier.dart';
 
 /// Public getter for Firebase initialization status.
 bool get isFirebaseInitialized => AppInitializer.isFirebaseInitialized;
@@ -45,21 +46,23 @@ class TeacherDashboardApp extends StatelessWidget {
           final authProvider = context.watch<AuthProvider>();
           final themeProvider = context.watch<ThemeProvider>();
 
-          return MaterialApp.router(
-            title: 'Teacher Dashboard',
-            theme: AppTheme.lightTheme().copyWith(
-              textTheme: AppTypography.createTextTheme(
-                AppTheme.lightTheme().colorScheme,
+          return PWAUpdateNotifier(
+            child: MaterialApp.router(
+              title: 'Teacher Dashboard',
+              theme: AppTheme.lightTheme().copyWith(
+                textTheme: AppTypography.createTextTheme(
+                  AppTheme.lightTheme().colorScheme,
+                ),
               ),
-            ),
-            darkTheme: AppTheme.darkTheme().copyWith(
-              textTheme: AppTypography.createTextTheme(
-                AppTheme.darkTheme().colorScheme,
+              darkTheme: AppTheme.darkTheme().copyWith(
+                textTheme: AppTypography.createTextTheme(
+                  AppTheme.darkTheme().colorScheme,
+                ),
               ),
+              themeMode: themeProvider.themeMode,
+              debugShowCheckedModeBanner: false,
+              routerConfig: AppRouter.createRouter(authProvider),
             ),
-            themeMode: themeProvider.themeMode,
-            debugShowCheckedModeBanner: false,
-            routerConfig: AppRouter.createRouter(authProvider),
           );
         },
       ),

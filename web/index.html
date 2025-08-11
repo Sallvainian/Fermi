@@ -44,6 +44,88 @@
   <title>Teacher Dashboard</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- PWA Update System -->
+  <script>
+    // Service Worker Registration and Update Handling
+    if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      
+      window.addEventListener('load', () => {
+        // Register custom service worker
+        navigator.serviceWorker.register('/custom_service_worker.js')
+          .then((registration) => {
+            console.log('Service Worker registered:', registration);
+            
+            // Check for updates every hour
+            setInterval(() => {
+              registration.update();
+            }, 60 * 60 * 1000);
+            
+            // Handle updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New service worker installed, show update notification
+                  console.log('New update available!');
+                  
+                  // Send message to Flutter app
+                  if (window.updateAvailable) {
+                    window.updateAvailable();
+                  }
+                }
+              });
+            });
+          })
+          .catch((error) => {
+            console.error('Service Worker registration failed:', error);
+          });
+        
+        // Listen for update messages from service worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data.type === 'UPDATE_AVAILABLE') {
+            console.log(`Update available: ${event.data.currentVersion} → ${event.data.newVersion}`);
+            
+            // Notify Flutter app
+            if (window.flutterUpdateAvailable) {
+              window.flutterUpdateAvailable(event.data);
+            }
+          } else if (event.data.type === 'SERVICE_WORKER_UPDATED') {
+            console.log(`Service Worker updated to version ${event.data.version}`);
+            
+            // Auto-refresh if no unsaved work
+            if (!refreshing && window.canAutoRefresh && window.canAutoRefresh()) {
+              refreshing = true;
+              window.location.reload();
+            }
+          }
+        });
+        
+        // Handle controller change (new service worker activated)
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            console.log('Service Worker updated, reloading page...');
+            window.location.reload();
+          }
+        });
+      });
+    }
+    
+    // Function to trigger manual update
+    window.checkForUpdates = function() {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'CHECK_UPDATE' });
+      }
+    };
+    
+    // Function to apply update (reload page)
+    window.applyUpdate = function() {
+      window.location.reload(true);
+    };
+  </script>
+
   <!-- This script adds the flutter initialization JS code -->
 </head>
 <body>

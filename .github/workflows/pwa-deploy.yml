@@ -33,6 +33,34 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
         
+      - name: Update version and build timestamp
+        run: |
+          # Generate version based on date and run number
+          VERSION="1.0.${{ github.run_number }}"
+          BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          # Update version.json
+          cat > web/version.json << EOF
+          {
+            "version": "$VERSION",
+            "buildTime": "$BUILD_TIME",
+            "buildNumber": "${{ github.run_number }}",
+            "commit": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "features": [
+              "PWA auto-update support",
+              "Safe area handling for iOS",
+              "Icon tree-shaking optimization"
+            ]
+          }
+          EOF
+          
+          # Update service worker version
+          sed -i "s/const APP_VERSION = '.*'/const APP_VERSION = '$VERSION'/" web/custom_service_worker.js
+          
+          # Copy files to build directory that will be created
+          echo "Version updated to $VERSION"
+          
       - name: Build PWA with iOS optimizations
         run: |
           flutter build web --release \
@@ -43,6 +71,12 @@ jobs:
             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }} \
             --dart-define=FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }} \
             --dart-define=FIREBASE_APP_ID_WEB=${{ secrets.FIREBASE_APP_ID_WEB }}
+            
+      - name: Copy custom service worker and version files
+        run: |
+          # Copy our custom service worker and version file to build
+          cp web/custom_service_worker.js build/web/
+          cp web/version.json build/web/
             
       - name: Optimize for iOS Safari
         run: |
