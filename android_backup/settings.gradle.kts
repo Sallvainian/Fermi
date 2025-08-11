@@ -18,10 +18,23 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.7.3" apply false
-    id("org.jetbrains.kotlin.android") version "2.1.0" apply false
+    id("com.android.application") version "8.12.0" apply false
+    id("com.android.library") version "8.12.0" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.0" apply false
     id("com.google.gms.google-services") version "4.4.3" apply false
     id("com.google.firebase.crashlytics") version "3.0.2" apply false
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    val storageUrl: String = System.getenv("FLUTTER_STORAGE_BASE_URL") ?: "https://storage.googleapis.com"
+    repositories {
+        google()
+        mavenCentral()
+        maven(url = "${storageUrl}/download.flutter.io")
+        maven(url = "https://jitpack.io")
+    }
 }
 
 include(":app")

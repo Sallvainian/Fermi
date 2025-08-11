@@ -4,18 +4,58 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Teacher Dashboard - A Flutter/Firebase education management platform currently migrating from SvelteKit/Supabase. The project is ~40% feature complete with authentication, routing, and basic dashboards implemented.
+**Teacher Dashboard** - A Flutter (Dart) application with Firebase backend for education management.
+
+**Tech Stack**: Flutter 3.24+, Dart 3.5+, Firebase (Auth, Firestore, Functions, Storage), Provider, GoRouter
+**Architecture**: Client-side Flutter app with Firebase backend; no separate server, using Provider for state management and Clean Architecture principles
+**Status**: ~40% feature complete - authentication, routing, and basic dashboards implemented
+
+## Claude Interaction Guidelines
+
+- **YOU MUST** ask clarifying questions if any requirement or code context is unclear. Do not assume unknown details.
+- **YOU SHOULD** draft and confirm a step-by-step plan for complex tasks before writing code.
+- **YOU MUST** use extended reasoning to consider implications of changes across the codebase.
+- **YOU SHOULD** verify that your planned changes align with the architecture and workflows documented below.
+- **IMPORTANT**: If something contradicts the established structure, discuss it before proceeding.
+
+## Key Components & Files
+
+### Core Entry Points
+- `lib/main.dart` - App initialization and Firebase setup
+- `lib/app.dart` - MaterialApp configuration, themes, and routing
+- `lib/firebase_options.dart` - Firebase configuration (auto-generated)
+
+### Critical Architecture Files
+- `lib/shared/core/app_providers.dart` - Central provider configuration
+- `lib/shared/routing/app_router.dart` - GoRouter configuration with auth guards
+- `lib/features/auth/presentation/providers/auth_provider.dart` - Authentication state management
+
+### Feature Locations
+- `lib/features/auth/` - Authentication system
+- `lib/features/dashboard/` - Teacher and student dashboards
+- `lib/features/students/` - Student management (placeholder)
+- `lib/features/assignments/` - Assignment system (planned)
+- `lib/shared/` - Shared utilities and widgets
 
 ## Development Commands
 
+### Environment Setup
+- **REQUIRED**: Flutter SDK 3.24+ (run `flutter --version` to check)
+- **IMPORTANT**: Run `flutter pub get` after cloning or modifying `pubspec.yaml`
+- **NOTE**: Desktop platforms (Linux/Windows) not supported due to Firebase limitations
+
 ### Essential Commands
 ```bash
+# Environment Setup
+flutter pub get            # Install dependencies (MUST run after cloning)
+flutter doctor             # Check environment setup
+
 # Run the app
 flutter run -d chrome      # Web (recommended for development)
 flutter run -d android      # Android emulator
 flutter run -d ios          # iOS simulator
 
-# Code Quality
+# Code Quality (MUST run before committing)
 flutter analyze            # Lint and analyze code
 dart format .              # Format code
 dart fix --apply           # Apply automated fixes
@@ -38,6 +78,9 @@ flutterfire configure --project=teacher-dashboard-flutterfire
 
 # Deploy to Firebase Hosting
 flutter build web && firebase deploy --only hosting
+
+# Local Firebase Emulators (for testing)
+firebase emulators:start   # Start local Firebase emulators
 ```
 
 ## Architecture
@@ -96,14 +139,14 @@ Multi-step authentication with role management:
 ## Critical Context
 
 ### Current Limitations
-- **Desktop Support**: Firebase doesn't support Linux/Windows - use web or emulator
-- **Placeholder Features**: Student management, messaging, calendar, notifications not yet implemented
-- **Compilation Branch**: Working on `fix/compilation-errors-auth-refactor` branch
+- **IMPORTANT: Desktop Not Supported** - Firebase doesn't support Linux/Windows. **YOU MUST** use web browser or mobile emulator for development.
+- **NOTE**: Student management, messaging, calendar, and notifications are placeholder features - not yet implemented
+- **Current Branch**: Working on `fix/compilation-errors-auth-refactor` branch
 
 ### Active Issues
-1. **IDE Error**: Flutter plugin `BadgeIcon` cast exception - doesn't affect functionality
-2. **38 Linting Issues**: Need to remove print statements and fix unused variables
-3. **Auth Refactor**: Recently centralized AuthProvider, may have residual issues
+1. **IDE Warning (Non-Critical)**: Flutter plugin `BadgeIcon` cast exception - does not affect functionality
+2. **Linting Issues**: 38 warnings - mostly print statements and unused variables that need cleanup
+3. **Recent Refactor**: Auth system recently centralized to AuthProvider - watch for residual issues
 
 ### Testing Approach
 ```bash
@@ -126,17 +169,36 @@ flutter test test/widget_test.dart               # Widget tests
 4. Add routes to `app_router.dart` with proper guards
 5. Implement Firestore security rules if adding collections
 
+#### Example: Adding a Profile Feature
+```
+Step 1: Create structure
+  lib/features/profile/
+    ├── domain/
+    │   ├── models/profile_model.dart      # Define ProfileModel class
+    │   └── repositories/profile_repository.dart  # Repository interface
+    ├── data/
+    │   └── repositories/profile_repository_impl.dart  # Firestore implementation
+    └── presentation/
+        ├── screens/profile_screen.dart    # UI screen
+        └── providers/profile_provider.dart # State management
+
+Step 2: Register provider in lib/shared/core/app_providers.dart
+Step 3: Add route in lib/shared/routing/app_router.dart with auth guard
+Step 4: Add navigation to profile from dashboard
+Step 5: Test authentication flow and data loading
+```
+
 ### When Modifying Authentication
-1. Check `AuthProvider` in `features/auth/presentation/providers/`
-2. Update redirect logic in `app_router.dart`
-3. Test with `app_router_redirect_test.dart`
+1. **MUST** check `AuthProvider` in `features/auth/presentation/providers/`
+2. Update redirect logic in `app_router.dart` (refer to Authentication Flow above)
+3. **MUST** test with `app_router_redirect_test.dart`
 4. Verify email verification flow still works
 
 ### When Working with Firebase
-1. Never commit API keys directly - use environment variables
+1. **MUST NOT** commit API keys directly - use environment variables
 2. Run `flutterfire configure` after Firebase Console changes
 3. Update security rules in Firebase Console
-4. Test locally with emulators when possible
+4. **SHOULD** test locally with emulators when possible
 
 ### CI/CD Considerations
 - GitHub Actions workflows in `.github/workflows/`
@@ -144,23 +206,49 @@ flutter test test/widget_test.dart               # Widget tests
 - Builds trigger on push to main
 - Separate workflows for web, Android, iOS
 
-## Code Style Guidelines
+## Code Style Rules
 
 ### Dart/Flutter Conventions
-- Use `const` constructors where possible
-- Prefer single quotes for strings
-- Avoid `print()` in production code - use proper logging
-- Follow effective dart guidelines
-- Document public APIs with `///` comments
+- **MUST** use `const` constructors wherever possible for performance
+- **SHOULD** prefer single quotes for strings (Flutter convention)
+- **MUST NOT** use `print()` in production code - use proper logging utilities
+- **MUST** follow [Effective Dart](https://dart.dev/guides/language/effective-dart) guidelines
+- **SHOULD** document public APIs with `///` doc comments
+- **MUST** follow Clean Architecture layering - no direct Firebase calls in presentation layer
 
 ### Error Handling
-- Use try-catch for Firebase operations
-- Show user-friendly error messages via SnackBars
-- Log errors to Crashlytics in production
-- Handle offline scenarios gracefully
+- **MUST** use try-catch for all Firebase operations
+- **MUST** show user-friendly error messages via SnackBars (not raw errors)
+- **SHOULD** log errors to Crashlytics in production builds
+- **MUST** handle offline scenarios gracefully with appropriate UI feedback
 
 ### Testing Requirements
-- Write tests for new features
-- Maintain existing test coverage
-- Test authentication flows thoroughly
-- Mock Firebase services in unit tests
+- **MUST** write tests for new features before marking them complete
+- **SHOULD** maintain >80% code coverage for critical paths
+- **MUST** test authentication flows thoroughly (login, logout, role changes)
+- **MUST** mock Firebase services in unit tests - no real Firebase calls
+
+### Git Workflow Rules
+- **MUST** use Conventional Commits format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
+- **MUST NOT** commit directly to `main` branch - use feature branches
+- **MUST** run `flutter analyze` before committing code
+- **SHOULD** keep commits atomic and focused on single changes
+
+## Important Reminders
+
+- **CRITICAL**: This is a Flutter/Firebase project - no backend server code needed
+- **IMPORTANT**: Always check existing patterns in the codebase before creating new ones
+- **NOTE**: Provider is used for state management, not Riverpod or Bloc
+- **REMEMBER**: Authentication flow has specific steps that must be followed in order
+- **WARNING**: Desktop platforms are not supported - test on web or mobile only
+
+## When You're Unsure
+
+If any aspect of the task is unclear:
+1. **ASK** for clarification before proceeding
+2. **EXPLAIN** what you understand and what needs clarification
+3. **PROPOSE** a solution approach and confirm it's correct
+4. **NEVER** make assumptions about critical functionality
+
+Remember: It's better to ask questions than to implement incorrectly\!
+ENDMARKER < /dev/null

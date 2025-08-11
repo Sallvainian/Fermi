@@ -29,6 +29,8 @@ import '../../features/classes/presentation/screens/student/enrollment_screen.da
 // import '../../features/notifications/presentation/screens/student_notifications_screen.dart' as student_notifications;
 import '../screens/settings_screen.dart';
 import '../screens/debug/debug/update_display_name_screen.dart';
+import '../screens/debug/crashlytics_test_screen.dart';
+import '../screens/debug/force_crashlytics_sync.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/user_selection_screen.dart';
@@ -458,6 +460,16 @@ class AppRouter {
           path: '/debug/update-name',
           name: 'updateDisplayName',
           builder: (context, state) => const UpdateDisplayNameScreen(),
+        ),
+        GoRoute(
+          path: '/debug/crashlytics-test',
+          name: 'crashlyticsTest',
+          builder: (context, state) => const CrashlyticsTestScreen(),
+        ),
+        GoRoute(
+          path: '/debug/crashlytics-sync',
+          name: 'crashlyticsSync',
+          builder: (context, state) => const ForceCrashlyticsSync(),
         ),
       ];
 

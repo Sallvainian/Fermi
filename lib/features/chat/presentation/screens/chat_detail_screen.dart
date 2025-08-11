@@ -6,11 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter/return_code.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_compress/video_compress.dart';
 import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 
 import '../providers/chat_provider.dart';
 import '../../domain/models/message.dart';
@@ -885,26 +883,70 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     });
 
     try {
-      // Compress video using ffmpeg
-      final Directory tempDir = await getTemporaryDirectory();
-      final String outputPath = '${tempDir.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.mp4';
+      File videoToUpload = videoFile;
       
-      // FFmpeg command for video compression
-      final command = '-i ${videoFile.path} -c:v libx264 -crf 28 -preset fast -c:a aac -b:a 128k $outputPath';
-      
-      await FFmpegKit.execute(command).then((session) async {
-        final returnCode = await session.getReturnCode();
-        
-        if (!ReturnCode.isSuccess(returnCode)) {
-          throw Exception('Video compression failed');
+      // Compress video if it's larger than 10MB
+      const int compressionThreshold = 10 * 1024 * 1024; // 10MB
+      if (videoFile.lengthSync() > compressionThreshold) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Compressing video...'),
+              duration: Duration(seconds: 2),
+            ),
+          );
         }
-      });
-
-      final File compressedFile = File(outputPath);
+        
+        try {
+          // Set compression quality based on file size
+          VideoQuality quality = VideoQuality.MediumQuality;
+          if (videoFile.lengthSync() > 50 * 1024 * 1024) {
+            quality = VideoQuality.LowQuality;
+          } else if (videoFile.lengthSync() > 20 * 1024 * 1024) {
+            quality = VideoQuality.MediumQuality;
+          } else {
+            quality = VideoQuality.HighestQuality;
+          }
+          
+          // Compress the video
+          final MediaInfo? info = await VideoCompress.compressVideo(
+            videoFile.path,
+            quality: quality,
+            deleteOrigin: false, // Keep original file
+            includeAudio: true,
+            frameRate: 30, // Standard frame rate
+          );
+          
+          if (info != null && info.file != null) {
+            videoToUpload = info.file!;
+            if (mounted) {
+              final originalSizeMB = (videoFile.lengthSync() / (1024 * 1024)).toStringAsFixed(1);
+              final compressedSizeMB = (videoToUpload.lengthSync() / (1024 * 1024)).toStringAsFixed(1);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Video compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
+          }
+        } catch (compressionError) {
+          // If compression fails, use original file
+          debugPrint('Video compression failed: $compressionError');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Video compression failed, uploading original'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        }
+      }
 
       // Create unique filename
       final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${compressedFile.path.split('/').last}';
+          '${DateTime.now().millisecondsSinceEpoch}_${videoToUpload.path.split('/').last}';
 
       // Upload to Firebase Storage
       final Reference storageRef = FirebaseStorage.instance
@@ -913,7 +955,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           .child(widget.chatRoomId)
           .child(fileName);
 
-      final UploadTask uploadTask = storageRef.putFile(compressedFile);
+      final UploadTask uploadTask = storageRef.putFile(videoToUpload);
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
@@ -938,6 +980,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
         _messageController.clear();
       }
+      
+      // Clean up compressed file if different from original
+      if (videoToUpload.path != videoFile.path) {
+        try {
+          await videoToUpload.delete();
+        } catch (e) {
+          debugPrint('Failed to delete compressed video: $e');
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -949,6 +1000,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         _isUploading = false;
         _uploadProgress = 0.0;
       });
+      
+      // Cancel any ongoing compression
+      await VideoCompress.cancelCompression();
     }
   }
 

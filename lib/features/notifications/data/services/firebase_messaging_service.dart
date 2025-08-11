@@ -175,22 +175,30 @@ class FirebaseMessagingService {
         const vapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
         
         if (vapidKey.isEmpty) {
-          LoggerService.error('FIREBASE_VAPID_KEY not found in environment variables');
-          return;
-        }
-        
-        try {
-          // Use VAPID key for web FCM token generation
-          token = await _messaging.getToken(vapidKey: vapidKey);
-          LoggerService.info('FCM token generated successfully with VAPID key', tag: 'FirebaseMessagingService');
-        } catch (e) {
-          LoggerService.error('Failed to get FCM token for web with VAPID key: $e', tag: 'FirebaseMessagingService');
-          // Fallback: try without VAPID key for development
+          LoggerService.warning('FIREBASE_VAPID_KEY not found in environment variables - attempting fallback', tag: 'FirebaseMessagingService');
+          // Try without VAPID key for development
           try {
             token = await _messaging.getToken();
-            LoggerService.warning('Using FCM token without VAPID key (development only)', tag: 'FirebaseMessagingService');
-          } catch (fallbackError) {
-            LoggerService.error('Failed to get FCM token completely: $fallbackError', tag: 'FirebaseMessagingService');
+            LoggerService.info('FCM token generated without VAPID key (development mode)', tag: 'FirebaseMessagingService');
+          } catch (e) {
+            LoggerService.error('Failed to get FCM token without VAPID key: $e', tag: 'FirebaseMessagingService');
+            LoggerService.info('To fix: Add VAPID key from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates', tag: 'FirebaseMessagingService');
+            return;
+          }
+        } else {
+          try {
+            // Use VAPID key for web FCM token generation
+            token = await _messaging.getToken(vapidKey: vapidKey);
+            LoggerService.info('FCM token generated successfully with VAPID key', tag: 'FirebaseMessagingService');
+          } catch (e) {
+            LoggerService.error('Failed to get FCM token with VAPID key: $e', tag: 'FirebaseMessagingService');
+            // Fallback: try without VAPID key for development
+            try {
+              token = await _messaging.getToken();
+              LoggerService.warning('Using FCM token without VAPID key (fallback)', tag: 'FirebaseMessagingService');
+            } catch (fallbackError) {
+              LoggerService.error('Failed to get FCM token completely: $fallbackError', tag: 'FirebaseMessagingService');
+            }
           }
         }
       } else {
@@ -412,17 +420,20 @@ class FirebaseMessagingService {
         // Use VAPID key for web
         const vapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
         
-        try {
-          return await _messaging.getToken(vapidKey: vapidKey);
-        } catch (e) {
-          LoggerService.warning('Failed to get current token for web with VAPID key: $e', tag: 'FirebaseMessagingService');
-          // Fallback without VAPID key for development
+        if (vapidKey.isNotEmpty) {
           try {
-            return await _messaging.getToken();
-          } catch (fallbackError) {
-            LoggerService.error('Failed to get current token completely: $fallbackError', tag: 'FirebaseMessagingService');
-            return null;
+            return await _messaging.getToken(vapidKey: vapidKey);
+          } catch (e) {
+            LoggerService.warning('Failed to get current token with VAPID key: $e', tag: 'FirebaseMessagingService');
+            // Fallback without VAPID key
           }
+        }
+        // Try without VAPID key as fallback or when not provided
+        try {
+          return await _messaging.getToken();
+        } catch (fallbackError) {
+          LoggerService.error('Failed to get current token completely: $fallbackError', tag: 'FirebaseMessagingService');
+          return null;
         }
       } else {
         return await _messaging.getToken();
