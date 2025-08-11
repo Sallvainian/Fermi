@@ -12,6 +12,7 @@ import '../../../../shared/widgets/common/common_widgets.dart';
 import '../../../student/presentation/widgets/online_users_card.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/pwa_install_prompt.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -125,6 +126,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
+              
+              // PWA Install Prompt for iOS users
+              const PWAInstallPrompt(),
+              const SizedBox(height: 8),
 
               // Quick Stats - Smaller section
               _buildQuickStats(context),

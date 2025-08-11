@@ -1,0 +1,134 @@
+name: Deploy PWA for iOS Testing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/pwa-deploy.yml'
+  workflow_dispatch:
+    inputs:
+      deploy_message:
+        description: 'Deployment message'
+        required: false
+        default: 'Deploy PWA update'
+
+jobs:
+  deploy-pwa:
+    name: Build and Deploy PWA
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+          
+      - name: Install dependencies
+        run: flutter pub get
+        
+      - name: Build PWA with iOS optimizations
+        run: |
+          flutter build web --release \
+            --pwa-strategy=offline-first \
+            --web-renderer=html \
+            --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
+            --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }} \
+            --dart-define=FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }} \
+            --dart-define=FIREBASE_APP_ID_WEB=${{ secrets.FIREBASE_APP_ID_WEB }}
+            
+      - name: Optimize for iOS Safari
+        run: |
+          # Add iOS-specific meta tags if not present
+          if ! grep -q "apple-mobile-web-app-capable" build/web/index.html; then
+            sed -i '/<head>/a\
+            <meta name="apple-mobile-web-app-capable" content="yes">\
+            <meta name="apple-mobile-web-app-status-bar-style" content="black">\
+            <meta name="apple-mobile-web-app-title" content="Teacher Dashboard">\
+            <link rel="apple-touch-icon" href="icons/Icon-192.png">' build/web/index.html
+          fi
+          
+      - name: Create/Update manifest.json
+        run: |
+          cat > build/web/manifest.json << 'EOF'
+          {
+            "name": "Teacher Dashboard",
+            "short_name": "TeacherDash",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#FFFFFF",
+            "theme_color": "#2196F3",
+            "description": "Teacher Dashboard - Education Management Platform",
+            "orientation": "portrait-primary",
+            "prefer_related_applications": false,
+            "icons": [
+              {
+                "src": "icons/Icon-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+              },
+              {
+                "src": "icons/Icon-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+              },
+              {
+                "src": "icons/Icon-maskable-192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "maskable"
+              },
+              {
+                "src": "icons/Icon-maskable-512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "maskable"
+              }
+            ]
+          }
+          EOF
+          
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEACHER_DASHBOARD_FLUTTERFIRE }}'
+          channelId: live
+          projectId: teacher-dashboard-flutterfire
+          
+      - name: Get deployment URL
+        id: deploy_url
+        run: |
+          echo "url=https://teacher-dashboard-flutterfire.web.app" >> $GITHUB_OUTPUT
+          
+      - name: Create deployment summary
+        run: |
+          echo "## 🚀 PWA Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📱 Test on iOS Device:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Open Safari on your iPhone/iPad" >> $GITHUB_STEP_SUMMARY
+          echo "2. Go to: [${{ steps.deploy_url.outputs.url }}](${{ steps.deploy_url.outputs.url }})" >> $GITHUB_STEP_SUMMARY
+          echo "3. Tap the Share button (square with arrow)" >> $GITHUB_STEP_SUMMARY
+          echo "4. Select **'Add to Home Screen'**" >> $GITHUB_STEP_SUMMARY
+          echo "5. Name it and tap **'Add'**" >> $GITHUB_STEP_SUMMARY
+          echo "6. Launch from home screen - works like a native app!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Direct Web Access:" >> $GITHUB_STEP_SUMMARY
+          echo "[${{ steps.deploy_url.outputs.url }}](${{ steps.deploy_url.outputs.url }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Deployment Info:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Message:** ${{ github.event.inputs.deploy_message || github.event.head_commit.message }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time:** $(date)" >> $GITHUB_STEP_SUMMARY

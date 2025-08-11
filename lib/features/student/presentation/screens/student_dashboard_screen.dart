@@ -11,6 +11,7 @@ import '../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
+import '../../../../shared/widgets/pwa_install_prompt.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -124,6 +125,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
+              
+              // PWA Install Prompt for iOS users
+              const PWAInstallPrompt(),
+              const SizedBox(height: 8),
 
               // Quick Stats - Smaller section
               _buildQuickStats(context),
