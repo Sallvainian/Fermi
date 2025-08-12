@@ -8,10 +8,14 @@ import 'dart:js' as js;
 /// and handles the update process smoothly
 class PWAUpdateNotifier extends StatefulWidget {
   final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
   
   const PWAUpdateNotifier({
     super.key,
     required this.child,
+    required this.navigatorKey,
+    required this.scaffoldMessengerKey,
   });
 
   @override
@@ -35,7 +39,20 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
   }
 
   void _setupUpdateListener() {
-    // Register Flutter callback for JavaScript to call
+    // Listen for PWA update event from DOM
+    html.document.addEventListener('pwa-update-available', (event) {
+      if (mounted) {
+        setState(() {
+          _updateAvailable = true;
+          // Version info can be passed through event detail if needed
+        });
+        
+        // Show update notification
+        _showUpdateNotification();
+      }
+    });
+    
+    // Register Flutter callback for JavaScript to call (fallback)
     js.context['flutterUpdateAvailable'] = (dynamic data) {
       if (mounted) {
         setState(() {
@@ -70,88 +87,96 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
   void _showUpdateNotification() {
     if (!_updateAvailable || !mounted) return;
     
-    // Show snackbar with update option
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.system_update, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Update Available!',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+    // Defer until after MaterialApp is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final messenger = widget.scaffoldMessengerKey.currentState;
+      if (messenger == null) return;
+      
+      messenger.showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.system_update, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Update Available!',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      if (_newVersion.isNotEmpty)
+                        Text(
+                          'Version $_currentVersion → $_newVersion',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                    ],
                   ),
-                  if (_newVersion.isNotEmpty)
-                    Text(
-                      'Version $_currentVersion → $_newVersion',
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-        duration: const Duration(days: 1), // Keep visible until action
-        action: SnackBarAction(
-          label: 'Update Now',
-          textColor: Colors.lightBlueAccent,
-          onPressed: _applyUpdate,
-        ),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.blueGrey.shade800,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
+            duration: const Duration(days: 1), // Keep visible until action
+            action: SnackBarAction(
+              label: 'Update Now',
+              textColor: Colors.lightBlueAccent,
+              onPressed: _applyUpdate,
+            ),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.blueGrey.shade800,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+    });
   }
 
-  void _applyUpdate() {
-    if (_isRefreshing) return;
+  Future<void> _applyUpdate() async {
+    if (_isRefreshing || !mounted) return;
     
     setState(() {
       _isRefreshing = true;
     });
     
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          title: const Text('Updating...'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text('Applying update to version $_newVersion'),
-              const SizedBox(height: 8),
-              const Text(
-                'The app will refresh automatically.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
+    // Safe dialog via navigatorKey (no ancestor Navigator required)
+    final ctx = widget.navigatorKey.currentContext;
+    if (ctx != null) {
+      showDialog(
+        context: ctx,
+        barrierDismissible: false,
+        builder: (context) => PopScope(
+          canPop: false,
+          child: AlertDialog(
+            title: const Text('Updating...'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text('Applying update to version $_newVersion'),
+                const SizedBox(height: 8),
+                const Text(
+                  'The app will refresh automatically.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
     
-    // Delay slightly to show dialog, then refresh
-    Future.delayed(const Duration(seconds: 1), () {
-      js.context.callMethod('applyUpdate');
-    });
+    // Give the dialog a beat, then trigger the JS update
+    await Future.delayed(const Duration(seconds: 1));
+    js.context.callMethod('applyUpdate');
   }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
+      alignment: Alignment.topCenter, // Use non-directional alignment
       children: [
         widget.child,
         

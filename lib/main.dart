@@ -1,5 +1,5 @@
 /// Main entry point for the Teacher Dashboard Flutter application.
-/// 
+///
 /// This application provides a comprehensive education management platform
 /// for teachers and students, built with Flutter and Firebase.
 library;
@@ -33,6 +33,10 @@ Future<void> main() async {
   );
 }
 
+/// Global keys for PWA update notifications
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 /// Root widget of the Teacher Dashboard application - simplified and modular
 class TeacherDashboardApp extends StatelessWidget {
   const TeacherDashboardApp({super.key});
@@ -47,8 +51,11 @@ class TeacherDashboardApp extends StatelessWidget {
           final themeProvider = context.watch<ThemeProvider>();
 
           return PWAUpdateNotifier(
+            navigatorKey: navigatorKey,
+            scaffoldMessengerKey: scaffoldMessengerKey,
             child: MaterialApp.router(
               title: 'Teacher Dashboard',
+              scaffoldMessengerKey: scaffoldMessengerKey,
               theme: AppTheme.lightTheme().copyWith(
                 textTheme: AppTypography.createTextTheme(
                   AppTheme.lightTheme().colorScheme,

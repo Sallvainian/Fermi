@@ -48,81 +48,60 @@
   <script>
     // Service Worker Registration and Update Handling
     if ('serviceWorker' in navigator) {
-      let refreshing = false;
-      
-      window.addEventListener('load', () => {
-        // Register custom service worker
-        navigator.serviceWorker.register('/custom_service_worker.js')
-          .then((registration) => {
-            console.log('Service Worker registered:', registration);
-            
-            // Check for updates every hour
-            setInterval(() => {
-              registration.update();
-            }, 60 * 60 * 1000);
-            
-            // Handle updates
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('/custom_service_worker.js');
+          console.log('Service Worker registered:', reg);
+          
+          // Only treat as update if a controller already exists
+          if (navigator.serviceWorker.controller) {
+            reg.addEventListener('updatefound', () => {
+              const sw = reg.installing;
+              if (!sw) return;
               
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New service worker installed, show update notification
+              sw.addEventListener('statechange', () => {
+                if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New SW installed over an existing one → update available
                   console.log('New update available!');
                   
-                  // Send message to Flutter app
-                  if (window.updateAvailable) {
-                    window.updateAvailable();
+                  // Dispatch custom event for Flutter
+                  document.dispatchEvent(new Event('pwa-update-available'));
+                  
+                  // Also call legacy callback if exists
+                  if (window.flutterUpdateAvailable) {
+                    window.flutterUpdateAvailable({
+                      currentVersion: '1.0.0',
+                      newVersion: '1.0.1'
+                    });
                   }
                 }
               });
             });
-          })
-          .catch((error) => {
-            console.error('Service Worker registration failed:', error);
-          });
-        
-        // Listen for update messages from service worker
-        navigator.serviceWorker.addEventListener('message', (event) => {
-          if (event.data.type === 'UPDATE_AVAILABLE') {
-            console.log(`Update available: ${event.data.currentVersion} → ${event.data.newVersion}`);
-            
-            // Notify Flutter app
-            if (window.flutterUpdateAvailable) {
-              window.flutterUpdateAvailable(event.data);
-            }
-          } else if (event.data.type === 'SERVICE_WORKER_UPDATED') {
-            console.log(`Service Worker updated to version ${event.data.version}`);
-            
-            // Auto-refresh if no unsaved work
-            if (!refreshing && window.canAutoRefresh && window.canAutoRefresh()) {
-              refreshing = true;
-              window.location.reload();
-            }
           }
-        });
-        
-        // Handle controller change (new service worker activated)
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!refreshing) {
-            refreshing = true;
-            console.log('Service Worker updated, reloading page...');
-            window.location.reload();
-          }
-        });
+          
+          // Optional: Check for updates periodically (throttled for dev)
+          // setInterval(() => reg.update(), 60000);
+          
+        } catch (e) {
+          console.warn('SW registration failed', e);
+        }
+      });
+      
+      // Reload only when a new controller takes over (updates), not first install
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // Only reload if we had a controller before (i.e., this is an update)
+        if (!refreshing && document.visibilityState === 'visible') {
+          refreshing = true;
+          console.log('Service Worker updated, reloading page...');
+          location.reload();
+        }
       });
     }
     
-    // Function to trigger manual update
-    window.checkForUpdates = function() {
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({ type: 'CHECK_UPDATE' });
-      }
-    };
-    
     // Function to apply update (reload page)
     window.applyUpdate = function() {
-      window.location.reload(true);
+      location.reload(true);
     };
   </script>
 
