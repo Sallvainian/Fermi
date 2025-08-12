@@ -193,7 +193,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
                   color: Colors.blue.shade700,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -241,7 +241,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
                           onPressed: _applyUpdate,
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.white,
-                            backgroundColor: Colors.white.withOpacity(0.2),
+                            backgroundColor: Colors.white.withValues(alpha: 0.2),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 4,
