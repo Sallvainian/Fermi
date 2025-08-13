@@ -74,15 +74,16 @@ abstract class ChatRepository extends BaseRepository {
   /// and the specified user, returns the existing chat room.
   /// Otherwise, creates a new direct chat room.
   /// 
+  /// Implementations must resolve both participants' roles from
+  /// their stored user profiles instead of relying on callers.
+  /// 
   /// @param otherUserId ID of the other participant
   /// @param otherUserName Display name of the other user
-  /// @param otherUserRole Role of the other user
   /// @return Created or existing chat room
   /// @throws Exception if operation fails
   Future<ChatRoom> createOrGetDirectChat(
     String otherUserId,
     String otherUserName,
-    String otherUserRole,
   );
   
   // Create group chat
@@ -118,6 +119,7 @@ abstract class ChatRepository extends BaseRepository {
   /// @param content Message text content
   /// @param attachmentUrl Optional file attachment URL
   /// @param attachmentType Optional attachment MIME type
+  /// @param userRole Optional sender's role (teacher/student)
   /// @return Generated message ID
   /// @throws Exception if sending fails
   Future<String> sendMessage({
@@ -125,6 +127,7 @@ abstract class ChatRepository extends BaseRepository {
     required String content,
     String? attachmentUrl,
     String? attachmentType,
+    String? userRole,
   });
   
   /// Deletes a message from a chat room.

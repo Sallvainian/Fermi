@@ -1,857 +1,343 @@
-# Implementation Plan (AI-Accelerated)
-# Teacher Dashboard Flutter Firebase
+# Flutter/Firebase App Critical Fixes - Planning Document
 
-## 🚀 Overview
-Complete teacher dashboard implementation using AI assistance for 15-20x development acceleration. This plan combines practical architecture with tactical AI-assisted development to deliver a working classroom management tool.
-
-## Development Approach
-
----
-
-## Phase 1: Foundation
-
-### Pre-Implementation Checklist
-```bash
-# Environment Setup
-- [ ] Flutter installed and working
-- [ ] Android Studio configured
-- [ ] Firebase account created
-- [ ] GitHub repository ready
-```
-
-### Project Setup
-```yaml
-Tasks:
-- [ ] Initialize Flutter project
-- [ ] Configure Firebase project
-- [ ] Set up GitHub repository
-- [ ] Configure Android Studio
-- [ ] Install dependencies
-- [ ] Basic folder structure
-- [ ] Theme configuration
-- [ ] Router setup
-- [ ] Environment variables
-- [ ] Android configuration
-- [ ] First successful run
-```
-
-### Authentication System
-```yaml
-Implementation:
-- [ ] Firebase Auth integration
-- [ ] Email/password authentication
-- [ ] Google Sign-In
-- [ ] Session management
-- [ ] Login screen complete
-- [ ] Signup screen complete
-- [ ] Password reset flow
-- [ ] Role detection (teacher/student)
-- [ ] Role-based routing
-- [ ] Permission system
-- [ ] Route guards implemented
-- [ ] Session persistence
-- [ ] Error handling
-- [ ] Logout functionality
-```
-
-### Core Navigation
-```yaml
-Implementation:
-- [ ] go_router implementation
-- [ ] Route guards
-- [ ] Deep linking
-- [ ] Teacher dashboard
-- [ ] Student dashboard
-- [ ] Navigation drawer
-- [ ] Bottom navigation
-- [ ] Profile screen
-- [ ] Settings screen
-- [ ] State management setup
-- [ ] Screen transitions
-```
-
-### Phase 1 Validation
-```yaml
-Testing Checklist:
-- [ ] Can create account
-- [ ] Can login/logout
-- [ ] Teacher sees teacher dashboard
-- [ ] Student sees student dashboard
-- [ ] Navigation works
-- [ ] No crashes
-- [ ] Unit tests for auth
-- [ ] Integration tests
-- [ ] Commit everything
-```
-
-**Phase 1 Deliverables:**
-✅ Working authentication
-✅ Role-based navigation
-✅ Basic app structure
-✅ All screens accessible
-
----
-
-## Phase 2: Core Features
-
-### Student Management System
-```yaml
-AI Prompts:
-- "Create complete CRUD for student management with Firestore"
-- "Build student list with search and filter"
-- "Generate forms for student creation and editing"
-
-Implementation:
-- [ ] Student entity model
-- [ ] Repository implementation
-- [ ] Firestore integration
-- [ ] Student model class
-- [ ] Firestore service
-- [ ] Create student form
-- [ ] Student list view
-- [ ] Student detail screen
-- [ ] Edit functionality
-- [ ] Delete with confirmation
-- [ ] Search implementation
-- [ ] Form validation
-- [ ] Test all CRUD operations
-```
-
-### Class Management
-```yaml
-Implementation:
-- [ ] Class model
-- [ ] Teacher-class relationship
-- [ ] Student enrollment
-- [ ] Class service
-- [ ] Create class form
-- [ ] Class list view
-- [ ] Manage class roster
-- [ ] Class settings
-- [ ] Class overview screen
-- [ ] Student-class relationships
-- [ ] Class dashboard
-- [ ] Bulk operations
-- [ ] Testing
-```
-
-### Assignment System
-```yaml
-Implementation:
-- [ ] Assignment entity model
-- [ ] Due date system
-- [ ] Categories and tags
-- [ ] Assignment model
-- [ ] Assignment service
-- [ ] Create assignment form
-- [ ] Assignment list
-- [ ] Edit assignment
-- [ ] Assignment details
-- [ ] Due date handling
-- [ ] Student submission flow
-- [ ] File attachments
-- [ ] Status tracking
-- [ ] Submission model
-- [ ] Student submission screen
-- [ ] File upload working
-- [ ] Teacher review screen
-```
-
-### Phase 2 Integration Test
-```yaml
-Validation:
-- [ ] Can create/edit/delete students
-- [ ] Can create assignments
-- [ ] Can manage classes
-- [ ] Students can view assignments
-- [ ] Data persists correctly
-- [ ] No data conflicts
-- [ ] Commit all changes
-```
-
-**Phase 2 Deliverables:**
-✅ Complete student management
-✅ Working class system
-✅ Assignment creation and viewing
-✅ Basic submission system
-
----
-
-## Phase 3: Advanced Features
-
-### Grading System
-```yaml
-Implementation:
-- [ ] Grade entity model
-- [ ] Rubrics
-- [ ] Grade calculations
-- [ ] Grade model
-- [ ] Grading service
-- [ ] Grade entry form
-- [ ] Gradebook view
-- [ ] Student grade view
-- [ ] Gradebook table view
-- [ ] Grade calculations
-- [ ] Progress reports
-- [ ] Grade export
-- [ ] Analytics
-- [ ] Export functionality
-- [ ] Grade statistics
-```
-
-### Communication Features
-```yaml
-Implementation:
-- [ ] Announcement system
-- [ ] Push notifications
-- [ ] In-app notifications
-- [ ] Announcement model
-- [ ] Create announcement
-- [ ] Announcement feed
-- [ ] Pin important items
-- [ ] Mark as read
-- [ ] Chat foundation
-- [ ] Message threads
-- [ ] Read receipts
-- [ ] Parent accounts
-- [ ] View-only access
-- [ ] Progress updates
-```
-
-### File Management
-```yaml
-Implementation:
-- [ ] Firebase Storage integration
-- [ ] File upload service
-- [ ] Folder organization
-- [ ] File upload service
-- [ ] Resource library
-- [ ] File organization
-- [ ] Download files
-- [ ] Share links
-- [ ] Teaching materials
-- [ ] Shared resources
-- [ ] File sharing
-- [ ] Image optimization
-- [ ] Video support
-- [ ] Document preview
-```
-
-### Phase 3 Integration
-```yaml
-Validation:
-- [ ] Can enter grades
-- [ ] Can make announcements
-- [ ] Can upload files
-- [ ] All features integrated
-- [ ] Performance acceptable
-- [ ] Commit everything
-```
-
-**Phase 3 Deliverables:**
-✅ Complete grading system
-✅ Basic analytics
-✅ Announcement system
-✅ File management
-
----
-
-## Phase 4: Polish & Deployment
-
-### Testing & Fixes
-```yaml
-Testing Strategy:
-- [ ] Test all auth flows
-- [ ] Test CRUD operations
-- [ ] Test file uploads
-- [ ] Test on multiple devices
-- [ ] Fix critical bugs
-- [ ] Unit tests (80% coverage)
-- [ ] Widget tests
-- [ ] Integration tests
-- [ ] User acceptance testing
-```
-
-### Performance Optimization & UI Polish
-```yaml
-Optimization Tasks:
-- [ ] Code optimization
-- [ ] Lazy loading
-- [ ] Code splitting
-- [ ] Bundle optimization
-- [ ] Database optimization
-- [ ] Query optimization
-- [ ] Indexing
-- [ ] Caching strategy
-- [ ] Loading states
-- [ ] Error messages
-- [ ] Empty states
-- [ ] Success feedback
-- [ ] Responsive adjustments
-- [ ] UI/UX polish
-- [ ] Animations
-```
-
-### Security & Deployment
-```yaml
-Security & Launch:
-- [ ] Security audit
-- [ ] Security rules
-- [ ] Input validation
-- [ ] Data encryption
-- [ ] Production preparation
-- [ ] Environment configuration
-- [ ] Production build config
-- [ ] Optimize images
-- [ ] Minimize bundle size
-- [ ] Configure security rules
-- [ ] Final testing
-- [ ] Production build
-- [ ] Documentation
-- [ ] Web deployment
-- [ ] Android release
-- [ ] iOS submission
-- [ ] Deploy to Firebase Hosting
-- [ ] Build Android APK
-- [ ] Create user guide
-- [ ] Record demo video
-- [ ] Share with test users
-- [ ] User training
-- [ ] Support documentation
-- [ ] Monitoring setup
-```
-
-**Phase 4 Deliverables:**
-✅ Fully tested application
-✅ Deployed to production
-✅ Android APK available
-✅ Documentation complete
-✅ Ready for classroom use
-
----
-
-## Success Metrics
-
-### Phase 1 Success
-- [ ] Can log in as teacher/student
-- [ ] Can navigate all screens
-- [ ] No crash on basic operations
-
-### Phase 2 Success
-- [ ] Can create/edit students
-- [ ] Can create assignments
-- [ ] Students can view assignments
-
-### Phase 3 Success
-- [ ] Can enter grades
-- [ ] Can make announcements
-- [ ] Can upload files
-
-### Phase 4 Success
-- [ ] Deployed and accessible
-- [ ] No critical bugs
-- [ ] Usable in classroom
-
-### Technical Metrics
-- [ ] All features implemented
-- [ ] < 3 second load time
-- [ ] 99.9% uptime
-- [ ] Zero critical bugs
-- [ ] 80% test coverage
-
----
-
-## AI Assistant Strategy
-
-#### Best Practices
-- Request Flutter best practices
-- Ask for performance tips
-- Get security recommendations
-- Request testing strategies
-
----
-
-## Risk Management
-
-### Common Blockers & Solutions
-
-#### Authentication Issues
-**Risk**: Role detection fails
-**Solution**: Hardcode teacher role initially, fix later
-
-#### Firebase Limits
-**Risk**: Hit free tier limits
-**Solution**: Optimize queries, batch operations
-
-#### Platform Issues
-**Risk**: iOS build problems
-**Solution**: Focus on Android/Web first
-
-#### Time Overrun
-**Risk**: Features take longer
-**Solution**: Cut nice-to-haves, focus on core
-
-### Technical Risks
-1. **Platform compatibility issues**
-   - Mitigation: Test early on all platforms
-2. **Firebase service limits**
-   - Mitigation: Monitor usage, optimize queries
-3. **Performance issues**
-   - Mitigation: Regular profiling, optimization
-
----
-
-## Post-Launch Plan
-
-### Initial Post-Launch
-- Fix reported bugs
-- Add most-requested features
-- Optimize slow operations
-
-### Extended Development
-- Implement parent portal
-- Add email notifications
-- Enhance analytics
-- Mobile app store submission
-
-### Future Enhancements
-- Video calls
-- AI grading assistance
-- Advanced reporting
-
----
-
-## Critical Path Features
-
-### Must Have (Phase 1-2)
-1. Authentication
-2. Student management
-3. Assignment creation
-4. Basic grading
-
-### Should Have (Phase 3)
-1. File uploads
-2. Announcements
-3. Reports
-4. Calendar
-5. Notifications
-
-### Nice to Have (Phase 4+)
-1. Analytics
-2. Parent access
-
----
-
-## Remember
-
-**This is YOUR tool for YOUR classroom**
-
-- Don't over-engineer
-- Focus on what helps teaching
-- Use AI to build faster
-- Test with real scenarios
-- Iterate based on feedback
-
-**Goal**: A working app in 4 days that makes your teaching easier!
-
-## Resources
-
-- Flutter documentation
-- Firebase docs
-- AI for debugging help
-- Stack Overflow
-- GitHub discussions
-
-**YOU'VE GOT THIS! 🚀**
-
----
-
-# CRITICAL COMPILATION ERRORS - FIX PLAN
-
-## Session: 2025-08-08 10:00
-
-## Current State: 108 Compilation Errors Blocking Development
-
-### ⚠️ IMMEDIATE ACTION REQUIRED
-The project currently has 71 critical errors and 37 warnings that prevent compilation. These errors stem from recent refactoring of AuthProvider and UserModel that wasn't properly propagated throughout the codebase.
-
-## Error Analysis Summary
-
-### Root Cause
-Recent commits "Refactor: Centralize AuthProvider and expand UserModel" have fundamentally changed the authentication API structure without updating dependent code, causing widespread compilation failures.
-
-### Error Categories Breakdown
-
-#### 1. **Method Signature Breaking Changes (25 errors)**
-**Impact**: Complete auth flow broken
-- Auth methods changed from named to positional parameters
-- Return types changed from Future to void in multiple places
-- Examples:
-  - `signInWithEmail(email: x, password: y)` → `signInWithEmail(x, y)`
-  - `signUpWithEmailOnly` expects 2 positional args, receives 0
-
-#### 2. **Type Safety Violations (20 errors)**
-**Impact**: Runtime crashes if not fixed
-- String? to String assignments without null checks
-- int to String? conversion errors
-- Nullable reference errors throughout
-
-#### 3. **Null Safety Issues (18 errors)**
-**Impact**: Potential crashes at runtime
-- Methods called on nullable objects without checks
-- Properties accessed on potentially null values
-- Examples: `toLowerCase()`, `split()`, `isNotEmpty` on nullable
-
-#### 4. **Missing Properties/Methods (8 errors)**
-**Impact**: Core functionality broken
-- `displayName` getter removed from User type
-- Named parameters (email, password, parentEmail, etc.) no longer exist
-- photoURL and updatePhoto parameters undefined
-
-#### 5. **Missing Classes/Imports (10 errors)**
-**Impact**: Navigation and testing broken
-- StudentsScreen, CoursesScreen, GradesScreen not found
-- MyApp class missing
-- Test imports failing
-
-## Prioritized Fix Strategy
-
-### 🔴 Sprint 1: Core Auth Fixes (CRITICAL - Do First)
-**Goal**: Restore authentication functionality
-**Time Estimate**: 2-3 hours
-
-#### Files to Fix:
-1. `lib/features/auth/presentation/screens/login_screen.dart`
-2. `lib/features/auth/presentation/screens/signup_screen.dart`
-3. `lib/features/auth/presentation/screens/role_selection_screen.dart`
-4. `lib/features/auth/data/services/auth_service.dart`
-5. `lib/shared/screens/settings_screen.dart`
-
-#### Actions:
-```dart
-// BEFORE (broken):
-await authNotifier.signInWithEmail(
-  email: _emailController.text,
-  password: _passwordController.text,
-);
-
-// AFTER (fixed):
-await authNotifier.signInWithEmail(
-  _emailController.text,
-  _passwordController.text,
-);
-```
-
-### 🟠 Sprint 2: Null Safety & Type Fixes (HIGH PRIORITY)
-**Goal**: Prevent runtime crashes
-**Time Estimate**: 2 hours
-
-#### Key Patterns to Apply:
-```dart
-// NULL CHECKS:
-// BEFORE: displayName.toLowerCase()
-// AFTER: displayName?.toLowerCase() ?? ''
-
-// TYPE CONVERSIONS:
-// BEFORE: int value as String?
-// AFTER: value.toString()
-
-// SAFE ACCESS:
-// BEFORE: list.isNotEmpty
-// AFTER: list?.isNotEmpty ?? false
-```
-
-### 🟡 Sprint 3: Missing Components (MEDIUM PRIORITY)
-**Goal**: Restore navigation and routing
-**Time Estimate**: 1 hour
-
-#### Actions:
-1. Create placeholder screens or find renamed versions
-2. Update app_router.dart with correct imports
-3. Fix test file imports
-
-### 🟢 Sprint 4: Code Quality (LOW PRIORITY)
-**Goal**: Clean up warnings
-**Time Estimate**: 30 minutes
-
-#### Actions:
-- Remove print statements
-- Fix BuildContext async usage
-- Update to super parameters
-
-## Implementation Commands
-
-### Step 1: Create Fix Branch
-```bash
-git checkout -b fix/compilation-errors-auth-refactor
-```
-
-### Step 2: After Each File Fix
-```bash
-flutter analyze | grep "error:" | wc -l  # Count remaining errors
-```
-
-### Step 3: Progressive Testing
-```bash
-# After auth fixes:
-flutter test test/auth/
-
-# After null safety:
-flutter run --debug
-
-# Final validation:
-flutter analyze && flutter test
-```
-
-## Success Criteria
-
-### Immediate Goals (Today):
-- [ ] Application compiles without errors
-- [ ] Can run `flutter run` successfully
-- [ ] Authentication flow works
-
-### Complete Fix Validation:
-- [ ] All 71 errors resolved
-- [ ] Warning count reduced to <10
-- [ ] All tests passing
-- [ ] No runtime null reference errors
-- [ ] Navigation working correctly
-
-## Risk Mitigation
-
-| Risk | Mitigation |
-|------|------------|
-| Breaking existing functionality | Test each fix incrementally |
-| Introduction of new bugs | Run flutter analyze after each file |
-| Merge conflicts | Work on isolated fix branch |
-| Missing context about changes | Review original refactor commit first |
-
-## Next Actions
-
-### Immediate (Do Now):
-1. **Inspect the new AuthProvider structure**:
-   ```bash
-   cat lib/features/auth/presentation/providers/auth_provider.dart
-   ```
-
-2. **Understand UserModel changes**:
-   ```bash
-   cat lib/shared/models/user_model.dart
-   ```
-
-3. **Start with login_screen.dart** as it's the entry point
-
-4. **Create backup before changes**:
-   ```bash
-   git stash  # Save any uncommitted work
-   git checkout -b fix/compilation-errors-auth-refactor
-   ```
-
-## Quick Reference: Common Fixes
-
-### Auth Method Calls:
-```dart
-// OLD: Named parameters
-authNotifier.signInWithEmail(email: email, password: password)
-
-// NEW: Positional parameters
-authNotifier.signInWithEmail(email, password)
-```
-
-### Null Safety:
-```dart
-// Add null checks
-user?.displayName ?? 'Unknown'
-list?.isNotEmpty == true
-text?.toLowerCase() ?? ''
-```
-
-### Type Conversions:
-```dart
-// int to String
-intValue.toString()
-
-// String? to String
-nullableString ?? ''
-```
-
-## Status: Ready for Implementation
-
-The errors are well-understood and the fix strategy is clear. Starting with auth fixes will unblock the most critical functionality, allowing progressive resolution of remaining issues.
-
----
-
-# MISSING SCREENS FIX - Planning Document
-
-## Session: 2025-08-08 14:30
+## Session: 2025-08-13 15:00
 
 ## 1. Problem Statement
-The app_router.dart references three screens that appear to be missing, causing compilation errors:
-- `StudentsScreen` (line 312)
-- `CoursesScreen` (line 321)  
-- `GradesScreen` (line 326)
 
-These are preventing the application from compiling and blocking navigation functionality.
+The Teacher Dashboard Flutter/Firebase app has critical bugs preventing proper functionality and contains significant overengineering that impacts performance and maintainability. A comprehensive audit has identified 6 critical bugs, 7 overengineered components, and multiple code smells that need immediate attention.
 
 ## 2. Requirements Analysis
 
-### Explicit Requirements
-- Fix the three missing screen reference errors in app_router.dart
-- Ensure navigation routes work correctly for both teacher and student roles
+### Explicit Requirements (From Audit)
+- Fix persistent login state restoration on app restart
+- Correct role handling in chat messages
+- Complete profile picture update functionality
+- Fix memory/listener leaks on logout
+- Simplify overengineered components
+- Ensure offline functionality works properly
 
 ### Implicit Requirements
-- Maintain consistency with existing codebase patterns
-- Preserve routing structure and navigation flow
-- Ensure no breaking changes to existing functionality
+- Maintain existing working features
+- Improve app startup performance
+- Reduce code complexity for easier maintenance
+- Ensure proper state management across the app
+- Implement proper error handling throughout
 
-### Clarifications Completed
-✅ Verified whether screens exist with different names
-✅ Located actual screen files in the codebase
-✅ Confirmed correct class names for each screen
+### Critical Issues to Address
+
+#### Priority 1 - Breaking Bugs
+1. **Auth State Persistence**: Users lose login on refresh/restart
+2. **Profile Photo Updates**: Uploads work but don't persist
+3. **Chat Role Attribution**: Using email domain hack instead of actual role
+4. **Memory Leaks**: Providers don't clean up on logout
+
+#### Priority 2 - Performance Issues
+1. **AppInitializer Overload**: Too many services initialized at startup
+2. **Eager Provider Loading**: All providers created upfront
+3. **Redundant Abstractions**: Multiple layers doing the same thing
+
+#### Priority 3 - Code Quality
+1. **Duplicate Auth Guard Logic**: Two implementations of same functionality
+2. **Unused Model Fields**: Message and User models have unused complexity
+3. **Dead Code**: Scheduled messages, custom claims, pending_users
 
 ## 3. Research Findings
 
-### Screen Discovery Results
-After thorough investigation of the codebase, all three screens EXIST but with different names:
+### Best Practices for Auth State Persistence
+- Firebase Auth automatically persists user sessions
+- AuthProvider should check FirebaseAuth.instance.currentUser on init
+- Use authStateChanges() stream for reactive auth state
+- Restore user profile from Firestore on app launch if user exists
 
-| Referenced Name | Actual Name | File Location |
-|-----------------|-------------|---------------|
-| `StudentsScreen` | `TeacherStudentsScreen` | `lib/features/student/presentation/screens/teacher/students_screen.dart` |
-| `CoursesScreen` | `StudentCoursesScreen` | `lib/features/classes/presentation/screens/student/courses_screen.dart` |
-| `GradesScreen` | `StudentGradesScreen` | `lib/features/grades/presentation/screens/student/grades_screen.dart` |
+### Provider State Management Patterns
+- Use lazy loading for providers not immediately needed
+- Clean up listeners in dispose() methods
+- Reset provider state on logout
+- Use ProxyProvider for dependent providers
 
-### Pattern Analysis
-- Teacher screens use prefix: `Teacher[Feature]Screen`
-- Student screens use prefix: `Student[Feature]Screen`
-- This naming convention provides clear role separation
+### Firebase Performance Optimization
+- Defer non-critical services (Crashlytics, Analytics) after first paint
+- Use Firebase offline persistence for better offline support
+- Batch Firestore reads where possible
+- Cancel all subscriptions on logout
 
 ## 4. Proposed Solutions
 
-### Option 1: Update Router Imports (RECOMMENDED)
-**Description**: Update app_router.dart to import and use the correct screen names
+### Solution Approach: Incremental Fixes with Simplification
 
-**Pros**:
-- Minimal code changes (3 imports + 3 class references)
-- Preserves existing screen implementations
-- Maintains architectural patterns
-- Quick fix (5 minutes)
+Breaking the fixes into 3 sprints to ensure stability:
 
-**Cons**:
-- None identified
+#### Sprint 1: Critical Bug Fixes (1-2 days)
+**Goal**: Fix breaking functionality
 
-**Implementation**:
-```dart
-// Add imports at top of app_router.dart
-import 'package:teacher_dashboard_flutter_firebase/features/student/presentation/screens/teacher/students_screen.dart';
-import 'package:teacher_dashboard_flutter_firebase/features/classes/presentation/screens/student/courses_screen.dart';
-import 'package:teacher_dashboard_flutter_firebase/features/grades/presentation/screens/student/grades_screen.dart';
+1. **Fix Auth State Persistence**
+   - Add initialization logic to AuthProvider
+   - Check for existing user on app launch
+   - Restore user model from Firestore if authenticated
 
-// Update route builders
-builder: (context, state) => const TeacherStudentsScreen(),  // Line 312
-builder: (context, state) => const StudentCoursesScreen(),   // Line 321
-builder: (context, state) => const StudentGradesScreen(),    // Line 326
-```
+2. **Complete Profile Picture Upload**
+   - Update Firebase Auth photoURL after upload
+   - Update Firestore user document
+   - Refresh local UserModel
 
-### Option 2: Create Alias Classes
-**Description**: Create new files with the expected names that export the actual screens
+3. **Fix Chat Role Attribution**
+   - Remove email domain hack
+   - Use actual role from UserModel
+   - Pass role from AuthProvider to ChatProvider
 
-**Pros**:
-- No changes to router
-- Provides migration path
+4. **Fix Memory Leaks**
+   - Add cleanup logic to all providers
+   - Cancel streams on logout
+   - Reset provider state
 
-**Cons**:
-- Adds unnecessary abstraction layer
-- Creates maintenance overhead
-- Confusing for future developers
+#### Sprint 2: Performance Optimization (1 day)
+**Goal**: Improve startup time and reduce memory usage
 
-### Option 3: Rename Existing Screens
-**Description**: Rename the actual screen classes to match router expectations
+1. **Simplify AppInitializer**
+   - Keep only Firebase core init
+   - Defer Crashlytics, Analytics, Performance
+   - Remove unnecessary platform checks
 
-**Pros**:
-- Simpler naming
+2. **Lazy Load Providers**
+   - Load only Auth and Theme providers initially
+   - Create other providers on-demand
+   - Remove unused providers (Jeopardy, Analytics)
 
-**Cons**:
-- Requires changes across multiple files
-- Risk of breaking other references
-- Goes against established naming convention
+3. **Remove Redundant Abstractions**
+   - Collapse Repository/Service layers into one
+   - Remove interfaces with single implementations
+   - Simplify data models
 
-### Recommended Approach
-**Option 1** is clearly the best choice - simple, safe, and maintains consistency.
+#### Sprint 3: Code Cleanup (1 day)
+**Goal**: Remove dead code and improve maintainability
+
+1. **Remove Dead Features**
+   - Delete scheduled messages if unused
+   - Remove custom claims logic if not implemented
+   - Delete pending_users collection logic
+
+2. **Consolidate Duplicate Code**
+   - Single auth guard implementation
+   - Combine teacher/student screens where similar
+   - Unify error handling patterns
+
+3. **Simplify Models**
+   - Remove unused fields from Message model
+   - Simplify UserModel (remove duplicate IDs)
+   - Clean up commented code
 
 ## 5. Implementation Plan
 
-### Phase 1: Fix Router References (5 minutes)
-1. Open `lib/shared/routing/app_router.dart`
-2. Add the three import statements
-3. Update the three class references
-4. Save the file
+### Phase 1: Setup and Testing (2 hours)
+- Create feature branch ✅
+- Set up test environment
+- Document current behavior
+- Create test checklist
 
-### Phase 2: Verification (2 minutes)
-1. Run `flutter analyze` to verify errors are resolved
-2. Check that no new errors were introduced
-3. Test navigation to each screen
+### Phase 2: Critical Fixes (Day 1)
+
+#### Task 1: Fix Auth State Persistence (2 hours)
+```dart
+// In AuthProvider.init() or constructor
+Future<void> initializeAuthState() async {
+  final currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser != null) {
+    // Fetch user model from Firestore
+    _userModel = await fetchUserModel(currentUser.uid);
+    _status = AuthStatus.authenticated;
+    notifyListeners();
+  }
+}
+```
+
+#### Task 2: Complete Profile Picture Upload (1 hour)
+```dart
+// After successful upload
+await FirebaseAuth.instance.currentUser?.updatePhotoURL(downloadUrl);
+await updateUserDocument({'photoURL': downloadUrl});
+_userModel = _userModel.copyWith(photoURL: downloadUrl);
+notifyListeners();
+```
+
+#### Task 3: Fix Chat Role Attribution (1 hour)
+```dart
+// In ChatProvider.sendMessage()
+final role = _authProvider?.userModel?.role ?? UserRole.student;
+// Use actual role instead of email check
+```
+
+#### Task 4: Provider Cleanup (2 hours)
+```dart
+// Add to each provider
+void logout() {
+  _subscriptions.forEach((sub) => sub.cancel());
+  _subscriptions.clear();
+  // Reset state
+  notifyListeners();
+}
+```
+
+### Phase 3: Performance Optimization (Day 2)
+
+#### Task 5: Simplify AppInitializer (2 hours)
+- Move non-critical init to post-launch
+- Remove platform-specific dead code
+- Streamline initialization flow
+
+#### Task 6: Lazy Provider Loading (3 hours)
+- Refactor AppProviders.getProviders()
+- Implement on-demand provider creation
+- Remove unused providers
+
+#### Task 7: Remove Abstractions (3 hours)
+- Collapse repository/service layers
+- Remove unnecessary interfaces
+- Simplify model classes
+
+### Phase 4: Code Cleanup (Day 3)
+
+#### Task 8: Remove Dead Code (2 hours)
+- Delete unused features
+- Remove commented code
+- Clean up TODOs
+
+#### Task 9: Consolidate Duplicates (3 hours)
+- Merge similar screens
+- Single auth guard
+- Unified error handling
+
+#### Task 10: Testing & Validation (3 hours)
+- Run full test suite
+- Manual testing of all features
+- Performance profiling
 
 ## 6. Risk Mitigation
 
 | Risk | Impact | Probability | Mitigation Strategy |
 |------|--------|-------------|-------------------|
-| Wrong import paths | High | Low | Double-check file paths before adding |
-| Breaking existing functionality | Medium | Very Low | Run tests after changes |
-| Naming conflicts | Low | Low | Use full import paths if needed |
+| Breaking existing features | High | Medium | Comprehensive testing after each change |
+| Auth state conflicts | High | Low | Test on multiple platforms and browsers |
+| Provider state issues | Medium | Medium | Incremental changes with testing |
+| Performance regression | Low | Low | Profile before/after changes |
+| Merge conflicts | Low | Medium | Work on feature branch |
 
 ## 7. Success Criteria
-- [ ] All three "not a class" errors resolved
-- [ ] App compiles successfully
-- [ ] Navigation to `/teacher/students` works
-- [ ] Navigation to `/student/courses` works
-- [ ] Navigation to `/student/grades` works
-- [ ] No new errors introduced
 
-## 8. Next Steps
+- [ ] Users remain logged in after app refresh/restart
+- [ ] Profile pictures persist after upload
+- [ ] Chat messages show correct sender role
+- [ ] No memory leaks on logout
+- [ ] App startup time reduced by 30%
+- [ ] Memory usage reduced by 20%
+- [ ] All existing features still work
+- [ ] Code coverage maintained or improved
+- [ ] No new linting warnings
 
-### Immediate Actions
-1. Open `app_router.dart` in editor
-2. Add the three import statements at the top
-3. Update the three builder references
-4. Run `flutter analyze` to verify
+## 8. Testing Strategy
 
-### Code Changes Required
+### Unit Tests
+- Auth state persistence
+- Provider cleanup logic
+- Role attribution in messages
 
+### Integration Tests
+- Full authentication flow
+- Profile update flow
+- Chat message sending
+
+### Manual Testing Checklist
+- [ ] Login → Refresh → Still logged in
+- [ ] Upload profile pic → Shows everywhere
+- [ ] Send chat → Correct role displayed
+- [ ] Logout → Login different user → No stale data
+- [ ] Cold start → Fast load time
+- [ ] Navigate all screens → No crashes
+
+## 9. Next Steps
+
+1. Begin Sprint 1 implementation
+2. Test each fix incrementally
+3. Deploy to staging for validation
+4. Get user feedback
+5. Proceed to Sprint 2
+
+## 10. Code Examples for Key Fixes
+
+### Auth State Restoration
 ```dart
-// At top of app_router.dart, add:
-import '../features/student/presentation/screens/teacher/students_screen.dart';
-import '../features/classes/presentation/screens/student/courses_screen.dart';
-import '../features/grades/presentation/screens/student/grades_screen.dart';
+// lib/features/auth/presentation/providers/auth_provider.dart
+class AuthProvider extends ChangeNotifier {
+  AuthProvider() {
+    _initializeAuthState();
+  }
 
-// Line 312 - change:
-builder: (context, state) => const StudentsScreen(),
-// to:
-builder: (context, state) => const TeacherStudentsScreen(),
-
-// Line 321 - change:
-builder: (context, state) => const CoursesScreen(),
-// to:
-builder: (context, state) => const StudentCoursesScreen(),
-
-// Line 326 - change:
-builder: (context, state) => const GradesScreen(),
-// to:
-builder: (context, state) => const StudentGradesScreen(),
+  Future<void> _initializeAuthState() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        _firebaseUser = user;
+        _userModel = await _authService.getUserProfile(user.uid);
+        _status = user.emailVerified 
+          ? AuthStatus.authenticated 
+          : AuthStatus.unauthenticated;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Failed to restore auth state: $e');
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+    }
+  }
+}
 ```
 
-## Summary
+### Provider Cleanup on Logout
+```dart
+// lib/shared/core/app_providers.dart
+class AppProviders {
+  static void resetAllProviders(BuildContext context) {
+    // Call cleanup on each provider
+    context.read<ChatProvider>().dispose();
+    context.read<StudentProvider>().dispose();
+    // ... other providers
+  }
+}
+```
 
-✅ **Good News**: All "missing" screens actually exist in the codebase!
-- No new screens need to be created
-- Simple naming mismatch issue
-- 5-minute fix
-
-📋 **Action Required**: Update app_router.dart with correct imports and class names
-
-🎯 **Impact**: This will immediately resolve 3 compilation errors and restore navigation functionality
+### Lazy Provider Loading
+```dart
+// lib/shared/core/app_providers.dart
+static List<SingleChildWidget> getProviders() {
+  return [
+    // Core providers loaded immediately
+    ChangeNotifierProvider(create: (_) => AuthProvider()),
+    ChangeNotifierProvider(create: (_) => ThemeProvider()),
+    
+    // Lazy loaded providers
+    ChangeNotifierProxyProvider<AuthProvider, ChatProvider?>(
+      create: (_) => null,
+      update: (_, auth, previous) {
+        if (auth.isAuthenticated && previous == null) {
+          return ChatProvider()..setAuthProvider(auth);
+        }
+        return previous;
+      },
+    ),
+    // ... other lazy providers
+  ];
+}
+```
 
 ---
 
-## Status: Ready for Code Mode
+## Session Summary
+- **Problem**: 6 critical bugs and major overengineering issues
+- **Solution**: 3-sprint incremental fix approach
+- **Timeline**: 3-4 days total
+- **Priority**: Auth persistence, profile pics, memory leaks
+- **Next**: Begin Sprint 1 implementation
 
-The solution is clear and straightforward. No new screens need to be created - we just need to update the router to use the correct existing screen names. This can be implemented immediately in Code Mode.
+## Status: Ready for Implementation
+- Branch created: `fix/critical-bugs-and-simplification`
+- Plan validated and comprehensive
+- Ready to proceed to code mode for Sprint 1

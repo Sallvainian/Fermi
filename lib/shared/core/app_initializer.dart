@@ -26,44 +26,51 @@ class AppInitializer {
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
     
-    // Initialize Firebase
+    // CRITICAL: Initialize Firebase first (required for everything)
     await _initializeFirebase();
     
-    // Initialize Google Sign In (early in the startup)
-    await _initializeGoogleSignIn();
+    // CRITICAL: Setup service locator (required for dependency injection)
+    await _setupServiceLocator();
     
-    // Initialize web auth helper for COOP warning fix
+    // CRITICAL: Initialize web auth helper for COOP warning fix (web only)
     if (kIsWeb) {
       _initializeWebAuthHelper();
     }
     
-    // Initialize performance monitoring (after Firebase)
-    if (_firebaseInitialized) {
-      await _initializePerformanceMonitoring();
-    }
+    // DEFER: Everything else happens after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeDeferredServices();
+    });
+  }
+  
+  /// Initialize non-critical services after first frame render
+  static Future<void> _initializeDeferredServices() async {
+    if (!_firebaseInitialized) return;
     
-    // Setup service locator
-    await _setupServiceLocator();
+    // Initialize in parallel for faster startup
+    await Future.wait([
+      // Google Sign In can be deferred
+      _initializeGoogleSignIn(),
+      
+      // Performance monitoring is not critical
+      _initializePerformanceMonitoring(),
+      
+      // Notifications can be initialized later
+      _initializeNotifications(),
+      
+      // Messaging services for VoIP
+      if (!kIsWeb) _initializeFirebaseMessaging(),
+      
+      // iOS-specific VoIP
+      if (!kIsWeb && Platform.isIOS) _initializeVoIPTokenService(),
+    ].where((future) => future != null).cast<Future<void>>());
     
-    // Initialize notification service
-    if (_firebaseInitialized) {
-      await _initializeNotifications();
-    }
-    
-    // Initialize Firebase Messaging for VoIP
-    if (_firebaseInitialized) {
-      await _initializeFirebaseMessaging();
-    }
-    
-    // Initialize VoIP token service for iOS
-    if (_firebaseInitialized && !kIsWeb && Platform.isIOS) {
-      await _initializeVoIPTokenService();
-    }
-    
-    // Setup crash reporting
-    if (_firebaseInitialized && !kIsWeb) {
+    // Setup crash reporting last
+    if (!kIsWeb) {
       _setupCrashlytics();
     }
+    
+    LoggerService.info('Deferred services initialized', tag: 'AppInitializer');
   }
   
   /// Initialize Firebase services

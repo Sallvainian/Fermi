@@ -182,13 +182,11 @@ class ChatProvider with ChangeNotifier {
   /// 
   /// @param otherUserId ID of other participant
   /// @param otherUserName Display name of other user
-  /// @param otherUserRole Role of other user
   /// @return Created or existing chat room
   /// @throws Exception if operation fails
   Future<ChatRoom> createOrGetDirectChat(
     String otherUserId,
     String otherUserName,
-    String otherUserRole,
   ) async {
     _isLoading = true;
     _error = null;
@@ -198,7 +196,6 @@ class ChatProvider with ChangeNotifier {
       final chatRoom = await _chatRepository.createOrGetDirectChat(
         otherUserId,
         otherUserName,
-        otherUserRole,
       );
       _currentChatRoom = chatRoom;
       loadChatMessages(chatRoom.id);
@@ -276,11 +273,15 @@ class ChatProvider with ChangeNotifier {
     }
 
     try {
+      // Get actual user role from AuthProvider
+      final userRole = _authProvider.userModel?.role.toString().split('.').last;
+      
       await _chatRepository.sendMessage(
         chatRoomId: _currentChatRoom!.id,
         content: content,
         attachmentUrl: attachmentUrl,
         attachmentType: attachmentType,
+        userRole: userRole,
       );
       _error = null;
     } catch (e) {
@@ -410,13 +411,32 @@ if (index != -1) {
     String? classId,
   }) async {
     final participantIds = participants.keys.toList();
-    final participantInfoList = participants.entries.map((entry) => 
-      ParticipantInfo(
-        id: entry.key,
-        name: entry.value,
-        role: 'user', // Default role, can be enhanced later
-      )
-    ).toList();
+
+    // Resolve participant roles from user profiles
+    List<ParticipantInfo> participantInfoList = [];
+    try {
+      final userRepo = getIt.userRepository;
+      final users = await userRepo.getUsersByIds(participantIds);
+      final userById = {for (final u in users) u.uid: u};
+      participantInfoList = participants.entries.map((entry) {
+      final user = userById[entry.key];
+      final role = user?.role?.name ?? 'student';
+      return ParticipantInfo(
+          id: entry.key,
+          name: entry.value,
+          role: role,
+        );
+      }).toList();
+    } catch (_) {
+      // Fallback: assume student if repository unavailable
+      participantInfoList = participants.entries.map((entry) =>
+        ParticipantInfo(
+          id: entry.key,
+          name: entry.value,
+          role: 'student',
+        )
+      ).toList();
+    }
     
     final chatRoom = await createGroupChat(
       name: name,

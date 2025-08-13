@@ -816,13 +816,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await storageRef.putFile(file);
       
       // Get the download URL
-      // final downloadUrl = await storageRef.getDownloadURL();
-      // TODO: Implement photo URL update when backend supports it
-      await storageRef.getDownloadURL(); // Upload completes but URL update not yet implemented
+      final downloadUrl = await storageRef.getDownloadURL();
       
       // Update user profile with new photo URL
-      // Note: photoURL is not directly updateable through updateProfile
-      // This would need to be handled through a separate method or database update
+      await authProvider.updateProfilePicture(downloadUrl);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

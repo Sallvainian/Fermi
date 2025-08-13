@@ -47,10 +47,9 @@ class ChatService {
   /// 
   /// @param otherUserId ID of the other participant
   /// @param otherUserName Display name of the other participant
-  /// @param otherUserRole Role of the other participant (teacher/student)
   /// @return ChatRoom instance for the direct chat
   /// @throws Exception if user is not authenticated
-  Future<ChatRoom> createOrGetDirectChat(String otherUserId, String otherUserName, String otherUserRole) async {
+  Future<ChatRoom> createOrGetDirectChat(String otherUserId, String otherUserName) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
 
@@ -74,14 +73,14 @@ class ChatService {
         {
           'id': currentUser.uid,
           'name': currentUser.displayName ?? 'Unknown',
-          'role': 'teacher', // This should be fetched from user profile
+          'role': 'teacher', // TODO: fetch from user profile
           'photoUrl': currentUser.photoURL,
         },
         {
           'id': otherUserId,
           'name': otherUserName,
-          'role': otherUserRole,
-          'photoUrl': null, // This should be fetched from user profile
+          'role': 'student', // TODO: fetch from user profile
+          'photoUrl': null, // TODO: fetch from user profile
         },
       ],
       'createdAt': FieldValue.serverTimestamp(),

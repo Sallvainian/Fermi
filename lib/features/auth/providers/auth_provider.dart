@@ -58,7 +58,47 @@ class AuthProvider extends ChangeNotifier {
       : _authRepository = repository ?? AuthRepositoryImpl(AuthService()),
         _status = initialStatus,
         _userModel = userModel,
-        _isLoading = false;
+        _isLoading = false {
+    // Initialize auth state on creation
+    _initializeAuthState();
+  }
+
+  /// Initializes auth state by checking for existing Firebase user.
+  /// This restores the user session on app restart/refresh.
+  Future<void> _initializeAuthState() async {
+    try {
+      final user = firebase_auth.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // User is logged in, fetch their profile
+        _status = AuthStatus.authenticating;
+        notifyListeners();
+        
+        // Get user model from Firestore
+        final currentUserModel = await _authRepository?.getCurrentUserModel();
+        
+        if (currentUserModel != null) {
+          _userModel = currentUserModel;
+          _status = AuthStatus.authenticated;
+          
+          // Start web in-app notifications if on web
+          if (kIsWeb) {
+            WebInAppNotificationService().startWebInAppNotifications();
+          }
+        } else {
+          // User exists in Auth but not in Firestore - might be mid-registration
+          _status = AuthStatus.authenticating;
+        }
+      } else {
+        // No user logged in
+        _status = AuthStatus.unauthenticated;
+      }
+    } catch (e) {
+      debugPrint('Failed to restore auth state: $e');
+      _status = AuthStatus.unauthenticated;
+    } finally {
+      notifyListeners();
+    }
+  }
 
   /// The current authentication status.
   AuthStatus get status => _status;
@@ -223,17 +263,18 @@ class AuthProvider extends ChangeNotifier {
     }
     
     try {
-      // Call the real Firebase sign-up
-      final userModel = await _authRepository?.signUpWithEmail(
+      // Call the real Firebase sign-up (Auth account only)
+      final user = await _authRepository?.signUpWithEmailOnly(
         email: email,
         password: password,
         displayName: email.split('@')[0], // Use email prefix as display name
-        role: UserRole.student, // Default role for email-only signup
+        firstName: email.split('@')[0],
+        lastName: '',
       );
       
-      if (userModel != null) {
-        _userModel = userModel;
-        _status = AuthStatus.authenticated;
+      if (user != null) {
+        // Don't assign role or set authenticated - let router handle role selection
+        _status = AuthStatus.authenticating;
       } else {
         throw Exception('Sign up failed');
       }
@@ -275,6 +316,36 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Updates the user's profile picture URL.
+  Future<void> updateProfilePicture(String photoURL) async {
+    if (_userModel == null) return;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    
+    try {
+      // Update Firebase Auth profile
+      final user = firebase_auth.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.updatePhotoURL(photoURL);
+      }
+      
+      // Update Firestore document
+      await _authRepository?.updateProfile(
+        photoURL: photoURL,
+        updatePhoto: true,
+      );
+      
+      // Update local model
+      _userModel = _userModel!.copyWith(photoURL: photoURL);
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Signs the user out.
   Future<void> signOut() async {
     _isLoading = true;
@@ -287,9 +358,7 @@ class AuthProvider extends ChangeNotifier {
       }
       // Call the real Firebase sign-out
       await _authRepository?.signOut();
-      _status = AuthStatus.unauthenticated;
-      _userModel = null;
-      _rememberMe = false;
+      _resetState();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -334,5 +403,33 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       // Silently fail - custom claims refresh is not critical
     }
+  }
+
+  /// Cleans up resources when provider is disposed.
+  /// Ensures proper cleanup to prevent memory leaks.
+  @override
+  void dispose() {
+    // Clean up any pending operations
+    _isLoading = false;
+    _errorMessage = null;
+    _userModel = null;
+    _status = AuthStatus.uninitialized;
+    
+    // Stop web notifications if on web
+    if (kIsWeb) {
+      WebInAppNotificationService().stopWebInAppNotifications();
+    }
+    
+    super.dispose();
+  }
+
+  /// Resets provider state on logout.
+  /// Called internally during sign out to ensure clean state.
+  void _resetState() {
+    _status = AuthStatus.unauthenticated;
+    _userModel = null;
+    _rememberMe = false;
+    _errorMessage = null;
+    _isLoading = false;
   }
 }
