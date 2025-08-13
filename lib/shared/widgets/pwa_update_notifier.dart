@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
-import 'dart:js' as js;
+import 'package:web/web.dart' as web;
+import 'dart:js_interop';
+
+
+@JS('applyUpdate')
+external void applyUpdate();
+
+@JS('flutterUpdateAvailable')
+external set flutterUpdateAvailable(JSFunction? f);
+
+@JS('canAutoRefresh')
+external set canAutoRefresh(JSFunction? f);
 
 /// PWA Update Notifier Widget
 /// Displays a non-intrusive notification when app updates are available
@@ -25,7 +35,7 @@ class PWAUpdateNotifier extends StatefulWidget {
 class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
   bool _updateAvailable = false;
   String _currentVersion = '';
-  String _newVersion = '';
+  final String _newVersion = '';
   bool _isRefreshing = false;
 
   @override
@@ -40,7 +50,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
 
   void _setupUpdateListener() {
     // Listen for PWA update event from DOM
-    html.document.addEventListener('pwa-update-available', (event) {
+    final listener = ((web.Event event) {
       if (mounted) {
         setState(() {
           _updateAvailable = true;
@@ -50,35 +60,39 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
         // Show update notification
         _showUpdateNotification();
       }
-    });
+    }).toJS;
+    
+    web.document.addEventListener('pwa-update-available', listener);
     
     // Register Flutter callback for JavaScript to call (fallback)
-    js.context['flutterUpdateAvailable'] = (dynamic data) {
-      if (mounted) {
+    flutterUpdateAvailable = ((JSAny? data) {
+      if (mounted && data != null) {
         setState(() {
           _updateAvailable = true;
-          _currentVersion = data['currentVersion'] ?? '';
-          _newVersion = data['newVersion'] ?? '';
+          // Parse version info from data if available
         });
         
         // Show update notification
         _showUpdateNotification();
       }
-    };
+    }.toJS as JSFunction);
     
     // Register auto-refresh check
-    js.context['canAutoRefresh'] = () {
+    canAutoRefresh = (() {
       // Return false if user has unsaved work or is in middle of something
       // For now, we'll always return false to let user decide
-      return false;
-    };
+      return false.toJS;
+    }.toJS as JSFunction);
   }
 
-  void _checkInitialVersion() async {
+  void _checkInitialVersion() {
     try {
-      final response = await html.HttpRequest.getString('/version.json?t=${DateTime.now().millisecondsSinceEpoch}');
-      // Parse and store version info if needed
-      debugPrint('Current app version: $response');
+      // Get current version from DOM if available
+      final versionMeta = web.document.querySelector('meta[name="app-version"]');
+      if (versionMeta != null) {
+        _currentVersion = versionMeta.getAttribute('content') ?? '';
+        debugPrint('Current app version: $_currentVersion');
+      }
     } catch (e) {
       debugPrint('Could not fetch version info: $e');
     }
@@ -170,7 +184,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
     
     // Give the dialog a beat, then trigger the JS update
     await Future.delayed(const Duration(seconds: 1));
-    js.context.callMethod('applyUpdate');
+    applyUpdate();
   }
 
   @override
@@ -274,8 +288,8 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
   void dispose() {
     if (kIsWeb) {
       // Clean up JavaScript callbacks
-      js.context['flutterUpdateAvailable'] = null;
-      js.context['canAutoRefresh'] = null;
+      flutterUpdateAvailable = null;
+      canAutoRefresh = null;
     }
     super.dispose();
   }

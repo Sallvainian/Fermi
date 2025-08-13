@@ -10,6 +10,8 @@ import '../../../../../features/student/domain/models/student.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../widgets/edit_class_dialog.dart';
 import '../../widgets/enroll_students_dialog.dart';
+import '../../../../../features/assignments/presentation/providers/assignment_provider.dart';
+import '../../../../../features/assignments/domain/models/assignment.dart';
 
 class ClassDetailScreen extends StatefulWidget {
   final String classId;
@@ -46,6 +48,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
   Future<void> _loadClassData() async {
     final classProvider = context.read<ClassProvider>();
     final authProvider = context.read<AuthProvider>();
+    final assignmentProvider = context.read<AssignmentProvider>();
     
     // Load teacher classes to get the specific class
     if (authProvider.userModel != null) {
@@ -64,6 +67,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       // Set as selected class and load students
       classProvider.setSelectedClass(classModel);
       await classProvider.loadClassStudents(widget.classId);
+      
+      // Load assignments for this class
+      await assignmentProvider.loadAssignmentsForClass(widget.classId);
     }
   }
 
@@ -552,30 +558,207 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
   }
 
   Widget _buildAssignmentsTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.assignment,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Assignments Coming Soon',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Assignment management will be available here',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return Consumer<AssignmentProvider>(
+      builder: (context, assignmentProvider, _) {
+        // Filter assignments for this specific class
+        final classAssignments = assignmentProvider.assignments
+            .where((assignment) => assignment.classId == widget.classId)
+            .toList();
+        
+        if (assignmentProvider.isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        
+        if (classAssignments.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.assignment_outlined,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No Assignments Yet',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Create your first assignment for this class',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // Navigate to create assignment with this class pre-selected
+                    context.push('/teacher/assignments/create?classId=${widget.classId}');
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create Assignment'),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
+          );
+        }
+        
+        return Column(
+          children: [
+            // Header with assignment count and create button
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${classAssignments.length} Assignment${classAssignments.length != 1 ? 's' : ''}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      context.push('/teacher/assignments/create?classId=${widget.classId}');
+                    },
+                    icon: const Icon(Icons.add, size: 20),
+                    label: const Text('New Assignment'),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Assignments list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: classAssignments.length,
+                itemBuilder: (context, index) {
+                  final assignment = classAssignments[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _getAssignmentTypeColor(assignment.type),
+                        child: Icon(
+                          _getAssignmentTypeIcon(assignment.type),
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(assignment.title),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(assignment.type.name),
+                          Text(
+                            'Due: ${_formatDate(assignment.dueDate)}',
+                            style: TextStyle(
+                              color: assignment.dueDate.isBefore(DateTime.now())
+                                  ? Colors.red
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (assignment.isPublished)
+                            const Icon(Icons.visibility, size: 20)
+                          else
+                            const Icon(Icons.visibility_off, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${assignment.totalPoints.toInt()} pts',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        // Navigate to assignment detail
+                        context.push('/teacher/assignments/${assignment.id}');
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
+  }
+  
+  Color _getAssignmentTypeColor(AssignmentType type) {
+    switch (type) {
+      case AssignmentType.homework:
+        return Colors.blue;
+      case AssignmentType.quiz:
+        return Colors.orange;
+      case AssignmentType.test:
+        return Colors.red;
+      case AssignmentType.exam:
+        return Colors.purple;
+      case AssignmentType.project:
+        return Colors.green;
+      case AssignmentType.classwork:
+        return Colors.teal;
+      case AssignmentType.essay:
+        return Colors.indigo;
+      case AssignmentType.lab:
+        return Colors.amber;
+      case AssignmentType.presentation:
+        return Colors.pink;
+      case AssignmentType.other:
+        return Colors.grey;
+    }
+  }
+  
+  IconData _getAssignmentTypeIcon(AssignmentType type) {
+    switch (type) {
+      case AssignmentType.homework:
+        return Icons.home_work;
+      case AssignmentType.quiz:
+        return Icons.quiz;
+      case AssignmentType.test:
+        return Icons.assignment_turned_in;
+      case AssignmentType.exam:
+        return Icons.school;
+      case AssignmentType.project:
+        return Icons.folder_special;
+      case AssignmentType.classwork:
+        return Icons.class_;
+      case AssignmentType.essay:
+        return Icons.edit_note;
+      case AssignmentType.lab:
+        return Icons.science;
+      case AssignmentType.presentation:
+        return Icons.present_to_all;
+      case AssignmentType.other:
+        return Icons.assignment;
+    }
+  }
+  
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = date.difference(now);
+    
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Tomorrow';
+    } else if (difference.inDays == -1) {
+      return 'Yesterday';
+    } else if (difference.inDays > 0 && difference.inDays < 7) {
+      return 'In ${difference.inDays} days';
+    } else if (difference.inDays < 0 && difference.inDays > -7) {
+      return '${-difference.inDays} days ago';
+    } else {
+      return '${date.month}/${date.day}/${date.year}';
+    }
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {

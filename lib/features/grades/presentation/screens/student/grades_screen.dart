@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
+import '../../../domain/models/grade.dart';
+import '../../providers/grade_provider.dart';
+import '../../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../assignments/presentation/providers/assignment_provider.dart';
+import '../../../../assignments/domain/models/assignment.dart';
+import '../../../../classes/presentation/providers/class_provider.dart';
+import '../../../../classes/domain/models/class_model.dart';
 
 class StudentGradesScreen extends StatefulWidget {
   const StudentGradesScreen({super.key});
@@ -15,705 +22,712 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   String _selectedCourseId = 'all';
   String _selectedFilter = 'All';
 
-  // Hardcoded grades data for demonstration
-  final List<StudentGradeEntry> _grades = [
-    // Advanced Mathematics
-    StudentGradeEntry(
-      id: '1',
-      courseId: '1',
-      courseName: 'Advanced Mathematics',
-      assignmentName: 'Calculus Quiz 3',
-      assignmentType: AssignmentType.quiz,
-      points: 45.0,
-      maxPoints: 50.0,
-      percentage: 90.0,
-      letterGrade: 'A-',
-      submittedDate: DateTime.now().subtract(const Duration(days: 2)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 1)),
-      feedback: 'Excellent work on derivatives! Pay attention to chain rule applications.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[0],
-    ),
-    StudentGradeEntry(
-      id: '2',
-      courseId: '1',
-      courseName: 'Advanced Mathematics',
-      assignmentName: 'Quadratic Equations Homework',
-      assignmentType: AssignmentType.homework,
-      points: 18.0,
-      maxPoints: 20.0,
-      percentage: 90.0,
-      letterGrade: 'A-',
-      submittedDate: DateTime.now().subtract(const Duration(days: 7)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 6)),
-      feedback: 'Good understanding of quadratic formulas.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[0],
-    ),
-    StudentGradeEntry(
-      id: '3',
-      courseId: '1',
-      courseName: 'Advanced Mathematics',
-      assignmentName: 'Midterm Exam',
-      assignmentType: AssignmentType.test,
-      points: 87.0,
-      maxPoints: 100.0,
-      percentage: 87.0,
-      letterGrade: 'B+',
-      submittedDate: DateTime.now().subtract(const Duration(days: 14)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 12)),
-      feedback: 'Strong performance overall. Review trigonometric identities for next exam.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[0],
-    ),
-    
-    // Biology Lab
-    StudentGradeEntry(
-      id: '4',
-      courseId: '2',
-      courseName: 'Biology Lab',
-      assignmentName: 'Cell Division Lab Report',
-      assignmentType: AssignmentType.project,
-      points: 92.0,
-      maxPoints: 100.0,
-      percentage: 92.0,
-      letterGrade: 'A-',
-      submittedDate: DateTime.now().subtract(const Duration(days: 3)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 1)),
-      feedback: 'Excellent observations and analysis. Clear methodology and conclusions.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[1],
-    ),
-    StudentGradeEntry(
-      id: '5',
-      courseId: '2',
-      courseName: 'Biology Lab',
-      assignmentName: 'Mitosis Quiz',
-      assignmentType: AssignmentType.quiz,
-      points: 42.0,
-      maxPoints: 50.0,
-      percentage: 84.0,
-      letterGrade: 'B',
-      submittedDate: DateTime.now().subtract(const Duration(days: 10)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 9)),
-      feedback: 'Good understanding of mitosis phases.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[1],
-    ),
-    
-    // Creative Writing
-    StudentGradeEntry(
-      id: '6',
-      courseId: '3',
-      courseName: 'Creative Writing',
-      assignmentName: 'Character Analysis Essay',
-      assignmentType: AssignmentType.project,
-      points: 95.0,
-      maxPoints: 100.0,
-      percentage: 95.0,
-      letterGrade: 'A',
-      submittedDate: DateTime.now().subtract(const Duration(days: 5)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 3)),
-      feedback: 'Outstanding analysis with excellent supporting evidence. Great writing style!',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[2],
-    ),
-    StudentGradeEntry(
-      id: '7',
-      courseId: '3',
-      courseName: 'Creative Writing',
-      assignmentName: 'Poetry Collection',
-      assignmentType: AssignmentType.project,
-      points: null,
-      maxPoints: 50.0,
-      percentage: null,
-      letterGrade: null,
-      submittedDate: DateTime.now().subtract(const Duration(days: 1)),
-      gradedDate: null,
-      feedback: null,
-      status: GradeStatus.submitted,
-      courseColor: AppTheme.subjectColors[2],
-    ),
-    
-    // World History
-    StudentGradeEntry(
-      id: '8',
-      courseId: '4',
-      courseName: 'World History',
-      assignmentName: 'Renaissance Research Paper',
-      assignmentType: AssignmentType.project,
-      points: 88.0,
-      maxPoints: 100.0,
-      percentage: 88.0,
-      letterGrade: 'B+',
-      submittedDate: DateTime.now().subtract(const Duration(days: 8)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 6)),
-      feedback: 'Well-researched paper with good historical context. Improve citation format.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[3],
-    ),
-    StudentGradeEntry(
-      id: '9',
-      courseId: '4',
-      courseName: 'World History',
-      assignmentName: 'Medieval Quiz',
-      assignmentType: AssignmentType.quiz,
-      points: 38.0,
-      maxPoints: 40.0,
-      percentage: 95.0,
-      letterGrade: 'A',
-      submittedDate: DateTime.now().subtract(const Duration(days: 15)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 14)),
-      feedback: 'Excellent knowledge of medieval period.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[3],
-    ),
-    
-    // AP Physics
-    StudentGradeEntry(
-      id: '10',
-      courseId: '5',
-      courseName: 'AP Physics',
-      assignmentName: 'Mechanics Problem Set',
-      assignmentType: AssignmentType.homework,
-      points: null,
-      maxPoints: 25.0,
-      percentage: null,
-      letterGrade: null,
-      submittedDate: null,
-      gradedDate: null,
-      feedback: null,
-      status: GradeStatus.missing,
-      courseColor: AppTheme.subjectColors[1],
-    ),
-    StudentGradeEntry(
-      id: '11',
-      courseId: '5',
-      courseName: 'AP Physics',
-      assignmentName: 'Lab Report: Projectile Motion',
-      assignmentType: AssignmentType.project,
-      points: 96.0,
-      maxPoints: 100.0,
-      percentage: 96.0,
-      letterGrade: 'A',
-      submittedDate: DateTime.now().subtract(const Duration(days: 12)),
-      gradedDate: DateTime.now().subtract(const Duration(days: 10)),
-      feedback: 'Excellent experimental design and data analysis. Clear conclusions.',
-      status: GradeStatus.graded,
-      courseColor: AppTheme.subjectColors[1],
-    ),
-  ];
-
-  final List<CourseOption> _courses = [
-    CourseOption(id: 'all', name: 'All Courses'),
-    CourseOption(id: '1', name: 'Advanced Mathematics'),
-    CourseOption(id: '2', name: 'Biology Lab'),
-    CourseOption(id: '3', name: 'Creative Writing'),
-    CourseOption(id: '4', name: 'World History'),
-    CourseOption(id: '5', name: 'AP Physics'),
-  ];
-
-  List<StudentGradeEntry> get _filteredGrades {
-    List<StudentGradeEntry> filtered = _grades;
-
-    // Apply course filter
-    if (_selectedCourseId != 'all') {
-      filtered = filtered.where((grade) => grade.courseId == _selectedCourseId).toList();
-    }
-
-    // Apply status filter
-    if (_selectedFilter != 'All') {
-      GradeStatus status = GradeStatus.values
-          .firstWhere((s) => s.toString().split('.').last == _selectedFilter.toLowerCase());
-      filtered = filtered.where((grade) => grade.status == status).toList();
-    }
-
-    // Apply search filter
-    if (_searchQuery.isNotEmpty) {
-      filtered = filtered.where((grade) {
-        return grade.assignmentName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               grade.courseName.toLowerCase().contains(_searchQuery.toLowerCase());
-      }).toList();
-    }
-
-    // Sort by most recent first
-    filtered.sort((a, b) {
-      final aDate = a.gradedDate ?? a.submittedDate ?? DateTime(1900);
-      final bDate = b.gradedDate ?? b.submittedDate ?? DateTime(1900);
-      return bDate.compareTo(aDate);
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadGrades();
     });
+  }
 
-    return filtered;
+  void _loadGrades() {
+    final authProvider = context.read<AuthProvider>();
+    final gradeProvider = context.read<GradeProvider>();
+    final classProvider = context.read<ClassProvider>();
+    final assignmentProvider = context.read<AssignmentProvider>();
+    
+    final studentId = authProvider.userModel?.uid;
+    if (studentId != null) {
+      // Load student's grades
+      gradeProvider.loadStudentGrades(studentId);
+      
+      // Load classes for course names
+      classProvider.loadStudentClasses(studentId);
+      
+      // Load assignments for each class the student is in
+      for (final classId in authProvider.userModel?.enrolledClassIds ?? []) {
+        assignmentProvider.loadAssignmentsForClass(classId);
+      }
+    }
+  }
+
+  // Helper method to get all assignments for a student's classes
+  List<Assignment> _getAllStudentAssignments(
+    List<ClassModel> classes,
+    AssignmentProvider provider,
+  ) {
+    // Filter assignments to only those belonging to student's classes
+    final classIds = classes.map((c) => c.id).toSet();
+    return provider.assignments
+        .where((assignment) => classIds.contains(assignment.classId))
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final gradeProvider = context.watch<GradeProvider>();
+    final classProvider = context.watch<ClassProvider>();
+    final assignmentProvider = context.watch<AssignmentProvider>();
+    final grades = gradeProvider.studentGrades;
+    final classes = classProvider.studentClasses;
+    
+    // Filter grades based on search and filters
+    final allAssignments = _getAllStudentAssignments(classes, assignmentProvider);
+    final filteredGrades = _filterGrades(grades, classes, allAssignments);
+    
+    // Group grades by course
+    final courseGroups = _groupGradesByCourse(filteredGrades, classes);
+    
+    // Calculate statistics
+    final stats = _calculateStatistics(filteredGrades);
+
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
-          tooltip: 'Back to Dashboard',
-        ),
         title: const Text('My Grades'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.analytics),
-            onPressed: _showGradeAnalytics,
-            tooltip: 'Grade Analytics',
-          ),
-        ],
+        elevation: 0,
+        backgroundColor: theme.colorScheme.surface,
       ),
-      body: Column(
+      body: gradeProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : grades.isEmpty
+              ? _buildEmptyState(context)
+              : Column(
+                  children: [
+                    // Statistics Summary
+                    _buildStatsHeader(context, stats),
+                    
+                    // Search and Filters
+                    _buildSearchAndFilters(context, classes),
+                    
+                    // Grades List
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: courseGroups.length,
+                        itemBuilder: (context, index) {
+                          final courseId = courseGroups.keys.elementAt(index);
+                          final courseGrades = courseGroups[courseId]!;
+                          final course = classes.firstWhere(
+                            (c) => c.id == courseId,
+                            orElse: () => ClassModel(
+                              id: courseId,
+                              name: 'Unknown Course',
+                              teacherId: '',
+                              subject: '',
+                              gradeLevel: '',
+                              studentIds: [],
+                              createdAt: DateTime.now(),
+                              updatedAt: DateTime.now(),
+                              academicYear: DateTime.now().year.toString(),
+                              semester: 'Fall',
+                              isActive: true,
+                            ),
+                          );
+                          
+                          return _buildCourseSection(
+                            context,
+                            course,
+                            courseGrades,
+                            allAssignments,
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Header with stats
-          _buildStatsHeader(),
-          
-          // Filters
-          _buildFiltersSection(),
-          
-          // Grades list
-          Expanded(
-            child: _filteredGrades.isEmpty
-                ? _searchQuery.isNotEmpty
-                    ? EmptyState.noSearchResults(searchTerm: _searchQuery)
-                    : const EmptyState(
-                        icon: Icons.grade,
-                        title: 'No Grades',
-                        message: 'No grades found for the selected filters.',
-                      )
-                : _buildGradesList(),
+          Icon(
+            Icons.grade_outlined,
+            size: 80,
+            color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No Grades Yet',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your grades will appear here once your\nteacher grades your assignments',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsHeader() {
-    final gradedEntries = _grades.where((g) => g.status == GradeStatus.graded).toList();
-    final totalPoints = gradedEntries.fold<double>(0, (sum, grade) => sum + (grade.points ?? 0));
-    final totalMaxPoints = gradedEntries.fold<double>(0, (sum, grade) => sum + grade.maxPoints);
-    final overallPercentage = totalMaxPoints > 0 ? (totalPoints / totalMaxPoints) * 100 : 0;
-    
-    final submittedCount = _grades.where((g) => g.status == GradeStatus.submitted).length;
-    final missingCount = _grades.where((g) => g.status == GradeStatus.missing).length;
+  Widget _buildStatsHeader(BuildContext context, Map<String, dynamic> stats) {
+    final theme = Theme.of(context);
     
     return Container(
-      margin: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildCompactStatCard(
-              title: 'Overall',
-              value: _getLetterGrade(overallPercentage.toDouble()),
-              subtitle: '${overallPercentage.toStringAsFixed(1)}%',
-              icon: Icons.grade,
-              valueColor: AppTheme.getGradeColor(_getLetterGrade(overallPercentage.toDouble())),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildCompactStatCard(
-              title: 'Graded',
-              value: '${gradedEntries.length}',
-              subtitle: 'Assignments',
-              icon: Icons.check_circle,
-              valueColor: Colors.green,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildCompactStatCard(
-              title: 'Pending',
-              value: '$submittedCount',
-              subtitle: 'Submitted',
-              icon: Icons.pending,
-              valueColor: Colors.orange,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildCompactStatCard(
-              title: 'Missing',
-              value: '$missingCount',
-              subtitle: 'Not done',
-              icon: Icons.warning,
-              valueColor: Colors.red,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCompactStatCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    Color? valueColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          ),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(
-                icon,
-                size: 16,
-                color: valueColor ?? Theme.of(context).colorScheme.primary,
-              ),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+          _buildStatItem(
+            context,
+            'Overall GPA',
+            stats['gpa'].toStringAsFixed(2),
+            Icons.school,
+            _getGPAColor(stats['gpa']),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: valueColor,
-            ),
-            textAlign: TextAlign.center,
+          _buildStatItem(
+            context,
+            'Avg Score',
+            '${stats['average'].toStringAsFixed(1)}%',
+            Icons.analytics,
+            _getGradeColor(stats['average']),
           ),
-          Text(
-            subtitle,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
+          _buildStatItem(
+            context,
+            'Completed',
+            '${stats['completed']}/${stats['total']}',
+            Icons.check_circle,
+            Colors.green,
+          ),
+          _buildStatItem(
+            context,
+            'Pending',
+            '${stats['pending']}',
+            Icons.schedule,
+            Colors.orange,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFiltersSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  Widget _buildStatItem(
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    final theme = Theme.of(context);
+    
+    return Column(
+      children: [
+        Icon(icon, size: 24, color: color),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchAndFilters(BuildContext context, List<ClassModel> classes) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Search bar
+          // Search Bar
           TextField(
-            decoration: const InputDecoration(
-              hintText: 'Search assignments...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-            ),
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
               });
             },
+            decoration: InputDecoration(
+              hintText: 'Search assignments...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              fillColor: theme.colorScheme.surfaceContainerHighest,
+              filled: true,
+            ),
           ),
           const SizedBox(height: 12),
           
-          // Filter dropdowns
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: _selectedCourseId,
-                  decoration: const InputDecoration(
-                    labelText: 'Course',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: _courses
-                      .map((course) => DropdownMenuItem(
-                            value: course.id,
-                            child: Text(
-                              course.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
+          // Filter Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                // Course Filter
+                _buildFilterChip(
+                  context,
+                  'All Courses',
+                  _selectedCourseId == 'all',
+                  () {
                     setState(() {
-                      _selectedCourseId = value ?? 'all';
+                      _selectedCourseId = 'all';
                     });
                   },
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: _selectedFilter,
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(),
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                const SizedBox(width: 8),
+                ...classes.map((course) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _buildFilterChip(
+                    context,
+                    course.name,
+                    _selectedCourseId == course.id,
+                    () {
+                      setState(() {
+                        _selectedCourseId = course.id;
+                      });
+                    },
                   ),
-                  items: ['All', 'Graded', 'Submitted', 'Missing']
-                      .map((filter) => DropdownMenuItem(
-                            value: filter,
-                            child: Text(filter),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
+                )),
+                
+                // Status Filter
+                const SizedBox(width: 16),
+                _buildFilterChip(
+                  context,
+                  'All',
+                  _selectedFilter == 'All',
+                  () {
                     setState(() {
-                      _selectedFilter = value ?? 'All';
+                      _selectedFilter = 'All';
                     });
                   },
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  context,
+                  'Graded',
+                  _selectedFilter == 'Graded',
+                  () {
+                    setState(() {
+                      _selectedFilter = 'Graded';
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  context,
+                  'Pending',
+                  _selectedFilter == 'Pending',
+                  () {
+                    setState(() {
+                      _selectedFilter = 'Pending';
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGradesList() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _filteredGrades.length,
-      itemBuilder: (context, index) {
-        final grade = _filteredGrades[index];
-        return _buildGradeCard(grade);
-      },
+  Widget _buildFilterChip(
+    BuildContext context,
+    String label,
+    bool isSelected,
+    VoidCallback onTap,
+  ) {
+    final theme = Theme.of(context);
+    
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (_) => onTap(),
+      backgroundColor: theme.colorScheme.surfaceContainerHighest,
+      selectedColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+      checkmarkColor: theme.colorScheme.primary,
     );
   }
 
-  Widget _buildGradeCard(StudentGradeEntry grade) {
-    return AppCard(
-      onTap: () => _showGradeDetails(grade),
+  Widget _buildCourseSection(
+    BuildContext context,
+    ClassModel course,
+    List<Grade> grades,
+    List<Assignment> assignments,
+  ) {
+    final theme = Theme.of(context);
+    final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
+    final courseColor = AppTheme.subjectColors[colorIndex];
+    
+    // Calculate course average
+    final gradedGrades = grades.where((g) => g.status == GradeStatus.graded || g.status == GradeStatus.returned).toList();
+    final courseAverage = gradedGrades.isEmpty
+        ? 0.0
+        : gradedGrades.fold<double>(0, (sum, g) => sum + g.percentage) / gradedGrades.length;
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row with assignment name and grade
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: grade.courseColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+          // Course Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: courseColor.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: courseColor,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        course.subject,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      grade.assignmentName,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      courseAverage > 0 ? '${courseAverage.toStringAsFixed(1)}%' : 'N/A',
+                      style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: _getGradeColor(courseAverage),
                       ),
                     ),
                     Text(
-                      grade.courseName,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      courseAverage > 0 ? _getLetterGrade(courseAverage) : '',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: _getGradeColor(courseAverage),
                       ),
                     ),
                   ],
                 ),
-              ),
-              if (grade.letterGrade != null)
-                StatusBadge.grade(grade: grade.letterGrade!)
-              else
-                _buildStatusChip(grade.status),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Grade info
-          Row(
-            children: [
-              _buildInfoChip(Icons.category, _getAssignmentTypeLabel(grade.assignmentType)),
-              const SizedBox(width: 8),
-              if (grade.points != null)
-                _buildInfoChip(Icons.score, '${grade.points!.toStringAsFixed(0)}/${grade.maxPoints.toStringAsFixed(0)}'),
-              if (grade.percentage != null) ...[
-                const SizedBox(width: 8),
-                _buildInfoChip(Icons.percent, '${grade.percentage!.toStringAsFixed(1)}%'),
               ],
-            ],
+            ),
           ),
           
-          if (grade.status == GradeStatus.graded && grade.percentage != null) ...[
-            const SizedBox(height: 12),
+          // Grades List
+          ...grades.map((grade) {
+            final assignment = assignments.firstWhere(
+              (a) => a.id == grade.assignmentId,
+              orElse: () => Assignment(
+                id: grade.assignmentId,
+                title: 'Unknown Assignment',
+                description: '',
+                type: AssignmentType.homework,
+                classId: grade.classId,
+                teacherId: grade.teacherId,
+                totalPoints: grade.pointsPossible,
+                maxPoints: grade.pointsPossible,
+                dueDate: DateTime.now(),
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+                instructions: '',
+                category: 'Other',
+                teacherName: '',
+                isPublished: true,
+                allowLateSubmissions: false,
+                latePenaltyPercentage: 0,
+                status: AssignmentStatus.active,
+              ),
+            );
             
-            // Grade progress bar
-            LinearProgressIndicator(
-              value: grade.percentage! / 100,
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              valueColor: AlwaysStoppedAnimation(
-                AppTheme.getGradeColor(grade.letterGrade ?? 'F'),
+            return _buildGradeItem(context, grade, assignment, courseColor);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGradeItem(
+    BuildContext context,
+    Grade grade,
+    Assignment assignment,
+    Color courseColor,
+  ) {
+    final theme = Theme.of(context);
+    final isGraded = grade.status == GradeStatus.graded || grade.status == GradeStatus.returned;
+    
+    return InkWell(
+      onTap: () => _showGradeDetails(context, grade, assignment),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Assignment Type Icon
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _getAssignmentTypeColor(assignment.type).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                _getAssignmentTypeIcon(assignment.type),
+                color: _getAssignmentTypeColor(assignment.type),
+                size: 20,
               ),
             ),
-          ],
-          
-          const SizedBox(height: 12),
-          
-          // Date information
-          Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                size: 16,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                _getDateText(grade),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          
-          // Feedback preview
-          if (grade.feedback != null && grade.feedback!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.feedback,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    grade.feedback!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+            const SizedBox(width: 12),
+            
+            // Assignment Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    assignment.title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        _getAssignmentTypeName(assignment.type),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '• Due ${_formatDate(assignment.dueDate)}',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            // Grade Display
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (isGraded) ...[
+                  Text(
+                    '${grade.pointsEarned.toStringAsFixed(1)}/${grade.pointsPossible.toStringAsFixed(0)}',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${grade.percentage.toStringAsFixed(1)}%',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: _getGradeColor(grade.percentage),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        grade.letterGrade ?? _getLetterGrade(grade.percentage),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: _getGradeColor(grade.percentage),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(grade.status).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getStatusText(grade.status),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: _getStatusColor(grade.status),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoChip(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(GradeStatus status) {
-    Color color;
-    String label;
-    
-    switch (status) {
-      case GradeStatus.graded:
-        color = Colors.green;
-        label = 'Graded';
-        break;
-      case GradeStatus.submitted:
-        color = Colors.orange;
-        label = 'Submitted';
-        break;
-      case GradeStatus.missing:
-        color = Colors.red;
-        label = 'Missing';
-        break;
-    }
-    
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
         ),
       ),
     );
   }
 
-  String _getAssignmentTypeLabel(AssignmentType type) {
-    switch (type) {
-      case AssignmentType.homework:
-        return 'Homework';
-      case AssignmentType.quiz:
-        return 'Quiz';
-      case AssignmentType.test:
-        return 'Test';
-      case AssignmentType.project:
-        return 'Project';
-      case AssignmentType.exam:
-        return 'Exam';
-    }
+  void _showGradeDetails(BuildContext context, Grade grade, Assignment assignment) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _GradeDetailsSheet(
+        grade: grade,
+        assignment: assignment,
+      ),
+    );
   }
 
-  String _getDateText(StudentGradeEntry grade) {
-    if (grade.gradedDate != null) {
-      final days = DateTime.now().difference(grade.gradedDate!).inDays;
-      if (days == 0) return 'Graded today';
-      if (days == 1) return 'Graded yesterday';
-      return 'Graded $days days ago';
-    } else if (grade.submittedDate != null) {
-      final days = DateTime.now().difference(grade.submittedDate!).inDays;
-      if (days == 0) return 'Submitted today';
-      if (days == 1) return 'Submitted yesterday';
-      return 'Submitted $days days ago';
-    } else {
-      return 'Not submitted';
+  List<Grade> _filterGrades(List<Grade> grades, List<ClassModel> classes, List<Assignment> assignments) {
+    return grades.where((grade) {
+      // Course filter
+      if (_selectedCourseId != 'all' && grade.classId != _selectedCourseId) {
+        return false;
+      }
+      
+      // Status filter
+      if (_selectedFilter == 'Graded' && 
+          grade.status != GradeStatus.graded && 
+          grade.status != GradeStatus.returned) {
+        return false;
+      }
+      if (_selectedFilter == 'Pending' && 
+          grade.status != GradeStatus.pending && 
+          grade.status != GradeStatus.draft) {
+        return false;
+      }
+      
+      // Search filter
+      if (_searchQuery.isNotEmpty) {
+        final assignment = assignments.firstWhere(
+          (a) => a.id == grade.assignmentId,
+          orElse: () => Assignment(
+            id: '',
+            title: '',
+            description: '',
+            type: AssignmentType.homework,
+            classId: '',
+            teacherId: '',
+            totalPoints: 0,
+            maxPoints: 0,
+            dueDate: DateTime.now(),
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            instructions: '',
+            category: 'Other',
+            teacherName: '',
+            isPublished: true,
+            allowLateSubmissions: false,
+            latePenaltyPercentage: 0,
+            status: AssignmentStatus.active,
+          ),
+        );
+        
+        return assignment.title.toLowerCase().contains(_searchQuery.toLowerCase());
+      }
+      
+      return true;
+    }).toList();
+  }
+
+  Map<String, List<Grade>> _groupGradesByCourse(List<Grade> grades, List<ClassModel> classes) {
+    final Map<String, List<Grade>> groups = {};
+    
+    for (final grade in grades) {
+      if (!groups.containsKey(grade.classId)) {
+        groups[grade.classId] = [];
+      }
+      groups[grade.classId]!.add(grade);
     }
+    
+    // Sort grades within each group by date
+    for (final grades in groups.values) {
+      grades.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    
+    return groups;
+  }
+
+  Map<String, dynamic> _calculateStatistics(List<Grade> grades) {
+    final gradedGrades = grades.where((g) => 
+      g.status == GradeStatus.graded || g.status == GradeStatus.returned
+    ).toList();
+    
+    final pendingGrades = grades.where((g) => 
+      g.status == GradeStatus.pending || g.status == GradeStatus.draft
+    ).toList();
+    
+    final average = gradedGrades.isEmpty
+        ? 0.0
+        : gradedGrades.fold<double>(0, (sum, g) => sum + g.percentage) / gradedGrades.length;
+    
+    final gpa = _calculateGPA(average);
+    
+    return {
+      'average': average,
+      'gpa': gpa,
+      'total': grades.length,
+      'completed': gradedGrades.length,
+      'pending': pendingGrades.length,
+    };
+  }
+
+  double _calculateGPA(double percentage) {
+    if (percentage >= 93) return 4.0;
+    if (percentage >= 90) return 3.7;
+    if (percentage >= 87) return 3.3;
+    if (percentage >= 83) return 3.0;
+    if (percentage >= 80) return 2.7;
+    if (percentage >= 77) return 2.3;
+    if (percentage >= 73) return 2.0;
+    if (percentage >= 70) return 1.7;
+    if (percentage >= 67) return 1.3;
+    if (percentage >= 65) return 1.0;
+    return 0.0;
   }
 
   String _getLetterGrade(double percentage) {
-    if (percentage >= 97) return 'A+';
     if (percentage >= 93) return 'A';
     if (percentage >= 90) return 'A-';
     if (percentage >= 87) return 'B+';
@@ -723,242 +737,73 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
     if (percentage >= 73) return 'C';
     if (percentage >= 70) return 'C-';
     if (percentage >= 67) return 'D+';
-    if (percentage >= 63) return 'D';
-    if (percentage >= 60) return 'D-';
+    if (percentage >= 65) return 'D';
     return 'F';
   }
 
-  void _showGradeDetails(StudentGradeEntry grade) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => GradeDetailSheet(grade: grade),
-    );
+  Color _getGradeColor(double percentage) {
+    if (percentage >= 90) return Colors.green;
+    if (percentage >= 80) return Colors.blue;
+    if (percentage >= 70) return Colors.orange;
+    if (percentage >= 60) return Colors.deepOrange;
+    return Colors.red;
   }
 
-  void _showGradeAnalytics() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Grade analytics coming soon!'),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {},
-        ),
-      ),
-    );
-  }
-}
-
-// Grade detail modal sheet
-class GradeDetailSheet extends StatelessWidget {
-  final StudentGradeEntry grade;
-
-  const GradeDetailSheet({super.key, required this.grade});
-
-  @override
-  Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.4,
-      maxChildSize: 0.9,
-      expand: false,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          child: Column(
-            children: [
-              // Handle bar
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: grade.courseColor,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            grade.assignmentName,
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            grade.courseName,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (grade.letterGrade != null)
-                      StatusBadge.grade(grade: grade.letterGrade!)
-                    else
-                      StatusBadge.custom(
-                        label: grade.status.toString().split('.').last,
-                        color: _getStatusColor(grade.status),
-                      ),
-                  ],
-                ),
-              ),
-              
-              // Content
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    if (grade.status == GradeStatus.graded) ...[
-                      _buildDetailSection(
-                        context,
-                        'Grade Information',
-                        [
-                          if (grade.points != null)
-                            _buildDetailRow(context, 'Points', '${grade.points!.toStringAsFixed(0)}/${grade.maxPoints.toStringAsFixed(0)}'),
-                          if (grade.percentage != null)
-                            _buildDetailRow(context, 'Percentage', '${grade.percentage!.toStringAsFixed(1)}%'),
-                          if (grade.letterGrade != null)
-                            _buildDetailRow(context, 'Letter Grade', grade.letterGrade!),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                    
-                    _buildDetailSection(
-                      context,
-                      'Assignment Details',
-                      [
-                        _buildDetailRow(context, 'Type', _getAssignmentTypeLabel(grade.assignmentType)),
-                        _buildDetailRow(context, 'Max Points', grade.maxPoints.toStringAsFixed(0)),
-                        _buildDetailRow(context, 'Status', grade.status.toString().split('.').last),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 24),
-                    
-                    _buildDetailSection(
-                      context,
-                      'Timeline',
-                      [
-                        if (grade.submittedDate != null)
-                          _buildDetailRow(context, 'Submitted', _formatDate(grade.submittedDate!)),
-                        if (grade.gradedDate != null)
-                          _buildDetailRow(context, 'Graded', _formatDate(grade.gradedDate!)),
-                      ],
-                    ),
-                    
-                    if (grade.feedback != null && grade.feedback!.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      
-                      _buildDetailSection(
-                        context,
-                        'Teacher Feedback',
-                        [
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Text(
-                              grade.feedback!,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              
-              // Actions
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  Color _getGPAColor(double gpa) {
+    if (gpa >= 3.5) return Colors.green;
+    if (gpa >= 3.0) return Colors.blue;
+    if (gpa >= 2.5) return Colors.orange;
+    if (gpa >= 2.0) return Colors.deepOrange;
+    return Colors.red;
   }
 
-  Widget _buildDetailSection(BuildContext context, String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...children,
-      ],
-    );
+  IconData _getAssignmentTypeIcon(AssignmentType type) {
+    switch (type) {
+      case AssignmentType.homework:
+        return Icons.home_work;
+      case AssignmentType.quiz:
+        return Icons.quiz;
+      case AssignmentType.test:
+        return Icons.assignment;
+      case AssignmentType.project:
+        return Icons.science;
+      case AssignmentType.exam:
+        return Icons.school;
+      case AssignmentType.classwork:
+        return Icons.edit_note;
+      case AssignmentType.lab:
+        return Icons.biotech;
+      case AssignmentType.presentation:
+        return Icons.present_to_all;
+      case AssignmentType.essay:
+        return Icons.edit;
+      case AssignmentType.other:
+        return Icons.assignment_outlined;
+    }
   }
 
-  Widget _buildDetailRow(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
+  Color _getAssignmentTypeColor(AssignmentType type) {
+    switch (type) {
+      case AssignmentType.homework:
+        return Colors.green;
+      case AssignmentType.quiz:
+        return Colors.blue;
+      case AssignmentType.test:
+        return Colors.orange;
+      case AssignmentType.project:
+        return Colors.purple;
+      case AssignmentType.exam:
+        return Colors.red;
+      case AssignmentType.essay:
+      case AssignmentType.classwork:
+      case AssignmentType.lab:
+      case AssignmentType.presentation:
+      case AssignmentType.other:
+        return Colors.grey;
+    }
   }
 
-  String _getAssignmentTypeLabel(AssignmentType type) {
+  String _getAssignmentTypeName(AssignmentType type) {
     switch (type) {
       case AssignmentType.homework:
         return 'Homework';
@@ -970,88 +815,469 @@ class GradeDetailSheet extends StatelessWidget {
         return 'Project';
       case AssignmentType.exam:
         return 'Exam';
+      case AssignmentType.classwork:
+        return 'Classwork';
+      case AssignmentType.lab:
+        return 'Lab';
+      case AssignmentType.presentation:
+        return 'Presentation';
+      case AssignmentType.essay:
+        return 'Essay';
+      case AssignmentType.other:
+        return 'Other';
     }
   }
 
   Color _getStatusColor(GradeStatus status) {
     switch (status) {
       case GradeStatus.graded:
+      case GradeStatus.returned:
         return Colors.green;
-      case GradeStatus.submitted:
+      case GradeStatus.pending:
         return Colors.orange;
-      case GradeStatus.missing:
+      case GradeStatus.draft:
+        return Colors.blue;
+      case GradeStatus.revised:
+        return Colors.purple;
+      case GradeStatus.notSubmitted:
         return Colors.red;
+    }
+  }
+
+  String _getStatusText(GradeStatus status) {
+    switch (status) {
+      case GradeStatus.graded:
+        return 'Graded';
+      case GradeStatus.returned:
+        return 'Returned';
+      case GradeStatus.pending:
+        return 'Pending';
+      case GradeStatus.draft:
+        return 'Draft';
+      case GradeStatus.revised:
+        return 'Revised';
+      case GradeStatus.notSubmitted:
+        return 'Not Submitted';
     }
   }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final diff = now.difference(date).inDays;
+    final difference = date.difference(now);
     
-    if (diff == 0) {
+    if (difference.inDays == 0) {
       return 'Today';
-    } else if (diff == 1) {
+    } else if (difference.inDays == 1) {
+      return 'Tomorrow';
+    } else if (difference.inDays == -1) {
       return 'Yesterday';
-    } else if (diff < 7) {
-      return '$diff days ago';
+    } else if (difference.inDays > 0 && difference.inDays < 7) {
+      return 'in ${difference.inDays} days';
+    } else if (difference.inDays < 0 && difference.inDays > -7) {
+      return '${-difference.inDays} days ago';
     } else {
-      return '${date.day}/${date.month}/${date.year}';
+      return '${date.month}/${date.day}/${date.year}';
     }
   }
 }
 
-// Data models
-class StudentGradeEntry {
-  final String id;
-  final String courseId;
-  final String courseName;
-  final String assignmentName;
-  final AssignmentType assignmentType;
-  final double? points;
-  final double maxPoints;
-  final double? percentage;
-  final String? letterGrade;
-  final DateTime? submittedDate;
-  final DateTime? gradedDate;
-  final String? feedback;
-  final GradeStatus status;
-  final Color courseColor;
+// Grade Details Bottom Sheet
+class _GradeDetailsSheet extends StatelessWidget {
+  final Grade grade;
+  final Assignment assignment;
 
-  StudentGradeEntry({
-    required this.id,
-    required this.courseId,
-    required this.courseName,
-    required this.assignmentName,
-    required this.assignmentType,
-    this.points,
-    required this.maxPoints,
-    this.percentage,
-    this.letterGrade,
-    this.submittedDate,
-    this.gradedDate,
-    this.feedback,
-    required this.status,
-    required this.courseColor,
+  const _GradeDetailsSheet({
+    required this.grade,
+    required this.assignment,
   });
-}
 
-class CourseOption {
-  final String id;
-  final String name;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isGraded = grade.status == GradeStatus.graded || grade.status == GradeStatus.returned;
 
-  CourseOption({required this.id, required this.name});
-}
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Assignment Title
+                  Text(
+                    assignment.title,
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // Assignment Type and Due Date
+                  Row(
+                    children: [
+                      StatusBadge.assignmentType(
+                        type: assignment.type.name,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Due ${_formatDate(assignment.dueDate)}',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Grade Information
+                  if (isGraded) ...[
+                    Card(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Your Score',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${grade.pointsEarned.toStringAsFixed(1)} / ${grade.pointsPossible.toStringAsFixed(0)}',
+                                      style: theme.textTheme.headlineMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      'Grade',
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          '${grade.percentage.toStringAsFixed(1)}%',
+                                          style: theme.textTheme.headlineMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: _getGradeColor(grade.percentage),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          grade.letterGrade ?? _getLetterGrade(grade.percentage),
+                                          style: theme.textTheme.headlineMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: _getGradeColor(grade.percentage),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            if (grade.gradedAt != null) ...[
+                              const SizedBox(height: 16),
+                              Divider(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Graded on',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${grade.gradedAt!.month}/${grade.gradedAt!.day}/${grade.gradedAt!.year}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Teacher Feedback
+                    if (grade.feedback != null && grade.feedback!.isNotEmpty) ...[
+                      Text(
+                        'Teacher Feedback',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            grade.feedback!,
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ] else ...[
+                    // Pending Status
+                    Card(
+                      color: _getStatusColor(grade.status).withValues(alpha: 0.1),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _getStatusIcon(grade.status),
+                              color: _getStatusColor(grade.status),
+                              size: 32,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _getStatusText(grade.status),
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: _getStatusColor(grade.status),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _getStatusDescription(grade.status),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  // Assignment Description
+                  if (assignment.description.isNotEmpty) ...[
+                    Text(
+                      'Assignment Description',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      assignment.description,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  
+                  // Rubric Scores (if available)
+                  if (grade.rubricScores != null && grade.rubricScores!.isNotEmpty) ...[
+                    Text(
+                      'Rubric Scores',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: grade.rubricScores!.entries.map((entry) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(entry.key),
+                                  Text(
+                                    entry.value.toString(),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          
+          // Close Button
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Close'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-enum AssignmentType {
-  homework,
-  quiz,
-  test,
-  project,
-  exam,
-}
+  Color _getGradeColor(double percentage) {
+    if (percentage >= 90) return Colors.green;
+    if (percentage >= 80) return Colors.blue;
+    if (percentage >= 70) return Colors.orange;
+    if (percentage >= 60) return Colors.deepOrange;
+    return Colors.red;
+  }
 
-enum GradeStatus {
-  graded,
-  submitted,
-  missing,
+  String _getLetterGrade(double percentage) {
+    if (percentage >= 93) return 'A';
+    if (percentage >= 90) return 'A-';
+    if (percentage >= 87) return 'B+';
+    if (percentage >= 83) return 'B';
+    if (percentage >= 80) return 'B-';
+    if (percentage >= 77) return 'C+';
+    if (percentage >= 73) return 'C';
+    if (percentage >= 70) return 'C-';
+    if (percentage >= 67) return 'D+';
+    if (percentage >= 65) return 'D';
+    return 'F';
+  }
+
+  Color _getStatusColor(GradeStatus status) {
+    switch (status) {
+      case GradeStatus.graded:
+      case GradeStatus.returned:
+        return Colors.green;
+      case GradeStatus.pending:
+        return Colors.orange;
+      case GradeStatus.draft:
+        return Colors.blue;
+      case GradeStatus.revised:
+        return Colors.purple;
+      case GradeStatus.notSubmitted:
+        return Colors.red;
+    }
+  }
+
+  IconData _getStatusIcon(GradeStatus status) {
+    switch (status) {
+      case GradeStatus.graded:
+      case GradeStatus.returned:
+        return Icons.check_circle;
+      case GradeStatus.pending:
+        return Icons.schedule;
+      case GradeStatus.draft:
+        return Icons.edit;
+      case GradeStatus.revised:
+        return Icons.refresh;
+      case GradeStatus.notSubmitted:
+        return Icons.warning;
+    }
+  }
+
+  String _getStatusText(GradeStatus status) {
+    switch (status) {
+      case GradeStatus.graded:
+        return 'Graded';
+      case GradeStatus.returned:
+        return 'Returned';
+      case GradeStatus.pending:
+        return 'Pending Review';
+      case GradeStatus.draft:
+        return 'Draft';
+      case GradeStatus.revised:
+        return 'Revised';
+      case GradeStatus.notSubmitted:
+        return 'Not Submitted';
+    }
+  }
+
+  String _getStatusDescription(GradeStatus status) {
+    switch (status) {
+      case GradeStatus.pending:
+        return 'Your submission is awaiting teacher review';
+      case GradeStatus.draft:
+        return 'Assignment is in draft status';
+      case GradeStatus.revised:
+        return 'Grade has been revised after initial grading';
+      case GradeStatus.notSubmitted:
+        return 'You have not submitted this assignment';
+      default:
+        return '';
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = date.difference(now);
+    
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Tomorrow';
+    } else if (difference.inDays == -1) {
+      return 'Yesterday';
+    } else if (difference.inDays > 0 && difference.inDays < 7) {
+      return 'in ${difference.inDays} days';
+    } else if (difference.inDays < 0 && difference.inDays > -7) {
+      return '${-difference.inDays} days ago';
+    } else {
+      return '${date.month}/${date.day}/${date.year}';
+    }
+  }
 }

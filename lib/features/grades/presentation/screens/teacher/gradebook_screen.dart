@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
-import '../../../../../shared/widgets/preview/preview_example_wrapper.dart';
-import '../../../../../shared/widgets/preview/example_badge.dart';
-import '../../../../../shared/example/example_repository.dart';
 import '../../../../../shared/theme/app_theme.dart';
+import '../../../domain/models/grade.dart';
+import '../../providers/grade_provider.dart';
+import '../../../../assignments/presentation/providers/assignment_provider.dart';
+import '../../../../assignments/domain/models/assignment.dart' as assignment_model;
+import '../../../../classes/presentation/providers/class_provider.dart';
+import '../../../../classes/domain/models/class_model.dart';
+import '../../../../student/domain/models/student.dart';
+import '../../../../student/presentation/providers/student_provider.dart';
 
 class GradebookScreen extends StatefulWidget {
   const GradebookScreen({super.key});
@@ -15,228 +21,137 @@ class GradebookScreen extends StatefulWidget {
 
 class _GradebookScreenState extends State<GradebookScreen> {
   String _searchQuery = '';
-  String _selectedClassId = '1';
-
-  // Data state - will be replaced with preview examples when empty
-  List<Assignment>? _assignments;
-  List<GradebookStudent>? _students;
-
-  List<GradebookStudent> get _filteredStudents {
-    final students = _students ?? [];
-    if (_searchQuery.isEmpty) return students;
-    return students.where((student) {
-      return student.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          student.email.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+  String? _selectedClassId;
+  List<Student> _students = [];
+  
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
-
-  // Helper methods to convert example data to local models
-  List<Assignment> _convertExampleAssignments(
-      List<dynamic> exampleAssignments) {
-    return exampleAssignments.map((data) {
-      return Assignment(
-        id: data['id'],
-        name: data['name'],
-        type: _parseAssignmentType(data['type']),
-        dueDate: data['dueDate'],
-        maxPoints: data['maxPoints'],
-        weight: data['weight'],
-      );
-    }).toList();
+  
+  void _loadData() {
+    final classProvider = context.read<ClassProvider>();
+    final gradeProvider = context.read<GradeProvider>();
+    
+    // Load classes and set default selection
+    if (classProvider.teacherClasses.isNotEmpty) {
+      final firstClass = classProvider.teacherClasses.first;
+      setState(() {
+        _selectedClassId = firstClass.id;
+      });
+      
+      // Load grades for the selected class
+      gradeProvider.loadClassGrades(firstClass.id);
+      
+      // TODO: Load students for the class
+      // For now, we'll use class student IDs
+      _loadStudentsForClass(firstClass);
+    }
   }
-
-  AssignmentType _parseAssignmentType(String type) {
-    switch (type) {
-      case 'homework':
-        return AssignmentType.homework;
-      case 'quiz':
-        return AssignmentType.quiz;
-      case 'test':
-        return AssignmentType.test;
-      case 'project':
-        return AssignmentType.project;
-      default:
-        return AssignmentType.homework;
+  
+  void _loadStudentsForClass(ClassModel classModel) async {
+    // Load actual students from Firebase using StudentProvider
+    final studentProvider = context.read<StudentProvider>();
+    
+    if (classModel.studentIds.isNotEmpty) {
+      final students = await studentProvider.loadStudentsByIds(classModel.studentIds);
+      setState(() {
+        _students = students;
+      });
+    } else {
+      setState(() {
+        _students = [];
+      });
     }
   }
 
-  List<GradebookStudent> _convertExampleStudents(List<dynamic> exampleGrades) {
-    // Group grades by student ID
-    final Map<String, List<StudentGrade>> gradesByStudent = {};
-
-    for (final gradeData in exampleGrades) {
-      final studentId = gradeData['studentId'];
-      final grade = StudentGrade(
-        studentId,
-        gradeData['assignmentId'],
-        gradeData['points'],
-        _parseGradeStatus(gradeData['status']),
-      );
-
-      gradesByStudent[studentId] ??= [];
-      gradesByStudent[studentId]!.add(grade);
-    }
-
-    // Create GradebookStudent objects
-    final studentNames = {
-      'example_student_1': 'Emma Example',
-      'example_student_2': 'Marcus Sample',
-      'example_student_3': 'Aisha Demo',
-      'example_student_4': 'David Preview',
-      'example_student_5': 'Sophie Test',
-    };
-
-    final studentEmails = {
-      'example_student_1': 'emma.example@preview.edu',
-      'example_student_2': 'marcus.sample@preview.edu',
-      'example_student_3': 'aisha.demo@preview.edu',
-      'example_student_4': 'david.preview@preview.edu',
-      'example_student_5': 'sophie.test@preview.edu',
-    };
-
-    return gradesByStudent.entries.map((entry) {
-      return GradebookStudent(
-        id: entry.key,
-        name: studentNames[entry.key] ?? 'Unknown Student',
-        email: studentEmails[entry.key] ?? 'unknown@preview.edu',
-        grades: entry.value,
-      );
+  List<Student> get _filteredStudents {
+    if (_searchQuery.isEmpty) return _students;
+    return _students.where((student) {
+      final fullName = '${student.firstName} ${student.lastName}';
+      return fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
     }).toList();
-  }
-
-  GradeStatus _parseGradeStatus(String status) {
-    switch (status) {
-      case 'graded':
-        return GradeStatus.graded;
-      case 'missing':
-        return GradeStatus.missing;
-      case 'late':
-        return GradeStatus.late;
-      case 'not_submitted':
-        return GradeStatus.notSubmitted;
-      default:
-        return GradeStatus.notSubmitted;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get example data from repository
-    final exampleAssignments =
-        ExampleRepository.of<dynamic>(ExampleDomain.assignments);
-    final exampleGrades = ExampleRepository.of<dynamic>(ExampleDomain.grades);
+    final gradeProvider = context.watch<GradeProvider>();
+    final assignmentProvider = context.watch<AssignmentProvider>();
+    final classProvider = context.watch<ClassProvider>();
 
-    // For now, simulate that we have no real data (empty state)
-    // In a real app, this would come from a provider or service
-    final List<Assignment> realAssignments = []; // Simulating empty real data
-    final List<GradebookStudent> realStudents =
-        []; // Simulating empty real data
-
-    return PreviewExampleWrapper<Assignment>(
-      realData: realAssignments,
-      exampleData: _convertExampleAssignments(exampleAssignments),
-      isLoading: false, // Set to true if loading from service
-      builder: (context, assignments, isExample) {
-        // Set the current data state
-        _assignments = assignments;
-
-        // Convert example grades to students if using examples
-        if (isExample) {
-          _students = _convertExampleStudents(exampleGrades);
-        } else {
-          _students = realStudents;
-        }
-
-        return Scaffold(
-          appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/dashboard'),
-              tooltip: 'Back to Dashboard',
-            ),
-            title: Row(
-              children: [
-                const Text('Gradebook'),
-                if (isExample) ...[
-                  const SizedBox(width: 8),
-                  const ExampleBadge.compact(),
-                ],
-              ],
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.file_download),
-                onPressed: _showExportDialog,
-                tooltip: 'Export Grades',
-              ),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+          tooltip: 'Back to Dashboard',
+        ),
+        title: const Text('Gradebook'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download),
+            onPressed: _showExportDialog,
+            tooltip: 'Export Grades',
           ),
-          body: _buildGradebookBody(isExample),
-          floatingActionButton: FloatingActionButton(
-            onPressed: isExample
-                ? () => _showExampleDialog(context)
-                : _showAddAssignmentDialog,
-            child: const Icon(Icons.assignment_add),
-          ),
-        );
-      },
-      onExampleTap: () => _showExampleDialog(context),
+        ],
+      ),
+      body: gradeProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _buildGradebookBody(context, gradeProvider, assignmentProvider, classProvider),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddAssignmentDialog,
+        child: const Icon(Icons.assignment_add),
+      ),
     );
   }
 
-  Widget _buildGradebookBody(bool isExample) {
+  Widget _buildGradebookBody(BuildContext context, GradeProvider gradeProvider, AssignmentProvider assignmentProvider, ClassProvider classProvider) {
+    
+    if (classProvider.teacherClasses.isEmpty) {
+      return const EmptyState(
+        icon: Icons.class_outlined,
+        title: 'No Classes Yet',
+        message: 'Create a class to start managing grades',
+      );
+    }
+    
     return Column(
       children: [
         // Statistics Header
-        _buildStatsHeader(isExample),
+        _buildStatsHeader(context, gradeProvider),
 
         // Class Selector and Search
-        _buildControlsSection(isExample),
+        _buildControlsSection(context, classProvider),
 
         // Students List
         Expanded(
           child: _filteredStudents.isEmpty
               ? _searchQuery.isNotEmpty
                   ? EmptyState.noSearchResults(searchTerm: _searchQuery)
-                  : isExample
-                      ? const EmptyState.noStudents()
-                      : const EmptyState.noStudents()
-              : _buildStudentsList(isExample),
+                  : const EmptyState(
+                      icon: Icons.people_outline,
+                      title: 'No Students',
+                      message: 'Students will appear here when they join your class',
+                    )
+              : _buildStudentsList(context, gradeProvider, assignmentProvider),
         ),
       ],
     );
   }
 
-  void _showExampleDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.info_outline),
-        title: const Text('Example Gradebook'),
-        content: const Text(
-          'This is example gradebook data to show you how the app works. '
-          'Add your own assignments and students to replace these examples.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _showAddAssignmentDialog();
-            },
-            child: const Text('Add Assignment'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsHeader(bool isExample) {
-    final classAverage = _calculateClassAverage();
-    final completionRate = _calculateCompletionRate();
+  Widget _buildStatsHeader(BuildContext context, GradeProvider gradeProvider) {
+    final stats = gradeProvider.classStatistics;
+    
+    final classAverage = stats?.average ?? 0.0;
+    // Calculate completion rate from grades
+    final totalGrades = gradeProvider.classGrades.length;
+    final completedGrades = gradeProvider.classGrades.where((g) => g.status == GradeStatus.graded || g.status == GradeStatus.returned).length;
+    final completionRate = totalGrades > 0 ? (completedGrades / totalGrades) * 100 : 0.0;
+    final studentCount = _students.length;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -249,7 +164,6 @@ class _GradebookScreenState extends State<GradebookScreen> {
               subtitle: _getLetterGrade(classAverage),
               icon: Icons.trending_up,
               valueColor: AppTheme.getGradeColor(_getLetterGrade(classAverage)),
-              isExample: isExample,
             ),
           ),
           const SizedBox(width: 8),
@@ -257,20 +171,17 @@ class _GradebookScreenState extends State<GradebookScreen> {
             child: _buildCompactStatCard(
               title: 'Completion',
               value: '${completionRate.toStringAsFixed(0)}%',
-              subtitle:
-                  '${_students?.where((s) => s.grades.any((g) => g.status == GradeStatus.graded)).length ?? 0}/${_students?.length ?? 0} done',
+              subtitle: '${gradeProvider.classGrades.where((g) => g.status == GradeStatus.graded).length}/${gradeProvider.classGrades.length} done',
               icon: Icons.assignment_turned_in,
-              isExample: isExample,
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: _buildCompactStatCard(
               title: 'Students',
-              value: '${_students?.length ?? 0}',
+              value: '$studentCount',
               subtitle: 'Enrolled',
               icon: Icons.people,
-              isExample: isExample,
             ),
           ),
         ],
@@ -284,7 +195,6 @@ class _GradebookScreenState extends State<GradebookScreen> {
     required String subtitle,
     required IconData icon,
     Color? valueColor,
-    bool isExample = false,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -295,67 +205,58 @@ class _GradebookScreenState extends State<GradebookScreen> {
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
-      child: Stack(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
+          Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w500,
-                          ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+              Icon(
+                icon,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: valueColor,
-                    ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color:
+                            Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-          if (isExample)
-            const Positioned(
-              top: 0,
-              right: 0,
-              child: ExampleBadge.compact(),
-            ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: valueColor,
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildControlsSection(bool isExample) {
+  Widget _buildControlsSection(BuildContext context, ClassProvider classProvider) {
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -374,29 +275,22 @@ class _GradebookScreenState extends State<GradebookScreen> {
                 value: _selectedClassId,
                 isExpanded: true,
                 underline: const SizedBox(),
-                items: isExample
-                    ? [
-                        const DropdownMenuItem(
-                            value: '1', child: Text('Advanced Mathematics')),
-                        const DropdownMenuItem(
-                            value: '2', child: Text('Environmental Science')),
-                        const DropdownMenuItem(
-                            value: '3', child: Text('Creative Writing')),
-                        const DropdownMenuItem(
-                            value: '4', child: Text('Physics Honors')),
-                      ]
-                    : [
-                        const DropdownMenuItem(
-                            value: '1', child: Text('Advanced Mathematics')),
-                        const DropdownMenuItem(
-                            value: '2', child: Text('Biology Lab')),
-                        const DropdownMenuItem(
-                            value: '3', child: Text('Creative Writing')),
-                      ],
+                items: classProvider.teacherClasses.map((cls) {
+                  return DropdownMenuItem(
+                    value: cls.id,
+                    child: Text(cls.name),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedClassId = value!;
+                    _selectedClassId = value;
                   });
+                  if (value != null) {
+                    final selectedClass = classProvider.teacherClasses
+                        .firstWhere((c) => c.id == value);
+                    context.read<GradeProvider>().loadClassGrades(value);
+                    _loadStudentsForClass(selectedClass);
+                  }
                 },
               ),
             ),
@@ -406,12 +300,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
           Expanded(
             flex: 3,
             child: TextField(
-              decoration: InputDecoration(
-                hintText: isExample
-                    ? 'Search example students...'
-                    : 'Search students...',
-                prefixIcon: const Icon(Icons.search),
-                border: const OutlineInputBorder(),
+              decoration: const InputDecoration(
+                hintText: 'Search students...',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
               ),
               onChanged: (value) {
                 setState(() {
@@ -425,202 +317,203 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  void _showStudentGradeDetail(GradebookStudent student) {
+  void _showStudentGradeDetail(Student student) {
+    final gradeProvider = context.read<GradeProvider>();
+    final assignmentProvider = context.read<AssignmentProvider>();
+    
+    // Load grades for this specific student
+    gradeProvider.loadStudentClassGrades(student.id, _selectedClassId!);
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (context) => StudentGradeDetailSheet(
         student: student,
-        assignments: _assignments ?? [],
+        assignments: assignmentProvider.teacherAssignments
+            .where((a) => a.classId == _selectedClassId)
+            .toList(),
         onGradeUpdate: (assignmentId, newPoints, newStatus) {
-          setState(() {
-            final grade = student.grades
-                .firstWhere((g) => g.assignmentId == assignmentId);
-            grade.points = newPoints;
-            grade.status = newStatus;
-          });
+          // Find the grade and update it
+          final grade = gradeProvider.studentGrades
+              .firstWhere((g) => g.assignmentId == assignmentId);
+          gradeProvider.submitGrade(grade.id, newPoints ?? 0, null);
         },
       ),
     );
   }
 
-  Widget _buildStudentsList(bool isExample) {
+  Widget _buildStudentsList(BuildContext context, GradeProvider gradeProvider, AssignmentProvider assignmentProvider) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _filteredStudents.length,
       itemBuilder: (context, index) {
         final student = _filteredStudents[index];
-        return _buildStudentCard(student, isExample: isExample);
+        return _buildStudentCard(student, gradeProvider);
       },
     );
   }
 
-  Widget _buildStudentCard(GradebookStudent student, {bool isExample = false}) {
-    final overallGrade = _calculateStudentOverallGrade(student);
-    final completedAssignments =
-        student.grades.where((g) => g.status == GradeStatus.graded).length;
-    final totalAssignments = _assignments?.length ?? 0;
+  Widget _buildStudentCard(Student student, GradeProvider gradeProvider) {
+    
+    // Calculate student's overall grade
+    final studentGrades = gradeProvider.classGrades
+        .where((g) => g.studentId == student.id)
+        .toList();
+    
+    final overallGrade = _calculateStudentOverallGrade(studentGrades);
+    final completedAssignments = studentGrades
+        .where((g) => g.status == GradeStatus.graded)
+        .length;
+    final totalAssignments = studentGrades.length;
 
     return AppCard(
-      onTap: isExample
-          ? () => _showExampleDialog(context)
-          : () => _showStudentGradeDetail(student),
-      child: Stack(
+      onTap: () => _showStudentGradeDetail(student),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Student Header
+          Row(
             children: [
-              // Student Header
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    child: Text(
-                      student.name.split(' ').map((n) => n[0]).join(''),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                child: Text(
+                  '${student.firstName[0]}${student.lastName[0]}'.toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          student.name,
-                          style:
-                              Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                        Text(
-                          student.email,
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      StatusBadge.grade(grade: _getLetterGrade(overallGrade)),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${overallGrade.toStringAsFixed(1)}%',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-
-              const SizedBox(height: 16),
-
-              // Progress Summary
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Assignments Completed',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: LinearProgressIndicator(
-                                value: totalAssignments > 0
-                                    ? completedAssignments / totalAssignments
-                                    : 0.0,
-                                backgroundColor: Theme.of(context)
-                                    .colorScheme
-                                    .surfaceContainerHighest,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Theme.of(context).colorScheme.primary,
-                                ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${student.firstName} ${student.lastName}',
+                      style:
+                          Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$completedAssignments/$totalAssignments',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ],
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  _buildQuickStatusChips(student),
-                ],
+                    Text(
+                      student.email ?? student.username,
+                      style:
+                          Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                    ),
+                  ],
+                ),
               ),
-
-              const SizedBox(height: 8),
-
-              // Tap hint
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Icon(
-                    isExample ? Icons.info_outline : Icons.touch_app,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
+                  StatusBadge.grade(grade: _getLetterGrade(overallGrade)),
+                  const SizedBox(height: 4),
                   Text(
-                    isExample
-                        ? 'Tap to learn about examples'
-                        : 'Tap to view detailed grades',
+                    '${overallGrade.toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
                         ),
                   ),
                 ],
               ),
             ],
           ),
-          if (isExample)
-            const Positioned(
-              top: 8,
-              right: 8,
-              child: ExampleBadge.compact(),
-            ),
+
+          const SizedBox(height: 16),
+
+          // Progress Summary
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Assignments Completed',
+                      style:
+                          Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
+                              ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: LinearProgressIndicator(
+                            value: totalAssignments > 0
+                                ? completedAssignments / totalAssignments
+                                : 0.0,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$completedAssignments/$totalAssignments',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              _buildQuickStatusChips(studentGrades),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // Tap hint
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.touch_app,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Tap to view detailed grades',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickStatusChips(GradebookStudent student) {
-    final missingCount =
-        student.grades.where((g) => g.status == GradeStatus.missing).length;
-    final lateCount =
-        student.grades.where((g) => g.status == GradeStatus.late).length;
+  Widget _buildQuickStatusChips(List<Grade> studentGrades) {
+    final missingCount = studentGrades
+        .where((g) => g.status == GradeStatus.notSubmitted)
+        .length;
+    final lateCount = studentGrades
+        .where((g) => g.status == GradeStatus.revised)
+        .length;
 
     return Row(
       children: [
@@ -661,54 +554,16 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  double _calculateClassAverage() {
-    if (_students?.isEmpty ?? true) return 0.0;
-
-    double totalPercentage = 0;
-    int studentCount = 0;
-
-    for (final student in _students!) {
-      final grade = _calculateStudentOverallGrade(student);
-      if (grade > 0) {
-        totalPercentage += grade;
-        studentCount++;
-      }
-    }
-
-    return studentCount > 0 ? totalPercentage / studentCount : 0.0;
-  }
-
-  double _calculateCompletionRate() {
-    if ((_students?.isEmpty ?? true) || (_assignments?.isEmpty ?? true)) {
-      return 0.0;
-    }
-
-    int totalAssignments = _students!.length * _assignments!.length;
-    int completedAssignments = 0;
-
-    for (final student in _students!) {
-      for (final grade in student.grades) {
-        if (grade.status == GradeStatus.graded) {
-          completedAssignments++;
-        }
-      }
-    }
-
-    return (completedAssignments / totalAssignments) * 100;
-  }
-
-  double _calculateStudentOverallGrade(GradebookStudent student) {
-    if (_assignments?.isEmpty ?? true) return 0.0;
+  double _calculateStudentOverallGrade(List<Grade> grades) {
+    if (grades.isEmpty) return 0.0;
 
     double totalPoints = 0;
     double maxPoints = 0;
 
-    for (final grade in student.grades) {
-      final assignment =
-          _assignments!.firstWhere((a) => a.id == grade.assignmentId);
-      if (grade.status == GradeStatus.graded && grade.points != null) {
-        totalPoints += grade.points!;
-        maxPoints += assignment.maxPoints;
+    for (final grade in grades) {
+      if (grade.status == GradeStatus.graded) {
+        totalPoints += grade.pointsEarned;
+        maxPoints += grade.pointsPossible;
       }
     }
 
@@ -765,8 +620,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
 
 // Student Grade Detail Bottom Sheet
 class StudentGradeDetailSheet extends StatelessWidget {
-  final GradebookStudent student;
-  final List<Assignment> assignments;
+  final Student student;
+  final List<assignment_model.Assignment> assignments;
   final Function(String assignmentId, double?, GradeStatus) onGradeUpdate;
 
   const StudentGradeDetailSheet({
@@ -778,7 +633,9 @@ class StudentGradeDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final overallGrade = _calculateStudentOverallGrade();
+    final gradeProvider = context.watch<GradeProvider>();
+    final studentGrades = gradeProvider.studentGrades;
+    final overallGrade = _calculateStudentOverallGrade(studentGrades);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
@@ -793,7 +650,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
                 radius: 24,
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 child: Text(
-                  student.name.split(' ').map((n) => n[0]).join(''),
+                  '${student.firstName[0]}${student.lastName[0]}'.toUpperCase(),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -807,14 +664,14 @@ class StudentGradeDetailSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      student.name,
+                      '${student.firstName} ${student.lastName}',
                       style:
                           Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                     ),
                     Text(
-                      student.email,
+                      student.email ?? student.username,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
@@ -875,7 +732,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      '${student.grades.where((g) => g.status == GradeStatus.graded).length}/${assignments.length}',
+                      '${studentGrades.where((g) => g.status == GradeStatus.graded).length}/${assignments.length}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -903,8 +760,23 @@ class StudentGradeDetailSheet extends StatelessWidget {
               itemCount: assignments.length,
               itemBuilder: (context, index) {
                 final assignment = assignments[index];
-                final grade = student.grades
-                    .firstWhere((g) => g.assignmentId == assignment.id);
+                final grade = studentGrades.firstWhere(
+                  (g) => g.assignmentId == assignment.id,
+                  orElse: () => Grade(
+                    id: 'temp_${student.id}_${assignment.id}',
+                    studentId: student.id,
+                    studentName: '${student.firstName} ${student.lastName}',
+                    assignmentId: assignment.id,
+                    classId: assignment.classId,
+                    teacherId: assignment.teacherId,
+                    pointsPossible: assignment.totalPoints.toDouble(),
+                    pointsEarned: 0,
+                    percentage: 0,
+                    status: GradeStatus.pending,
+                    createdAt: DateTime.now(),
+                    updatedAt: DateTime.now(),
+                  ),
+                );
                 return _buildAssignmentGradeCard(context, assignment, grade);
               },
             ),
@@ -915,7 +787,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
   }
 
   Widget _buildAssignmentGradeCard(
-      BuildContext context, Assignment assignment, StudentGrade grade) {
+      BuildContext context, assignment_model.Assignment assignment, Grade grade) {
     final isOverdue = assignment.dueDate.isBefore(DateTime.now());
 
     Color statusColor;
@@ -924,25 +796,31 @@ class StudentGradeDetailSheet extends StatelessWidget {
 
     switch (grade.status) {
       case GradeStatus.graded:
-        final percentage = (grade.points! / assignment.maxPoints) * 100;
+      case GradeStatus.returned:
+        final percentage = grade.percentage;
         statusColor = AppTheme.getGradeColor(_getLetterGrade(percentage));
         statusText = _getLetterGrade(percentage);
         scoreText =
-            '${grade.points!.toInt()}/${assignment.maxPoints} (${percentage.toStringAsFixed(1)}%)';
-        break;
-      case GradeStatus.missing:
-        statusColor = Theme.of(context).colorScheme.error;
-        statusText = 'Missing';
-        scoreText = '0/${assignment.maxPoints} (0%)';
-        break;
-      case GradeStatus.late:
-        statusColor = AppTheme.warningColor;
-        statusText = 'Late';
-        scoreText = grade.points != null
-            ? '${grade.points!.toInt()}/${assignment.maxPoints}'
-            : 'Not graded';
+            '${grade.pointsEarned.toInt()}/${grade.pointsPossible.toInt()} (${percentage.toStringAsFixed(1)}%)';
         break;
       case GradeStatus.notSubmitted:
+        statusColor = Theme.of(context).colorScheme.error;
+        statusText = 'Not Submitted';
+        scoreText = '0/${grade.pointsPossible.toInt()} (0%)';
+        break;
+      case GradeStatus.revised:
+        statusColor = AppTheme.warningColor;
+        statusText = 'Revised';
+        scoreText = grade.pointsEarned > 0
+            ? '${grade.pointsEarned.toInt()}/${grade.pointsPossible.toInt()}'
+            : 'Not graded';
+        break;
+      case GradeStatus.draft:
+        statusColor = Theme.of(context).colorScheme.onSurfaceVariant;
+        statusText = 'Draft';
+        scoreText = '-';
+        break;
+      case GradeStatus.pending:
         statusColor = Theme.of(context).colorScheme.onSurfaceVariant;
         statusText = 'Not Submitted';
         scoreText = '-';
@@ -962,7 +840,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      assignment.name,
+                      assignment.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -1009,9 +887,9 @@ class StudentGradeDetailSheet extends StatelessWidget {
           const SizedBox(height: 8),
 
           // Progress Bar for graded assignments
-          if (grade.status == GradeStatus.graded) ...[
+          if (grade.status == GradeStatus.graded || grade.status == GradeStatus.returned) ...[
             LinearProgressIndicator(
-              value: grade.points! / assignment.maxPoints,
+              value: grade.pointsEarned / grade.pointsPossible,
               backgroundColor:
                   Theme.of(context).colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
@@ -1043,7 +921,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
   }
 
   void _showGradeEntryDialog(
-      BuildContext context, Assignment assignment, StudentGrade grade) {
+      BuildContext context, assignment_model.Assignment assignment, Grade grade) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1064,16 +942,16 @@ class StudentGradeDetailSheet extends StatelessWidget {
     );
   }
 
-  double _calculateStudentOverallGrade() {
+  double _calculateStudentOverallGrade(List<Grade> grades) {
+    if (grades.isEmpty) return 0.0;
+
     double totalPoints = 0;
     double maxPoints = 0;
 
-    for (final grade in student.grades) {
-      final assignment =
-          assignments.firstWhere((a) => a.id == grade.assignmentId);
-      if (grade.status == GradeStatus.graded && grade.points != null) {
-        totalPoints += grade.points!;
-        maxPoints += assignment.maxPoints;
+    for (final grade in grades) {
+      if (grade.status == GradeStatus.graded || grade.status == GradeStatus.returned) {
+        totalPoints += grade.pointsEarned;
+        maxPoints += grade.pointsPossible;
       }
     }
 
@@ -1099,9 +977,9 @@ class StudentGradeDetailSheet extends StatelessWidget {
 
 // Grade Entry Bottom Sheet
 class GradeEntrySheet extends StatefulWidget {
-  final GradebookStudent student;
-  final Assignment assignment;
-  final StudentGrade grade;
+  final Student student;
+  final assignment_model.Assignment assignment;
+  final Grade grade;
   final Function(double?, GradeStatus) onSave;
 
   const GradeEntrySheet({
@@ -1124,7 +1002,7 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
   void initState() {
     super.initState();
     _pointsController = TextEditingController(
-      text: widget.grade.points?.toString() ?? '',
+      text: widget.grade.pointsEarned > 0 ? widget.grade.pointsEarned.toString() : '',
     );
     _selectedStatus = widget.grade.status;
   }
@@ -1139,7 +1017,7 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
   Widget build(BuildContext context) {
     final percentage = _pointsController.text.isNotEmpty
         ? (double.tryParse(_pointsController.text) ?? 0) /
-            widget.assignment.maxPoints *
+            widget.assignment.totalPoints *
             100
         : 0.0;
 
@@ -1172,12 +1050,12 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.student.name,
+                  '${widget.student.firstName} ${widget.student.lastName}',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.assignment.name,
+                  widget.assignment.title,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 4),
@@ -1203,9 +1081,9 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: 'Points Earned',
-              hintText: 'Enter points (0-${widget.assignment.maxPoints})',
+              hintText: 'Enter points (0-${widget.assignment.totalPoints})',
               border: const OutlineInputBorder(),
-              suffix: Text('/ ${widget.assignment.maxPoints}'),
+              suffix: Text('/ ${widget.assignment.totalPoints}'),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -1269,7 +1147,7 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
       final points = double.tryParse(_pointsController.text);
       return points != null &&
           points >= 0 &&
-          points <= widget.assignment.maxPoints;
+          points <= widget.assignment.totalPoints;
     }
     return true;
   }
@@ -1286,12 +1164,16 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
     switch (status) {
       case GradeStatus.graded:
         return 'Graded';
-      case GradeStatus.missing:
-        return 'Missing';
-      case GradeStatus.late:
-        return 'Late';
       case GradeStatus.notSubmitted:
         return 'Not Submitted';
+      case GradeStatus.revised:
+        return 'Revised';
+      case GradeStatus.pending:
+        return 'Pending';
+      case GradeStatus.returned:
+        return 'Returned';
+      case GradeStatus.draft:
+        return 'Draft';
     }
   }
 
@@ -1310,60 +1192,4 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
     if (percentage >= 60) return 'D-';
     return 'F';
   }
-}
-
-// Data Models
-class Assignment {
-  final String id;
-  final String name;
-  final AssignmentType type;
-  final DateTime dueDate;
-  final int maxPoints;
-  final double weight;
-
-  Assignment({
-    required this.id,
-    required this.name,
-    required this.type,
-    required this.dueDate,
-    required this.maxPoints,
-    required this.weight,
-  });
-}
-
-enum AssignmentType {
-  homework,
-  quiz,
-  test,
-  project,
-}
-
-class StudentGrade {
-  final String studentId;
-  final String assignmentId;
-  double? points;
-  GradeStatus status;
-
-  StudentGrade(this.studentId, this.assignmentId, this.points, this.status);
-}
-
-enum GradeStatus {
-  graded,
-  missing,
-  late,
-  notSubmitted,
-}
-
-class GradebookStudent {
-  final String id;
-  final String name;
-  final String email;
-  final List<StudentGrade> grades;
-
-  GradebookStudent({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.grades,
-  });
 }

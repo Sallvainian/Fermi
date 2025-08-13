@@ -210,6 +210,83 @@ class StudentAssignmentProvider with ChangeNotifier {
     
     await setupAssignmentsStream();
   }
+  
+  /// Loads assignments for a student with specific class IDs.
+  /// 
+  /// This is a convenience method for dashboard usage that takes
+  /// explicit class IDs rather than fetching from student document.
+  /// 
+  /// @param studentId Student's user identifier
+  /// @param classIds List of class IDs the student is enrolled in
+  Future<void> loadAssignmentsForStudent(String studentId, List<String> classIds) async {
+    _currentStudentId = studentId;
+    
+    // If Firebase is not initialized or no classes, emit empty data
+    if (!isFirebaseInitialized || classIds.isEmpty) {
+      _assignments = [];
+      _isLoading = false;
+      notifyListeners();
+      _studentAssignmentsController.add([]);
+      return;
+    }
+    
+    // Set up streams directly with class IDs
+    _isLoading = true;
+    _error = '';
+    notifyListeners();
+    
+    try {
+      // Cancel existing subscription if any
+      await _assignmentsSubscription?.cancel();
+      
+      // Create a transformed stream that converts Assignments to StudentAssignments
+      final assignmentStream = _assignmentRepository
+          .getClassAssignmentsForMultipleClasses(classIds)
+          .asyncMap((assignments) async {
+        // Process assignments similar to setupAssignmentsStream
+        final studentAssignments = <StudentAssignment>[];
+        
+        for (final assignment in assignments) {
+          // Only include published and active assignments
+          if (assignment.isPublished && assignment.status == AssignmentStatus.active) {
+            // For now, create without submission and grade data
+            // TODO: Implement proper submission and grade fetching
+            
+            studentAssignments.add(StudentAssignment(
+              assignment: assignment,
+              submission: null,
+              grade: null,
+            ));
+          }
+        }
+        
+        // Sort by due date
+        studentAssignments.sort((a, b) => 
+            a.assignment.dueDate.compareTo(b.assignment.dueDate));
+        
+        return studentAssignments;
+      });
+      
+      // Subscribe to the transformed stream
+      _assignmentsSubscription = assignmentStream.listen(
+        (studentAssignments) {
+          _assignments = studentAssignments;
+          _isLoading = false;
+          notifyListeners();
+          _studentAssignmentsController.add(studentAssignments);
+        },
+        onError: (error) {
+          _error = error.toString();
+          _isLoading = false;
+          notifyListeners();
+        },
+      );
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   /// Sets up real-time stream combining assignments, submissions, and grades.
   /// 

@@ -13,6 +13,9 @@ import '../../../student/presentation/widgets/online_users_card.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
+import '../../../dashboard/domain/models/activity_model.dart';
+import '../../../assignments/presentation/providers/assignment_provider.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -26,17 +29,21 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTeacherClasses();
+      _loadDashboardData();
     });
   }
 
-  void _loadTeacherClasses() {
+  void _loadDashboardData() {
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
+    final dashboardProvider = context.read<DashboardProvider>();
+    final assignmentProvider = context.read<AssignmentProvider>();
     final teacherId = authProvider.userModel?.uid;
     
     if (teacherId != null) {
       classProvider.loadTeacherClasses(teacherId);
+      dashboardProvider.loadTeacherDashboard(teacherId);
+      assignmentProvider.loadAssignmentsForTeacher(teacherId);
     }
   }
 
@@ -44,6 +51,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final callProvider = context.watch<CallProvider>();
+    final classProvider = context.watch<ClassProvider>();
+    final dashboardProvider = context.watch<DashboardProvider>();
+    final assignmentProvider = context.watch<AssignmentProvider>();
     final user = authProvider.userModel;
     final theme = Theme.of(context);
 
@@ -132,7 +142,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               const SizedBox(height: 8),
 
               // Quick Stats - Smaller section
-              _buildQuickStats(context),
+              _buildQuickStats(context, classProvider, dashboardProvider, assignmentProvider),
               const SizedBox(height: 24),
 
               // My Classes
@@ -143,7 +153,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
-              _buildClassesSection(context),
+              _buildClassesSection(context, classProvider),
               const SizedBox(height: AppSpacing.lg),
 
               // Recent Activity
@@ -154,7 +164,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
-              _buildRecentActivityCard(context),
+              _buildRecentActivityCard(context, dashboardProvider),
               const SizedBox(height: AppSpacing.lg),
               
               // Online Users
@@ -187,8 +197,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildQuickStats(BuildContext context) {
-    final classProvider = context.watch<ClassProvider>();
+  Widget _buildQuickStats(BuildContext context, ClassProvider classProvider, DashboardProvider dashboardProvider, AssignmentProvider assignmentProvider) {
     final teacherClasses = classProvider.teacherClasses;
     final totalStudents = teacherClasses.fold<int>(0, (sum, classModel) => sum + classModel.studentCount);
     
@@ -219,7 +228,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             context,
             icon: Icons.assignment,
             title: 'Assignments',
-            value: '23',
+            value: '${assignmentProvider.teacherAssignments.length}',
             color: Colors.orange,
             onTap: () => context.go('/teacher/assignments'),
           ),
@@ -228,7 +237,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             context,
             icon: Icons.grade,
             title: 'To Grade',
-            value: '8',
+            value: '${dashboardProvider.assignmentsToGrade}',
             color: Colors.red,
             onTap: () => context.go('/teacher/gradebook'),
           ),
@@ -237,8 +246,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildClassesSection(BuildContext context) {
-    final classProvider = context.watch<ClassProvider>();
+  Widget _buildClassesSection(BuildContext context, ClassProvider classProvider) {
     
     if (classProvider.isLoading) {
       return const Center(
@@ -464,41 +472,96 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildRecentActivityCard(BuildContext context) {
+  Widget _buildRecentActivityCard(BuildContext context, DashboardProvider dashboardProvider) {
+    final activities = dashboardProvider.recentActivities;
+    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildActivityItem(
-              context,
-              icon: Icons.assignment_turned_in,
-              title: 'New assignment submitted',
-              subtitle: 'John Doe submitted Math Homework #5',
-              time: '2 hours ago',
-              color: Colors.green,
-            ),
-            const Divider(),
-            _buildActivityItem(
-              context,
-              icon: Icons.message,
-              title: 'New message',
-              subtitle: 'Parent inquiry about Sarah\'s progress',
-              time: '4 hours ago',
-              color: Colors.blue,
-            ),
-            const Divider(),
-            _buildActivityItem(
-              context,
-              icon: Icons.schedule,
-              title: 'Upcoming deadline',
-              subtitle: 'Science Project due tomorrow',
-              time: '1 day left',
-              color: Colors.orange,
-            ),
-          ],
-        ),
+        child: dashboardProvider.isLoading
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            : activities.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.history_outlined,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No Recent Activity',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Activity from your classes will appear here',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: [
+                      for (int i = 0; i < activities.take(3).length; i++) ...[
+                        _buildActivityItemFromModel(context, activities[i]),
+                        if (i < activities.take(3).length - 1) const Divider(),
+                      ],
+                    ],
+                  ),
       ),
+    );
+  }
+  
+  Widget _buildActivityItemFromModel(BuildContext context, ActivityModel activity) {
+    IconData icon;
+    Color color;
+    
+    switch (activity.type) {
+      case ActivityType.assignmentSubmitted:
+        icon = Icons.assignment_turned_in;
+        color = Colors.green;
+        break;
+      case ActivityType.messageReceived:
+        icon = Icons.message;
+        color = Colors.blue;
+        break;
+      case ActivityType.upcomingDeadline:
+        icon = Icons.schedule;
+        color = Colors.orange;
+        break;
+      case ActivityType.assignmentGraded:
+        icon = Icons.grade;
+        color = Colors.purple;
+        break;
+      case ActivityType.studentJoined:
+        icon = Icons.person_add;
+        color = Colors.teal;
+        break;
+      default:
+        icon = Icons.notifications;
+        color = Colors.grey;
+    }
+    
+    return _buildActivityItem(
+      context,
+      icon: icon,
+      title: activity.title,
+      subtitle: activity.description,
+      time: activity.timeAgo,
+      color: color,
     );
   }
 
@@ -561,15 +624,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           subtitle: 'Review student submissions',
           onTap: () {
             context.go('/teacher/gradebook');
-          },
-        ),
-        _buildActionCard(
-          context,
-          icon: Icons.chat,
-          title: 'Message Parents',
-          subtitle: 'Send updates and announcements',
-          onTap: () {
-            context.go('/messages');
           },
         ),
         _buildActionCard(

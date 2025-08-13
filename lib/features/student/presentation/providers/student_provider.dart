@@ -432,6 +432,41 @@ class StudentProvider with ChangeNotifier {
     }
   }
   
+  /// Loads multiple students by their IDs.
+  /// 
+  /// Fetches student records for a list of student IDs.
+  /// Used for displaying students in a class roster.
+  /// Returns list of found students, skipping any not found.
+  /// 
+  /// @param studentIds List of student identifiers
+  /// @return List of Student objects for found IDs
+  Future<List<Student>> loadStudentsByIds(List<String> studentIds) async {
+    if (studentIds.isEmpty) return [];
+    
+    _setLoading(true);
+    try {
+      final students = <Student>[];
+      
+      // Load students in parallel for efficiency
+      final futures = studentIds.map((id) => _studentRepository.getStudent(id));
+      final results = await Future.wait(futures);
+      
+      // Add non-null students to the list
+      for (final student in results) {
+        if (student != null) {
+          students.add(student);
+        }
+      }
+      
+      _setLoading(false);
+      return students;
+    } catch (e) {
+      _setError(e.toString());
+      _setLoading(false);
+      return [];
+    }
+  }
+  
   /// Sets the currently selected student.
   /// 
   /// Used for detail views and context-aware operations.

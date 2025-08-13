@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/grade_analytics.dart';
 import '../../domain/models/grade.dart';
@@ -11,11 +10,6 @@ class GradeAnalyticsService {
 
   /// Generate analytics for a specific class
   Future<GradeAnalytics> generateClassAnalytics(String classId) async {
-    // Demo data for testing
-    if (classId.startsWith('math-') || classId.startsWith('sci-') || 
-        classId.startsWith('eng-') || classId.startsWith('hist-')) {
-      return _generateDemoAnalytics(classId);
-    }
     try {
       // Get class info
       final classDoc = await _firestore.collection('classes').doc(classId).get();
@@ -461,96 +455,5 @@ class GradeAnalyticsService {
     });
     
     return trends;
-  }
-  
-  /// Generate demo analytics for testing
-  GradeAnalytics _generateDemoAnalytics(String classId) {
-    final random = Random();
-    final className = _getClassNameFromId(classId);
-    
-    // Generate student performances
-    final studentPerformances = List.generate(15, (index) {
-      final avgGrade = 65 + random.nextDouble() * 35; // 65-100
-      return StudentPerformance(
-        studentId: 'student-$index',
-        studentName: 'Student ${index + 1}',
-        averageGrade: avgGrade,
-        completedAssignments: 8 + random.nextInt(5),
-        missingAssignments: random.nextInt(3),
-        lateSubmissions: random.nextInt(2),
-        categoryScores: {
-          'Homework': avgGrade + random.nextDouble() * 10 - 5,
-          'Quizzes': avgGrade + random.nextDouble() * 10 - 5,
-          'Tests': avgGrade + random.nextDouble() * 10 - 5,
-          'Projects': avgGrade + random.nextDouble() * 10 - 5,
-        },
-        trend: random.nextDouble() * 10 - 5, // -5 to +5
-        letterGrade: _getLetterGrade(avgGrade),
-      );
-    });
-    
-    // Generate assignment stats
-    final assignmentStats = List.generate(10, (index) {
-      final avgScore = 70 + random.nextDouble() * 20;
-      return AssignmentStats(
-        assignmentId: 'assignment-$index',
-        assignmentTitle: 'Assignment ${index + 1}',
-        category: ['Homework', 'Quiz', 'Test', 'Project'][random.nextInt(4)],
-        averageScore: avgScore,
-        medianScore: avgScore + random.nextDouble() * 5 - 2.5,
-        maxScore: 95 + random.nextDouble() * 5,
-        minScore: 50 + random.nextDouble() * 20,
-        totalSubmissions: 15,
-        gradedSubmissions: 13 + random.nextInt(3),
-        dueDate: DateTime.now().subtract(Duration(days: random.nextInt(30))),
-        scoreDistribution: {
-          'A': random.nextInt(5),
-          'B': random.nextInt(5),
-          'C': random.nextInt(4),
-          'D': random.nextInt(2),
-          'F': random.nextInt(2),
-        },
-      );
-    });
-    
-    // Calculate averages
-    final overallAvg = studentPerformances.map((s) => s.averageGrade)
-        .reduce((a, b) => a + b) / studentPerformances.length;
-    
-    return GradeAnalytics(
-      classId: classId,
-      className: className,
-      averageGrade: overallAvg,
-      medianGrade: overallAvg - 2, // Simplified
-      totalAssignments: 12,
-      gradedAssignments: 10,
-      pendingSubmissions: 8,
-      gradeDistribution: {
-        'A': 3,
-        'B': 5,
-        'C': 4,
-        'D': 2,
-        'F': 1,
-      },
-      categoryAverages: {
-        'Homework': overallAvg + 2,
-        'Quizzes': overallAvg - 1,
-        'Tests': overallAvg - 3,
-        'Projects': overallAvg + 1,
-      },
-      studentPerformances: studentPerformances,
-      assignmentStats: assignmentStats,
-      lastUpdated: DateTime.now(),
-    );
-  }
-  
-  String _getClassNameFromId(String classId) {
-    final classNames = {
-      'math-101': 'Mathematics 101',
-      'sci-202': 'Science 202',
-      'eng-303': 'English 303',
-      'hist-404': 'History 404',
-    };
-    return classNames[classId] ?? 'Unknown Class';
   }
 }

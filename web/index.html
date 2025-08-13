@@ -21,7 +21,6 @@
   <meta name="description" content="Teacher Dashboard - Education Management Platform">
   
   <!-- PWA Configuration for better iOS support -->
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#2196F3">
 
   <!-- iOS meta tags & icons -->
@@ -44,66 +43,6 @@
   <title>Teacher Dashboard</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- PWA Update System -->
-  <script>
-    // Service Worker Registration and Update Handling
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        try {
-          const reg = await navigator.serviceWorker.register('/custom_service_worker.js');
-          console.log('Service Worker registered:', reg);
-          
-          // Only treat as update if a controller already exists
-          if (navigator.serviceWorker.controller) {
-            reg.addEventListener('updatefound', () => {
-              const sw = reg.installing;
-              if (!sw) return;
-              
-              sw.addEventListener('statechange', () => {
-                if (sw.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New SW installed over an existing one → update available
-                  console.log('New update available!');
-                  
-                  // Dispatch custom event for Flutter
-                  document.dispatchEvent(new Event('pwa-update-available'));
-                  
-                  // Also call legacy callback if exists
-                  if (window.flutterUpdateAvailable) {
-                    window.flutterUpdateAvailable({
-                      currentVersion: '1.0.0',
-                      newVersion: '1.0.1'
-                    });
-                  }
-                }
-              });
-            });
-          }
-          
-          // Optional: Check for updates periodically (throttled for dev)
-          // setInterval(() => reg.update(), 60000);
-          
-        } catch (e) {
-          console.warn('SW registration failed', e);
-        }
-      });
-      
-      // Reload only when a new controller takes over (updates), not first install
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // Only reload if we had a controller before (i.e., this is an update)
-        if (!refreshing && document.visibilityState === 'visible') {
-          refreshing = true;
-          console.log('Service Worker updated, reloading page...');
-          location.reload();
-        }
-      });
-    }
-    
-    // Function to apply update (reload page)
-    window.applyUpdate = function() {
-      location.reload(true);
-    };
-  </script>
 
   <!-- This script adds the flutter initialization JS code -->
 </head>

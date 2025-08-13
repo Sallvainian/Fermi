@@ -12,6 +12,8 @@ import '../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
+import '../../../dashboard/presentation/providers/dashboard_provider.dart';
+import '../../../assignments/presentation/providers/student_assignment_provider.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -25,17 +27,27 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadStudentClasses();
+      _loadDashboardData();
     });
   }
 
-  void _loadStudentClasses() {
+  void _loadDashboardData() {
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
+    final dashboardProvider = context.read<DashboardProvider>();
+    final assignmentProvider = context.read<StudentAssignmentProvider>();
     final studentId = authProvider.userModel?.uid;
     
     if (studentId != null) {
       classProvider.loadStudentClasses(studentId);
+      // Wait for classes to load, then load dashboard data
+      Future.delayed(const Duration(milliseconds: 500), () {
+        final classIds = classProvider.studentClasses.map((c) => c.id).toList();
+        dashboardProvider.loadStudentDashboard(studentId, classIds);
+        if (classIds.isNotEmpty) {
+          assignmentProvider.loadAssignmentsForStudent(studentId, classIds);
+        }
+      });
     }
   }
 
@@ -43,6 +55,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final callProvider = context.watch<CallProvider>();
+    final classProvider = context.watch<ClassProvider>();
+    final dashboardProvider = context.watch<DashboardProvider>();
     final user = authProvider.userModel;
     final theme = Theme.of(context);
 
@@ -131,7 +145,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               const SizedBox(height: 8),
 
               // Quick Stats - Smaller section
-              _buildQuickStats(context),
+              _buildQuickStats(context, classProvider, dashboardProvider),
               const SizedBox(height: 24),
 
               // My Classes
@@ -142,7 +156,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
-              _buildClassesSection(context),
+              _buildClassesSection(context, classProvider),
               const SizedBox(height: AppSpacing.lg),
 
               // Upcoming Assignments
@@ -153,7 +167,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
-              _buildUpcomingAssignmentsCard(context),
+              _buildUpcomingAssignmentsCard(context, dashboardProvider),
               const SizedBox(height: AppSpacing.lg),
 
               // Recent Grades
@@ -164,7 +178,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
                 ),
               const SizedBox(height: AppSpacing.md),
-              _buildRecentGradesCard(context),
+              _buildRecentGradesCard(context, dashboardProvider),
             ],
           ),
         ),
@@ -172,8 +186,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildQuickStats(BuildContext context) {
-    final classProvider = context.watch<ClassProvider>();
+  Widget _buildQuickStats(BuildContext context, ClassProvider classProvider, DashboardProvider dashboardProvider) {
     final enrolledClasses = classProvider.studentClasses;
     
     return SizedBox(
@@ -194,7 +207,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             context,
             icon: Icons.assignment,
             title: 'Assignments',
-            value: '12',
+            value: '${dashboardProvider.studentTotalAssignments}',
             color: Colors.orange,
             onTap: () => context.go('/student/assignments'),
           ),
@@ -203,7 +216,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             context,
             icon: Icons.schedule,
             title: 'Due Soon',
-            value: '3',
+            value: '${dashboardProvider.assignmentsDueSoon}',
             color: Colors.red,
           ),
           const SizedBox(width: 12),
@@ -211,7 +224,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             context,
             icon: Icons.trending_up,
             title: 'GPA',
-            value: '3.8',
+            value: dashboardProvider.studentGPA.toStringAsFixed(1),
             color: Colors.green,
             onTap: () => context.go('/student/grades'),
           ),
@@ -220,8 +233,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildClassesSection(BuildContext context) {
-    final classProvider = context.watch<ClassProvider>();
+  Widget _buildClassesSection(BuildContext context, ClassProvider classProvider) {
     
     if (classProvider.isLoading) {
       return const Center(
@@ -447,50 +459,107 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildUpcomingAssignmentsCard(BuildContext context) {
+  Widget _buildUpcomingAssignmentsCard(BuildContext context, DashboardProvider dashboardProvider) {
+    final assignments = dashboardProvider.upcomingAssignments;
+    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildAssignmentItem(
-              context,
-              subject: 'Mathematics',
-              title: 'Algebra Problem Set 5',
-              dueDate: 'Due Tomorrow',
-              priority: 'High',
-              color: Colors.red,
-            ),
-            const Divider(),
-            _buildAssignmentItem(
-              context,
-              subject: 'Science',
-              title: 'Lab Report: Chemical Reactions',
-              dueDate: 'Due in 3 days',
-              priority: 'Medium',
-              color: Colors.orange,
-            ),
-            const Divider(),
-            _buildAssignmentItem(
-              context,
-              subject: 'English',
-              title: 'Book Report: To Kill a Mockingbird',
-              dueDate: 'Due in 1 week',
-              priority: 'Low',
-              color: Colors.green,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => context.go('/student/assignments'),
-                child: const Text('View All Assignments'),
+        child: dashboardProvider.isLoading
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            : Column(
+                children: [
+                  if (assignments.isEmpty) ...[
+                    Icon(
+                      Icons.assignment_outlined,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Upcoming Assignments',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your assignments will appear here when available',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ] else ...[
+                    for (int i = 0; i < assignments.take(3).length; i++) ...[
+                      _buildAssignmentItem(
+                        context,
+                        subject: assignments[i].category,
+                        title: assignments[i].title,
+                        dueDate: _getDueDateText(assignments[i].dueDate),
+                        priority: _getPriority(assignments[i].dueDate),
+                        color: _getPriorityColor(assignments[i].dueDate),
+                      ),
+                      if (i < assignments.take(3).length - 1) const Divider(),
+                    ],
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => context.go('/student/assignments'),
+                      child: const Text('View All Assignments'),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
+  }
+  
+  String _getDueDateText(DateTime dueDate) {
+    final now = DateTime.now();
+    final difference = dueDate.difference(now);
+    
+    if (difference.isNegative) {
+      return 'Overdue';
+    } else if (difference.inDays == 0) {
+      return 'Due Today';
+    } else if (difference.inDays == 1) {
+      return 'Due Tomorrow';
+    } else if (difference.inDays <= 7) {
+      return 'Due in ${difference.inDays} days';
+    } else {
+      return 'Due in ${(difference.inDays / 7).round()} weeks';
+    }
+  }
+  
+  String _getPriority(DateTime dueDate) {
+    final now = DateTime.now();
+    final difference = dueDate.difference(now);
+    
+    if (difference.isNegative || difference.inDays <= 1) {
+      return 'High';
+    } else if (difference.inDays <= 3) {
+      return 'Medium';
+    } else {
+      return 'Low';
+    }
+  }
+  
+  Color _getPriorityColor(DateTime dueDate) {
+    final priority = _getPriority(dueDate);
+    switch (priority) {
+      case 'High':
+        return Colors.red;
+      case 'Medium':
+        return Colors.orange;
+      default:
+        return Colors.green;
+    }
   }
 
   Widget _buildAssignmentItem(
@@ -538,50 +607,72 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildRecentGradesCard(BuildContext context) {
+  Widget _buildRecentGradesCard(BuildContext context, DashboardProvider dashboardProvider) {
+    final grades = dashboardProvider.recentGrades;
+    
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildGradeItem(
-              context,
-              subject: 'Mathematics',
-              assignment: 'Quiz 4: Quadratic Equations',
-              grade: 'A-',
-              points: '87/100',
-              color: Colors.green,
-            ),
-            const Divider(),
-            _buildGradeItem(
-              context,
-              subject: 'Science',
-              assignment: 'Midterm Exam',
-              grade: 'B+',
-              points: '92/100',
-              color: Colors.blue,
-            ),
-            const Divider(),
-            _buildGradeItem(
-              context,
-              subject: 'English',
-              assignment: 'Essay: Character Analysis',
-              grade: 'A',
-              points: '95/100',
-              color: Colors.green,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () => context.go('/student/grades'),
-                child: const Text('View All Grades'),
+        child: dashboardProvider.isLoading
+            ? const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            : Column(
+                children: [
+                  if (grades.isEmpty) ...[
+                    Icon(
+                      Icons.grade_outlined,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Grades Yet',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your grades will appear here once available',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ] else ...[
+                    for (int i = 0; i < grades.take(3).length; i++) ...[
+                      _buildGradeItem(
+                        context,
+                        subject: grades[i].category,
+                        assignment: grades[i].assignmentTitle,
+                        grade: grades[i].grade.letterGrade ?? '-',
+                        points: '${grades[i].grade.pointsEarned.toInt()}/${grades[i].grade.pointsPossible.toInt()}',
+                        color: _getGradeColor(grades[i].grade.letterGrade ?? 'F'),
+                      ),
+                      if (i < grades.take(3).length - 1) const Divider(),
+                    ],
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => context.go('/student/grades'),
+                      child: const Text('View All Grades'),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
+  }
+  
+  Color _getGradeColor(String letterGrade) {
+    if (letterGrade.startsWith('A')) return Colors.green;
+    if (letterGrade.startsWith('B')) return Colors.blue;
+    if (letterGrade.startsWith('C')) return Colors.orange;
+    return Colors.red;
   }
 
   Widget _buildGradeItem(

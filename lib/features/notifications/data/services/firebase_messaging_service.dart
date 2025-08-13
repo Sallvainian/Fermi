@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'notification_service.dart';
 import '../../../chat/domain/models/call.dart';
@@ -171,18 +172,25 @@ class FirebaseMessagingService {
       String? token;
       
       if (kIsWeb) {
-        // Web requires VAPID key - get from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
-        const vapidKey = String.fromEnvironment('FIREBASE_VAPID_KEY');
+        // Web requires VAPID key - get from .env file or environment variable
+        // First try .env file (for local development)
+        String? vapidKey = dotenv.env['FIREBASE_VAPID_KEY'];
         
-        if (vapidKey.isEmpty) {
-          LoggerService.warning('FIREBASE_VAPID_KEY not found in environment variables - attempting fallback', tag: 'FirebaseMessagingService');
+        // If not in .env, try compile-time environment variable (for CI/CD)
+        if (vapidKey == null || vapidKey.isEmpty) {
+          vapidKey = const String.fromEnvironment('FIREBASE_VAPID_KEY');
+        }
+        
+        if (vapidKey.isEmpty || vapidKey == 'your_vapid_key_here') {
+          LoggerService.warning('FIREBASE_VAPID_KEY not configured - attempting fallback', tag: 'FirebaseMessagingService');
+          LoggerService.info('To fix: Add your VAPID key to .env file or set FIREBASE_VAPID_KEY environment variable', tag: 'FirebaseMessagingService');
+          LoggerService.info('Get key from: Firebase Console > Project Settings > Cloud Messaging > Web Push certificates', tag: 'FirebaseMessagingService');
           // Try without VAPID key for development
           try {
             token = await _messaging.getToken();
             LoggerService.info('FCM token generated without VAPID key (development mode)', tag: 'FirebaseMessagingService');
           } catch (e) {
             LoggerService.error('Failed to get FCM token without VAPID key: $e', tag: 'FirebaseMessagingService');
-            LoggerService.info('To fix: Add VAPID key from Firebase Console > Project Settings > Cloud Messaging > Web Push certificates', tag: 'FirebaseMessagingService');
             return;
           }
         } else {

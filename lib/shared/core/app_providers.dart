@@ -13,6 +13,9 @@ import '../../features/chat/presentation/providers/call_provider.dart';
 import '../../features/notifications/presentation/providers/notification_provider.dart';
 import '../../features/classes/presentation/providers/class_provider.dart';
 import '../../features/games/presentation/providers/jeopardy_provider.dart';
+import '../../features/dashboard/presentation/providers/dashboard_provider.dart';
+import '../../features/student/presentation/providers/student_provider.dart';
+import '../../features/grades/presentation/providers/grade_provider.dart';
 
 /// Centralized provider configuration
 class AppProviders {
@@ -32,6 +35,9 @@ class AppProviders {
       ChangeNotifierProvider(create: (_) => CallProvider()),
       ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ChangeNotifierProvider(create: (_) => JeopardyProvider()),
+      ChangeNotifierProvider(create: (_) => DashboardProvider()),
+      ChangeNotifierProvider(create: (_) => StudentProvider()),
+      ChangeNotifierProvider(create: (_) => GradeProvider()),
     ];
   }
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
-import 'dart:js_util' as js_util;
+import 'package:web/web.dart' as web;
 
 class PWAInstallPrompt extends StatefulWidget {
   const PWAInstallPrompt({super.key});
@@ -24,13 +23,13 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
   }
 
   void _checkPlatform() {
-    final userAgent = html.window.navigator.userAgent.toLowerCase();
+    final userAgent = web.window.navigator.userAgent.toLowerCase();
     final isIOS = userAgent.contains('iphone') || userAgent.contains('ipad');
     final isSafari = userAgent.contains('safari') && !userAgent.contains('chrome') && !userAgent.contains('crios');
     
     // Check if app is already installed (running in standalone mode)
-    final isStandalone = html.window.matchMedia('(display-mode: standalone)').matches ||
-        (js_util.getProperty(html.window.navigator, 'standalone') == true);
+    // For iOS, we can only check via matchMedia since navigator.standalone requires JS interop
+    final isStandalone = web.window.matchMedia('(display-mode: standalone)').matches;
 
     setState(() {
       _isIOSSafari = kIsWeb && isIOS && isSafari;
@@ -43,7 +42,7 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
       _promptDismissed = true;
     });
     // Store dismissal in local storage
-    html.window.localStorage['pwa_prompt_dismissed'] = 'true';
+    web.window.localStorage.setItem('pwa_prompt_dismissed', 'true');
   }
 
   @override
@@ -54,7 +53,7 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
     }
 
     // Check if previously dismissed
-    final previouslyDismissed = html.window.localStorage['pwa_prompt_dismissed'] == 'true';
+    final previouslyDismissed = web.window.localStorage.getItem('pwa_prompt_dismissed') == 'true';
     if (previouslyDismissed) {
       return const SizedBox.shrink();
     }
@@ -93,7 +92,7 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
                         Text(
                           'Add to Home Screen for the best experience',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 14,
                           ),
                         ),
@@ -110,7 +109,7 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -253,9 +252,9 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -345,15 +344,14 @@ class PWAUtils {
   static bool get isRunningAsPWA {
     if (!kIsWeb) return false;
     
-    return html.window.matchMedia('(display-mode: standalone)').matches ||
-        html.window.matchMedia('(display-mode: fullscreen)').matches ||
-        (js_util.getProperty(html.window.navigator, 'standalone') == true);
+    return web.window.matchMedia('(display-mode: standalone)').matches ||
+        web.window.matchMedia('(display-mode: fullscreen)').matches;
   }
   
   static bool get isIOS {
     if (!kIsWeb) return false;
     
-    final userAgent = html.window.navigator.userAgent.toLowerCase();
+    final userAgent = web.window.navigator.userAgent.toLowerCase();
     return userAgent.contains('iphone') || 
            userAgent.contains('ipad') || 
            userAgent.contains('ipod');
@@ -362,7 +360,7 @@ class PWAUtils {
   static bool get isIOSSafari {
     if (!kIsWeb) return false;
     
-    final userAgent = html.window.navigator.userAgent.toLowerCase();
+    final userAgent = web.window.navigator.userAgent.toLowerCase();
     return isIOS && 
            userAgent.contains('safari') && 
            !userAgent.contains('chrome') && 
@@ -371,7 +369,7 @@ class PWAUtils {
   
   static void clearInstallPromptDismissal() {
     if (kIsWeb) {
-      html.window.localStorage.remove('pwa_prompt_dismissed');
+      web.window.localStorage.removeItem('pwa_prompt_dismissed');
     }
   }
 }

@@ -295,6 +295,24 @@ service cloud.firestore {
       }
     }
     
+    // Activities collection - for dashboard recent activities
+    match /activities/{activityId} {
+      // Teachers can read activities where they are the teacher
+      // Students can read activities for their classes
+      allow read: if request.auth != null && 
+        (isTheTeacher() || 
+         (isStudent() && resource.data.classId != null && 
+          request.auth.uid in get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.studentIds));
+      
+      // System or teacher can create activities
+      allow create: if request.auth != null && 
+        (isTheTeacher() || 
+         request.resource.data.userId == request.auth.uid);
+      
+      // Activities cannot be updated or deleted
+      allow update, delete: if false;
+    }
+    
     // Notifications collection
     match /notifications/{notificationId} {
       // Users can only read their own notifications

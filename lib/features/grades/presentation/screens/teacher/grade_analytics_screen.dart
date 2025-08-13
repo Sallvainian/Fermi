@@ -5,6 +5,8 @@ import '../../providers/grade_analytics_provider.dart';
 import '../../../domain/models/grade_analytics.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
+import '../../../../../features/classes/presentation/providers/class_provider.dart';
+import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 
 class GradeAnalyticsScreen extends StatefulWidget {
   final String? classId;
@@ -18,26 +20,35 @@ class GradeAnalyticsScreen extends StatefulWidget {
 class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
   String? _selectedClassId;
   
-  // Demo class data
-  final List<Map<String, String>> _classes = [
-    {'id': 'math-101', 'name': 'Mathematics 101'},
-    {'id': 'sci-202', 'name': 'Science 202'},
-    {'id': 'eng-303', 'name': 'English 303'},
-    {'id': 'hist-404', 'name': 'History 404'},
-  ];
-  
   @override
   void initState() {
     super.initState();
     _selectedClassId = widget.classId;
     
-    // Load analytics for the class
+    // Load analytics and classes
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<GradeAnalyticsProvider>();
-      if (widget.classId != null) {
-        provider.loadClassAnalytics(widget.classId!);
-      }
+      _loadData();
     });
+  }
+  
+  void _loadData() {
+    final authProvider = context.read<AuthProvider>();
+    final classProvider = context.read<ClassProvider>();
+    final analyticsProvider = context.read<GradeAnalyticsProvider>();
+    
+    // Load teacher's classes
+    if (authProvider.userModel != null) {
+      classProvider.loadTeacherClasses(authProvider.userModel!.uid);
+    }
+    
+    // Load analytics for selected class
+    if (_selectedClassId != null) {
+      analyticsProvider.loadClassAnalytics(_selectedClassId!);
+    } else if (classProvider.teacherClasses.isNotEmpty) {
+      // Auto-select first class if none specified
+      _selectedClassId = classProvider.teacherClasses.first.id;
+      analyticsProvider.loadClassAnalytics(_selectedClassId!);
+    }
   }
 
   @override
@@ -71,29 +82,44 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
       body: Column(
         children: [
           // Class selector
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: DropdownButtonFormField<String>(
-              value: _selectedClassId,
-              decoration: const InputDecoration(
-                labelText: 'Select Class',
-                border: OutlineInputBorder(),
-              ),
-              items: _classes.map((classInfo) {
-                return DropdownMenuItem(
-                  value: classInfo['id'],
-                  child: Text(classInfo['name']!),
-                );
-              }).toList(),
-              onChanged: (classId) {
-                setState(() {
-                  _selectedClassId = classId;
-                });
-                if (classId != null) {
-                  analyticsProvider.loadClassAnalytics(classId);
-                }
-              },
-            ),
+          Consumer<ClassProvider>(
+            builder: (context, classProvider, _) {
+              final classes = classProvider.teacherClasses;
+              
+              // Ensure selected class is valid
+              if (_selectedClassId != null && 
+                  !classes.any((c) => c.id == _selectedClassId)) {
+                _selectedClassId = classes.isNotEmpty ? classes.first.id : null;
+              }
+              
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: DropdownButtonFormField<String>(
+                  value: _selectedClassId,
+                  decoration: const InputDecoration(
+                    labelText: 'Select Class',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: classes.map((classModel) {
+                    return DropdownMenuItem(
+                      value: classModel.id,
+                      child: Text('${classModel.name} - ${classModel.subject}'),
+                    );
+                  }).toList(),
+                  onChanged: classes.isEmpty ? null : (classId) {
+                    setState(() {
+                      _selectedClassId = classId;
+                    });
+                    if (classId != null) {
+                      analyticsProvider.loadClassAnalytics(classId);
+                    }
+                  },
+                  hint: classes.isEmpty 
+                      ? const Text('No classes available')
+                      : const Text('Select a class'),
+                ),
+              );
+            },
           ),
           Expanded(
             child: _selectedClassId != null

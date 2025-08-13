@@ -11,8 +11,7 @@ class PreviewWithData extends StatelessWidget {
       body: Stack(
         children: [
           // Show the actual TeacherStudentsScreen
-          // The screen will detect it's in preview mode via context
-          const TeacherStudentsScreen(isPreviewMode: true),
+          const TeacherStudentsScreen(),
           
           // Floating close button
           Positioned(

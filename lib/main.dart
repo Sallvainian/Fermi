@@ -7,6 +7,7 @@ library;
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'shared/core/app_initializer.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'shared/providers/theme_provider.dart';
@@ -25,6 +26,15 @@ Future<void> main() async {
   await runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      
+      // Load environment variables from .env file
+      try {
+        await dotenv.load(fileName: ".env");
+      } catch (e) {
+        // .env file is optional - don't fail if it doesn't exist
+        debugPrint('Note: .env file not found or could not be loaded. Using defaults.');
+      }
+      
       runApp(const InitializationWrapper());
     },
     (error, stack) {
