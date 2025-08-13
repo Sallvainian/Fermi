@@ -1,52 +1,43 @@
-importScripts("https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.10.0/firebase-messaging-compat.js");
+// Firebase Messaging Service Worker - Minimal, no caching, no takeover
+importScripts('https://www.gstatic.com/firebasejs/9.10.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.10.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker
-// Firebase configuration - hardcoded since service workers can't import Dart files
-const firebaseConfig = {
+// Initialize Firebase app in the service worker
+firebase.initializeApp({
   apiKey: "AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac",
   authDomain: "teacher-dashboard-flutterfire.firebaseapp.com",
   projectId: "teacher-dashboard-flutterfire",
   storageBucket: "teacher-dashboard-flutterfire.firebasestorage.app",
   messagingSenderId: "218352465432",
-  appId: "1:218352465432:web:6e1c0fa4f21416df38b56d",
-  databaseURL: "https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com"
-};
+  appId: "1:218352465432:web:6e1c0fa4f21416df38b56d"
+});
 
-firebase.initializeApp(firebaseConfig);
-
-// Retrieve firebase messaging
 const messaging = firebase.messaging();
 
-// Note: Token retrieval should be done in the main app after permission is granted,
-// not in the service worker. The service worker only handles background messages.
-
-// Handle background messages
+// Handle background push messages only
 messaging.onBackgroundMessage((payload) => {
-  console.log("[firebase-messaging-sw.js] Received background message ", payload);
+  console.log('[FCM SW] Background message:', payload);
   
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-72.png",
-    data: payload.data
+  const title = payload.notification?.title || 'New message';
+  const options = {
+    body: payload.notification?.body || '',
+    icon: '/icons/Icon-192.png',
+    data: payload.data || {}
   };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  
+  self.registration.showNotification(title, options);
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-  console.log('[firebase-messaging-sw.js] Notification click received.');
-  
+  console.log('[FCM SW] Notification click');
   event.notification.close();
   
-  // Handle the click action based on the notification data
-  if (event.notification.data && event.notification.data.type === 'voip_call') {
-    // Open the app and handle the call
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
+  const url = event.notification?.data?.click_action || '/';
+  event.waitUntil(
+    clients.openWindow(url)
+  );
 });
+
+// IMPORTANT: This SW should NOT handle skipWaiting or claim clients
+// It should remain in waiting state and not control the page

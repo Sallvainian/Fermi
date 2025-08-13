@@ -64,64 +64,68 @@
       }
     })();
 
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async function() {
+    // Service Worker Registration - Fixed to prevent reload loop
+    (function () {
+      if (!('serviceWorker' in navigator)) return;
+
+      // Register ONLY the Firebase Messaging SW here (Flutter registers its own)
+      window.addEventListener('load', async () => {
         try {
-          // Register Firebase Messaging SW first (required for FCM on web)
-          await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-          console.log('Firebase Messaging SW registered');
-          
-          // Register Flutter SW for app caching
-          const flutterReg = await navigator.serviceWorker.register('/flutter_service_worker.js');
-          console.log('Flutter SW registered');
-          
-          // Handle PWA updates cleanly
-          navigator.serviceWorker.addEventListener('controllerchange', function() {
-            // When new SW takes control, reload to get fresh app
-            window.location.reload();
-          });
-          
-          // Listen for updates
-          flutterReg.addEventListener('updatefound', function() {
-            const newWorker = flutterReg.installing;
-            if (!newWorker) return;
-            
-            newWorker.addEventListener('statechange', function() {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New update available - in production, show toast/button
-                console.log('New version available - refresh to update');
-                
-                // Notify Flutter if handler is set
-                if (window.flutterUpdateAvailable) {
-                  window.flutterUpdateAvailable({version: 'new'});
-                }
-                
-                // For now, auto-update after 5 seconds
-                setTimeout(function() {
-                  newWorker.postMessage({ type: 'SKIP_WAITING' });
-                }, 5000);
-              }
-            });
-          });
-          
-          // Check for waiting SW on page load
-          if (flutterReg.waiting) {
-            flutterReg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          }
+          const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('Firebase Messaging SW registered', reg);
         } catch (e) {
-          console.error('SW registration failed:', e);
+          console.error('FCM SW registration failed', e);
         }
       });
-    }
-    
-    // Function to apply update (called from Flutter)
-    window.applyUpdate = function() {
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({type: 'SKIP_WAITING'});
-      } else {
-        window.location.reload(true);
+
+      // Helper to identify Flutter's SW (the one we allow to take control)
+      function isFlutterWorker(worker) {
+        return worker && worker.scriptURL && worker.scriptURL.includes('flutter_service_worker.js');
       }
+
+      // One-time reload guard
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        // Reload once when Flutter SW activates
+        window.location.reload();
+      });
+
+      // Listen for updates on all registrations and only fast-swap Flutter's SW
+      navigator.serviceWorker.ready.then(() => {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          for (const reg of regs) {
+            reg.addEventListener('updatefound', () => {
+              const w = reg.installing;
+              if (!w) return;
+              w.addEventListener('statechange', () => {
+                // Only promote Flutter's SW; never promote the FCM SW
+                if (w.state === 'installed' && navigator.serviceWorker.controller && isFlutterWorker(w)) {
+                  console.log('New Flutter app version available');
+                  // Optional: Show user notification before updating
+                  // For now, auto-update after 5 seconds
+                  setTimeout(() => {
+                    w.postMessage({ type: 'SKIP_WAITING' });
+                  }, 5000);
+                }
+              });
+            });
+          }
+        });
+      });
+    })();
+    
+    // Function to apply update (called from Flutter if needed)
+    window.applyUpdate = function() {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        for (const reg of regs) {
+          if (reg.waiting && reg.waiting.scriptURL.includes('flutter_service_worker.js')) {
+            reg.waiting.postMessage({type: 'SKIP_WAITING'});
+            break;
+          }
+        }
+      });
     };
     
     // Placeholder for Flutter to set
