@@ -63,7 +63,7 @@ class AppInitializer {
       
       // iOS-specific VoIP
       if (!kIsWeb && Platform.isIOS) _initializeVoIPTokenService(),
-    ].where((future) => future != null).cast<Future<void>>());
+    ]);
     
     // Setup crash reporting last
     if (!kIsWeb) {
