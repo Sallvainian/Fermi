@@ -48,6 +48,55 @@
 </head>
 <body>
   <script>
+    // PWA Update Handler - Bridge between Flutter's service worker and our app
+    window.addEventListener('load', function(ev) {
+      // Register service worker with update detection
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('flutter_service_worker.js?v=' + Date.now())
+          .then(function(registration) {
+            console.log('Service Worker registered');
+            
+            // Check for updates periodically
+            setInterval(function() {
+              registration.update();
+            }, 60000); // Check every minute
+            
+            // Listen for new service worker
+            registration.addEventListener('updatefound', function() {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New update available
+                  console.log('New update available');
+                  document.dispatchEvent(new Event('pwa-update-available'));
+                  
+                  // Call Flutter if function is set
+                  if (window.flutterUpdateAvailable) {
+                    window.flutterUpdateAvailable({version: 'new'});
+                  }
+                }
+              });
+            });
+          });
+      }
+    });
+    
+    // Function to apply update (called from Flutter)
+    window.applyUpdate = function() {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        // Skip waiting and reload
+        navigator.serviceWorker.controller.postMessage({type: 'SKIP_WAITING'});
+        window.location.reload(true);
+      } else {
+        // Fallback: just reload
+        window.location.reload(true);
+      }
+    };
+    
+    // Placeholder for Flutter to set
+    window.flutterUpdateAvailable = null;
+    window.canAutoRefresh = null;
+    
     {{flutter_bootstrap_js}}
   </script>
 </body>

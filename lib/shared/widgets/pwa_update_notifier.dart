@@ -4,14 +4,55 @@ import 'package:web/web.dart' as web;
 import 'dart:js_interop';
 
 
+// Optional JavaScript functions - may not exist
 @JS('applyUpdate')
-external void applyUpdate();
+external void _applyUpdateJS();
 
 @JS('flutterUpdateAvailable')
-external set flutterUpdateAvailable(JSFunction? f);
+external set _flutterUpdateAvailableJS(JSFunction? f);
 
-@JS('canAutoRefresh')
-external set canAutoRefresh(JSFunction? f);
+@JS('canAutoRefresh') 
+external set _canAutoRefreshJS(JSFunction? f);
+
+// Safe wrapper to check if JavaScript functions exist
+bool _jsFunctionsAvailable = false;
+
+void _checkJSFunctions() {
+  // Enable PWA update functionality now that JS functions are in place
+  _jsFunctionsAvailable = true;
+}
+
+void _setFlutterUpdateAvailable(JSFunction? f) {
+  if (!_jsFunctionsAvailable) return;
+  try {
+    _flutterUpdateAvailableJS = f;
+  } catch (e) {
+    debugPrint('PWA update functions not available');
+  }
+}
+
+void _setCanAutoRefresh(JSFunction? f) {
+  if (!_jsFunctionsAvailable) return;
+  try {
+    _canAutoRefreshJS = f;
+  } catch (e) {
+    debugPrint('PWA update functions not available');
+  }
+}
+
+void _callApplyUpdate() {
+  if (!_jsFunctionsAvailable) {
+    // Fallback: reload the page
+    web.window.location.reload();
+    return;
+  }
+  try {
+    _applyUpdateJS();
+  } catch (e) {
+    // Fallback: reload the page
+    web.window.location.reload();
+  }
+}
 
 /// PWA Update Notifier Widget
 /// Displays a non-intrusive notification when app updates are available
@@ -43,6 +84,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
     super.initState();
     
     if (kIsWeb) {
+      _checkJSFunctions();
       _setupUpdateListener();
       _checkInitialVersion();
     }
@@ -65,7 +107,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
     web.document.addEventListener('pwa-update-available', listener);
     
     // Register Flutter callback for JavaScript to call (fallback)
-    flutterUpdateAvailable = ((JSAny? data) {
+    _setFlutterUpdateAvailable(((JSAny? data) {
       if (mounted && data != null) {
         setState(() {
           _updateAvailable = true;
@@ -75,14 +117,14 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
         // Show update notification
         _showUpdateNotification();
       }
-    }.toJS as JSFunction);
+    }.toJS as JSFunction));
     
     // Register auto-refresh check
-    canAutoRefresh = (() {
+    _setCanAutoRefresh((() {
       // Return false if user has unsaved work or is in middle of something
       // For now, we'll always return false to let user decide
       return false.toJS;
-    }.toJS as JSFunction);
+    }.toJS as JSFunction));
   }
 
   void _checkInitialVersion() {
@@ -184,7 +226,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
     
     // Give the dialog a beat, then trigger the JS update
     await Future.delayed(const Duration(seconds: 1));
-    applyUpdate();
+    _callApplyUpdate();
   }
 
   @override
@@ -288,8 +330,8 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
   void dispose() {
     if (kIsWeb) {
       // Clean up JavaScript callbacks
-      flutterUpdateAvailable = null;
-      canAutoRefresh = null;
+      _setFlutterUpdateAvailable(null);
+      _setCanAutoRefresh(null);
     }
     super.dispose();
   }
