@@ -93,6 +93,15 @@ class FirebaseMessagingService {
     if (_isInitialized) return;
     
     try {
+      // Check if messaging is supported (critical for Web)
+      if (kIsWeb) {
+        final isSupported = await _messaging.isSupported();
+        if (!isSupported) {
+          LoggerService.warning('Firebase Messaging not supported in this browser/context', tag: 'FirebaseMessagingService');
+          return;
+        }
+      }
+      
       // Force token refresh to drop old queues
       await _messaging.deleteToken();
       LoggerService.info('Deleted old FCM token', tag: 'FirebaseMessagingService');

@@ -48,54 +48,84 @@
 </head>
 <body>
   <script>
-    // PWA Update Handler - Bridge between Flutter's service worker and our app
-    window.addEventListener('load', function(ev) {
-      // Register service worker with update detection
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('flutter_service_worker.js?v=' + Date.now())
-          .then(function(registration) {
-            console.log('Service Worker registered');
+    // WebGL Detection - fail fast with friendly message
+    (function(){
+      const canvas = document.createElement('canvas');
+      const hasWebGL = !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
+      if (!hasWebGL) {
+        document.body.innerHTML = `
+          <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #d32f2f;">Graphics acceleration is disabled</h2>
+            <p>This application requires WebGL to run. Please enable hardware acceleration in your browser settings or use a device/browser with GPU support enabled.</p>
+            <p style="margin-top: 20px;">In Chrome, you can check your GPU status at <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">chrome://gpu</code></p>
+            <p style="margin-top: 20px; color: #666;">If you're using a corporate device, please contact your IT administrator for assistance.</p>
+          </div>`;
+        return;
+      }
+    })();
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async function() {
+        try {
+          // Register Firebase Messaging SW first (required for FCM on web)
+          await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          console.log('Firebase Messaging SW registered');
+          
+          // Register Flutter SW for app caching
+          const flutterReg = await navigator.serviceWorker.register('/flutter_service_worker.js');
+          console.log('Flutter SW registered');
+          
+          // Handle PWA updates cleanly
+          navigator.serviceWorker.addEventListener('controllerchange', function() {
+            // When new SW takes control, reload to get fresh app
+            window.location.reload();
+          });
+          
+          // Listen for updates
+          flutterReg.addEventListener('updatefound', function() {
+            const newWorker = flutterReg.installing;
+            if (!newWorker) return;
             
-            // Check for updates periodically
-            setInterval(function() {
-              registration.update();
-            }, 60000); // Check every minute
-            
-            // Listen for new service worker
-            registration.addEventListener('updatefound', function() {
-              const newWorker = registration.installing;
-              newWorker.addEventListener('statechange', function() {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New update available
-                  console.log('New update available');
-                  document.dispatchEvent(new Event('pwa-update-available'));
-                  
-                  // Call Flutter if function is set
-                  if (window.flutterUpdateAvailable) {
-                    window.flutterUpdateAvailable({version: 'new'});
-                  }
+            newWorker.addEventListener('statechange', function() {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New update available - in production, show toast/button
+                console.log('New version available - refresh to update');
+                
+                // Notify Flutter if handler is set
+                if (window.flutterUpdateAvailable) {
+                  window.flutterUpdateAvailable({version: 'new'});
                 }
-              });
+                
+                // For now, auto-update after 5 seconds
+                setTimeout(function() {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }, 5000);
+              }
             });
           });
-      }
-    });
+          
+          // Check for waiting SW on page load
+          if (flutterReg.waiting) {
+            flutterReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        } catch (e) {
+          console.error('SW registration failed:', e);
+        }
+      });
+    }
     
     // Function to apply update (called from Flutter)
     window.applyUpdate = function() {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        // Skip waiting and reload
         navigator.serviceWorker.controller.postMessage({type: 'SKIP_WAITING'});
-        window.location.reload(true);
       } else {
-        // Fallback: just reload
         window.location.reload(true);
       }
     };
     
     // Placeholder for Flutter to set
     window.flutterUpdateAvailable = null;
-    window.canAutoRefresh = null;
     
     {{flutter_bootstrap_js}}
   </script>
