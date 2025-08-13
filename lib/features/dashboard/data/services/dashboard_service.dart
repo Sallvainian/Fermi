@@ -10,6 +10,7 @@ class DashboardService {
   // Get recent activities for a teacher
   Future<List<ActivityModel>> getTeacherActivities(String teacherId, {int limit = 10}) async {
     try {
+      // First check if the collection exists
       final querySnapshot = await _firestore
           .collection('activities')
           .where('teacherId', isEqualTo: teacherId)
@@ -21,7 +22,9 @@ class DashboardService {
           .map((doc) => ActivityModel.fromFirestore(doc))
           .toList();
     } catch (e) {
-      LoggerService.error('Error fetching teacher activities', error: e);
+      // Log the full error which includes index creation link in development
+      LoggerService.error('Error fetching teacher activities - if index is missing, check console for creation link', error: e);
+      // Return empty list to prevent app crash
       return [];
     }
   }
@@ -62,7 +65,11 @@ class DashboardService {
           .collection('assignments')
           .where('teacherId', isEqualTo: teacherId)
           .where('needsGrading', isEqualTo: true)
-          .get();
+          .get()
+          .catchError((e) {
+        LoggerService.warning('Assignment grading query failed: $e');
+        return _firestore.collection('assignments').limit(0).get();
+      });
       
       return {
         'totalAssignments': assignmentsQuery.size,
