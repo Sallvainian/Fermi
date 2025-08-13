@@ -227,7 +227,34 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       onTap: () {
         context.read<ChatProvider>().setCurrentChatRoom(chatRoom);
-        context.push('/chat/${chatRoom.id}');
+        // Use the new simple chat screen that actually works
+        context.push('/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
+      },
+      onLongPress: () {
+        // Option to use old chat screen if needed
+        showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) => AlertDialog(
+            title: const Text('Choose Chat Version'),
+            content: const Text('Which chat interface would you like to use?'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  context.push('/chat/${chatRoom.id}');
+                },
+                child: const Text('Original (may have issues)'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  context.push('/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
+                },
+                child: const Text('Simple (recommended)'),
+              ),
+            ],
+          ),
+        );
       },
     );
   }

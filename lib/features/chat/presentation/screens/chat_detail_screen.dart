@@ -9,11 +9,23 @@ import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_compress/video_compress.dart';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../providers/chat_provider.dart';
 import '../../domain/models/message.dart';
 import '../../data/services/scheduled_messages_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart' as app_auth;
+
+// Transparent placeholder for FadeInImage
+final Uint8List kTransparentImage = Uint8List.fromList(<int>[
+  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
+  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
+  0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+  0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
+  0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+]);
 
 class ChatDetailScreen extends StatefulWidget {
   final String chatRoomId;
@@ -270,6 +282,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final isMe = message.senderId == currentUserId;
     final theme = Theme.of(context);
+    
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -311,14 +324,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (message.attachmentUrl != null) _buildAttachment(message),
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      color: isMe
-                          ? theme.colorScheme.onPrimary
-                          : theme.colorScheme.onSurfaceVariant,
+                  // Only show text if it's not a placeholder OR if there's no attachment
+                  if (message.attachmentUrl == null || 
+                      (message.content != 'Sent an image' && 
+                       message.content != 'Sent a video' &&
+                       message.content.isNotEmpty))
+                    Text(
+                      message.content,
+                      style: TextStyle(
+                        color: isMe
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
@@ -340,46 +358,24 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Widget _buildAttachment(Message message) {
     if (message.attachmentType == 'image' && message.attachmentUrl != null) {
-      return GestureDetector(
-        onTap: () => _viewFullScreenImage(message.attachmentUrl!),
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          constraints: const BoxConstraints(
-            maxHeight: 200,
-            maxWidth: 200,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              message.attachmentUrl!,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 100,
-                  width: 100,
-                  color: Colors.grey[300],
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                    ),
-                  ),
-                );
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 100,
-                  width: 100,
-                  color: Colors.grey[300],
-                  child: const Icon(Icons.error_outline),
-                );
-              },
+      // DEBUG: Log when trying to display image
+      
+      // Simplified approach - just use Image.network without any containers
+      return Image.network(
+        message.attachmentUrl!,
+        width: 200,
+        height: 200,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 200,
+            height: 200,
+            color: Colors.red,
+            child: Center(
+              child: Text('ERROR', style: TextStyle(color: Colors.white)),
             ),
-          ),
-        ),
+          );
+        },
       );
     }
     
@@ -755,6 +751,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
+  String _inferMimeType(String filename) {
+    final ext = filename.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'png': return 'image/png';
+      case 'jpg':
+      case 'jpeg': return 'image/jpeg';
+      case 'gif': return 'image/gif';
+      case 'webp': return 'image/webp';
+      default: return 'application/octet-stream';
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _imagePicker.pickImage(
@@ -765,7 +773,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
 
       if (image != null) {
-        await _uploadAndSendImage(File(image.path));
+        await _uploadAndSendImage(image);
       }
     } catch (e) {
       if (mounted) {
@@ -776,10 +784,21 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  Future<void> _uploadAndSendImage(File imageFile) async {
+  Future<void> _uploadAndSendImage(XFile image) async {
     // Validate file size (10MB limit)
     const int maxSizeBytes = 10 * 1024 * 1024;
-    if (imageFile.lengthSync() > maxSizeBytes) {
+    
+    // Get file size based on platform
+    int fileSize;
+    if (kIsWeb) {
+      final bytes = await image.readAsBytes();
+      fileSize = bytes.length;
+    } else {
+      final file = File(image.path);
+      fileSize = await file.length();
+    }
+    
+    if (fileSize > maxSizeBytes) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -797,7 +816,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     try {
       // Create unique filename
       final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+          '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
 
       // Upload to Firebase Storage
       final Reference storageRef = FirebaseStorage.instance
@@ -806,7 +825,20 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           .child(widget.chatRoomId)
           .child(fileName);
 
-      final UploadTask uploadTask = storageRef.putFile(imageFile);
+      // Upload based on platform
+      final UploadTask uploadTask;
+      if (kIsWeb) {
+        // Web: use bytes
+        final Uint8List bytes = await image.readAsBytes();
+        final metadata = SettableMetadata(
+          contentType: _inferMimeType(image.name),
+        );
+        uploadTask = storageRef.putData(bytes, metadata);
+      } else {
+        // Mobile: use File
+        final file = File(image.path);
+        uploadTask = storageRef.putFile(file);
+      }
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
@@ -818,6 +850,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       // Wait for upload to complete
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+      
+      // DEBUG: Log the download URL
+      debugPrint('DEBUG: Download URL length: ${downloadUrl.length}');
 
       // Send message with image attachment
       if (mounted) {
@@ -853,7 +888,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
 
       if (video != null) {
-        await _uploadAndSendVideo(File(video.path));
+        await _uploadAndSendVideo(video);
       }
     } catch (e) {
       if (mounted) {
@@ -864,10 +899,23 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  Future<void> _uploadAndSendVideo(File videoFile) async {
-    // Validate file size (100MB limit)
-    const int maxSizeBytes = 100 * 1024 * 1024;
-    if (videoFile.lengthSync() > maxSizeBytes) {
+  Future<void> _uploadAndSendVideo(XFile video) async {
+    // Validate file size (100MB limit for mobile, 50MB for web)
+    const int maxSizeBytesWeb = 50 * 1024 * 1024; // 50MB for web
+    const int maxSizeBytesMobile = 100 * 1024 * 1024; // 100MB for mobile
+    final int maxSizeBytes = kIsWeb ? maxSizeBytesWeb : maxSizeBytesMobile;
+    
+    // Get file size based on platform
+    int fileSize;
+    if (kIsWeb) {
+      final bytes = await video.readAsBytes();
+      fileSize = bytes.length;
+    } else {
+      final file = File(video.path);
+      fileSize = await file.length();
+    }
+    
+    if (fileSize > maxSizeBytes) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -883,26 +931,29 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     });
 
     try {
-      File videoToUpload = videoFile;
+      XFile videoToUpload = video;
       
-      // Compress video if it's larger than 10MB
-      const int compressionThreshold = 10 * 1024 * 1024; // 10MB
-      if (videoFile.lengthSync() > compressionThreshold) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Compressing video...'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+      // Video compression only on mobile (not supported on web)
+      if (!kIsWeb) {
+        const int compressionThreshold = 10 * 1024 * 1024; // 10MB
+        final file = File(video.path);
+        if (await file.length() > compressionThreshold) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Compressing video...'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
         }
         
         try {
           // Set compression quality based on file size
           VideoQuality quality = VideoQuality.MediumQuality;
-          if (videoFile.lengthSync() > 50 * 1024 * 1024) {
+          if (await file.length() > 50 * 1024 * 1024) {
             quality = VideoQuality.LowQuality;
-          } else if (videoFile.lengthSync() > 20 * 1024 * 1024) {
+          } else if (await file.length() > 20 * 1024 * 1024) {
             quality = VideoQuality.MediumQuality;
           } else {
             quality = VideoQuality.HighestQuality;
@@ -910,7 +961,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           
           // Compress the video
           final MediaInfo? info = await VideoCompress.compressVideo(
-            videoFile.path,
+            video.path,
             quality: quality,
             deleteOrigin: false, // Keep original file
             includeAudio: true,
@@ -918,10 +969,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           );
           
           if (info != null && info.file != null) {
-            videoToUpload = info.file!;
+            videoToUpload = XFile(info.file!.path);
+            final originalSizeMB = (await file.length() / (1024 * 1024)).toStringAsFixed(1);
+            final compressedFile = File(info.file!.path);
+            final compressedSizeMB = (await compressedFile.length() / (1024 * 1024)).toStringAsFixed(1);
             if (mounted) {
-              final originalSizeMB = (videoFile.lengthSync() / (1024 * 1024)).toStringAsFixed(1);
-              final compressedSizeMB = (videoToUpload.lengthSync() / (1024 * 1024)).toStringAsFixed(1);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Video compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB'),
@@ -946,7 +998,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       // Create unique filename
       final String fileName =
-          '${DateTime.now().millisecondsSinceEpoch}_${videoToUpload.path.split('/').last}';
+          '${DateTime.now().millisecondsSinceEpoch}_${videoToUpload.name}';
 
       // Upload to Firebase Storage
       final Reference storageRef = FirebaseStorage.instance
@@ -955,7 +1007,20 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           .child(widget.chatRoomId)
           .child(fileName);
 
-      final UploadTask uploadTask = storageRef.putFile(videoToUpload);
+      // Upload based on platform
+      final UploadTask uploadTask;
+      if (kIsWeb) {
+        // Web: use bytes
+        final Uint8List bytes = await videoToUpload.readAsBytes();
+        final metadata = SettableMetadata(
+          contentType: 'video/mp4', // Most common video format
+        );
+        uploadTask = storageRef.putData(bytes, metadata);
+      } else {
+        // Mobile: use File
+        final file = File(videoToUpload.path);
+        uploadTask = storageRef.putFile(file);
+      }
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
@@ -981,10 +1046,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         _messageController.clear();
       }
       
-      // Clean up compressed file if different from original
-      if (videoToUpload.path != videoFile.path) {
+      // Clean up compressed file if different from original (mobile only)
+      if (!kIsWeb && videoToUpload.path != video.path) {
         try {
-          await videoToUpload.delete();
+          final compressedFile = File(videoToUpload.path);
+          if (await compressedFile.exists()) {
+            await compressedFile.delete();
+          }
         } catch (e) {
           debugPrint('Failed to delete compressed video: $e');
         }
@@ -1006,33 +1074,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
   }
 
-  void _viewFullScreenImage(String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Stack(
-          children: [
-            Center(
-              child: InteractiveViewer(
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 16,
-              right: 16,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   void _viewFullScreenVideo(String videoUrl) {
     Navigator.push(

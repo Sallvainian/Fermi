@@ -5,6 +5,7 @@ import '../../../shared/models/user_model.dart';
 import '../domain/repositories/auth_repository.dart';
 import '../data/repositories/auth_repository_impl.dart';
 import '../data/services/auth_service.dart';
+import '../../notifications/data/services/web_in_app_notification_service.dart';
 
 /// Enumeration describing the current authentication state.
 ///
@@ -129,6 +130,10 @@ class AuthProvider extends ChangeNotifier {
       if (userModel != null) {
         _userModel = userModel;
         _status = AuthStatus.authenticated;
+        // Start web in-app notifications if on web
+        if (kIsWeb) {
+          WebInAppNotificationService().startWebInAppNotifications();
+        }
       } else {
         throw Exception('Sign in failed');
       }
@@ -276,6 +281,10 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     
     try {
+      // Stop web in-app notifications if on web
+      if (kIsWeb) {
+        WebInAppNotificationService().stopWebInAppNotifications();
+      }
       // Call the real Firebase sign-out
       await _authRepository?.signOut();
       _status = AuthStatus.unauthenticated;

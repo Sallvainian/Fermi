@@ -42,77 +42,28 @@
 
   <title>Teacher Dashboard</title>
   <link rel="manifest" href="manifest.json">
-
-
-  <!-- This script adds the flutter initialization JS code -->
 </head>
 <body>
   <script>
-    // WebGL Detection - fail fast with friendly message
-    (function(){
-      const canvas = document.createElement('canvas');
-      const hasWebGL = !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
-      if (!hasWebGL) {
-        document.body.innerHTML = `
-          <div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #d32f2f;">Graphics acceleration is disabled</h2>
-            <p>This application requires WebGL to run. Please enable hardware acceleration in your browser settings or use a device/browser with GPU support enabled.</p>
-            <p style="margin-top: 20px;">In Chrome, you can check your GPU status at <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">chrome://gpu</code></p>
-            <p style="margin-top: 20px; color: #666;">If you're using a corporate device, please contact your IT administrator for assistance.</p>
-          </div>`;
-        return;
-      }
-    })();
-
-    // Service Worker Registration - Fixed to prevent reload loop
+    // Enhanced error handling for better debugging
+    window.addEventListener('error', e => {
+      console.error('window.onerror', e.error || e.message, e.filename, e.lineno, e.colno, e.error?.stack);
+    });
+    window.addEventListener('unhandledrejection', e => {
+      console.error('unhandledrejection', e.reason);
+    });
+  </script>
+  
+  <script>
+    // Service Worker Update Handler - No auto-reload
     (function () {
       if (!('serviceWorker' in navigator)) return;
 
-      // Register ONLY the Firebase Messaging SW here (Flutter registers its own)
-      window.addEventListener('load', async () => {
-        try {
-          const reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-          console.log('Firebase Messaging SW registered', reg);
-        } catch (e) {
-          console.error('FCM SW registration failed', e);
-        }
-      });
-
-      // Helper to identify Flutter's SW (the one we allow to take control)
-      function isFlutterWorker(worker) {
-        return worker && worker.scriptURL && worker.scriptURL.includes('flutter_service_worker.js');
-      }
-
-      // One-time reload guard
-      let reloaded = false;
+      // Log when new version is available but don't auto-reload
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloaded) return;
-        reloaded = true;
-        // Reload once when Flutter SW activates
-        window.location.reload();
-      });
-
-      // Listen for updates on all registrations and only fast-swap Flutter's SW
-      navigator.serviceWorker.ready.then(() => {
-        navigator.serviceWorker.getRegistrations().then((regs) => {
-          for (const reg of regs) {
-            reg.addEventListener('updatefound', () => {
-              const w = reg.installing;
-              if (!w) return;
-              w.addEventListener('statechange', () => {
-                // Only promote Flutter's SW; never promote the FCM SW
-                if (w.state === 'installed' && navigator.serviceWorker.controller && isFlutterWorker(w)) {
-                  console.log('New Flutter app version available');
-                  // Optional: Show user notification before updating
-                  // For now, auto-update after 5 seconds
-                  setTimeout(() => {
-                    w.postMessage({ type: 'SKIP_WAITING' });
-                  }, 5000);
-                }
-              });
-            });
-          }
-        });
+        // Commented out to reduce console noise - uncomment if you want to track updates
+        // console.log('New Flutter app version available');
+        // TODO: Show an in-page banner/button that calls window.location.reload() when clicked
       });
     })();
     
@@ -130,8 +81,9 @@
     
     // Placeholder for Flutter to set
     window.flutterUpdateAvailable = null;
-    
-    {{flutter_bootstrap_js}}
   </script>
+  
+  <!-- Load Flutter bootstrap using the modern approach -->
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

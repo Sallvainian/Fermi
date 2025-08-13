@@ -1,142 +1,42 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // ========================================
-    // STORAGE RULES - PRODUCTION VERSION
-    // ========================================
-    // Note: Storage rules cannot query Firestore. We use a combination of:
-    // 1. Auth token info (uid, custom claims for role)
-    // 2. Path-based access control
-    // 3. Request metadata validation
-    
-    // Helper function to check if user has teacher role
-    // Requires custom claim 'role' to be set via Admin SDK
-    function isTeacher() {
-      return request.auth != null && 
-        request.auth.token.role == 'teacher';
-    }
-    
     // Helper function to check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Helper function to validate image files
-    function isValidImage() {
-      return request.resource.contentType.matches('image/.*') &&
-        request.resource.size < 10 * 1024 * 1024; // 10MB max
+    // Chat images - authenticated users can read/write
+    match /chat_images/{chatRoomId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
     
-    // Helper function to validate document files
-    function isValidDocument() {
-      return (request.resource.contentType.matches('application/pdf') ||
-              request.resource.contentType.matches('application/.*document.*') ||
-              request.resource.contentType.matches('text/.*')) &&
-        request.resource.size < 50 * 1024 * 1024; // 50MB max
+    // Chat videos - authenticated users can read/write  
+    match /chat_videos/{chatRoomId}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
     
-    // ========================================
-    // USER PROFILE IMAGES
-    // ========================================
-    // Path: /users/{userId}/profile/{fileName}
-    // Users can only upload their own profile images
+    // User profile images
     match /users/{userId}/profile/{fileName} {
-      allow read: if isAuthenticated(); // Profile images are semi-public
-      allow write: if isAuthenticated() && 
-        request.auth.uid == userId &&
-        isValidImage();
-    }
-    
-    // ========================================
-    // CLASS MATERIALS (Teacher Uploads)
-    // ========================================
-    // Path: /classes/{classId}/materials/{fileName}
-    // Only teachers can upload, authenticated users can read
-    // Note: Students need classId to access, providing basic access control
-    match /classes/{classId}/materials/{fileName} {
       allow read: if isAuthenticated();
-      allow write: if isTeacher() &&
-        isValidDocument();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
     }
     
-    // ========================================
-    // STUDENT SUBMISSIONS
-    // ========================================
-    // Path: /classes/{classId}/submissions/{studentId}/{fileName}
-    // Students can only upload to their own folder, teachers can read all
-    match /classes/{classId}/submissions/{studentId}/{fileName} {
-      allow read: if isAuthenticated() && 
-        (request.auth.uid == studentId || isTeacher());
-      allow create: if isAuthenticated() && 
-        request.auth.uid == studentId &&
-        isValidDocument();
-      allow update: if isAuthenticated() && 
-        request.auth.uid == studentId &&
-        isValidDocument();
-      allow delete: if isTeacher();
-    }
-    
-    // ========================================
-    // CHAT MEDIA
-    // ========================================
-    // Path: /chat_media/{chatRoomId}/{fileName}
-    // Authenticated users can upload/read (they need roomId to access)
-    match /chat_media/{chatRoomId}/{fileName} {
+    // User uploads
+    match /users/{userId}/{allPaths=**} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-        request.resource.size < 100 * 1024 * 1024 && // 100MB limit
-        (request.resource.contentType.matches('image/.*') || 
-         request.resource.contentType.matches('video/.*') ||
-         request.resource.contentType.matches('audio/.*') ||
-         request.resource.contentType.matches('application/pdf'));
+      allow write: if isAuthenticated() && request.auth.uid == userId;
     }
     
-    // ========================================
-    // GAME ASSETS
-    // ========================================
-    // Path: /games/{gameId}/{allPaths=**}
-    // Teachers upload, all authenticated users can read
-    match /games/{gameId}/{allPaths=**} {
-      allow read: if isAuthenticated();
-      allow write: if isTeacher() &&
-        request.resource.size < 50 * 1024 * 1024; // 50MB limit
+    // Public assets
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
     }
     
-    // ========================================
-    // SHARED FILES (Collaborative Documents)
-    // ========================================
-    // Path: /shared/{classId}/{fileName}
-    // Teachers can upload, authenticated users can read
-    // Note: More complex permissions would require Cloud Functions
-    match /shared/{classId}/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isTeacher() &&
-        isValidDocument();
-    }
-    
-    // ========================================
-    // CONVERSATION ATTACHMENTS (Legacy)
-    // ========================================
-    // Path: /conversations/{conversationId}/attachments/{fileName}
-    // Authenticated users can read/write (they need conversationId)
-    match /conversations/{conversationId}/attachments/{fileName} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated() &&
-        request.resource.size < 25 * 1024 * 1024; // 25MB limit
-    }
-    
-    // ========================================
-    // TEMPORARY UPLOADS
-    // ========================================
-    // Path: /temp/{userId}/{fileName}
-    // Users can upload temp files (auto-cleaned by lifecycle rules)
-    match /temp/{userId}/{fileName} {
-      allow read, write: if isAuthenticated() && 
-        request.auth.uid == userId &&
-        request.resource.size < 100 * 1024 * 1024; // 100MB limit
-    }
-    
-    // Catch-all: Deny any other paths
+    // Default deny
     match /{document=**} {
       allow read, write: if false;
     }

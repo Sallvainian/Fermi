@@ -250,6 +250,9 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
     String? attachmentType,
   }) async {
     try {
+      // DEBUG: Log incoming parameters
+      LoggerService.info('sendMessage called with attachmentUrl: $attachmentUrl, type: $attachmentType', tag: _tag);
+      
       final message = Message(
         id: '',
         senderId: _currentUserId,
@@ -269,12 +272,17 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
           .doc();
       
       final messageWithId = message.copyWith(id: ref.id);
-      await ref.set(messageWithId.toFirestore());
+      final firestoreData = messageWithId.toFirestore();
+      
+      // DEBUG: Log what we're saving to Firestore
+      LoggerService.info('Saving to Firestore: attachmentUrl=${firestoreData['attachmentUrl']}, type=${firestoreData['attachmentType']}', tag: _tag);
+      
+      await ref.set(firestoreData);
 
       // Update last message in chat room
       await updateLastMessage(chatRoomId, messageWithId);
 
-      LoggerService.info('Message sent to chat room $chatRoomId', tag: _tag);
+      LoggerService.info('Message sent to chat room $chatRoomId with attachment: ${attachmentUrl != null}', tag: _tag);
       return ref.id;
     } catch (e) {
       LoggerService.error('Failed to send message', tag: _tag, error: e);

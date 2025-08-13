@@ -84,11 +84,15 @@ class AppInitializer {
         return;
       }
       
+      LoggerService.info('Starting Firebase initialization...', tag: 'AppInitializer');
+      
       // Use simple Firebase initialization with DefaultFirebaseOptions
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
       _firebaseInitialized = true;
+      
+      LoggerService.info('Firebase core initialized successfully', tag: 'AppInitializer');
       
       // Skip emulator configuration for now
       // The Android emulator has issues with Google Play Services
@@ -143,7 +147,10 @@ class AppInitializer {
     try {
       final notificationService = NotificationService();
       await notificationService.initialize();
-      await notificationService.requestPermissions();
+      // Only request permissions on mobile platforms, not web
+      if (!kIsWeb) {
+        await notificationService.requestPermissions();
+      }
       LoggerService.info('Notification service initialized', tag: 'AppInitializer');
     } catch (e) {
       LoggerService.error('Notification initialization error', tag: 'AppInitializer', error: e);
@@ -152,6 +159,10 @@ class AppInitializer {
   
   /// Initialize Firebase Messaging for VoIP support
   static Future<void> _initializeFirebaseMessaging() async {
+    if (kIsWeb) {
+      // Foreground-only on web → do not initialize FCM at all
+      return;
+    }
     try {
       final messagingService = FirebaseMessagingService();
       await messagingService.initialize();

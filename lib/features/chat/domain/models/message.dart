@@ -90,6 +90,8 @@ class Message {
   /// @return Parsed Message instance
   factory Message.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
+    
     return Message(
       id: doc.id,
       senderId: data['senderId'] ?? '',

@@ -5,6 +5,7 @@
 library;
 
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -17,16 +18,29 @@ import 'shared/theme/app_theme.dart';
 import 'shared/theme/app_typography.dart';
 import 'shared/widgets/splash_screen.dart';
 import 'shared/widgets/pwa_update_notifier.dart';
+import 'shared/widgets/web_notification_handler.dart';
 
 /// Public getter for Firebase initialization status.
 bool get isFirebaseInitialized => AppInitializer.isFirebaseInitialized;
 
-/// Application entry point - shows splash screen immediately
+/// Application entry point - shows splash screen immediately with enhanced error handling
 Future<void> main() async {
   await runZonedGuarded<Future<void>>(
     () async {
+      // Ensure Flutter bindings are initialized inside the zone
       WidgetsFlutterBinding.ensureInitialized();
-      
+
+      // Forward Flutter framework errors into Zone for unified logging
+      FlutterError.onError = (FlutterErrorDetails details) {
+        Zone.current.handleUncaughtError(details.exception, details.stack ?? StackTrace.current);
+      };
+
+      // Catch uncaught engine/platform errors
+      PlatformDispatcher.instance.onError = (error, stack) {
+        debugPrint('UNCAUGHT (platform): $error\n$stack');
+        return true; // prevent the default "Uncaught" spam
+      };
+
       // Load environment variables from .env file
       try {
         await dotenv.load(fileName: ".env");
@@ -38,6 +52,7 @@ Future<void> main() async {
       runApp(const InitializationWrapper());
     },
     (error, stack) {
+      debugPrint('UNCAUGHT (zone): $error\n$stack');
       AppInitializer.handleError(error, stack);
     },
   );
@@ -63,22 +78,24 @@ class TeacherDashboardApp extends StatelessWidget {
           return PWAUpdateNotifier(
             navigatorKey: navigatorKey,
             scaffoldMessengerKey: scaffoldMessengerKey,
-            child: MaterialApp.router(
-              title: 'Teacher Dashboard',
-              scaffoldMessengerKey: scaffoldMessengerKey,
-              theme: AppTheme.lightTheme().copyWith(
-                textTheme: AppTypography.createTextTheme(
-                  AppTheme.lightTheme().colorScheme,
+            child: WebNotificationHandler(
+              child: MaterialApp.router(
+                title: 'Teacher Dashboard',
+                scaffoldMessengerKey: scaffoldMessengerKey,
+                theme: AppTheme.lightTheme().copyWith(
+                  textTheme: AppTypography.createTextTheme(
+                    AppTheme.lightTheme().colorScheme,
+                  ),
                 ),
-              ),
-              darkTheme: AppTheme.darkTheme().copyWith(
-                textTheme: AppTypography.createTextTheme(
-                  AppTheme.darkTheme().colorScheme,
+                darkTheme: AppTheme.darkTheme().copyWith(
+                  textTheme: AppTypography.createTextTheme(
+                    AppTheme.darkTheme().colorScheme,
+                  ),
                 ),
+                themeMode: themeProvider.themeMode,
+                debugShowCheckedModeBanner: false,
+                routerConfig: AppRouter.createRouter(authProvider),
               ),
-              themeMode: themeProvider.themeMode,
-              debugShowCheckedModeBanner: false,
-              routerConfig: AppRouter.createRouter(authProvider),
             ),
           );
         },
