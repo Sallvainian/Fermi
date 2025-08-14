@@ -53,25 +53,18 @@ class ClassProvider with ChangeNotifier {
   
   /// Returns a stream of teacher's classes from Firestore.
   Stream<List<ClassModel>> loadTeacherClasses(String teacherId) {
-    print('Loading classes for teacher: $teacherId');
     return _firestore
         .collection('classes')
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
         .map((snapshot) {
-      print('Got ${snapshot.docs.length} classes for teacher $teacherId');
-      
       final List<ClassModel> classes = [];
       for (var doc in snapshot.docs) {
         try {
-          print('Processing document: ${doc.id}');
           final classModel = ClassModel.fromFirestore(doc);
           classes.add(classModel);
-          print('Successfully parsed class: ${classModel.name}');
-        } catch (e, stack) {
-          print('ERROR: Failed to parse class document ${doc.id}');
-          print('Error: $e');
-          print('Stack trace: $stack');
+        } catch (e) {
+          print('ERROR: Failed to parse class document ${doc.id}: $e');
           // Continue processing other documents
         }
       }
@@ -79,10 +72,8 @@ class ClassProvider with ChangeNotifier {
       _teacherClasses = classes;
       notifyListeners();
       return classes;
-    }).handleError((error, stackTrace) {
-      print('STREAM ERROR: Failed to load teacher classes');
-      print('Error: $error');
-      print('Stack: $stackTrace');
+    }).handleError((error) {
+      print('ERROR: Failed to load teacher classes: $error');
       _teacherClasses = [];
       _setError('Failed to load classes: $error');
       notifyListeners();
