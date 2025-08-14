@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_compress/video_compress.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -557,6 +558,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       await context.read<ChatProvider>().sendMessage(content: message);
     } catch (e) {
       if (mounted) {
+        LoggerService.error('Failed to send message in ChatDetailScreen', error: e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to send message: $e')),
         );

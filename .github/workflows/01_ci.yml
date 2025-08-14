@@ -25,7 +25,18 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
+      # Skip tests if no test directory exists
+      - name: Check for tests
+        id: check_tests
+        run: |
+          if [ -d "test" ] && [ "$(find test -name '*_test.dart' -type f | wc -l)" -gt 0 ]; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Test
+        if: steps.check_tests.outputs.has_tests == 'true'
         run: flutter test --no-pub
 
       - name: Build web with ALL Firebase config

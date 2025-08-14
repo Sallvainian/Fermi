@@ -12,8 +12,6 @@ import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
 import '../../features/notifications/data/services/voip_token_service.dart';
 import '../services/performance_service.dart';
-import '../../features/auth/data/services/google_sign_in_service.dart';
-import '../../features/auth/data/services/web_auth_helper_interface.dart';
 import 'service_locator.dart';
 
 /// Handles all app initialization tasks
@@ -32,10 +30,6 @@ class AppInitializer {
     // CRITICAL: Setup service locator (required for dependency injection)
     await _setupServiceLocator();
     
-    // CRITICAL: Initialize web auth helper for COOP warning fix (web only)
-    if (kIsWeb) {
-      _initializeWebAuthHelper();
-    }
     
     // DEFER: Everything else happens after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,8 +43,6 @@ class AppInitializer {
     
     // Initialize in parallel for faster startup
     await Future.wait([
-      // Google Sign In can be deferred
-      _initializeGoogleSignIn(),
       
       // Performance monitoring is not critical
       _initializePerformanceMonitoring(),
@@ -100,6 +92,8 @@ class AppInitializer {
       _firebaseInitialized = true;
       
       LoggerService.info('Firebase core initialized successfully', tag: 'AppInitializer');
+      
+      // Auth persistence is now handled in AuthService constructor
       
       // Skip emulator configuration for now
       // The Android emulator has issues with Google Play Services
@@ -202,27 +196,6 @@ class AppInitializer {
     };
   }
   
-  /// Initialize Google Sign In service
-  static Future<void> _initializeGoogleSignIn() async {
-    try {
-      // Initialize with required scopes
-      // In google_sign_in 6.x, this is synchronous  
-      GoogleSignInService().initialize();
-      LoggerService.info('Google Sign In initialized', tag: 'AppInitializer');
-    } catch (e) {
-      LoggerService.error('Google Sign In initialization error', tag: 'AppInitializer', error: e);
-    }
-  }
-  
-  /// Initialize web auth helper for COOP warning prevention
-  static void _initializeWebAuthHelper() {
-    try {
-      WebAuthHelper().initialize();
-      LoggerService.info('Web Auth Helper initialized', tag: 'AppInitializer');
-    } catch (e) {
-      LoggerService.error('Web Auth Helper initialization error', tag: 'AppInitializer', error: e);
-    }
-  }
   
   
   /// Handle uncaught errors in the app

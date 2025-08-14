@@ -112,7 +112,9 @@ class ChatRoom {
           ? Map<String, int>.from(data['unreadCounts'])
           : null,
       classId: data['classId'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
       updatedAt: data['updatedAt'] != null
           ? (data['updatedAt'] as Timestamp).toDate()
           : null,

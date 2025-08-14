@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'shared/core/app_initializer.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -63,8 +64,15 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 /// Root widget of the Teacher Dashboard application - simplified and modular
-class TeacherDashboardApp extends StatelessWidget {
+class TeacherDashboardApp extends StatefulWidget {
   const TeacherDashboardApp({super.key});
+
+  @override
+  State<TeacherDashboardApp> createState() => _TeacherDashboardAppState();
+}
+
+class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
+  GoRouter? _router;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +82,26 @@ class TeacherDashboardApp extends StatelessWidget {
         builder: (context) {
           final authProvider = context.watch<AuthProvider>();
           final themeProvider = context.watch<ThemeProvider>();
+
+          // Show loading screen while auth is initializing
+          // This prevents login screen flash and route errors
+          if (authProvider.status == AuthStatus.uninitialized) {
+            return MaterialApp(
+              title: 'Teacher Dashboard',
+              theme: AppTheme.lightTheme(),
+              darkTheme: AppTheme.darkTheme(),
+              themeMode: themeProvider.themeMode,
+              debugShowCheckedModeBanner: false,
+              home: const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            );
+          }
+
+          // Create router only once when auth is initialized
+          _router ??= AppRouter.createRouter(authProvider);
 
           return PWAUpdateNotifier(
             navigatorKey: navigatorKey,
@@ -94,7 +122,7 @@ class TeacherDashboardApp extends StatelessWidget {
                 ),
                 themeMode: themeProvider.themeMode,
                 debugShowCheckedModeBanner: false,
-                routerConfig: AppRouter.createRouter(authProvider),
+                routerConfig: _router!,
               ),
             ),
           );

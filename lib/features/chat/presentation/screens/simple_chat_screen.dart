@@ -132,7 +132,10 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     final hasImage = messageData['imageUrl'] != null;
     final hasVideo = messageData['videoUrl'] != null;
     final messageText = messageData['text'] ?? '';
-    final timestamp = (messageData['timestamp'] as Timestamp).toDate();
+    // Handle server timestamp that hasn't been set yet
+    final timestamp = messageData['timestamp'] != null 
+        ? (messageData['timestamp'] as Timestamp).toDate()
+        : DateTime.now(); // Use current time for pending messages
     
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,

@@ -21,8 +21,6 @@ import '../../features/assignments/data/services/assignment_service.dart';
 import '../../features/chat/data/services/chat_service.dart';
 import '../../features/assignments/data/services/submission_service.dart';
 import '../services/logger_service.dart';
-import '../../features/auth/domain/repositories/auth_repository.dart';
-import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/assignments/domain/repositories/assignment_repository.dart';
 import '../../features/assignments/data/repositories/assignment_repository_impl.dart';
 import '../../features/classes/domain/repositories/class_repository.dart';
@@ -39,8 +37,6 @@ import '../../features/discussions/domain/repositories/discussion_repository.dar
 import '../../features/discussions/data/repositories/discussion_repository_impl.dart';
 import '../../features/calendar/domain/repositories/calendar_repository.dart';
 import '../../features/calendar/data/repositories/calendar_repository_impl.dart';
-import '../../features/auth/domain/repositories/user_repository.dart';
-import '../../features/auth/data/repositories/user_repository_impl.dart';
 import '../../features/calendar/data/services/calendar_service.dart';
 import '../../features/games/domain/repositories/jeopardy_repository.dart';
 import '../../features/games/data/repositories/firebase_jeopardy_repository.dart';
@@ -88,11 +84,6 @@ Future<void> setupServiceLocator() async {
   getIt.registerLazySingleton<AuthService>(() => AuthService());
   getIt.registerLazySingleton<LoggerService>(() => LoggerService());
   
-  // Register repositories
-  getIt.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(getIt<AuthService>()),
-  );
-  
   getIt.registerLazySingleton<AssignmentRepository>(
     () => AssignmentRepositoryImpl(getIt<FirebaseFirestore>()),
   );
@@ -125,9 +116,6 @@ Future<void> setupServiceLocator() async {
     () => CalendarRepositoryImpl(getIt<FirebaseFirestore>()),
   );
   
-  getIt.registerLazySingleton<UserRepository>(
-    () => UserRepositoryImpl(getIt<FirebaseFirestore>()),
-  );
   
   getIt.registerLazySingleton<JeopardyRepository>(
     () => FirebaseJeopardyRepository(firestore: getIt<FirebaseFirestore>()),
@@ -146,7 +134,6 @@ Future<void> setupServiceLocator() async {
   getIt.registerFactory<CalendarService>(
     () => CalendarService(
       getIt<CalendarRepository>(),
-      getIt<UserRepository>(),
       getIt<ClassRepository>(),
     ),
   );
@@ -182,7 +169,6 @@ extension ServiceLocatorExtension on GetIt {
   FirebaseCrashlytics get crashlytics => get<FirebaseCrashlytics>();
   
   AuthService get authService => get<AuthService>();
-  AuthRepository get authRepository => get<AuthRepository>();
   AssignmentRepository get assignmentRepository => get<AssignmentRepository>();
   ClassRepository get classRepository => get<ClassRepository>();
   GradeRepository get gradeRepository => get<GradeRepository>();
@@ -191,7 +177,6 @@ extension ServiceLocatorExtension on GetIt {
   ChatRepository get chatRepository => get<ChatRepository>();
   DiscussionRepository get discussionRepository => get<DiscussionRepository>();
   CalendarRepository get calendarRepository => get<CalendarRepository>();
-  UserRepository get userRepository => get<UserRepository>();
   AssignmentService get assignmentService => get<AssignmentService>();
   ChatService get chatService => get<ChatService>();
   SubmissionService get submissionService => get<SubmissionService>();

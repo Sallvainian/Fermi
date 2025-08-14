@@ -109,28 +109,88 @@ class ClassModel {
   /// @return Parsed ClassModel instance
   factory ClassModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return ClassModel(
-      id: doc.id,
-      teacherId: data['teacherId'] ?? '',
-      name: data['name'] ?? '',
-      subject: data['subject'] ?? '',
-      description: data['description'],
-      gradeLevel: data['gradeLevel'] ?? '',
-      room: data['room'],
-      schedule: data['schedule'],
-      studentIds: List<String>.from(data['studentIds'] ?? []),
-      syllabusUrl: data['syllabusUrl'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: data['updatedAt'] != null 
-          ? (data['updatedAt'] as Timestamp).toDate() 
-          : null,
-      isActive: data['isActive'] ?? true,
-      academicYear: data['academicYear'] ?? '',
-      semester: data['semester'] ?? '',
-      maxStudents: data['maxStudents'],
-      enrollmentCode: data['enrollmentCode'],
-      settings: data['settings'],
-    );
+    
+    // Debug logging for diagnostics
+    print('DEBUG: Parsing class document ${doc.id}');
+    print('DEBUG: Data keys: ${data.keys.toList()}');
+    print('DEBUG: createdAt type: ${data['createdAt']?.runtimeType}');
+    print('DEBUG: createdAt value: ${data['createdAt']}');
+    
+    // Safe timestamp parsing with fallback
+    DateTime parseTimestamp(dynamic value, {DateTime? fallback}) {
+      if (value == null) {
+        print('DEBUG: Timestamp is null, using fallback');
+        return fallback ?? DateTime.now();
+      }
+      
+      try {
+        if (value is Timestamp) {
+          print('DEBUG: Converting Timestamp to DateTime');
+          return value.toDate();
+        } else if (value is DateTime) {
+          print('DEBUG: Already a DateTime');
+          return value;
+        } else if (value is String) {
+          print('DEBUG: Parsing string timestamp: $value');
+          return DateTime.parse(value);
+        } else if (value is int) {
+          print('DEBUG: Converting milliseconds to DateTime: $value');
+          return DateTime.fromMillisecondsSinceEpoch(value);
+        } else {
+          print('WARNING: Unknown timestamp type: ${value.runtimeType}');
+          return fallback ?? DateTime.now();
+        }
+      } catch (e) {
+        print('ERROR: Failed to parse timestamp: $e');
+        print('ERROR: Value was: $value (${value.runtimeType})');
+        return fallback ?? DateTime.now();
+      }
+    }
+    
+    try {
+      return ClassModel(
+        id: doc.id,
+        teacherId: data['teacherId'] ?? '',
+        name: data['name'] ?? '',
+        subject: data['subject'] ?? '',
+        description: data['description'],
+        gradeLevel: data['gradeLevel'] ?? '',
+        room: data['room'],
+        schedule: data['schedule'],
+        studentIds: List<String>.from(data['studentIds'] ?? []),
+        syllabusUrl: data['syllabusUrl'],
+        createdAt: parseTimestamp(data['createdAt']),
+        updatedAt: data['updatedAt'] != null 
+            ? parseTimestamp(data['updatedAt']) 
+            : null,
+        isActive: data['isActive'] ?? true,
+        academicYear: data['academicYear'] ?? '2024-2025',
+        semester: data['semester'] ?? 'Fall',
+        maxStudents: data['maxStudents'],
+        enrollmentCode: data['enrollmentCode'],
+        settings: data['settings'],
+      );
+    } catch (e, stack) {
+      print('CRITICAL ERROR: Failed to create ClassModel from Firestore');
+      print('Error: $e');
+      print('Stack: $stack');
+      print('Document ID: ${doc.id}');
+      print('Data: $data');
+      
+      // Return a minimal valid ClassModel to prevent crashes
+      return ClassModel(
+        id: doc.id,
+        teacherId: data['teacherId'] ?? '',
+        name: data['name'] ?? 'Unknown Class',
+        subject: data['subject'] ?? 'Unknown',
+        gradeLevel: data['gradeLevel'] ?? 'Unknown',
+        studentIds: [],
+        createdAt: DateTime.now(),
+        isActive: true,
+        academicYear: '2024-2025',
+        semester: 'Fall',
+      );
+    }
   }
 
   /// Converts the ClassModel instance to a Map for Firestore storage.

@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 import '../../../shared/models/user_model.dart';
-import '../domain/repositories/auth_repository.dart';
-import '../data/repositories/auth_repository_impl.dart';
 import '../data/services/auth_service.dart';
 import '../../notifications/data/services/web_in_app_notification_service.dart';
 
@@ -45,7 +43,7 @@ typedef User = firebase_auth.User;
 /// operate synchronously or with minimal delay and simply update local
 /// state.
 class AuthProvider extends ChangeNotifier {
-  final AuthRepository? _authRepository;
+  final AuthService _authService;
   AuthStatus _status;
   UserModel? _userModel;
   String? _errorMessage;
@@ -54,8 +52,8 @@ class AuthProvider extends ChangeNotifier {
   /// Whether the user has chosen to persist their authentication session.
   bool _rememberMe = false;
 
-  AuthProvider({AuthRepository? repository, AuthStatus initialStatus = AuthStatus.uninitialized, UserModel? userModel})
-      : _authRepository = repository ?? AuthRepositoryImpl(AuthService()),
+  AuthProvider({AuthService? authService, AuthStatus initialStatus = AuthStatus.uninitialized, UserModel? userModel})
+      : _authService = authService ?? AuthService(),
         _status = initialStatus,
         _userModel = userModel,
         _isLoading = false {
@@ -74,7 +72,9 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
         
         // Get user model from Firestore
-        final currentUserModel = await _authRepository?.getCurrentUserModel();
+        final uid = user.uid;
+        final userData = await _authService.getUserData(uid);
+        final currentUserModel = userData != null ? UserModel.fromFirestore(userData) : null;
         
         if (currentUserModel != null) {
           _userModel = currentUserModel;
@@ -162,10 +162,15 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real Firebase authentication
-      final userModel = await _authRepository?.signInWithEmail(
+      final user = await _authService.signIn(
         email: email,
         password: password,
       );
+      UserModel? userModel;
+      if (user != null) {
+        final userData = await _authService.getUserData(user.uid);
+        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       
       if (userModel != null) {
         _userModel = userModel;
@@ -198,7 +203,12 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real Google Sign-In
-      final userModel = await _authRepository?.signInWithGoogle();
+      final user = await _authService.signInWithGoogle();
+      UserModel? userModel;
+      if (user != null) {
+        final userData = await _authService.getUserData(user.uid);
+        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       
       if (userModel != null) {
         // Existing user - sign them in directly
@@ -226,11 +236,14 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real repository to complete Google sign-up
-      final userModel = await _authRepository?.completeGoogleSignUp(
-        role: role,
-        parentEmail: parentEmail,
-        gradeLevel: gradeLevel,
-      );
+      // After Google sign-in, update the user's role
+      final user = _authService.currentUser;
+      UserModel? userModel;
+      if (user != null) {
+        await _authService.updateUserRole(user.uid, role.toString());
+        final userData = await _authService.getUserData(user.uid);
+        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       
       if (userModel != null) {
         _userModel = userModel;
@@ -264,12 +277,10 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real Firebase sign-up (Auth account only)
-      final user = await _authRepository?.signUpWithEmailOnly(
+      final user = await _authService.signUp(
         email: email,
         password: password,
         displayName: email.split('@')[0], // Use email prefix as display name
-        firstName: email.split('@')[0],
-        lastName: '',
       );
       
       if (user != null) {
@@ -296,11 +307,11 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real Firebase update
-      await _authRepository?.updateProfile(
-        displayName: displayName,
-        firstName: firstName,
-        lastName: lastName,
-      );
+      // Update display name in Firebase Auth
+      final user = _authService.currentUser;
+      if (user != null && displayName != null) {
+        await user.updateDisplayName(displayName);
+      }
       
       // Update local model
       _userModel = _userModel!.copyWith(
@@ -330,12 +341,6 @@ class AuthProvider extends ChangeNotifier {
         await user.updatePhotoURL(photoURL);
       }
       
-      // Update Firestore document
-      await _authRepository?.updateProfile(
-        photoURL: photoURL,
-        updatePhoto: true,
-      );
-      
       // Update local model
       _userModel = _userModel!.copyWith(photoURL: photoURL);
     } catch (e) {
@@ -357,7 +362,7 @@ class AuthProvider extends ChangeNotifier {
         WebInAppNotificationService().stopWebInAppNotifications();
       }
       // Call the real Firebase sign-out
-      await _authRepository?.signOut();
+      await _authService.signOut();
       _resetState();
     } catch (e) {
       _errorMessage = e.toString();
@@ -381,7 +386,8 @@ class AuthProvider extends ChangeNotifier {
     if (user != null) {
       await user.reload();
       // Refresh user model from repository
-      final currentUser = await _authRepository?.getCurrentUserModel();
+      final userData = await _authService.getUserData(user.uid);
+      final currentUser = userData != null ? UserModel.fromFirestore(userData) : null;
       if (currentUser != null) {
         _userModel = currentUser;
       }
@@ -395,7 +401,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshCustomClaims() async {
     try {
       // Get fresh user data from repository
-      final currentUser = await _authRepository?.getCurrentUserModel();
+      final user = _authService.currentUser;
+      UserModel? currentUser;
+      if (user != null) {
+        final userData = await _authService.getUserData(user.uid);
+        currentUser = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       if (currentUser != null) {
         _userModel = currentUser;
         notifyListeners();
