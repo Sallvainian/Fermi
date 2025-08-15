@@ -56,14 +56,32 @@
     // Cache busting debug logging
     console.log('🚀 [CACHE DEBUG] Page loaded at:', new Date().toISOString());
     
-    // Check for service worker
+    // Unregister any existing service worker (we're not using PWA anymore)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then(reg => {
-        if (reg) {
-          console.error('❌ [CACHE DEBUG] Service Worker still active! Should be disabled.');
-          console.error('[CACHE DEBUG] SW URL:', reg.active?.scriptURL);
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        if (registrations.length > 0) {
+          console.warn('🔄 [CACHE DEBUG] Found old service worker(s), unregistering...');
+          registrations.forEach(registration => {
+            registration.unregister().then(success => {
+              if (success) {
+                console.log('✅ [CACHE DEBUG] Successfully unregistered old service worker');
+                // Also clear all caches created by the old service worker
+                if ('caches' in window) {
+                  caches.keys().then(names => {
+                    names.forEach(name => {
+                      caches.delete(name).then(() => {
+                        console.log('🗑️ [CACHE DEBUG] Deleted cache:', name);
+                      });
+                    });
+                  });
+                }
+              } else {
+                console.error('❌ [CACHE DEBUG] Failed to unregister service worker');
+              }
+            });
+          });
         } else {
-          console.log('✅ [CACHE DEBUG] No service worker (correct!)');
+          console.log('✅ [CACHE DEBUG] No service worker registered (correct!)');
         }
       });
     }
