@@ -91,7 +91,7 @@ Teacher Dashboard is a modern, cross-platform educational management system that
 | **Web** | ✅ Production | Primary platform, PWA enabled |
 | **Android** | ✅ Production | Full feature support |
 | **iOS** | ✅ Production | Full feature support |
-| **macOS** | 🚧 Beta | Desktop support coming soon |
+| **macOS** | ❌ Not Supported | Firebase SDK limitations |
 | **Windows** | ❌ Not Supported | Firebase SDK limitations |
 | **Linux** | ❌ Not Supported | Firebase SDK limitations |
 
