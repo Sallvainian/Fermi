@@ -98,7 +98,9 @@ class Message {
       senderName: data['senderName'] ?? '',
       senderRole: data['senderRole'] ?? '',
       content: data['content'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp: data['timestamp'] != null 
+          ? (data['timestamp'] as Timestamp).toDate()
+          : DateTime.now(),
       isRead: data['isRead'] ?? false,
       attachmentUrl: data['attachmentUrl'],
       attachmentType: data['attachmentType'],

@@ -77,9 +77,7 @@ class ScheduledMessagesService {
         id: '',
         senderId: _currentUserId,
         senderName: _auth.currentUser?.displayName ?? 'User',
-        senderRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true 
-            ? 'teacher' 
-            : 'student',
+        senderRole: 'unknown', // will be filled below
         content: content,
         timestamp: DateTime.now(),
         scheduledFor: scheduledFor,
@@ -89,12 +87,26 @@ class ScheduledMessagesService {
         attachmentType: attachmentType,
       );
 
-      // Store in scheduled_messages collection
+      // Attempt to determine role from user profile document
+      String resolvedRole = 'student';
+      try {
+        final userDoc = await _firestore.collection('users').doc(_currentUserId).get();
+        if (userDoc.exists) {
+          final data = userDoc.data();
+          final role = data?['role'];
+          if (role is String && role.isNotEmpty) {
+            resolvedRole = role;
+          }
+        }
+      } catch (_) {
+        // default to 'student' if profile not available
+      }
+
       final ref = _firestore.collection('scheduled_messages').doc();
       
       await ref.set({
         'chatRoomId': chatRoomId,
-        'message': message.toFirestore(),
+        'message': message.copyWith(senderRole: resolvedRole).toFirestore(),
         'createdAt': FieldValue.serverTimestamp(),
       });
 

@@ -11,55 +11,19 @@ class RoleSelectionScreen extends StatefulWidget {
 }
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
-  UserRole? _selectedRole;
-  final _teacherPasswordController = TextEditingController();
-  final _parentEmailController = TextEditingController();
-  final _gradeLevelController = TextEditingController();
+  // Student role is the only option
+  final UserRole _selectedRole = UserRole.student;
   bool _isLoading = false;
-  bool _obscurePassword = true;
-
-  @override
-  void dispose() {
-    _teacherPasswordController.dispose();
-    _parentEmailController.dispose();
-    _gradeLevelController.dispose();
-    super.dispose();
-  }
 
   Future<void> _completeSignUp() async {
-    if (_selectedRole == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select your role')),
-      );
-      return;
-    }
-
-    if (_selectedRole == UserRole.teacher && 
-        _teacherPasswordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the teacher password')),
-      );
-      return;
-    }
-
-    if (_selectedRole == UserRole.teacher && 
-        _teacherPasswordController.text != 'fuzzyballs') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid teacher password')),
-      );
-      return;
-    }
-
-    // Students can proceed without additional info
-
     setState(() => _isLoading = true);
 
     try {
       final authProvider = context.read<AuthProvider>();
       await authProvider.completeGoogleSignUp(
-        role: _selectedRole!,
-        parentEmail: _selectedRole == UserRole.student ? _parentEmailController.text.trim() : null,
-        gradeLevel: _selectedRole == UserRole.student ? _gradeLevelController.text.trim() : null,
+        role: _selectedRole,
+        parentEmail: null,
+        gradeLevel: null,
       );
 
       if (authProvider.isAuthenticated && mounted) {
@@ -82,6 +46,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -97,7 +62,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Welcome!',
+              'Welcome Student!',
               style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -105,7 +70,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Select your role to get started',
+              'Complete your profile to get started',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -113,7 +78,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Role Selection
+            // Student Information Card
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -121,89 +86,23 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'I am a:',
+                      'Student Profile',
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 16),
                     
-                    // Teacher Option
-                    RadioListTile<UserRole>(
-                      title: const Text('Teacher'),
-                      subtitle: const Text('I teach and manage students (requires password)'),
-                      value: UserRole.teacher,
-                      groupValue: _selectedRole,
-                      onChanged: (value) {
-                        setState(() => _selectedRole = value);
-                      },
-                    ),
-                    
-                    // Student Option
-                    RadioListTile<UserRole>(
-                      title: const Text('Student'),
-                      subtitle: const Text('Access your assignments and grades'),
-                      value: UserRole.student,
-                      groupValue: _selectedRole,
-                      onChanged: (value) {
-                        setState(() => _selectedRole = value);
-                      },
+                    // Display student info
+                    ListTile(
+                      leading: const Icon(Icons.school),
+                      title: const Text('Student Account'),
+                      subtitle: const Text('Access your assignments, grades, and chat with your teacher'),
                     ),
                   ],
                 ),
               ),
             ),
-
-            // Teacher Additional Fields
-            if (_selectedRole == UserRole.teacher) ...[
-              const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Teacher Verification',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      TextFormField(
-                        controller: _teacherPasswordController,
-                        obscureText: _obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Teacher Password',
-                          hintText: 'Enter teacher password',
-                          prefixIcon: const Icon(Icons.lock_outlined),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Contact your administrator for the teacher password',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-
-            // Students don't need additional fields - straight to dashboard!
 
             const SizedBox(height: 32),
 
@@ -219,7 +118,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Complete Setup'),
+                  : const Text('Start Learning'),
             ),
           ],
         ),

@@ -55,32 +55,8 @@
   </script>
   
   <script>
-    // Service Worker Update Handler - No auto-reload
-    (function () {
-      if (!('serviceWorker' in navigator)) return;
-
-      // Log when new version is available but don't auto-reload
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // Commented out to reduce console noise - uncomment if you want to track updates
-        // console.log('New Flutter app version available');
-        // TODO: Show an in-page banner/button that calls window.location.reload() when clicked
-      });
-    })();
-    
-    // Function to apply update (called from Flutter if needed)
-    window.applyUpdate = function() {
-      navigator.serviceWorker.getRegistrations().then((regs) => {
-        for (const reg of regs) {
-          if (reg.waiting && reg.waiting.scriptURL.includes('flutter_service_worker.js')) {
-            reg.waiting.postMessage({type: 'SKIP_WAITING'});
-            break;
-          }
-        }
-      });
-    };
-    
-    // Placeholder for Flutter to set
-    window.flutterUpdateAvailable = null;
+    // Use build timestamp for service worker versioning
+    const serviceWorkerVersion = "{{flutter_service_worker_version}}";
   </script>
   
   <!-- Load Flutter bootstrap using the modern approach -->

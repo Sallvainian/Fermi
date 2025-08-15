@@ -150,6 +150,40 @@ class StudentProvider with ChangeNotifier {
     }
   }
   
+  /// Loads students enrolled in teacher's classes.
+  /// 
+  /// More efficient than loading all students and filtering client-side.
+  /// Gets student IDs from teacher's classes and loads only those students.
+  /// 
+  /// @param teacherClasses List of ClassModel objects for teacher
+  /// @throws Exception if loading fails
+  Future<void> loadTeacherStudents(List<ClassModel> teacherClasses) async {
+    _setLoading(true);
+    try {
+      // Collect all unique student IDs from teacher's classes
+      final studentIds = <String>{};
+      for (final classModel in teacherClasses) {
+        studentIds.addAll(classModel.studentIds);
+      }
+      
+      if (studentIds.isEmpty) {
+        _students = [];
+        _setLoading(false);
+        notifyListeners();
+        return;
+      }
+      
+      // Load only those students
+      final students = await loadStudentsByIds(studentIds.toList());
+      _students = students;
+      _setLoading(false);
+      notifyListeners();
+    } catch (e) {
+      _setError(e.toString());
+      _setLoading(false);
+    }
+  }
+  
   /// Loads and subscribes to students by grade level.
   /// 
   /// Sets up real-time stream for grade-specific student updates.

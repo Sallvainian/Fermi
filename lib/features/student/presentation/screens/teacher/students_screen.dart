@@ -31,8 +31,16 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   void _loadData() {
     final auth = context.read<AuthProvider>();
     if (auth.userModel != null) {
-      context.read<StudentProvider>().loadActiveStudents();
-      context.read<ClassProvider>().loadTeacherClasses(auth.userModel!.uid);
+      // First load classes, then load students in those classes
+      final classProvider = context.read<ClassProvider>();
+      classProvider.loadTeacherClasses(auth.userModel!.uid);
+      
+      // Load students after classes are loaded
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (classProvider.teacherClasses.isNotEmpty) {
+          context.read<StudentProvider>().loadTeacherStudents(classProvider.teacherClasses);
+        }
+      });
     }
   }
 
@@ -159,11 +167,20 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   }
 
   Widget _buildAllStudentsTab() {
-    return Consumer<StudentProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
+    return Consumer2<StudentProvider, ClassProvider>(
+      builder: (context, studentProvider, classProvider, _) {
+        if (studentProvider.isLoading || classProvider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
         
-        final students = _filterStudents(provider.students);
+        // Reload students when classes change
+        if (classProvider.teacherClasses.isNotEmpty && studentProvider.students.isEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            studentProvider.loadTeacherStudents(classProvider.teacherClasses);
+          });
+        }
+        
+        final students = _filterStudents(studentProvider.students);
         
         if (students.isEmpty) {
           return EmptyState(
@@ -171,7 +188,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
             title: _searchController.text.isNotEmpty ? 'No students found' : 'No Students Yet',
             message: _searchController.text.isNotEmpty
                 ? 'Try adjusting your search or filters'
-                : 'Add students to start managing your classroom',
+                : 'No students enrolled in your classes yet',
           );
         }
         

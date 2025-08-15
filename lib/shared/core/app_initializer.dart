@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:async';
 import '../../config/firebase_options.dart';
 import '../services/logger_service.dart';
@@ -12,8 +11,6 @@ import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
 import '../../features/notifications/data/services/voip_token_service.dart';
 import '../services/performance_service.dart';
-import '../../features/auth/data/services/google_sign_in_service.dart';
-import '../../features/auth/data/services/web_auth_helper_interface.dart';
 import 'service_locator.dart';
 
 /// Handles all app initialization tasks
@@ -26,44 +23,40 @@ class AppInitializer {
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
     
-    // Initialize Firebase
+    // CRITICAL: Initialize Firebase first (required for everything)
     await _initializeFirebase();
     
-    // Initialize Google Sign In (early in the startup)
-    await _initializeGoogleSignIn();
-    
-    // Initialize web auth helper for COOP warning fix
-    if (kIsWeb) {
-      _initializeWebAuthHelper();
-    }
-    
-    // Initialize performance monitoring (after Firebase)
-    if (_firebaseInitialized) {
-      await _initializePerformanceMonitoring();
-    }
-    
-    // Setup service locator
+    // CRITICAL: Setup service locator (required for dependency injection)
     await _setupServiceLocator();
     
-    // Initialize notification service
-    if (_firebaseInitialized) {
-      await _initializeNotifications();
-    }
     
-    // Initialize Firebase Messaging for VoIP
-    if (_firebaseInitialized) {
-      await _initializeFirebaseMessaging();
-    }
+    // DEFER: Everything else happens after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeDeferredServices();
+    });
+  }
+  
+  /// Initialize non-critical services after first frame render
+  static Future<void> _initializeDeferredServices() async {
+    if (!_firebaseInitialized) return;
     
-    // Initialize VoIP token service for iOS
-    if (_firebaseInitialized && !kIsWeb && Platform.isIOS) {
-      await _initializeVoIPTokenService();
-    }
+    // Initialize in parallel for faster startup
+    await Future.wait([
+      
+      // Performance monitoring is not critical
+      _initializePerformanceMonitoring(),
+      
+      // Notifications can be initialized later
+      _initializeNotifications(),
+      
+      // Messaging services for VoIP
+      if (!kIsWeb) _initializeFirebaseMessaging(),
+      
+      // iOS-specific VoIP
+      if (!kIsWeb && Platform.isIOS) _initializeVoIPTokenService(),
+    ]);
     
-    // Setup crash reporting
-    if (_firebaseInitialized && !kIsWeb) {
-      _setupCrashlytics();
-    }
+    LoggerService.info('Deferred services initialized', tag: 'AppInitializer');
   }
   
   /// Initialize Firebase services
@@ -93,6 +86,8 @@ class AppInitializer {
       _firebaseInitialized = true;
       
       LoggerService.info('Firebase core initialized successfully', tag: 'AppInitializer');
+      
+      // Auth persistence is now handled in AuthService constructor
       
       // Skip emulator configuration for now
       // The Android emulator has issues with Google Play Services
@@ -183,46 +178,8 @@ class AppInitializer {
     }
   }
   
-  /// Configure Crashlytics error reporting
-  static void _setupCrashlytics() {
-    // Pass all uncaught "fatal" errors from the framework to Crashlytics
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    
-    // Pass all uncaught asynchronous errors to Crashlytics
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-  }
-  
-  /// Initialize Google Sign In service
-  static Future<void> _initializeGoogleSignIn() async {
-    try {
-      // Initialize with required scopes
-      // In google_sign_in 6.x, this is synchronous  
-      GoogleSignInService().initialize();
-      LoggerService.info('Google Sign In initialized', tag: 'AppInitializer');
-    } catch (e) {
-      LoggerService.error('Google Sign In initialization error', tag: 'AppInitializer', error: e);
-    }
-  }
-  
-  /// Initialize web auth helper for COOP warning prevention
-  static void _initializeWebAuthHelper() {
-    try {
-      WebAuthHelper().initialize();
-      LoggerService.info('Web Auth Helper initialized', tag: 'AppInitializer');
-    } catch (e) {
-      LoggerService.error('Web Auth Helper initialization error', tag: 'AppInitializer', error: e);
-    }
-  }
-  
-  
   /// Handle uncaught errors in the app
   static void handleError(Object error, StackTrace stack) {
     LoggerService.error('Uncaught error in app', tag: 'AppInitializer', error: error);
-    if (!kIsWeb && _firebaseInitialized) {
-      FirebaseCrashlytics.instance.recordError(error, stack);
-    }
   }
 }

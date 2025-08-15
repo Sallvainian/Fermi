@@ -132,14 +132,12 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
   /// 
   /// @param otherUserId ID of the other participant
   /// @param otherUserName Display name of other participant
-  /// @param otherUserRole Role of other participant
   /// @return Created or existing chat room
   /// @throws Exception if operation fails
   @override
   Future<ChatRoom> createOrGetDirectChat(
     String otherUserId,
     String otherUserName,
-    String otherUserRole,
   ) async {
     try {
       // Check if direct chat already exists
@@ -148,17 +146,41 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
         return existing;
       }
 
+      // Resolve roles from user profiles
+      String currentUserRole = 'student';
+      String otherRole = 'student';
+      try {
+        final currentUserDoc = await _firestore.collection('users').doc(_currentUserId).get();
+        if (currentUserDoc.exists) {
+          final data = currentUserDoc.data() as Map<String, dynamic>;
+          final roleStr = (data['role'] as String?)?.toLowerCase();
+          if (roleStr == 'teacher' || roleStr == 'student' || roleStr == 'admin') {
+            currentUserRole = roleStr!;
+          }
+        }
+      } catch (_) {}
+      try {
+        final otherUserDoc = await _firestore.collection('users').doc(otherUserId).get();
+        if (otherUserDoc.exists) {
+          final data = otherUserDoc.data() as Map<String, dynamic>;
+          final roleStr = (data['role'] as String?)?.toLowerCase();
+          if (roleStr == 'teacher' || roleStr == 'student' || roleStr == 'admin') {
+            otherRole = roleStr!;
+          }
+        }
+      } catch (_) {}
+
       // Create new direct chat
       final participants = [
         ParticipantInfo(
           id: _currentUserId,
           name: _auth.currentUser?.displayName ?? 'User',
-          role: 'user', // This should be fetched from user profile
+          role: currentUserRole,
         ),
         ParticipantInfo(
           id: otherUserId,
           name: otherUserName,
-          role: otherUserRole,
+          role: otherRole,
         ),
       ];
 
@@ -248,6 +270,7 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
     required String content,
     String? attachmentUrl,
     String? attachmentType,
+    String? userRole,
   }) async {
     try {
       // DEBUG: Log incoming parameters
@@ -257,7 +280,7 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom> implements ChatRe
         id: '',
         senderId: _currentUserId,
         senderName: _auth.currentUser?.displayName ?? 'User',
-        senderRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true ? 'teacher' : 'student',
+        senderRole: userRole ?? 'student', // Use actual role passed from AuthProvider
         content: content,
         attachmentUrl: attachmentUrl,
         attachmentType: attachmentType,

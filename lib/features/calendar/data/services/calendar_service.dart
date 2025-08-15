@@ -7,7 +7,6 @@ library;
 
 import '../../domain/models/calendar_event.dart';
 import '../../domain/repositories/calendar_repository.dart';
-import '../../../auth/domain/repositories/user_repository.dart';
 import '../../../classes/domain/repositories/class_repository.dart';
 import '../../../notifications/data/services/notification_service.dart';
 import 'device_calendar_service_factory.dart';
@@ -22,13 +21,11 @@ import 'device_calendar_service_factory.dart';
 /// - Permission management
 class CalendarService {
   final CalendarRepository _calendarRepository;
-  final UserRepository _userRepository;
   final ClassRepository _classRepository;
   
   /// Creates service with required repositories.
   CalendarService(
     this._calendarRepository,
-    this._userRepository,
     this._classRepository,
   );
   
@@ -53,11 +50,7 @@ class CalendarService {
     String? colorHex,
     bool syncToDeviceCalendar = false,
   }) async {
-    // Get creator details
-    final creator = await _userRepository.getUserById(createdBy);
-    if (creator == null) {
-      throw Exception('Creator not found');
-    }
+    // Removed user validation - just use the createdBy ID directly
     
     // Validate class if provided
     if (classId != null) {
@@ -83,7 +76,7 @@ class CalendarService {
       isAllDay: isAllDay,
       location: location,
       createdBy: createdBy,
-      createdByName: creator.displayName ?? 'Unknown',
+      createdByName: 'User', // Simplified - just use generic name
       classId: classId,
       assignmentId: assignmentId,
       participantIds: participantIds,
@@ -275,10 +268,7 @@ class CalendarService {
     String participantId,
   ) async {
     // Verify participant exists
-    final participant = await _userRepository.getUserById(participantId);
-    if (participant == null) {
-      throw Exception('Participant not found');
-    }
+    // Removed participant validation - just use the participantId directly
     
     await _calendarRepository.addParticipant(eventId, participantId);
   }

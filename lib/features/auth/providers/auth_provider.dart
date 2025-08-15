@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 import '../../../shared/models/user_model.dart';
-import '../domain/repositories/auth_repository.dart';
-import '../data/repositories/auth_repository_impl.dart';
 import '../data/services/auth_service.dart';
 import '../../notifications/data/services/web_in_app_notification_service.dart';
 
@@ -45,7 +43,7 @@ typedef User = firebase_auth.User;
 /// operate synchronously or with minimal delay and simply update local
 /// state.
 class AuthProvider extends ChangeNotifier {
-  final AuthRepository? _authRepository;
+  final AuthService _authService;
   AuthStatus _status;
   UserModel? _userModel;
   String? _errorMessage;
@@ -54,11 +52,53 @@ class AuthProvider extends ChangeNotifier {
   /// Whether the user has chosen to persist their authentication session.
   bool _rememberMe = false;
 
-  AuthProvider({AuthRepository? repository, AuthStatus initialStatus = AuthStatus.uninitialized, UserModel? userModel})
-      : _authRepository = repository ?? AuthRepositoryImpl(AuthService()),
+  AuthProvider({AuthService? authService, AuthStatus initialStatus = AuthStatus.uninitialized, UserModel? userModel})
+      : _authService = authService ?? AuthService(),
         _status = initialStatus,
         _userModel = userModel,
-        _isLoading = false;
+        _isLoading = false {
+    // Initialize auth state on creation
+    _initializeAuthState();
+  }
+
+  /// Initializes auth state by checking for existing Firebase user.
+  /// This restores the user session on app restart/refresh.
+  Future<void> _initializeAuthState() async {
+    try {
+      final user = firebase_auth.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        // User is logged in, fetch their profile
+        _status = AuthStatus.authenticating;
+        notifyListeners();
+        
+        // Get user model from Firestore
+        final uid = user.uid;
+        final userData = await _authService.getUserData(uid);
+        final currentUserModel = userData != null ? UserModel.fromFirestore(userData) : null;
+        
+        if (currentUserModel != null) {
+          _userModel = currentUserModel;
+          _status = AuthStatus.authenticated;
+          
+          // Start web in-app notifications if on web
+          if (kIsWeb) {
+            WebInAppNotificationService().startWebInAppNotifications();
+          }
+        } else {
+          // User exists in Auth but not in Firestore - might be mid-registration
+          _status = AuthStatus.authenticating;
+        }
+      } else {
+        // No user logged in
+        _status = AuthStatus.unauthenticated;
+      }
+    } catch (e) {
+      debugPrint('Failed to restore auth state: $e');
+      _status = AuthStatus.unauthenticated;
+    } finally {
+      notifyListeners();
+    }
+  }
 
   /// The current authentication status.
   AuthStatus get status => _status;
@@ -122,10 +162,15 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real Firebase authentication
-      final userModel = await _authRepository?.signInWithEmail(
+      final user = await _authService.signIn(
         email: email,
         password: password,
       );
+      UserModel? userModel;
+      if (user != null) {
+        final userData = await _authService.getUserData(user.uid);
+        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       
       if (userModel != null) {
         _userModel = userModel;
@@ -158,7 +203,12 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real Google Sign-In
-      final userModel = await _authRepository?.signInWithGoogle();
+      final user = await _authService.signInWithGoogle();
+      UserModel? userModel;
+      if (user != null) {
+        final userData = await _authService.getUserData(user.uid);
+        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       
       if (userModel != null) {
         // Existing user - sign them in directly
@@ -186,11 +236,14 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real repository to complete Google sign-up
-      final userModel = await _authRepository?.completeGoogleSignUp(
-        role: role,
-        parentEmail: parentEmail,
-        gradeLevel: gradeLevel,
-      );
+      // After Google sign-in, update the user's role
+      final user = _authService.currentUser;
+      UserModel? userModel;
+      if (user != null) {
+        await _authService.updateUserRole(user.uid, role.toString());
+        final userData = await _authService.getUserData(user.uid);
+        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       
       if (userModel != null) {
         _userModel = userModel;
@@ -223,17 +276,16 @@ class AuthProvider extends ChangeNotifier {
     }
     
     try {
-      // Call the real Firebase sign-up
-      final userModel = await _authRepository?.signUpWithEmail(
+      // Call the real Firebase sign-up (Auth account only)
+      final user = await _authService.signUp(
         email: email,
         password: password,
         displayName: email.split('@')[0], // Use email prefix as display name
-        role: UserRole.student, // Default role for email-only signup
       );
       
-      if (userModel != null) {
-        _userModel = userModel;
-        _status = AuthStatus.authenticated;
+      if (user != null) {
+        // Don't assign role or set authenticated - let router handle role selection
+        _status = AuthStatus.authenticating;
       } else {
         throw Exception('Sign up failed');
       }
@@ -255,11 +307,11 @@ class AuthProvider extends ChangeNotifier {
     
     try {
       // Call the real Firebase update
-      await _authRepository?.updateProfile(
-        displayName: displayName,
-        firstName: firstName,
-        lastName: lastName,
-      );
+      // Update display name in Firebase Auth
+      final user = _authService.currentUser;
+      if (user != null && displayName != null) {
+        await user.updateDisplayName(displayName);
+      }
       
       // Update local model
       _userModel = _userModel!.copyWith(
@@ -267,6 +319,30 @@ class AuthProvider extends ChangeNotifier {
         firstName: firstName ?? _userModel!.firstName,
         lastName: lastName ?? _userModel!.lastName,
       );
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Updates the user's profile picture URL.
+  Future<void> updateProfilePicture(String photoURL) async {
+    if (_userModel == null) return;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    
+    try {
+      // Update Firebase Auth profile
+      final user = firebase_auth.FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.updatePhotoURL(photoURL);
+      }
+      
+      // Update local model
+      _userModel = _userModel!.copyWith(photoURL: photoURL);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -286,10 +362,8 @@ class AuthProvider extends ChangeNotifier {
         WebInAppNotificationService().stopWebInAppNotifications();
       }
       // Call the real Firebase sign-out
-      await _authRepository?.signOut();
-      _status = AuthStatus.unauthenticated;
-      _userModel = null;
-      _rememberMe = false;
+      await _authService.signOut();
+      _resetState();
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -312,7 +386,8 @@ class AuthProvider extends ChangeNotifier {
     if (user != null) {
       await user.reload();
       // Refresh user model from repository
-      final currentUser = await _authRepository?.getCurrentUserModel();
+      final userData = await _authService.getUserData(user.uid);
+      final currentUser = userData != null ? UserModel.fromFirestore(userData) : null;
       if (currentUser != null) {
         _userModel = currentUser;
       }
@@ -326,7 +401,12 @@ class AuthProvider extends ChangeNotifier {
   Future<void> refreshCustomClaims() async {
     try {
       // Get fresh user data from repository
-      final currentUser = await _authRepository?.getCurrentUserModel();
+      final user = _authService.currentUser;
+      UserModel? currentUser;
+      if (user != null) {
+        final userData = await _authService.getUserData(user.uid);
+        currentUser = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
       if (currentUser != null) {
         _userModel = currentUser;
         notifyListeners();
@@ -334,5 +414,33 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       // Silently fail - custom claims refresh is not critical
     }
+  }
+
+  /// Cleans up resources when provider is disposed.
+  /// Ensures proper cleanup to prevent memory leaks.
+  @override
+  void dispose() {
+    // Clean up any pending operations
+    _isLoading = false;
+    _errorMessage = null;
+    _userModel = null;
+    _status = AuthStatus.uninitialized;
+    
+    // Stop web notifications if on web
+    if (kIsWeb) {
+      WebInAppNotificationService().stopWebInAppNotifications();
+    }
+    
+    super.dispose();
+  }
+
+  /// Resets provider state on logout.
+  /// Called internally during sign out to ensure clean state.
+  void _resetState() {
+    _status = AuthStatus.unauthenticated;
+    _userModel = null;
+    _rememberMe = false;
+    _errorMessage = null;
+    _isLoading = false;
   }
 }

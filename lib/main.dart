@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'shared/core/app_initializer.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
@@ -32,7 +33,21 @@ Future<void> main() async {
 
       // Forward Flutter framework errors into Zone for unified logging
       FlutterError.onError = (FlutterErrorDetails details) {
-        Zone.current.handleUncaughtError(details.exception, details.stack ?? StackTrace.current);
+        // Safely handle errors without causing recursive failures
+        try {
+          // Check if we're in a valid Zone context
+          if (Zone.current != Zone.root) {
+            Zone.current.handleUncaughtError(details.exception, details.stack ?? StackTrace.current);
+          } else {
+            // Fallback to simple logging if Zone is not available
+            debugPrint('Flutter Error: ${details.exception}');
+            debugPrint('Stack trace: ${details.stack}');
+          }
+        } catch (e) {
+          // Last resort fallback - just print the error
+          debugPrint('Error in error handler: $e');
+          debugPrint('Original error: ${details.exception}');
+        }
       };
 
       // Catch uncaught engine/platform errors
@@ -52,8 +67,14 @@ Future<void> main() async {
       runApp(const InitializationWrapper());
     },
     (error, stack) {
+      // Zone error handler - catches errors not caught elsewhere
       debugPrint('UNCAUGHT (zone): $error\n$stack');
-      AppInitializer.handleError(error, stack);
+      // Only call AppInitializer if it won't cause recursive errors
+      try {
+        AppInitializer.handleError(error, stack);
+      } catch (e) {
+        debugPrint('Failed to handle error in AppInitializer: $e');
+      }
     },
   );
 }
@@ -63,8 +84,15 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 /// Root widget of the Teacher Dashboard application - simplified and modular
-class TeacherDashboardApp extends StatelessWidget {
+class TeacherDashboardApp extends StatefulWidget {
   const TeacherDashboardApp({super.key});
+
+  @override
+  State<TeacherDashboardApp> createState() => _TeacherDashboardAppState();
+}
+
+class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
+  GoRouter? _router;
 
   @override
   Widget build(BuildContext context) {
@@ -74,6 +102,26 @@ class TeacherDashboardApp extends StatelessWidget {
         builder: (context) {
           final authProvider = context.watch<AuthProvider>();
           final themeProvider = context.watch<ThemeProvider>();
+
+          // Show loading screen while auth is initializing
+          // This prevents login screen flash and route errors
+          if (authProvider.status == AuthStatus.uninitialized) {
+            return MaterialApp(
+              title: 'Teacher Dashboard',
+              theme: AppTheme.lightTheme(),
+              darkTheme: AppTheme.darkTheme(),
+              themeMode: themeProvider.themeMode,
+              debugShowCheckedModeBanner: false,
+              home: const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+            );
+          }
+
+          // Create router only once when auth is initialized
+          _router ??= AppRouter.createRouter(authProvider);
 
           return PWAUpdateNotifier(
             navigatorKey: navigatorKey,
@@ -94,7 +142,7 @@ class TeacherDashboardApp extends StatelessWidget {
                 ),
                 themeMode: themeProvider.themeMode,
                 debugShowCheckedModeBanner: false,
-                routerConfig: AppRouter.createRouter(authProvider),
+                routerConfig: _router!,
               ),
             ),
           );

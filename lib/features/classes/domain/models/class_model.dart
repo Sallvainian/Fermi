@@ -109,28 +109,73 @@ class ClassModel {
   /// @return Parsed ClassModel instance
   factory ClassModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return ClassModel(
-      id: doc.id,
-      teacherId: data['teacherId'] ?? '',
-      name: data['name'] ?? '',
-      subject: data['subject'] ?? '',
-      description: data['description'],
-      gradeLevel: data['gradeLevel'] ?? '',
-      room: data['room'],
-      schedule: data['schedule'],
-      studentIds: List<String>.from(data['studentIds'] ?? []),
-      syllabusUrl: data['syllabusUrl'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: data['updatedAt'] != null 
-          ? (data['updatedAt'] as Timestamp).toDate() 
-          : null,
-      isActive: data['isActive'] ?? true,
-      academicYear: data['academicYear'] ?? '',
-      semester: data['semester'] ?? '',
-      maxStudents: data['maxStudents'],
-      enrollmentCode: data['enrollmentCode'],
-      settings: data['settings'],
-    );
+    
+    // Safe timestamp parsing with fallback
+    DateTime parseTimestamp(dynamic value, {DateTime? fallback}) {
+      if (value == null) {
+        return fallback ?? DateTime.now();
+      }
+      
+      try {
+        if (value is Timestamp) {
+          return value.toDate();
+        } else if (value is DateTime) {
+          return value;
+        } else if (value is String) {
+          return DateTime.parse(value);
+        } else if (value is int) {
+          return DateTime.fromMillisecondsSinceEpoch(value);
+        } else {
+          return fallback ?? DateTime.now();
+        }
+      } catch (e) {
+        return fallback ?? DateTime.now();
+      }
+    }
+    
+    try {
+      return ClassModel(
+        id: doc.id,
+        teacherId: data['teacherId'] ?? '',
+        name: data['name'] ?? '',
+        subject: data['subject'] ?? '',
+        description: data['description'],
+        gradeLevel: data['gradeLevel'] ?? '',
+        room: data['room'],
+        schedule: data['schedule'],
+        studentIds: List<String>.from(data['studentIds'] ?? []),
+        syllabusUrl: data['syllabusUrl'],
+        createdAt: parseTimestamp(data['createdAt']),
+        updatedAt: data['updatedAt'] != null 
+            ? parseTimestamp(data['updatedAt']) 
+            : null,
+        isActive: data['isActive'] ?? true,
+        academicYear: data['academicYear'] ?? '2024-2025',
+        semester: data['semester'] ?? 'Fall',
+        maxStudents: data['maxStudents'],
+        enrollmentCode: data['enrollmentCode'],
+        settings: data['settings'],
+      );
+    } catch (e) {
+      // CRITICAL ERROR: Failed to create ClassModel from Firestore
+      // Error: $e
+      // Document ID: ${doc.id}
+      // Data: $data
+      
+      // Return a minimal valid ClassModel to prevent crashes
+      return ClassModel(
+        id: doc.id,
+        teacherId: data['teacherId'] ?? '',
+        name: data['name'] ?? 'Unknown Class',
+        subject: data['subject'] ?? 'Unknown',
+        gradeLevel: data['gradeLevel'] ?? 'Unknown',
+        studentIds: [],
+        createdAt: DateTime.now(),
+        isActive: true,
+        academicYear: '2024-2025',
+        semester: 'Fall',
+      );
+    }
   }
 
   /// Converts the ClassModel instance to a Map for Firestore storage.

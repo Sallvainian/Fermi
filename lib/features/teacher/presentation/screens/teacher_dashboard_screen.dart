@@ -25,22 +25,36 @@ class TeacherDashboardScreen extends StatefulWidget {
 }
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
+  Stream<List<ClassModel>>? _classesStream;
+  bool _isInitialized = false;
+
   @override
   void initState() {
     super.initState();
+    // Initialize once in initState
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadDashboardData();
+      if (!_isInitialized) {
+        _initializeDashboard();
+      }
     });
   }
 
-  void _loadDashboardData() {
+  void _initializeDashboard() {
+    if (_isInitialized) return; // Prevent multiple initializations
+    
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
     final dashboardProvider = context.read<DashboardProvider>();
     final assignmentProvider = context.read<AssignmentProvider>();
-    final teacherId = authProvider.userModel?.uid;
+    
+    final teacherId = authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
+    
+    // === INITIALIZING DASHBOARD FOR TEACHER: $teacherId ===
     
     if (teacherId != null) {
+      _isInitialized = true; // Set this BEFORE loading to prevent re-runs
+      
+      // Load data only once
       classProvider.loadTeacherClasses(teacherId);
       dashboardProvider.loadTeacherDashboard(teacherId);
       assignmentProvider.loadAssignmentsForTeacher(teacherId);
@@ -247,14 +261,55 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Widget _buildClassesSection(BuildContext context, ClassProvider classProvider) {
-    
-    if (classProvider.isLoading) {
+    // If not initialized, show loading
+    if (!_isInitialized || _classesStream == null) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
     
-    final teacherClasses = classProvider.teacherClasses;
+    return StreamBuilder<List<ClassModel>>(
+      stream: _classesStream,
+      builder: (context, snapshot) {
+        // Simple error handling
+        if (snapshot.hasError) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: ${snapshot.error}'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _isInitialized = false;
+                          _classesStream = null;
+                          _initializeDashboard();
+                        });
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+        
+        // Show loading only if no data yet
+        if (!snapshot.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        
+        // We have data - show it
+        final teacherClasses = snapshot.data!;
     
     if (teacherClasses.isEmpty) {
       return Card(
@@ -312,6 +367,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
         ],
       ],
+    );
+      },
     );
   }
 

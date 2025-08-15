@@ -12,6 +12,7 @@ import '../../domain/models/chat_room.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../../../../shared/core/service_locator.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Provider managing chat rooms and messages.
 /// 
@@ -109,6 +110,7 @@ class ChatProvider with ChangeNotifier {
         notifyListeners();
       },
       onError: (error) {
+        LoggerService.error('Stream error in ChatProvider', error: error);
         _error = error.toString();
         notifyListeners();
       },
@@ -134,6 +136,7 @@ class ChatProvider with ChangeNotifier {
         notifyListeners();
       },
       onError: (error) {
+        LoggerService.error('Stream error in ChatProvider', error: error);
         _error = error.toString();
         notifyListeners();
       },
@@ -165,6 +168,7 @@ class ChatProvider with ChangeNotifier {
     try {
       return await _chatRepository.getChatRoom(chatRoomId);
     } catch (e) {
+      LoggerService.error('Failed to get chat room', error: e);
       _error = e.toString();
       notifyListeners();
       return null;
@@ -182,13 +186,11 @@ class ChatProvider with ChangeNotifier {
   /// 
   /// @param otherUserId ID of other participant
   /// @param otherUserName Display name of other user
-  /// @param otherUserRole Role of other user
   /// @return Created or existing chat room
   /// @throws Exception if operation fails
   Future<ChatRoom> createOrGetDirectChat(
     String otherUserId,
     String otherUserName,
-    String otherUserRole,
   ) async {
     _isLoading = true;
     _error = null;
@@ -198,12 +200,12 @@ class ChatProvider with ChangeNotifier {
       final chatRoom = await _chatRepository.createOrGetDirectChat(
         otherUserId,
         otherUserName,
-        otherUserRole,
       );
       _currentChatRoom = chatRoom;
       loadChatMessages(chatRoom.id);
       return chatRoom;
     } catch (e) {
+      LoggerService.error('Failed to create chat room', error: e);
       _error = e.toString();
       rethrow;
     } finally {
@@ -247,6 +249,7 @@ class ChatProvider with ChangeNotifier {
       );
       return chatRoom;
     } catch (e) {
+      LoggerService.error('Failed to create chat room', error: e);
       _error = e.toString();
       rethrow;
     } finally {
@@ -276,14 +279,19 @@ class ChatProvider with ChangeNotifier {
     }
 
     try {
+      // Get actual user role from AuthProvider
+      final userRole = _authProvider.userModel?.role.toString().split('.').last;
+      
       await _chatRepository.sendMessage(
         chatRoomId: _currentChatRoom!.id,
         content: content,
         attachmentUrl: attachmentUrl,
         attachmentType: attachmentType,
+        userRole: userRole,
       );
       _error = null;
     } catch (e) {
+      LoggerService.error('Failed to send message in ChatProvider', error: e);
       _error = e.toString();
       notifyListeners();
       rethrow;
@@ -301,6 +309,7 @@ class ChatProvider with ChangeNotifier {
     try {
       await _chatRepository.markMessagesAsRead(chatRoomId);
     } catch (e) {
+      LoggerService.error('Failed to mark messages as read', error: e);
       _error = e.toString();
       notifyListeners();
     }
@@ -320,6 +329,7 @@ class ChatProvider with ChangeNotifier {
       await _chatRepository.deleteMessage(_currentChatRoom!.id, messageId);
       _error = null;
     } catch (e) {
+      LoggerService.error('Failed to send message in ChatProvider', error: e);
       _error = e.toString();
       notifyListeners();
       rethrow;
@@ -344,6 +354,7 @@ class ChatProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
     } catch (e) {
+      LoggerService.error('Failed to delete message', error: e);
       _error = e.toString();
       notifyListeners();
       rethrow;
@@ -386,6 +397,7 @@ if (index != -1) {
 
       notifyListeners();
     } catch (e) {
+      LoggerService.error('Failed to delete message', error: e);
       _error = e.toString();
       notifyListeners();
     }
@@ -410,13 +422,41 @@ if (index != -1) {
     String? classId,
   }) async {
     final participantIds = participants.keys.toList();
-    final participantInfoList = participants.entries.map((entry) => 
-      ParticipantInfo(
-        id: entry.key,
-        name: entry.value,
-        role: 'user', // Default role, can be enhanced later
-      )
-    ).toList();
+
+    // Resolve participant roles from user profiles
+    List<ParticipantInfo> participantInfoList = [];
+    try {
+      // Get user data directly from Firestore
+      final firestore = getIt.firestore;
+      final userDocs = await firestore
+          .collection('users')
+          .where('uid', whereIn: participantIds)
+          .get();
+      
+      final userById = {
+        for (final doc in userDocs.docs)
+          doc.data()['uid'] as String: doc.data()
+      };
+      
+      participantInfoList = participants.entries.map((entry) {
+        final userData = userById[entry.key];
+        final role = userData?['role'] ?? 'student';
+        return ParticipantInfo(
+          id: entry.key,
+          name: entry.value,
+          role: role,
+        );
+      }).toList();
+    } catch (_) {
+      // Fallback: assume student if repository unavailable
+      participantInfoList = participants.entries.map((entry) =>
+        ParticipantInfo(
+          id: entry.key,
+          name: entry.value,
+          role: 'student',
+        )
+      ).toList();
+    }
     
     final chatRoom = await createGroupChat(
       name: name,
@@ -454,6 +494,7 @@ if (index != -1) {
       // If not found in loaded rooms, use repository to find it
       return await _chatRepository.findDirectChat(currentUserId, otherUserId);
     } catch (e) {
+      LoggerService.error('Failed to find direct chat', error: e);
       _error = e.toString();
       notifyListeners();
       return null;
@@ -479,6 +520,7 @@ if (index != -1) {
       );
       return results;
     } catch (e) {
+      LoggerService.error('Failed to search chats', error: e);
       _error = e.toString();
       notifyListeners();
       return [];

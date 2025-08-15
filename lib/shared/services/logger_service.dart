@@ -1,12 +1,10 @@
 /// Centralized logging service for the education platform.
 /// 
-/// This service provides structured logging with multiple severity levels,
-/// console output in debug mode, and Firebase Crashlytics integration
-/// for production error tracking.
+/// This service provides structured logging with multiple severity levels
+/// and console output in debug mode.
 library;
 
 import 'package:flutter/foundation.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 /// Enumeration of available log severity levels.
 /// 
@@ -27,12 +25,10 @@ enum LogLevel {
 /// This service provides:
 /// - Structured logging with severity levels
 /// - Console output with color coding in debug mode
-/// - Firebase Crashlytics integration for production
 /// - Contextual tagging for log categorization
 /// - Extension methods for convenient logging
 /// 
 /// In debug mode, all log levels are printed to console.
-/// In production, only warnings and errors are sent to Crashlytics.
 class LoggerService {
   /// Singleton instance of the logger service.
   static final LoggerService _instance = LoggerService._internal();
@@ -62,9 +58,8 @@ class LoggerService {
 
   /// Logs an informational message.
   /// 
-  /// Info messages are printed in debug mode and logged
-  /// to analytics in production. Use for significant
-  /// application events and state changes.
+  /// Info messages are printed in debug mode.
+  /// Use for significant application events and state changes.
   /// 
   /// @param message Informational message to log
   /// @param tag Optional tag for categorizing the log
@@ -76,8 +71,7 @@ class LoggerService {
   /// 
   /// Warnings indicate potentially problematic situations
   /// that don't prevent operation but should be addressed.
-  /// Displayed in yellow in debug console and sent to
-  /// Crashlytics in production.
+  /// Displayed in yellow in debug console.
   /// 
   /// @param message Warning message to log
   /// @param tag Optional tag for categorizing the log
@@ -88,8 +82,7 @@ class LoggerService {
   /// Logs an error message with optional exception details.
   /// 
   /// Errors represent failure conditions requiring attention.
-  /// Displayed in red in debug console and automatically
-  /// sent to Firebase Crashlytics in production builds.
+  /// Displayed in red in debug console.
   /// 
   /// @param message Error description
   /// @param tag Optional tag for categorizing the error
@@ -97,24 +90,12 @@ class LoggerService {
   /// @param stackTrace Optional stack trace for debugging
   static void error(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
     _log(LogLevel.error, message, tag: tag, error: error, stackTrace: stackTrace);
-    
-    // Send to Crashlytics in production
-    if (!kDebugMode && error != null) {
-      FirebaseCrashlytics.instance.recordError(
-        error,
-        stackTrace,
-        reason: message,
-        information: tag != null ? ['Tag: $tag'] : [],
-      );
-    }
   }
 
   /// Internal logging method handling all log levels.
   /// 
   /// Formats log messages with timestamp, level, and optional tag.
-  /// Routes output based on build mode:
-  /// - Debug: Prints to console with color coding
-  /// - Production: Sends warnings/errors to Crashlytics
+  /// Prints to console with color coding in debug mode.
   /// 
   /// @param level Severity level of the log
   /// @param message Log message content
@@ -162,10 +143,9 @@ class LoggerService {
           break;
       }
     } else {
-      // In production, only log warnings and errors
+      // In production, just print warnings and errors
       if (level == LogLevel.warning || level == LogLevel.error) {
-        // You could send to Firebase Analytics or other logging service here
-        FirebaseCrashlytics.instance.log(logMessage);
+        debugPrint(logMessage);
       }
     }
   }

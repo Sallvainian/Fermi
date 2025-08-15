@@ -150,7 +150,10 @@ class AssignmentProvider with ChangeNotifier {
         (assignmentList) {
           _assignments = assignmentList;
           _setLoading(false);
-          notifyListeners();
+          // Defer notification to next frame to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
         onError: (error) {
           _setError(error.toString());
@@ -182,7 +185,10 @@ class AssignmentProvider with ChangeNotifier {
         (assignmentList) {
           _teacherAssignments = assignmentList;
           _setLoading(false);
-          notifyListeners();
+          // Defer notification to next frame to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
         onError: (error) {
           _setError(error.toString());
@@ -214,7 +220,10 @@ class AssignmentProvider with ChangeNotifier {
         (gradeList) {
           _grades = gradeList;
           _setLoading(false);
-          notifyListeners();
+          // Defer notification to next frame to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
         onError: (error) {
           _setError(error.toString());

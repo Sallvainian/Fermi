@@ -94,8 +94,6 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
             ? null 
             : 'Period ${_periodController.text.trim()}',
         academicYear: _getCurrentAcademicYear(),
-        semester: 'Full Year',
-        maxStudents: null,
         teacherId: teacherId,
       );
       

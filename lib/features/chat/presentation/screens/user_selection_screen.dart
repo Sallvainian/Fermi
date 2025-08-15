@@ -120,12 +120,12 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
           ParticipantInfo(
             id: currentUser.uid,
             name: currentUser.displayName ?? '',
-            role: 'user',
+            role: '',
           ),
           ParticipantInfo(
             id: otherUser.uid,
             name: otherUser.displayName ?? '',
-            role: 'user',
+            role: '',
           ),
         ];
 
