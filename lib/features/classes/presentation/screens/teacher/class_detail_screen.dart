@@ -50,29 +50,40 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
     final authProvider = context.read<AuthProvider>();
     final assignmentProvider = context.read<AssignmentProvider>();
     
-    // Load teacher classes to get the specific class
-    if (authProvider.userModel != null) {
-      classProvider.loadTeacherClasses(authProvider.userModel!.uid);
-      
-      // Wait a moment for the stream to initialize
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      // Find the specific class
-      final classModel = classProvider.teacherClasses.firstWhere(
-        (c) => c.id == widget.classId,
-        orElse: () => throw Exception('Class not found'),
-      );
-      
-      setState(() {
-        _classModel = classModel;
-      });
-      
-      // Set as selected class and load students
-      classProvider.setSelectedClass(classModel);
-      await classProvider.loadClassStudents(widget.classId);
-      
-      // Load assignments for this class
-      await assignmentProvider.loadAssignmentsForClass(widget.classId);
+    try {
+      // Load teacher classes to get the specific class
+      if (authProvider.userModel != null) {
+        // Load class directly instead of waiting for stream
+        final classModel = await classProvider.getClassById(widget.classId);
+        
+        if (classModel != null) {
+          setState(() {
+            _classModel = classModel;
+          });
+          
+          // Set as selected class and load students
+          classProvider.setSelectedClass(classModel);
+          await classProvider.loadClassStudents(widget.classId);
+          
+          // Load assignments for this class
+          await assignmentProvider.loadAssignmentsForClass(widget.classId);
+        } else {
+          // Class not found - navigate back
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Class not found')),
+            );
+            context.pop();
+          }
+        }
+      }
+    } catch (e) {
+      print('Error loading class data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading class: $e')),
+        );
+      }
     }
   }
 

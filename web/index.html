@@ -108,6 +108,24 @@
         }
       });
     }
+    
+    // Only clear IndexedDB if URL contains ?clear-cache=true
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('clear-cache') === 'true') {
+      console.warn('🗑️ [CACHE DEBUG] Clear cache requested via URL parameter');
+      if (window.indexedDB) {
+        // Clear Firebase Auth IndexedDB
+        indexedDB.deleteDatabase('firebaseLocalStorageDb').then(() => {
+          console.log('✅ [CACHE DEBUG] Cleared Firebase Auth IndexedDB');
+          // Remove the parameter and reload
+          urlParams.delete('clear-cache');
+          const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+          window.location.replace(newUrl);
+        }).catch(e => {
+          console.error('❌ [CACHE DEBUG] Could not clear Firebase Auth IndexedDB:', e);
+        });
+      }
+    }
   </script>
   
   <!-- Load Flutter bootstrap with cache busting -->

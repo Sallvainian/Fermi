@@ -228,6 +228,20 @@ class ClassProvider with ChangeNotifier {
     }
   }
   
+  /// Gets a specific class by ID.
+  Future<ClassModel?> getClassById(String classId) async {
+    try {
+      final doc = await _firestore.collection('classes').doc(classId).get();
+      if (doc.exists) {
+        return ClassModel.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      print('Error getting class by ID: $e');
+      return null;
+    }
+  }
+  
   /// Sets the selected class.
   void setSelectedClass(ClassModel? classModel) {
     _selectedClass = classModel;
