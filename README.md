@@ -1,4 +1,4 @@
-# Teacher Dashboard - Flutter & Firebase
+# Fermi
 
 A comprehensive education management platform built with Flutter and Firebase, designed to streamline classroom management, student tracking, and educational workflows.
 

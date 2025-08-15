@@ -37,6 +37,7 @@ import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/discussions/presentation/screens/discussion_boards_screen_simple.dart';
 import '../../features/discussions/presentation/screens/discussion_board_detail_screen_simple.dart';
+import '../../features/discussions/presentation/screens/thread_detail_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
@@ -350,6 +351,19 @@ class AppRouter {
               boardId: boardId,
             );
           },
+          routes: [
+            GoRoute(
+              path: 'thread/:threadId',
+              builder: (context, state) {
+                final boardId = state.pathParameters['boardId']!;
+                final threadId = state.pathParameters['threadId']!;
+                return ThreadDetailScreen(
+                  boardId: boardId,
+                  threadId: threadId,
+                );
+              },
+            ),
+          ],
         ),
         GoRoute(
           path: '/call',

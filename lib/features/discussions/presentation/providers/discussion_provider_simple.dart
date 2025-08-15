@@ -168,8 +168,13 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .snapshots()
           .listen(
         (snapshot) {
+          print('DEBUG: Loaded ${snapshot.docs.length} boards');
           _boards = snapshot.docs
-              .map((doc) => SimpleDiscussionBoard.fromFirestore(doc))
+              .map((doc) {
+                final board = SimpleDiscussionBoard.fromFirestore(doc);
+                print('DEBUG: Board loaded - ID: ${board.id}, Title: ${board.title}');
+                return board;
+              })
               .toList();
           _setLoading(false);
           notifyListeners();

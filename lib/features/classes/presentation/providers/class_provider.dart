@@ -107,125 +107,85 @@ class ClassProvider with ChangeNotifier {
   
   /// Loads student's enrolled classes from Firestore.
   Future<void> loadStudentClasses(String studentId) async {
-    print('DEBUG: loadStudentClasses called for: $studentId');
     _setLoading(true);
-    _error = null; // Clear any previous errors
-    notifyListeners();
     
-    try {
-      _studentClassesSubscription?.cancel();
-      
-      // First get the data once to ensure we get an initial result
-      final snapshot = await _firestore
-          .collection('classes')
-          .where('studentIds', arrayContains: studentId)
-          .get();
-      
-      // Even if no classes found, this is a valid state
-      _studentClasses = snapshot.docs
-          .map((doc) {
-            try {
-              return ClassModel.fromFirestore(doc);
-            } catch (e) {
-              // Log error but continue processing other docs
-              print('Error parsing class document ${doc.id}: $e');
-              return null;
-            }
-          })
-          .where((classModel) => classModel != null)
-          .cast<ClassModel>()
-          .toList();
-      
-      _setLoading(false);
-      notifyListeners();
-      
-      // Then set up the stream for real-time updates
-      _studentClassesSubscription = _firestore
-          .collection('classes')
-          .where('studentIds', arrayContains: studentId)
-          .snapshots()
-          .listen(
-        (snapshot) {
-          _studentClasses = snapshot.docs
-              .map((doc) {
-                try {
-                  return ClassModel.fromFirestore(doc);
-                } catch (e) {
-                  print('Error parsing class document ${doc.id}: $e');
-                  return null;
-                }
-              })
-              .where((classModel) => classModel != null)
-              .cast<ClassModel>()
-              .toList();
-          // Defer notification to next frame to avoid setState during build
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            notifyListeners();
-          });
-        },
-        onError: (error) {
-          // Error: $error
-          _setError(error.toString());
-          _setLoading(false); // Ensure loading is set to false on error
-          // Defer notification to next frame to avoid setState during build
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            notifyListeners();
-          });
-        },
-      );
-    } catch (e) {
-      // Error in loadStudentClasses: $e
-      _setError(e.toString());
-      _setLoading(false);
-      notifyListeners();
-    }
+    // Cancel previous subscription if exists
+    _studentClassesSubscription?.cancel();
+    
+    // Set up new subscription (same pattern as loadTeacherClasses)
+    _studentClassesSubscription = _firestore
+        .collection('classes')
+        .where('studentIds', arrayContains: studentId)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        final List<ClassModel> classes = [];
+        for (var doc in snapshot.docs) {
+          try {
+            final classModel = ClassModel.fromFirestore(doc);
+            classes.add(classModel);
+          } catch (e) {
+            // ERROR: Failed to parse class document ${doc.id}: $e
+            // Continue processing other documents
+          }
+        }
+        
+        _studentClasses = classes;
+        _setLoading(false);
+        // Defer notification to next frame to avoid setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      },
+      onError: (error) {
+        // ERROR: Failed to load student classes: $error
+        _studentClasses = [];
+        _setError('Failed to load classes: $error');
+        _setLoading(false);
+        // Defer notification to next frame to avoid setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      },
+    );
   }
   
   /// Creates a new class.
   Future<void> createClass(ClassModel classModel) async {
     _setLoading(true);
-    notifyListeners();
     
     try {
       await _firestore.collection('classes').add(classModel.toFirestore());
       _setLoading(false);
-      notifyListeners();
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
-      notifyListeners();
     }
   }
   
   /// Updates an existing class.
   Future<void> updateClass(String classId, ClassModel classModel) async {
     _setLoading(true);
-    notifyListeners();
     
     try {
       await _firestore.collection('classes').doc(classId).update(classModel.toFirestore());
       _setLoading(false);
-      notifyListeners();
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
-      notifyListeners();
     }
   }
   
   /// Deletes a class.
   Future<void> deleteClass(String classId) async {
     _setLoading(true);
-    notifyListeners();
     
     try {
       await _firestore.collection('classes').doc(classId).delete();
       _setLoading(false);
-      notifyListeners();
     } catch (e) {
       _setError(e.toString());
       _setLoading(false);
-      notifyListeners();
     }
   }
   
@@ -252,7 +212,6 @@ class ClassProvider with ChangeNotifier {
   /// Loads students for a specific class.
   Future<void> loadClassStudents(String classId) async {
     _setLoading(true);
-    notifyListeners();
     
     try {
       final classDoc = await _firestore.collection('classes').doc(classId).get();
@@ -272,12 +231,10 @@ class ClassProvider with ChangeNotifier {
         }
       }
       _setLoading(false);
-      notifyListeners();
     } catch (e) {
       // Error loading class students: $e
       _setError(e.toString());
       _setLoading(false);
-      notifyListeners();
     }
   }
   
@@ -440,10 +397,12 @@ class ClassProvider with ChangeNotifier {
   // Helper methods
   void _setLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
   }
   
   void _setError(String? value) {
     _error = value;
+    notifyListeners();
   }
   
   void clearError() {

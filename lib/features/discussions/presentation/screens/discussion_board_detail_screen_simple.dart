@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
@@ -199,8 +200,6 @@ class _ThreadCard extends StatefulWidget {
 }
 
 class _ThreadCardState extends State<_ThreadCard> {
-  bool _isExpanded = false;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -210,11 +209,8 @@ class _ThreadCardState extends State<_ThreadCard> {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          setState(() {
-            _isExpanded = !_isExpanded;
-          });
-          // Select the thread in provider
-          context.read<SimpleDiscussionProvider>().selectThread(widget.thread);
+          // Navigate to thread detail screen
+          context.push('/discussions/${widget.thread.boardId}/thread/${widget.thread.id}');
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -249,7 +245,7 @@ class _ThreadCardState extends State<_ThreadCard> {
                     ),
                   ),
                   Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
+                    Icons.chevron_right,
                     color: theme.colorScheme.outline,
                   ),
                 ],
@@ -258,8 +254,8 @@ class _ThreadCardState extends State<_ThreadCard> {
               Text(
                 widget.thread.content,
                 style: theme.textTheme.bodyMedium,
-                maxLines: _isExpanded ? null : 3,
-                overflow: _isExpanded ? null : TextOverflow.ellipsis,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
               Row(
@@ -323,32 +319,6 @@ class _ThreadCardState extends State<_ThreadCard> {
                   ],
                 ],
               ),
-              if (_isExpanded && widget.thread.isLocked) ...[
-                const Divider(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.lock_outline,
-                        size: 16,
-                        color: theme.colorScheme.outline,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'This thread is locked. No new replies allowed.',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.outline,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ],
           ),
         ),

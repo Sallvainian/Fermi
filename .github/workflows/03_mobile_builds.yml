@@ -86,8 +86,17 @@ jobs:
       - name: Write GoogleService-Info.plist
         shell: bash
         run: |
+          if [ -z "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" ]; then
+            echo "Error: GOOGLESERVICE_INFO_PLIST_B64 secret is not set"
+            exit 1
+          fi
           echo "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" | base64 -d > ios/Runner/GoogleService-Info.plist
-          test -s ios/Runner/GoogleService-Info.plist || (echo "GoogleService-Info.plist missing/empty" && exit 1)
+          if [ ! -s ios/Runner/GoogleService-Info.plist ]; then
+            echo "Error: GoogleService-Info.plist is empty after decoding"
+            echo "Decoded content length: $(wc -c < ios/Runner/GoogleService-Info.plist)"
+            exit 1
+          fi
+          echo "GoogleService-Info.plist written successfully ($(wc -c < ios/Runner/GoogleService-Info.plist) bytes)"
 
       - name: CocoaPods setup
         run: |
