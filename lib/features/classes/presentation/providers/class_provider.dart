@@ -107,6 +107,7 @@ class ClassProvider with ChangeNotifier {
   
   /// Loads student's enrolled classes from Firestore.
   Future<void> loadStudentClasses(String studentId) async {
+    print('DEBUG: loadStudentClasses called for: $studentId');
     _setLoading(true);
     _error = null; // Clear any previous errors
     notifyListeners();

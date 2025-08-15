@@ -29,8 +29,11 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
     final classProvider = context.read<ClassProvider>();
     final studentId = authProvider.userModel?.uid;
     
+    print('DEBUG: Loading courses for student: $studentId');
     if (studentId != null) {
       classProvider.loadStudentClasses(studentId);
+    } else {
+      print('DEBUG: No student ID found!');
     }
   }
 
