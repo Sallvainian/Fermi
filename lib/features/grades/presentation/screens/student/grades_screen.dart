@@ -87,6 +87,10 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
         title: const Text('My Grades'),
         elevation: 0,
         backgroundColor: theme.colorScheme.surface,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: gradeProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
