@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
@@ -186,10 +185,17 @@ class _SimpleDiscussionBoardDetailScreenState extends State<SimpleDiscussionBoar
   }
 }
 
-class _ThreadCard extends StatelessWidget {
+class _ThreadCard extends StatefulWidget {
   final SimpleDiscussionThread thread;
 
   const _ThreadCard({required this.thread});
+
+  @override
+  State<_ThreadCard> createState() => _ThreadCardState();
+}
+
+class _ThreadCardState extends State<_ThreadCard> {
+  bool _isExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -200,16 +206,11 @@ class _ThreadCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
+          setState(() {
+            _isExpanded = !_isExpanded;
+          });
           // Select the thread in provider
-          context.read<SimpleDiscussionProvider>().selectThread(thread);
-          
-          // Use GoRouter.of to get the router instance
-          try {
-            GoRouter.of(context).push('/discussions/${thread.boardId}/thread/${thread.id}');
-          } catch (e) {
-            // Fallback to context.go if push fails
-            context.go('/discussions/${thread.boardId}/thread/${thread.id}');
-          }
+          context.read<SimpleDiscussionProvider>().selectThread(widget.thread);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -219,7 +220,7 @@ class _ThreadCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  if (thread.isPinned) ...[
+                  if (widget.thread.isPinned) ...[
                     Icon(
                       Icons.push_pin,
                       size: 16,
@@ -227,7 +228,7 @@ class _ThreadCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                   ],
-                  if (thread.isLocked) ...[
+                  if (widget.thread.isLocked) ...[
                     Icon(
                       Icons.lock_outline,
                       size: 16,
@@ -237,20 +238,24 @@ class _ThreadCard extends StatelessWidget {
                   ],
                   Expanded(
                     child: Text(
-                      thread.title,
+                      widget.thread.title,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+                  Icon(
+                    _isExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: theme.colorScheme.outline,
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                thread.content,
+                widget.thread.content,
                 style: theme.textTheme.bodyMedium,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+                maxLines: _isExpanded ? null : 3,
+                overflow: _isExpanded ? null : TextOverflow.ellipsis,
               ),
               const SizedBox(height: 12),
               Row(
@@ -258,13 +263,13 @@ class _ThreadCard extends StatelessWidget {
                   CircleAvatar(
                     radius: 12,
                     child: Text(
-                      thread.authorName.isNotEmpty ? thread.authorName[0].toUpperCase() : '?',
+                      widget.thread.authorName.isNotEmpty ? widget.thread.authorName[0].toUpperCase() : '?',
                       style: theme.textTheme.labelSmall,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    thread.authorName,
+                    widget.thread.authorName,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
@@ -277,13 +282,13 @@ class _ThreadCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    dateFormat.format(thread.createdAt),
+                    dateFormat.format(widget.thread.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.outline,
                     ),
                   ),
                   const Spacer(),
-                  if (thread.replyCount > 0) ...[
+                  if (widget.thread.replyCount > 0) ...[
                     Icon(
                       Icons.comment_outlined,
                       size: 16,
@@ -291,13 +296,13 @@ class _ThreadCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${thread.replyCount}',
+                      '${widget.thread.replyCount}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.outline,
                       ),
                     ),
                   ],
-                  if (thread.likeCount > 0) ...[
+                  if (widget.thread.likeCount > 0) ...[
                     const SizedBox(width: 12),
                     Icon(
                       Icons.thumb_up_outlined,
@@ -306,7 +311,7 @@ class _ThreadCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      '${thread.likeCount}',
+                      '${widget.thread.likeCount}',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.outline,
                       ),
@@ -314,6 +319,32 @@ class _ThreadCard extends StatelessWidget {
                   ],
                 ],
               ),
+              if (_isExpanded && widget.thread.isLocked) ...[
+                const Divider(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lock_outline,
+                        size: 16,
+                        color: theme.colorScheme.outline,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'This thread is locked. No new replies allowed.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),

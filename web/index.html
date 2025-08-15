@@ -56,7 +56,8 @@
     // Cache busting debug logging
     console.log('🚀 [CACHE DEBUG] Page loaded at:', new Date().toISOString());
     
-    // Unregister any existing service worker (we're not using PWA anymore)
+    // TEMPORARY CLEANUP: Remove old service workers (can be deleted after a few deploys)
+    // This only helps AFTER first load, doesn't prevent stale bootstrap on first visit
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         if (registrations.length > 0) {
@@ -109,12 +110,16 @@
     }
   </script>
   
+  <!-- Load Flutter bootstrap with cache busting -->
+  <!-- CI/CD should replace {{BUILD_ID}} with commit hash or timestamp -->
   <script>
-    // Use build timestamp for service worker versioning
-    const serviceWorkerVersion = "1734239842065";
+    // Generate build ID for cache busting (replace with CI/CD injection)
+    const buildId = Date.now();
+    const script = document.createElement('script');
+    script.src = `flutter_bootstrap.js?v=${buildId}`;
+    script.defer = true;
+    document.body.appendChild(script);
+    console.log('✅ [CACHE DEBUG] Bootstrap loading with version:', buildId);
   </script>
-  
-  <!-- Load Flutter bootstrap using the modern approach -->
-  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
