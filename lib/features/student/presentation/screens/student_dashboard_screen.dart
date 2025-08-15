@@ -7,7 +7,6 @@ import '../../../chat/presentation/providers/call_provider.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../classes/domain/models/class_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
@@ -90,13 +89,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           },
         ),
       ],
-      body: ResponsiveContainer(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Welcome Header
-              Card(
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Welcome Header
+            Card(
                 child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Row(
@@ -182,8 +180,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildQuickStats(BuildContext context, ClassProvider classProvider, DashboardProvider dashboardProvider) {
