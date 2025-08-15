@@ -117,6 +117,23 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   build_runner: ^2.6.0
   json_serializable: ^6.10.0
+
+# Flutter launcher icons configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/fermi_icon.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/icon/fermi_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icon/fermi_icon.png"
+    background_color: "#000000"
+    theme_color: "#8B5CF6"
+  windows:
+    generate: true
+    image_path: "assets/icon/fermi_icon.png"
+    icon_size: 48
   freezed: ^3.2.0
   freezed_annotation: ^3.1.0
 
