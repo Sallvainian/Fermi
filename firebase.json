@@ -14,11 +14,11 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css|woff2|woff|ttf|png|jpg|jpeg|gif|ico|json)",
+        "source": "**/*.@(mjs|js|wasm|json)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "public, max-age=31536000, immutable"
+            "value": "max-age=0,s-maxage=604800"
           },
           {
             "key": "Access-Control-Allow-Origin",
@@ -27,20 +27,15 @@
         ]
       },
       {
-        "source": "index.html",
+        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|css|eot|otf|ttf|ttc|woff|woff2|font.css)",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      },
-      {
-        "source": "manifest.json",
-        "headers": [
+            "value": "max-age=3600,s-maxage=604800"
+          },
           {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
+            "key": "Access-Control-Allow-Origin",
+            "value": "*"
           }
         ]
       },
