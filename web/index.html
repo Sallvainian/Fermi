@@ -128,16 +128,7 @@
     }
   </script>
   
-  <!-- Load Flutter bootstrap with cache busting -->
-  <!-- CI/CD should replace {{BUILD_ID}} with commit hash or timestamp -->
-  <script>
-    // Generate build ID for cache busting (replace with CI/CD injection)
-    const buildId = Date.now();
-    const script = document.createElement('script');
-    script.src = `flutter_bootstrap.js?v=${buildId}`;
-    script.defer = true;
-    document.body.appendChild(script);
-    console.log('✅ [CACHE DEBUG] Bootstrap loading with version:', buildId);
-  </script>
+  <!-- Load Flutter bootstrap with ACTUAL FUCKING CACHE BUSTING -->
+  <script src="flutter_bootstrap.js?v=1734282187000" defer></script>
 </body>
 </html>
