@@ -185,7 +185,8 @@ class _BoardCard extends StatelessWidget {
           final route = '/discussions/${board.id}';
           print('DEBUG: Navigating to: $route');
           
-          context.go(route);
+          // Use push instead of go to properly navigate
+          context.push(route);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
