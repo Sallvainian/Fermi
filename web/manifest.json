@@ -3,24 +3,52 @@
     "short_name": "Fermi",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#FFFFFF",
-    "theme_color": "#2196F3",
+    "background_color": "#000000",
+    "theme_color": "#8B5CF6",
     "description": "Fermi - Education Management Platform",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "scope": "/",
+    "categories": [
+        "education",
+        "productivity"
+    ],
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "View your dashboard",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Students",
+            "short_name": "Students",
+            "description": "Manage students",
+            "url": "/students",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any"
+            "type": "image/png"
         },
         {
             "src": "icons/Icon-512.png",
             "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any"
+            "type": "image/png"
         },
         {
             "src": "icons/Icon-maskable-192.png",
@@ -33,23 +61,6 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
-        }
-    ],
-    "categories": ["education", "productivity"],
-    "shortcuts": [
-        {
-            "name": "Dashboard",
-            "short_name": "Dashboard",
-            "description": "View your dashboard",
-            "url": "/dashboard",
-            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
-        },
-        {
-            "name": "Students",
-            "short_name": "Students",
-            "description": "Manage students",
-            "url": "/students",
-            "icons": [{ "src": "icons/Icon-192.png", "sizes": "192x192" }]
         }
     ]
 }
