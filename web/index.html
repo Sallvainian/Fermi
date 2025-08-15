@@ -52,6 +52,43 @@
     window.addEventListener('unhandledrejection', e => {
       console.error('unhandledrejection', e.reason);
     });
+    
+    // Cache busting debug logging
+    console.log('🚀 [CACHE DEBUG] Page loaded at:', new Date().toISOString());
+    
+    // Check for service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) {
+          console.error('❌ [CACHE DEBUG] Service Worker still active! Should be disabled.');
+          console.error('[CACHE DEBUG] SW URL:', reg.active?.scriptURL);
+        } else {
+          console.log('✅ [CACHE DEBUG] No service worker (correct!)');
+        }
+      });
+    }
+    
+    // Log bootstrap version
+    window.addEventListener('DOMContentLoaded', () => {
+      const scripts = Array.from(document.scripts);
+      const bootstrap = scripts.find(s => s.src.includes('flutter_bootstrap.js'));
+      if (bootstrap) {
+        const url = new URL(bootstrap.src);
+        const version = url.searchParams.get('v');
+        console.log('✅ [CACHE DEBUG] Bootstrap version:', version || 'NO VERSION!');
+      }
+    });
+    
+    // Check caches
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        if (names.length > 0) {
+          console.warn('⚠️ [CACHE DEBUG] Active caches:', names);
+        } else {
+          console.log('✅ [CACHE DEBUG] No caches active');
+        }
+      });
+    }
   </script>
   
   <script>
