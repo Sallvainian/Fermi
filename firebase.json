@@ -14,24 +14,23 @@
     ],
     "headers": [
       {
-        "source": "**/*.html",
+        "source": "**",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(mjs|js|wasm|json)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
+            "value": "no-cache, no-store, must-revalidate, proxy-revalidate, max-age=0"
           },
           {
-            "key": "Access-Control-Allow-Origin",
-            "value": "*"
+            "key": "Pragma",
+            "value": "no-cache"
+          },
+          {
+            "key": "Expires",
+            "value": "0"
+          },
+          {
+            "key": "Surrogate-Control",
+            "value": "no-store"
           }
         ]
       },
