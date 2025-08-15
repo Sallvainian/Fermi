@@ -296,7 +296,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
   /// Select a board
   void selectBoard(SimpleDiscussionBoard board) {
     _currentBoard = board;
-    loadThreadsForBoard(board.id);
+    // Don't load threads here - let the detail screen handle it
     notifyListeners();
   }
 
