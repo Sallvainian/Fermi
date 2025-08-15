@@ -176,16 +176,16 @@ class _BoardCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
+          print('DEBUG: Board clicked - ID: ${board.id}, Title: ${board.title}');
+          
           // Select the board in provider
           context.read<SimpleDiscussionProvider>().selectBoard(board);
           
-          // Use GoRouter.of to get the router instance
-          try {
-            GoRouter.of(context).push('/discussions/${board.id}');
-          } catch (e) {
-            // Fallback to context.go if push fails
-            context.go('/discussions/${board.id}');
-          }
+          // Navigate to board detail
+          final route = '/discussions/${board.id}';
+          print('DEBUG: Navigating to: $route');
+          
+          context.go(route);
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

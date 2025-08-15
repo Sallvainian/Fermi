@@ -21,17 +21,21 @@ class _SimpleDiscussionBoardDetailScreenState extends State<SimpleDiscussionBoar
   @override
   void initState() {
     super.initState();
+    print('DEBUG: DiscussionBoardDetailScreen - initState for boardId: ${widget.boardId}');
     // Load threads for this board
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('DEBUG: Loading threads for board: ${widget.boardId}');
       context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    print('DEBUG: DiscussionBoardDetailScreen - building for boardId: ${widget.boardId}');
     final provider = context.watch<SimpleDiscussionProvider>();
     final board = provider.currentBoard;
     final threads = provider.getThreadsForBoard(widget.boardId);
+    print('DEBUG: Current board: ${board?.title}, Threads count: ${threads.length}');
 
     return AdaptiveLayout(
       title: board?.title ?? 'Discussion Board',
