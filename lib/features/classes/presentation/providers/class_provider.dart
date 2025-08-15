@@ -120,9 +120,21 @@ class ClassProvider with ChangeNotifier {
           .where('studentIds', arrayContains: studentId)
           .get();
       
+      // Even if no classes found, this is a valid state
       _studentClasses = snapshot.docs
-          .map((doc) => ClassModel.fromFirestore(doc))
+          .map((doc) {
+            try {
+              return ClassModel.fromFirestore(doc);
+            } catch (e) {
+              // Log error but continue processing other docs
+              print('Error parsing class document ${doc.id}: $e');
+              return null;
+            }
+          })
+          .where((classModel) => classModel != null)
+          .cast<ClassModel>()
           .toList();
+      
       _setLoading(false);
       notifyListeners();
       
@@ -134,7 +146,16 @@ class ClassProvider with ChangeNotifier {
           .listen(
         (snapshot) {
           _studentClasses = snapshot.docs
-              .map((doc) => ClassModel.fromFirestore(doc))
+              .map((doc) {
+                try {
+                  return ClassModel.fromFirestore(doc);
+                } catch (e) {
+                  print('Error parsing class document ${doc.id}: $e');
+                  return null;
+                }
+              })
+              .where((classModel) => classModel != null)
+              .cast<ClassModel>()
               .toList();
           // Defer notification to next frame to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -144,6 +165,7 @@ class ClassProvider with ChangeNotifier {
         onError: (error) {
           // Error: $error
           _setError(error.toString());
+          _setLoading(false); // Ensure loading is set to false on error
           // Defer notification to next frame to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             notifyListeners();
