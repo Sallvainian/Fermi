@@ -5,7 +5,7 @@ import '../../features/assignments/presentation/providers/assignment_provider.da
 import '../../features/assignments/presentation/providers/student_assignment_provider.dart';
 import '../providers/theme_provider.dart';
 import '../../features/chat/presentation/providers/chat_provider.dart';
-import '../../features/discussions/presentation/providers/discussion_provider.dart';
+import '../../features/discussions/presentation/providers/discussion_provider_simple.dart';
 import '../../features/calendar/presentation/providers/calendar_provider.dart';
 import '../../features/grades/presentation/providers/grade_analytics_provider.dart';
 import '../providers/navigation_provider.dart';
@@ -50,7 +50,7 @@ class AppProviders {
         lazy: true,
       ),
       ChangeNotifierProvider(
-        create: (_) => DiscussionProvider(),
+        create: (_) => SimpleDiscussionProvider(),
         lazy: true,
       ),
       ChangeNotifierProvider(

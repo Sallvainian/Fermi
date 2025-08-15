@@ -35,8 +35,8 @@ import '../../features/grades/presentation/screens/student/grades_screen.dart';
 import '../../features/student/presentation/screens/teacher/students_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
-import '../../features/discussions/presentation/screens/discussion_boards_screen.dart';
-import '../../features/discussions/presentation/screens/discussion_board_detail_screen.dart';
+import '../../features/discussions/presentation/screens/discussion_boards_screen_simple.dart';
+import '../../features/discussions/presentation/screens/discussion_board_detail_screen_simple.dart';
 import '../../features/games/presentation/screens/jeopardy_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
@@ -326,7 +326,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/student/discussions',
-          builder: (context, state) => const DiscussionBoardsScreen(),
+          builder: (context, state) => const SimpleDiscussionBoardsScreen(),
         ),
         
         // Common routes
@@ -340,17 +340,14 @@ class AppRouter {
         ),
         GoRoute(
           path: '/discussions',
-          builder: (context, state) => const DiscussionBoardsScreen(),
+          builder: (context, state) => const SimpleDiscussionBoardsScreen(),
         ),
         GoRoute(
           path: '/discussions/:boardId',
           builder: (context, state) {
             final boardId = state.pathParameters['boardId']!;
-            final boardTitle = state.uri.queryParameters['title'] ?? 
-                'Discussion Board';
-            return DiscussionBoardDetailScreen(
+            return SimpleDiscussionBoardDetailScreen(
               boardId: boardId,
-              boardTitle: boardTitle,
             );
           },
         ),

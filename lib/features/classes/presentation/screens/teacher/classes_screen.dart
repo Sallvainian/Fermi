@@ -34,7 +34,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
     final classProvider = context.read<ClassProvider>();
     
     if (authProvider.userModel != null) {
-      await classProvider.loadTeacherClasses(authProvider.userModel!.uid);
+      classProvider.loadTeacherClasses(authProvider.userModel!.uid);
     }
   }
 
@@ -299,6 +299,12 @@ class _ClassesScreenState extends State<ClassesScreen> {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               IconButton(
+                onPressed: () => _showDeleteConfirmation(classModel),
+                icon: const Icon(Icons.delete_outline),
+                tooltip: 'Delete Class',
+                color: Theme.of(context).colorScheme.error,
+              ),
+              IconButton(
                 onPressed: () => _showEditClassDialog(classModel),
                 icon: const Icon(Icons.edit),
                 tooltip: 'Edit Class',
@@ -388,5 +394,57 @@ class _ClassesScreenState extends State<ClassesScreen> {
         _loadClasses();
       }
     });
+  }
+
+  void _showDeleteConfirmation(ClassModel classModel) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Class'),
+        content: Text('Are you sure you want to delete "${classModel.name}"?\n\nThis action cannot be undone and will remove all associated data.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _deleteClass(classModel);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteClass(ClassModel classModel) async {
+    try {
+      final classProvider = context.read<ClassProvider>();
+      await classProvider.deleteClass(classModel.id);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Class "${classModel.name}" deleted successfully'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        _loadClasses();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting class: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:async';
 import '../../config/firebase_options.dart';
 import '../services/logger_service.dart';
@@ -56,11 +55,6 @@ class AppInitializer {
       // iOS-specific VoIP
       if (!kIsWeb && Platform.isIOS) _initializeVoIPTokenService(),
     ]);
-    
-    // Setup crash reporting last
-    if (!kIsWeb) {
-      _setupCrashlytics();
-    }
     
     LoggerService.info('Deferred services initialized', tag: 'AppInitializer');
   }
@@ -184,25 +178,8 @@ class AppInitializer {
     }
   }
   
-  /// Configure Crashlytics error reporting
-  static void _setupCrashlytics() {
-    // Pass all uncaught "fatal" errors from the framework to Crashlytics
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    
-    // Pass all uncaught asynchronous errors to Crashlytics
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-  }
-  
-  
-  
   /// Handle uncaught errors in the app
   static void handleError(Object error, StackTrace stack) {
     LoggerService.error('Uncaught error in app', tag: 'AppInitializer', error: error);
-    if (!kIsWeb && _firebaseInitialized) {
-      FirebaseCrashlytics.instance.recordError(error, stack);
-    }
   }
 }

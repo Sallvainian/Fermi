@@ -42,7 +42,6 @@ import '../../features/discussions/presentation/screens/discussion_board_detail_
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../screens/common/common/dashboard_screen.dart';
-import '../widgets/auth_loading_screen.dart';
 import '../screens/contact_support_screen.dart';
 // import '../../features/games/presentation/screens/jeopardy_screen.dart';
 // import '../../features/games/presentation/screens/jeopardy_play_screen.dart';

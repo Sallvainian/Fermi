@@ -53,64 +53,105 @@ class ClassProvider with ChangeNotifier {
   
   /// Returns a stream of teacher's classes from Firestore.
   Stream<List<ClassModel>> loadTeacherClasses(String teacherId) {
+    // Cancel previous subscription if exists
+    _teacherClassesSubscription?.cancel();
+    
+    // Set up new subscription
+    _teacherClassesSubscription = _firestore
+        .collection('classes')
+        .where('teacherId', isEqualTo: teacherId)
+        .snapshots()
+        .listen(
+      (snapshot) {
+        final List<ClassModel> classes = [];
+        for (var doc in snapshot.docs) {
+          try {
+            final classModel = ClassModel.fromFirestore(doc);
+            classes.add(classModel);
+          } catch (e) {
+            // ERROR: Failed to parse class document ${doc.id}: $e
+            // Continue processing other documents
+          }
+        }
+        
+        _teacherClasses = classes;
+        _setLoading(false);
+        // Defer notification to next frame to avoid setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      },
+      onError: (error) {
+        // ERROR: Failed to load teacher classes: $error
+        _teacherClasses = [];
+        _setError('Failed to load classes: $error');
+        _setLoading(false);
+        // Defer notification to next frame to avoid setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
+      },
+    );
+    
+    // Return the stream for UI if needed
     return _firestore
         .collection('classes')
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
         .map((snapshot) {
-      final List<ClassModel> classes = [];
-      for (var doc in snapshot.docs) {
-        try {
-          final classModel = ClassModel.fromFirestore(doc);
-          classes.add(classModel);
-        } catch (e) {
-          print('ERROR: Failed to parse class document ${doc.id}: $e');
-          // Continue processing other documents
-        }
-      }
-      
-      _teacherClasses = classes;
-      notifyListeners();
-      return classes;
-    }).handleError((error) {
-      print('ERROR: Failed to load teacher classes: $error');
-      _teacherClasses = [];
-      _setError('Failed to load classes: $error');
-      notifyListeners();
-      return <ClassModel>[];
+      return snapshot.docs
+          .map((doc) => ClassModel.fromFirestore(doc))
+          .toList();
     });
   }
   
   /// Loads student's enrolled classes from Firestore.
   Future<void> loadStudentClasses(String studentId) async {
     _setLoading(true);
+    _error = null; // Clear any previous errors
     notifyListeners();
     
     try {
       _studentClassesSubscription?.cancel();
       
-      // Direct Firestore query for student's enrolled classes
+      // First get the data once to ensure we get an initial result
+      final snapshot = await _firestore
+          .collection('classes')
+          .where('studentIds', arrayContains: studentId)
+          .get();
+      
+      _studentClasses = snapshot.docs
+          .map((doc) => ClassModel.fromFirestore(doc))
+          .toList();
+      _setLoading(false);
+      notifyListeners();
+      
+      // Then set up the stream for real-time updates
       _studentClassesSubscription = _firestore
           .collection('classes')
           .where('studentIds', arrayContains: studentId)
-          .where('isActive', isEqualTo: true)
           .snapshots()
           .listen(
         (snapshot) {
           _studentClasses = snapshot.docs
               .map((doc) => ClassModel.fromFirestore(doc))
               .toList();
-          _setLoading(false);
-          notifyListeners();
+          // Defer notification to next frame to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
         onError: (error) {
-          print('Error loading student classes: $error');
+          // Error: $error
           _setError(error.toString());
-          _setLoading(false);
-          notifyListeners();
+          // Defer notification to next frame to avoid setState during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
+      // Error in loadStudentClasses: $e
       _setError(e.toString());
       _setLoading(false);
       notifyListeners();
@@ -196,7 +237,7 @@ class ClassProvider with ChangeNotifier {
       _setLoading(false);
       notifyListeners();
     } catch (e) {
-      print('Error loading class students: $e');
+      // Error loading class students: $e
       _setError(e.toString());
       _setLoading(false);
       notifyListeners();

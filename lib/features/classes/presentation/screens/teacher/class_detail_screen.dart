@@ -52,7 +52,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
     
     // Load teacher classes to get the specific class
     if (authProvider.userModel != null) {
-      await classProvider.loadTeacherClasses(authProvider.userModel!.uid);
+      classProvider.loadTeacherClasses(authProvider.userModel!.uid);
+      
+      // Wait a moment for the stream to initialize
+      await Future.delayed(const Duration(milliseconds: 100));
       
       // Find the specific class
       final classModel = classProvider.teacherClasses.firstWhere(

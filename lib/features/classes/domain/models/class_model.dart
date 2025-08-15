@@ -156,12 +156,11 @@ class ClassModel {
         enrollmentCode: data['enrollmentCode'],
         settings: data['settings'],
       );
-    } catch (e, stack) {
-      print('CRITICAL ERROR: Failed to create ClassModel from Firestore');
-      print('Error: $e');
-      print('Stack: $stack');
-      print('Document ID: ${doc.id}');
-      print('Data: $data');
+    } catch (e) {
+      // CRITICAL ERROR: Failed to create ClassModel from Firestore
+      // Error: $e
+      // Document ID: ${doc.id}
+      // Data: $data
       
       // Return a minimal valid ClassModel to prevent crashes
       return ClassModel(

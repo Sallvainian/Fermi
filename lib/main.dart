@@ -33,7 +33,21 @@ Future<void> main() async {
 
       // Forward Flutter framework errors into Zone for unified logging
       FlutterError.onError = (FlutterErrorDetails details) {
-        Zone.current.handleUncaughtError(details.exception, details.stack ?? StackTrace.current);
+        // Safely handle errors without causing recursive failures
+        try {
+          // Check if we're in a valid Zone context
+          if (Zone.current != Zone.root) {
+            Zone.current.handleUncaughtError(details.exception, details.stack ?? StackTrace.current);
+          } else {
+            // Fallback to simple logging if Zone is not available
+            debugPrint('Flutter Error: ${details.exception}');
+            debugPrint('Stack trace: ${details.stack}');
+          }
+        } catch (e) {
+          // Last resort fallback - just print the error
+          debugPrint('Error in error handler: $e');
+          debugPrint('Original error: ${details.exception}');
+        }
       };
 
       // Catch uncaught engine/platform errors
@@ -53,8 +67,14 @@ Future<void> main() async {
       runApp(const InitializationWrapper());
     },
     (error, stack) {
+      // Zone error handler - catches errors not caught elsewhere
       debugPrint('UNCAUGHT (zone): $error\n$stack');
-      AppInitializer.handleError(error, stack);
+      // Only call AppInitializer if it won't cause recursive errors
+      try {
+        AppInitializer.handleError(error, stack);
+      } catch (e) {
+        debugPrint('Failed to handle error in AppInitializer: $e');
+      }
     },
   );
 }

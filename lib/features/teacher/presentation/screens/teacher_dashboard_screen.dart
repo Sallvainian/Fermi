@@ -26,7 +26,6 @@ class TeacherDashboardScreen extends StatefulWidget {
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   Stream<List<ClassModel>>? _classesStream;
-  String? _currentTeacherId;
   bool _isInitialized = false;
 
   @override
@@ -50,17 +49,15 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     
     final teacherId = authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
     
-    print('=== INITIALIZING DASHBOARD FOR TEACHER: $teacherId ===');
+    // === INITIALIZING DASHBOARD FOR TEACHER: $teacherId ===
     
-    if (teacherId != null && teacherId != _currentTeacherId) {
-      _currentTeacherId = teacherId;
-      _classesStream = classProvider.loadTeacherClasses(teacherId);
+    if (teacherId != null) {
+      _isInitialized = true; // Set this BEFORE loading to prevent re-runs
+      
+      // Load data only once
+      classProvider.loadTeacherClasses(teacherId);
       dashboardProvider.loadTeacherDashboard(teacherId);
       assignmentProvider.loadAssignmentsForTeacher(teacherId);
-      _isInitialized = true;
-      
-      // Force a rebuild to show the stream
-      setState(() {});
     }
   }
 

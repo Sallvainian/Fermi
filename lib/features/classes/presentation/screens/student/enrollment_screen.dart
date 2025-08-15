@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/class_provider.dart';
@@ -39,6 +40,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
     return AdaptiveLayout(
       title: 'Join a Class',
       showBackButton: true,
+      onBackPressed: () => context.go('/dashboard'),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
@@ -269,9 +271,12 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context).pop(); // Close dialog
-                  Navigator.of(context).pop(); // Go back to previous screen
+                  // Navigate to dashboard instead of popping
+                  if (mounted) {
+                    context.go('/dashboard');
+                  }
                 },
-                child: const Text('OK'),
+                child: const Text('Go to Dashboard'),
               ),
             ],
           ),
