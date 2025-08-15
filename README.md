@@ -1,74 +1,142 @@
-# Teacher Dashboard Flutter/Firebase
+# Teacher Dashboard - Flutter & Firebase
 
-A comprehensive teacher education management platform built with Flutter and Firebase, designed to streamline classroom management, student tracking, and educational workflows.
+A comprehensive education management platform built with Flutter and Firebase, designed to streamline classroom management, student tracking, and educational workflows.
 
-## 🚀 Project Overview
+🌐 **Live Demo**: [https://academic-tools.org](https://academic-tools.org)
 
-This is a migration project from SvelteKit + Supabase to Flutter + Firebase, providing a modern, cross-platform solution for educational management.
+## 🚀 Overview
 
-### Tech Stack Migration
-- **FROM**: SvelteKit 5, TypeScript, Supabase, Tailwind CSS, Netlify
-- **TO**: Flutter, Dart, Firebase (Firestore, Auth, Storage, Functions), Firebase Hosting
+Teacher Dashboard is a modern, cross-platform educational management system that connects teachers, students, and parents. Built with Flutter for beautiful, responsive UIs and Firebase for real-time data synchronization and secure authentication.
 
-## ⚠️ Current Status (July 2, 2025)
-
-**Development Stage**: Pre-MVP (~40% feature complete)
-
-### 🔴 Platform Limitations
-Firebase does not officially support Linux/Windows desktop platforms. The app will run on these platforms but Firebase services (auth, database) will not be available. For development on Linux/Windows, you can:
-1. Use Flutter web (`flutter run -d chrome`)
-2. Use an Android emulator
-3. Mock Firebase services for local development
-
-### ✅ Completed Features
-- Authentication system (email/password, Google Sign-In)
-- Role-based routing and navigation
-- Basic dashboard structure for teachers/students
-- Firestore security rules
-- Theme system with Material 3 design
-- State management with Provider pattern
-
-### 🚧 In Progress
-- Assignment creation and management system
-- Grade tracking functionality
-- Classes management
-
-### ❌ Not Yet Implemented (Placeholder Screens)
-- Student management
-- Messaging system
-- Calendar functionality
-- Notifications
-- Help & support
-- Analytics dashboard
-- Offline support
+### Key Highlights
+- 📱 **Cross-Platform**: Web, Android, and iOS from a single codebase
+- 🔥 **Real-time Updates**: Instant synchronization across all devices
+- 🔐 **Secure**: Role-based access control with comprehensive Firestore rules
+- 🎨 **Modern UI**: Material 3 design with adaptive layouts
+- ⚡ **Fast**: Optimized performance with efficient state management
+- 🚀 **CI/CD**: Automated testing and deployment pipeline
 
 ## ✨ Features
 
-### Current Implementation (Phase 1-2)
-- ✅ **Authentication System** - Email/password and Google Sign-In
-- ✅ **Responsive Design** - Material 3 design system with adaptive layouts
-- ✅ **Firebase Integration** - Firestore database, Authentication, Storage
-- ✅ **Cross-Platform** - Web, Android, iOS support
-- ✅ **Navigation** - Go Router with protected routes
-- ✅ **State Management** - Provider pattern for app state
+### Core Functionality
+- ✅ **Authentication System**
+  - Email/password authentication
+  - Google Sign-In integration
+  - Email verification
+  - Password reset
+  - Role-based access (Teacher/Student/Parent)
 
-### Planned Features (Phase 3-4)
-- 📚 **Gradebook Management** - Grade tracking and analytics
-- 👥 **Student Management** - Enrollment, profiles, progress tracking
-- 📝 **Assignment System** - Create, distribute, and grade assignments
-- 💬 **Messaging** - Teacher-student-parent communication
-- 📊 **Analytics Dashboard** - Performance insights and reports
-- 🎮 **Educational Games** - Interactive learning activities
-- 📱 **Push Notifications** - Assignment reminders and updates
-- 📴 **Offline Support** - Work without internet connection
+- ✅ **Class Management**
+  - Create and manage classes
+  - Enrollment codes for easy student registration
+  - Class rosters and student tracking
+  - Subject and grade level organization
 
-## 🛠️ Setup Instructions
+- ✅ **Student Management**
+  - Student profiles and enrollment
+  - Grade tracking and progress monitoring
+  - Parent contact information
+  - Account claim system for students
+
+- ✅ **Assignments & Grading**
+  - Create and distribute assignments
+  - Due date tracking
+  - Grade submission and management
+  - Assignment status tracking
+
+- ✅ **Communication**
+  - Direct messaging between teachers and students
+  - Group chat for classes
+  - Discussion boards for collaborative learning
+  - Real-time chat with read receipts
+
+- ✅ **Dashboard & Analytics**
+  - Teacher dashboard with key metrics
+  - Student dashboard with assignments and grades
+  - Recent activity tracking
+  - Performance analytics (in progress)
+
+### Additional Features
+- 📅 **Calendar Integration** - Schedule and event management
+- 🔔 **Notifications** - Assignment reminders and updates
+- 🎮 **Educational Games** - Interactive learning activities (Jeopardy)
+- 📊 **Reports** - Grade reports and progress tracking
+- 🌙 **Theme Support** - Light and dark modes
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **Flutter** (3.24+) - Cross-platform UI framework
+- **Dart** (3.5+) - Programming language
+- **Provider** - State management
+- **GoRouter** - Navigation and routing
+- **Material 3** - Design system
+
+### Backend
+- **Firebase Auth** - Authentication and user management
+- **Cloud Firestore** - NoSQL real-time database
+- **Firebase Storage** - File and media storage
+- **Firebase Hosting** - Web app hosting
+- **Firebase Functions** - Serverless backend logic
+
+### DevOps
+- **GitHub Actions** - CI/CD pipeline
+- **Firebase CLI** - Deployment and management
+- **Flutter Web** - Progressive Web App (PWA) support
+
+## 📱 Platform Support
+
+| Platform | Status | Notes |
+|----------|--------|-------|
+| **Web** | ✅ Production | Primary platform, PWA enabled |
+| **Android** | ✅ Production | Full feature support |
+| **iOS** | ✅ Production | Full feature support |
+| **macOS** | 🚧 Beta | Desktop support coming soon |
+| **Windows** | ❌ Not Supported | Firebase SDK limitations |
+| **Linux** | ❌ Not Supported | Firebase SDK limitations |
+
+## 🏗️ Architecture
+
+The project follows Clean Architecture principles with a feature-based structure:
+
+```
+lib/
+├── features/                 # Feature modules
+│   ├── auth/                # Authentication
+│   │   ├── data/           # Services and Firebase integration
+│   │   ├── domain/         # Models and business logic
+│   │   └── presentation/   # Screens and providers
+│   ├── classes/             # Class management
+│   ├── students/            # Student management
+│   ├── assignments/         # Assignment system
+│   ├── grades/              # Grading system
+│   ├── chat/                # Messaging
+│   ├── discussions/         # Discussion boards
+│   └── calendar/            # Calendar feature
+├── shared/                   # Shared code
+│   ├── core/               # App initialization, DI
+│   ├── routing/            # Navigation configuration
+│   ├── theme/              # App theming
+│   ├── widgets/            # Reusable widgets
+│   ├── utils/              # Utilities
+│   └── services/           # Shared services
+└── main.dart                # App entry point
+```
+
+### Design Patterns
+- **Provider Pattern** - State management
+- **Repository Pattern** (simplified) - Data access abstraction
+- **Service Layer** - Business logic encapsulation
+- **Feature-First Organization** - Modular architecture
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Flutter SDK (>=3.6.0)
+- Flutter SDK (>=3.24.0)
+- Dart SDK (>=3.5.0)
 - Firebase CLI
-- Android Studio / VS Code
 - Git
+- IDE (VS Code or Android Studio recommended)
 
 ### Installation
 
@@ -85,12 +153,11 @@ Firebase does not officially support Linux/Windows desktop platforms. The app wi
 
 3. **Firebase Setup**
    ```bash
-   # Install Firebase CLI
+   # Install Firebase CLI (if not already installed)
    npm install -g firebase-tools
-   firebase login
    
-   # Install FlutterFire CLI
-   dart pub global activate flutterfire_cli
+   # Login to Firebase
+   firebase login
    
    # Configure Firebase for your project
    flutterfire configure --project=teacher-dashboard-flutterfire
@@ -98,254 +165,288 @@ Firebase does not officially support Linux/Windows desktop platforms. The app wi
 
 4. **Run the application**
    ```bash
-   # Web
+   # Web (recommended for development)
    flutter run -d chrome
    
-   # Android (requires device/emulator)
+   # Android
    flutter run -d android
    
-   # iOS (requires macOS and device/simulator)
+   # iOS (macOS only)
    flutter run -d ios
    ```
 
+### Development Commands
+
+```bash
+# Check code quality
+flutter analyze
+
+# Run tests
+flutter test
+
+# Format code
+dart format .
+
+# Build for production
+flutter build web --release
+flutter build apk --release
+flutter build ios --release
+```
+
 ## 🔥 Firebase Configuration
 
-The project uses Firebase for:
-- **Authentication** - Email/password and Google Sign-In
-- **Firestore** - Real-time database for app data
-- **Storage** - File uploads and media management
-- **Analytics** - User behavior tracking
-- **Crashlytics** - Error monitoring
-
-### Security Rules
-Firestore security rules are configured for:
-- User document access (users can only access their own data)
-- Class management (creators can manage their classes)
-- Message/conversation access (participants only)
-- File storage permissions
-
-## 📱 Platform Support
-
-| Platform | Status | Notes |
-|----------|--------|-------|
-| **Web** | ✅ Ready | Primary development platform |
-| **Android** | ✅ Ready | Requires google-services.json |
-| **iOS** | ✅ Ready | Requires GoogleService-Info.plist |
-| **macOS** | 🚧 Planned | Future release |
-| **Windows** | ❌ Not Supported | Firebase limitations |
-| **Linux** | ❌ Not Supported | Firebase limitations |
-
-## 🗂️ Project Structure
-
-```
-lib/
-├── main.dart                 # App entry point
-├── firebase_options.dart     # Firebase configuration
-├── models/                   # Data models
-│   ├── user_model.dart
-│   ├── class_model.dart
-│   └── assignment_model.dart
-├── services/                 # Business logic
-│   ├── auth_service.dart
-│   ├── firestore_service.dart
-│   └── storage_service.dart
-├── providers/                # State management
-│   ├── auth_provider.dart
-│   └── data_provider.dart
-├── screens/                  # UI screens
-│   ├── auth/
-│   ├── teacher/
-│   └── student/
-├── widgets/                  # Reusable components
-├── theme/                    # App theming
-└── utils/                    # Helper functions
-```
-
-## 🔐 Authentication
-
-The app supports multiple authentication methods:
-
-### Email/Password
-- Create account with email and password
-- Sign in with existing credentials
-- Password reset functionality
-
-### Google Sign-In
-- One-tap Google authentication
-- Automatic profile information sync
-- Seamless cross-platform experience
-
-## 💾 Database Schema
-
-### Collections Structure
+### Firestore Structure
 ```
 users/{userId}
 ├── email: string
 ├── displayName: string
+├── role: string (teacher/student/parent)
 ├── createdAt: timestamp
-└── lastActive: timestamp
+└── emailVerified: boolean
 
 classes/{classId}
-├── name: string
 ├── teacherId: string
+├── name: string
 ├── subject: string
-├── createdAt: timestamp
-├── students/{studentId}
-├── assignments/{assignmentId}
-└── grades/{gradeId}
+├── gradeLevel: string
+├── enrollmentCode: string
+├── studentIds: array
+└── createdAt: timestamp
 
-conversations/{conversationId}
-├── participants: array
-├── lastMessage: timestamp
-└── messages/{messageId}
+assignments/{assignmentId}
+├── classId: string
+├── teacherId: string
+├── title: string
+├── description: string
+├── dueDate: timestamp
+└── status: string
+
+grades/{gradeId}
+├── studentId: string
+├── assignmentId: string
+├── classId: string
+├── score: number
+└── feedback: string
+
+discussionBoards/{boardId}
+├── classId: string
+├── title: string
+├── posts/{postId}
+│   ├── authorId: string
+│   ├── content: string
+│   └── createdAt: timestamp
+```
+
+### Security Rules
+Comprehensive Firestore security rules ensure:
+- Users can only access their own data
+- Teachers manage their classes and students
+- Students access only enrolled classes
+- Role-based permissions throughout
+- Email verification requirements for sensitive operations
+
+## 🚀 Deployment
+
+### Automatic Deployment (CI/CD)
+The project uses GitHub Actions for automated deployment:
+
+1. **Push to main branch** triggers the CI/CD pipeline
+2. **CI workflow** runs tests and builds the app
+3. **Deploy workflow** automatically deploys to Firebase
+
+### Manual Deployment
+
+```bash
+# Deploy everything
+firebase deploy
+
+# Deploy specific services
+firebase deploy --only hosting           # Web app
+firebase deploy --only firestore:rules   # Security rules
+firebase deploy --only storage:rules     # Storage rules
+firebase deploy --only functions         # Cloud Functions
 ```
 
 ## 🧪 Testing
 
-### Database Testing
-Use the built-in test utilities:
-
+### Run Tests
 ```bash
-# Simple database test (no authentication required)
-flutter run lib/test_db_simple.dart
+# All tests
+flutter test
 
-# Full authentication test
-flutter run lib/test_db_direct.dart
+# With coverage
+flutter test --coverage
+
+# Specific test file
+flutter test test/widget_test.dart
+```
+
+### Test Database Connection
+```bash
+# Simple database test
+flutter run lib/test_db_simple.dart
 
 # Setup test data
 flutter run lib/setup_test_data.dart
 ```
 
-### Unit Tests
-```bash
-flutter test
-```
+## 📊 CI/CD Pipeline
 
-## 🚀 Deployment
+The project includes comprehensive GitHub Actions workflows:
 
-### Web Deployment (Firebase Hosting)
-```bash
-flutter build web
-firebase deploy --only hosting
-```
+### Workflows
+- **CI** - Runs on every push and PR
+  - Code analysis
+  - Unit tests
+  - Build verification
+  
+- **Deploy Web** - Triggered on main branch
+  - Builds production app
+  - Deploys to Firebase Hosting
+  - Updates Firestore rules
 
-### Android Deployment
-```bash
-flutter build apk --release
-# or
-flutter build appbundle --release
-```
+- **Mobile Builds** - Creates APK/IPA artifacts
 
-### iOS Deployment
-```bash
-flutter build ios --release
-```
+### Status Badges
+![CI](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/workflows/CI/badge.svg)
+![Deploy](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/workflows/Deploy%20Web/badge.svg)
 
-## 🔧 Development Guidelines
+## 🔧 Environment Variables
 
-### 🚨 Immediate Action Required
-1. **Fix Firebase Initialization**: Remove dotenv approach for Firebase configuration
-   - Run `flutterfire configure` to regenerate proper `firebase_options.dart`
-   - Remove `flutter_dotenv` dependency and usage
-   - Use platform-specific configuration files (google-services.json, GoogleService-Info.plist)
+The project uses environment-specific configuration:
 
-2. **Code Quality**: Fix 38 linting issues
-   - Remove all `print` statements from production code
-   - Fix unused variables and methods
-   - Run `flutter analyze` and address all warnings
+### Required Secrets (GitHub Actions)
+- `FIREBASE_TOKEN` - Firebase CI token
+- `FIREBASE_API_KEY` - Web API key
+- `FIREBASE_PROJECT_ID` - Firebase project ID
+- `FIREBASE_APP_ID_*` - Platform-specific app IDs
 
-### Code Style
-- Follow Dart conventions and linting rules
+### Local Development
+Create platform-specific configuration files:
+- `android/app/google-services.json` - Android
+- `ios/Runner/GoogleService-Info.plist` - iOS
+- `web/index.html` - Web configuration
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Make your changes**
+   - Follow Dart style guide
+   - Add tests for new features
+   - Update documentation
+4. **Commit with conventional commits**
+   ```bash
+   git commit -m "feat: add amazing feature"
+   ```
+5. **Push and create PR**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+### Commit Convention
+- `feat:` - New features
+- `fix:` - Bug fixes
+- `docs:` - Documentation
+- `style:` - Formatting, no code change
+- `refactor:` - Code restructuring
+- `test:` - Adding tests
+- `chore:` - Maintenance
+
+## 📱 Development Best Practices
+
+### Code Quality
+- Run `flutter analyze` before committing
+- Maintain >80% test coverage for critical features
 - Use meaningful variable and function names
-- Implement proper error handling
-- Add comments for complex logic
-
-### Firebase Best Practices
-- Use offline persistence for better UX
-- Implement proper security rules
-- Optimize queries with indexes
-- Handle authentication states properly
+- Document complex logic with comments
 
 ### State Management
 - Use Provider for global state
 - Keep state as local as possible
-- Implement proper loading states
-- Handle errors gracefully
+- Implement proper loading and error states
+- Use `ChangeNotifier` with `notifyListeners()` carefully
 
-### Testing Strategy
-- Write unit tests for all services and providers
-- Add widget tests for UI components
-- Implement integration tests for critical user flows
-- Aim for >80% code coverage
+### Firebase Best Practices
+- Enable offline persistence for better UX
+- Use batch operations for multiple writes
+- Implement proper error handling
+- Optimize queries with composite indexes
 
-## 📋 Migration Progress
+### Performance
+- Use `const` constructors where possible
+- Implement lazy loading for lists
+- Optimize images and assets
+- Monitor bundle size
 
-### ✅ Completed Phases
-- **Phase 1.1**: Flutter project initialization
-- **Phase 1.2**: Firebase project setup
-- **Phase 1.3**: Authentication system
-- **Phase 1.4**: Navigation and routing
-- **Phase 1.5**: Theme and UI foundation
-- **Phase 2.1**: Database schema design
-- **Phase 2.2**: Security rules implementation
+## 🆘 Troubleshooting
 
-### 🚧 Current Phase
-- **Phase 2.3**: Real-time data synchronization
-- **Phase 3.1**: Gradebook implementation
+### Common Issues
 
-### 📅 Upcoming Phases
-- **Phase 3.2**: Student management system
-- **Phase 3.3**: Assignment creation and distribution
-- **Phase 4.1**: Messaging system
-- **Phase 4.2**: Analytics and reporting
+**setState() during build**
+- Wrap state changes in `WidgetsBinding.instance.addPostFrameCallback()`
 
-## 🤝 Contributing
+**Firebase Permission Denied**
+- Check Firestore security rules
+- Ensure user is authenticated and email verified
+- Verify document paths
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+**Web Package Compatibility**
+- Use conditional imports for web-specific code
+- Create stub files for platform-specific implementations
+
+**Build Failures**
+- Run `flutter clean` and `flutter pub get`
+- Check for dependency conflicts
+- Verify Firebase configuration files
+
+## 📈 Roadmap
+
+### Current Sprint
+- [ ] Complete performance analytics dashboard
+- [ ] Add export functionality for grades
+- [ ] Implement attendance tracking
+- [ ] Add parent portal access
+
+### Future Enhancements
+- [ ] AI-powered assignment suggestions
+- [ ] Video conferencing integration
+- [ ] Advanced reporting and analytics
+- [ ] Mobile offline support
+- [ ] Multi-language support
+- [ ] Integration with Google Classroom
+- [ ] Automated grading for objective questions
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 👥 Team
 
-### Common Issues
+- **Development**: Sallvainian
+- **Design**: Material Design 3 Guidelines
+- **Infrastructure**: Firebase Platform
 
-**Firebase Configuration Issues**
-- Ensure all platform apps are added to Firebase Console
-- Verify google-services.json and GoogleService-Info.plist are in correct locations
-- Check that bundle IDs match between Flutter and Firebase
+## 🙏 Acknowledgments
 
-**Authentication Problems**
-- Enable Authentication providers in Firebase Console
-- For Google Sign-In on Android, add SHA-1 fingerprints
-- Verify domain authorization for web
+- Flutter team for the amazing framework
+- Firebase team for the backend platform
+- Material Design team for design guidelines
+- Open source community for invaluable packages
 
-**Database Permission Errors**
-- Check Firestore security rules
-- Ensure user is properly authenticated
-- Verify document paths and permissions
+## 📞 Support
 
-### Getting Help
-- 📧 Create an issue on GitHub
-- 📖 Check the [Firebase Documentation](https://firebase.google.com/docs)
-- 📱 Review [Flutter Documentation](https://flutter.dev/docs)
-
-## 📈 Project Stats
-
-- **Languages**: Dart, JavaScript (Firebase Functions)
-- **Platforms**: Web, Android, iOS
-- **Database**: Cloud Firestore
-- **Authentication**: Firebase Auth
-- **Storage**: Firebase Storage
-- **Hosting**: Firebase Hosting
+- 📧 **Issues**: [GitHub Issues](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/issues)
+- 📖 **Documentation**: [Wiki](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/wiki)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/discussions)
 
 ---
 
 **Built with ❤️ using Flutter and Firebase**
 
-*This project represents a modern approach to educational technology, focusing on user experience, scalability, and cross-platform compatibility.*
+*Empowering educators with modern technology for better learning outcomes*
