@@ -134,7 +134,15 @@
     }
   </script>
   
-  <!-- Load Flutter bootstrap with cache busting - UPDATE THIS NUMBER ON EACH BUILD -->
-  <script src="flutter_bootstrap.js?v=1755298510000" defer></script>
+  <!-- Load Flutter bootstrap with cache busting - AUTO-UPDATED ON BUILD -->
+  <script>
+    // Generate timestamp for cache busting
+    const cacheBuster = new Date().getTime();
+    const script = document.createElement('script');
+    script.src = `flutter_bootstrap.js?v=${cacheBuster}`;
+    script.defer = true;
+    document.body.appendChild(script);
+    console.log('🚀 [CACHE DEBUG] Loading flutter_bootstrap.js with version:', cacheBuster);
+  </script>
 </body>
 </html>
