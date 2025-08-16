@@ -27,8 +27,8 @@ android {
         applicationId = "com.teacherdashboard.teacher_dashboard_flutter_firebase"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
-        targetSdk = (rootProject.extra["compileSdkVersion"] as Int)
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
         multiDexEnabled = true
         versionCode = flutter.versionCode
         versionName = flutter.versionName
