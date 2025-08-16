@@ -32,6 +32,8 @@
 	<string>Allow microphone access for voice and video calls</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to photo library to select profile pictures</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allow saving photos and videos to your library</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

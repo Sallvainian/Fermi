@@ -28,6 +28,7 @@ app.*.map.json
 .svn/
 .sonarlint/
 .grok/
+.trae/
 
 # Platform-specific ephemerals/generated (consolidated)
 **/flutter/ephemeral
