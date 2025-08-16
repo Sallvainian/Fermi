@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 // Temporarily disabled WebRTC imports - will re-enable when implementing video calling
 // import 'package:flutter_webrtc/flutter_webrtc.dart';
 // import 'package:permission_handler/permission_handler.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/services/webrtc_service.dart';
-import '../../data/services/webrtc_signaling_service.dart';
 import '../../domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
 
@@ -14,16 +12,6 @@ class WebRTCCallManager extends ChangeNotifier {
   static const String _tag = 'WebRTCCallManager';
   
   final WebRTCService _webrtcService = WebRTCService();
-  final WebRTCSignalingService _signalingService = WebRTCSignalingService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
-  // WebRTC configuration
-  final Map<String, dynamic> _configuration = {
-    'iceServers': [
-      {'urls': 'stun:stun.l.google.com:19302'},
-      {'urls': 'stun:stun1.l.google.com:19302'},
-    ],
-  };
   
   // Call state
   Call? _currentCall;
@@ -40,7 +28,7 @@ class WebRTCCallManager extends ChangeNotifier {
   
   /// Initialize the call manager - placeholder
   Future<void> initialize() async {
-    LoggerService().info('$_tag: Initializing (placeholder)');
+    LoggerService.info('Initializing (placeholder)', tag: _tag);
     await _webrtcService.initialize();
   }
   
@@ -52,7 +40,7 @@ class WebRTCCallManager extends ChangeNotifier {
     String? receiverPhotoUrl,
   }) async {
     try {
-      LoggerService().info('$_tag: Making call (placeholder)');
+      LoggerService.info('Making call (placeholder)', tag: _tag);
       _updateCallState(CallState.calling);
       
       // Create call document
@@ -79,7 +67,7 @@ class WebRTCCallManager extends ChangeNotifier {
       
       notifyListeners();
     } catch (e) {
-      LoggerService().error('$_tag: Error making call: $e');
+      LoggerService.error('Error making call', tag: _tag, error: e);
       _updateCallState(CallState.error);
       rethrow;
     }
@@ -88,7 +76,7 @@ class WebRTCCallManager extends ChangeNotifier {
   /// Answer a call - placeholder
   Future<void> answerCall(Call call) async {
     try {
-      LoggerService().info('$_tag: Answering call (placeholder)');
+      LoggerService.info('Answering call (placeholder)', tag: _tag);
       _currentCall = call;
       _updateCallState(CallState.connecting);
       
@@ -96,7 +84,7 @@ class WebRTCCallManager extends ChangeNotifier {
       
       notifyListeners();
     } catch (e) {
-      LoggerService().error('$_tag: Error answering call: $e');
+      LoggerService.error('Error answering call', tag: _tag, error: e);
       _updateCallState(CallState.error);
       rethrow;
     }
@@ -105,7 +93,7 @@ class WebRTCCallManager extends ChangeNotifier {
   /// End the current call - placeholder
   Future<void> endCall() async {
     try {
-      LoggerService().info('$_tag: Ending call (placeholder)');
+      LoggerService.info('Ending call (placeholder)', tag: _tag);
       
       await _webrtcService.endCall();
       
@@ -113,7 +101,7 @@ class WebRTCCallManager extends ChangeNotifier {
       _updateCallState(CallState.idle);
       notifyListeners();
     } catch (e) {
-      LoggerService().error('$_tag: Error ending call: $e');
+      LoggerService.error('Error ending call', tag: _tag, error: e);
     }
   }
   

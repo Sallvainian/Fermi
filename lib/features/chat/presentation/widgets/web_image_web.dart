@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html;
-import 'dart:ui' as ui;
+import 'package:web/web.dart' as web;
+import 'dart:ui_web' as ui_web;
 
 class WebImage extends StatelessWidget {
   final String imageUrl;
@@ -41,23 +41,19 @@ class WebImage extends StatelessWidget {
     final String viewType = 'img-${imageUrl.hashCode}';
     
     // Register the view factory only once
-    // ignore: undefined_prefixed_name
-    ui.platformViewRegistry.registerViewFactory(
+    ui_web.platformViewRegistry.registerViewFactory(
       viewType,
       (int viewId) {
-        final img = html.ImageElement()
-          ..src = imageUrl
-          ..style.width = '100%'
-          ..style.height = '100%'
-          ..style.objectFit = _getObjectFit(fit);
+        final img = web.HTMLImageElement()
+          ..src = imageUrl;
         
-        img.onError.listen((event) {
-          // Image failed to load
-        });
+        // Set styles using CSSStyleDeclaration  
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = _getObjectFit(fit);
         
-        img.onLoad.listen((event) {
-          // Image loaded successfully
-        });
+        // Note: Event listeners are handled differently with package:web
+        // For now we'll skip error/load handling as it requires more complex setup
         
         return img;
       },

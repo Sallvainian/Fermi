@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/models/user_model.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/discussion_provider_simple.dart';
@@ -176,14 +177,14 @@ class _BoardCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          print('DEBUG: Board clicked - ID: ${board.id}, Title: ${board.title}');
+          LoggerService.debug('Board clicked - ID: ${board.id}, Title: ${board.title}', tag: 'SimpleDiscussionBoardsScreen');
           
           // Select the board in provider
           context.read<SimpleDiscussionProvider>().selectBoard(board);
           
           // Navigate to board detail
           final route = '/discussions/${board.id}';
-          print('DEBUG: Navigating to: $route');
+          LoggerService.debug('Navigating to: $route', tag: 'SimpleDiscussionBoardsScreen');
           
           // Use push instead of go to properly navigate
           context.push(route);

@@ -3,8 +3,6 @@ import 'dart:async';
 import '../../data/services/webrtc_service.dart';
 import '../../domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
-import '../../../notifications/data/services/notification_service.dart';
-import '../../../notifications/data/services/firebase_messaging_service.dart';
 
 /// Placeholder Call Provider - actual implementation pending
 class CallProvider extends ChangeNotifier {
@@ -156,22 +154,6 @@ class CallProvider extends ChangeNotifier {
   void clearIncomingCall() {
     _incomingCall = null;
     notifyListeners();
-  }
-
-  Call _createCallFromRemote(Map<String, dynamic> callData) {
-    return Call(
-      id: callData['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      callerId: callData['callerId'] ?? '',
-      callerName: callData['callerName'] ?? 'Unknown',
-      callerPhotoUrl: callData['callerPhotoUrl'] ?? '',
-      receiverId: callData['receiverId'] ?? '',
-      receiverName: callData['receiverName'] ?? 'You',
-      receiverPhotoUrl: callData['receiverPhotoUrl'] ?? '',
-      type: callData['isVideoCall'] == true ? CallType.video : CallType.voice,
-      status: CallStatus.ringing,
-      startedAt: DateTime.now(),
-      chatRoomId: callData['chatRoomId'],
-    );
   }
 
   @override

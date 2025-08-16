@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
+import '../../../../../shared/services/logger_service.dart';
 import '../../providers/class_provider.dart';
 import '../../../domain/models/class_model.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
@@ -29,11 +30,11 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
     final classProvider = context.read<ClassProvider>();
     final studentId = authProvider.userModel?.uid;
     
-    print('DEBUG: Loading courses for student: $studentId');
+    LoggerService.debug('Loading courses for student: $studentId', tag: 'StudentCoursesScreen');
     if (studentId != null) {
       classProvider.loadStudentClasses(studentId);
     } else {
-      print('DEBUG: No student ID found!');
+      LoggerService.warning('No student ID found!', tag: 'StudentCoursesScreen');
     }
   }
 

@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/class_model.dart';
 import '../../../student/domain/models/student.dart';
 
@@ -198,7 +199,7 @@ class ClassProvider with ChangeNotifier {
       }
       return null;
     } catch (e) {
-      print('Error getting class by ID: $e');
+      LoggerService.error('Error getting class by ID', tag: 'ClassProvider', error: e);
       return null;
     }
   }

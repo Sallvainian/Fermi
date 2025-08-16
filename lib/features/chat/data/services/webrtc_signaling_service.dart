@@ -1,23 +1,12 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 // Temporarily disabled WebRTC imports - will re-enable when implementing video calling
 // import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/call.dart';
-import '../../../notifications/data/services/notification_service.dart';
 
 /// Placeholder WebRTC Signaling Service - actual implementation pending
 class WebRTCSignalingService {
   static const String _tag = 'WebRTCSignalingService';
-  
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final NotificationService _notificationService = NotificationService();
-  
-  // Signaling paths in Firebase
-  static const String _callsPath = 'calls';
-  static const String _incomingCallsPath = 'incoming_calls';
   
   // Stream subscriptions
   final Map<String, StreamSubscription> _subscriptions = {};
@@ -31,13 +20,13 @@ class WebRTCSignalingService {
   
   /// Initialize signaling service - placeholder
   Future<void> initialize() async {
-    LoggerService().info('$_tag: Initializing signaling service (placeholder)');
+    LoggerService.info('Initializing signaling service (placeholder)', tag: _tag);
     // Actual implementation will be added when WebRTC is enabled
   }
   
   /// Listen for incoming calls - placeholder
   void listenForIncomingCalls() {
-    LoggerService().info('$_tag: Listening for incoming calls (placeholder)');
+    LoggerService.info('Listening for incoming calls (placeholder)', tag: _tag);
     // Actual implementation will be added when WebRTC is enabled
   }
   
@@ -48,7 +37,7 @@ class WebRTCSignalingService {
     required dynamic offer,
     required bool isVideoCall,
   }) async {
-    LoggerService().info('$_tag: Sending offer (placeholder)');
+    LoggerService.info('Sending offer (placeholder)', tag: _tag);
     // Actual implementation will be added when WebRTC is enabled
   }
   
@@ -57,7 +46,7 @@ class WebRTCSignalingService {
     required String callId,
     required dynamic answer,
   }) async {
-    LoggerService().info('$_tag: Sending answer (placeholder)');
+    LoggerService.info('Sending answer (placeholder)', tag: _tag);
     // Actual implementation will be added when WebRTC is enabled
   }
   
@@ -67,13 +56,13 @@ class WebRTCSignalingService {
     required String receiverId,
     required dynamic candidate,
   }) async {
-    LoggerService().info('$_tag: Sending ICE candidate (placeholder)');
+    LoggerService.info('Sending ICE candidate (placeholder)', tag: _tag);
     // Actual implementation will be added when WebRTC is enabled
   }
   
   /// End call - placeholder
   Future<void> endCall(String callId) async {
-    LoggerService().info('$_tag: Ending call (placeholder)');
+    LoggerService.info('Ending call (placeholder)', tag: _tag);
     // Actual implementation will be added when WebRTC is enabled
   }
   

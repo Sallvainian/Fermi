@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
+import 'shared/services/logger_service.dart';
 
 void main() async {
   // Initialize Firebase
@@ -12,7 +13,7 @@ void main() async {
 
   try {
     // Create test discussion boards
-    print('Creating test discussion boards...');
+    LoggerService.info('Creating test discussion boards...', tag: 'TestDiscussions');
     
     // Board 1
     final board1Ref = await firestore.collection('discussion_boards').add({
@@ -24,7 +25,7 @@ void main() async {
       'isPinned': true,
       'tags': ['general', 'announcements'],
     });
-    print('Created board: ${board1Ref.id}');
+    LoggerService.info('Created board: ${board1Ref.id}', tag: 'TestDiscussions');
 
     // Board 2  
     final board2Ref = await firestore.collection('discussion_boards').add({
@@ -36,10 +37,10 @@ void main() async {
       'isPinned': false,
       'tags': ['study', 'collaboration'],
     });
-    print('Created board: ${board2Ref.id}');
+    LoggerService.info('Created board: ${board2Ref.id}', tag: 'TestDiscussions');
 
     // Add some test threads to board 1
-    print('Adding test threads...');
+    LoggerService.info('Adding test threads...', tag: 'TestDiscussions');
     
     final thread1Ref = await firestore
         .collection('discussion_boards')
@@ -57,7 +58,7 @@ void main() async {
       'isPinned': true,
       'isLocked': false,
     });
-    print('Created thread: ${thread1Ref.id}');
+    LoggerService.info('Created thread: ${thread1Ref.id}', tag: 'TestDiscussions');
 
     final thread2Ref = await firestore
         .collection('discussion_boards')
@@ -75,7 +76,7 @@ void main() async {
       'isPinned': false,
       'isLocked': false,
     });
-    print('Created thread: ${thread2Ref.id}');
+    LoggerService.info('Created thread: ${thread2Ref.id}', tag: 'TestDiscussions');
 
     // Add a comment to thread 1
     await firestore
@@ -90,18 +91,18 @@ void main() async {
       'authorName': 'John Smith',
       'createdAt': Timestamp.now(),
     });
-    print('Added comment to thread');
+    LoggerService.info('Added comment to thread', tag: 'TestDiscussions');
 
     // Update thread count
     await firestore.collection('discussion_boards').doc(board1Ref.id).update({
       'threadCount': 2,
     });
 
-    print('✅ Test discussion data created successfully!');
-    print('Board 1 ID: ${board1Ref.id}');
-    print('Board 2 ID: ${board2Ref.id}');
+    LoggerService.info('✅ Test discussion data created successfully!', tag: 'TestDiscussions');
+    LoggerService.info('Board 1 ID: ${board1Ref.id}', tag: 'TestDiscussions');
+    LoggerService.info('Board 2 ID: ${board2Ref.id}', tag: 'TestDiscussions');
     
   } catch (e) {
-    print('❌ Error creating test data: $e');
+    LoggerService.error('❌ Error creating test data', tag: 'TestDiscussions', error: e);
   }
 }
