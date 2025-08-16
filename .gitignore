@@ -84,8 +84,8 @@ migrate_working_dir/
 *.env
 .envs/
 secrets.json
-google-services.json
-GoogleService-Info.plist
+# google-services.json  # Commented out - needed for CI/CD
+# GoogleService-Info.plist  # Commented out - needed for CI/CD
 .firebaserc
 **/firebase.json  # Added for Firebase CLI configs
 firebase-debug.log
