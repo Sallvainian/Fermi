@@ -44,8 +44,14 @@ jobs:
       - name: Write google-services.json
         shell: bash
         run: |
-          echo "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" | base64 -d > android/app/google-services.json
-          test -s android/app/google-services.json || (echo "google-services.json missing/empty" && exit 1)
+          # Check if file already exists (committed to repo)
+          if [ -f "android/app/google-services.json" ] && [ -s "android/app/google-services.json" ]; then
+            echo "✓ google-services.json already exists in repository"
+          elif [ -n "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" ]; then
+            echo "Writing google-services.json from secret..."
+            echo "${{ secrets.GOOGLE_SERVICES_JSON_B64 }}" | base64 -d > android/app/google-services.json
+          fi
+          test -s android/app/google-services.json || (echo "ERROR: google-services.json missing/empty" && exit 1)
 
       - name: Build Android APK
         shell: bash
@@ -86,17 +92,15 @@ jobs:
       - name: Write GoogleService-Info.plist
         shell: bash
         run: |
-          if [ -z "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" ]; then
-            echo "Error: GOOGLESERVICE_INFO_PLIST_B64 secret is not set"
-            exit 1
+          # Check if file already exists (committed to repo)
+          if [ -f "ios/Runner/GoogleService-Info.plist" ] && [ -s "ios/Runner/GoogleService-Info.plist" ]; then
+            echo "✓ GoogleService-Info.plist already exists in repository"
+          elif [ -n "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" ]; then
+            echo "Writing GoogleService-Info.plist from secret..."
+            echo "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" | base64 -d > ios/Runner/GoogleService-Info.plist
           fi
-          echo "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" | base64 -d > ios/Runner/GoogleService-Info.plist
-          if [ ! -s ios/Runner/GoogleService-Info.plist ]; then
-            echo "Error: GoogleService-Info.plist is empty after decoding"
-            echo "Decoded content length: $(wc -c < ios/Runner/GoogleService-Info.plist)"
-            exit 1
-          fi
-          echo "GoogleService-Info.plist written successfully ($(wc -c < ios/Runner/GoogleService-Info.plist) bytes)"
+          test -s ios/Runner/GoogleService-Info.plist || (echo "ERROR: GoogleService-Info.plist missing/empty" && exit 1)
+          echo "GoogleService-Info.plist ready ($(wc -c < ios/Runner/GoogleService-Info.plist) bytes)"
 
       - name: CocoaPods setup
         run: |

@@ -61,7 +61,7 @@ android/init.gradle
 android/gradle.properties
 
 # iOS specific
-/ios/Runner/GoogleService-Info.plist
+# /ios/Runner/GoogleService-Info.plist  # Commented out - needed for CI/CD
 
 # General artifacts
 *.class
