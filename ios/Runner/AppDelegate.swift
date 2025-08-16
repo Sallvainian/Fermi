@@ -72,9 +72,11 @@ extension AppDelegate: PKPushRegistryDelegate {
       
       // Additional configuration
       callData.appName = "Teacher Dashboard"
-      callData.avatar = callerPhoto
+      if let photo = callerPhoto {
+        callData.avatar = photo
+      }
       callData.duration = 30000 // 30 seconds
-      callData.extra = data
+      callData.extra = data as NSDictionary
       
       // Show incoming call UI
       SwiftFlutterCallkitIncomingPlugin.sharedInstance?.showCallkitIncoming(callData, fromPushKit: true)
