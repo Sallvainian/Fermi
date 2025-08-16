@@ -36,8 +36,13 @@ target 'Runner' do
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
-  # Firebase will be automatically included by Flutter plugins
-  # No need to specify versions here
+  # Pin Firebase versions to avoid Swift 6 compatibility issues
+  # These versions are known to work with Swift 5
+  pod 'FirebaseCore', '~> 10.22.0'
+  pod 'FirebaseAuth', '~> 10.22.0'
+  pod 'FirebaseFirestore', '~> 10.22.0'
+  pod 'FirebaseMessaging', '~> 10.22.0'
+  pod 'FirebaseStorage', '~> 10.22.0'
   
   # Force compatible versions for Xcode 13.2.1
   pod 'SDWebImage', '5.18.0'
@@ -75,6 +80,10 @@ post_install do |installer|
       # Fix Firebase Swift compatibility
       config.build_settings['SWIFT_VERSION'] = '5.0'
       
+      # Disable Swift 6 language mode that causes 'sending' keyword issues
+      config.build_settings['SWIFT_UPCOMING_FEATURE_CONCISE_MAGIC_FILE'] = 'NO'
+      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'NO'
+      
       # Define missing constants for older Xcode
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'TARGET_OS_VISION=0'
@@ -85,8 +94,11 @@ post_install do |installer|
       
       # Handle pods with newer Swift syntax
       if ['FirebaseSharedSwift', 'FirebaseCoreInternal', 'FirebaseCore', 'FirebaseAuth', 'GoogleUtilities'].include?(target.name)
-        # Define Swift compatibility flags
-        config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -D SWIFT_PACKAGE -Xcc -Wno-error=non-modular-include-in-framework-module'
+        # Define Swift compatibility flags and disable Swift 6 features
+        config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -D SWIFT_PACKAGE -Xcc -Wno-error=non-modular-include-in-framework-module -suppress-warnings'
+        config.build_settings['SWIFT_VERSION'] = '5.0'
+        config.build_settings['SWIFT_COMPILATION_MODE'] = 'wholemodule'
+        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Osize'
         config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
         config.build_settings['DEFINES_MODULE'] = 'YES'
