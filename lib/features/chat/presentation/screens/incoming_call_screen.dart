@@ -59,7 +59,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   }
 
   void _rejectCall() async {
-    await _webrtcService.rejectCall(widget.call.id);
+    // Placeholder - actual implementation pending
+    await _webrtcService.endCall();
     if (!mounted) return;
     Navigator.pop(context);
   }

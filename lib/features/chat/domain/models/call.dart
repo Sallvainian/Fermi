@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum CallType { voice, video }
 enum CallStatus { ringing, accepted, rejected, ended, missed }
+enum CallState { idle, calling, ringing, connecting, connected, reconnecting, error }
 
 class Call {
   final String id;

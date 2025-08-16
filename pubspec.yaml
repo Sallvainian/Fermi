@@ -80,9 +80,10 @@ dependencies:
   video_player: ^2.10.0
   video_compress: ^3.1.3  # Most popular & stable: 717 likes, 107k downloads, native code
 
-  # WebRTC for video/voice calling
-  flutter_webrtc: ^1.0.0
-  permission_handler: ^12.0.1
+  # WebRTC for video/voice calling - Temporarily disabled due to web compilation issues
+  # TODO: Re-enable when implementing video calling features with updated packages
+  # flutter_webrtc: ^1.0.0
+  # permission_handler: ^12.0.1
 
   # Notifications - Re-enabled with desktop support
   flutter_local_notifications: ^18.0.1

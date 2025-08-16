@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:permission_handler/permission_handler.dart';
+// Temporarily disabled WebRTC imports - will re-enable when implementing video calling
+// import 'package:flutter_webrtc/flutter_webrtc.dart';
+// import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/services/webrtc_service.dart';
 import '../../data/services/webrtc_signaling_service.dart';
 import '../../domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
 
-/// Manages WebRTC calls with Firebase signaling
+/// Placeholder WebRTC Call Manager - actual implementation pending
 class WebRTCCallManager extends ChangeNotifier {
   static const String _tag = 'WebRTCCallManager';
   
@@ -21,386 +22,134 @@ class WebRTCCallManager extends ChangeNotifier {
     'iceServers': [
       {'urls': 'stun:stun.l.google.com:19302'},
       {'urls': 'stun:stun1.l.google.com:19302'},
-      // Add TURN servers for better connectivity
-      // {
-      //   'urls': 'turn:your-turn-server.com:3478',
-      //   'username': 'username',
-      //   'credential': 'password',
-      // },
     ],
-    'sdpSemantics': 'unified-plan',
   };
-  
-  // Peer connections map
-  final Map<String, RTCPeerConnection> _peerConnections = {};
-  
-  // Media streams
-  MediaStream? _localStream;
-  final Map<String, MediaStream> _remoteStreams = {};
-  
-  // Renderers
-  final localRenderer = RTCVideoRenderer();
-  final Map<String, RTCVideoRenderer> remoteRenderers = {};
   
   // Call state
   Call? _currentCall;
-  bool _isCaller = false;
+  CallState _callState = CallState.idle;
+  bool _isVideoEnabled = true;
+  bool _isAudioEnabled = true;
   
   // Getters
   Call? get currentCall => _currentCall;
-  bool get isCaller => _isCaller;
-  MediaStream? get localStream => _localStream;
-  Map<String, MediaStream> get remoteStreams => _remoteStreams;
+  CallState get callState => _callState;
+  bool get isVideoEnabled => _isVideoEnabled;
+  bool get isAudioEnabled => _isAudioEnabled;
+  bool get isInCall => _callState != CallState.idle;
   
-  /// Initialize the call manager
+  /// Initialize the call manager - placeholder
   Future<void> initialize() async {
-    await localRenderer.initialize();
-    await _signalingService.initialize();
-    
-    // Set up signaling callbacks
-    _signalingService.onIncomingCall = _handleIncomingCall;
-    _signalingService.onOffer = _handleOffer;
-    _signalingService.onAnswer = _handleAnswer;
-    _signalingService.onIceCandidate = _handleIceCandidate;
-    _signalingService.onCallEnded = _handleCallEnded;
+    LoggerService().info('$_tag: Initializing (placeholder)');
+    await _webrtcService.initialize();
   }
   
-  /// Start a call
-  Future<void> startCall({
-    required String calleeId,
-    required bool isVideo,
-    String? calleeName,
-    String? chatRoomId,
+  /// Make a call - placeholder
+  Future<void> makeCall({
+    required String receiverId,
+    required String receiverName,
+    required bool isVideoCall,
+    String? receiverPhotoUrl,
   }) async {
     try {
-      _isCaller = true;
+      LoggerService().info('$_tag: Making call (placeholder)');
+      _updateCallState(CallState.calling);
       
-      // Initialize local stream
-      await _initializeLocalStream(isVideo);
-      
-      // Initiate call through signaling
-      final callId = await _signalingService.initiateCall(
-        calleeId: calleeId,
-        isVideo: isVideo,
-        calleeName: calleeName,
-      );
-      
-      // Create peer connection
-      final pc = await _createPeerConnection(callId);
-      
-      // Add local stream tracks
-      if (_localStream != null) {
-        _localStream!.getTracks().forEach((track) {
-          pc.addTrack(track, _localStream!);
-        });
-      }
-      
-      // Create offer
-      final offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      
-      // Send offer through signaling
-      await _signalingService.sendOffer(callId, offer);
-      
-      // Fetch receiver photo URL
-      String receiverPhotoUrl = '';
-      try {
-        final receiverDoc = await _firestore.collection('users').doc(calleeId).get();
-        if (receiverDoc.exists) {
-          receiverPhotoUrl = receiverDoc.data()?['photoUrl'] ?? '';
-        }
-      } catch (e) {
-        LoggerService.error('Failed to fetch receiver photo', error: e, tag: _tag);
-      }
-
-      // Update current call
+      // Create call document
       _currentCall = Call(
-        id: callId,
-        callerId: _webrtcService.currentUserId,
-        callerName: _webrtcService.currentUserName,
-        callerPhotoUrl: _webrtcService.currentUserPhoto,
-        receiverId: calleeId,
-        receiverName: calleeName ?? 'Unknown',
-        receiverPhotoUrl: receiverPhotoUrl,
-        type: isVideo ? CallType.video : CallType.voice,
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        callerId: 'current_user',
+        callerName: 'Current User',
+        callerPhotoUrl: '',
+        receiverId: receiverId,
+        receiverName: receiverName,
+        receiverPhotoUrl: receiverPhotoUrl ?? '',
+        type: isVideoCall ? CallType.video : CallType.voice,
         status: CallStatus.ringing,
         startedAt: DateTime.now(),
-        chatRoomId: chatRoomId, // Pass provided chatRoomId
+      );
+      
+      // Simulate call
+      await _webrtcService.makeCall(
+        receiverId: receiverId,
+        isVideoCall: isVideoCall,
+        receiverName: receiverName,
+        receiverPhotoUrl: receiverPhotoUrl,
       );
       
       notifyListeners();
-      
     } catch (e) {
-      LoggerService.error('Failed to start call', error: e, tag: _tag);
-      await endCall();
+      LoggerService().error('$_tag: Error making call: $e');
+      _updateCallState(CallState.error);
       rethrow;
     }
   }
   
-  /// Accept incoming call
-  Future<void> acceptCall(Call call) async {
+  /// Answer a call - placeholder
+  Future<void> answerCall(Call call) async {
     try {
+      LoggerService().info('$_tag: Answering call (placeholder)');
       _currentCall = call;
-      _isCaller = false;
+      _updateCallState(CallState.connecting);
       
-      // Initialize local stream
-      await _initializeLocalStream(call.isVideo);
-      
-      // Accept call through signaling
-      await _signalingService.acceptCall(call.id);
-      
-      // Create peer connection
-      final pc = await _createPeerConnection(call.id);
-      
-      // Add local stream tracks
-      if (_localStream != null) {
-        _localStream!.getTracks().forEach((track) {
-          pc.addTrack(track, _localStream!);
-        });
-      }
+      await _webrtcService.answerCall(call.id);
       
       notifyListeners();
-      
     } catch (e) {
-      LoggerService.error('Failed to accept call', error: e, tag: _tag);
-      await endCall();
+      LoggerService().error('$_tag: Error answering call: $e');
+      _updateCallState(CallState.error);
       rethrow;
     }
   }
   
-  /// Decline incoming call
-  Future<void> declineCall(String callId) async {
-    await _signalingService.declineCall(callId);
-    _cleanup();
-  }
-  
-  /// End current call
+  /// End the current call - placeholder
   Future<void> endCall() async {
-    if (_currentCall != null) {
-      await _signalingService.endCall(_currentCall!.id);
-    }
-    _cleanup();
-  }
-  
-  /// Toggle camera
-  Future<void> toggleCamera() async {
-    if (_localStream != null) {
-      final videoTrack = _localStream!.getVideoTracks().firstOrNull;
-      if (videoTrack != null) {
-        videoTrack.enabled = !videoTrack.enabled;
-        notifyListeners();
-      }
+    try {
+      LoggerService().info('$_tag: Ending call (placeholder)');
+      
+      await _webrtcService.endCall();
+      
+      _currentCall = null;
+      _updateCallState(CallState.idle);
+      notifyListeners();
+    } catch (e) {
+      LoggerService().error('$_tag: Error ending call: $e');
     }
   }
   
-  /// Toggle microphone
-  Future<void> toggleMicrophone() async {
-    if (_localStream != null) {
-      final audioTrack = _localStream!.getAudioTracks().firstOrNull;
-      if (audioTrack != null) {
-        audioTrack.enabled = !audioTrack.enabled;
-        notifyListeners();
-      }
-    }
+  /// Toggle video - placeholder
+  Future<void> toggleVideo() async {
+    _isVideoEnabled = !_isVideoEnabled;
+    await _webrtcService.toggleVideo();
+    notifyListeners();
   }
   
-  /// Switch camera
+  /// Toggle audio - placeholder
+  Future<void> toggleAudio() async {
+    _isAudioEnabled = !_isAudioEnabled;
+    await _webrtcService.toggleAudio();
+    notifyListeners();
+  }
+  
+  /// Switch camera - placeholder
   Future<void> switchCamera() async {
-    if (_localStream != null) {
-      final videoTrack = _localStream!.getVideoTracks().firstOrNull;
-      if (videoTrack != null) {
-        await Helper.switchCamera(videoTrack);
-      }
-    }
+    await _webrtcService.switchCamera();
   }
   
-  // Private methods
-  
-  Future<void> _initializeLocalStream(bool isVideo) async {
-    // Request permissions before accessing media
-    final permissions = await _requestMediaPermissions(isVideo);
-    if (!permissions) {
-      throw Exception('Media permissions denied');
-    }
-    
-    final mediaConstraints = {
-      'audio': true,
-      'video': isVideo ? {
-        'facingMode': 'user',
-        'width': {'min': 640, 'ideal': 1280, 'max': 1920},
-        'height': {'min': 480, 'ideal': 720, 'max': 1080},
-      } : false,
-    };
-    
-    try {
-      _localStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-      localRenderer.srcObject = _localStream;
-    } catch (e) {
-      LoggerService.error('Failed to get user media', error: e, tag: _tag);
-      throw Exception('Failed to access camera/microphone: ${e.toString()}');
-    }
+  /// Enable speaker - placeholder
+  Future<void> enableSpeaker(bool enable) async {
+    await _webrtcService.enableSpeaker(enable);
   }
   
-  Future<bool> _requestMediaPermissions(bool isVideo) async {
-    try {
-      // Request microphone permission (always needed)
-      var micStatus = await Permission.microphone.status;
-      if (!micStatus.isGranted) {
-        micStatus = await Permission.microphone.request();
-        if (!micStatus.isGranted) {
-          LoggerService.error('Microphone permission denied', tag: _tag);
-          return false;
-        }
-      }
-      
-      // Request camera permission if video call
-      if (isVideo) {
-        var cameraStatus = await Permission.camera.status;
-        if (!cameraStatus.isGranted) {
-          cameraStatus = await Permission.camera.request();
-          if (!cameraStatus.isGranted) {
-            LoggerService.error('Camera permission denied', tag: _tag);
-            return false;
-          }
-        }
-      }
-      
-      LoggerService.info('Media permissions granted', tag: _tag);
-      return true;
-    } catch (e) {
-      LoggerService.error('Failed to request media permissions', error: e, tag: _tag);
-      return false;
-    }
-  }
-  
-  Future<RTCPeerConnection> _createPeerConnection(String callId) async {
-    final pc = await createPeerConnection(_configuration);
-    _peerConnections[callId] = pc;
-    
-    // Set up event handlers
-    pc.onIceCandidate = (candidate) {
-      _signalingService.sendIceCandidate(callId, candidate);
-    };
-    
-    pc.onTrack = (event) {
-      if (event.streams.isNotEmpty) {
-        final stream = event.streams.first;
-        _remoteStreams[callId] = stream;
-        
-        // Initialize renderer if needed
-        if (!remoteRenderers.containsKey(callId)) {
-          final renderer = RTCVideoRenderer();
-          renderer.initialize().then((_) {
-            renderer.srcObject = stream;
-            remoteRenderers[callId] = renderer;
-            notifyListeners();
-          });
-        } else {
-          remoteRenderers[callId]!.srcObject = stream;
-          notifyListeners();
-        }
-      }
-    };
-    
-    pc.onConnectionState = (state) {
-      LoggerService.info('Connection state: $state', tag: _tag);
-      if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed ||
-          state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
-        // Handle connection failure
-        endCall();
-      }
-    };
-    
-    return pc;
-  }
-  
-  void _handleIncomingCall(Call call) {
-    // This is handled by the CallProvider
-    // You can emit an event or update state here if needed
-  }
-  
-  void _handleOffer(String callId, RTCSessionDescription offer) async {
-    try {
-      final pc = _peerConnections[callId];
-      if (pc == null) return;
-      
-      // Set remote description
-      await pc.setRemoteDescription(offer);
-      
-      // Create answer
-      final answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      
-      // Send answer through signaling
-      await _signalingService.sendAnswer(callId, answer);
-      
-    } catch (e) {
-      LoggerService.error('Failed to handle offer', error: e, tag: _tag);
-    }
-  }
-  
-  void _handleAnswer(String callId, RTCSessionDescription answer) async {
-    try {
-      final pc = _peerConnections[callId];
-      if (pc == null) return;
-      
-      await pc.setRemoteDescription(answer);
-      
-    } catch (e) {
-      LoggerService.error('Failed to handle answer', error: e, tag: _tag);
-    }
-  }
-  
-  void _handleIceCandidate(String callId, RTCIceCandidate candidate) async {
-    try {
-      final pc = _peerConnections[callId];
-      if (pc == null) return;
-      
-      await pc.addCandidate(candidate);
-      
-    } catch (e) {
-      LoggerService.error('Failed to add ICE candidate', error: e, tag: _tag);
-    }
-  }
-  
-  void _handleCallEnded(String callId) {
-    if (_currentCall?.id == callId) {
-      _cleanup();
-    }
-  }
-  
-  void _cleanup() {
-    // Close peer connections
-    for (final pc in _peerConnections.values) {
-      pc.close();
-    }
-    _peerConnections.clear();
-    
-    // Dispose local stream
-    _localStream?.dispose();
-    _localStream = null;
-    
-    // Clear remote streams
-    _remoteStreams.clear();
-    
-    // Dispose renderers
-    for (final renderer in remoteRenderers.values) {
-      renderer.dispose();
-    }
-    remoteRenderers.clear();
-    
-    // Reset state
-    _currentCall = null;
-    _isCaller = false;
-    
+  // Private helper methods
+  void _updateCallState(CallState state) {
+    _callState = state;
     notifyListeners();
   }
   
   @override
   void dispose() {
-    _cleanup();
-    localRenderer.dispose();
-    _signalingService.dispose();
+    _webrtcService.dispose();
     super.dispose();
   }
 }

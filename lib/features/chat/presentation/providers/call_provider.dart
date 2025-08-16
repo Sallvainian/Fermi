@@ -6,6 +6,7 @@ import '../../../../shared/services/logger_service.dart';
 import '../../../notifications/data/services/notification_service.dart';
 import '../../../notifications/data/services/firebase_messaging_service.dart';
 
+/// Placeholder Call Provider - actual implementation pending
 class CallProvider extends ChangeNotifier {
   static const String _tag = 'CallProvider';
   
@@ -28,7 +29,7 @@ class CallProvider extends ChangeNotifier {
   Future<void> _initialize() async {
     try {
       await _webrtcService.initialize();
-      _listenForIncomingCalls();
+      // Placeholder - actual incoming call listening will be implemented with WebRTC
       _setupNotificationHandlers();
       _setupFirebaseMessagingHandlers();
     } catch (e) {
@@ -36,17 +37,14 @@ class CallProvider extends ChangeNotifier {
     }
   }
 
-  void _listenForIncomingCalls() {
-    _incomingCallSubscription = _webrtcService.getIncomingCalls().listen(
-      (call) {
-        LoggerService.info('Incoming call from ${call.callerName}', tag: _tag);
-        _incomingCall = call;
-        notifyListeners();
-      },
-      onError: (error) {
-        LoggerService.error('Error listening for incoming calls', tag: _tag, error: error);
-      },
-    );
+  void _setupNotificationHandlers() {
+    // Placeholder - notification handlers for incoming calls will be implemented later
+    LoggerService.info('Setting up notification handlers (placeholder)', tag: _tag);
+  }
+
+  void _setupFirebaseMessagingHandlers() {
+    // Placeholder - FCM handlers for incoming calls will be implemented later
+    LoggerService.info('Setting up FCM handlers (placeholder)', tag: _tag);
   }
 
   Future<String> startCall({
@@ -57,21 +55,32 @@ class CallProvider extends ChangeNotifier {
     String? chatRoomId,
   }) async {
     try {
-      final callId = await _webrtcService.startCall(
+      // Placeholder implementation
+      final callId = DateTime.now().millisecondsSinceEpoch.toString();
+      
+      _currentCall = Call(
+        id: callId,
+        callerId: 'current_user',
+        callerName: 'Current User',
+        callerPhotoUrl: '',
         receiverId: receiverId,
         receiverName: receiverName,
         receiverPhotoUrl: receiverPhotoUrl,
-        isVideoCall: isVideoCall,
+        type: isVideoCall ? CallType.video : CallType.voice,
+        status: CallStatus.ringing,
+        startedAt: DateTime.now(),
         chatRoomId: chatRoomId,
       );
       
-      _currentCall = _webrtcService.currentCallState;
-      notifyListeners();
+      await _webrtcService.makeCall(
+        receiverId: receiverId,
+        isVideoCall: isVideoCall,
+        receiverName: receiverName,
+        receiverPhotoUrl: receiverPhotoUrl,
+      );
       
+      notifyListeners();
       return callId;
-    } on WebRTCException catch (e) {
-      LoggerService.error('WebRTC error starting call: ${e.userFriendlyMessage}', tag: _tag, error: e);
-      rethrow;
     } catch (e) {
       LoggerService.error('Failed to start call', tag: _tag, error: e);
       rethrow;
@@ -80,14 +89,10 @@ class CallProvider extends ChangeNotifier {
 
   Future<void> acceptCall(String callId) async {
     try {
-      await _webrtcService.acceptCall(callId);
-      _currentCall = _webrtcService.currentCallState;
+      await _webrtcService.answerCall(callId);
+      _currentCall = _incomingCall;
       _incomingCall = null;
-      _isNavigationInProgress = false;
       notifyListeners();
-    } on WebRTCException catch (e) {
-      LoggerService.error('WebRTC error accepting call: ${e.userFriendlyMessage}', tag: _tag, error: e);
-      rethrow;
     } catch (e) {
       LoggerService.error('Failed to accept call', tag: _tag, error: e);
       rethrow;
@@ -96,9 +101,9 @@ class CallProvider extends ChangeNotifier {
 
   Future<void> rejectCall(String callId) async {
     try {
-      await _webrtcService.rejectCall(callId);
+      // Placeholder - actual implementation pending
+      LoggerService.info('Rejecting call: $callId', tag: _tag);
       _incomingCall = null;
-      _isNavigationInProgress = false;
       notifyListeners();
     } catch (e) {
       LoggerService.error('Failed to reject call', tag: _tag, error: e);
@@ -117,83 +122,56 @@ class CallProvider extends ChangeNotifier {
     }
   }
 
-  void dismissIncomingCall() {
-    _incomingCall = null;
-    _isNavigationInProgress = false;
-    notifyListeners();
-  }
-
-  void setNavigationInProgress(bool inProgress) {
-    _isNavigationInProgress = inProgress;
-    notifyListeners();
-  }
-
-  WebRTCService get webrtcService => _webrtcService;
-
-  void _setupNotificationHandlers() {
-    final notificationService = NotificationService();
-    
-    // Handle call accepted from notification
-    notificationService.onCallAccepted = (callId) {
-      LoggerService.info('Call accepted from notification: $callId', tag: _tag);
-      acceptCall(callId);
-    };
-    
-    // Handle call declined from notification
-    notificationService.onCallDeclined = (callId) {
-      LoggerService.info('Call declined from notification: $callId', tag: _tag);
-      rejectCall(callId);
-    };
-  }
-  
-  void _setupFirebaseMessagingHandlers() {
-    final messagingService = FirebaseMessagingService();
-    
-    // Handle incoming VoIP call from FCM
-    messagingService.onIncomingCall = (call) {
-      LoggerService.info('Incoming VoIP call from FCM: ${call.callerName}', tag: _tag);
-      _incomingCall = call;
-      notifyListeners();
-      
-      // Show notification
-      final notificationService = NotificationService();
-      notificationService.showIncomingCall(call);
-    };
-  }
-  
-  Future<String> startCallWithNotification({
-    required String receiverId,
-    required String receiverName,
-    required String receiverPhotoUrl,
-    required bool isVideoCall,
-    String? chatRoomId,
-  }) async {
+  Future<void> toggleVideo() async {
     try {
-      // Start the call
-      final callId = await startCall(
-        receiverId: receiverId,
-        receiverName: receiverName,
-        receiverPhotoUrl: receiverPhotoUrl,
-        isVideoCall: isVideoCall,
-        chatRoomId: chatRoomId,
-      );
-      
-      // Send push notification to receiver
-      final messagingService = FirebaseMessagingService();
-      await messagingService.sendCallNotification(
-        receiverId: receiverId,
-        callId: callId,
-        callerName: _webrtcService.currentUserName,
-        isVideo: isVideoCall,
-        callerPhotoUrl: _webrtcService.currentUserPhoto,
-        chatRoomId: chatRoomId,
-      );
-      
-      return callId;
+      await _webrtcService.toggleVideo();
+      notifyListeners();
     } catch (e) {
-      LoggerService.error('Failed to start call with notification', tag: _tag, error: e);
-      rethrow;
+      LoggerService.error('Failed to toggle video', tag: _tag, error: e);
     }
+  }
+
+  Future<void> toggleAudio() async {
+    try {
+      await _webrtcService.toggleAudio();
+      notifyListeners();
+    } catch (e) {
+      LoggerService.error('Failed to toggle audio', tag: _tag, error: e);
+    }
+  }
+
+  Future<void> switchCamera() async {
+    try {
+      await _webrtcService.switchCamera();
+    } catch (e) {
+      LoggerService.error('Failed to switch camera', tag: _tag, error: e);
+    }
+  }
+
+  void setNavigationInProgress(bool value) {
+    _isNavigationInProgress = value;
+    notifyListeners();
+  }
+
+  void clearIncomingCall() {
+    _incomingCall = null;
+    notifyListeners();
+  }
+
+  Call _createCallFromRemote(Map<String, dynamic> callData) {
+    return Call(
+      id: callData['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      callerId: callData['callerId'] ?? '',
+      callerName: callData['callerName'] ?? 'Unknown',
+      callerPhotoUrl: callData['callerPhotoUrl'] ?? '',
+      receiverId: callData['receiverId'] ?? '',
+      receiverName: callData['receiverName'] ?? 'You',
+      receiverPhotoUrl: callData['receiverPhotoUrl'] ?? '',
+      type: callData['isVideoCall'] == true ? CallType.video : CallType.voice,
+      status: CallStatus.ringing,
+      startedAt: DateTime.now(),
+      chatRoomId: callData['chatRoomId'],
+    );
   }
 
   @override
