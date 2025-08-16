@@ -86,13 +86,6 @@ post_install do |installer|
         config.build_settings['SWIFT_UPCOMING_FEATURE_CONCISE_MAGIC_FILE'] = 'NO'
         config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -Xcc -Wno-error=non-isolated-async-calls'
       end
-      
-      # Fix FirebaseSharedSwift 'sending' keyword errors
-      if target.name == 'FirebaseSharedSwift'
-        config.build_settings['SWIFT_VERSION'] = '5.0'
-        config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
-        config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -Xcc -Wno-error=non-modular-include-in-framework-module -suppress-warnings'
-      end
     end
   end
   
