@@ -51,7 +51,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
 
   # Web support
-  # web dependency is resolved automatically by Flutter
+  web: ^1.1.0
 
   # State Management
   provider: ^6.1.5
