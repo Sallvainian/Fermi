@@ -126,4 +126,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ios-artifact
-          path: build/ios/ipa/*.ipa
+          path: build/ios/archive/*.xcarchive
