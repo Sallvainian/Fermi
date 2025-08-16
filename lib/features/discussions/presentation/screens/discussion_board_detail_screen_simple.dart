@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
 
@@ -22,21 +23,21 @@ class _SimpleDiscussionBoardDetailScreenState extends State<SimpleDiscussionBoar
   @override
   void initState() {
     super.initState();
-    print('DEBUG: DiscussionBoardDetailScreen - initState for boardId: ${widget.boardId}');
+    LoggerService.debug('DiscussionBoardDetailScreen - initState for boardId: ${widget.boardId}', tag: 'SimpleDiscussionBoardDetailScreen');
     // Load threads for this board
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print('DEBUG: Loading threads for board: ${widget.boardId}');
+      LoggerService.debug('Loading threads for board: ${widget.boardId}', tag: 'SimpleDiscussionBoardDetailScreen');
       context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    print('DEBUG: DiscussionBoardDetailScreen - building for boardId: ${widget.boardId}');
+    LoggerService.debug('DiscussionBoardDetailScreen - building for boardId: ${widget.boardId}', tag: 'SimpleDiscussionBoardDetailScreen');
     final provider = context.watch<SimpleDiscussionProvider>();
     final board = provider.currentBoard;
     final threads = provider.getThreadsForBoard(widget.boardId);
-    print('DEBUG: Current board: ${board?.title}, Threads count: ${threads.length}');
+    LoggerService.debug('Current board: ${board?.title}, Threads count: ${threads.length}', tag: 'SimpleDiscussionBoardDetailScreen');
 
     return AdaptiveLayout(
       title: board?.title ?? 'Discussion Board',

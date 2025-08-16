@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/services/logger_service.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/class_model.dart';
@@ -78,7 +79,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
         }
       }
     } catch (e) {
-      print('Error loading class data: $e');
+      LoggerService.error('Error loading class data', tag: 'ClassDetailScreen', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading class: $e')),

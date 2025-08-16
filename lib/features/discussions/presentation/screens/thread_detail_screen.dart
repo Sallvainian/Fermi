@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
 
@@ -88,7 +89,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
         }
       });
     } catch (e) {
-      print('Error loading thread: $e');
+      LoggerService.error('Error loading thread', tag: 'ThreadDetailScreen', error: e);
       setState(() {
         _isLoading = false;
       });
@@ -298,7 +299,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                 color: theme.colorScheme.surface,
                 border: Border(
                   top: BorderSide(
-                    color: theme.colorScheme.outline.withOpacity(0.2),
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -334,7 +335,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
               ),
               child: Row(
                 children: [
