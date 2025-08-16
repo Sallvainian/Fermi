@@ -1,11 +1,8 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '16.0'
+platform :ios, '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
-
-# Use CDN for faster pod installation (default)
-# source 'https://cdn.cocoapods.org/'
 
 project 'Runner', {
   'Debug' => :debug,
@@ -36,120 +33,34 @@ target 'Runner' do
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
-  # Pin Firebase versions to avoid Swift 6 compatibility issues
-  # These versions are known to work with Swift 5
-  pod 'FirebaseCore', '~> 10.22.0'
-  pod 'FirebaseAuth', '~> 10.22.0'
-  pod 'FirebaseFirestore', '~> 10.22.0'
-  pod 'FirebaseMessaging', '~> 10.22.0'
-  pod 'FirebaseStorage', '~> 10.22.0'
-  
-  # Force compatible versions for Xcode 13.2.1
-  pod 'SDWebImage', '5.18.0'
+  # Override Firebase versions to avoid version conflicts
+  # Using 10.x versions for Swift 5 compatibility
+  pod 'Firebase/Core', '10.22.0'
+  pod 'Firebase/Auth', '10.22.0'
+  pod 'Firebase/Firestore', '10.22.0'
+  pod 'Firebase/Storage', '10.22.0'
+  pod 'Firebase/Messaging', '10.22.0'
 end
-
-# Force dependency resolution to use compatible versions
-$force_GoogleSignIn_version = true
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
-    # Ensure all pods target iOS 16.0 or higher
     target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.0'
+      # Minimum iOS version
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       
-      # Enable module stability for better compatibility
-      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
-      
-      # Disable bitcode for compatibility
+      # Disable bitcode
       config.build_settings['ENABLE_BITCODE'] = 'NO'
       
-      # Fix SDWebImage compatibility issue
-      if target.name == 'SDWebImage'
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'SD_CHECK_CGIMAGE_RETAIN_SOURCE=1'
-      end
-      
-      # Fix GoogleUtilities TARGET_OS_VISION issue for older Xcode
-      if target.name == 'GoogleUtilities'
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'TARGET_OS_VISION=0'
-      end
-      
-      # Fix Firebase Swift compatibility
+      # Swift 5 compatibility
       config.build_settings['SWIFT_VERSION'] = '5.0'
       
-      # Disable Swift 6 language mode that causes 'sending' keyword issues
-      config.build_settings['SWIFT_UPCOMING_FEATURE_CONCISE_MAGIC_FILE'] = 'NO'
-      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'NO'
-      
-      # Define missing constants for older Xcode
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'TARGET_OS_VISION=0'
-      
-      # Disable newer Swift features
-      config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
-      config.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
-      
-      # Handle pods with newer Swift syntax
-      if ['FirebaseSharedSwift', 'FirebaseCoreInternal', 'FirebaseCore', 'FirebaseAuth', 'GoogleUtilities'].include?(target.name)
-        # Define Swift compatibility flags and disable Swift 6 features
-        config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -D SWIFT_PACKAGE -Xcc -Wno-error=non-modular-include-in-framework-module -suppress-warnings'
-        config.build_settings['SWIFT_VERSION'] = '5.0'
-        config.build_settings['SWIFT_COMPILATION_MODE'] = 'wholemodule'
-        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Osize'
-        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      # Fix for Firebase modules
+      if target.name.start_with?('Firebase')
         config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-        config.build_settings['DEFINES_MODULE'] = 'YES'
-        # Generate module maps for Firebase pods
-        config.build_settings['GENERATE_MODULEMAP'] = 'YES'
-        config.build_settings['MODULE_MAP_PATH'] = '$(PODS_ROOT)/$(PRODUCT_MODULE_NAME)/module.modulemap'
+        config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -Xcc -Wno-error=non-modular-include-in-framework-module'
       end
-      
-      # Fix GoogleUtilities_NSData module issue
-      if target.name == 'GoogleUtilities' || target.name.start_with?('GoogleUtilities')
-        config.build_settings['HEADER_SEARCH_PATHS'] ||= []
-        config.build_settings['HEADER_SEARCH_PATHS'] << '$(inherited)'
-        config.build_settings['HEADER_SEARCH_PATHS'] << '"${PODS_ROOT}/GoogleUtilities"'
-        config.build_settings['DEFINES_MODULE'] = 'YES'
-        config.build_settings['SWIFT_INCLUDE_PATHS'] = '$(inherited) "${PODS_CONFIGURATION_BUILD_DIR}/GoogleUtilities"'
-      end
-      
-      # Silence all warnings for pod targets
-      config.build_settings['WARNING_CFLAGS'] = '-w'
-      config.build_settings['INHIBIT_ALL_WARNINGS'] = 'YES'
     end
-  end
-  
-  # Fix GoogleUtilities_NSData module issue specifically
-  google_utils_target = installer.pods_project.targets.find { |t| t.name == 'GoogleUtilities' }
-  if google_utils_target
-    google_utils_pod_dir = installer.sandbox.pod_dir('GoogleUtilities')
-    
-    # Create specific module map for GoogleUtilities_NSData
-    nsdata_module_path = "#{google_utils_pod_dir}/GoogleUtilities_NSData.modulemap"
-    puts "Creating GoogleUtilities_NSData module map at #{nsdata_module_path}..."
-    
-    nsdata_module_content = <<-MODULEMAP
-module GoogleUtilities_NSData {
-  header "GoogleUtilities/GULNSData+zlib.h"
-  export *
-}
-MODULEMAP
-    File.write(nsdata_module_path, nsdata_module_content)
-    
-    # Update build settings to include this module map
-    google_utils_target.build_configurations.each do |config|
-      config.build_settings['MODULEMAP_FILE'] = "$(PODS_ROOT)/GoogleUtilities/GoogleUtilities_NSData.modulemap"
-      config.build_settings['DEFINES_MODULE'] = 'YES'
-    end
-  end
-  
-  # Apply flutter_webrtc patch for Xcode 13.2.1 compatibility
-  patch_script = "#{File.dirname(__FILE__)}/../scripts/patch_flutter_webrtc.sh"
-  if File.exist?(patch_script)
-    puts "Applying flutter_webrtc compatibility patch..."
-    system("sh #{patch_script}")
   end
 end
