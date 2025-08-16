@@ -32,15 +32,15 @@ dependencies:
     sdk: flutter
 
   # Firebase Core - Required for all Firebase services
-  firebase_core: 2.26.0
+  firebase_core: ^3.8.0
 
   # Firebase Services
-  firebase_auth: 4.15.0
-  cloud_firestore: 4.14.0
-  firebase_storage: 11.6.0
-  firebase_database: 10.3.8
-  firebase_messaging: 14.7.10
-  cloud_functions: 4.6.0
+  firebase_auth: ^5.3.4
+  cloud_firestore: ^5.6.0
+  firebase_storage: ^12.3.8
+  firebase_database: ^11.2.2
+  firebase_messaging: ^15.1.8
+  cloud_functions: ^5.2.0
 
   # Authentication
   # Temporarily disabled due to iOS CocoaPods conflicts with Firebase SDK 10.x
