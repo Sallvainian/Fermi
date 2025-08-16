@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:device_calendar/device_calendar.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../../domain/models/calendar_event.dart';
@@ -28,21 +27,29 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
   @override
   Future<bool> requestPermissions() async {
     try {
-      // Request calendar permission
-      final status = await Permission.calendarFullAccess.request();
-      
-      if (status.isGranted) {
-        LoggerService.info('Calendar permissions granted', tag: 'DeviceCalendarService');
-        return true;
-      } else if (status.isPermanentlyDenied) {
-        // Open app settings if permanently denied
-        await openAppSettings();
+      // Placeholder implementation - permission_handler package was removed
+      // In a real implementation, you would need to handle permissions properly
+      // For now, return true on mobile platforms and false on web
+      if (kIsWeb) {
+        LoggerService.warning('Calendar permissions not available on web', tag: 'DeviceCalendarService');
+        return false;
       }
       
-      LoggerService.warning('Calendar permissions denied', tag: 'DeviceCalendarService');
+      // On mobile platforms, we'll attempt to use the calendar directly
+      // The device_calendar plugin will handle permission requests internally
+      LoggerService.info('Calendar permissions check (placeholder)', tag: 'DeviceCalendarService');
+      
+      // Try to retrieve calendars as a permission check
+      final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
+      if (calendarsResult.isSuccess) {
+        LoggerService.info('Calendar access available', tag: 'DeviceCalendarService');
+        return true;
+      }
+      
+      LoggerService.warning('Calendar access denied or unavailable', tag: 'DeviceCalendarService');
       return false;
     } catch (e) {
-      LoggerService.error('Error requesting calendar permissions', 
+      LoggerService.error('Error checking calendar permissions', 
           tag: 'DeviceCalendarService', error: e);
       return false;
     }

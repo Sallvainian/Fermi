@@ -126,7 +126,9 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
       });
 
       _commentController.clear();
-      FocusScope.of(context).unfocus();
+      if (mounted) {
+        FocusScope.of(context).unfocus();
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -335,7 +337,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.5),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               ),
               child: Row(
                 children: [

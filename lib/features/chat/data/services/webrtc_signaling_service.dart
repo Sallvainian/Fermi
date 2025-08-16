@@ -1,23 +1,12 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 // Temporarily disabled WebRTC imports - will re-enable when implementing video calling
 // import 'package:flutter_webrtc/flutter_webrtc.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/call.dart';
-import '../../../notifications/data/services/notification_service.dart';
 
 /// Placeholder WebRTC Signaling Service - actual implementation pending
 class WebRTCSignalingService {
   static const String _tag = 'WebRTCSignalingService';
-  
-  final FirebaseDatabase _database = FirebaseDatabase.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final NotificationService _notificationService = NotificationService();
-  
-  // Signaling paths in Firebase
-  static const String _callsPath = 'calls';
-  static const String _incomingCallsPath = 'incoming_calls';
   
   // Stream subscriptions
   final Map<String, StreamSubscription> _subscriptions = {};

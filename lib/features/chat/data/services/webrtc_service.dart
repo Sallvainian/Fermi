@@ -1,8 +1,6 @@
 import 'dart:async';
 // Temporarily disabled WebRTC imports - will re-enable when implementing video calling
 // import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:rxdart/rxdart.dart';
 // import 'package:permission_handler/permission_handler.dart';
 import '../../domain/models/call.dart';
@@ -39,7 +37,6 @@ class WebRTCException implements Exception {
       case WebRTCErrorType.callTimeout:
         return 'Call connection timed out. Please try again.';
       case WebRTCErrorType.unknown:
-      default:
         return 'Something went wrong. Please try again.';
     }
   }
@@ -52,8 +49,6 @@ class WebRTCService {
   factory WebRTCService() => _instance;
   WebRTCService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   static const String _tag = 'WebRTCService';
 
   // Stream controllers for call events
@@ -83,9 +78,6 @@ class WebRTCService {
   String? get currentCallId => _currentCallId;
   
   // Placeholder properties
-  dynamic _peerConnection;
-  dynamic _localStream;
-  dynamic _remoteStream;
   dynamic _localRenderer;
   dynamic _remoteRenderer;
 

@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 // Temporarily disabled WebRTC imports - will re-enable when implementing video calling
 // import 'package:flutter_webrtc/flutter_webrtc.dart';
 // import 'package:permission_handler/permission_handler.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/services/webrtc_service.dart';
-import '../../data/services/webrtc_signaling_service.dart';
 import '../../domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
 
@@ -14,16 +12,6 @@ class WebRTCCallManager extends ChangeNotifier {
   static const String _tag = 'WebRTCCallManager';
   
   final WebRTCService _webrtcService = WebRTCService();
-  final WebRTCSignalingService _signalingService = WebRTCSignalingService();
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
-  // WebRTC configuration
-  final Map<String, dynamic> _configuration = {
-    'iceServers': [
-      {'urls': 'stun:stun.l.google.com:19302'},
-      {'urls': 'stun:stun1.l.google.com:19302'},
-    ],
-  };
   
   // Call state
   Call? _currentCall;

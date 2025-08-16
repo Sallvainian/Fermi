@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 // import 'package:flutter_webrtc/flutter_webrtc.dart';
 // import 'package:permission_handler/permission_handler.dart';
 // import '../../data/services/webrtc_service.dart';
-import '../../domain/models/call.dart';
 import 'dart:async';
 
 /// Placeholder for call screen - WebRTC implementation pending
@@ -37,7 +36,6 @@ class _CallScreenState extends State<CallScreen> {
   bool _isSpeakerOn = false;
   bool _isConnecting = true;
   Timer? _callTimer;
-  Duration _callDuration = Duration.zero;
 
   @override
   void initState() {
