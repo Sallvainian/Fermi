@@ -45,20 +45,44 @@ post_install do |installer|
       # Disable bitcode
       config.build_settings['ENABLE_BITCODE'] = 'NO'
       
-      # Swift 5 compatibility for all targets
+      # CRITICAL: Suppress Swift 6 language mode and concurrency features
+      # This addresses the 'sending' keyword and async issues
       config.build_settings['SWIFT_VERSION'] = '5.0'
-      
-      # Suppress Swift 6 features
-      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'NO'
+      config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'complete'
       config.build_settings['SWIFT_UPCOMING_FEATURE_CONCISE_MAGIC_FILE'] = 'NO'
+      config.build_settings['SWIFT_DISABLE_SAFETY_CHECKS'] = 'YES'
       
-      # Fix for Firebase and Google pods with newer Swift syntax
-      if target.name.include?('Firebase') || target.name.include?('Google')
-        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
-        config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -Xcc -Wno-error=non-modular-include-in-framework-module -suppress-warnings'
+      # Suppress warnings
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+      config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      
+      # Fix TARGET_OS_VISION for Firebase SDK 12.0
+      if target.name.include?('Firebase') || target.name.include?('Google') || target.name.include?('Protobuf')
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'TARGET_OS_VISION=0'
+        
+        # Allow non-modular includes
+        config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        
+        # Additional Swift flags to suppress errors
+        config.build_settings['OTHER_SWIFT_FLAGS'] = '$(inherited) -Xcc -Wno-error=non-modular-include-in-framework-module -suppress-warnings'
+        
+        # Force module map generation
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+        config.build_settings['GENERATE_MODULEMAP'] = 'YES'
+      end
+      
+      # Special handling for PromisesSwift which has Swift 6 issues
+      if target.name == 'PromisesSwift'
+        config.build_settings['SWIFT_VERSION'] = '5.0'
+        config.build_settings['SWIFT_COMPILATION_MODE'] = 'wholemodule'
+        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone'
       end
     end
+  end
+  
+  # Additional fix for module issues
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
   end
 end
