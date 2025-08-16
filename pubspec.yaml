@@ -43,9 +43,10 @@ dependencies:
   cloud_functions: 4.6.0
 
   # Authentication
-  google_sign_in: 5.4.4
-  google_sign_in_web: 0.10.2+1
-  google_identity_services_web: 0.2.1+1
+  # Temporarily disabled due to iOS CocoaPods conflicts with Firebase SDK 10.x
+  # google_sign_in: 5.4.4
+  # google_sign_in_web: 0.10.2+1
+  # google_identity_services_web: 0.2.1+1
   
   # Environment variables
   flutter_dotenv: ^5.1.0

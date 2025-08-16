@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+// Temporarily disabled due to iOS dependency conflicts
+// import 'package:google_sign_in/google_sign_in.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
@@ -85,18 +86,19 @@ class AuthService {
       final cred = await _auth.signInWithPopup(provider);
       user = cred.user;
     } else {
-      // Mobile: Use native UI
-      final googleSignIn = GoogleSignIn.instance;
-      await googleSignIn.initialize();
-      final account = await googleSignIn.authenticate();
-      
-      final auth = account.authentication;
-      final credential = GoogleAuthProvider.credential(
-        idToken: auth.idToken,
-      );
-      
-      final cred = await _auth.signInWithCredential(credential);
-      user = cred.user;
+      // Mobile: Google Sign-In temporarily disabled due to iOS dependency conflicts
+      throw UnimplementedError('Google Sign-In is temporarily unavailable on mobile');
+      // final googleSignIn = GoogleSignIn.instance;
+      // await googleSignIn.initialize();
+      // final account = await googleSignIn.authenticate();
+      // 
+      // final auth = account.authentication;
+      // final credential = GoogleAuthProvider.credential(
+      //   idToken: auth.idToken,
+      // );
+      // 
+      // final cred = await _auth.signInWithCredential(credential);
+      // user = cred.user;
     }
     
     // Check if user document exists, create if not (for new Google users)
@@ -136,11 +138,12 @@ class AuthService {
     await _auth.signOut();
     
     // Also sign out of Google on mobile
-    if (!kIsWeb) {
-      try {
-        await GoogleSignIn.instance.signOut();
-      } catch (_) {}
-    }
+    // Temporarily disabled due to iOS dependency conflicts
+    // if (!kIsWeb) {
+    //   try {
+    //     await GoogleSignIn.instance.signOut();
+    //   } catch (_) {}
+    // }
   }
 
   // Password reset
