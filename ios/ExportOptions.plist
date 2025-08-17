@@ -18,7 +18,7 @@
     <string>Apple Distribution</string>
     <key>provisioningProfiles</key>
     <dict>
-        <key>com.frank.teacherDashboard</key>
+        <key>com.academic-tools.fermi</key>
         <string>Teacher Dashboard Distribution</string>
     </dict>
     <key>destination</key>
