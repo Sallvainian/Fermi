@@ -168,18 +168,32 @@ jobs:
         env:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
-          # Update the Xcode project to use manual signing with our provisioning profile
+          # Update the Xcode project.pbxproj file with our signing configuration
           cd ios
           
-          # Use xcodebuild to configure the project settings
-          xcodebuild -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -showBuildSettings \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
-            PROVISIONING_PROFILE_SPECIFIER="$PP_UUID" \
-            CODE_SIGN_IDENTITY="Apple Distribution" | head -20
+          # Use sed to update the project.pbxproj with our signing settings
+          sed -i '' "s/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;/g" Runner.xcodeproj/project.pbxproj
+          sed -i '' "s/CODE_SIGN_STYLE = .*/CODE_SIGN_STYLE = Manual;/g" Runner.xcodeproj/project.pbxproj
+          sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";/g" Runner.xcodeproj/project.pbxproj
+          sed -i '' "s/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = \"iPhone Distribution\";/g" Runner.xcodeproj/project.pbxproj
+          
+          # If the settings don't exist, add them
+          if ! grep -q "DEVELOPMENT_TEAM = " Runner.xcodeproj/project.pbxproj; then
+            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\\
+					DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;" Runner.xcodeproj/project.pbxproj
+          fi
+          
+          if ! grep -q "CODE_SIGN_STYLE = " Runner.xcodeproj/project.pbxproj; then
+            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\\
+					CODE_SIGN_STYLE = Manual;" Runner.xcodeproj/project.pbxproj
+          fi
+          
+          if ! grep -q "PROVISIONING_PROFILE_SPECIFIER = " Runner.xcodeproj/project.pbxproj; then
+            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\\
+					PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";" Runner.xcodeproj/project.pbxproj
+          fi
+          
+          echo "✓ Updated project.pbxproj with signing settings"
           
           cd ..
 
