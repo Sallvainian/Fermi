@@ -128,6 +128,10 @@ jobs:
           security import $DIST_CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
+          
+          # Show available identities for debugging
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning $KEYCHAIN_PATH
 
       - name: Install Provisioning Profile
         env:
@@ -139,13 +143,19 @@ jobs:
           # Import provisioning profile from secrets
           echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
           
-          # Apply provisioning profile
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/
+          # Extract UUID and Name from provisioning profile
+          PP_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i $PP_PATH))
+          PP_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" /dev/stdin <<< $(security cms -D -i $PP_PATH))
+          echo "Provisioning Profile UUID: $PP_UUID"
+          echo "Provisioning Profile Name: $PP_NAME"
           
-          # Extract UUID from provisioning profile
-          PROVISIONING_PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i $PP_PATH))
-          echo "Provisioning Profile UUID: $PROVISIONING_PROFILE_UUID"
+          # Install provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$PP_UUID.mobileprovision
+          
+          # Export for later use
+          echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
+          echo "PP_NAME=$PP_NAME" >> $GITHUB_ENV
 
       - name: CocoaPods setup
         run: |
@@ -154,16 +164,36 @@ jobs:
           pod install
           cd ..
 
-      - name: Build Signed iOS IPA
+      - name: Configure Xcode Project for Manual Signing
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
+        run: |
+          # Update the Xcode project to use manual signing with our provisioning profile
+          cd ios
+          
+          # Use xcodebuild to configure the project settings
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -showBuildSettings \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+            PROVISIONING_PROFILE_SPECIFIER="$PP_UUID" \
+            CODE_SIGN_IDENTITY="Apple Distribution" | head -20
+          
+          cd ..
+
+      - name: Build iOS Archive
         env:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         shell: bash
         run: |
           set -euo pipefail
           
-          # Build the IPA with signing
-          flutter build ipa --release \
-            --export-options-plist=ios/ExportOptions.plist \
+          # First build the Flutter app without signing
+          flutter build ios --release --no-codesign \
+            --build-name=1.0.0 \
+            --build-number=1 \
             --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
@@ -173,24 +203,64 @@ jobs:
             --dart-define=FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }} \
             --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }}
           
+          # Now build the archive with proper signing
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath ../build/ios/archive/Runner.xcarchive \
+            archive \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+            PROVISIONING_PROFILE_SPECIFIER="$PP_UUID" \
+            CODE_SIGN_IDENTITY="Apple Distribution"
+          cd ..
+
+      - name: Export IPA from Archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          
+          # Create a dynamic ExportOptions.plist with the correct provisioning profile UUID
+          cat > ios/ExportOptionsGenerated.plist <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store</string>
+    <key>teamID</key>
+    <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
+    <key>uploadBitcode</key>
+    <false/>
+    <key>compileBitcode</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.academic-tools.fermi</key>
+        <string>$PP_UUID</string>
+    </dict>
+</dict>
+</plist>
+EOF
+          
+          # Export the IPA
+          xcodebuild -exportArchive \
+            -archivePath build/ios/archive/Runner.xcarchive \
+            -exportPath build/ios/ipa \
+            -exportOptionsPlist ios/ExportOptionsGenerated.plist
+          
           # Verify IPA was created
-          if [ -f "build/ios/ipa/*.ipa" ]; then
-            echo "✓ IPA file created successfully"
-            ls -la build/ios/ipa/
-          else
-            echo "❌ IPA file not found, checking archive..."
-            ls -la build/ios/archive/
-            
-            # If IPA wasn't created but archive exists, export it manually
-            if [ -d "build/ios/archive/Runner.xcarchive" ]; then
-              echo "Exporting IPA from archive..."
-              xcodebuild -exportArchive \
-                -archivePath build/ios/archive/Runner.xcarchive \
-                -exportPath build/ios/ipa \
-                -exportOptionsPlist ios/ExportOptions.plist \
-                -allowProvisioningUpdates
-            fi
-          fi
+          echo "✓ Checking for IPA file..."
+          ls -la build/ios/ipa/
 
       - name: Clean up keychain
         if: always()
