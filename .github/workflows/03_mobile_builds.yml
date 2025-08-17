@@ -102,26 +102,30 @@ jobs:
           test -s ios/Runner/GoogleService-Info.plist || (echo "ERROR: GoogleService-Info.plist missing/empty" && exit 1)
           echo "GoogleService-Info.plist ready ($(wc -c < ios/Runner/GoogleService-Info.plist) bytes)"
 
-      - name: Install Apple Certificate
+      - name: Install Apple Certificates
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          BUILD_DISTRIBUTION_CERTIFICATE_BASE64: ${{ secrets.BUILD_DISTRIBUTION_CERTIFICATE_BASE64 }}
           P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.P12_PASSWORD }}
         run: |
           # Create variables
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          DEV_CERTIFICATE_PATH=$RUNNER_TEMP/dev_certificate.p12
+          DIST_CERTIFICATE_PATH=$RUNNER_TEMP/dist_certificate.p12
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
           
-          # Import certificate from secrets
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $CERTIFICATE_PATH
+          # Import certificates from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o $DEV_CERTIFICATE_PATH
+          echo -n "$BUILD_DISTRIBUTION_CERTIFICATE_BASE64" | base64 --decode -o $DIST_CERTIFICATE_PATH
           
           # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           
-          # Import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          # Import BOTH certificates to keychain
+          security import $DEV_CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security import $DIST_CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
