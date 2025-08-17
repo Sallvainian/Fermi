@@ -190,10 +190,11 @@ jobs:
         run: |
           set -euo pipefail
           
-          # First build the Flutter app without signing
-          flutter build ios --release --no-codesign \
+          # Build the Flutter app WITH signing
+          flutter build ipa --release \
             --build-name=1.0.0 \
             --build-number=1 \
+            --export-options-plist=ios/ExportOptions.plist \
             --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
@@ -203,64 +204,20 @@ jobs:
             --dart-define=FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }} \
             --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }}
           
-          # Now build the archive with proper signing
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -archivePath ../build/ios/archive/Runner.xcarchive \
-            archive \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
-            PROVISIONING_PROFILE_SPECIFIER="$PP_UUID" \
-            CODE_SIGN_IDENTITY="Apple Distribution"
-          cd ..
+          echo "✓ IPA build completed"
 
-      - name: Export IPA from Archive
+      - name: Verify IPA Creation
         shell: bash
         run: |
-          set -euo pipefail
-          
-          # Create a dynamic ExportOptions.plist with the correct provisioning profile UUID
-          cat > ios/ExportOptionsGenerated.plist <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>app-store</string>
-    <key>teamID</key>
-    <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
-    <key>uploadBitcode</key>
-    <false/>
-    <key>compileBitcode</key>
-    <false/>
-    <key>uploadSymbols</key>
-    <true/>
-    <key>signingStyle</key>
-    <string>manual</string>
-    <key>signingCertificate</key>
-    <string>Apple Distribution</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.academic-tools.fermi</key>
-        <string>$PP_UUID</string>
-    </dict>
-</dict>
-</plist>
-EOF
-          
-          # Export the IPA
-          xcodebuild -exportArchive \
-            -archivePath build/ios/archive/Runner.xcarchive \
-            -exportPath build/ios/ipa \
-            -exportOptionsPlist ios/ExportOptionsGenerated.plist
-          
-          # Verify IPA was created
-          echo "✓ Checking for IPA file..."
-          ls -la build/ios/ipa/
+          # Check if IPA was created successfully
+          if [ -f "build/ios/ipa/*.ipa" ]; then
+            echo "✓ IPA file created successfully"
+            ls -la build/ios/ipa/
+          else
+            echo "Checking archive location..."
+            ls -la build/ios/archive/ || true
+            exit 1
+          fi
 
       - name: Clean up keychain
         if: always()
