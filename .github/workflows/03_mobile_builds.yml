@@ -182,18 +182,18 @@ jobs:
           
           # If the settings don't exist, add them
           if ! grep -q "DEVELOPMENT_TEAM = " Runner.xcodeproj/project.pbxproj; then
-            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\\
-					DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;" Runner.xcodeproj/project.pbxproj
+            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\
+            DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;" Runner.xcodeproj/project.pbxproj
           fi
           
           if ! grep -q "CODE_SIGN_STYLE = " Runner.xcodeproj/project.pbxproj; then
-            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\\
-					CODE_SIGN_STYLE = Manual;" Runner.xcodeproj/project.pbxproj
+            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\
+            CODE_SIGN_STYLE = Manual;" Runner.xcodeproj/project.pbxproj
           fi
           
           if ! grep -q "PROVISIONING_PROFILE_SPECIFIER = " Runner.xcodeproj/project.pbxproj; then
-            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\\
-					PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";" Runner.xcodeproj/project.pbxproj
+            sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\
+            PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";" Runner.xcodeproj/project.pbxproj
           fi
           
           echo "✓ Updated project.pbxproj with signing settings"
