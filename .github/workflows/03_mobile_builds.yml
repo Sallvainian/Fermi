@@ -157,12 +157,11 @@ jobs:
           echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
           echo "PP_NAME=$PP_NAME" >> $GITHUB_ENV
 
-      - name: Update ExportOptions.plist with Provisioning Profile
+      - name: Create ExportOptions.plist for Manual Signing
         run: |
-          # Update the ExportOptions.plist to use the correct provisioning profile name
-          echo "Updating ExportOptions.plist with provisioning profile: ${{ env.PP_NAME }}"
+          echo "Creating ExportOptions.plist with provisioning profile: ${{ env.PP_NAME }}"
           
-          # Create a properly formatted ExportOptions.plist
+          # Create a properly formatted ExportOptions.plist for manual signing
           cat > ios/ExportOptions.plist << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -172,12 +171,6 @@ jobs:
     <string>app-store</string>
     <key>teamID</key>
     <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
-    <key>uploadBitcode</key>
-    <false/>
-    <key>compileBitcode</key>
-    <false/>
-    <key>uploadSymbols</key>
-    <true/>
     <key>signingStyle</key>
     <string>manual</string>
     <key>signingCertificate</key>
@@ -187,13 +180,21 @@ jobs:
         <key>com.academic-tools.fermi</key>
         <string>${{ env.PP_NAME }}</string>
     </dict>
-    <key>destination</key>
-    <string>export</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>uploadBitcode</key>
+    <false/>
+    <key>compileBitcode</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>thinning</key>
+    <string>&lt;none&gt;</string>
 </dict>
 </plist>
 EOF
           
-          echo "✓ Updated ExportOptions.plist"
+          echo "✓ Created ExportOptions.plist"
           cat ios/ExportOptions.plist
 
       - name: CocoaPods setup
@@ -248,14 +249,15 @@ EOF
           
           cd ..
 
-      - name: Build iOS Archive
+      - name: Build iOS App
         env:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         shell: bash
         run: |
           set -euo pipefail
           
-          # Build the Flutter app WITH signing (verbose to see what's happening)
+          # First, try flutter build ipa with export options
+          echo "Building iOS app with flutter build ipa..."
           flutter build ipa --release \
             --build-name=1.0.0 \
             --build-number=1 \
@@ -267,33 +269,67 @@ EOF
             --dart-define=FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }} \
             --dart-define=FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }} \
             --dart-define=FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }} \
-            --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }} \
-            --verbose || {
-              echo "Build failed. Checking for archive..."
-              if [ -d "build/ios/archive/Runner.xcarchive" ]; then
-                echo "Archive was created but export failed. Archive contents:"
-                ls -la build/ios/archive/Runner.xcarchive/
-                echo "Checking Products/Applications:"
-                ls -la build/ios/archive/Runner.xcarchive/Products/Applications/ || true
-              fi
-              exit 1
+            --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }} || {
+              echo "flutter build ipa failed or didn't create IPA. Will try alternative method..."
             }
           
-          echo "✓ Flutter build ipa completed"
+          # Check if IPA was created
+          if ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
+            echo "✓ IPA created successfully with flutter build ipa"
+          else
+            echo "IPA not found. Using alternative build method..."
+            
+            # Alternative method: Build with flutter build ios, then archive and export manually
+            echo "Step 1: Building iOS app without IPA export..."
+            flutter clean
+            flutter build ios --release \
+              --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
+              --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+              --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
+              --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }} \
+              --dart-define=FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }} \
+              --dart-define=FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }} \
+              --dart-define=FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }} \
+              --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }}
+            
+            echo "Step 2: Creating archive with xcodebuild..."
+            xcodebuild -workspace ios/Runner.xcworkspace \
+              -scheme Runner \
+              -sdk iphoneos \
+              -configuration Release \
+              -archivePath build/ios/archive/Runner.xcarchive \
+              archive
+            
+            echo "Step 3: Exporting IPA from archive..."
+            mkdir -p build/ios/ipa
+            xcodebuild -exportArchive \
+              -archivePath build/ios/archive/Runner.xcarchive \
+              -exportPath build/ios/ipa \
+              -exportOptionsPlist ios/ExportOptions.plist \
+              -allowProvisioningUpdates
+            
+            # Verify IPA was created
+            if ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
+              echo "✓ IPA created successfully with xcodebuild"
+            else
+              echo "✗ Failed to create IPA even with manual export"
+              echo "Archive contents:"
+              ls -la build/ios/archive/Runner.xcarchive/ || true
+              echo "IPA directory contents:"
+              ls -la build/ios/ipa/ || true
+              exit 1
+            fi
+          fi
 
-      - name: Debug Archive and Export
+      - name: Verify Build Outputs
         shell: bash
         run: |
-          echo "=== Checking build outputs ==="
+          echo "=== Verifying build outputs ==="
           
           # Check if archive was created
           if [ -d "build/ios/archive/Runner.xcarchive" ]; then
             echo "✓ Archive found at build/ios/archive/Runner.xcarchive"
             echo "Archive size: $(du -sh build/ios/archive/Runner.xcarchive | cut -f1)"
-            
-            # Check archive contents
-            echo "Archive Info.plist:"
-            plutil -p build/ios/archive/Runner.xcarchive/Info.plist | head -20
             
             # Check if app exists in archive
             if [ -d "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app" ]; then
@@ -302,10 +338,14 @@ EOF
               # Check app's embedded provisioning profile
               if [ -f "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/embedded.mobileprovision" ]; then
                 echo "✓ Embedded provisioning profile found"
-                security cms -D -i build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/embedded.mobileprovision | plutil -p - | grep -E "(Name|UUID|TeamIdentifier)" | head -10
+                security cms -D -i build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/embedded.mobileprovision | plutil -p - | grep -E "(Name|UUID|TeamIdentifier|application-identifier)" | head -10
               else
                 echo "✗ No embedded provisioning profile found"
               fi
+              
+              # Check app Info.plist for bundle ID
+              echo "App bundle identifier:"
+              plutil -p build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/Info.plist | grep CFBundleIdentifier || true
             else
               echo "✗ Runner.app not found in archive"
             fi
@@ -315,46 +355,53 @@ EOF
           
           # Check if IPA was created
           echo ""
-          echo "=== Checking IPA export ==="
+          echo "=== Verifying IPA export ==="
           if [ -d "build/ios/ipa" ]; then
             echo "IPA directory contents:"
             ls -la build/ios/ipa/
             
-            # Check for any IPA files
+            # Check for IPA files
             if ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
               echo "✓ IPA file(s) found:"
-              ls -la build/ios/ipa/*.ipa
+              for ipa in build/ios/ipa/*.ipa; do
+                echo "  - $(basename $ipa) ($(du -h $ipa | cut -f1))"
+              done
+              
+              # Extract and verify IPA contents
+              echo ""
+              echo "Verifying IPA contents:"
+              unzip -l build/ios/ipa/*.ipa | head -20
             else
               echo "✗ No IPA files found in build/ios/ipa/"
               
               # Check for export logs
+              if [ -f "build/ios/ipa/DistributionSummary.plist" ]; then
+                echo "Export summary found:"
+                plutil -p build/ios/ipa/DistributionSummary.plist | head -30
+              fi
+              
               if [ -f "build/ios/ipa/ExportOptions.plist" ]; then
                 echo "Export options used:"
                 cat build/ios/ipa/ExportOptions.plist
               fi
-              
-              # Try manual export as a fallback
-              echo ""
-              echo "=== Attempting manual export ==="
-              xcodebuild -exportArchive \
-                -archivePath build/ios/archive/Runner.xcarchive \
-                -exportPath build/ios/ipa \
-                -exportOptionsPlist ios/ExportOptions.plist \
-                -allowProvisioningUpdates || {
-                  echo "Manual export also failed"
-                }
             fi
           else
             echo "✗ IPA directory doesn't exist"
           fi
 
-      - name: Verify IPA Creation
+      - name: Final IPA Verification
         shell: bash
         run: |
           # Final verification
           if ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
-            echo "✓ IPA file created successfully:"
-            ls -la build/ios/ipa/*.ipa
+            echo "✓ Build successful! IPA files created:"
+            for ipa in build/ios/ipa/*.ipa; do
+              echo "  $(basename $ipa): $(du -h $ipa | cut -f1)"
+            done
+            echo ""
+            echo "Build artifacts:"
+            echo "- Archive: build/ios/archive/Runner.xcarchive"
+            echo "- IPA: build/ios/ipa/"
           else
             echo "✗ IPA creation failed"
             echo ""
@@ -362,10 +409,16 @@ EOF
             echo "- Archive: $([ -d 'build/ios/archive/Runner.xcarchive' ] && echo 'Created' || echo 'Failed')"
             echo "- IPA: Not created"
             echo ""
-            echo "This usually indicates an export problem. Check:"
-            echo "1. Provisioning profile matches bundle ID"
-            echo "2. Signing certificate is valid"
-            echo "3. ExportOptions.plist is correct"
+            echo "Common causes:"
+            echo "1. Provisioning profile doesn't match bundle ID (expected: com.academic-tools.fermi)"
+            echo "2. Signing certificate not found or invalid"
+            echo "3. ExportOptions.plist configuration incorrect"
+            echo "4. Missing entitlements in provisioning profile"
+            echo ""
+            echo "Debug information:"
+            echo "- Team ID: ${{ secrets.DEVELOPMENT_TEAM }}"
+            echo "- Profile Name: ${{ env.PP_NAME }}"
+            echo "- Profile UUID: ${{ env.PP_UUID }}"
             exit 1
           fi
 
