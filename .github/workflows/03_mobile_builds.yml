@@ -304,8 +304,11 @@ jobs:
           flutter pub get
           
           # Fix for non-modular header errors with Firebase
+          # Set build settings via environment variables that xcodebuild will pick up
+          export CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES=YES
+          export GCC_PREPROCESSOR_DEFINITIONS='$(inherited) COCOAPODS=1'
+          export OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module'
           export SWIFT_COMPILATION_MODE=wholemodule
-          export OTHER_SWIFT_FLAGS="-Xfrontend -warn-long-function-bodies=500"
           
           # Build the Flutter app WITHOUT code signing
           # This creates the necessary build artifacts for xcodebuild
@@ -320,14 +323,7 @@ jobs:
             --dart-define=FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }} \
             --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }} \
             --build-name=0.9.0 \
-            --build-number=1 \
-            -- \
-            -workspace Runner.xcworkspace \
-            -scheme Runner \
-            -configuration Release \
-            CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES=YES \
-            GCC_PREPROCESSOR_DEFINITIONS='$(inherited) COCOAPODS=1' \
-            OTHER_CFLAGS='$(inherited) -Wno-error=non-modular-include-in-framework-module'
+            --build-number=1
           
           echo "✓ Flutter build completed"
 
