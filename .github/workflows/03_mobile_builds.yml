@@ -157,6 +157,45 @@ jobs:
           echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
           echo "PP_NAME=$PP_NAME" >> $GITHUB_ENV
 
+      - name: Update ExportOptions.plist with Provisioning Profile
+        run: |
+          # Update the ExportOptions.plist to use the correct provisioning profile name
+          echo "Updating ExportOptions.plist with provisioning profile: ${{ env.PP_NAME }}"
+          
+          # Create a properly formatted ExportOptions.plist
+          cat > ios/ExportOptions.plist << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store</string>
+    <key>teamID</key>
+    <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
+    <key>uploadBitcode</key>
+    <false/>
+    <key>compileBitcode</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <true/>
+    <key>signingStyle</key>
+    <string>manual</string>
+    <key>signingCertificate</key>
+    <string>Apple Distribution</string>
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.academic-tools.fermi</key>
+        <string>${{ env.PP_NAME }}</string>
+    </dict>
+    <key>destination</key>
+    <string>export</string>
+</dict>
+</plist>
+EOF
+          
+          echo "✓ Updated ExportOptions.plist"
+          cat ios/ExportOptions.plist
+
       - name: CocoaPods setup
         run: |
           cd ios
@@ -171,13 +210,18 @@ jobs:
           # Update the Xcode project.pbxproj file with our signing configuration
           cd ios
           
+          # Debug: Show provisioning profile info
+          echo "Using PP_UUID: ${{ env.PP_UUID }}"
+          echo "Using PP_NAME: ${{ env.PP_NAME }}"
+          
           # CRITICAL: Update the bundle ID to match our provisioning profile
           sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = .*/PRODUCT_BUNDLE_IDENTIFIER = com.academic-tools.fermi;/g" Runner.xcodeproj/project.pbxproj
           
           # Use sed to update the project.pbxproj with our signing settings
           sed -i '' "s/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;/g" Runner.xcodeproj/project.pbxproj
           sed -i '' "s/CODE_SIGN_STYLE = .*/CODE_SIGN_STYLE = Manual;/g" Runner.xcodeproj/project.pbxproj
-          sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";/g" Runner.xcodeproj/project.pbxproj
+          # FIX: Use proper GitHub env variable syntax for PP_UUID
+          sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"${{ env.PP_UUID }}\";/g" Runner.xcodeproj/project.pbxproj
           sed -i '' "s/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = \"iPhone Distribution\";/g" Runner.xcodeproj/project.pbxproj
           
           # If the settings don't exist, add them
@@ -193,10 +237,14 @@ jobs:
           
           if ! grep -q "PROVISIONING_PROFILE_SPECIFIER = " Runner.xcodeproj/project.pbxproj; then
             sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\
-            PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";" Runner.xcodeproj/project.pbxproj
+            PROVISIONING_PROFILE_SPECIFIER = \"${{ env.PP_UUID }}\";" Runner.xcodeproj/project.pbxproj
           fi
           
           echo "✓ Updated project.pbxproj with signing settings"
+          
+          # Debug: Verify the changes
+          echo "Verifying signing settings in project.pbxproj:"
+          grep -E "(DEVELOPMENT_TEAM|CODE_SIGN_STYLE|PROVISIONING_PROFILE_SPECIFIER|CODE_SIGN_IDENTITY)" Runner.xcodeproj/project.pbxproj | head -20
           
           cd ..
 
@@ -207,7 +255,7 @@ jobs:
         run: |
           set -euo pipefail
           
-          # Build the Flutter app WITH signing
+          # Build the Flutter app WITH signing (verbose to see what's happening)
           flutter build ipa --release \
             --build-name=1.0.0 \
             --build-number=1 \
@@ -219,20 +267,105 @@ jobs:
             --dart-define=FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }} \
             --dart-define=FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }} \
             --dart-define=FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }} \
-            --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }}
+            --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }} \
+            --verbose || {
+              echo "Build failed. Checking for archive..."
+              if [ -d "build/ios/archive/Runner.xcarchive" ]; then
+                echo "Archive was created but export failed. Archive contents:"
+                ls -la build/ios/archive/Runner.xcarchive/
+                echo "Checking Products/Applications:"
+                ls -la build/ios/archive/Runner.xcarchive/Products/Applications/ || true
+              fi
+              exit 1
+            }
           
-          echo "✓ IPA build completed"
+          echo "✓ Flutter build ipa completed"
+
+      - name: Debug Archive and Export
+        shell: bash
+        run: |
+          echo "=== Checking build outputs ==="
+          
+          # Check if archive was created
+          if [ -d "build/ios/archive/Runner.xcarchive" ]; then
+            echo "✓ Archive found at build/ios/archive/Runner.xcarchive"
+            echo "Archive size: $(du -sh build/ios/archive/Runner.xcarchive | cut -f1)"
+            
+            # Check archive contents
+            echo "Archive Info.plist:"
+            plutil -p build/ios/archive/Runner.xcarchive/Info.plist | head -20
+            
+            # Check if app exists in archive
+            if [ -d "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app" ]; then
+              echo "✓ Runner.app found in archive"
+              
+              # Check app's embedded provisioning profile
+              if [ -f "build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/embedded.mobileprovision" ]; then
+                echo "✓ Embedded provisioning profile found"
+                security cms -D -i build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app/embedded.mobileprovision | plutil -p - | grep -E "(Name|UUID|TeamIdentifier)" | head -10
+              else
+                echo "✗ No embedded provisioning profile found"
+              fi
+            else
+              echo "✗ Runner.app not found in archive"
+            fi
+          else
+            echo "✗ No archive found at build/ios/archive/Runner.xcarchive"
+          fi
+          
+          # Check if IPA was created
+          echo ""
+          echo "=== Checking IPA export ==="
+          if [ -d "build/ios/ipa" ]; then
+            echo "IPA directory contents:"
+            ls -la build/ios/ipa/
+            
+            # Check for any IPA files
+            if ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
+              echo "✓ IPA file(s) found:"
+              ls -la build/ios/ipa/*.ipa
+            else
+              echo "✗ No IPA files found in build/ios/ipa/"
+              
+              # Check for export logs
+              if [ -f "build/ios/ipa/ExportOptions.plist" ]; then
+                echo "Export options used:"
+                cat build/ios/ipa/ExportOptions.plist
+              fi
+              
+              # Try manual export as a fallback
+              echo ""
+              echo "=== Attempting manual export ==="
+              xcodebuild -exportArchive \
+                -archivePath build/ios/archive/Runner.xcarchive \
+                -exportPath build/ios/ipa \
+                -exportOptionsPlist ios/ExportOptions.plist \
+                -allowProvisioningUpdates || {
+                  echo "Manual export also failed"
+                }
+            fi
+          else
+            echo "✗ IPA directory doesn't exist"
+          fi
 
       - name: Verify IPA Creation
         shell: bash
         run: |
-          # Check if IPA was created successfully
-          if [ -f "build/ios/ipa/*.ipa" ]; then
-            echo "✓ IPA file created successfully"
-            ls -la build/ios/ipa/
+          # Final verification
+          if ls build/ios/ipa/*.ipa 1> /dev/null 2>&1; then
+            echo "✓ IPA file created successfully:"
+            ls -la build/ios/ipa/*.ipa
           else
-            echo "Checking archive location..."
-            ls -la build/ios/archive/ || true
+            echo "✗ IPA creation failed"
+            echo ""
+            echo "Build summary:"
+            echo "- Archive: $([ -d 'build/ios/archive/Runner.xcarchive' ] && echo 'Created' || echo 'Failed')"
+            echo "- IPA: Not created"
+            echo ""
+            echo "This usually indicates an export problem. Check:"
+            echo "1. Provisioning profile matches bundle ID"
+            echo "2. Signing certificate is valid"
+            echo "3. ExportOptions.plist is correct"
             exit 1
           fi
 
