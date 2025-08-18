@@ -83,7 +83,7 @@ jobs:
       
       - name: Select Xcode 16 with iOS 18 SDK
         run: |
-          # Use Xcode 16.2 which has iOS 18 SDK
+          # Use latest Xcode 16 (the -G flag issue is now fixed in Podfile)
           sudo xcode-select -s /Applications/Xcode_16.2.app
           xcodebuild -version
           xcodebuild -showsdks | grep iOS
@@ -209,8 +209,10 @@ jobs:
       - name: CocoaPods setup
         run: |
           cd ios
+          # Clean pods to ensure Podfile changes are applied
+          rm -rf Pods Podfile.lock
           pod repo update
-          pod install
+          pod install --verbose
           cd ..
 
       - name: Configure Xcode Project for Manual Signing

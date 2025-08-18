@@ -38,6 +38,18 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
+    # Fix for Xcode 16: Remove unsupported -G flag from BoringSSL-GRPC
+    if target.name == 'BoringSSL-GRPC'
+      target.source_build_phase.files.each do |file|
+        if file.settings && file.settings['COMPILER_FLAGS']
+          flags = file.settings['COMPILER_FLAGS'].split
+          # Remove both -G and -GCC_WARN_INHIBIT_ALL_WARNINGS flags
+          flags.reject! { |flag| flag == '-G' || flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
+          file.settings['COMPILER_FLAGS'] = flags.join(' ')
+        end
+      end
+    end
+    
     target.build_configurations.each do |config|
       # CRITICAL: Prevent provisioning profiles for Pods
       # Pods don't need code signing and it causes build failures
