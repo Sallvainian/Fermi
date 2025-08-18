@@ -303,10 +303,14 @@ jobs:
           flutter clean
           flutter pub get
           
+          # Fix for non-modular header errors with Firebase
+          export SWIFT_COMPILATION_MODE=wholemodule
+          export OTHER_SWIFT_FLAGS="-Xfrontend -warn-long-function-bodies=500"
+          
           # Build the Flutter app WITHOUT code signing
           # This creates the necessary build artifacts for xcodebuild
           echo "Building Flutter iOS app without code signing..."
-          flutter build ios --release --no-codesign --verbose \
+          flutter build ios --release --no-codesign \
             --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
@@ -314,7 +318,16 @@ jobs:
             --dart-define=FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }} \
             --dart-define=FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }} \
             --dart-define=FIREBASE_APP_ID_IOS=${{ secrets.FIREBASE_APP_ID_IOS }} \
-            --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }}
+            --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }} \
+            --build-name=0.9.0 \
+            --build-number=1 \
+            -- \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES=YES \
+            GCC_PREPROCESSOR_DEFINITIONS='$(inherited) COCOAPODS=1' \
+            OTHER_CFLAGS='$(inherited) -Wno-error=non-modular-include-in-framework-module'
           
           echo "✓ Flutter build completed"
 
@@ -342,7 +355,10 @@ jobs:
             DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}" \
             PROVISIONING_PROFILE_SPECIFIER="$PP_UUID" \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
-            CODE_SIGN_STYLE="Manual"
+            CODE_SIGN_STYLE="Manual" \
+            CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES=YES \
+            GCC_PREPROCESSOR_DEFINITIONS='$(inherited) COCOAPODS=1' \
+            OTHER_CFLAGS='$(inherited) -Wno-error=non-modular-include-in-framework-module'
           
           # Verify archive was created
           if [ -d "build/ios/Runner.xcarchive" ]; then
