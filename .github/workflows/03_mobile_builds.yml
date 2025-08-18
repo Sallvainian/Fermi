@@ -74,12 +74,18 @@ jobs:
 
   ios:
     name: iOS IPA
-    runs-on: macos-latest
+    runs-on: macos-14
     if: >
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/ios-v')) ||
       (github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both'))
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select Xcode Version
+        run: |
+          # Use Xcode 15.4 for compatibility with Firebase
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -version
 
       - uses: subosito/flutter-action@v2
         with:
@@ -207,20 +213,61 @@ jobs:
           
           cd ..
 
-      - name: Install CocoaPods Dependencies
+      - name: Clean and Install CocoaPods Dependencies
         run: |
           cd ios
-          pod repo update
-          pod install
+          
+          # Clean previous pod installations
+          rm -rf Pods
+          rm -f Podfile.lock
+          
+          # Clean derived data and module cache
+          rm -rf ~/Library/Developer/Xcode/DerivedData
+          rm -rf ~/Library/Caches/CocoaPods
+          
+          # Update pod repo and install with retries
+          pod repo update || pod repo update --verbose
+          
+          # Try pod install with retry logic
+          if ! pod install --repo-update; then
+            echo "First pod install failed, retrying with cleanup..."
+            pod deintegrate
+            pod setup
+            pod install --repo-update --verbose
+          fi
+          
+          # Verify pods installed correctly
+          if [ ! -d "Pods" ]; then
+            echo "ERROR: Pods directory not created"
+            echo "Attempting manual pod installation..."
+            
+            # Try one more time with full cleanup
+            rm -rf ~/.cocoapods/repos/trunk
+            pod setup
+            pod install --repo-update
+            
+            if [ ! -d "Pods" ]; then
+              echo "FATAL: Could not install pods after multiple attempts"
+              exit 1
+            fi
+          fi
+          
+          echo "Pod installation completed successfully"
+          ls -la Pods/ | head -20
+          
           cd ..
 
       - name: Build iOS App (Without Code Signing)
         shell: bash
         run: |
+          # Clean Flutter build cache
+          flutter clean
+          flutter pub get
+          
           # Build the Flutter app WITHOUT code signing
           # This creates the necessary build artifacts for xcodebuild
           echo "Building Flutter iOS app without code signing..."
-          flutter build ios --release --no-codesign \
+          flutter build ios --release --no-codesign --verbose \
             --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
@@ -237,10 +284,17 @@ jobs:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         shell: bash
         run: |
+          # Clean build folder
+          rm -rf build/ios
+          
+          # Set compiler flags for FirebaseFirestore compatibility
+          export COMPILER_INDEX_STORE_ENABLE=NO
+          export GCC_PREPROCESSOR_DEFINITIONS='$(inherited) TARGET_OS_VISION=0'
+          
           # Create archive using xcodebuild with manual signing
           echo "Creating archive with xcodebuild..."
           
-          xcodebuild -workspace ios/Runner.xcworkspace \
+          xcodebuild clean archive -workspace ios/Runner.xcworkspace \
             -scheme Runner \
             -sdk iphoneos \
             -configuration Release \
@@ -317,8 +371,8 @@ jobs:
             echo "✓ IPA files:"
             for ipa in build/ios/ipa/*.ipa; do
               echo "  - $(basename $ipa): $(du -h $ipa | cut -f1)"
-              # Quick verification of IPA contents
-              unzip -l "$ipa" | grep -E "(Runner.app|embedded.mobileprovision)" | head -5
+              # Quick verification of IPA contents (fixed grep pipe issue)
+              unzip -l "$ipa" | grep -E "(Runner.app|embedded.mobileprovision)" | head -5 || true
             done
           else
             echo "✗ No IPA files found"
