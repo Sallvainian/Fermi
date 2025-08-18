@@ -39,6 +39,13 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     
     target.build_configurations.each do |config|
+      # CRITICAL: Prevent provisioning profiles for Pods
+      # Pods don't need code signing and it causes build failures
+      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      config.build_settings.delete('PROVISIONING_PROFILE_SPECIFIER')
+      config.build_settings.delete('PROVISIONING_PROFILE')
+      config.build_settings.delete('CODE_SIGNING_IDENTITY')
+      
       # Minimum iOS version
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
       
