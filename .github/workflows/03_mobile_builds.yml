@@ -164,37 +164,37 @@ jobs:
           echo "Creating ExportOptions.plist with provisioning profile: $PP_NAME"
           
           # Create a properly formatted ExportOptions.plist for manual signing
-          cat > ios/ExportOptions.plist << EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>method</key>
-    <string>app-store</string>
-    <key>teamID</key>
-    <string>$DEVELOPMENT_TEAM</string>
-    <key>signingStyle</key>
-    <string>manual</string>
-    <key>signingCertificate</key>
-    <string>Apple Distribution</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.academic-tools.fermi</key>
-        <string>$PP_NAME</string>
-    </dict>
-    <key>stripSwiftSymbols</key>
-    <true/>
-    <key>uploadBitcode</key>
-    <false/>
-    <key>compileBitcode</key>
-    <false/>
-    <key>uploadSymbols</key>
-    <true/>
-    <key>thinning</key>
-    <string>&lt;none&gt;</string>
-</dict>
-</plist>
-EOF
+          # Use printf to avoid heredoc parsing issues
+          printf '%s\n' \
+            '<?xml version="1.0" encoding="UTF-8"?>' \
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+            '<plist version="1.0">' \
+            '<dict>' \
+            '    <key>method</key>' \
+            '    <string>app-store</string>' \
+            '    <key>teamID</key>' \
+            "    <string>$DEVELOPMENT_TEAM</string>" \
+            '    <key>signingStyle</key>' \
+            '    <string>manual</string>' \
+            '    <key>signingCertificate</key>' \
+            '    <string>Apple Distribution</string>' \
+            '    <key>provisioningProfiles</key>' \
+            '    <dict>' \
+            '        <key>com.academic-tools.fermi</key>' \
+            "        <string>$PP_NAME</string>" \
+            '    </dict>' \
+            '    <key>stripSwiftSymbols</key>' \
+            '    <true/>' \
+            '    <key>uploadBitcode</key>' \
+            '    <false/>' \
+            '    <key>compileBitcode</key>' \
+            '    <false/>' \
+            '    <key>uploadSymbols</key>' \
+            '    <true/>' \
+            '    <key>thinning</key>' \
+            '    <string>&lt;none&gt;</string>' \
+            '</dict>' \
+            '</plist>' > ios/ExportOptions.plist
           
           echo "✓ Created ExportOptions.plist"
           cat ios/ExportOptions.plist
