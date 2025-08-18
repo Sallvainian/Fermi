@@ -212,8 +212,8 @@ EOF
           cd ios
           
           # Debug: Show provisioning profile info
-          echo "Using PP_UUID: ${{ env.PP_UUID }}"
-          echo "Using PP_NAME: ${{ env.PP_NAME }}"
+          echo "Using PP_UUID: $PP_UUID"
+          echo "Using PP_NAME: $PP_NAME"
           
           # CRITICAL: Update the bundle ID to match our provisioning profile
           sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = .*/PRODUCT_BUNDLE_IDENTIFIER = com.academic-tools.fermi;/g" Runner.xcodeproj/project.pbxproj
@@ -222,7 +222,7 @@ EOF
           sed -i '' "s/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = $DEVELOPMENT_TEAM;/g" Runner.xcodeproj/project.pbxproj
           sed -i '' "s/CODE_SIGN_STYLE = .*/CODE_SIGN_STYLE = Manual;/g" Runner.xcodeproj/project.pbxproj
           # FIX: Use proper GitHub env variable syntax for PP_UUID
-          sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"${{ env.PP_UUID }}\";/g" Runner.xcodeproj/project.pbxproj
+          sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";/g" Runner.xcodeproj/project.pbxproj
           sed -i '' "s/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = \"iPhone Distribution\";/g" Runner.xcodeproj/project.pbxproj
           
           # If the settings don't exist, add them
@@ -238,7 +238,7 @@ EOF
           
           if ! grep -q "PROVISIONING_PROFILE_SPECIFIER = " Runner.xcodeproj/project.pbxproj; then
             sed -i '' "/PRODUCT_BUNDLE_IDENTIFIER/a\
-            PROVISIONING_PROFILE_SPECIFIER = \"${{ env.PP_UUID }}\";" Runner.xcodeproj/project.pbxproj
+            PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";" Runner.xcodeproj/project.pbxproj
           fi
           
           echo "✓ Updated project.pbxproj with signing settings"
@@ -418,7 +418,7 @@ EOF
             echo "Debug information:"
             echo "- Team ID: ${{ secrets.DEVELOPMENT_TEAM }}"
             echo "- Profile Name: ${{ env.PP_NAME }}"
-            echo "- Profile UUID: ${{ env.PP_UUID }}"
+            echo "- Profile UUID: $PP_UUID"
             exit 1
           fi
 
