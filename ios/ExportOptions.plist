@@ -19,7 +19,7 @@
     <key>provisioningProfiles</key>
     <dict>
         <key>com.academic-tools.fermi</key>
-        <string>Fermi_Distribution</string>
+        <string>Fermi Distribution</string>
     </dict>
     <key>destination</key>
     <string>export</string>
