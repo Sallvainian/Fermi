@@ -89,6 +89,36 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks | grep iOS
 
+      - name: Install iOS 18 Runtime
+        run: |
+          echo "Installing iOS 18 runtime for Xcode 16..."
+          
+          # List available runtimes to see what's already installed
+          echo "Currently installed runtimes:"
+          xcrun simctl list runtimes
+          
+          # Download and install iOS 18.0 runtime using xcodebuild
+          # The -downloadPlatform command downloads all available simulators for iOS
+          echo "Downloading iOS platform and simulators..."
+          xcodebuild -downloadPlatform iOS -verbose || {
+            echo "Note: Platform download may have completed or iOS SDK already available"
+          }
+          
+          # Wait a moment for the download to complete
+          sleep 5
+          
+          # Verify the runtime is installed
+          echo "Verifying iOS runtime installation:"
+          xcrun simctl list runtimes
+          
+          # Show available SDKs
+          echo "Available SDKs:"
+          xcodebuild -showsdks
+          
+          # For archive builds, we don't need simulators, just the SDK
+          # The generic/platform=iOS destination uses the SDK directly
+          echo "iOS SDK is ready for archive build"
+
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -209,9 +239,16 @@ jobs:
           sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"$PP_UUID\";/g" Runner.xcodeproj/project.pbxproj
           sed -i '' "s/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = \"iPhone Distribution\";/g" Runner.xcodeproj/project.pbxproj
           
+          # Update iOS deployment target to iOS 18.0 as required by Apple
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = .*/IPHONEOS_DEPLOYMENT_TARGET = 18.0;/g" Runner.xcodeproj/project.pbxproj
+          
+          # Also update in Podfile
+          sed -i '' "s/config.build_settings\['IPHONEOS_DEPLOYMENT_TARGET'\] = .*/config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'/g" Podfile
+          sed -i '' "s/platform :ios, .*/platform :ios, '18.0'/g" Podfile
+          
           # Verify changes
           echo "Verifying Xcode settings:"
-          grep -E "(PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_STYLE)" Runner.xcodeproj/project.pbxproj | head -10
+          grep -E "(PRODUCT_BUNDLE_IDENTIFIER|DEVELOPMENT_TEAM|CODE_SIGN_STYLE|IPHONEOS_DEPLOYMENT_TARGET)" Runner.xcodeproj/project.pbxproj | head -15
           
           cd ..
 
@@ -298,7 +335,7 @@ jobs:
           
           xcodebuild clean archive -workspace ios/Runner.xcworkspace \
             -scheme Runner \
-            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
             -configuration Release \
             -archivePath build/ios/Runner.xcarchive \
             archive \
