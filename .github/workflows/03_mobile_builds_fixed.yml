@@ -153,6 +153,8 @@ jobs:
           security find-identity -v -p codesigning $KEYCHAIN_PATH
 
       - name: Create ExportOptions.plist
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
           cat > ios/ExportOptions.plist << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -162,7 +164,7 @@ jobs:
     <key>method</key>
     <string>app-store</string>
     <key>teamID</key>
-    <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
+    <string>$DEVELOPMENT_TEAM</string>
     <key>signingStyle</key>
     <string>manual</string>
     <key>signingCertificate</key>

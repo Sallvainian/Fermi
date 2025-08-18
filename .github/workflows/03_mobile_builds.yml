@@ -158,8 +158,10 @@ jobs:
           echo "PP_NAME=$PP_NAME" >> $GITHUB_ENV
 
       - name: Create ExportOptions.plist for Manual Signing
+        env:
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM }}
         run: |
-          echo "Creating ExportOptions.plist with provisioning profile: ${{ env.PP_NAME }}"
+          echo "Creating ExportOptions.plist with provisioning profile: $PP_NAME"
           
           # Create a properly formatted ExportOptions.plist for manual signing
           cat > ios/ExportOptions.plist << EOF
@@ -170,7 +172,7 @@ jobs:
     <key>method</key>
     <string>app-store</string>
     <key>teamID</key>
-    <string>${{ secrets.DEVELOPMENT_TEAM }}</string>
+    <string>$DEVELOPMENT_TEAM</string>
     <key>signingStyle</key>
     <string>manual</string>
     <key>signingCertificate</key>
@@ -178,7 +180,7 @@ jobs:
     <key>provisioningProfiles</key>
     <dict>
         <key>com.academic-tools.fermi</key>
-        <string>${{ env.PP_NAME }}</string>
+        <string>$PP_NAME</string>
     </dict>
     <key>stripSwiftSymbols</key>
     <true/>
