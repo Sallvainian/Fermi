@@ -114,17 +114,25 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
-      - name: Write GoogleService-Info.plist
+      - name: Verify GoogleService-Info.plist
         shell: bash
         run: |
-          # Check if file already exists (committed to repo)
+          # The file is committed to the repository, just verify it exists
           if [ -f "ios/Runner/GoogleService-Info.plist" ] && [ -s "ios/Runner/GoogleService-Info.plist" ]; then
-            echo "✓ GoogleService-Info.plist already exists in repository"
-          elif [ -n "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" ]; then
-            echo "Writing GoogleService-Info.plist from secret..."
-            echo "${{ secrets.GOOGLESERVICE_INFO_PLIST_B64 }}" | base64 -d > ios/Runner/GoogleService-Info.plist
+            echo "✓ GoogleService-Info.plist exists in repository"
+            echo "File size: $(wc -c < ios/Runner/GoogleService-Info.plist) bytes"
+            # Verify Bundle ID matches
+            if grep -q "com.academic-tools.fermi" ios/Runner/GoogleService-Info.plist; then
+              echo "✓ Bundle ID verified: com.academic-tools.fermi"
+            else
+              echo "⚠️ Bundle ID mismatch in GoogleService-Info.plist"
+            fi
+          else
+            echo "ERROR: GoogleService-Info.plist not found in repository"
+            echo "File should be at: ios/Runner/GoogleService-Info.plist"
+            ls -la ios/Runner/ || true
+            exit 1
           fi
-          test -s ios/Runner/GoogleService-Info.plist || (echo "ERROR: GoogleService-Info.plist missing/empty" && exit 1)
 
       - name: Setup Certificates and Provisioning Profile
         env:
@@ -291,15 +299,20 @@ jobs:
           flutter pub get
           
           # Fix for non-modular header errors with Firebase
-          # Set build settings via environment variables that xcodebuild will pick up
-          export CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES=YES
-          export GCC_PREPROCESSOR_DEFINITIONS='$(inherited) COCOAPODS=1'
-          export OTHER_CFLAGS='-Wno-error=non-modular-include-in-framework-module'
-          export SWIFT_COMPILATION_MODE=wholemodule
+          # Add build settings to ios/Runner.xcodeproj/project.pbxproj
+          cd ios
+          
+          # Update project settings to allow non-modular includes
+          if ! grep -q "CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES" Runner.xcodeproj/project.pbxproj; then
+            echo "Adding non-modular include settings to project..."
+            sed -i '' 's/ENABLE_BITCODE = NO;/ENABLE_BITCODE = NO;\n\t\t\t\tCLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES = YES;/g' Runner.xcodeproj/project.pbxproj
+          fi
+          
+          cd ..
           
           # Build the Flutter app WITHOUT code signing
-          # This creates the necessary build artifacts for xcodebuild
-          echo "Building Flutter iOS app without code signing..."
+          # Use iOS device build (not simulator) with generic destination
+          echo "Building Flutter iOS app for device (archive)..."
           flutter build ios --release --no-codesign \
             --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
