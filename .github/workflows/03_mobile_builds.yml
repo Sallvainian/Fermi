@@ -89,35 +89,22 @@ jobs:
           xcodebuild -version
           xcodebuild -showsdks | grep iOS
 
-      - name: Install iOS 18 Runtime
+      - name: Verify iOS SDK
         run: |
-          echo "Installing iOS 18 runtime for Xcode 16..."
+          echo "Checking iOS SDK availability..."
           
-          # List available runtimes to see what's already installed
-          echo "Currently installed runtimes:"
-          xcrun simctl list runtimes
-          
-          # Download and install iOS 18.0 runtime using xcodebuild
-          # The -downloadPlatform command downloads all available simulators for iOS
-          echo "Downloading iOS platform and simulators..."
-          xcodebuild -downloadPlatform iOS -verbose || {
-            echo "Note: Platform download may have completed or iOS SDK already available"
-          }
-          
-          # Wait a moment for the download to complete
-          sleep 5
-          
-          # Verify the runtime is installed
-          echo "Verifying iOS runtime installation:"
-          xcrun simctl list runtimes
-          
-          # Show available SDKs
+          # Show available SDKs (Xcode 16 should have iOS 18 SDK)
           echo "Available SDKs:"
-          xcodebuild -showsdks
+          xcodebuild -showsdks | grep -i ios || true
           
-          # For archive builds, we don't need simulators, just the SDK
-          # The generic/platform=iOS destination uses the SDK directly
-          echo "iOS SDK is ready for archive build"
+          # List installed runtimes (for reference)
+          echo "Installed runtimes:"
+          xcrun simctl list runtimes || true
+          
+          # Note: We don't need to download the full iOS 18 runtime/simulator
+          # for archive builds. The SDK that comes with Xcode 16 is sufficient.
+          # Skip the lengthy download that takes 30+ minutes.
+          echo "iOS SDK is ready for archive build (skipping runtime download)"
 
       - uses: subosito/flutter-action@v2
         with:
