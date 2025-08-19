@@ -6,7 +6,7 @@ A comprehensive education management platform built with Flutter and Firebase, d
 
 ## 🚀 Overview
 
-Teacher Dashboard is a modern, cross-platform educational management system that connects teachers, students, and parents. Built with Flutter for beautiful, responsive UIs and Firebase for real-time data synchronization and secure authentication.
+Fermi is a modern, cross-platform educational management system that connects teachers, students, and parents. Built with Flutter for beautiful, responsive UIs and Firebase for real-time data synchronization and secure authentication.
 
 ### Key Highlights
 - 📱 **Cross-Platform**: Web, Android, and iOS from a single codebase
@@ -142,8 +142,8 @@ lib/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Sallvainian/teacher-dashboard-flutter-firebase.git
-   cd teacher-dashboard-flutter-firebase
+   git clone https://github.com/Sallvainian/Fermi.git
+   cd Fermi
    ```
 
 2. **Install dependencies**
@@ -160,6 +160,7 @@ lib/
    firebase login
    
    # Configure Firebase for your project
+   # Note: Firebase project ID remains 'teacher-dashboard-flutterfire'
    flutterfire configure --project=teacher-dashboard-flutterfire
    ```
 
@@ -308,8 +309,8 @@ The project includes comprehensive GitHub Actions workflows:
 - **Mobile Builds** - Creates APK/IPA artifacts
 
 ### Status Badges
-![CI](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/workflows/CI/badge.svg)
-![Deploy](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/workflows/Deploy%20Web/badge.svg)
+![CI](https://github.com/Sallvainian/Fermi/workflows/CI/badge.svg)
+![Deploy](https://github.com/Sallvainian/Fermi/workflows/Deploy%20Web/badge.svg)
 
 ## 🔧 Environment Variables
 
@@ -441,9 +442,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📧 **Issues**: [GitHub Issues](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/issues)
-- 📖 **Documentation**: [Wiki](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/wiki)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/Sallvainian/teacher-dashboard-flutter-firebase/discussions)
+- 📧 **Issues**: [GitHub Issues](https://github.com/Sallvainian/Fermi/issues)
+- 📖 **Documentation**: [Wiki](https://github.com/Sallvainian/Fermi/wiki)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/Sallvainian/Fermi/discussions)
 
 ---
 

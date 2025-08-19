@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Teacher Dashboard** - A Flutter (Dart) application with Firebase backend for education management.
+**Fermi** - A Flutter (Dart) application with Firebase backend for education management.
 
 **Tech Stack**: Flutter 3.24+, Dart 3.5+, Firebase (Auth, Firestore, Functions, Storage), Provider, GoRouter
 **Architecture**: Client-side Flutter app with Firebase backend; no separate server, using Provider for state management and Clean Architecture principles
@@ -74,6 +74,7 @@ flutter build ios --release
 ### Firebase Setup
 ```bash
 # Configure Firebase (when changing project)
+# Note: Firebase project ID remains 'teacher-dashboard-flutterfire'
 flutterfire configure --project=teacher-dashboard-flutterfire
 
 # Deploy to Firebase Hosting
