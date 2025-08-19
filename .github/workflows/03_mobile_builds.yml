@@ -101,12 +101,16 @@ jobs:
           echo "Currently installed runtimes:"
           xcrun simctl list runtimes || true
           
-          # For device builds, we don't need simulator but SDK must be available
-          # Ensure iOS 18 SDK is available
+          # Install iOS 18.0 runtime for device builds
+          echo "Installing iOS 18.0 runtime..."
+          xcodebuild -downloadPlatform iOS -quiet || true
+          
+          # Try to install iOS 18 runtime specifically
+          xcrun simctl runtime add "iOS 18.0" --quiet 2>/dev/null || true
+          
+          # Verify iOS 18 SDK is available
           if ! xcodebuild -showsdks | grep -q "iphoneos18"; then
-            echo "ERROR: iOS 18 SDK not found. Installing..."
-            # Try to download just the iOS platform (not full runtime)
-            xcodebuild -downloadPlatform iOS 2>/dev/null || true
+            echo "WARNING: iOS 18 SDK not found after installation attempt"
           else
             echo "✓ iOS 18 SDK is available"
           fi
