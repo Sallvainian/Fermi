@@ -44,6 +44,11 @@
 		<string>fetch</string>
 		<string>audio</string>
 	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.academic-tools.fermi.refresh</string>
+		<string>com.academic-tools.fermi.sync</string>
+	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Allow location access to provide location-based features</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
