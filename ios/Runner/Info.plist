@@ -61,8 +61,6 @@
 	<string>Allow access to calendar to schedule events</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Allow Bluetooth access to connect with accessories</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>This app collects data to provide a better user experience</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
