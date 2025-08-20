@@ -13,7 +13,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.academic-tools.fermi"
       groups:
-        - firebase_credentials # Add Firebase env vars to this group in Codemagic UI
+        - firebase_credentials # Contains all Firebase and App Store Connect env vars
     
     triggering:
       events:
@@ -47,12 +47,24 @@ workflows:
       - name: Set up code signing
         script: |
           keychain initialize
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create \
-            --issuer-id $APP_STORE_CONNECT_ISSUER_ID \
-            --key-id $APP_STORE_CONNECT_KEY_IDENTIFIER \
-            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
+          
+          # When using integration, credentials are automatically available
+          # When using environment variables, they need to be passed explicitly
+          if [ -n "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
+            # Using environment variables
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --create \
+              --issuer-id $APP_STORE_CONNECT_ISSUER_ID \
+              --key-id $APP_STORE_CONNECT_KEY_IDENTIFIER \
+              --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
+          else
+            # Using integration (credentials managed by CodeMagic)
+            app-store-connect fetch-signing-files "$BUNDLE_ID" \
+              --type IOS_APP_STORE \
+              --create
+          fi
+          
           keychain add-certificates
           xcode-project use-profiles
       
@@ -85,7 +97,10 @@ workflows:
     
     publishing:
       app_store_connect:
-        auth: integration
+        # Using environment variables directly
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
