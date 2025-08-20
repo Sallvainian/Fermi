@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -38,7 +39,15 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            // Smart navigation: check if we can pop, otherwise go to dashboard
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              // Use go_router to navigate to dashboard
+              GoRouter.of(context).go('/dashboard');
+            }
+          },
         ),
         title: Text(widget.chatTitle),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,

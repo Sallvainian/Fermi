@@ -178,7 +178,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: 32),
 
         OutlinedButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/auth/login');
+            }
+          },
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(56),
           ),
