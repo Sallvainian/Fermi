@@ -1,0 +1,68 @@
+workflows:
+  ios-workflow:
+    name: iOS Workflow
+    instance_type: mac_mini_m1
+    max_build_duration: 120
+    integrations:
+      app_store_connect: codemagic
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: $BUNDLE_IDENTIFIER
+      vars:
+        BUNDLE_ID: $BUNDLE_IDENTIFIER
+        APP_ID: $APP_STORE_APP_ID
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Set up local properties
+        script: |
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Install pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+        ignore_failure: true
+      - name: Flutter build IPA
+        script: |
+          flutter build ipa --release \
+            --build-name=1.0.$BUILD_NUMBER \
+            --build-number=$BUILD_NUMBER \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        
+        # Submit to TestFlight beta review
+        submit_to_testflight: true
+        beta_groups: # Specify beta tester groups
+          - "Internal Testers" # UPDATE with your beta group names
+        
+        # Set whether to submit to App Store review
+        submit_to_app_store: false
+        release_type: AFTER_APPROVAL # or MANUAL
+        
+      email:
+        recipients:
+          - $EMAIL_RECIPIENT
+        notify:
+          success: true
+          failure: true
+      slack:
+        channel: "#builds" # Optional - remove if not using Slack
+        notify_on_build_start: false
+        notify:
+          success: true
+          failure: true
