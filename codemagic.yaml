@@ -3,8 +3,6 @@ workflows:
     name: iOS Build
     instance_type: mac_mini_m2
     max_build_duration: 60
-    integrations:
-      app_store_connect: Fermi App Store Connect
     environment:
       ios_signing:
         distribution_type: app_store
@@ -51,7 +49,10 @@ workflows:
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
-            --create
+            --create \
+            --issuer-id $APP_STORE_CONNECT_ISSUER_ID \
+            --key-id $APP_STORE_CONNECT_KEY_IDENTIFIER \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY"
           keychain add-certificates
           xcode-project use-profiles
       
@@ -87,6 +88,9 @@ workflows:
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
       email:
         recipients:
           - team@academic-tools.com
