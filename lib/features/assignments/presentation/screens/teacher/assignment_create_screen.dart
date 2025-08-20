@@ -240,7 +240,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<AssignmentType>(
-                      value: _selectedType,
+                      initialValue: _selectedType,
                       decoration: const InputDecoration(
                         labelText: 'Assignment Type',
                         prefixIcon: Icon(Icons.category),
