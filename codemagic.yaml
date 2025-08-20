@@ -5,6 +5,13 @@ workflows:
     max_build_duration: 120
     integrations:
       app_store_connect: codemagic
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
     environment:
       ios_signing:
         distribution_type: app_store
@@ -18,6 +25,12 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Add SSH key for repository access
+        script: |
+          echo "$SSH_KEY_GITHUB" > /tmp/ssh_key
+          chmod 600 /tmp/ssh_key
+          ssh-add /tmp/ssh_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
       - name: Set up local properties
         script: |
           echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
