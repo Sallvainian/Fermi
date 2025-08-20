@@ -31,7 +31,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:218352465432:ios:828a5d537da284df38b56d</string>
+	<string>1:218352465432:ios:33fe51117562f8d938b56d</string>
 	<key>DATABASE_URL</key>
 	<string>https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com</string>
 </dict>

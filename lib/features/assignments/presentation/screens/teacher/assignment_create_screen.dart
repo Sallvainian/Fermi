@@ -174,6 +174,17 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
     
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/teacher/assignments');
+            }
+          },
+          tooltip: 'Back',
+        ),
         title: const Text('Create Assignment'),
         actions: [
           TextButton.icon(
