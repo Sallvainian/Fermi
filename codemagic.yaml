@@ -1,81 +1,177 @@
 workflows:
   ios-workflow:
-    name: iOS Workflow
-    instance_type: mac_mini_m1
-    max_build_duration: 120
+    name: iOS Build
+    instance_type: mac_mini_m2
+    max_build_duration: 60
     integrations:
-      app_store_connect: codemagic
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-          source: true
+      app_store_connect: Fermi App Store Connect
     environment:
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: $BUNDLE_IDENTIFIER
-      vars:
-        BUNDLE_ID: $BUNDLE_IDENTIFIER
-        APP_ID: $APP_STORE_APP_ID
-        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
-        XCODE_SCHEME: "Runner"
+        bundle_identifier: com.academic-tools.fermi
       flutter: stable
-      xcode: latest
+      xcode: 16.0
       cocoapods: default
+      vars:
+        BUNDLE_ID: "com.academic-tools.fermi"
+      groups:
+        - firebase_credentials # Add Firebase env vars to this group in Codemagic UI
+    
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+        - pattern: 'release/*'
+          include: true
+      tag_patterns:
+        - pattern: 'ios-v*'
+          include: true
+    
     scripts:
-      - name: Add SSH key for repository access
+      - name: Set up iOS SDK
         script: |
-          echo "$SSH_KEY_GITHUB" > /tmp/ssh_key
-          chmod 600 /tmp/ssh_key
-          ssh-add /tmp/ssh_key
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-      - name: Set up local properties
+          xcode-select --print-path
+          xcodebuild -version
+          xcodebuild -showsdks
+      
+      - name: Install dependencies
         script: |
-          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
-      - name: Get Flutter packages
-        script: |
-          flutter packages pub get
+          flutter pub get
+      
       - name: Install pods
         script: |
-          find . -name "Podfile" -execdir pod install \;
-      - name: Flutter analyze
+          cd ios
+          pod install
+      
+      - name: Set up code signing
         script: |
-          flutter analyze
-        ignore_failure: true
-      - name: Flutter build IPA
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      
+      - name: Update deployment target
+        script: |
+          cd ios
+          # Update iOS deployment target to 18.0 as required by Apple
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = .*/IPHONEOS_DEPLOYMENT_TARGET = 18.0;/g" Runner.xcodeproj/project.pbxproj
+          sed -i '' "s/platform :ios, .*/platform :ios, '18.0'/g" Podfile
+      
+      - name: Build iOS
         script: |
           flutter build ipa --release \
-            --build-name=1.0.$BUILD_NUMBER \
-            --build-number=$BUILD_NUMBER \
-            --export-options-plist=/Users/builder/export_options.plist
+            --build-name=0.9.0 \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --export-options-plist=/tmp/export_options.plist \
+            --dart-define=FIREBASE_API_KEY=$FIREBASE_API_KEY \
+            --dart-define=FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID \
+            --dart-define=FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET \
+            --dart-define=FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN \
+            --dart-define=FIREBASE_DATABASE_URL=$FIREBASE_DATABASE_URL \
+            --dart-define=FIREBASE_APP_ID_IOS=$FIREBASE_APP_ID_IOS \
+            --dart-define=FIREBASE_VAPID_KEY=$FIREBASE_VAPID_KEY
+    
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
+      - build/ios/archive/*.xcarchive
       - flutter_drive.log
+    
     publishing:
       app_store_connect:
         auth: integration
-        
-        # Submit to TestFlight beta review
         submit_to_testflight: true
-        beta_groups: # Specify beta tester groups
-          - "Internal Testers" # UPDATE with your beta group names
-        
-        # Set whether to submit to App Store review
         submit_to_app_store: false
-        release_type: AFTER_APPROVAL # or MANUAL
-        
       email:
         recipients:
-          - $EMAIL_RECIPIENT
+          - team@academic-tools.com
         notify:
           success: true
           failure: true
-      slack:
-        channel: "#builds" # Optional - remove if not using Slack
-        notify_on_build_start: false
+  
+  android-workflow:
+    name: Android Build
+    instance_type: linux_x2
+    max_build_duration: 30
+    environment:
+      android_signing:
+        - fermi_keystore
+      flutter: stable
+      java: 17
+      groups:
+        - firebase_credentials
+    
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+        - pattern: 'release/*'
+          include: true
+      tag_patterns:
+        - pattern: 'android-v*'
+          include: true
+    
+    scripts:
+      - name: Install dependencies
+        script: |
+          flutter pub get
+      
+      - name: Set up Firebase config
+        script: |
+          # Write google-services.json if provided via environment variable
+          if [ ! -f "android/app/google-services.json" ] && [ -n "$GOOGLE_SERVICES_JSON_B64" ]; then
+            echo "$GOOGLE_SERVICES_JSON_B64" | base64 -d > android/app/google-services.json
+          fi
+      
+      - name: Build Android APK
+        script: |
+          flutter build apk --release \
+            --build-name=0.9.0 \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --dart-define=FIREBASE_API_KEY=$FIREBASE_API_KEY \
+            --dart-define=FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID \
+            --dart-define=FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET \
+            --dart-define=FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN \
+            --dart-define=FIREBASE_DATABASE_URL=$FIREBASE_DATABASE_URL \
+            --dart-define=FIREBASE_APP_ID_ANDROID=$FIREBASE_APP_ID_ANDROID \
+            --dart-define=FIREBASE_VAPID_KEY=$FIREBASE_VAPID_KEY
+      
+      - name: Build Android App Bundle
+        script: |
+          flutter build appbundle --release \
+            --build-name=0.9.0 \
+            --build-number=$PROJECT_BUILD_NUMBER \
+            --dart-define=FIREBASE_API_KEY=$FIREBASE_API_KEY \
+            --dart-define=FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=$FIREBASE_MESSAGING_SENDER_ID \
+            --dart-define=FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET \
+            --dart-define=FIREBASE_AUTH_DOMAIN=$FIREBASE_AUTH_DOMAIN \
+            --dart-define=FIREBASE_DATABASE_URL=$FIREBASE_DATABASE_URL \
+            --dart-define=FIREBASE_APP_ID_ANDROID=$FIREBASE_APP_ID_ANDROID \
+            --dart-define=FIREBASE_VAPID_KEY=$FIREBASE_VAPID_KEY
+    
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
+      - build/app/outputs/bundle/release/app-release.aab
+      - flutter_drive.log
+    
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: true
+      email:
+        recipients:
+          - team@academic-tools.com
         notify:
           success: true
           failure: true
