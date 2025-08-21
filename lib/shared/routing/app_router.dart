@@ -140,6 +140,7 @@ class AppRouter {
           path: '/dashboard',
           builder: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: true);
+            // CRITICAL: Get fresh userModel every time, not cached
             final user = auth.userModel;
 
             // Handle authenticating state (needs role selection)
@@ -211,8 +212,29 @@ class AppRouter {
             // Fallback - check if we're truly authenticated but missing user data
             // This can happen briefly during OAuth flow completion
             if (auth.status == AuthStatus.authenticated && user == null) {
-              // User is authenticated but model not loaded yet
-              // This is a transient state that should resolve quickly
+              // This is a CRITICAL BUG - if we're authenticated, we MUST have a user model
+              // Otherwise we're stuck in an infinite loading state
+              debugPrint('CRITICAL: Dashboard in authenticated state but userModel is null!');
+              debugPrint('Auth status: ${auth.status}');
+              debugPrint('User model: ${auth.userModel}');
+              debugPrint('Firebase user: ${auth.firebaseUser?.uid}');
+              
+              // Try to reload the user data
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                if (context.mounted) {
+                  debugPrint('Attempting to reload user data...');
+                  await auth.reloadUser();
+                  // If still no user model, we have a serious problem
+                  if (auth.userModel == null) {
+                    debugPrint('FAILED to load user model after reload!');
+                    // Navigate back to login to reset the state
+                    if (context.mounted) {
+                      GoRouter.of(context).go('/auth/login');
+                    }
+                  }
+                }
+              });
+              
               return Scaffold(
                 body: Center(
                   child: Column(

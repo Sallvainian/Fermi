@@ -15,12 +15,32 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   // Student role is the only option
   final UserRole _selectedRole = UserRole.student;
   bool _isLoading = false;
+  bool _isProcessing = false; // Prevent multiple simultaneous submissions
 
   Future<void> _completeSignUp() async {
-    setState(() => _isLoading = true);
+    // Prevent multiple simultaneous submissions (spam clicking)
+    if (_isProcessing) {
+      debugPrint('Already processing role selection, ignoring duplicate request');
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+      _isProcessing = true;
+    });
 
     try {
       final authProvider = context.read<AuthProvider>();
+      
+      // Check if we already have a role set (shouldn't happen but safety check)
+      if (authProvider.userModel?.role != null) {
+        debugPrint('User already has role: ${authProvider.userModel?.role}, navigating to dashboard');
+        if (mounted) {
+          context.go('/dashboard');
+        }
+        return;
+      }
+      
       // Use the generic OAuth completion method that works for both Google and Apple
       await authProvider.completeOAuthSignUp(
         role: _selectedRole,
@@ -28,38 +48,60 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         gradeLevel: null,
       );
 
-      // Small delay to ensure state propagation
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Longer delay to ensure Firestore propagation AND provider update
+      await Future.delayed(const Duration(milliseconds: 1500));
 
       if (mounted) {
-        // Check the current status after completion
+        // Re-read the provider to get the latest state
+        final authProvider = context.read<AuthProvider>();
         final currentStatus = authProvider.status;
+        final hasRole = authProvider.userModel?.role != null;
+        final userModel = authProvider.userModel;
         
-        if (currentStatus == AuthStatus.authenticated) {
+        debugPrint('Role selection complete - Status: $currentStatus, Has role: $hasRole, Role: ${userModel?.role}');
+        debugPrint('UserModel exists: ${userModel != null}');
+        debugPrint('UserModel details: id=${userModel?.id}, email=${userModel?.email}');
+        
+        if (currentStatus == AuthStatus.authenticated && hasRole && userModel != null) {
           // Force navigation to dashboard
-          // Use pushReplacement to ensure clean navigation stack
+          debugPrint('Successfully authenticated with role, navigating to dashboard');
           context.go('/dashboard');
         } else if (currentStatus == AuthStatus.error || 
                    currentStatus == AuthStatus.unauthenticated) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(authProvider.errorMessage ?? 
-                          'Failed to complete sign up'),
+                          'Failed to complete sign up. Please try again.'),
             ),
           );
           // Navigate back to login since sign up failed
           context.go('/auth/login');
+        } else {
+          // Still in authenticating state or no role
+          debugPrint('Unexpected state - Status: $currentStatus, Role: ${authProvider.userModel?.role}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Setup incomplete. Please try signing in again.'),
+            ),
+          );
+          context.go('/auth/login');
         }
       }
     } catch (e) {
+      debugPrint('Error during role selection: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
+        // Reset processing flag on error
+        setState(() => _isProcessing = false);
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _isProcessing = false;
+        });
       }
     }
   }

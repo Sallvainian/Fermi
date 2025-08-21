@@ -522,28 +522,75 @@ class AuthProvider extends ChangeNotifier {
         // First update the role in Firestore
         await _authService.updateUserRole(user.uid, role.toString());
         
-        // Small delay to ensure Firestore write completes
-        await Future.delayed(const Duration(milliseconds: 200));
+        // Retry logic to handle Firestore propagation delay
+        int retryCount = 0;
+        const maxRetries = 5;
+        const baseDelay = Duration(milliseconds: 500);
         
-        // Then fetch the updated user data
-        final userData = await _authService.getUserData(user.uid);
-        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+        while (retryCount < maxRetries) {
+          // Wait with exponential backoff
+          if (retryCount > 0) {
+            final delay = baseDelay * (retryCount);
+            debugPrint('Retry $retryCount: Waiting ${delay.inMilliseconds}ms for Firestore propagation...');
+            await Future.delayed(delay);
+          }
+          
+          // Try to fetch the updated user data
+          final userData = await _authService.getUserData(user.uid);
+          debugPrint('Fetched userData: $userData');
+          
+          if (userData != null && userData['role'] != null) {
+            try {
+              userModel = UserModel.fromFirestore(userData);
+              debugPrint('Successfully created UserModel with role: ${userModel.role} on attempt ${retryCount + 1}');
+              debugPrint('UserModel details: id=${userModel.id}, email=${userModel.email}, displayName=${userModel.displayName}');
+              break;
+            } catch (e) {
+              debugPrint('ERROR creating UserModel from Firestore data: $e');
+              debugPrint('userData was: $userData');
+            }
+          }
+          
+          retryCount++;
+          debugPrint('Attempt $retryCount: User data incomplete, role: ${userData?['role']}');
+        }
+        
+        // If we still don't have user data after retries, try one more time with a longer delay
+        if (userModel == null || userModel.role == null) {
+          debugPrint('Final attempt after ${maxRetries} retries...');
+          await Future.delayed(const Duration(seconds: 2));
+          final userData = await _authService.getUserData(user.uid);
+          debugPrint('Final attempt userData: $userData');
+          if (userData != null) {
+            try {
+              userModel = UserModel.fromFirestore(userData);
+              debugPrint('Final attempt created UserModel: role=${userModel.role}, id=${userModel.id}');
+            } catch (e) {
+              debugPrint('Final attempt ERROR creating UserModel: $e');
+              debugPrint('Final attempt userData was: $userData');
+            }
+          }
+        }
         
         // Debug logging
-        debugPrint('OAuth sign-up completion - User role: ${userModel?.role}, Status will be: authenticated');
+        debugPrint('OAuth sign-up completion - User role: ${userModel?.role}, Has data: ${userModel != null}');
       }
 
-      if (userModel != null) {
+      if (userModel != null && userModel.role != null) {
         _userModel = userModel;
         _status = AuthStatus.authenticated;
-        debugPrint('OAuth sign-up successful - Status set to: $_status');
+        debugPrint('OAuth sign-up successful - Status set to: $_status, Role: ${userModel.role}');
+        debugPrint('UserModel assigned: ${_userModel != null}');
+        debugPrint('UserModel ID: ${_userModel?.id}');
+        debugPrint('UserModel email: ${_userModel?.email}');
+        debugPrint('UserModel role: ${_userModel?.role}');
         
         // Start web in-app notifications if on web
         if (kIsWeb) {
           WebInAppNotificationService().startWebInAppNotifications();
         }
       } else {
-        throw Exception('Failed to complete OAuth sign-up - user data not found');
+        throw Exception('Failed to complete OAuth sign-up - user data not found or role not set after retries');
       }
     } catch (e) {
       debugPrint('OAuth sign-up error: $e');
