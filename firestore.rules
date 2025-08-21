@@ -15,17 +15,20 @@ service cloud.firestore {
     
     // Helper function to get user role from database (with caching)
     function getUserRole(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data.role;
+      let doc = get(/databases/$(database)/documents/users/$(userId));
+      return doc != null && doc.data != null && doc.data.role != null ? doc.data.role : null;
     }
     
     // Helper function to check if user is THE teacher
     function isTheTeacher() {
-      return isAuthenticated() && getUserRole(request.auth.uid) == 'teacher';
+      let role = getUserRole(request.auth.uid);
+      return isAuthenticated() && role != null && role == 'teacher';
     }
     
     // Helper function to check if user is a student
     function isStudent() {
-      return isAuthenticated() && getUserRole(request.auth.uid) == 'student';
+      let role = getUserRole(request.auth.uid);
+      return isAuthenticated() && role != null && role == 'student';
     }
     
     // Helper function to check if student is enrolled in a class
@@ -37,10 +40,11 @@ service cloud.firestore {
     // Users collection
     match /users/{userId} {
       // Users can read their own profile, teachers can read all, students can read limited info
+      // CRITICAL: Allow users without roles to read their own data during OAuth setup
       allow read: if isOwner(userId) || 
-                     isTheTeacher() ||
-                     (isAuthenticated() && resource.data.keys().hasAll(['displayName', 'role', 'photoURL']));
-      // Users can only write their own document
+                     (isAuthenticated() && resource != null && resource.data.role == 'teacher') ||
+                     (isAuthenticated() && resource != null && resource.data.keys().hasAll(['displayName', 'role', 'photoURL']));
+      // Users can only write their own document (including initial creation)
       allow write: if isOwner(userId);
     }
     
