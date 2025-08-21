@@ -336,7 +336,11 @@ class AssignmentProvider with ChangeNotifier {
       final createdAssignment = assignment.copyWith(
         id: assignmentId,
         createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+      final now = DateTime.now();
+      final createdAssignment = assignment.copyWith(
+        id: assignmentId,
+        createdAt: now,
+        updatedAt: now,
       );
 
       // Add to local teacher assignments list immediately
