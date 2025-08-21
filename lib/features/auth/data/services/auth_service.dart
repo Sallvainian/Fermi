@@ -157,7 +157,7 @@ class AuthService {
         ],
         webAuthenticationOptions: kIsWeb
             ? WebAuthenticationOptions(
-                clientId: 'com.academic-tools.fermi',
+                clientId: 'com.academic-tools.fermi.firebase',
                 redirectUri: Uri.parse(
                   'https://teacher-dashboard-flutterfire.firebaseapp.com/__/auth/handler',
                 ),
@@ -425,7 +425,7 @@ class AuthService {
         scopes: [],
         webAuthenticationOptions: kIsWeb
             ? WebAuthenticationOptions(
-                clientId: 'com.academic-tools.fermi',
+                clientId: 'com.academic-tools.fermi.firebase',
                 redirectUri: Uri.parse(
                   'https://teacher-dashboard-flutterfire.firebaseapp.com/__/auth/handler',
                 ),
