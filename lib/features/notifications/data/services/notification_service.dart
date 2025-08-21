@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -339,9 +340,34 @@ class NotificationService {
 
 
   void _onNotificationResponse(NotificationResponse response) {
-    // Handle notification responses for assignments and other features
-    LoggerService.info('Notification response: ${response.actionId}',
-        tag: 'NotificationService');
+    // Handle notification taps
+    if (response.payload != null) {
+      LoggerService.info('Notification tapped with payload: ${response.payload}',
+          tag: 'NotificationService');
+      
+      // Parse payload to determine notification type
+      try {
+        final Map<String, dynamic> data = json.decode(response.payload!);
+        final String? type = data['type'];
+        final String? id = data['id'];
+        
+        if (type == 'assignment' && id != null) {
+          // Navigate to assignment details
+          // Navigation will be handled by the app's router when it implements deep linking
+          LoggerService.info('Assignment notification tapped: $id',
+              tag: 'NotificationService');
+        } else if (type == 'message' && id != null) {
+          // Navigate to message/chat
+          LoggerService.info('Message notification tapped: $id',
+              tag: 'NotificationService');
+        }
+        // Add more types as needed
+      } catch (e) {
+        // If payload isn't JSON, just log it
+        LoggerService.info('Notification tapped: ${response.payload}',
+            tag: 'NotificationService');
+      }
+    }
   }
 
   /// Show guidance when notification permission is denied
