@@ -12,6 +12,7 @@ import '../../../grades/domain/models/grade.dart';
 import '../../domain/repositories/assignment_repository.dart';
 import '../../../grades/domain/repositories/grade_repository.dart';
 import '../../../../shared/core/service_locator.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Provider managing assignment and grade state.
 ///
@@ -144,7 +145,15 @@ class AssignmentProvider with ChangeNotifier {
   /// @param classId Class to load assignments from
   /// @throws Exception if loading fails
   Future<void> loadAssignmentsForClass(String classId) async {
+    // Validate classId
+    if (classId.isEmpty) {
+      LoggerService.warning('loadAssignmentsForClass called with empty classId');
+      _setError('Invalid class ID');
+      return;
+    }
+    
     _setLoading(true);
+    LoggerService.info('Loading assignments for class: $classId');
     try {
       // Cancel existing subscription before creating new one
       _classAssignmentsSubscription?.cancel();
@@ -180,6 +189,10 @@ class AssignmentProvider with ChangeNotifier {
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          // Notify listeners about the error
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
@@ -197,7 +210,15 @@ class AssignmentProvider with ChangeNotifier {
   /// @param teacherId Teacher's unique identifier
   /// @throws Exception if loading fails
   Future<void> loadAssignmentsForTeacher(String teacherId) async {
+    // Validate teacherId
+    if (teacherId.isEmpty) {
+      LoggerService.warning('loadAssignmentsForTeacher called with empty teacherId');
+      _setError('Invalid teacher ID');
+      return;
+    }
+    
     _setLoading(true);
+    LoggerService.info('Loading assignments for teacher: $teacherId');
     try {
       // Cancel existing subscription before creating new one
       _teacherAssignmentsSubscription?.cancel();
@@ -233,6 +254,10 @@ class AssignmentProvider with ChangeNotifier {
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          // Notify listeners about the error
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
@@ -269,6 +294,10 @@ class AssignmentProvider with ChangeNotifier {
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          // Notify listeners about the error
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {

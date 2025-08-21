@@ -26,13 +26,20 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
   void initState() {
     super.initState();
     // Load assignments when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = context.read<AuthProvider>();
       final assignmentProvider = context.read<AssignmentProvider>();
       final user = authProvider.userModel;
 
       if (user != null && user.role == UserRole.teacher) {
-        assignmentProvider.loadAssignmentsForTeacher(user.uid);
+        // Clear any previous error before loading
+        assignmentProvider.clearError();
+        
+        // Small delay to ensure Firebase indexes are ready
+        await Future.delayed(const Duration(milliseconds: 100));
+        
+        // Load teacher assignments
+        await assignmentProvider.loadAssignmentsForTeacher(user.uid);
       }
     });
   }
@@ -187,12 +194,18 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       // Status filter
       if (_selectedStatus != 'All') {
         if (_selectedStatus == 'Active' &&
-            assignment.status != AssignmentStatus.active) return false;
+            assignment.status != AssignmentStatus.active) {
+          return false;
+        }
         if (_selectedStatus == 'Draft' &&
             (assignment.status != AssignmentStatus.draft ||
-                assignment.isPublished)) return false;
+                assignment.isPublished)) {
+          return false;
+        }
         if (_selectedStatus == 'Closed' &&
-            assignment.status != AssignmentStatus.completed) return false;
+            assignment.status != AssignmentStatus.completed) {
+          return false;
+        }
       }
 
       // Search filter

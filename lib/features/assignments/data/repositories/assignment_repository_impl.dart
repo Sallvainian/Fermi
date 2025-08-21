@@ -117,6 +117,7 @@ class AssignmentRepositoryImpl extends FirestoreRepository<Assignment>
   /// @return Stream of assignment lists
   @override
   Stream<List<Assignment>> getClassAssignments(String classId) {
+    LoggerService.info('Querying assignments for classId: $classId', tag: tag);
     return stream(
       conditions: [
         QueryCondition(field: 'classId', isEqualTo: classId),
@@ -136,6 +137,7 @@ class AssignmentRepositoryImpl extends FirestoreRepository<Assignment>
   /// @return Stream of teacher's assignments
   @override
   Stream<List<Assignment>> getTeacherAssignments(String teacherId) {
+    LoggerService.info('Querying assignments for teacherId: $teacherId', tag: tag);
     return stream(
       conditions: [
         QueryCondition(field: 'teacherId', isEqualTo: teacherId),
