@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:teacher_dashboard_flutter/features/auth/providers/auth_provider.dart';
 import 'package:teacher_dashboard_flutter/shared/models/user_model.dart';
-import 'lib/firebase_options.dart';
+import 'package:teacher_dashboard_flutter/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
