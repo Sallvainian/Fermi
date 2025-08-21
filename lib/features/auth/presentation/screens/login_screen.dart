@@ -30,6 +30,28 @@ class _LoginScreenState extends State<LoginScreen> {
     if (kIsWeb) {
       _listenToGoogleSignInEvents();
     }
+
+    // Check if we arrived here due to an auth error
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.status == AuthStatus.error && authProvider.errorMessage != null) {
+        // Show a snackbar with the error message for better visibility
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage!),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: Theme.of(context).colorScheme.onError,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
+      }
+    });
   }
 
   @override

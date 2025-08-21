@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/models/user_model.dart';
-import '../providers/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -20,18 +21,35 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      await authProvider.completeGoogleSignUp(
+      // Use the generic OAuth completion method that works for both Google and Apple
+      await authProvider.completeOAuthSignUp(
         role: _selectedRole,
         parentEmail: null,
         gradeLevel: null,
       );
 
-      if (authProvider.isAuthenticated && mounted) {
-        // Navigation will be handled by the AuthProvider state change
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to complete sign up')),
-        );
+      // Small delay to ensure state propagation
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      if (mounted) {
+        // Check the current status after completion
+        final currentStatus = authProvider.status;
+        
+        if (currentStatus == AuthStatus.authenticated) {
+          // Force navigation to dashboard
+          // Use pushReplacement to ensure clean navigation stack
+          context.go('/dashboard');
+        } else if (currentStatus == AuthStatus.error || 
+                   currentStatus == AuthStatus.unauthenticated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.errorMessage ?? 
+                          'Failed to complete sign up'),
+            ),
+          );
+          // Navigate back to login since sign up failed
+          context.go('/auth/login');
+        }
       }
     } catch (e) {
       if (mounted) {

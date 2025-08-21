@@ -67,7 +67,9 @@ class AppRouter {
       refreshListenable: authProvider,
       redirect: (context, state) {
         final isAuth = authProvider.status == AuthStatus.authenticated;
+        final isAuthenticating = authProvider.status == AuthStatus.authenticating;
         final isAuthRoute = state.matchedLocation.startsWith('/auth');
+        final hasError = authProvider.status == AuthStatus.error;
 
         // During initialization, don't redirect
         // The app shows a loading screen before router is created
@@ -75,8 +77,20 @@ class AppRouter {
           return null;
         }
 
+        // If there's an auth error, redirect to login to show the error
+        // and allow the user to try signing in again
+        if (hasError && !isAuthRoute) {
+          return '/auth/login';
+        }
+
+        // If user is in the middle of OAuth flow (needs role selection)
+        // redirect to role selection screen
+        if (isAuthenticating && state.matchedLocation != '/auth/role-selection') {
+          return '/auth/role-selection';
+        }
+
         // Simple redirect logic - standard Flutter pattern
-        if (!isAuth && !isAuthRoute) {
+        if (!isAuth && !isAuthenticating && !isAuthRoute && !hasError) {
           // Not authenticated and trying to access protected route
           return '/auth/login';
         }
@@ -125,8 +139,67 @@ class AppRouter {
         GoRoute(
           path: '/dashboard',
           builder: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
+            final auth = Provider.of<AuthProvider>(context, listen: true);
             final user = auth.userModel;
+
+            // Handle authenticating state (needs role selection)
+            // BUT only if the user has no role - this prevents infinite loop
+            // when transitioning from authenticating to authenticated
+            if (auth.status == AuthStatus.authenticating && 
+                user?.role == null && 
+                auth.firebaseUser != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  GoRouter.of(context).go('/auth/role-selection');
+                }
+              });
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            // Handle error state - shouldn't reach here due to redirect, but safety check
+            if (auth.status == AuthStatus.error) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  GoRouter.of(context).go('/auth/login');
+                }
+              });
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        auth.errorMessage ?? 'Authentication error occurred',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => GoRouter.of(context).go('/auth/login'),
+                        child: const Text('Go to Login'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // Check if user needs role selection
+            if (user?.role == null && auth.firebaseUser != null) {
+              // User is authenticated but has no role - redirect to role selection
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  GoRouter.of(context).go('/auth/role-selection');
+                }
+              });
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
 
             // Simple role-based dashboard
             if (user?.role == UserRole.teacher) {
@@ -135,9 +208,51 @@ class AppRouter {
               return const StudentDashboardScreen();
             }
 
-            // Fallback - shouldn't happen if auth is working
-            return const Scaffold(
-              body: Center(child: Text('Loading dashboard...')),
+            // Fallback - check if we're truly authenticated but missing user data
+            // This can happen briefly during OAuth flow completion
+            if (auth.status == AuthStatus.authenticated && user == null) {
+              // User is authenticated but model not loaded yet
+              // This is a transient state that should resolve quickly
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Loading your profile...',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            // Final fallback - shouldn't happen if auth is working
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Loading dashboard...',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    if (auth.status != AuthStatus.authenticated)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Text(
+                          'Status: ${auth.status}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             );
           },
         ),

@@ -19,15 +19,15 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.yourcompany.teacherdashboard</string>
+		<string>group.com.academic-tools.fermi</string>
 	</array>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.yourcompany.teacherdashboard</string>
+		<string>$(AppIdentifierPrefix)com.academic-tools.fermi</string>
 	</array>
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
-		<string>iCloud.com.yourcompany.teacherdashboard</string>
+		<string>iCloud.com.academic-tools.fermi</string>
 	</array>
 	<key>com.apple.developer.icloud-services</key>
 	<array>

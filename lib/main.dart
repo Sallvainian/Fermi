@@ -115,9 +115,19 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
               darkTheme: AppTheme.darkTheme(),
               themeMode: themeProvider.themeMode,
               debugShowCheckedModeBanner: false,
-              home: const Scaffold(
+              home: Scaffold(
                 body: Center(
-                  child: CircularProgressIndicator(),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Loading...',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
