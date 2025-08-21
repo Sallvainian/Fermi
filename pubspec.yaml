@@ -100,12 +100,6 @@ dependencies:
   cupertino_icons: ^1.0.8
   rxdart: ^0.28.0
 
-# Dependency overrides to resolve version conflicts
-# dependency_overrides:
-#   js: ^0.7.1  # JavaScript interop utilities
-#   path_provider: ^2.1.5
-#   path: ^1.9.1
-#   web: ^0.5.1  # Force compatible web version
 dev_dependencies:
   flutter_test:
     sdk: flutter
