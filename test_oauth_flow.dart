@@ -4,7 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:teacher_dashboard_flutter/features/auth/providers/auth_provider.dart';
-import 'package:fermi/shared/models/user_model.dart';
+import 'package:teacher_dashboard_flutter/shared/models/user_model.dart';
 
 void main() {
   group('OAuth Sign-Up Flow Tests', () {
