@@ -106,7 +106,6 @@ dependencies:
 #   path_provider: ^2.1.5
 #   path: ^1.9.1
 #   web: ^0.5.1  # Force compatible web version
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
