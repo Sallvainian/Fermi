@@ -128,7 +128,13 @@ class SimpleDiscussionProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   SimpleDiscussionProvider() {
-    _loadUserModel();
+  SimpleDiscussionProvider._();
+
+  /// Factory constructor to handle async initialization
+  static Future<SimpleDiscussionProvider> create() async {
+    final provider = SimpleDiscussionProvider._();
+    await provider._loadUserModel();
+    return provider;
   }
   
   /// Load and cache the user model for display name
