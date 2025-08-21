@@ -224,3 +224,40 @@ class UserModel {
     }
   }
 }
+
+/// Extension on UserModel to provide consistent display name logic.
+///
+/// This extension addresses code duplication identified by Copilot PR review.
+/// It provides a standardized way to get a user's display name with fallbacks.
+extension UserModelDisplayName on UserModel? {
+  /// Returns the most appropriate display name for the user with fallbacks.
+  ///
+  /// Priority order:
+  /// 1. firstName + lastName (if both exist)
+  /// 2. displayName (if not empty)
+  /// 3. email prefix (before @)
+  /// 4. 'Unknown User' as final fallback
+  String get displayNameOrFallback {
+    if (this == null) return 'Unknown User';
+    
+    final user = this!;
+    
+    // Prefer firstName + lastName if both exist
+    if (user.firstName != null && user.lastName != null) {
+      final fullName = '${user.firstName} ${user.lastName}'.trim();
+      if (fullName.isNotEmpty) return fullName;
+    }
+    
+    // Fall back to displayName
+    if (user.displayName != null && user.displayName!.isNotEmpty) {
+      return user.displayName!;
+    }
+    
+    // Fall back to email prefix
+    if (user.email != null && user.email!.isNotEmpty) {
+      return user.email!.split('@').first;
+    }
+    
+    return 'Unknown User';
+  }
+}

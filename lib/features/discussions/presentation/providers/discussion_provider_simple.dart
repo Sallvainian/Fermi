@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/models/user_model.dart';
 
 /// Simple discussion board model
 class SimpleDiscussionBoard {
@@ -126,6 +127,35 @@ class SimpleDiscussionProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  SimpleDiscussionProvider() {
+    _loadUserModel();
+  }
+  
+  /// Load and cache the user model for display name
+  Future<void> _loadUserModel() async {
+    try {
+      final userId = currentUserId;
+      if (userId.isEmpty) return;
+      
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        _cachedUserModel = UserModel.fromFirestore(doc);
+        _cachedDisplayName = _cachedUserModel.displayNameOrFallback;
+        notifyListeners();
+      }
+    } catch (e) {
+      LoggerService.error('Failed to load user model for display name', tag: _tag, error: e);
+      // Fallback to Firebase Auth display name
+      _cachedDisplayName = _auth.currentUser?.displayName ?? 'Unknown User';
+    }
+  }
+  
+  /// Clear cached user data (call on logout)
+  void clearUserCache() {
+    _cachedDisplayName = null;
+    _cachedUserModel = null;
+  }
+
   // State
   List<SimpleDiscussionBoard> _boards = [];
   final Map<String, List<SimpleDiscussionThread>> _boardThreads = {};
@@ -133,6 +163,11 @@ class SimpleDiscussionProvider with ChangeNotifier {
   SimpleDiscussionThread? _currentThread;
   bool _isLoading = false;
   String? _error;
+  
+  // Cache for user display name to avoid repeated Firestore calls
+  // Addresses Copilot PR recommendation for performance optimization
+  String? _cachedDisplayName;
+  UserModel? _cachedUserModel;
 
   // Stream subscriptions
   StreamSubscription<QuerySnapshot>? _boardsSubscription;
@@ -145,7 +180,18 @@ class SimpleDiscussionProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get currentUserId => _auth.currentUser?.uid ?? '';
-  String get currentUserName => _auth.currentUser?.displayName ?? 'Unknown User';
+  
+  /// Returns cached display name or fetches and caches it
+  String get currentUserName {
+    // Return cached name if available
+    if (_cachedDisplayName != null) {
+      return _cachedDisplayName!;
+    }
+    
+    // Use UserModel extension for consistent display name logic
+    _cachedDisplayName = _cachedUserModel.displayNameOrFallback;
+    return _cachedDisplayName!;
+  }
 
   List<SimpleDiscussionThread> getThreadsForBoard(String boardId) {
     return _boardThreads[boardId] ?? [];
