@@ -310,20 +310,26 @@ class _ClassesScreenState extends State<ClassesScreen> {
 
           const SizedBox(height: 12),
 
-          // Action buttons row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          // Action buttons row - using Wrap to prevent overflow
+          Wrap(
+            alignment: WrapAlignment.end,
+            spacing: 4,
+            runSpacing: 8,
             children: [
               IconButton(
                 onPressed: () => _showDeleteConfirmation(classModel),
                 icon: const Icon(Icons.delete_outline),
                 tooltip: 'Delete Class',
                 color: Theme.of(context).colorScheme.error,
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(8),
               ),
               IconButton(
                 onPressed: () => _showEditClassDialog(classModel),
                 icon: const Icon(Icons.edit),
                 tooltip: 'Edit Class',
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(8),
               ),
               TextButton.icon(
                 onPressed: () =>
@@ -332,11 +338,14 @@ class _ClassesScreenState extends State<ClassesScreen> {
                 label: const Text('Copy Code'),
                 style: TextButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
               ),
-              const SizedBox(width: 8),
               FilledButton.tonal(
                 onPressed: () => _navigateToClassDetail(classModel),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
                 child: const Text('View Details'),
               ),
             ],
