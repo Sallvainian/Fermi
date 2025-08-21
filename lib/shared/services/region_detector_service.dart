@@ -38,7 +38,7 @@ class RegionDetectorService {
     try {
       // Perform runtime detection
       // Determine if device is in a restricted region
-      await _detectRestrictedRegion();
+      await _detectRegion();
       
       LoggerService.info(
         'Region detection initialized. Restricted region: $_isInRestrictedRegion',

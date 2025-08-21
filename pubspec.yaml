@@ -55,7 +55,7 @@ dependencies:
   web: ^1.1.0
 
   # State Management
-  provider: ^6.1.5
+  provider: ^6.1.5+1
 
   # Charts and Data Visualization
   fl_chart: ^1.0.0
@@ -71,7 +71,7 @@ dependencies:
   get_it: ^8.2.0
 
   # File handling
-  file_picker: ^10.3.1
+  file_picker: ^10.3.2
 
   # Image caching for performance
   cached_network_image: ^3.4.1
@@ -101,11 +101,11 @@ dependencies:
   rxdart: ^0.28.0
 
 # Dependency overrides to resolve version conflicts
-dependency_overrides:
-  js: ^0.7.1  # JavaScript interop utilities
-  path_provider: ^2.1.5
-  path: ^1.9.1
-  web: ^0.5.1  # Force compatible web version
+# dependency_overrides:
+#   js: ^0.7.1  # JavaScript interop utilities
+#   path_provider: ^2.1.5
+#   path: ^1.9.1
+#   web: ^0.5.1  # Force compatible web version
 
 dev_dependencies:
   flutter_test:
