@@ -219,7 +219,17 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
-  /// Sign in with Apple OAuth
+  /// Signs in the user using Apple OAuth.
+  ///
+  /// **Flow for new vs existing users:**
+  /// - If the user is signing in for the first time (i.e., no profile or role exists),
+  ///   the authentication state is set to [AuthStatus.authenticating] to trigger the
+  ///   role selection and profile completion flow.
+  /// - If the user already exists and has a complete profile (including a role),
+  ///   the user is signed in directly and the authentication state is set to [AuthStatus.authenticated].
+  ///
+  /// If the user cancels the sign-in process, the authentication state is set to [AuthStatus.unauthenticated].
+  /// Any errors during the sign-in process are handled and the appropriate error state is set.
   Future<void> signInWithApple() async {
     if (_authOperationInProgress) {
       debugPrint('Auth operation already in progress');
