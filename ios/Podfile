@@ -39,6 +39,20 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
+    # Fix leveldb C++ compilation issues - requires C++17
+    if target.name == 'leveldb-library'
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
+        config.build_settings['GCC_C_LANGUAGE_STANDARD'] = 'gnu11'
+        config.build_settings['HEADER_SEARCH_PATHS'] = '$(inherited) "${PODS_TARGET_SRCROOT}/include"'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'LEVELDB_IS_BIG_ENDIAN=0'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'LEVELDB_PLATFORM_POSIX'
+        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      end
+    end
+    
     # Fix C++ template issues in gRPC with Xcode 16
     if target.name == 'gRPC-Core' || target.name == 'gRPC-C++' || target.name == 'abseil'
       target.build_configurations.each do |config|
