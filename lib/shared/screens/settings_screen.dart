@@ -8,6 +8,7 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/common/adaptive_layout.dart';
 import '../widgets/common/responsive_layout.dart';
+import '../widgets/custom_radio_list_tile.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -1153,7 +1154,7 @@ class _AdvancedNotificationSettingsSheetState extends State<AdvancedNotification
             'Chime',
             'Ding',
             'None',
-          ].map((sound) => RadioListTile<String>(
+          ].map((sound) => CustomRadioListTile<String>(
             title: Text(sound),
             value: sound,
             groupValue: _notificationSound,

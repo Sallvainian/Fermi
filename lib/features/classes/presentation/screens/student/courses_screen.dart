@@ -62,6 +62,10 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/dashboard'),
+        ),
         title: const Text('My Courses'),
         actions: [
           IconButton(

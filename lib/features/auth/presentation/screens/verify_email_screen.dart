@@ -82,6 +82,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final email = authProvider.firebaseUser?.email ?? '';
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Sign out to allow user to go back to login
+            context.read<AuthProvider>().signOut();
+            context.go('/auth/login');
+          },
+        ),
         title: const Text('Verify Email'),
       ),
       body: Padding(

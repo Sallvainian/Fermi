@@ -1,0 +1,5 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
+#include "Generated.xcconfig"
+
+// Enable Crashlytics for profile builds
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym

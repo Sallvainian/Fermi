@@ -7,6 +7,7 @@ import '../../../domain/models/assignment.dart';
 import '../../../../../shared/models/user_model.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/assignment_provider.dart';
+import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 
 class TeacherAssignmentsScreen extends StatefulWidget {
   const TeacherAssignmentsScreen({super.key});
@@ -513,7 +514,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              RadioListTile(
+              CustomRadioListTile<String>(
                 title: const Text('All Classes'),
                 value: 'All Classes',
                 groupValue: _selectedClass,
@@ -524,7 +525,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   Navigator.pop(context);
                 },
               ),
-              RadioListTile(
+              CustomRadioListTile<String>(
                 title: const Text('Math 101 - Section A'),
                 value: 'Math 101 - Section A',
                 groupValue: _selectedClass,
@@ -535,7 +536,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   Navigator.pop(context);
                 },
               ),
-              RadioListTile(
+              CustomRadioListTile<String>(
                 title: const Text('Environmental Science'),
                 value: 'Environmental Science',
                 groupValue: _selectedClass,
@@ -546,7 +547,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   Navigator.pop(context);
                 },
               ),
-              RadioListTile(
+              CustomRadioListTile<String>(
                 title: const Text('Physics Honors'),
                 value: 'Physics Honors',
                 groupValue: _selectedClass,
@@ -844,7 +845,7 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
 
                   // Type Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedType,
+                    initialValue: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Assignment Type',
                       border: OutlineInputBorder(),
@@ -867,7 +868,7 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
 
                   // Class Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedClass,
+                    initialValue: _selectedClass,
                     decoration: const InputDecoration(
                       labelText: 'Class',
                       border: OutlineInputBorder(),

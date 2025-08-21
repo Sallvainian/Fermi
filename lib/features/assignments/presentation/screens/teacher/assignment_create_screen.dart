@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../domain/models/assignment.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/assignment_provider.dart';
+import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 
 class AssignmentCreateScreen extends StatefulWidget {
   final String? classId;
@@ -240,7 +241,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<AssignmentType>(
-                      value: _selectedType,
+                      initialValue: _selectedType,
                       decoration: const InputDecoration(
                         labelText: 'Assignment Type',
                         prefixIcon: Icon(Icons.category),
@@ -412,7 +413,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                       style: theme.textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
-                    RadioListTile<int>(
+                    CustomRadioListTile<int>(
                       title: const Text('Save as Draft'),
                       subtitle: const Text('Assignment will not be visible to students'),
                       value: 0,
@@ -425,7 +426,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         });
                       },
                     ),
-                    RadioListTile<int>(
+                    CustomRadioListTile<int>(
                       title: const Text('Publish Immediately'),
                       subtitle: const Text('Students can see and submit the assignment'),
                       value: 1,
@@ -438,7 +439,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         });
                       },
                     ),
-                    RadioListTile<int>(
+                    CustomRadioListTile<int>(
                       title: const Text('Schedule for Later'),
                       subtitle: const Text('Assignment will become visible at a future date'),
                       value: 2,

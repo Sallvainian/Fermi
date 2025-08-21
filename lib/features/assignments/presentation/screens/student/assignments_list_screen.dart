@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../../main.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../../shared/widgets/common/error_aware_stream_builder.dart';
@@ -77,36 +76,6 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen> wit
             );
           }
 
-          // Check if Firebase is initialized
-          if (!isFirebaseInitialized) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_off,
-                    size: 64,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Firebase not available',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: theme.colorScheme.error,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Running in offline mode',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-          
           return ErrorAwareStreamBuilder<List<StudentAssignment>>(
             stream: studentProvider.assignmentsStream,
             onRetry: () => studentProvider.refresh(),

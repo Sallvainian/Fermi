@@ -297,7 +297,19 @@ service cloud.firestore {
         allow delete: if request.auth != null 
           && (isTheTeacher() || resource.data.authorId == request.auth.uid);
         
-        // Thread replies
+        // Thread comments (used by the app for discussion replies)
+        match /comments/{commentId} {
+          allow read: if request.auth != null;
+          // Allow create if authenticated and setting self as author
+          allow create: if request.auth != null 
+            && request.auth.uid == request.resource.data.authorId;
+          allow update: if request.auth != null 
+            && resource.data.authorId == request.auth.uid;
+          allow delete: if request.auth != null 
+            && (isTheTeacher() || resource.data.authorId == request.auth.uid);
+        }
+        
+        // Thread replies (legacy - kept for compatibility)
         match /replies/{replyId} {
           allow read: if request.auth != null;
           // Allow create if authenticated and setting self as author

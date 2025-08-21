@@ -95,7 +95,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
               return Padding(
                 padding: const EdgeInsets.all(16),
                 child: DropdownButtonFormField<String>(
-                  value: _selectedClassId,
+                  initialValue: _selectedClassId,
                   decoration: const InputDecoration(
                     labelText: 'Select Class',
                     border: OutlineInputBorder(),
