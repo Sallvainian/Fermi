@@ -27,9 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow camera access for video calls</string>
+	<string>Allow camera access to take photos for assignments</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow microphone access for voice and video calls</string>
+	<string>Allow microphone access to record audio for assignments</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to photo library to select profile pictures</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -41,7 +41,6 @@
 		<string>remote-notification</string>
 		<string>processing</string>
 		<string>fetch</string>
-		<!-- CallKit/VoIP background mode removed for China compliance -->
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
@@ -108,9 +107,5 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	
-	<!-- China-specific configuration -->
-	<!-- CallKit capabilities are removed for China App Store compliance -->
-	<!-- Use Info-China.plist for China region builds -->
 </dict>
 </plist>

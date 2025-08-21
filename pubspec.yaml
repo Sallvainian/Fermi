@@ -89,8 +89,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   timezone: ^0.9.4
 
-  # Call UI for mobile platforms (iOS CallKit, Android ConnectionService)
-  flutter_callkit_incoming: ^2.5.8  # Keeping for web compatibility - only used on mobile platforms
+  # Call UI handled through standard notifications
 
   # Calendar sync
   device_calendar: ^4.3.3
