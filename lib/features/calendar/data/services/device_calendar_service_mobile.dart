@@ -28,33 +28,45 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
   @override
   Future<bool> requestPermissions() async {
     try {
-      // Placeholder implementation - permission_handler package was removed
-      // In a real implementation, you would need to handle permissions properly
-      // For now, return true on mobile platforms and false on web
       if (kIsWeb) {
         LoggerService.warning('Calendar permissions not available on web',
             tag: 'DeviceCalendarService');
         return false;
       }
 
-      // On mobile platforms, we'll attempt to use the calendar directly
-      // The device_calendar plugin will handle permission requests internally
-      LoggerService.info('Calendar permissions check (placeholder)',
+      // Request calendar permissions explicitly using device_calendar plugin
+      LoggerService.info('Requesting calendar permissions',
           tag: 'DeviceCalendarService');
 
-      // Try to retrieve calendars as a permission check
+      // First request permission explicitly
+      var permissionsResult = await _deviceCalendarPlugin.requestPermissions();
+      
+      if (!permissionsResult.isSuccess) {
+        LoggerService.warning('Calendar permission request failed: ${permissionsResult.errors}',
+            tag: 'DeviceCalendarService');
+        return false;
+      }
+
+      // Check if permission was granted
+      if (permissionsResult.data == false) {
+        LoggerService.warning('Calendar permission denied by user',
+            tag: 'DeviceCalendarService');
+        return false;
+      }
+
+      // Now try to retrieve calendars to confirm access
       final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
       if (calendarsResult.isSuccess) {
-        LoggerService.info('Calendar access available',
+        LoggerService.info('Calendar access granted and verified',
             tag: 'DeviceCalendarService');
         return true;
       }
 
-      LoggerService.warning('Calendar access denied or unavailable',
+      LoggerService.warning('Calendar access issue after permission grant',
           tag: 'DeviceCalendarService');
       return false;
     } catch (e) {
-      LoggerService.error('Error checking calendar permissions',
+      LoggerService.error('Error requesting calendar permissions',
           tag: 'DeviceCalendarService', error: e);
       return false;
     }
