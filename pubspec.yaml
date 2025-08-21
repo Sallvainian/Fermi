@@ -46,7 +46,7 @@ dependencies:
   google_sign_in: ^6.2.1
   
   # Sign in with Apple (required for App Store compliance - Guideline 4.8)
-  sign_in_with_apple: ^6.1.2
+  sign_in_with_apple: ^7.0.1
   
   # Environment variables
   flutter_dotenv: ^5.1.0
@@ -110,6 +110,8 @@ dependency_overrides:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
 

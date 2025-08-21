@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/models/user_model.dart';
-import '../providers/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -14,34 +15,100 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   // Student role is the only option
   final UserRole _selectedRole = UserRole.student;
   bool _isLoading = false;
+  bool _isProcessing = false; // Prevent multiple simultaneous submissions
 
   Future<void> _completeSignUp() async {
-    setState(() => _isLoading = true);
+    // Prevent multiple simultaneous submissions (spam clicking)
+    if (_isProcessing) {
+      debugPrint('Already processing role selection, ignoring duplicate request');
+      return;
+    }
+    
+    setState(() {
+      _isLoading = true;
+      _isProcessing = true;
+    });
 
     try {
       final authProvider = context.read<AuthProvider>();
-      await authProvider.completeGoogleSignUp(
+      
+      // Check if we already have a role set (shouldn't happen but safety check)
+      if (authProvider.userModel?.role != null) {
+        debugPrint('User already has role: ${authProvider.userModel?.role}, navigating to dashboard');
+        if (mounted) {
+          context.go('/dashboard');
+        }
+        return;
+      }
+      
+      // Use the generic OAuth completion method that works for both Google and Apple
+      await authProvider.completeOAuthSignUp(
         role: _selectedRole,
         parentEmail: null,
         gradeLevel: null,
       );
 
-      if (authProvider.isAuthenticated && mounted) {
-        // Navigation will be handled by the AuthProvider state change
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to complete sign up')),
-        );
+      // CRITICAL: Wait a moment for provider to fully update
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (mounted) {
+        // Re-read the provider to get the absolutely latest state
+        final authProvider = context.read<AuthProvider>();
+        
+        // Double-check everything is set properly
+        final currentStatus = authProvider.status;
+        final userModel = authProvider.userModel;
+        final hasRole = userModel?.role != null;
+        
+        debugPrint('=== ROLE SELECTION COMPLETE ===');
+        debugPrint('Status: $currentStatus');
+        debugPrint('UserModel exists: ${userModel != null}');
+        debugPrint('Has role: $hasRole');
+        debugPrint('Role: ${userModel?.role}');
+        debugPrint('UID: ${userModel?.uid}');
+        debugPrint('Email: ${userModel?.email}');
+        debugPrint('==============================');
+        
+        // Only navigate if EVERYTHING is properly set
+        if (currentStatus == AuthStatus.authenticated && userModel != null && hasRole) {
+          debugPrint('✅ All checks passed, navigating to dashboard');
+          context.go('/dashboard');
+        } else if (currentStatus == AuthStatus.error || 
+                   currentStatus == AuthStatus.unauthenticated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(authProvider.errorMessage ?? 
+                          'Failed to complete sign up. Please try again.'),
+            ),
+          );
+          // Navigate back to login since sign up failed
+          context.go('/auth/login');
+        } else {
+          // Still in authenticating state or no role
+          debugPrint('Unexpected state - Status: $currentStatus, Role: ${authProvider.userModel?.role}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Setup incomplete. Please try signing in again.'),
+            ),
+          );
+          context.go('/auth/login');
+        }
       }
     } catch (e) {
+      debugPrint('Error during role selection: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
+        // Reset processing flag on error
+        setState(() => _isProcessing = false);
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _isProcessing = false;
+        });
       }
     }
   }

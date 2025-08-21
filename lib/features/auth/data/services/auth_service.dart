@@ -152,7 +152,7 @@ class AuthService {
         ],
         webAuthenticationOptions: kIsWeb
             ? WebAuthenticationOptions(
-                clientId: 'com.academic-tools.fermi.firebase',
+                clientId: 'com.academic-tools.fermi.services',
                 redirectUri: Uri.parse(
                   'https://teacher-dashboard-flutterfire.firebaseapp.com/__/auth/handler',
                 ),
@@ -249,10 +249,12 @@ class AuthService {
       roleStr = role.split('.').last;
     }
 
-    await _firestore.collection('users').doc(uid).update({
+    // Use set with merge to handle both existing and new documents
+    // This ensures it works even if the document doesn't exist yet
+    await _firestore.collection('users').doc(uid).set({
       'role': roleStr,
       'updatedAt': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
 
     // If student, also create student document
     if (roleStr == 'student') {
@@ -261,15 +263,15 @@ class AuthService {
       if (userData != null) {
         await _firestore.collection('students').doc(uid).set({
           'uid': uid,
-          'email': userData['email'],
-          'displayName': userData['displayName'],
+          'email': userData['email'] ?? '',
+          'displayName': userData['displayName'] ?? 'Student',
           'firstName': userData['firstName'] ?? '',
           'lastName': userData['lastName'] ?? '',
           'isActive': true,
           'classIds': [],
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       }
     }
   }

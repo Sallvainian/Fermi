@@ -115,9 +115,19 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
               darkTheme: AppTheme.darkTheme(),
               themeMode: themeProvider.themeMode,
               debugShowCheckedModeBanner: false,
-              home: const Scaffold(
+              home: Scaffold(
                 body: Center(
-                  child: CircularProgressIndicator(),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Loading...',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -208,11 +218,21 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
         _progress = 1.0;
       });
     } catch (e) {
-      // Show error state
-      setState(() {
-        _currentStatus = 'Initialization failed. Please restart the app.';
-        _progress = null;
-      });
+      debugPrint('Initialization error: $e');
+      // If it's a duplicate app error, try to proceed anyway
+      if (e.toString().contains('duplicate-app')) {
+        debugPrint('Ignoring duplicate app error and proceeding...');
+        setState(() {
+          _isInitialized = true;
+          _progress = 1.0;
+        });
+      } else {
+        // Show error state for other errors
+        setState(() {
+          _currentStatus = 'Initialization failed. Please restart the app.';
+          _progress = null;
+        });
+      }
     }
   }
 
