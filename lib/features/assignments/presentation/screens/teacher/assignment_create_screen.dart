@@ -172,8 +172,13 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard when tapping outside text fields
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -216,6 +221,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         labelText: 'Assignment Title',
                         prefixIcon: Icon(Icons.title),
                       ),
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.sentences,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a title';
@@ -231,6 +238,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         prefixIcon: Icon(Icons.description),
                       ),
                       maxLines: 2,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.sentences,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter a description';
@@ -282,6 +291,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         alignLabelWithHint: true,
                       ),
                       maxLines: 5,
+                      textInputAction: TextInputAction.next,
+                      textCapitalization: TextCapitalization.sentences,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please provide instructions';
@@ -311,7 +322,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         labelText: 'Maximum Points',
                         prefixIcon: Icon(Icons.score),
                       ),
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                      textInputAction: TextInputAction.done,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
                       ],
@@ -520,6 +532,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
             const SizedBox(height: 32),
           ],
         ),
+      ),
       ),
     );
   }

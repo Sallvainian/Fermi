@@ -231,17 +231,22 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
       );
     }
 
-    return AdaptiveLayout(
-      title: 'Edit Assignment',
-      actions: [
-        TextButton.icon(
-          onPressed: _isSaving ? null : _saveChanges,
-          icon: const Icon(Icons.save),
-          label: const Text('Save Changes'),
-        ),
-      ],
-      body: ResponsiveContainer(
-        child: Form(
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard when tapping outside text fields
+        FocusScope.of(context).unfocus();
+      },
+      child: AdaptiveLayout(
+        title: 'Edit Assignment',
+        actions: [
+          TextButton.icon(
+            onPressed: _isSaving ? null : _saveChanges,
+            icon: const Icon(Icons.save),
+            label: const Text('Save Changes'),
+          ),
+        ],
+        body: ResponsiveContainer(
+          child: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.all(16.0),
@@ -640,6 +645,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
             ],
           ),
         ),
+      ),
       ),
     );
   }
