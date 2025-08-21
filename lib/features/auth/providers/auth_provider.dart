@@ -271,7 +271,15 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
-  /// Complete OAuth sign-up by setting role
+  /// Completes the OAuth sign-up process after initial authentication.
+  ///
+  /// Call this method after a user has signed in with an OAuth provider (e.g., Google or Apple)
+  /// but before their profile is complete—typically after the user has selected their role
+  /// and provided any additional required information (such as parent email or grade level).
+  ///
+  /// This method finalizes the user's registration by setting their role and any extra profile
+  /// details, updates the user model, and transitions the authentication state to 'authenticated'.
+  /// If an error occurs, the user is signed out to prevent a stuck authentication state.
   Future<void> completeOAuthSignUp({
     required UserRole role,
     String? parentEmail,
