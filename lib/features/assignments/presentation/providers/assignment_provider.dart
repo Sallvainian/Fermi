@@ -352,7 +352,7 @@ class AssignmentProvider with ChangeNotifier {
       _recentlyCreatedIds.add(assignmentId);
       
       // Clear the recently created ID after a delay to allow stream to catch up
-      Future.delayed(const Duration(seconds: 5), () {
+      Future.delayed(recentlyCreatedIdRetentionDuration, () {
         _recentlyCreatedIds.remove(assignmentId);
       });
 
