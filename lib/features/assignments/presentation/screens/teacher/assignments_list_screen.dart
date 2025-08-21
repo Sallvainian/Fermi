@@ -35,9 +35,6 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
         // Clear any previous error before loading
         assignmentProvider.clearError();
         
-        // Small delay to ensure Firebase indexes are ready
-        await Future.delayed(const Duration(milliseconds: 100));
-        
         // Load teacher assignments
         await assignmentProvider.loadAssignmentsForTeacher(user.uid);
       }
