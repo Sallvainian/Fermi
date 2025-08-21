@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
+import '../../../auth/providers/auth_provider.dart';
 
 class ThreadDetailScreen extends StatefulWidget {
   final String boardId;
@@ -101,7 +102,28 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
     if (text.isEmpty) return;
 
     try {
-      final provider = context.read<SimpleDiscussionProvider>();
+      final authProvider = context.read<AuthProvider>();
+      final userModel = authProvider.userModel;
+      
+      // Get the user's display name, preferring firstName + lastName
+      String authorName = 'Unknown User';
+      if (userModel != null) {
+        if (userModel.firstName != null && userModel.lastName != null) {
+          authorName = '${userModel.firstName} ${userModel.lastName}'.trim();
+        } else if (userModel.displayName != null && userModel.displayName!.isNotEmpty) {
+          authorName = userModel.displayName!;
+        } else if (userModel.email != null) {
+          // Fallback to email prefix if no name is available
+          authorName = userModel.email!.split('@').first;
+        }
+      }
+      
+      final userId = authProvider.firebaseUser?.uid ?? '';
+      
+      if (userId.isEmpty) {
+        throw Exception('User not authenticated');
+      }
+      
       await _firestore
           .collection('discussion_boards')
           .doc(widget.boardId)
@@ -110,8 +132,8 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
           .collection('comments')
           .add({
         'content': text,
-        'authorId': provider.currentUserId,
-        'authorName': provider.currentUserName,
+        'authorId': userId,
+        'authorName': authorName,
         'createdAt': Timestamp.now(),
       });
 
@@ -128,12 +150,19 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
       _commentController.clear();
       if (mounted) {
         FocusScope.of(context).unfocus();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Comment added successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
+      LoggerService.error('Failed to add comment', tag: 'ThreadDetailScreen', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to add comment: $e'),
+            content: Text('Failed to add comment: ${e.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );

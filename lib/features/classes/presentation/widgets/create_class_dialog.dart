@@ -218,7 +218,7 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: DropdownButtonFormField<String>(
-                                value: _selectedGradeLevel,
+                                initialValue: _selectedGradeLevel,
                                 decoration: const InputDecoration(
                                   labelText: 'Grade Level*',
                                   prefixIcon: Icon(Icons.grade),

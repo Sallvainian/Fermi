@@ -6,6 +6,7 @@ import '../../../domain/models/assignment.dart';
 import '../../providers/assignment_provider.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
+import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 
 class AssignmentEditScreen extends StatefulWidget {
   final String assignmentId;
@@ -283,7 +284,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<AssignmentType>(
-                        value: _selectedType,
+                        initialValue: _selectedType,
                         decoration: const InputDecoration(
                           labelText: 'Assignment Type',
                           prefixIcon: Icon(Icons.category),
@@ -493,7 +494,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                       ),
                       if (_updatePublishStatus) ...[
                         const SizedBox(height: 16),
-                        RadioListTile<bool>(
+                        CustomRadioListTile<bool>(
                           title: const Text('Publish Now'),
                           subtitle: const Text('Make assignment visible to students immediately'),
                           value: true,
@@ -504,7 +505,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                             });
                           },
                         ),
-                        RadioListTile<bool>(
+                        CustomRadioListTile<bool>(
                           title: const Text('Schedule for Later'),
                           subtitle: const Text('Set a future date for automatic publication'),
                           value: false,

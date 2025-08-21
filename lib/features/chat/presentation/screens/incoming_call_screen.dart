@@ -62,7 +62,12 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
     // Placeholder - actual implementation pending
     await _webrtcService.endCall();
     if (!mounted) return;
-    Navigator.pop(context);
+    // Safely navigate back
+    if (Navigator.of(context).canPop()) {
+      Navigator.pop(context);
+    } else {
+      context.go('/dashboard');
+    }
   }
 
   @override

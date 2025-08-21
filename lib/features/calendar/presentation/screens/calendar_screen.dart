@@ -1396,7 +1396,7 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
 
                   // Type Dropdown
                   DropdownButtonFormField<EventType>(
-                    value: _selectedType,
+                    initialValue: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Event Type',
                       border: OutlineInputBorder(),
@@ -1537,7 +1537,7 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
 
                   if (_hasReminder) ...[
                     DropdownButtonFormField<int>(
-                      value: _reminderMinutes,
+                      initialValue: _reminderMinutes,
                       decoration: const InputDecoration(
                         labelText: 'Reminder Time',
                         border: OutlineInputBorder(),

@@ -305,6 +305,44 @@ class SimpleDiscussionProvider with ChangeNotifier {
     }
   }
 
+  /// Helper method to get the current user's display name from Firestore
+  Future<String> _getCurrentUserDisplayName() async {
+    try {
+      final userId = currentUserId;
+      if (userId.isEmpty) return 'Unknown User';
+      
+      // Try to get user data from Firestore
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        final data = userDoc.data();
+        if (data != null) {
+          // Try firstName + lastName first
+          final firstName = data['firstName'] as String?;
+          final lastName = data['lastName'] as String?;
+          if (firstName != null && lastName != null) {
+            return '$firstName $lastName'.trim();
+          }
+          // Then try displayName
+          final displayName = data['displayName'] as String?;
+          if (displayName != null && displayName.isNotEmpty) {
+            return displayName;
+          }
+          // Fallback to email prefix
+          final email = data['email'] as String?;
+          if (email != null && email.isNotEmpty) {
+            return email.split('@').first;
+          }
+        }
+      }
+      
+      // Fallback to Firebase Auth displayName
+      return _auth.currentUser?.displayName ?? 'Unknown User';
+    } catch (e) {
+      LoggerService.error('Failed to get user display name', tag: _tag, error: e);
+      return _auth.currentUser?.displayName ?? 'Unknown User';
+    }
+  }
+
   /// Create a new thread in a board (simplified - no count update)
   Future<void> createThread({
     required String boardId,
@@ -315,13 +353,16 @@ class SimpleDiscussionProvider with ChangeNotifier {
     _error = null;
     
     try {
+      // Get the proper user display name
+      final authorName = await _getCurrentUserDisplayName();
+      
       final thread = SimpleDiscussionThread(
         id: '', // Will be set by Firestore
         boardId: boardId,
         title: title,
         content: content,
         authorId: currentUserId,
-        authorName: currentUserName,
+        authorName: authorName,
         createdAt: DateTime.now(),
       );
 
