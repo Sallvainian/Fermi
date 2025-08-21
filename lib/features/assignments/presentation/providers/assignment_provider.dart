@@ -206,24 +206,24 @@ class AssignmentProvider with ChangeNotifier {
       _teacherAssignmentsSubscription =
           _assignmentRepository.getTeacherAssignments(teacherId).listen(
         (assignmentList) {
-          // Preserve recently created assignments that might not be in the stream yet
-          final recentAssignments = _teacherAssignments
-              .where((a) => _recentlyCreatedIds.contains(a.id))
-              .toList();
-          
-          // Merge the stream data with recently created assignments
-          final mergedList = [...recentAssignments];
-          for (final assignment in assignmentList) {
-            // Add assignment if it's not a recently created one (to avoid duplicates)
-            if (!_recentlyCreatedIds.contains(assignment.id)) {
-              mergedList.add(assignment);
+          // If we have recently created assignments, don't let the stream overwrite them
+          if (_recentlyCreatedIds.isNotEmpty) {
+            // Keep any assignments we just created locally
+            final recentAssignments = _teacherAssignments
+                .where((a) => _recentlyCreatedIds.contains(a.id))
+                .toList();
+            
+            // Add assignments from stream that aren't duplicates
+            final streamIds = assignmentList.map((a) => a.id).toSet();
+            for (final recentAssignment in recentAssignments) {
+              if (!streamIds.contains(recentAssignment.id)) {
+                // This assignment was just created locally but isn't in the stream yet
+                assignmentList.insert(0, recentAssignment);
+              }
             }
           }
           
-          // Sort by creation date (newest first)
-          mergedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          
-          _teacherAssignments = mergedList;
+          _teacherAssignments = assignmentList;
           _setLoading(false);
           // Defer notification to next frame to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {

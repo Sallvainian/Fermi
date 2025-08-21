@@ -143,12 +143,6 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
       final success = await assignmentProvider.createAssignment(assignment);
 
       if (success && mounted) {
-        // Force reload the teacher's assignments to ensure the new one shows up
-        final authProvider = context.read<AuthProvider>();
-        if (authProvider.userModel != null) {
-          await assignmentProvider.loadAssignmentsForTeacher(authProvider.userModel!.uid);
-        }
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
