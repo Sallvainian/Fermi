@@ -43,10 +43,7 @@ dependencies:
   cloud_functions: ^6.0.0
 
   # Authentication
-  # Temporarily disabled due to iOS CocoaPods conflicts with Firebase SDK 10.x
-  # google_sign_in: 5.4.4
-  # google_sign_in_web: 0.10.2+1
-  # google_identity_services_web: 0.2.1+1
+  google_sign_in: ^6.2.1
   
   # Sign in with Apple (required for App Store compliance - Guideline 4.8)
   sign_in_with_apple: ^6.1.2

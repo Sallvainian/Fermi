@@ -2,15 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-// NOTE: google_sign_in temporarily disabled due to iOS dependency conflicts
-// Will be re-enabled once dependency issues are resolved
-// import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   AuthService() {
     // Web persistence
@@ -90,21 +88,18 @@ class AuthService {
       final cred = await _auth.signInWithPopup(provider);
       user = cred.user;
     } else {
-      // Mobile: Google Sign-In temporarily disabled due to iOS dependency conflicts
-      // Will be re-enabled once dependency issues are resolved
-      throw UnimplementedError(
-          'Google Sign-In is temporarily unavailable on mobile. Please use email/password or Apple Sign-In.');
-      // final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      // if (googleUser == null) return null;
-      //
-      // final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      // final credential = GoogleAuthProvider.credential(
-      //   accessToken: googleAuth.accessToken,
-      //   idToken: googleAuth.idToken,
-      // );
-      //
-      // final cred = await _auth.signInWithCredential(credential);
-      // user = cred.user;
+      // Mobile: Use Google Sign-In SDK
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return null;
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final cred = await _auth.signInWithCredential(credential);
+      user = cred.user;
     }
 
     // Check if user document exists, create if not (for new Google users)
@@ -229,12 +224,11 @@ class AuthService {
     await _auth.signOut();
 
     // Also sign out of Google on mobile
-    // Temporarily disabled due to iOS dependency conflicts
-    // if (!kIsWeb) {
-    //   try {
-    //     await GoogleSignIn.instance.signOut();
-    //   } catch (_) {}
-    // }
+    if (!kIsWeb) {
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+    }
   }
 
   // Password reset
@@ -376,40 +370,31 @@ class AuthService {
       throw Exception('No user is currently signed in');
     }
 
-    // NOTE: Google re-authentication temporarily disabled due to iOS dependency conflicts
-    // For now, web users can re-authenticate via popup
-    if (kIsWeb) {
-      try {
+    try {
+      if (kIsWeb) {
+        // Web: Use popup re-authentication
         final provider = GoogleAuthProvider();
         await user.reauthenticateWithPopup(provider);
-      } catch (e) {
-        debugPrint('Google re-authentication failed: $e');
-        throw Exception('Google authentication failed. Please try again.');
+      } else {
+        // Mobile: Use Google Sign-In SDK
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          throw Exception('Google sign-in was cancelled');
+        }
+
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        await user.reauthenticateWithCredential(credential);
       }
-    } else {
-      throw UnimplementedError(
-          'Google re-authentication is temporarily unavailable on mobile. Please use email/password or Apple Sign-In.');
+    } catch (e) {
+      debugPrint('Google re-authentication failed: $e');
+      throw Exception('Google authentication failed. Please try again.');
     }
-    
-    // Full implementation will be restored once google_sign_in dependency is re-enabled:
-    // try {
-    //   final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-    //   if (googleUser == null) {
-    //     throw Exception('Google sign-in was cancelled');
-    //   }
-    //
-    //   final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    //
-    //   final credential = GoogleAuthProvider.credential(
-    //     accessToken: googleAuth.accessToken,
-    //     idToken: googleAuth.idToken,
-    //   );
-    //
-    //   await user.reauthenticateWithCredential(credential);
-    // } catch (e) {
-    //   debugPrint('Google re-authentication failed: $e');
-    //   throw Exception('Google authentication failed. Please try again.');
-    // }
   }
 
   // Re-authenticate with Apple for account deletion

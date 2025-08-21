@@ -109,5 +109,14 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.218352465432-5lt4mte28dqof4ae3igmi6m8i261jh99</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
