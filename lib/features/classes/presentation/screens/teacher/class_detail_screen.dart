@@ -604,24 +604,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   Widget _buildAssignmentsTab() {
     return Consumer<AssignmentProvider>(
       builder: (context, assignmentProvider, _) {
-        // Use both teacherAssignments and assignments lists to ensure we see all assignments
-        // This handles both the general list and class-specific list
-        final allAssignments = [
-          ...assignmentProvider.teacherAssignments,
-          ...assignmentProvider.assignments,
-        ];
-        
-        // Remove duplicates based on assignment ID
-        final uniqueAssignments = <String, Assignment>{};
-        for (final assignment in allAssignments) {
-          uniqueAssignments[assignment.id] = assignment;
-        }
-        
-        // Filter assignments for this specific class
-        final classAssignments = uniqueAssignments.values
-            .where((assignment) => assignment.classId == widget.classId)
-            .toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); // Sort by newest first
+        // Use the optimized method from the provider to get deduplicated assignments
+        final classAssignments = assignmentProvider.getAssignmentsForClass(widget.classId);
 
         if (assignmentProvider.isLoading) {
           return const Center(
