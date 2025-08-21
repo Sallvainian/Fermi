@@ -56,6 +56,9 @@ class AssignmentProvider with ChangeNotifier {
   
   /// Track recently created assignment IDs to prevent stream overwrites.
   final Set<String> _recentlyCreatedIds = {};
+  
+  /// Duration to retain recently created IDs before allowing stream updates.
+  static const Duration recentlyCreatedIdRetentionDuration = Duration(seconds: 5);
 
   // Stream subscriptions
 
@@ -333,9 +336,6 @@ class AssignmentProvider with ChangeNotifier {
       }
 
       // Create the assignment with the new ID for local state
-      final createdAssignment = assignment.copyWith(
-        id: assignmentId,
-        createdAt: DateTime.now(),
       final now = DateTime.now();
       final createdAssignment = assignment.copyWith(
         id: assignmentId,
