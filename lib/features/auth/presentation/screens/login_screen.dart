@@ -254,11 +254,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     future: SignInWithApple.isAvailable(),
                     builder: (context, snapshot) {
                       if (snapshot.data == true) {
-                        return SignInWithAppleButton(
-                          onPressed: _signInWithApple,
-                          text: 'Continue with Apple',
+                        return SizedBox(
+                          width: double.infinity,
                           height: 56,
-                          style: SignInWithAppleButtonStyle.whiteOutlined,
+                          child: OutlinedButton.icon(
+                            onPressed: _signInWithApple,
+                            icon: const Icon(Icons.apple, size: 24),
+                            label: const Text('Continue with Apple'),
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: theme.colorScheme.outline),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(28),
+                              ),
+                            ),
+                          ),
                         );
                       }
                       return const SizedBox.shrink();
