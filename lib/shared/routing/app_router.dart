@@ -427,11 +427,6 @@ class AppRouter {
           path: '/grades',
           builder: (context, state) => const GradebookScreen(),
         ),
-        GoRoute(
-          path: '/assignments',
-          builder: (context, state) =>
-              const teacher_assignments.TeacherAssignmentsScreen(),
-        ),
 
         // Student routes
         GoRoute(
