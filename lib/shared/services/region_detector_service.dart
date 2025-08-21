@@ -37,7 +37,8 @@ class RegionDetectorService {
   Future<void> initialize() async {
     try {
       // Perform runtime detection
-      await _detectRegion();
+      // Determine if device is in a restricted region
+      await _detectRestrictedRegion();
       
       LoggerService.info(
         'Region detection initialized. Restricted region: $_isInRestrictedRegion',
