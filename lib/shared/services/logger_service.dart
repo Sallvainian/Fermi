@@ -1,5 +1,5 @@
 /// Centralized logging service for the education platform.
-/// 
+///
 /// This service provides structured logging with multiple severity levels
 /// and console output in debug mode.
 library;
@@ -7,7 +7,7 @@ library;
 import 'package:flutter/foundation.dart';
 
 /// Enumeration of available log severity levels.
-/// 
+///
 /// Levels are ordered from least to most severe:
 /// - debug: Development-time debugging information
 /// - info: General informational messages
@@ -21,33 +21,34 @@ enum LogLevel {
 }
 
 /// Singleton service for centralized application logging.
-/// 
+///
 /// This service provides:
 /// - Structured logging with severity levels
 /// - Console output with color coding in debug mode
 /// - Contextual tagging for log categorization
 /// - Extension methods for convenient logging
-/// 
+///
 /// In debug mode, all log levels are printed to console.
 class LoggerService {
   /// Singleton instance of the logger service.
   static final LoggerService _instance = LoggerService._internal();
-  
+
   /// Factory constructor returning the singleton instance.
   factory LoggerService() => _instance;
-  
+
   /// Private constructor for singleton pattern.
   LoggerService._internal();
-  
+
   /// Minimum log level to display (can be configured via environment)
-  static LogLevel minimumLogLevel = kDebugMode ? LogLevel.warning : LogLevel.warning;
+  static LogLevel minimumLogLevel =
+      kDebugMode ? LogLevel.warning : LogLevel.warning;
 
   /// Logs a debug message (only in debug mode).
-  /// 
+  ///
   /// Debug messages are only printed in development builds
   /// and are completely ignored in production. Use for
   /// detailed debugging information during development.
-  /// 
+  ///
   /// @param message Debug message to log
   /// @param tag Optional tag for categorizing the log
   static void debug(String message, {String? tag}) {
@@ -57,10 +58,10 @@ class LoggerService {
   }
 
   /// Logs an informational message.
-  /// 
+  ///
   /// Info messages are printed in debug mode.
   /// Use for significant application events and state changes.
-  /// 
+  ///
   /// @param message Informational message to log
   /// @param tag Optional tag for categorizing the log
   static void info(String message, {String? tag}) {
@@ -68,35 +69,37 @@ class LoggerService {
   }
 
   /// Logs a warning message.
-  /// 
+  ///
   /// Warnings indicate potentially problematic situations
   /// that don't prevent operation but should be addressed.
   /// Displayed in yellow in debug console.
-  /// 
+  ///
   /// @param message Warning message to log
   /// @param tag Optional tag for categorizing the log
   static void warning(String message, {String? tag}) {
     _log(LogLevel.warning, message, tag: tag);
   }
-  
+
   /// Logs an error message with optional exception details.
-  /// 
+  ///
   /// Errors represent failure conditions requiring attention.
   /// Displayed in red in debug console.
-  /// 
+  ///
   /// @param message Error description
   /// @param tag Optional tag for categorizing the error
   /// @param error Optional error object (Exception, Error, etc.)
   /// @param stackTrace Optional stack trace for debugging
-  static void error(String message, {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message, tag: tag, error: error, stackTrace: stackTrace);
+  static void error(String message,
+      {String? tag, dynamic error, StackTrace? stackTrace}) {
+    _log(LogLevel.error, message,
+        tag: tag, error: error, stackTrace: stackTrace);
   }
 
   /// Internal logging method handling all log levels.
-  /// 
+  ///
   /// Formats log messages with timestamp, level, and optional tag.
   /// Prints to console with color coding in debug mode.
-  /// 
+  ///
   /// @param level Severity level of the log
   /// @param message Log message content
   /// @param tag Optional categorization tag
@@ -115,13 +118,13 @@ class LoggerService {
     if (levelIndex < minLevelIndex) {
       return;
     }
-    
+
     final timestamp = DateTime.now().toIso8601String();
     final levelStr = level.toString().split('.').last.toUpperCase();
     final tagStr = tag != null ? '[$tag] ' : '';
-    
+
     final logMessage = '$timestamp [$levelStr] $tagStr$message';
-    
+
     if (kDebugMode) {
       // In debug mode, print to console
       switch (level) {
@@ -152,10 +155,10 @@ class LoggerService {
 }
 
 /// Extension providing convenient logging methods for any object.
-/// 
+///
 /// Automatically tags log messages with the object's runtime type,
 /// making it easy to track which class generated each log entry.
-/// 
+///
 /// Example usage:
 /// ```dart
 /// class MyService {
@@ -172,27 +175,31 @@ class LoggerService {
 extension LoggerExtension on Object {
   /// Gets the logger service instance.
   LoggerService get logger => LoggerService();
-  
+
   /// Logs a debug message tagged with this object's type.
-  /// 
+  ///
   /// @param message Debug message to log
-  void logDebug(String message) => LoggerService.debug(message, tag: runtimeType.toString());
-  
+  void logDebug(String message) =>
+      LoggerService.debug(message, tag: runtimeType.toString());
+
   /// Logs an info message tagged with this object's type.
-  /// 
+  ///
   /// @param message Informational message to log
-  void logInfo(String message) => LoggerService.info(message, tag: runtimeType.toString());
-  
+  void logInfo(String message) =>
+      LoggerService.info(message, tag: runtimeType.toString());
+
   /// Logs a warning message tagged with this object's type.
-  /// 
+  ///
   /// @param message Warning message to log
-  void logWarning(String message) => LoggerService.warning(message, tag: runtimeType.toString());
-  
+  void logWarning(String message) =>
+      LoggerService.warning(message, tag: runtimeType.toString());
+
   /// Logs an error message tagged with this object's type.
-  /// 
+  ///
   /// @param message Error description
   /// @param error Optional error object
   /// @param stackTrace Optional stack trace
-  void logError(String message, {dynamic error, StackTrace? stackTrace}) => 
-      LoggerService.error(message, tag: runtimeType.toString(), error: error, stackTrace: stackTrace);
+  void logError(String message, {dynamic error, StackTrace? stackTrace}) =>
+      LoggerService.error(message,
+          tag: runtimeType.toString(), error: error, stackTrace: stackTrace);
 }

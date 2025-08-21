@@ -25,11 +25,14 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
   void _checkPlatform() {
     final userAgent = web.window.navigator.userAgent.toLowerCase();
     final isIOS = userAgent.contains('iphone') || userAgent.contains('ipad');
-    final isSafari = userAgent.contains('safari') && !userAgent.contains('chrome') && !userAgent.contains('crios');
-    
+    final isSafari = userAgent.contains('safari') &&
+        !userAgent.contains('chrome') &&
+        !userAgent.contains('crios');
+
     // Check if app is already installed (running in standalone mode)
     // For iOS, we can only check via matchMedia since navigator.standalone requires JS interop
-    final isStandalone = web.window.matchMedia('(display-mode: standalone)').matches;
+    final isStandalone =
+        web.window.matchMedia('(display-mode: standalone)').matches;
 
     setState(() {
       _isIOSSafari = kIsWeb && isIOS && isSafari;
@@ -53,7 +56,8 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
     }
 
     // Check if previously dismissed
-    final previouslyDismissed = web.window.localStorage.getItem('pwa_prompt_dismissed') == 'true';
+    final previouslyDismissed =
+        web.window.localStorage.getItem('pwa_prompt_dismissed') == 'true';
     if (previouslyDismissed) {
       return const SizedBox.shrink();
     }
@@ -150,7 +154,8 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
                       // Show full instructions dialog
                       showDialog(
                         context: context,
-                        builder: (context) => _buildDetailedInstructions(context),
+                        builder: (context) =>
+                            _buildDetailedInstructions(context),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -281,7 +286,8 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
     );
   }
 
-  Widget _buildDetailedStep(String number, String title, String description, IconData icon) {
+  Widget _buildDetailedStep(
+      String number, String title, String description, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -343,30 +349,30 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
 class PWAUtils {
   static bool get isRunningAsPWA {
     if (!kIsWeb) return false;
-    
+
     return web.window.matchMedia('(display-mode: standalone)').matches ||
         web.window.matchMedia('(display-mode: fullscreen)').matches;
   }
-  
+
   static bool get isIOS {
     if (!kIsWeb) return false;
-    
+
     final userAgent = web.window.navigator.userAgent.toLowerCase();
-    return userAgent.contains('iphone') || 
-           userAgent.contains('ipad') || 
-           userAgent.contains('ipod');
+    return userAgent.contains('iphone') ||
+        userAgent.contains('ipad') ||
+        userAgent.contains('ipod');
   }
-  
+
   static bool get isIOSSafari {
     if (!kIsWeb) return false;
-    
+
     final userAgent = web.window.navigator.userAgent.toLowerCase();
-    return isIOS && 
-           userAgent.contains('safari') && 
-           !userAgent.contains('chrome') && 
-           !userAgent.contains('crios');
+    return isIOS &&
+        userAgent.contains('safari') &&
+        !userAgent.contains('chrome') &&
+        !userAgent.contains('crios');
   }
-  
+
   static void clearInstallPromptDismissal() {
     if (kIsWeb) {
       web.window.localStorage.removeItem('pwa_prompt_dismissed');

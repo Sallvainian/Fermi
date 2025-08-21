@@ -8,7 +8,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 
 class JeopardyCreateScreen extends StatefulWidget {
   final String? gameId;
-  
+
   const JeopardyCreateScreen({
     super.key,
     this.gameId,
@@ -36,7 +36,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
     final authProvider = context.read<AuthProvider>();
     final jeopardyProvider = context.read<JeopardyProvider>();
     final currentUserId = authProvider.userModel?.uid ?? '';
-    
+
     if (_isEditing) {
       // Load existing game from Firebase
       final loadedGame = await jeopardyProvider.loadGame(widget.gameId!);
@@ -63,11 +63,13 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         categories: [
           JeopardyCategory(
             name: 'Category 1',
-            questions: List.generate(5, (index) => JeopardyQuestion(
-              question: '',
-              answer: '',
-              points: (index + 1) * 100,
-            )),
+            questions: List.generate(
+                5,
+                (index) => JeopardyQuestion(
+                      question: '',
+                      answer: '',
+                      points: (index + 1) * 100,
+                    )),
           ),
         ],
         createdAt: DateTime.now(),
@@ -92,7 +94,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : _saveGame,
-          child: _isLoading 
+          child: _isLoading
               ? const SizedBox(
                   width: 20,
                   height: 20,
@@ -122,7 +124,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
               },
             ),
             const SizedBox(height: 24),
-            
+
             // Categories
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -139,7 +141,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Category List
             ..._game.categories.asMap().entries.map((entry) {
               final index = entry.key;
@@ -189,7 +191,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Questions
             ...category.questions.asMap().entries.map((entry) {
               final questionIndex = entry.key;
@@ -202,9 +204,10 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
     );
   }
 
-  Widget _buildQuestionRow(int categoryIndex, int questionIndex, JeopardyQuestion question) {
+  Widget _buildQuestionRow(
+      int categoryIndex, int questionIndex, JeopardyQuestion question) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -231,7 +234,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          
+
           // Question field
           TextFormField(
             initialValue: question.question,
@@ -248,7 +251,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          
+
           // Answer field
           TextFormField(
             initialValue: question.answer,
@@ -269,12 +272,13 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
     );
   }
 
-  void _updateQuestion(int categoryIndex, int questionIndex, JeopardyQuestion newQuestion) {
+  void _updateQuestion(
+      int categoryIndex, int questionIndex, JeopardyQuestion newQuestion) {
     setState(() {
       final category = _game.categories[categoryIndex];
       final updatedQuestions = List<JeopardyQuestion>.from(category.questions);
       updatedQuestions[questionIndex] = newQuestion;
-      
+
       _game.categories[categoryIndex] = JeopardyCategory(
         name: category.name,
         questions: updatedQuestions,
@@ -289,16 +293,18 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       );
       return;
     }
-    
+
     setState(() {
       _game.categories.add(
         JeopardyCategory(
           name: 'Category ${_game.categories.length + 1}',
-          questions: List.generate(5, (index) => JeopardyQuestion(
-            question: '',
-            answer: '',
-            points: (index + 1) * 100,
-          )),
+          questions: List.generate(
+              5,
+              (index) => JeopardyQuestion(
+                    question: '',
+                    answer: '',
+                    points: (index + 1) * 100,
+                  )),
         ),
       );
     });
@@ -326,22 +332,23 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
           }
         }
       }
-      
+
       if (hasEmptyQuestions) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please fill in all categories, questions, and answers'),
+            content:
+                Text('Please fill in all categories, questions, and answers'),
           ),
         );
         return;
       }
-      
+
       setState(() {
         _isLoading = true;
       });
-      
+
       final jeopardyProvider = context.read<JeopardyProvider>();
-      
+
       // Prepare game data
       _game = JeopardyGame(
         id: _game.id,
@@ -352,7 +359,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         updatedAt: DateTime.now(),
         isPublic: _game.isPublic,
       );
-      
+
       // Save to Firebase
       bool success = false;
       if (_isEditing) {
@@ -361,11 +368,11 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         final gameId = await jeopardyProvider.createGame(_game);
         success = gameId != null;
       }
-      
+
       setState(() {
         _isLoading = false;
       });
-      
+
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

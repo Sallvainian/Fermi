@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class SplashScreen extends StatelessWidget {
   final String? message;
   final double? progress;
-  
+
   const SplashScreen({
     super.key,
     this.message,
@@ -28,7 +28,7 @@ class SplashScreen extends StatelessWidget {
                 color: Color(0xFF2196F3),
               ),
               const SizedBox(height: 24),
-              
+
               // App title
               const Text(
                 'Teacher Dashboard',
@@ -39,7 +39,7 @@ class SplashScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 48),
-              
+
               // Progress indicator
               SizedBox(
                 width: 200,
@@ -53,7 +53,7 @@ class SplashScreen extends StatelessWidget {
                     else
                       const CircularProgressIndicator(),
                     const SizedBox(height: 16),
-                    
+
                     // Status message
                     Text(
                       message ?? 'Loading...',

@@ -9,7 +9,8 @@ class StudentMessagesScreen extends StatefulWidget {
   State<StudentMessagesScreen> createState() => _StudentMessagesScreenState();
 }
 
-class _StudentMessagesScreenState extends State<StudentMessagesScreen> with SingleTickerProviderStateMixin {
+class _StudentMessagesScreenState extends State<StudentMessagesScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
   String _selectedFilter = 'All';
@@ -97,14 +98,20 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
                       });
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'All', child: Text('All Messages')),
-                      const PopupMenuItem(value: 'Unread', child: Text('Unread')),
-                      const PopupMenuItem(value: 'Starred', child: Text('Starred')),
-                      const PopupMenuItem(value: 'Teachers', child: Text('From Teachers')),
-                      const PopupMenuItem(value: 'Important', child: Text('Important')),
+                      const PopupMenuItem(
+                          value: 'All', child: Text('All Messages')),
+                      const PopupMenuItem(
+                          value: 'Unread', child: Text('Unread')),
+                      const PopupMenuItem(
+                          value: 'Starred', child: Text('Starred')),
+                      const PopupMenuItem(
+                          value: 'Teachers', child: Text('From Teachers')),
+                      const PopupMenuItem(
+                          value: 'Important', child: Text('Important')),
                     ],
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -141,7 +148,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
         'sender': 'Mr. Smith',
         'senderType': 'Teacher',
         'subject': 'Math Assignment Feedback',
-        'preview': 'Great work on your latest assignment! I wanted to provide some additional feedback...',
+        'preview':
+            'Great work on your latest assignment! I wanted to provide some additional feedback...',
         'time': DateTime.now().subtract(const Duration(hours: 1)),
         'isRead': false,
         'isStarred': true,
@@ -152,7 +160,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
         'sender': 'Ms. Johnson',
         'senderType': 'Teacher',
         'subject': 'Science Project Reminder',
-        'preview': 'Just a friendly reminder that your science project is due next week...',
+        'preview':
+            'Just a friendly reminder that your science project is due next week...',
         'time': DateTime.now().subtract(const Duration(hours: 4)),
         'isRead': true,
         'isStarred': false,
@@ -174,7 +183,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
         'sender': 'Dr. Wilson',
         'senderType': 'Teacher',
         'subject': 'Class Schedule Change',
-        'preview': 'Please note that tomorrow\'s physics class has been moved to room 205...',
+        'preview':
+            'Please note that tomorrow\'s physics class has been moved to room 205...',
         'time': DateTime.now().subtract(const Duration(days: 2)),
         'isRead': false,
         'isStarred': true,
@@ -192,7 +202,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
         'sender': 'To: Mr. Smith',
         'senderType': 'Sent',
         'subject': 'Re: Math homework question',
-        'preview': 'Thank you for the explanation! I understand the concept much better now...',
+        'preview':
+            'Thank you for the explanation! I understand the concept much better now...',
         'time': DateTime.now().subtract(const Duration(hours: 6)),
         'isRead': true,
         'isStarred': false,
@@ -203,7 +214,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
         'sender': 'To: Academic Office',
         'senderType': 'Sent',
         'subject': 'Request for transcript',
-        'preview': 'I would like to request an official transcript for my college applications...',
+        'preview':
+            'I would like to request an official transcript for my college applications...',
         'time': DateTime.now().subtract(const Duration(days: 3)),
         'isRead': true,
         'isStarred': false,
@@ -221,7 +233,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
         'sender': 'Previous Teacher',
         'senderType': 'Teacher',
         'subject': 'End of semester message',
-        'preview': 'Thank you for being such a dedicated student this semester...',
+        'preview':
+            'Thank you for being such a dedicated student this semester...',
         'time': DateTime.now().subtract(const Duration(days: 60)),
         'isRead': true,
         'isStarred': true,
@@ -249,7 +262,7 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
     final theme = Theme.of(context);
     final isUnread = !(message['isRead'] as bool);
     final isImportant = message['priority'] == 'High';
-    
+
     Color senderTypeColor;
     IconData senderTypeIcon;
     switch (message['senderType']) {
@@ -283,7 +296,7 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
               Stack(
                 children: [
                   CircleAvatar(
-                    backgroundColor: isUnread 
+                    backgroundColor: isUnread
                         ? senderTypeColor.withValues(alpha: 0.2)
                         : Colors.grey.withValues(alpha: 0.1),
                     child: Icon(
@@ -325,7 +338,9 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
                           child: Text(
                             message['sender'],
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isUnread
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -334,7 +349,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
                           _formatMessageTime(message['time']),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight:
+                                isUnread ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -344,7 +360,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
                     Text(
                       message['subject'],
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight:
+                            isUnread ? FontWeight.w600 : FontWeight.normal,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -362,7 +379,7 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
                             maxLines: 1,
                           ),
                         ),
-                        if (message['hasAttachment']) ...[ 
+                        if (message['hasAttachment']) ...[
                           const SizedBox(width: 8),
                           Icon(
                             Icons.attach_file,
@@ -398,7 +415,7 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> with Sing
   String _formatMessageTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-    
+
     if (difference.inMinutes < 60) {
       return '${difference.inMinutes}m';
     } else if (difference.inHours < 24) {
@@ -462,14 +479,16 @@ class StudentMessageDetailSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -499,7 +518,9 @@ class StudentMessageDetailSheet extends StatelessWidget {
                         IconButton(
                           onPressed: () {},
                           icon: Icon(
-                            message['isStarred'] ? Icons.star : Icons.star_border,
+                            message['isStarred']
+                                ? Icons.star
+                                : Icons.star_border,
                             color: message['isStarred'] ? Colors.amber : null,
                           ),
                           tooltip: 'Star',
@@ -576,8 +597,8 @@ Best regards,
 ${message['sender']}''',
                         style: theme.textTheme.bodyLarge,
                       ),
-                      
-                      if (message['hasAttachment']) ...[ 
+
+                      if (message['hasAttachment']) ...[
                         const SizedBox(height: 24),
                         // Attachment
                         Container(
@@ -599,7 +620,8 @@ ${message['sender']}''',
                                   children: [
                                     Text(
                                       'grade_report.pdf',
-                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w600),
                                     ),
                                     Text(
                                       '156 KB',
@@ -668,15 +690,26 @@ ${message['sender']}''',
 
   String _formatFullDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     final hour = date.hour > 12 ? date.hour - 12 : date.hour;
     final amPm = date.hour >= 12 ? 'PM' : 'AM';
     return '${months[date.month - 1]} ${date.day}, ${date.year} at $hour:${date.minute.toString().padLeft(2, '0')} $amPm';
   }
 
-  void _showReplyMessage(BuildContext context, Map<String, dynamic> originalMessage) {
+  void _showReplyMessage(
+      BuildContext context, Map<String, dynamic> originalMessage) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -688,7 +721,8 @@ ${message['sender']}''',
     );
   }
 
-  void _showForwardMessage(BuildContext context, Map<String, dynamic> originalMessage) {
+  void _showForwardMessage(
+      BuildContext context, Map<String, dynamic> originalMessage) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -712,10 +746,12 @@ class StudentComposeMessageSheet extends StatefulWidget {
   });
 
   @override
-  State<StudentComposeMessageSheet> createState() => _StudentComposeMessageSheetState();
+  State<StudentComposeMessageSheet> createState() =>
+      _StudentComposeMessageSheetState();
 }
 
-class _StudentComposeMessageSheetState extends State<StudentComposeMessageSheet> {
+class _StudentComposeMessageSheetState
+    extends State<StudentComposeMessageSheet> {
   final _recipientController = TextEditingController();
   final _subjectController = TextEditingController();
   final _messageController = TextEditingController();
@@ -759,7 +795,8 @@ class _StudentComposeMessageSheetState extends State<StudentComposeMessageSheet>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -832,11 +869,11 @@ class _StudentComposeMessageSheetState extends State<StudentComposeMessageSheet>
                     controller: _recipientController,
                     decoration: InputDecoration(
                       labelText: 'To',
-                      hintText: _recipientType == 'Teacher' 
-                          ? 'Select teacher...' 
+                      hintText: _recipientType == 'Teacher'
+                          ? 'Select teacher...'
                           : _recipientType == 'Admin'
-                          ? 'Academic Office'
-                          : 'Support Team',
+                              ? 'Academic Office'
+                              : 'Support Team',
                       border: const OutlineInputBorder(),
                       suffixIcon: const Icon(Icons.person_search),
                     ),
@@ -865,7 +902,7 @@ class _StudentComposeMessageSheetState extends State<StudentComposeMessageSheet>
                       alignLabelWithHint: true,
                     ),
                   ),
-                  
+
                   // Quick Message Templates
                   const SizedBox(height: 16),
                   Text(
@@ -958,7 +995,8 @@ class _StudentComposeMessageSheetState extends State<StudentComposeMessageSheet>
           if (_subjectController.text.isEmpty) {
             _subjectController.text = template;
           }
-          _messageController.text = 'Hi,\n\nI hope this message finds you well. I wanted to reach out regarding $template.\n\n[Please add your specific details here]\n\nThank you for your time and assistance.\n\nBest regards,\n[Your name]';
+          _messageController.text =
+              'Hi,\n\nI hope this message finds you well. I wanted to reach out regarding $template.\n\n[Please add your specific details here]\n\nThank you for your time and assistance.\n\nBest regards,\n[Your name]';
         });
       },
     );

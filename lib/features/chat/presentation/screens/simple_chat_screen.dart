@@ -29,7 +29,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final ImagePicker _picker = ImagePicker();
-  
+
   bool _isUploading = false;
   double _uploadProgress = 0.0;
 
@@ -69,7 +69,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                 }
 
                 final messages = snapshot.data!.docs;
-                
+
                 if (messages.isEmpty) {
                   return const Center(
                     child: Text('No messages yet. Start chatting!'),
@@ -81,18 +81,18 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final messageData = messages[index].data() as Map<String, dynamic>;
+                    final messageData =
+                        messages[index].data() as Map<String, dynamic>;
                     return _buildMessage(messageData);
                   },
                 );
               },
             ),
           ),
-          
+
           // Upload progress indicator
-          if (_isUploading)
-            LinearProgressIndicator(value: _uploadProgress),
-          
+          if (_isUploading) LinearProgressIndicator(value: _uploadProgress),
+
           // Input area
           Container(
             padding: const EdgeInsets.all(8),
@@ -113,7 +113,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                   icon: const Icon(Icons.attach_file),
                   onPressed: _showAttachmentOptions,
                 ),
-                
+
                 // Text field
                 Expanded(
                   child: TextField(
@@ -125,7 +125,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                     onSubmitted: (_) => _sendTextMessage(),
                   ),
                 ),
-                
+
                 // Send button
                 IconButton(
                   icon: const Icon(Icons.send),
@@ -146,10 +146,10 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     final hasVideo = messageData['videoUrl'] != null;
     final messageText = messageData['text'] ?? '';
     // Handle server timestamp that hasn't been set yet
-    final timestamp = messageData['timestamp'] != null 
+    final timestamp = messageData['timestamp'] != null
         ? (messageData['timestamp'] as Timestamp).toDate()
         : DateTime.now(); // Use current time for pending messages
-    
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -172,13 +172,13 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
               _buildImageWidget(messageData['imageUrl']),
               const SizedBox(height: 8),
             ],
-            
+
             // Video thumbnail
             if (hasVideo) ...[
               _buildVideoThumbnail(messageData['videoUrl']),
               const SizedBox(height: 8),
             ],
-            
+
             // Text message
             if (messageText.isNotEmpty)
               Text(
@@ -189,7 +189,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                       : Theme.of(context).colorScheme.onSecondaryContainer,
                 ),
               ),
-            
+
             // Timestamp
             const SizedBox(height: 4),
             Text(
@@ -197,8 +197,14 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
               style: TextStyle(
                 fontSize: 11,
                 color: isMe
-                    ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)
-                    : Theme.of(context).colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
+                    ? Theme.of(context)
+                        .colorScheme
+                        .onPrimary
+                        .withValues(alpha: 0.7)
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSecondaryContainer
+                        .withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -257,7 +263,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         ),
       );
     }
-    
+
     // For mobile platforms
     return Image.network(
       imageUrl,
@@ -330,9 +336,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
   Future<void> _sendTextMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
-    
+
     _messageController.clear();
-    
+
     try {
       await _firestore
           .collection('chat_rooms')
@@ -361,30 +367,32 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       final currentUser = _auth.currentUser;
       debugPrint('DEBUG: Current user UID: ${currentUser?.uid}');
       debugPrint('DEBUG: User authenticated: ${currentUser != null}');
-      
+
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 70,
       );
-      
+
       if (image == null) return;
-      
+
       setState(() {
         _isUploading = true;
         _uploadProgress = 0.0;
       });
-      
+
       // Upload to Firebase Storage
-      final String fileName = '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-      debugPrint('DEBUG: Uploading to path: chat_images/${widget.chatRoomId}/$fileName');
+      final String fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+      debugPrint(
+          'DEBUG: Uploading to path: chat_images/${widget.chatRoomId}/$fileName');
       final Reference ref = _storage
           .ref()
           .child('chat_images')
           .child(widget.chatRoomId)
           .child(fileName);
-      
+
       UploadTask uploadTask;
-      
+
       if (kIsWeb) {
         // For web, read as bytes
         final Uint8List imageData = await image.readAsBytes();
@@ -394,18 +402,18 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         final File imageFile = File(image.path);
         uploadTask = ref.putFile(imageFile);
       }
-      
+
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
       });
-      
+
       // Wait for upload to complete
       final TaskSnapshot snapshot = await uploadTask;
       final String downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       // Send message with image URL
       await _firestore
           .collection('chat_rooms')
@@ -419,12 +427,10 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         'imageUrl': downloadUrl,
         'videoUrl': null,
       });
-      
+
       setState(() {
         _isUploading = false;
       });
-      
-      
     } catch (e) {
       setState(() {
         _isUploading = false;
@@ -443,24 +449,25 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         source: ImageSource.gallery,
         maxDuration: const Duration(minutes: 5),
       );
-      
+
       if (video == null) return;
-      
+
       setState(() {
         _isUploading = true;
         _uploadProgress = 0.0;
       });
-      
+
       // Upload to Firebase Storage
-      final String fileName = '${DateTime.now().millisecondsSinceEpoch}_${video.name}';
+      final String fileName =
+          '${DateTime.now().millisecondsSinceEpoch}_${video.name}';
       final Reference ref = _storage
           .ref()
           .child('chat_videos')
           .child(widget.chatRoomId)
           .child(fileName);
-      
+
       UploadTask uploadTask;
-      
+
       if (kIsWeb) {
         // For web, read as bytes
         final Uint8List videoData = await video.readAsBytes();
@@ -470,18 +477,18 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         final File videoFile = File(video.path);
         uploadTask = ref.putFile(videoFile);
       }
-      
+
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
       });
-      
+
       // Wait for upload to complete
       final TaskSnapshot snapshot = await uploadTask;
       final String downloadUrl = await snapshot.ref.getDownloadURL();
-      
+
       // Send message with video URL
       await _firestore
           .collection('chat_rooms')
@@ -495,12 +502,10 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         'imageUrl': null,
         'videoUrl': downloadUrl,
       });
-      
+
       setState(() {
         _isUploading = false;
       });
-      
-      
     } catch (e) {
       setState(() {
         _isUploading = false;
@@ -512,7 +517,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       }
     }
   }
-  
+
   @override
   void dispose() {
     _messageController.dispose();

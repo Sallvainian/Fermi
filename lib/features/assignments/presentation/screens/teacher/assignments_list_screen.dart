@@ -13,7 +13,8 @@ class TeacherAssignmentsScreen extends StatefulWidget {
   const TeacherAssignmentsScreen({super.key});
 
   @override
-  State<TeacherAssignmentsScreen> createState() => _TeacherAssignmentsScreenState();
+  State<TeacherAssignmentsScreen> createState() =>
+      _TeacherAssignmentsScreenState();
 }
 
 class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
@@ -29,7 +30,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       final authProvider = context.read<AuthProvider>();
       final assignmentProvider = context.read<AssignmentProvider>();
       final user = authProvider.userModel;
-      
+
       if (user != null && user.role == UserRole.teacher) {
         assignmentProvider.loadAssignmentsForTeacher(user.uid);
       }
@@ -147,7 +148,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     final authProvider = context.watch<AuthProvider>();
     final assignmentProvider = context.watch<AssignmentProvider>();
     final user = authProvider.userModel;
-    
+
     if (user == null) {
       return const Center(
         child: Text('Please log in to view assignments'),
@@ -180,55 +181,59 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     }
 
     final assignments = assignmentProvider.teacherAssignments;
-        
-        // Filter assignments based on selected filters
-        final filteredAssignments = assignments.where((assignment) {
-          // Status filter
-          if (_selectedStatus != 'All') {
-            if (_selectedStatus == 'Active' && assignment.status != AssignmentStatus.active) return false;
-            if (_selectedStatus == 'Draft' && (assignment.status != AssignmentStatus.draft || assignment.isPublished)) return false;
-            if (_selectedStatus == 'Closed' && assignment.status != AssignmentStatus.completed) return false;
-          }
-          
-          // Search filter
-          if (_searchController.text.isNotEmpty) {
-            final searchLower = _searchController.text.toLowerCase();
-            return assignment.title.toLowerCase().contains(searchLower) ||
-                   assignment.description.toLowerCase().contains(searchLower);
-          }
-          
-          return true;
-        }).toList();
 
-        if (filteredAssignments.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.assignment_outlined,
-                  size: 64,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'No assignments found',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                if (_searchController.text.isNotEmpty || _selectedStatus != 'All')
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _searchController.clear();
-                        _selectedStatus = 'All';
-                      });
-                    },
-                    child: const Text('Clear filters'),
-                  ),
-              ],
+    // Filter assignments based on selected filters
+    final filteredAssignments = assignments.where((assignment) {
+      // Status filter
+      if (_selectedStatus != 'All') {
+        if (_selectedStatus == 'Active' &&
+            assignment.status != AssignmentStatus.active) return false;
+        if (_selectedStatus == 'Draft' &&
+            (assignment.status != AssignmentStatus.draft ||
+                assignment.isPublished)) return false;
+        if (_selectedStatus == 'Closed' &&
+            assignment.status != AssignmentStatus.completed) return false;
+      }
+
+      // Search filter
+      if (_searchController.text.isNotEmpty) {
+        final searchLower = _searchController.text.toLowerCase();
+        return assignment.title.toLowerCase().contains(searchLower) ||
+            assignment.description.toLowerCase().contains(searchLower);
+      }
+
+      return true;
+    }).toList();
+
+    if (filteredAssignments.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.assignment_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-          );
-        }
+            const SizedBox(height: 16),
+            Text(
+              'No assignments found',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            if (_searchController.text.isNotEmpty || _selectedStatus != 'All')
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _searchController.clear();
+                    _selectedStatus = 'All';
+                  });
+                },
+                child: const Text('Clear filters'),
+              ),
+          ],
+        ),
+      );
+    }
 
     return ListView.builder(
       itemCount: filteredAssignments.length,
@@ -241,8 +246,9 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
   Widget _buildAssignmentCard(Assignment assignment) {
     final theme = Theme.of(context);
     final dueDate = assignment.dueDate;
-    final isOverdue = dueDate.isBefore(DateTime.now()) && assignment.status == AssignmentStatus.active;
-    
+    final isOverdue = dueDate.isBefore(DateTime.now()) &&
+        assignment.status == AssignmentStatus.active;
+
     Color statusColor;
     IconData statusIcon;
     switch (assignment.status) {
@@ -322,7 +328,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   ),
                   // Status Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -333,7 +340,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                         Icon(statusIcon, size: 16, color: statusColor),
                         const SizedBox(width: 4),
                         Text(
-                          assignment.isPublished 
+                          assignment.isPublished
                               ? assignment.status.name.toUpperCase()
                               : assignment.publishAt != null
                                   ? 'SCHEDULED'
@@ -373,18 +380,19 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   ),
                   // Type or Publish Date
                   Expanded(
-                    child: assignment.publishAt != null && !assignment.isPublished
-                      ? _buildInfoItem(
-                          icon: Icons.schedule,
-                          label: 'Publishes',
-                          value: _formatDate(assignment.publishAt!),
-                          color: Colors.blue,
-                        )
-                      : _buildInfoItem(
-                          icon: Icons.assignment_outlined,
-                          label: 'Type',
-                          value: assignment.type.name.toUpperCase(),
-                        ),
+                    child:
+                        assignment.publishAt != null && !assignment.isPublished
+                            ? _buildInfoItem(
+                                icon: Icons.schedule,
+                                label: 'Publishes',
+                                value: _formatDate(assignment.publishAt!),
+                                color: Colors.blue,
+                              )
+                            : _buildInfoItem(
+                                icon: Icons.assignment_outlined,
+                                label: 'Type',
+                                value: assignment.type.name.toUpperCase(),
+                              ),
                   ),
                 ],
               ),
@@ -397,7 +405,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   if (assignment.status == AssignmentStatus.active)
                     TextButton.icon(
                       onPressed: () {
-                        context.go('/teacher/gradebook?assignmentId=${assignment.id}');
+                        context.go(
+                            '/teacher/gradebook?assignmentId=${assignment.id}');
                       },
                       icon: const Icon(Icons.grading, size: 18),
                       label: const Text('Grade'),
@@ -405,8 +414,10 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   if (!assignment.isPublished)
                     TextButton.icon(
                       onPressed: () async {
-                        final assignmentProvider = context.read<AssignmentProvider>();
-                        await assignmentProvider.togglePublishStatus(assignment.id, true);
+                        final assignmentProvider =
+                            context.read<AssignmentProvider>();
+                        await assignmentProvider.togglePublishStatus(
+                            assignment.id, true);
                       },
                       icon: const Icon(Icons.publish, size: 18),
                       label: const Text('Publish'),
@@ -439,7 +450,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: color ?? theme.colorScheme.onSurfaceVariant),
+            Icon(icon,
+                size: 16, color: color ?? theme.colorScheme.onSurfaceVariant),
             const SizedBox(width: 4),
             Text(
               label,
@@ -605,7 +617,8 @@ class AssignmentDetailSheet extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                      color: theme.colorScheme.onSurfaceVariant
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -667,7 +680,8 @@ class AssignmentDetailSheet extends StatelessWidget {
                     const SizedBox(height: 12),
                     _buildDetailRow('Type', assignment['type']),
                     _buildDetailRow('Points', '${assignment['points']}'),
-                    _buildDetailRow('Due Date', _formatDetailDate(assignment['dueDate'])),
+                    _buildDetailRow(
+                        'Due Date', _formatDetailDate(assignment['dueDate'])),
                     _buildDetailRow('Status', assignment['status']),
                     const SizedBox(height: 24),
 
@@ -728,7 +742,8 @@ class AssignmentDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildStatCard(String label, String value, Color color, IconData icon) {
+  Widget _buildStatCard(
+      String label, String value, Color color, IconData icon) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -751,8 +766,18 @@ class AssignmentDetailSheet extends StatelessWidget {
 
   String _formatDetailDate(DateTime date) {
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -801,7 +826,8 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -851,7 +877,12 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
                       border: OutlineInputBorder(),
                     ),
                     items: [
-                      'Homework', 'Essay', 'Exam', 'Lab Report', 'Project', 'Quiz'
+                      'Homework',
+                      'Essay',
+                      'Exam',
+                      'Lab Report',
+                      'Project',
+                      'Quiz'
                     ].map((type) {
                       return DropdownMenuItem(
                         value: type,

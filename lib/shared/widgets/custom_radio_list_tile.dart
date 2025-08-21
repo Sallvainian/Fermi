@@ -81,7 +81,7 @@ class CustomRadioListTile<T> extends StatelessWidget {
 
     Widget? leading;
     Widget? trailing;
-    
+
     switch (controlAffinity) {
       case ListTileControlAffinity.leading:
         leading = control;

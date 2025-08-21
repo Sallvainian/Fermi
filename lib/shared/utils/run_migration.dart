@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 /// Temporary utility to run the user role migration.
 /// This calls the Cloud Function to migrate all existing users to use custom claims.
-/// 
+///
 /// Usage:
 /// 1. Deploy the functions first: `deploy-functions.cmd`
 /// 2. Sign in as a teacher in your app
@@ -46,18 +46,20 @@ Future<void> runUserRoleMigration(BuildContext context) async {
     // Call the migration function
     final functions = FirebaseFunctions.instanceFor(region: 'us-east4');
     final callable = functions.httpsCallable('migrateAllUserRoles');
-    
+
     final result = await callable.call();
     final data = result.data as Map<String, dynamic>;
-    
+
     if (context.mounted) {
       Navigator.of(context).pop(); // Close loading dialog
-      
+
       // Show result
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(data['success'] == true ? 'Migration Complete' : 'Migration Failed'),
+          title: Text(data['success'] == true
+              ? 'Migration Complete'
+              : 'Migration Failed'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +71,8 @@ Future<void> runUserRoleMigration(BuildContext context) async {
               Text('Errors: ${data['errorCount']}'),
               if (data['errors'] != null) ...[
                 const SizedBox(height: 8),
-                const Text('Errors:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Errors:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 ...((data['errors'] as List).map((e) => Text('• $e'))),
               ],
             ],
@@ -86,7 +89,7 @@ Future<void> runUserRoleMigration(BuildContext context) async {
   } catch (e) {
     if (context.mounted) {
       Navigator.of(context).pop(); // Close loading dialog if open
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Migration failed: ${e.toString()}'),

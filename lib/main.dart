@@ -37,7 +37,8 @@ Future<void> main() async {
         try {
           // Check if we're in a valid Zone context
           if (Zone.current != Zone.root) {
-            Zone.current.handleUncaughtError(details.exception, details.stack ?? StackTrace.current);
+            Zone.current.handleUncaughtError(
+                details.exception, details.stack ?? StackTrace.current);
           } else {
             // Fallback to simple logging if Zone is not available
             debugPrint('Flutter Error: ${details.exception}');
@@ -61,9 +62,10 @@ Future<void> main() async {
         await dotenv.load(fileName: ".env");
       } catch (e) {
         // .env file is optional - don't fail if it doesn't exist
-        debugPrint('Note: .env file not found or could not be loaded. Using defaults.');
+        debugPrint(
+            'Note: .env file not found or could not be loaded. Using defaults.');
       }
-      
+
       runApp(const InitializationWrapper());
     },
     (error, stack) {
@@ -81,7 +83,8 @@ Future<void> main() async {
 
 /// Global keys for PWA update notifications
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 /// Root widget of the Teacher Dashboard application - simplified and modular
 class TeacherDashboardApp extends StatefulWidget {
@@ -180,7 +183,8 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       });
 
       // Initialize services with progress updates
-      await Future.delayed(const Duration(milliseconds: 100)); // Allow UI to update
+      await Future.delayed(
+          const Duration(milliseconds: 100)); // Allow UI to update
 
       setState(() {
         _currentStatus = 'Initializing Firebase...';

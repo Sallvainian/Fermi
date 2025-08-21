@@ -15,7 +15,8 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> with SingleTickerProviderStateMixin {
+class _NotificationsScreenState extends State<NotificationsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
   String _selectedFilter = 'All';
@@ -90,7 +91,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       ),
                     ),
                     onChanged: (value) {
-                      context.read<NotificationProvider>().updateSearchQuery(value);
+                      context
+                          .read<NotificationProvider>()
+                          .updateSearchQuery(value);
                     },
                   ),
                 ),
@@ -106,18 +109,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     onSelected: (value) {
                       setState(() {
                         _selectedFilter = value;
-                        context.read<NotificationProvider>().updateFilter(value);
+                        context
+                            .read<NotificationProvider>()
+                            .updateFilter(value);
                       });
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'All', child: Text('All Types')),
-                      const PopupMenuItem(value: 'Grades', child: Text('Grades')),
-                      const PopupMenuItem(value: 'Assignments', child: Text('Assignments')),
-                      const PopupMenuItem(value: 'Messages', child: Text('Messages')),
-                      const PopupMenuItem(value: 'System', child: Text('System')),
+                      const PopupMenuItem(
+                          value: 'All', child: Text('All Types')),
+                      const PopupMenuItem(
+                          value: 'Grades', child: Text('Grades')),
+                      const PopupMenuItem(
+                          value: 'Assignments', child: Text('Assignments')),
+                      const PopupMenuItem(
+                          value: 'Messages', child: Text('Messages')),
+                      const PopupMenuItem(
+                          value: 'System', child: Text('System')),
                     ],
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -154,7 +165,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (provider.error.isNotEmpty) {
           return Center(
             child: Column(
@@ -172,7 +183,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
             ),
           );
         }
-        
+
         final notifications = provider.getNotificationsByTab('all');
         if (notifications.isEmpty) {
           return Center(
@@ -182,20 +193,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                 Icon(
                   Icons.notifications_none,
                   size: 64,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No notifications',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
           );
         }
-        
+
         return _buildNotificationsList(notifications);
       },
     );
@@ -207,7 +221,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final notifications = provider.getNotificationsByTab('unread');
         if (notifications.isEmpty) {
           return Center(
@@ -217,27 +231,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                 Icon(
                   Icons.mark_email_read,
                   size: 64,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'All caught up!',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'No unread notifications',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
           );
         }
-        
+
         return _buildNotificationsList(notifications);
       },
     );
@@ -249,7 +266,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final notifications = provider.getNotificationsByTab('academic');
         if (notifications.isEmpty) {
           return Center(
@@ -259,20 +276,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                 Icon(
                   Icons.school_outlined,
                   size: 64,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No academic notifications',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
               ],
             ),
           );
         }
-        
+
         return _buildNotificationsList(notifications);
       },
     );
@@ -293,7 +313,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
   Widget _buildNotificationCard(NotificationModel notification) {
     final theme = Theme.of(context);
     final isUnread = !notification.isRead;
-    
+
     Color typeColor;
     IconData typeIcon;
     switch (notification.type) {
@@ -360,8 +380,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: isUnread 
-                ? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 1)
+            border: isUnread
+                ? Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    width: 1)
                 : null,
           ),
           child: Row(
@@ -372,7 +394,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isUnread 
+                      color: isUnread
                           ? typeColor.withValues(alpha: 0.2)
                           : Colors.grey.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
@@ -383,7 +405,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       size: 20,
                     ),
                   ),
-                  if (notification.priority == NotificationPriority.high || 
+                  if (notification.priority == NotificationPriority.high ||
                       notification.priority == NotificationPriority.urgent)
                     Positioned(
                       top: 0,
@@ -417,7 +439,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                           child: Text(
                             notification.title,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                              fontWeight:
+                                  isUnread ? FontWeight.bold : FontWeight.w600,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -426,7 +449,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                           _formatNotificationTime(notification.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight:
+                                isUnread ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -437,7 +461,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                       notification.message,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
+                        fontWeight:
+                            isUnread ? FontWeight.w500 : FontWeight.normal,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -450,7 +475,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                           notification.type.name.toUpperCase(),
                           typeColor,
                         ),
-                        if (notification.priority != NotificationPriority.normal) ...[ 
+                        if (notification.priority !=
+                            NotificationPriority.normal) ...[
                           const SizedBox(width: 8),
                           _buildNotificationTag(
                             notification.priority.name.toUpperCase(),
@@ -475,7 +501,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     child: Row(
                       children: [
                         Icon(
-                          isUnread ? Icons.mark_email_read : Icons.mark_email_unread,
+                          isUnread
+                              ? Icons.mark_email_read
+                              : Icons.mark_email_unread,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -494,7 +522,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
                     ),
                   ),
                 ],
-                onSelected: (value) => _handleNotificationAction(value, notification),
+                onSelected: (value) =>
+                    _handleNotificationAction(value, notification),
               ),
             ],
           ),
@@ -524,7 +553,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
   String _formatNotificationTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-    
+
     if (difference.inMinutes < 60) {
       return '${difference.inMinutes}m';
     } else if (difference.inHours < 24) {
@@ -538,7 +567,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
 
   void _handleNotificationTap(NotificationModel notification) {
     final provider = context.read<NotificationProvider>();
-    
+
     // Mark as read if unread
     if (!notification.isRead) {
       provider.markAsRead(notification.id);
@@ -563,7 +592,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         break;
       case NotificationType.announcement:
         // Navigate to discussions board where announcements are typically posted
-        if (notification.actionData != null && notification.actionData!['boardId'] != null) {
+        if (notification.actionData != null &&
+            notification.actionData!['boardId'] != null) {
           context.go('/discussions/${notification.actionData!['boardId']}');
         } else {
           context.go('/discussions');
@@ -582,11 +612,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     // Check if user is a teacher or student and navigate accordingly
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isTeacher = authProvider.userModel?.role == UserRole.teacher;
-    
+
     if (actionData != null && actionData['assignmentId'] != null) {
       // Navigate to specific assignment's grades
       if (isTeacher) {
-        context.go('/teacher/gradebook?assignmentId=${actionData['assignmentId']}');
+        context.go(
+            '/teacher/gradebook?assignmentId=${actionData['assignmentId']}');
       } else {
         // For students, just go to their grades page
         context.go('/student/grades');
@@ -608,7 +639,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     // Check if user is a teacher or student and navigate accordingly
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isTeacher = authProvider.userModel?.role == UserRole.teacher;
-    
+
     if (actionData != null && actionData['assignmentId'] != null) {
       // Navigate to specific assignment
       if (isTeacher) {
@@ -652,9 +683,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
     );
   }
 
-  void _handleNotificationAction(String action, NotificationModel notification) {
+  void _handleNotificationAction(
+      String action, NotificationModel notification) {
     final provider = context.read<NotificationProvider>();
-    
+
     switch (action) {
       case 'mark_read':
         if (notification.isRead) {
@@ -665,9 +697,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              notification.isRead 
-                  ? 'Marked as unread' 
-                  : 'Marked as read',
+              notification.isRead ? 'Marked as unread' : 'Marked as read',
             ),
           ),
         );
@@ -683,7 +713,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Notification'),
-        content: const Text('Are you sure you want to delete this notification?'),
+        content:
+            const Text('Are you sure you want to delete this notification?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -692,7 +723,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> with SingleTi
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<NotificationProvider>().deleteNotification(notification.id);
+              context
+                  .read<NotificationProvider>()
+                  .deleteNotification(notification.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Notification deleted'),
@@ -721,7 +754,8 @@ class NotificationSettingsSheet extends StatefulWidget {
   const NotificationSettingsSheet({super.key});
 
   @override
-  State<NotificationSettingsSheet> createState() => _NotificationSettingsSheetState();
+  State<NotificationSettingsSheet> createState() =>
+      _NotificationSettingsSheetState();
 }
 
 class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
@@ -753,7 +787,8 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -794,7 +829,8 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                   const SizedBox(height: 12),
                   SwitchListTile(
                     title: const Text('Push Notifications'),
-                    subtitle: const Text('Receive notifications on this device'),
+                    subtitle:
+                        const Text('Receive notifications on this device'),
                     value: _pushNotifications,
                     onChanged: (value) {
                       setState(() {
@@ -812,9 +848,9 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                       });
                     },
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Notification Types
                   Text(
                     'Notification Types',
@@ -845,7 +881,8 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                   ),
                   SwitchListTile(
                     title: const Text('Message Notifications'),
-                    subtitle: const Text('New messages from teachers and staff'),
+                    subtitle:
+                        const Text('New messages from teachers and staff'),
                     value: _messageNotifications,
                     onChanged: (value) {
                       setState(() {
@@ -863,9 +900,9 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                       });
                     },
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Quiet Hours
                   Text(
                     'Quiet Hours',
@@ -901,7 +938,7 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 32),
                 ],
               ),
@@ -957,7 +994,8 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
     );
 
     if (picked != null) {
-      final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      final formattedTime =
+          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
       setState(() {
         if (isStart) {
           _quietHoursStart = formattedTime;

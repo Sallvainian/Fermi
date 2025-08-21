@@ -5,30 +5,30 @@ import '../../../../shared/services/logger_service.dart';
 class PresenceService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseDatabase? _database;
-  
+
   FirebaseDatabase get database {
     _database ??= FirebaseDatabase.instance;
     return _database!;
   }
-  
+
   // Privacy settings - can be extended to user preferences
   static const bool _showFullName = true;
   static const bool _showPhoto = true;
   static const bool _showRole = true;
-  
+
   // Track user's online status with privacy controls
   Future<void> updateUserPresence(bool isOnline, {String? userRole}) async {
     try {
       final user = _auth.currentUser;
       if (user == null) return;
-      
+
       final userStatusRef = database.ref('presence/${user.uid}');
-      
+
       if (isOnline) {
         // User is online - store only necessary public information
         final presenceData = _buildPresenceData(user, true, userRole);
         await userStatusRef.set(presenceData);
-        
+
         // Set up disconnect handler
         final offlineData = _buildPresenceData(user, false, userRole);
         await userStatusRef.onDisconnect().set(offlineData);
@@ -43,14 +43,15 @@ class PresenceService {
       LoggerService.error('Error updating user presence', error: error);
     }
   }
-  
+
   // Build presence data with privacy controls
-  Map<String, dynamic> _buildPresenceData(User user, bool isOnline, String? userRole) {
+  Map<String, dynamic> _buildPresenceData(
+      User user, bool isOnline, String? userRole) {
     return {
       'online': isOnline,
       'lastSeen': ServerValue.timestamp,
       'uid': user.uid,
-      'displayName': _showFullName 
+      'displayName': _showFullName
           ? (user.displayName ?? 'Anonymous User')
           : _getInitials(user.displayName ?? 'AU'),
       // Never expose email in presence data
@@ -65,7 +66,7 @@ class PresenceService {
       },
     };
   }
-  
+
   // Get initials from display name
   String _getInitials(String displayName) {
     if (displayName.isEmpty) return 'AU';
@@ -75,7 +76,7 @@ class PresenceService {
     }
     return displayName[0].toUpperCase();
   }
-  
+
   // Get stream of online users with filtering
   Stream<List<OnlineUser>> getOnlineUsers({bool excludeSelf = false}) {
     // Check if user is authenticated before accessing database
@@ -84,19 +85,20 @@ class PresenceService {
       // Return an empty list if no user is logged in
       return Stream.value([]);
     }
-    
+
     return database.ref('presence').onValue.map((event) {
       final List<OnlineUser> onlineUsers = [];
-      
+
       if (event.snapshot.exists && event.snapshot.value != null) {
         // Safely handle the data conversion
         final rawData = event.snapshot.value;
         if (rawData is! Map) {
-          LoggerService.error('Unexpected presence data format: ${rawData.runtimeType}');
+          LoggerService.error(
+              'Unexpected presence data format: ${rawData.runtimeType}');
           return onlineUsers;
         }
         final data = Map<dynamic, dynamic>.from(rawData);
-        
+
         data.forEach((key, value) {
           // Filter out offline users and optionally self
           if (value['online'] == true) {
@@ -108,7 +110,7 @@ class PresenceService {
                 // Email is no longer exposed in presence data
                 photoURL: value['photoURL'],
                 role: value['role'],
-                lastSeen: value['lastSeen'] != null 
+                lastSeen: value['lastSeen'] != null
                     ? DateTime.fromMillisecondsSinceEpoch(value['lastSeen'])
                     : DateTime.now(),
                 isAnonymous: value['isAnonymous'] ?? false,
@@ -120,10 +122,10 @@ class PresenceService {
           }
         });
       }
-      
+
       // Sort by last seen (most recent first)
       onlineUsers.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
-      
+
       return onlineUsers;
     }).handleError((error) {
       // Log the error but return empty list to keep UI functional
@@ -131,14 +133,14 @@ class PresenceService {
       return <OnlineUser>[];
     });
   }
-  
+
   // Get specific user's online status
   Stream<bool> getUserOnlineStatus(String uid) {
     // Check if user is authenticated before accessing database
     if (_auth.currentUser == null) {
       return Stream.value(false);
     }
-    
+
     return database.ref('presence/$uid/online').onValue.map((event) {
       return event.snapshot.value as bool? ?? false;
     }).handleError((error) {
@@ -146,16 +148,16 @@ class PresenceService {
       return false;
     });
   }
-  
+
   // Get user's last seen time
   Stream<DateTime?> getUserLastSeen(String uid) {
     if (_auth.currentUser == null) {
       return Stream.value(null);
     }
-    
+
     return database.ref('presence/$uid/lastSeen').onValue.map((event) {
       final timestamp = event.snapshot.value as int?;
-      return timestamp != null 
+      return timestamp != null
           ? DateTime.fromMillisecondsSinceEpoch(timestamp)
           : null;
     }).handleError((error) {
@@ -163,7 +165,7 @@ class PresenceService {
       return null;
     });
   }
-  
+
   // Initialize presence tracking
   void initializePresence({String? userRole}) {
     _auth.authStateChanges().listen((user) {
@@ -172,12 +174,12 @@ class PresenceService {
       }
     });
   }
-  
+
   // Clean up presence on sign out
   Future<void> cleanupPresence() async {
     await updateUserPresence(false);
   }
-  
+
   // Batch update presence for multiple users (admin function)
   Future<void> batchUpdatePresence(Map<String, bool> userStatuses) async {
     try {
@@ -191,25 +193,26 @@ class PresenceService {
       LoggerService.error('Error in batch presence update', error: error);
     }
   }
-  
+
   // Get count of online users by role
   Stream<Map<String, int>> getOnlineUserCountByRole() {
     if (_auth.currentUser == null) {
       return Stream.value({});
     }
-    
+
     return database.ref('presence').onValue.map((event) {
       final Map<String, int> roleCounts = {};
-      
+
       if (event.snapshot.exists && event.snapshot.value != null) {
         // Safely handle the data conversion
         final rawData = event.snapshot.value;
         if (rawData is! Map) {
-          LoggerService.error('Unexpected presence data format: ${rawData.runtimeType}');
+          LoggerService.error(
+              'Unexpected presence data format: ${rawData.runtimeType}');
           return roleCounts;
         }
         final data = Map<dynamic, dynamic>.from(rawData);
-        
+
         data.forEach((key, value) {
           if (value['online'] == true) {
             final role = value['role'] ?? 'unknown';
@@ -217,7 +220,7 @@ class PresenceService {
           }
         });
       }
-      
+
       return roleCounts;
     }).handleError((error) {
       LoggerService.error('Error fetching online user counts', error: error);
@@ -235,7 +238,7 @@ class OnlineUser {
   final DateTime lastSeen;
   final bool isAnonymous;
   final PresenceMetadata? metadata;
-  
+
   OnlineUser({
     required this.uid,
     required this.displayName,
@@ -245,12 +248,12 @@ class OnlineUser {
     this.isAnonymous = false,
     this.metadata,
   });
-  
+
   // Helper method to get relative time
   String get relativeTime {
     final now = DateTime.now();
     final difference = now.difference(lastSeen);
-    
+
     if (difference.inSeconds < 60) {
       return 'just now';
     } else if (difference.inMinutes < 60) {
@@ -261,7 +264,7 @@ class OnlineUser {
       return '${difference.inDays}d ago';
     }
   }
-  
+
   // Helper to check if user is active (online in last 5 minutes)
   bool get isActive {
     return DateTime.now().difference(lastSeen).inMinutes < 5;
@@ -272,19 +275,19 @@ class OnlineUser {
 class PresenceMetadata {
   final String platform;
   final String version;
-  
+
   PresenceMetadata({
     required this.platform,
     required this.version,
   });
-  
+
   factory PresenceMetadata.fromMap(Map<dynamic, dynamic> map) {
     return PresenceMetadata(
       platform: map['platform'] ?? 'unknown',
       version: map['version'] ?? '0.0.0',
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       'platform': platform,

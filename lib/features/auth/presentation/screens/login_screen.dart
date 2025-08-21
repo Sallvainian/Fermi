@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 
@@ -24,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
     // Clear error when user starts typing
     _emailController.addListener(_clearError);
     _passwordController.addListener(_clearError);
-    
+
     // On web, listen for Google Sign-In events
     if (kIsWeb) {
       _listenToGoogleSignInEvents();
@@ -44,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       authProvider.clearError();
     }
   }
-  
+
   void _listenToGoogleSignInEvents() {
     // For web, Google Sign-In is handled by button click
     // No need for additional listeners
@@ -78,16 +79,30 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _signInWithApple() async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.signInWithApple();
+
+    if (mounted) {
+      if (authProvider.status == AuthStatus.authenticating) {
+        // Need role selection
+        context.go('/auth/role-selection');
+      } else if (authProvider.isAuthenticated) {
+        context.go('/dashboard');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 48.0), // Extra bottom padding
+            padding: const EdgeInsets.fromLTRB(
+                24.0, 24.0, 24.0, 48.0), // Extra bottom padding
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
@@ -227,10 +242,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                       height: 24,
                       width: 24,
-                      errorBuilder: (context, error, stackTrace) => 
-                        const Icon(Icons.g_mobiledata, size: 24),
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.g_mobiledata, size: 24),
                     ),
                     label: const Text('Continue with Google'),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Apple Sign In - only show on iOS/macOS or web
+                  FutureBuilder<bool>(
+                    future: SignInWithApple.isAvailable(),
+                    builder: (context, snapshot) {
+                      if (snapshot.data == true) {
+                        return SignInWithAppleButton(
+                          onPressed: _signInWithApple,
+                          text: 'Continue with Apple',
+                          height: 56,
+                          style: SignInWithAppleButtonStyle.whiteOutlined,
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
                   const SizedBox(height: 24),
 

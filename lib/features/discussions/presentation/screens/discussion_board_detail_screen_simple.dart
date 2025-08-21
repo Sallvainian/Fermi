@@ -15,29 +15,39 @@ class SimpleDiscussionBoardDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<SimpleDiscussionBoardDetailScreen> createState() => 
+  State<SimpleDiscussionBoardDetailScreen> createState() =>
       _SimpleDiscussionBoardDetailScreenState();
 }
 
-class _SimpleDiscussionBoardDetailScreenState extends State<SimpleDiscussionBoardDetailScreen> {
+class _SimpleDiscussionBoardDetailScreenState
+    extends State<SimpleDiscussionBoardDetailScreen> {
   @override
   void initState() {
     super.initState();
-    LoggerService.debug('DiscussionBoardDetailScreen - initState for boardId: ${widget.boardId}', tag: 'SimpleDiscussionBoardDetailScreen');
+    LoggerService.debug(
+        'DiscussionBoardDetailScreen - initState for boardId: ${widget.boardId}',
+        tag: 'SimpleDiscussionBoardDetailScreen');
     // Load threads for this board
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      LoggerService.debug('Loading threads for board: ${widget.boardId}', tag: 'SimpleDiscussionBoardDetailScreen');
-      context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+      LoggerService.debug('Loading threads for board: ${widget.boardId}',
+          tag: 'SimpleDiscussionBoardDetailScreen');
+      context
+          .read<SimpleDiscussionProvider>()
+          .loadThreadsForBoard(widget.boardId);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    LoggerService.debug('DiscussionBoardDetailScreen - building for boardId: ${widget.boardId}', tag: 'SimpleDiscussionBoardDetailScreen');
+    LoggerService.debug(
+        'DiscussionBoardDetailScreen - building for boardId: ${widget.boardId}',
+        tag: 'SimpleDiscussionBoardDetailScreen');
     final provider = context.watch<SimpleDiscussionProvider>();
     final board = provider.currentBoard;
     final threads = provider.getThreadsForBoard(widget.boardId);
-    LoggerService.debug('Current board: ${board?.title}, Threads count: ${threads.length}', tag: 'SimpleDiscussionBoardDetailScreen');
+    LoggerService.debug(
+        'Current board: ${board?.title}, Threads count: ${threads.length}',
+        tag: 'SimpleDiscussionBoardDetailScreen');
 
     return AdaptiveLayout(
       title: board?.title ?? 'Discussion Board',
@@ -73,8 +83,8 @@ class _SimpleDiscussionBoardDetailScreenState extends State<SimpleDiscussionBoar
                       Text(
                         'Created ${DateFormat.yMMMd().format(board.createdAt)}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
                       ),
                     ],
                   ),
@@ -160,14 +170,14 @@ class _SimpleDiscussionBoardDetailScreenState extends State<SimpleDiscussionBoar
           ),
           FilledButton(
             onPressed: () async {
-              if (titleController.text.isNotEmpty && 
+              if (titleController.text.isNotEmpty &&
                   contentController.text.isNotEmpty) {
                 try {
                   await context.read<SimpleDiscussionProvider>().createThread(
-                    boardId: widget.boardId,
-                    title: titleController.text,
-                    content: contentController.text,
-                  );
+                        boardId: widget.boardId,
+                        title: titleController.text,
+                        content: contentController.text,
+                      );
                   if (dialogContext.mounted) {
                     Navigator.of(dialogContext).pop();
                   }
@@ -176,7 +186,8 @@ class _SimpleDiscussionBoardDetailScreenState extends State<SimpleDiscussionBoar
                     ScaffoldMessenger.of(dialogContext).showSnackBar(
                       SnackBar(
                         content: Text('Failed to create thread: $e'),
-                        backgroundColor: Theme.of(dialogContext).colorScheme.error,
+                        backgroundColor:
+                            Theme.of(dialogContext).colorScheme.error,
                       ),
                     );
                   }
@@ -211,7 +222,8 @@ class _ThreadCardState extends State<_ThreadCard> {
       child: InkWell(
         onTap: () {
           // Navigate to thread detail screen
-          context.push('/discussions/${widget.thread.boardId}/thread/${widget.thread.id}');
+          context.push(
+              '/discussions/${widget.thread.boardId}/thread/${widget.thread.id}');
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -264,7 +276,9 @@ class _ThreadCardState extends State<_ThreadCard> {
                   CircleAvatar(
                     radius: 12,
                     child: Text(
-                      widget.thread.authorName.isNotEmpty ? widget.thread.authorName[0].toUpperCase() : '?',
+                      widget.thread.authorName.isNotEmpty
+                          ? widget.thread.authorName[0].toUpperCase()
+                          : '?',
                       style: theme.textTheme.labelSmall,
                     ),
                   ),

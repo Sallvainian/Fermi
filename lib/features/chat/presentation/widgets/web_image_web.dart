@@ -39,22 +39,21 @@ class WebImage extends StatelessWidget {
 
     // For web, use HtmlElementView with an img element
     final String viewType = 'img-${imageUrl.hashCode}';
-    
+
     // Register the view factory only once
     ui_web.platformViewRegistry.registerViewFactory(
       viewType,
       (int viewId) {
-        final img = web.HTMLImageElement()
-          ..src = imageUrl;
-        
-        // Set styles using CSSStyleDeclaration  
+        final img = web.HTMLImageElement()..src = imageUrl;
+
+        // Set styles using CSSStyleDeclaration
         img.style.width = '100%';
         img.style.height = '100%';
         img.style.objectFit = _getObjectFit(fit);
-        
+
         // Note: Event listeners are handled differently with package:web
         // For now we'll skip error/load handling as it requires more complex setup
-        
+
         return img;
       },
     );

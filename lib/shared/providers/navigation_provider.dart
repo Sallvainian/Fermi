@@ -13,9 +13,11 @@ class NavigationProvider extends ChangeNotifier {
 
   List<String> get favoriteIds => _favoriteIds;
   bool get isLoading => _isLoading;
-  
-  List<NavItem> get favoriteItems => NavigationService.getFavoriteItems(_favoriteIds);
-  List<NavItem> get availableItems => NavigationService.getItemsForRole(_currentRole);
+
+  List<NavItem> get favoriteItems =>
+      NavigationService.getFavoriteItems(_favoriteIds);
+  List<NavItem> get availableItems =>
+      NavigationService.getItemsForRole(_currentRole);
 
   NavigationProvider() {
     // Initialize with default favorites to avoid empty state
@@ -34,16 +36,17 @@ class NavigationProvider extends ChangeNotifier {
   /// Load favorites from storage
   Future<void> _loadFavorites() async {
     _isLoading = true;
-    
+
     // Notify listeners immediately if not in build phase
     // Otherwise, the async operation will naturally defer the notification
-    if (WidgetsBinding.instance.schedulerPhase != SchedulerPhase.persistentCallbacks) {
+    if (WidgetsBinding.instance.schedulerPhase !=
+        SchedulerPhase.persistentCallbacks) {
       notifyListeners();
     }
 
     try {
       final savedFavorites = await NavigationService.loadFavorites();
-      
+
       if (savedFavorites.isEmpty) {
         // Use defaults if no saved favorites
         _favoriteIds = NavigationService.getDefaultFavorites(_currentRole);
@@ -56,12 +59,12 @@ class NavigationProvider extends ChangeNotifier {
             .where((id) => availableIds.contains(id))
             .take(NavigationService.maxFavorites)
             .toList();
-        
+
         // If we have less than 4 favorites after filtering, add defaults
         if (_favoriteIds.length < NavigationService.maxFavorites) {
           final defaults = NavigationService.getDefaultFavorites(_currentRole);
           for (final defaultId in defaults) {
-            if (!_favoriteIds.contains(defaultId) && 
+            if (!_favoriteIds.contains(defaultId) &&
                 _favoriteIds.length < NavigationService.maxFavorites) {
               _favoriteIds.add(defaultId);
             }
@@ -69,19 +72,20 @@ class NavigationProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      LoggerService.error('Error loading favorites', tag: 'NavigationProvider', error: e);
+      LoggerService.error('Error loading favorites',
+          tag: 'NavigationProvider', error: e);
       _favoriteIds = NavigationService.getDefaultFavorites(_currentRole);
     }
 
     _isLoading = false;
-    
+
     // Always notify listeners here since we're in an async callback
     notifyListeners();
   }
 
   /// Add item to favorites
   Future<bool> addFavorite(String itemId) async {
-    if (_favoriteIds.contains(itemId) || 
+    if (_favoriteIds.contains(itemId) ||
         _favoriteIds.length >= NavigationService.maxFavorites) {
       return false;
     }
@@ -106,8 +110,10 @@ class NavigationProvider extends ChangeNotifier {
 
   /// Reorder favorites
   Future<bool> reorderFavorites(int oldIndex, int newIndex) async {
-    if (oldIndex < 0 || oldIndex >= _favoriteIds.length ||
-        newIndex < 0 || newIndex > _favoriteIds.length) {
+    if (oldIndex < 0 ||
+        oldIndex >= _favoriteIds.length ||
+        newIndex < 0 ||
+        newIndex > _favoriteIds.length) {
       return false;
     }
 

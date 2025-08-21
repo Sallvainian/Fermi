@@ -16,49 +16,47 @@ import 'service_locator.dart';
 /// Handles all app initialization tasks
 class AppInitializer {
   static bool _firebaseInitialized = false;
-  
+
   static bool get isFirebaseInitialized => _firebaseInitialized;
-  
+
   /// Initialize all app dependencies
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
-    
+
     // CRITICAL: Initialize Firebase first (required for everything)
     await _initializeFirebase();
-    
+
     // CRITICAL: Setup service locator (required for dependency injection)
     await _setupServiceLocator();
-    
-    
+
     // DEFER: Everything else happens after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeDeferredServices();
     });
   }
-  
+
   /// Initialize non-critical services after first frame render
   static Future<void> _initializeDeferredServices() async {
     if (!_firebaseInitialized) return;
-    
+
     // Initialize in parallel for faster startup
     await Future.wait([
-      
       // Performance monitoring is not critical
       _initializePerformanceMonitoring(),
-      
+
       // Notifications can be initialized later
       _initializeNotifications(),
-      
+
       // Messaging services for VoIP
       if (!kIsWeb) _initializeFirebaseMessaging(),
-      
+
       // iOS-specific VoIP
       if (!kIsWeb && Platform.isIOS) _initializeVoIPTokenService(),
     ]);
-    
+
     LoggerService.info('Deferred services initialized', tag: 'AppInitializer');
   }
-  
+
   /// Initialize Firebase services
   static Future<void> _initializeFirebase() async {
     try {
@@ -69,29 +67,30 @@ class AppInitializer {
       // 3. Skip Firebase for local testing
       if (defaultTargetPlatform == TargetPlatform.linux && !kIsWeb) {
         LoggerService.warning(
-          'Firebase is not supported on Linux desktop. '
-          'Consider running with: flutter run -d web-server',
-          tag: 'AppInitializer'
-        );
+            'Firebase is not supported on Linux desktop. '
+            'Consider running with: flutter run -d web-server',
+            tag: 'AppInitializer');
         _firebaseInitialized = false;
         return;
       }
-      
-      LoggerService.info('Starting Firebase initialization...', tag: 'AppInitializer');
-      
+
+      LoggerService.info('Starting Firebase initialization...',
+          tag: 'AppInitializer');
+
       // Use simple Firebase initialization with DefaultFirebaseOptions
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
       _firebaseInitialized = true;
-      
-      LoggerService.info('Firebase core initialized successfully', tag: 'AppInitializer');
-      
+
+      LoggerService.info('Firebase core initialized successfully',
+          tag: 'AppInitializer');
+
       // Auth persistence is now handled in AuthService constructor
-      
+
       // Skip emulator configuration for now
       // The Android emulator has issues with Google Play Services
-      
+
       // Enable Firestore offline persistence
       if (!kIsWeb) {
         FirebaseFirestore.instance.settings = const Settings(
@@ -99,7 +98,7 @@ class AppInitializer {
           cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
         );
       }
-      
+
       // Initialize Firebase Realtime Database
       try {
         final database = FirebaseDatabase.instance;
@@ -107,36 +106,43 @@ class AppInitializer {
           // Enable offline persistence for Realtime Database
           database.setPersistenceEnabled(true);
         }
-        LoggerService.info('Firebase Realtime Database initialized', tag: 'AppInitializer');
+        LoggerService.info('Firebase Realtime Database initialized',
+            tag: 'AppInitializer');
       } catch (e) {
-        LoggerService.warning('Firebase Realtime Database initialization error: $e', tag: 'AppInitializer');
+        LoggerService.warning(
+            'Firebase Realtime Database initialization error: $e',
+            tag: 'AppInitializer');
       }
     } catch (e) {
       _firebaseInitialized = false;
-      LoggerService.error('Firebase initialization error', tag: 'AppInitializer', error: e);
+      LoggerService.error('Firebase initialization error',
+          tag: 'AppInitializer', error: e);
     }
   }
-  
+
   /// Setup dependency injection
   static Future<void> _setupServiceLocator() async {
     try {
       await setupServiceLocator();
     } catch (e) {
-      LoggerService.error('Service locator setup error', tag: 'AppInitializer', error: e);
+      LoggerService.error('Service locator setup error',
+          tag: 'AppInitializer', error: e);
     }
   }
-  
+
   /// Initialize performance monitoring
   static Future<void> _initializePerformanceMonitoring() async {
     try {
       // Initialize performance monitoring asynchronously to avoid blocking main thread
       unawaited(PerformanceService().initialize());
-      LoggerService.debug('Performance monitoring initialized (async)', tag: 'AppInitializer');
+      LoggerService.debug('Performance monitoring initialized (async)',
+          tag: 'AppInitializer');
     } catch (e) {
-      LoggerService.error('Performance monitoring initialization error', tag: 'AppInitializer', error: e);
+      LoggerService.error('Performance monitoring initialization error',
+          tag: 'AppInitializer', error: e);
     }
   }
-  
+
   /// Initialize notification service
   static Future<void> _initializeNotifications() async {
     try {
@@ -146,12 +152,14 @@ class AppInitializer {
       if (!kIsWeb) {
         await notificationService.requestPermissions();
       }
-      LoggerService.info('Notification service initialized', tag: 'AppInitializer');
+      LoggerService.info('Notification service initialized',
+          tag: 'AppInitializer');
     } catch (e) {
-      LoggerService.error('Notification initialization error', tag: 'AppInitializer', error: e);
+      LoggerService.error('Notification initialization error',
+          tag: 'AppInitializer', error: e);
     }
   }
-  
+
   /// Initialize Firebase Messaging for VoIP support
   static Future<void> _initializeFirebaseMessaging() async {
     if (kIsWeb) {
@@ -161,25 +169,30 @@ class AppInitializer {
     try {
       final messagingService = FirebaseMessagingService();
       await messagingService.initialize();
-      LoggerService.info('Firebase Messaging initialized for VoIP', tag: 'AppInitializer');
+      LoggerService.info('Firebase Messaging initialized for VoIP',
+          tag: 'AppInitializer');
     } catch (e) {
-      LoggerService.error('Firebase Messaging initialization error', tag: 'AppInitializer', error: e);
+      LoggerService.error('Firebase Messaging initialization error',
+          tag: 'AppInitializer', error: e);
     }
   }
-  
+
   /// Initialize VoIP token service for iOS
   static Future<void> _initializeVoIPTokenService() async {
     try {
       final voipTokenService = VoIPTokenService();
       await voipTokenService.initialize();
-      LoggerService.info('VoIP token service initialized', tag: 'AppInitializer');
+      LoggerService.info('VoIP token service initialized',
+          tag: 'AppInitializer');
     } catch (e) {
-      LoggerService.error('VoIP token service initialization error', tag: 'AppInitializer', error: e);
+      LoggerService.error('VoIP token service initialization error',
+          tag: 'AppInitializer', error: e);
     }
   }
-  
+
   /// Handle uncaught errors in the app
   static void handleError(Object error, StackTrace stack) {
-    LoggerService.error('Uncaught error in app', tag: 'AppInitializer', error: error);
+    LoggerService.error('Uncaught error in app',
+        tag: 'AppInitializer', error: error);
   }
 }

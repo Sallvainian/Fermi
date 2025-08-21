@@ -11,13 +11,7 @@ enum NotificationType {
   submission
 }
 
-enum NotificationPriority {
-  low,
-  normal,
-  medium,
-  high,
-  urgent
-}
+enum NotificationPriority { low, normal, medium, high, urgent }
 
 class NotificationModel {
   final String id;
@@ -91,12 +85,9 @@ class NotificationModel {
       'actionData': actionData,
       'imageUrl': imageUrl,
       'category': category,
-      'scheduledFor': scheduledFor != null
-          ? Timestamp.fromDate(scheduledFor!)
-          : null,
-      'expiresAt': expiresAt != null
-          ? Timestamp.fromDate(expiresAt!)
-          : null,
+      'scheduledFor':
+          scheduledFor != null ? Timestamp.fromDate(scheduledFor!) : null,
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
     };
   }
 

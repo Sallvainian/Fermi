@@ -7,7 +7,7 @@ import '../providers/jeopardy_provider.dart';
 
 class JeopardyPlayScreen extends StatefulWidget {
   final String gameId;
-  
+
   const JeopardyPlayScreen({
     super.key,
     required this.gameId,
@@ -42,7 +42,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   void _loadGame() async {
     final jeopardyProvider = context.read<JeopardyProvider>();
     final loadedGame = await jeopardyProvider.loadGame(widget.gameId);
-    
+
     if (loadedGame != null) {
       setState(() {
         _game = loadedGame;
@@ -66,7 +66,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     if (_isLoading) {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
@@ -75,7 +75,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         ),
       );
     }
-    
+
     if (_game == null) {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
@@ -96,7 +96,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         ),
       );
     }
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: _gameStarted ? _buildGameScreen() : _buildSetupScreen(),
@@ -105,7 +105,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildSetupScreen() {
     final theme = Theme.of(context);
-    
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -129,7 +129,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               ],
             ),
             const SizedBox(height: 32),
-            
+
             // Game title
             Text(
               _game?.title ?? '',
@@ -137,7 +137,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            
+
             // Players setup
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -154,7 +154,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Player list
             Expanded(
               child: _players.isEmpty
@@ -168,10 +168,11 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                     )
                   : ListView.builder(
                       itemCount: _players.length,
-                      itemBuilder: (context, index) => _buildPlayerSetupTile(_players[index]),
+                      itemBuilder: (context, index) =>
+                          _buildPlayerSetupTile(_players[index]),
                     ),
             ),
-            
+
             // Start button
             SizedBox(
               width: double.infinity,
@@ -237,7 +238,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       );
       return;
     }
-    
+
     setState(() {
       _players.add(JeopardyPlayer(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -259,7 +260,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       );
       return;
     }
-    
+
     setState(() {
       _gameStarted = true;
       _currentPlayer = _players.first;
@@ -268,139 +269,146 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildGameScreen() {
     final theme = Theme.of(context);
-    
+
     return Stack(
       children: [
         // Main game board
         Column(
           children: [
-              // Header with game title and controls
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => context.pop(),
-                        icon: const Icon(Icons.close),
-                      ),
-                      Expanded(
-                        child: Text(
-                          _game?.title ?? '',
-                          style: theme.textTheme.headlineSmall,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: _showScoreboard,
-                        icon: const Icon(Icons.leaderboard),
-                      ),
-                    ],
+            // Header with game title and controls
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                ),
+                ],
               ),
-              
-              // Game board
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: _buildGameBoard(),
-                ),
-              ),
-              
-              // Player scores
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, -2),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => context.pop(),
+                      icon: const Icon(Icons.close),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _game?.title ?? '',
+                        style: theme.textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _showScoreboard,
+                      icon: const Icon(Icons.leaderboard),
                     ),
                   ],
                 ),
-                child: _buildPlayerScores(),
               ),
-            ],
-          ),
-          
-          // Question overlay
-          if (_selectedQuestion != null)
-            _buildQuestionOverlay(),
-        ],
-      );
+            ),
+
+            // Game board
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: _buildGameBoard(),
+              ),
+            ),
+
+            // Player scores
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: _buildPlayerScores(),
+            ),
+          ],
+        ),
+
+        // Question overlay
+        if (_selectedQuestion != null) _buildQuestionOverlay(),
+      ],
+    );
   }
 
   Widget _buildGameBoard() {
     final theme = Theme.of(context);
-    
+
     return Column(
       children: [
         // Category headers row
         SizedBox(
           height: 80,
           child: Row(
-            children: (_game?.categories ?? []).map((category) => Expanded(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      category.name.toUpperCase(),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.bold,
+            children: (_game?.categories ?? [])
+                .map((category) => Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Text(
+                              category.name.toUpperCase(),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-            )).toList(),
+                    ))
+                .toList(),
           ),
         ),
         const SizedBox(height: 8),
-        
+
         // Questions grid
         Expanded(
           child: Row(
-            children: (_game?.categories ?? []).map((category) => Expanded(
-              child: Column(
-                children: category.questions.map((question) => Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(4),
-                    child: _buildQuestionTile(category, question),
-                  ),
-                )).toList(),
-              ),
-            )).toList(),
+            children: (_game?.categories ?? [])
+                .map((category) => Expanded(
+                      child: Column(
+                        children: category.questions
+                            .map((question) => Expanded(
+                                  child: Container(
+                                    margin: const EdgeInsets.all(4),
+                                    child:
+                                        _buildQuestionTile(category, question),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ))
+                .toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildQuestionTile(JeopardyCategory category, JeopardyQuestion question) {
+  Widget _buildQuestionTile(
+      JeopardyCategory category, JeopardyQuestion question) {
     final theme = Theme.of(context);
     final isAnswered = question.isAnswered;
-    
+
     return Material(
       color: isAnswered
           ? theme.colorScheme.surfaceContainerHighest
@@ -437,12 +445,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildPlayerScores() {
     final theme = Theme.of(context);
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: _players.map((player) {
         final isCurrentPlayer = player == _currentPlayer;
-        
+
         return Expanded(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -464,7 +472,8 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 Text(
                   player.name,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: isCurrentPlayer ? FontWeight.bold : FontWeight.normal,
+                    fontWeight:
+                        isCurrentPlayer ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -485,11 +494,11 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildQuestionOverlay() {
     final theme = Theme.of(context);
-    
+
     if (_showingDailyDouble && !_showingAnswer) {
       return _buildDailyDoubleOverlay();
     }
-    
+
     return Container(
       color: Colors.black.withValues(alpha: 0.9),
       child: Center(
@@ -516,7 +525,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                   ),
                 ],
               ),
-              
+
               // Points value (or wager for Daily Double)
               Text(
                 _selectedQuestion!.isDailyDouble && _dailyDoubleWager > 0
@@ -528,17 +537,19 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Question or Answer
               Text(
-                _showingAnswer ? _selectedQuestion!.answer : _selectedQuestion!.question,
+                _showingAnswer
+                    ? _selectedQuestion!.answer
+                    : _selectedQuestion!.question,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   color: theme.colorScheme.onPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
+
               // Action buttons
               if (!_showingAnswer) ...[
                 FilledButton.tonal(
@@ -584,13 +595,13 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                     runSpacing: 8,
                     children: [
                       ..._players.map((player) => FilledButton.tonal(
-                        onPressed: () => _awardPoints(player),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: _getPlayerColor(player.id),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text(player.name),
-                      )),
+                            onPressed: () => _awardPoints(player),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: _getPlayerColor(player.id),
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(player.name),
+                          )),
                       OutlinedButton(
                         onPressed: () => _scoreQuestion(false),
                         style: OutlinedButton.styleFrom(
@@ -615,7 +626,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       _selectedQuestion = question;
       _selectedCategory = category;
       _showingAnswer = false;
-      
+
       // Check if it's a Daily Double
       if (question.isDailyDouble && !_showingDailyDouble) {
         _showingDailyDouble = true;
@@ -645,63 +656,68 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   void _awardPoints(JeopardyPlayer player) {
     if (_selectedQuestion == null) return;
-    
+
     setState(() {
       // Update score
       player.score += _selectedQuestion!.points;
-      
+
       // Mark question as answered
       final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
       if (categoryIndex != -1 && _game != null) {
-        final questionIndex = _game!.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
-        _game!.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
+        final questionIndex = _game!.categories[categoryIndex].questions
+            .indexOf(_selectedQuestion!);
+        _game!.categories[categoryIndex].questions[questionIndex] =
+            _selectedQuestion!.copyWith(
           isAnswered: true,
           answeredBy: player.id,
         );
       }
-      
+
       // Set current player for next selection
       _currentPlayer = player;
-      
+
       // Close question overlay
       _selectedQuestion = null;
       _selectedCategory = null;
       _showingAnswer = false;
     });
-    
+
     // Check if game is complete
     _checkGameComplete();
   }
 
   void _scoreQuestion(bool correct) {
     if (_selectedQuestion == null) return;
-    
+
     setState(() {
       // Mark question as answered with no winner
       final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
       if (categoryIndex != -1 && _game != null) {
-        final questionIndex = _game!.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
-        _game!.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
+        final questionIndex = _game!.categories[categoryIndex].questions
+            .indexOf(_selectedQuestion!);
+        _game!.categories[categoryIndex].questions[questionIndex] =
+            _selectedQuestion!.copyWith(
           isAnswered: true,
           answeredBy: 'none',
         );
       }
-      
+
       // Close question overlay
       _selectedQuestion = null;
       _selectedCategory = null;
       _showingAnswer = false;
     });
-    
+
     // Check if game is complete
     _checkGameComplete();
   }
 
   void _checkGameComplete() {
     final allAnswered = _game?.categories.every(
-      (cat) => cat.questions.every((q) => q.isAnswered),
-    ) ?? false;
-    
+          (cat) => cat.questions.every((q) => q.isAnswered),
+        ) ??
+        false;
+
     if (allAnswered && _game?.finalJeopardy != null) {
       _startFinalJeopardy();
     } else if (allAnswered) {
@@ -711,7 +727,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   void _showGameComplete() {
     final winner = _players.reduce((a, b) => a.score > b.score ? a : b);
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -724,9 +740,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             const SizedBox(height: 16),
             ...(_players..sort((a, b) => b.score.compareTo(a.score)))
                 .map((player) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text('${player.name}: \$${player.score}'),
-                )),
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text('${player.name}: \$${player.score}'),
+                    )),
           ],
         ),
         actions: [
@@ -749,22 +765,26 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         title: const Text('Scoreboard'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: _players.map((player) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(player.name),
-                Text(
-                  '\$${player.score}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: player.score < 0 ? Theme.of(context).colorScheme.error : null,
-                  ),
-                ),
-              ],
-            ),
-          )).toList(),
+          children: _players
+              .map((player) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(player.name),
+                        Text(
+                          '\$${player.score}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: player.score < 0
+                                ? Theme.of(context).colorScheme.error
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ))
+              .toList(),
         ),
         actions: [
           TextButton(
@@ -775,11 +795,11 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       ),
     );
   }
-  
+
   Widget _buildDailyDoubleOverlay() {
     final theme = Theme.of(context);
     final maxWager = max(_dailyDoublePlayer!.score, 1000);
-    
+
     return Container(
       color: Colors.black.withValues(alpha: 0.9),
       child: Center(
@@ -831,10 +851,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                     labelText: 'Wager',
                     labelStyle: TextStyle(color: theme.colorScheme.onPrimary),
                     enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.onPrimary),
+                      borderSide:
+                          BorderSide(color: theme.colorScheme.onPrimary),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: theme.colorScheme.onPrimary, width: 2),
+                      borderSide: BorderSide(
+                          color: theme.colorScheme.onPrimary, width: 2),
                     ),
                   ),
                   onChanged: (value) {
@@ -847,7 +869,8 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               ),
               const SizedBox(height: 24),
               FilledButton.tonal(
-                onPressed: _dailyDoubleWager > 0 ? _confirmDailyDoubleWager : null,
+                onPressed:
+                    _dailyDoubleWager > 0 ? _confirmDailyDoubleWager : null,
                 child: const Text('Confirm Wager'),
               ),
             ],
@@ -856,16 +879,16 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       ),
     );
   }
-  
+
   void _confirmDailyDoubleWager() {
     setState(() {
       _showingDailyDouble = false;
     });
   }
-  
+
   void _scoreDailyDouble(bool correct) {
     if (_selectedQuestion == null || _dailyDoublePlayer == null) return;
-    
+
     setState(() {
       // Update score
       if (correct) {
@@ -873,20 +896,22 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       } else {
         _dailyDoublePlayer!.score -= _dailyDoubleWager;
       }
-      
+
       // Mark question as answered
       final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
       if (categoryIndex != -1 && _game != null) {
-        final questionIndex = _game!.categories[categoryIndex].questions.indexOf(_selectedQuestion!);
-        _game!.categories[categoryIndex].questions[questionIndex] = _selectedQuestion!.copyWith(
+        final questionIndex = _game!.categories[categoryIndex].questions
+            .indexOf(_selectedQuestion!);
+        _game!.categories[categoryIndex].questions[questionIndex] =
+            _selectedQuestion!.copyWith(
           isAnswered: true,
           answeredBy: _dailyDoublePlayer!.id,
         );
       }
-      
+
       // Set current player for next selection
       _currentPlayer = _dailyDoublePlayer;
-      
+
       // Close question overlay
       _selectedQuestion = null;
       _selectedCategory = null;
@@ -895,15 +920,15 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       _dailyDoubleWager = 0;
       _dailyDoublePlayer = null;
     });
-    
+
     // Check if game is complete
     _checkGameComplete();
   }
-  
+
   void _startFinalJeopardy() {
     _showFinalJeopardyDialog();
   }
-  
+
   void _showFinalJeopardyDialog() {
     showDialog(
       context: context,
@@ -918,19 +943,19 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             _finalJeopardyAnswers.clear();
             _finalJeopardyAnswers.addAll(answers);
           });
-          
+
           _scoreFinalJeopardy();
         },
       ),
     );
   }
-  
+
   void _scoreFinalJeopardy() {
     // This would typically be done by the teacher/host
     // For now, we'll show a dialog to score each player
     _showFinalJeopardyScoringDialog();
   }
-  
+
   void _showFinalJeopardyScoringDialog() {
     showDialog(
       context: context,
@@ -945,35 +970,41 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             Text('Answer: ${_game?.finalJeopardy?.answer ?? ''}'),
             const SizedBox(height: 16),
             ..._players.map((player) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(player.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        Text('Answer: ${_finalJeopardyAnswers[player.id] ?? "No answer"}'),
-                        Text('Wager: \$${_finalJeopardyWagers[player.id] ?? 0}'),
-                      ],
-                    ),
-                  ),
-                  Row(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.check, color: Colors.green),
-                        onPressed: () => _scoreFinalJeopardyPlayer(player, true),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(player.name,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            Text(
+                                'Answer: ${_finalJeopardyAnswers[player.id] ?? "No answer"}'),
+                            Text(
+                                'Wager: \$${_finalJeopardyWagers[player.id] ?? 0}'),
+                          ],
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () => _scoreFinalJeopardyPlayer(player, false),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.check, color: Colors.green),
+                            onPressed: () =>
+                                _scoreFinalJeopardyPlayer(player, true),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.red),
+                            onPressed: () =>
+                                _scoreFinalJeopardyPlayer(player, false),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            )),
+                )),
           ],
         ),
         actions: [
@@ -988,7 +1019,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       ),
     );
   }
-  
+
   void _scoreFinalJeopardyPlayer(JeopardyPlayer player, bool correct) {
     setState(() {
       final wager = _finalJeopardyWagers[player.id] ?? 0;
@@ -1006,13 +1037,13 @@ class _FinalJeopardyDialog extends StatefulWidget {
   final JeopardyGame game;
   final List<JeopardyPlayer> players;
   final Function(Map<String, int>, Map<String, String>) onComplete;
-  
+
   const _FinalJeopardyDialog({
     required this.game,
     required this.players,
     required this.onComplete,
   });
-  
+
   @override
   State<_FinalJeopardyDialog> createState() => _FinalJeopardyDialogState();
 }
@@ -1024,11 +1055,11 @@ class _FinalJeopardyDialogState extends State<_FinalJeopardyDialog> {
   bool _showingCategory = true;
   bool _showingWagers = false;
   bool _showingQuestion = false;
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     if (_showingCategory) {
       return AlertDialog(
         backgroundColor: theme.colorScheme.primary,
@@ -1075,11 +1106,11 @@ class _FinalJeopardyDialogState extends State<_FinalJeopardyDialog> {
         ],
       );
     }
-    
+
     if (_showingWagers && _currentPlayerIndex < widget.players.length) {
       final player = widget.players[_currentPlayerIndex];
       final maxWager = max(0, player.score);
-      
+
       return AlertDialog(
         title: Text('${player.name}\'s Wager'),
         content: Column(
@@ -1120,7 +1151,7 @@ class _FinalJeopardyDialogState extends State<_FinalJeopardyDialog> {
         ],
       );
     }
-    
+
     if (_showingQuestion) {
       return AlertDialog(
         title: const Text('Final Jeopardy'),
@@ -1134,19 +1165,19 @@ class _FinalJeopardyDialogState extends State<_FinalJeopardyDialog> {
             ),
             const SizedBox(height: 24),
             ...widget.players.map((player) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: TextFormField(
-                decoration: InputDecoration(
-                  labelText: '${player.name}\'s Answer',
-                  border: const OutlineInputBorder(),
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    _answers[player.id] = value;
-                  });
-                },
-              ),
-            )),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: '${player.name}\'s Answer',
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        _answers[player.id] = value;
+                      });
+                    },
+                  ),
+                )),
           ],
         ),
         actions: [
@@ -1160,7 +1191,7 @@ class _FinalJeopardyDialogState extends State<_FinalJeopardyDialog> {
         ],
       );
     }
-    
+
     return const SizedBox.shrink();
   }
 }

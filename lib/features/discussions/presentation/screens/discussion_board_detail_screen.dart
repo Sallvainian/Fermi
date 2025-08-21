@@ -22,7 +22,8 @@ class DiscussionBoardDetailScreen extends StatefulWidget {
       _DiscussionBoardDetailScreenState();
 }
 
-class _DiscussionBoardDetailScreenState extends State<DiscussionBoardDetailScreen> {
+class _DiscussionBoardDetailScreenState
+    extends State<DiscussionBoardDetailScreen> {
   String _sortType = 'recent';
 
   @override

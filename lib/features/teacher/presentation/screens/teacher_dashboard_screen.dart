@@ -41,19 +41,20 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   void _initializeDashboard() {
     if (_isInitialized) return; // Prevent multiple initializations
-    
+
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
     final dashboardProvider = context.read<DashboardProvider>();
     final assignmentProvider = context.read<AssignmentProvider>();
-    
-    final teacherId = authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
-    
+
+    final teacherId =
+        authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
+
     // === INITIALIZING DASHBOARD FOR TEACHER: $teacherId ===
-    
+
     if (teacherId != null) {
       _isInitialized = true; // Set this BEFORE loading to prevent re-runs
-      
+
       // Load data only once
       classProvider.loadTeacherClasses(teacherId);
       dashboardProvider.loadTeacherDashboard(teacherId);
@@ -72,12 +73,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final theme = Theme.of(context);
 
     // Handle incoming calls
-    if (callProvider.hasIncomingCall && 
+    if (callProvider.hasIncomingCall &&
         callProvider.incomingCall != null &&
         !callProvider.isNavigationInProgress) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         callProvider.setNavigationInProgress(true);
-        context.push('/incoming-call', extra: callProvider.incomingCall).then((_) {
+        context
+            .push('/incoming-call', extra: callProvider.incomingCall)
+            .then((_) {
           // Reset navigation state after call screen is popped
           callProvider.setNavigationInProgress(false);
           // Optional: Add any post-call logic here
@@ -109,85 +112,86 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               // Welcome Header
               Card(
                 child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundColor: theme.colorScheme.primary,
-                          child: Text(
-                            user?.displayName?.isNotEmpty == true
-                                ? user!.displayName![0].toUpperCase()
-                                : 'T',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
+                  padding: const EdgeInsets.all(24),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundColor: theme.colorScheme.primary,
+                        child: Text(
+                          user?.displayName?.isNotEmpty == true
+                              ? user!.displayName![0].toUpperCase()
+                              : 'T',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome Back',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome Back',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            Text(
+                              _getUserFirstName(user, authProvider),
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
-                              Text(
-                                _getUserFirstName(user, authProvider),
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
+              ),
               const SizedBox(height: 16),
-              
+
               // PWA Install Prompt for iOS users
               const PWAInstallPrompt(),
               const SizedBox(height: 8),
 
               // Quick Stats - Smaller section
-              _buildQuickStats(context, classProvider, dashboardProvider, assignmentProvider),
+              _buildQuickStats(context, classProvider, dashboardProvider,
+                  assignmentProvider),
               const SizedBox(height: 24),
 
               // My Classes
               Text(
-                  'My Classes',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                'My Classes',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
               const SizedBox(height: AppSpacing.md),
               _buildClassesSection(context, classProvider),
               const SizedBox(height: AppSpacing.lg),
 
               // Recent Activity
               Text(
-                  'Recent Activity',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                'Recent Activity',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
               const SizedBox(height: AppSpacing.md),
               _buildRecentActivityCard(context, dashboardProvider),
               const SizedBox(height: AppSpacing.lg),
-              
+
               // Online Users
               Text(
-                  'Online Users',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                'Online Users',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
               const SizedBox(height: AppSpacing.md),
               SizedBox(
                 height: 300,
@@ -197,11 +201,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
               // Quick Actions
               Text(
-                  'Quick Actions',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                'Quick Actions',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+              ),
               const SizedBox(height: AppSpacing.md),
               _buildQuickActionsGrid(context),
             ],
@@ -211,10 +215,15 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildQuickStats(BuildContext context, ClassProvider classProvider, DashboardProvider dashboardProvider, AssignmentProvider assignmentProvider) {
+  Widget _buildQuickStats(
+      BuildContext context,
+      ClassProvider classProvider,
+      DashboardProvider dashboardProvider,
+      AssignmentProvider assignmentProvider) {
     final teacherClasses = classProvider.teacherClasses;
-    final totalStudents = teacherClasses.fold<int>(0, (sum, classModel) => sum + classModel.studentCount);
-    
+    final totalStudents = teacherClasses.fold<int>(
+        0, (sum, classModel) => sum + classModel.studentCount);
+
     return SizedBox(
       height: 80,
       child: ListView(
@@ -260,14 +269,15 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildClassesSection(BuildContext context, ClassProvider classProvider) {
+  Widget _buildClassesSection(
+      BuildContext context, ClassProvider classProvider) {
     // If not initialized, show loading
     if (!_isInitialized || _classesStream == null) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
-    
+
     return StreamBuilder<List<ClassModel>>(
       stream: _classesStream,
       builder: (context, snapshot) {
@@ -280,7 +290,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const Icon(Icons.error_outline,
+                        size: 48, color: Colors.red),
                     const SizedBox(height: 16),
                     Text('Error: ${snapshot.error}'),
                     const SizedBox(height: 16),
@@ -300,74 +311,75 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
           );
         }
-        
+
         // Show loading only if no data yet
         if (!snapshot.hasData) {
           return const Center(
             child: CircularProgressIndicator(),
           );
         }
-        
+
         // We have data - show it
         final teacherClasses = snapshot.data!;
-    
-    if (teacherClasses.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Center(
-            child: Column(
-              children: [
-                Icon(
-                  Icons.class_outlined,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+
+        if (teacherClasses.isEmpty) {
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.class_outlined,
+                      size: 48,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Classes Yet',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Create your first class to get started',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => context.go('/teacher/classes'),
+                      child: const Text('Create a Class'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'No Classes Yet',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Create your first class to get started',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
+              ),
+            ),
+          );
+        }
+
+        // Show max 4 classes on dashboard
+        final displayClasses = teacherClasses.take(4).toList();
+
+        return Column(
+          children: [
+            ...displayClasses.map((course) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildClassCard(context, course),
+                )),
+            if (teacherClasses.length > 4) ...[
+              const SizedBox(height: 4),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
                   onPressed: () => context.go('/teacher/classes'),
-                  child: const Text('Create a Class'),
+                  child: Text('View All ${teacherClasses.length} Classes'),
                 ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-    
-    // Show max 4 classes on dashboard
-    final displayClasses = teacherClasses.take(4).toList();
-    
-    return Column(
-      children: [
-        ...displayClasses.map((course) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildClassCard(context, course),
-        )),
-        if (teacherClasses.length > 4) ...[
-          const SizedBox(height: 4),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => context.go('/teacher/classes'),
-              child: Text('View All ${teacherClasses.length} Classes'),
-            ),
-          ),
-        ],
-      ],
-    );
+              ),
+            ],
+          ],
+        );
       },
     );
   }
@@ -376,7 +388,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final theme = Theme.of(context);
     final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
     final color = AppTheme.subjectColors[colorIndex];
-    
+
     return AppCard(
       onTap: () => _navigateToClass(context, course),
       child: Row(
@@ -391,7 +403,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // Class info
           Expanded(
             child: Column(
@@ -420,13 +432,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                       _buildInfoChip(Icons.room, course.room!),
                     if (course.schedule != null)
                       _buildInfoChip(Icons.schedule, course.schedule!),
-                    _buildInfoChip(Icons.people, '${course.studentCount} students'),
+                    _buildInfoChip(
+                        Icons.people, '${course.studentCount} students'),
                   ],
                 ),
               ],
             ),
           ),
-          
+
           // Arrow icon
           Icon(
             Icons.arrow_forward_ios,
@@ -454,7 +467,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
-    
+
     return SizedBox(
       width: 120,
       child: Card(
@@ -529,9 +542,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
   }
 
-  Widget _buildRecentActivityCard(BuildContext context, DashboardProvider dashboardProvider) {
+  Widget _buildRecentActivityCard(
+      BuildContext context, DashboardProvider dashboardProvider) {
     final activities = dashboardProvider.recentActivities;
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -551,7 +565,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           Icon(
                             Icons.history_outlined,
                             size: 48,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -561,9 +576,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                           const SizedBox(height: 8),
                           Text(
                             'Activity from your classes will appear here',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -581,11 +601,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       ),
     );
   }
-  
-  Widget _buildActivityItemFromModel(BuildContext context, ActivityModel activity) {
+
+  Widget _buildActivityItemFromModel(
+      BuildContext context, ActivityModel activity) {
     IconData icon;
     Color color;
-    
+
     switch (activity.type) {
       case ActivityType.assignmentSubmitted:
         icon = Icons.assignment_turned_in;
@@ -611,7 +632,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         icon = Icons.notifications;
         color = Colors.grey;
     }
-    
+
     return _buildActivityItem(
       context,
       icon: icon,
@@ -631,7 +652,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required Color color,
   }) {
     final theme = Theme.of(context);
-    
+
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.1),
@@ -731,7 +752,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     required VoidCallback onTap,
   }) {
     final theme = Theme.of(context);
-    
+
     return Card(
       child: InkWell(
         onTap: onTap,
@@ -768,13 +789,13 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       ),
     );
   }
-  
+
   String _getUserFirstName(UserModel? user, AuthProvider authProvider) {
     // Try firstName field first
     if (user?.firstName?.isNotEmpty == true) {
       return '${user!.firstName}!';
     }
-    
+
     // Try displayName from user model
     if (user?.displayName?.isNotEmpty == true) {
       final nameParts = user!.displayName!.split(' ');
@@ -782,10 +803,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         return '${nameParts.first}!';
       }
     }
-    
+
     // Firebase User doesn't have displayName getter anymore
     // UserModel should be the single source of truth for user data
-    
+
     // Default fallback
     return 'Teacher!';
   }

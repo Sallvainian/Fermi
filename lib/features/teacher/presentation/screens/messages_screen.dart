@@ -9,7 +9,8 @@ class TeacherMessagesScreen extends StatefulWidget {
   State<TeacherMessagesScreen> createState() => _TeacherMessagesScreenState();
 }
 
-class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with SingleTickerProviderStateMixin {
+class _TeacherMessagesScreenState extends State<TeacherMessagesScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
   String _selectedFilter = 'All';
@@ -97,14 +98,20 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
                       });
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'All', child: Text('All Messages')),
-                      const PopupMenuItem(value: 'Unread', child: Text('Unread')),
-                      const PopupMenuItem(value: 'Starred', child: Text('Starred')),
-                      const PopupMenuItem(value: 'Students', child: Text('From Students')),
-                      const PopupMenuItem(value: 'Parents', child: Text('From Parents')),
+                      const PopupMenuItem(
+                          value: 'All', child: Text('All Messages')),
+                      const PopupMenuItem(
+                          value: 'Unread', child: Text('Unread')),
+                      const PopupMenuItem(
+                          value: 'Starred', child: Text('Starred')),
+                      const PopupMenuItem(
+                          value: 'Students', child: Text('From Students')),
+                      const PopupMenuItem(
+                          value: 'Parents', child: Text('From Parents')),
                     ],
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -141,7 +148,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
         'sender': 'Sarah Johnson',
         'senderType': 'Student',
         'subject': 'Question about Math homework',
-        'preview': 'Hi Mr. Smith, I\'m having trouble understanding problem 5 from...',
+        'preview':
+            'Hi Mr. Smith, I\'m having trouble understanding problem 5 from...',
         'time': DateTime.now().subtract(const Duration(hours: 2)),
         'isRead': false,
         'isStarred': true,
@@ -151,7 +159,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
         'sender': 'Parent - Michael Chen',
         'senderType': 'Parent',
         'subject': 'Michael\'s absence tomorrow',
-        'preview': 'Dear Teacher, Michael will be absent tomorrow due to a doctor\'s appointment...',
+        'preview':
+            'Dear Teacher, Michael will be absent tomorrow due to a doctor\'s appointment...',
         'time': DateTime.now().subtract(const Duration(hours: 5)),
         'isRead': true,
         'isStarred': false,
@@ -161,7 +170,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
         'sender': 'Emma Davis',
         'senderType': 'Student',
         'subject': 'Extra credit opportunity',
-        'preview': 'Hello, I was wondering if there are any extra credit opportunities available...',
+        'preview':
+            'Hello, I was wondering if there are any extra credit opportunities available...',
         'time': DateTime.now().subtract(const Duration(days: 1)),
         'isRead': true,
         'isStarred': false,
@@ -171,7 +181,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
         'sender': 'Admin Office',
         'senderType': 'Admin',
         'subject': 'Faculty meeting reminder',
-        'preview': 'This is a reminder about the faculty meeting scheduled for Friday at 3:00 PM...',
+        'preview':
+            'This is a reminder about the faculty meeting scheduled for Friday at 3:00 PM...',
         'time': DateTime.now().subtract(const Duration(days: 1)),
         'isRead': false,
         'isStarred': true,
@@ -188,7 +199,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
         'sender': 'To: James Wilson',
         'senderType': 'Sent',
         'subject': 'Re: Missing assignments',
-        'preview': 'Hi James, I noticed you have several missing assignments. Please submit...',
+        'preview':
+            'Hi James, I noticed you have several missing assignments. Please submit...',
         'time': DateTime.now().subtract(const Duration(hours: 3)),
         'isRead': true,
         'isStarred': false,
@@ -198,7 +210,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
         'sender': 'To: Parent - Sarah Johnson',
         'senderType': 'Sent',
         'subject': 'Sarah\'s progress update',
-        'preview': 'Dear Mr./Mrs. Johnson, I wanted to update you on Sarah\'s excellent progress...',
+        'preview':
+            'Dear Mr./Mrs. Johnson, I wanted to update you on Sarah\'s excellent progress...',
         'time': DateTime.now().subtract(const Duration(days: 2)),
         'isRead': true,
         'isStarred': false,
@@ -215,7 +228,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
         'sender': 'Previous Student',
         'senderType': 'Student',
         'subject': 'Thank you!',
-        'preview': 'Thank you for all your help this semester. I really appreciated...',
+        'preview':
+            'Thank you for all your help this semester. I really appreciated...',
         'time': DateTime.now().subtract(const Duration(days: 30)),
         'isRead': true,
         'isStarred': true,
@@ -241,7 +255,7 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
   Widget _buildMessageCard(Map<String, dynamic> message) {
     final theme = Theme.of(context);
     final isUnread = !(message['isRead'] as bool);
-    
+
     Color senderTypeColor;
     IconData senderTypeIcon;
     switch (message['senderType']) {
@@ -277,7 +291,7 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
             children: [
               // Sender Avatar
               CircleAvatar(
-                backgroundColor: isUnread 
+                backgroundColor: isUnread
                     ? senderTypeColor.withValues(alpha: 0.2)
                     : Colors.grey.withValues(alpha: 0.1),
                 child: Icon(
@@ -299,7 +313,9 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
                           child: Text(
                             message['sender'],
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
+                              fontWeight: isUnread
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -308,7 +324,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
                           _formatMessageTime(message['time']),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight:
+                                isUnread ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -318,7 +335,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
                     Text(
                       message['subject'],
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight:
+                            isUnread ? FontWeight.w600 : FontWeight.normal,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -372,7 +390,7 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen> with Sing
   String _formatMessageTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-    
+
     if (difference.inMinutes < 60) {
       return '${difference.inMinutes}m';
     } else if (difference.inHours < 24) {
@@ -436,14 +454,16 @@ class MessageDetailSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               // Header
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -473,7 +493,9 @@ class MessageDetailSheet extends StatelessWidget {
                         IconButton(
                           onPressed: () {},
                           icon: Icon(
-                            message['isStarred'] ? Icons.star : Icons.star_border,
+                            message['isStarred']
+                                ? Icons.star
+                                : Icons.star_border,
                             color: message['isStarred'] ? Colors.amber : null,
                           ),
                           tooltip: 'Star',
@@ -550,7 +572,7 @@ Best regards,
 ${message['sender']}''',
                         style: theme.textTheme.bodyLarge,
                       ),
-                      
+
                       if (message['hasAttachment']) ...[
                         const SizedBox(height: 24),
                         // Attachment
@@ -573,7 +595,8 @@ ${message['sender']}''',
                                   children: [
                                     Text(
                                       'homework_problem_5.pdf',
-                                      style: TextStyle(fontWeight: FontWeight.w600),
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w600),
                                     ),
                                     Text(
                                       '245 KB',
@@ -642,15 +665,26 @@ ${message['sender']}''',
 
   String _formatFullDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     final hour = date.hour > 12 ? date.hour - 12 : date.hour;
     final amPm = date.hour >= 12 ? 'PM' : 'AM';
     return '${months[date.month - 1]} ${date.day}, ${date.year} at $hour:${date.minute.toString().padLeft(2, '0')} $amPm';
   }
 
-  void _showReplyMessage(BuildContext context, Map<String, dynamic> originalMessage) {
+  void _showReplyMessage(
+      BuildContext context, Map<String, dynamic> originalMessage) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -662,7 +696,8 @@ ${message['sender']}''',
     );
   }
 
-  void _showForwardMessage(BuildContext context, Map<String, dynamic> originalMessage) {
+  void _showForwardMessage(
+      BuildContext context, Map<String, dynamic> originalMessage) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -733,7 +768,8 @@ class _ComposeMessageSheetState extends State<ComposeMessageSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -806,8 +842,8 @@ class _ComposeMessageSheetState extends State<ComposeMessageSheet> {
                     controller: _recipientController,
                     decoration: InputDecoration(
                       labelText: 'To',
-                      hintText: _recipientType == 'Class' 
-                          ? 'Select class...' 
+                      hintText: _recipientType == 'Class'
+                          ? 'Select class...'
                           : 'Enter recipient...',
                       border: const OutlineInputBorder(),
                       suffixIcon: const Icon(Icons.person_search),

@@ -13,8 +13,9 @@ void main() async {
 
   try {
     // Create test discussion boards
-    LoggerService.info('Creating test discussion boards...', tag: 'TestDiscussions');
-    
+    LoggerService.info('Creating test discussion boards...',
+        tag: 'TestDiscussions');
+
     // Board 1
     final board1Ref = await firestore.collection('discussion_boards').add({
       'title': 'General Discussion',
@@ -25,9 +26,10 @@ void main() async {
       'isPinned': true,
       'tags': ['general', 'announcements'],
     });
-    LoggerService.info('Created board: ${board1Ref.id}', tag: 'TestDiscussions');
+    LoggerService.info('Created board: ${board1Ref.id}',
+        tag: 'TestDiscussions');
 
-    // Board 2  
+    // Board 2
     final board2Ref = await firestore.collection('discussion_boards').add({
       'title': 'Study Groups',
       'description': 'Organize and join study groups with your classmates',
@@ -37,11 +39,12 @@ void main() async {
       'isPinned': false,
       'tags': ['study', 'collaboration'],
     });
-    LoggerService.info('Created board: ${board2Ref.id}', tag: 'TestDiscussions');
+    LoggerService.info('Created board: ${board2Ref.id}',
+        tag: 'TestDiscussions');
 
     // Add some test threads to board 1
     LoggerService.info('Adding test threads...', tag: 'TestDiscussions');
-    
+
     final thread1Ref = await firestore
         .collection('discussion_boards')
         .doc(board1Ref.id)
@@ -49,7 +52,8 @@ void main() async {
         .add({
       'boardId': board1Ref.id,
       'title': 'Welcome to the class!',
-      'content': 'Hello everyone! Welcome to our online discussion board. Feel free to introduce yourself here.',
+      'content':
+          'Hello everyone! Welcome to our online discussion board. Feel free to introduce yourself here.',
       'authorId': 'teacher123',
       'authorName': 'Prof. Smith',
       'createdAt': Timestamp.now(),
@@ -58,7 +62,8 @@ void main() async {
       'isPinned': true,
       'isLocked': false,
     });
-    LoggerService.info('Created thread: ${thread1Ref.id}', tag: 'TestDiscussions');
+    LoggerService.info('Created thread: ${thread1Ref.id}',
+        tag: 'TestDiscussions');
 
     final thread2Ref = await firestore
         .collection('discussion_boards')
@@ -67,7 +72,8 @@ void main() async {
         .add({
       'boardId': board1Ref.id,
       'title': 'Homework questions',
-      'content': 'If you have any questions about the homework, please post them here.',
+      'content':
+          'If you have any questions about the homework, please post them here.',
       'authorId': 'student456',
       'authorName': 'Jane Doe',
       'createdAt': Timestamp.now(),
@@ -76,7 +82,8 @@ void main() async {
       'isPinned': false,
       'isLocked': false,
     });
-    LoggerService.info('Created thread: ${thread2Ref.id}', tag: 'TestDiscussions');
+    LoggerService.info('Created thread: ${thread2Ref.id}',
+        tag: 'TestDiscussions');
 
     // Add a comment to thread 1
     await firestore
@@ -98,11 +105,12 @@ void main() async {
       'threadCount': 2,
     });
 
-    LoggerService.info('✅ Test discussion data created successfully!', tag: 'TestDiscussions');
+    LoggerService.info('✅ Test discussion data created successfully!',
+        tag: 'TestDiscussions');
     LoggerService.info('Board 1 ID: ${board1Ref.id}', tag: 'TestDiscussions');
     LoggerService.info('Board 2 ID: ${board2Ref.id}', tag: 'TestDiscussions');
-    
   } catch (e) {
-    LoggerService.error('❌ Error creating test data', tag: 'TestDiscussions', error: e);
+    LoggerService.error('❌ Error creating test data',
+        tag: 'TestDiscussions', error: e);
   }
 }

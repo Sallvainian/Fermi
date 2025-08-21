@@ -1,9 +1,9 @@
 /// Service locator configuration for dependency injection.
-/// 
+///
 /// This module sets up the application's dependency injection container
 /// using the GetIt package. It provides a centralized location for
 /// registering and resolving dependencies throughout the application.
-/// 
+///
 /// The service locator pattern helps:
 /// - Decouple classes from their dependencies
 /// - Enable easy testing with mock implementations
@@ -46,116 +46,116 @@ import '../../features/games/data/repositories/firebase_jeopardy_repository.dart
 final GetIt getIt = GetIt.instance;
 
 /// Initializes and registers all application dependencies.
-/// 
+///
 /// This function must be called during app initialization (in main.dart)
 /// after Firebase has been initialized. It sets up:
-/// 
+///
 /// 1. **Firebase Services** (as singletons):
 ///    - FirebaseAuth for authentication
 ///    - FirebaseFirestore for database operations
 ///    - FirebaseStorage for file storage
-/// 
+///
 /// 2. **Core Services** (as singletons):
 ///    - AuthService for authentication logic
 ///    - LoggerService for centralized logging
-/// 
+///
 /// 3. **Repository Layer** (as singletons):
 ///    - All repository implementations that abstract data access
-/// 
+///
 /// 4. **Business Logic Services** (as factories):
 ///    - Services that contain business logic and use repositories
-/// 
+///
 /// Registration types:
 /// - `registerLazySingleton`: Creates instance only when first requested, then reuses
 /// - `registerFactory`: Creates new instance each time it's requested
-/// 
+///
 /// @throws Exception if Firebase is not initialized before calling this
 Future<void> setupServiceLocator() async {
   // Setting up service locator...
-  
+
   // Register Firebase instances
   getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
+  getIt.registerLazySingleton<FirebaseFirestore>(
+      () => FirebaseFirestore.instance);
   getIt.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
 
   // Register services
   getIt.registerLazySingleton<AuthService>(() => AuthService());
   getIt.registerLazySingleton<LoggerService>(() => LoggerService());
-  
+
   getIt.registerLazySingleton<AssignmentRepository>(
     () => AssignmentRepositoryImpl(getIt<FirebaseFirestore>()),
   );
-  
+
   getIt.registerLazySingleton<ClassRepository>(
     () => ClassRepositoryImpl(getIt<FirebaseFirestore>()),
   );
-  
+
   getIt.registerLazySingleton<GradeRepository>(
     () => GradeRepositoryImpl(getIt<FirebaseFirestore>()),
   );
-  
+
   getIt.registerLazySingleton<StudentRepository>(
     () => StudentRepositoryImpl(getIt<FirebaseFirestore>()),
   );
-  
+
   getIt.registerLazySingleton<SubmissionRepository>(
     () => SubmissionRepositoryImpl(getIt<FirebaseFirestore>()),
   );
-  
+
   getIt.registerLazySingleton<ChatRepository>(
     () => ChatRepositoryImpl(getIt<FirebaseFirestore>(), getIt<FirebaseAuth>()),
   );
-  
+
   // Discussion repository removed - using direct Firestore in SimpleDiscussionProvider
   // getIt.registerLazySingleton<DiscussionRepository>(
   //   () => DiscussionRepositoryImpl(getIt<FirebaseFirestore>(), getIt<FirebaseAuth>()),
   // );
-  
+
   getIt.registerLazySingleton<CalendarRepository>(
     () => CalendarRepositoryImpl(getIt<FirebaseFirestore>()),
   );
-  
-  
+
   getIt.registerLazySingleton<JeopardyRepository>(
     () => FirebaseJeopardyRepository(firestore: getIt<FirebaseFirestore>()),
   );
-  
+
   // Register services with dependencies
   getIt.registerFactory<AssignmentService>(
     () => AssignmentService(firestore: getIt<FirebaseFirestore>()),
   );
-  
-  getIt.registerFactory<ChatService>(() => ChatService());  
+
+  getIt.registerFactory<ChatService>(() => ChatService());
   getIt.registerFactory<SubmissionService>(
     () => SubmissionService(firestore: getIt<FirebaseFirestore>()),
   );
-  
+
   getIt.registerFactory<CalendarService>(
     () => CalendarService(
       getIt<CalendarRepository>(),
       getIt<ClassRepository>(),
     ),
   );
-  
+
   // CalendarService registered
-  
+
   // Note: Providers will be refactored to use these services via dependency injection
   // rather than creating service instances directly
   // Service locator setup complete
 }
 
 /// Convenience extension for accessing registered services.
-/// 
+///
 /// This extension provides type-safe getters for all registered services,
 /// making it easier to retrieve dependencies without having to specify
 /// the type parameter each time.
-/// 
+///
 /// Usage example:
 /// ```dart
 /// final auth = getIt.auth; // Instead of getIt.get<FirebaseAuth>()
 /// final userRepo = getIt.authRepository; // Instead of getIt.get<AuthRepository>()
 /// ```
-/// 
+///
 /// Benefits:
 /// - Cleaner, more readable code
 /// - Compile-time type safety
@@ -165,7 +165,7 @@ extension ServiceLocatorExtension on GetIt {
   FirebaseAuth get auth => get<FirebaseAuth>();
   FirebaseFirestore get firestore => get<FirebaseFirestore>();
   FirebaseStorage get storage => get<FirebaseStorage>();
-  
+
   AuthService get authService => get<AuthService>();
   AssignmentRepository get assignmentRepository => get<AssignmentRepository>();
   ClassRepository get classRepository => get<ClassRepository>();

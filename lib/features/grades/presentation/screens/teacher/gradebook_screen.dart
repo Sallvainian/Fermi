@@ -6,7 +6,8 @@ import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/grade.dart';
 import '../../providers/grade_provider.dart';
 import '../../../../assignments/presentation/providers/assignment_provider.dart';
-import '../../../../assignments/domain/models/assignment.dart' as assignment_model;
+import '../../../../assignments/domain/models/assignment.dart'
+    as assignment_model;
 import '../../../../classes/presentation/providers/class_provider.dart';
 import '../../../../classes/domain/models/class_model.dart';
 import '../../../../student/domain/models/student.dart';
@@ -23,7 +24,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
   String _searchQuery = '';
   String? _selectedClassId;
   List<Student> _students = [];
-  
+
   @override
   void initState() {
     super.initState();
@@ -31,33 +32,34 @@ class _GradebookScreenState extends State<GradebookScreen> {
       _loadData();
     });
   }
-  
+
   void _loadData() {
     final classProvider = context.read<ClassProvider>();
     final gradeProvider = context.read<GradeProvider>();
-    
+
     // Load classes and set default selection
     if (classProvider.teacherClasses.isNotEmpty) {
       final firstClass = classProvider.teacherClasses.first;
       setState(() {
         _selectedClassId = firstClass.id;
       });
-      
+
       // Load grades for the selected class
       gradeProvider.loadClassGrades(firstClass.id);
-      
+
       // TODO: Load students for the class
       // For now, we'll use class student IDs
       _loadStudentsForClass(firstClass);
     }
   }
-  
+
   void _loadStudentsForClass(ClassModel classModel) async {
     // Load actual students from Firebase using StudentProvider
     final studentProvider = context.read<StudentProvider>();
-    
+
     if (classModel.studentIds.isNotEmpty) {
-      final students = await studentProvider.loadStudentsByIds(classModel.studentIds);
+      final students =
+          await studentProvider.loadStudentsByIds(classModel.studentIds);
       setState(() {
         _students = students;
       });
@@ -73,7 +75,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
     return _students.where((student) {
       final fullName = '${student.firstName} ${student.lastName}';
       return fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+          (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
+              false);
     }).toList();
   }
 
@@ -101,7 +104,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
       ),
       body: gradeProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildGradebookBody(context, gradeProvider, assignmentProvider, classProvider),
+          : _buildGradebookBody(
+              context, gradeProvider, assignmentProvider, classProvider),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddAssignmentDialog,
         child: const Icon(Icons.assignment_add),
@@ -109,8 +113,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildGradebookBody(BuildContext context, GradeProvider gradeProvider, AssignmentProvider assignmentProvider, ClassProvider classProvider) {
-    
+  Widget _buildGradebookBody(BuildContext context, GradeProvider gradeProvider,
+      AssignmentProvider assignmentProvider, ClassProvider classProvider) {
     if (classProvider.teacherClasses.isEmpty) {
       return const EmptyState(
         icon: Icons.class_outlined,
@@ -118,7 +122,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
         message: 'Create a class to start managing grades',
       );
     }
-    
+
     return Column(
       children: [
         // Statistics Header
@@ -135,7 +139,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
                   : const EmptyState(
                       icon: Icons.people_outline,
                       title: 'No Students',
-                      message: 'Students will appear here when they join your class',
+                      message:
+                          'Students will appear here when they join your class',
                     )
               : _buildStudentsList(context, gradeProvider, assignmentProvider),
         ),
@@ -145,12 +150,16 @@ class _GradebookScreenState extends State<GradebookScreen> {
 
   Widget _buildStatsHeader(BuildContext context, GradeProvider gradeProvider) {
     final stats = gradeProvider.classStatistics;
-    
+
     final classAverage = stats?.average ?? 0.0;
     // Calculate completion rate from grades
     final totalGrades = gradeProvider.classGrades.length;
-    final completedGrades = gradeProvider.classGrades.where((g) => g.status == GradeStatus.graded || g.status == GradeStatus.returned).length;
-    final completionRate = totalGrades > 0 ? (completedGrades / totalGrades) * 100 : 0.0;
+    final completedGrades = gradeProvider.classGrades
+        .where((g) =>
+            g.status == GradeStatus.graded || g.status == GradeStatus.returned)
+        .length;
+    final completionRate =
+        totalGrades > 0 ? (completedGrades / totalGrades) * 100 : 0.0;
     final studentCount = _students.length;
 
     return Padding(
@@ -171,7 +180,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
             child: _buildCompactStatCard(
               title: 'Completion',
               value: '${completionRate.toStringAsFixed(0)}%',
-              subtitle: '${gradeProvider.classGrades.where((g) => g.status == GradeStatus.graded).length}/${gradeProvider.classGrades.length} done',
+              subtitle:
+                  '${gradeProvider.classGrades.where((g) => g.status == GradeStatus.graded).length}/${gradeProvider.classGrades.length} done',
               icon: Icons.assignment_turned_in,
             ),
           ),
@@ -220,8 +230,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color:
-                            Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                   maxLines: 1,
@@ -255,8 +264,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildControlsSection(BuildContext context, ClassProvider classProvider) {
-    
+  Widget _buildControlsSection(
+      BuildContext context, ClassProvider classProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -320,10 +329,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
   void _showStudentGradeDetail(Student student) {
     final gradeProvider = context.read<GradeProvider>();
     final assignmentProvider = context.read<AssignmentProvider>();
-    
+
     // Load grades for this specific student
     gradeProvider.loadStudentClassGrades(student.id, _selectedClassId!);
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -342,7 +351,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildStudentsList(BuildContext context, GradeProvider gradeProvider, AssignmentProvider assignmentProvider) {
+  Widget _buildStudentsList(BuildContext context, GradeProvider gradeProvider,
+      AssignmentProvider assignmentProvider) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _filteredStudents.length,
@@ -354,16 +364,14 @@ class _GradebookScreenState extends State<GradebookScreen> {
   }
 
   Widget _buildStudentCard(Student student, GradeProvider gradeProvider) {
-    
     // Calculate student's overall grade
     final studentGrades = gradeProvider.classGrades
         .where((g) => g.studentId == student.id)
         .toList();
-    
+
     final overallGrade = _calculateStudentOverallGrade(studentGrades);
-    final completedAssignments = studentGrades
-        .where((g) => g.status == GradeStatus.graded)
-        .length;
+    final completedAssignments =
+        studentGrades.where((g) => g.status == GradeStatus.graded).length;
     final totalAssignments = studentGrades.length;
 
     return AppCard(
@@ -393,19 +401,16 @@ class _GradebookScreenState extends State<GradebookScreen> {
                   children: [
                     Text(
                       '${student.firstName} ${student.lastName}',
-                      style:
-                          Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     Text(
                       student.email ?? student.username,
-                      style:
-                          Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                   ],
                 ),
@@ -418,9 +423,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                   Text(
                     '${overallGrade.toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                   ),
                 ],
@@ -439,12 +442,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
                   children: [
                     Text(
                       'Assignments Completed',
-                      style:
-                          Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -465,12 +466,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
                         const SizedBox(width: 8),
                         Text(
                           '$completedAssignments/$totalAssignments',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                         ),
                       ],
                     ),
@@ -508,12 +507,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
   }
 
   Widget _buildQuickStatusChips(List<Grade> studentGrades) {
-    final missingCount = studentGrades
-        .where((g) => g.status == GradeStatus.notSubmitted)
-        .length;
-    final lateCount = studentGrades
-        .where((g) => g.status == GradeStatus.revised)
-        .length;
+    final missingCount =
+        studentGrades.where((g) => g.status == GradeStatus.notSubmitted).length;
+    final lateCount =
+        studentGrades.where((g) => g.status == GradeStatus.revised).length;
 
     return Row(
       children: [
@@ -786,8 +783,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildAssignmentGradeCard(
-      BuildContext context, assignment_model.Assignment assignment, Grade grade) {
+  Widget _buildAssignmentGradeCard(BuildContext context,
+      assignment_model.Assignment assignment, Grade grade) {
     final isOverdue = assignment.dueDate.isBefore(DateTime.now());
 
     Color statusColor;
@@ -887,7 +884,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
           const SizedBox(height: 8),
 
           // Progress Bar for graded assignments
-          if (grade.status == GradeStatus.graded || grade.status == GradeStatus.returned) ...[
+          if (grade.status == GradeStatus.graded ||
+              grade.status == GradeStatus.returned) ...[
             LinearProgressIndicator(
               value: grade.pointsEarned / grade.pointsPossible,
               backgroundColor:
@@ -920,8 +918,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
     );
   }
 
-  void _showGradeEntryDialog(
-      BuildContext context, assignment_model.Assignment assignment, Grade grade) {
+  void _showGradeEntryDialog(BuildContext context,
+      assignment_model.Assignment assignment, Grade grade) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -949,7 +947,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
     double maxPoints = 0;
 
     for (final grade in grades) {
-      if (grade.status == GradeStatus.graded || grade.status == GradeStatus.returned) {
+      if (grade.status == GradeStatus.graded ||
+          grade.status == GradeStatus.returned) {
         totalPoints += grade.pointsEarned;
         maxPoints += grade.pointsPossible;
       }
@@ -1002,7 +1001,9 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
   void initState() {
     super.initState();
     _pointsController = TextEditingController(
-      text: widget.grade.pointsEarned > 0 ? widget.grade.pointsEarned.toString() : '',
+      text: widget.grade.pointsEarned > 0
+          ? widget.grade.pointsEarned.toString()
+          : '',
     );
     _selectedStatus = widget.grade.status;
   }

@@ -61,7 +61,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       // verification is complete and the user is still on this page,
       // they are sent to the dashboard.
       if (!mounted) return;
-      
+
       if (context.read<AuthProvider>().firebaseUser?.emailVerified ?? false) {
         context.go('/dashboard');
       }

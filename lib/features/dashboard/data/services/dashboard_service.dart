@@ -6,9 +6,10 @@ import '../../../grades/domain/models/grade.dart';
 
 class DashboardService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
+
   // Get recent activities for a teacher
-  Future<List<ActivityModel>> getTeacherActivities(String teacherId, {int limit = 10}) async {
+  Future<List<ActivityModel>> getTeacherActivities(String teacherId,
+      {int limit = 10}) async {
     try {
       // First check if the collection exists
       final querySnapshot = await _firestore
@@ -17,30 +18,34 @@ class DashboardService {
           .orderBy('timestamp', descending: true)
           .limit(limit)
           .get();
-      
+
       return querySnapshot.docs
           .map((doc) => ActivityModel.fromFirestore(doc))
           .toList();
     } catch (e) {
       // Log the full error which includes index creation link in development
-      LoggerService.error('Error fetching teacher activities - if index is missing, check console for creation link', error: e);
+      LoggerService.error(
+          'Error fetching teacher activities - if index is missing, check console for creation link',
+          error: e);
       // Return empty list to prevent app crash
       return [];
     }
   }
-  
+
   // Get recent activities for a student
-  Future<List<ActivityModel>> getStudentActivities(String studentId, List<String> classIds, {int limit = 10}) async {
+  Future<List<ActivityModel>> getStudentActivities(
+      String studentId, List<String> classIds,
+      {int limit = 10}) async {
     try {
       if (classIds.isEmpty) return [];
-      
+
       final querySnapshot = await _firestore
           .collection('activities')
           .where('classId', whereIn: classIds)
           .orderBy('timestamp', descending: true)
           .limit(limit)
           .get();
-      
+
       return querySnapshot.docs
           .map((doc) => ActivityModel.fromFirestore(doc))
           .toList();
@@ -49,7 +54,7 @@ class DashboardService {
       return [];
     }
   }
-  
+
   // Get assignment statistics for teacher dashboard
   Future<Map<String, int>> getTeacherAssignmentStats(String teacherId) async {
     try {
@@ -59,7 +64,7 @@ class DashboardService {
           .where('teacherId', isEqualTo: teacherId)
           .where('status', isEqualTo: 'active')
           .get();
-      
+
       // Get assignments needing grading
       final gradingQuery = await _firestore
           .collection('assignments')
@@ -70,7 +75,7 @@ class DashboardService {
         LoggerService.warning('Assignment grading query failed: $e');
         return _firestore.collection('assignments').limit(0).get();
       });
-      
+
       return {
         'totalAssignments': assignmentsQuery.size,
         'toGrade': gradingQuery.size,
@@ -83,9 +88,10 @@ class DashboardService {
       };
     }
   }
-  
+
   // Get assignment statistics for student dashboard
-  Future<Map<String, int>> getStudentAssignmentStats(String studentId, List<String> classIds) async {
+  Future<Map<String, int>> getStudentAssignmentStats(
+      String studentId, List<String> classIds) async {
     try {
       if (classIds.isEmpty) {
         return {
@@ -93,17 +99,17 @@ class DashboardService {
           'dueSoon': 0,
         };
       }
-      
+
       final now = DateTime.now();
       final threeDaysFromNow = now.add(const Duration(days: 3));
-      
+
       // Get total active assignments
       final totalQuery = await _firestore
           .collection('assignments')
           .where('classId', whereIn: classIds)
           .where('status', isEqualTo: 'active')
           .get();
-      
+
       // Get assignments due soon (within 3 days)
       final dueSoonQuery = await _firestore
           .collection('assignments')
@@ -111,7 +117,7 @@ class DashboardService {
           .where('dueDate', isGreaterThanOrEqualTo: now)
           .where('dueDate', isLessThanOrEqualTo: threeDaysFromNow)
           .get();
-      
+
       return {
         'totalAssignments': totalQuery.size,
         'dueSoon': dueSoonQuery.size,
@@ -124,7 +130,7 @@ class DashboardService {
       };
     }
   }
-  
+
   // Create an activity log entry
   Future<void> logActivity(ActivityModel activity) async {
     try {
@@ -133,14 +139,16 @@ class DashboardService {
       LoggerService.error('Error logging activity', error: e);
     }
   }
-  
+
   // Get upcoming assignments for a student
-  Future<List<Assignment>> getUpcomingAssignments(String studentId, List<String> classIds, {int limit = 5}) async {
+  Future<List<Assignment>> getUpcomingAssignments(
+      String studentId, List<String> classIds,
+      {int limit = 5}) async {
     try {
       if (classIds.isEmpty) return [];
-      
+
       final now = DateTime.now();
-      
+
       final querySnapshot = await _firestore
           .collection('assignments')
           .where('classId', whereIn: classIds)
@@ -149,7 +157,7 @@ class DashboardService {
           .orderBy('dueDate')
           .limit(limit)
           .get();
-      
+
       return querySnapshot.docs
           .map((doc) => Assignment.fromFirestore(doc))
           .toList();
@@ -158,7 +166,7 @@ class DashboardService {
       return [];
     }
   }
-  
+
   // Get recent grades for a student
   Future<List<Grade>> getRecentGrades(String studentId, {int limit = 5}) async {
     try {
@@ -169,16 +177,14 @@ class DashboardService {
           .orderBy('gradedAt', descending: true)
           .limit(limit)
           .get();
-      
-      return querySnapshot.docs
-          .map((doc) => Grade.fromFirestore(doc))
-          .toList();
+
+      return querySnapshot.docs.map((doc) => Grade.fromFirestore(doc)).toList();
     } catch (e) {
       LoggerService.error('Error fetching recent grades', error: e);
       return [];
     }
   }
-  
+
   // Calculate GPA for a student
   Future<double> calculateGPA(String studentId) async {
     try {
@@ -187,20 +193,20 @@ class DashboardService {
           .where('studentId', isEqualTo: studentId)
           .where('isGraded', isEqualTo: true)
           .get();
-      
+
       if (gradesQuery.docs.isEmpty) return 0.0;
-      
+
       double totalPoints = 0;
       double totalPossible = 0;
-      
+
       for (var doc in gradesQuery.docs) {
         final grade = Grade.fromFirestore(doc);
         totalPoints += grade.pointsEarned;
         totalPossible += grade.pointsPossible;
       }
-      
+
       if (totalPossible == 0) return 0.0;
-      
+
       // Convert percentage to 4.0 scale GPA
       final percentage = (totalPoints / totalPossible) * 100;
       if (percentage >= 93) return 4.0;

@@ -29,12 +29,14 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
     final studentId = authProvider.userModel?.uid;
-    
-    LoggerService.debug('Loading courses for student: $studentId', tag: 'StudentCoursesScreen');
+
+    LoggerService.debug('Loading courses for student: $studentId',
+        tag: 'StudentCoursesScreen');
     if (studentId != null) {
       classProvider.loadStudentClasses(studentId);
     } else {
-      LoggerService.warning('No student ID found!', tag: 'StudentCoursesScreen');
+      LoggerService.warning('No student ID found!',
+          tag: 'StudentCoursesScreen');
     }
   }
 
@@ -85,7 +87,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
           if (classProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (classProvider.error != null) {
             return Center(
               child: Column(
@@ -103,9 +105,9 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
               ),
             );
           }
-          
+
           final enrolledClasses = classProvider.studentClasses;
-          
+
           if (enrolledClasses.isEmpty) {
             return Center(
               child: EmptyState(
@@ -117,15 +119,15 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
               ),
             );
           }
-          
+
           return Column(
             children: [
               // Header with stats
               _buildStatsHeaderFirebase(enrolledClasses),
-              
+
               // Search and filter bar
               _buildSearchAndFilterBar(),
-              
+
               // Courses list
               Expanded(
                 child: _buildCoursesListFirebase(enrolledClasses),
@@ -140,7 +142,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
   Widget _buildStatsHeaderFirebase(List<ClassModel> classes) {
     final totalClasses = classes.length;
     final activeClasses = classes.where((c) => c.isActive).length;
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       child: Row(
@@ -182,10 +184,10 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((course) {
         return course.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               course.subject.toLowerCase().contains(_searchQuery.toLowerCase());
+            course.subject.toLowerCase().contains(_searchQuery.toLowerCase());
       }).toList();
     }
-    
+
     // Apply status filter
     if (_selectedFilter != 'All') {
       if (_selectedFilter == 'Active') {
@@ -194,7 +196,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
         filtered = filtered.where((c) => !c.isActive).toList();
       }
     }
-    
+
     if (filtered.isEmpty) {
       return _searchQuery.isNotEmpty
           ? EmptyState.noSearchResults(searchTerm: _searchQuery)
@@ -204,7 +206,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
               message: 'No courses match your filter.',
             );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: filtered.length,
@@ -219,7 +221,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
     final theme = Theme.of(context);
     final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
     final color = AppTheme.subjectColors[colorIndex];
-    
+
     return AppCard(
       onTap: () => _showCourseDetailsFirebase(course),
       child: Column(
@@ -263,25 +265,25 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
                 ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Course info
           Wrap(
             spacing: 8.0,
             runSpacing: 8.0,
             children: [
-              if (course.room != null)
-                _buildInfoChip(Icons.room, course.room!),
+              if (course.room != null) _buildInfoChip(Icons.room, course.room!),
               if (course.schedule != null)
                 _buildInfoChip(Icons.schedule, course.schedule!),
               _buildInfoChip(Icons.school, 'Grade ${course.gradeLevel}'),
-              _buildInfoChip(Icons.people, '${course.studentIds.length} students'),
+              _buildInfoChip(
+                  Icons.people, '${course.studentIds.length} students'),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Academic year and semester
           Row(
             children: [
@@ -344,9 +346,9 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
@@ -357,16 +359,16 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: valueColor,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: valueColor,
+                ),
             textAlign: TextAlign.center,
           ),
           Text(
             subtitle,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
           ),
@@ -433,8 +435,8 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
         ],
       ),
@@ -453,7 +455,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
     final theme = Theme.of(context);
     final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
     final color = AppTheme.subjectColors[colorIndex];
-    
+
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
       minChildSize: 0.5,
@@ -477,7 +479,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Header
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -519,7 +521,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Content
               Expanded(
                 child: ListView(
@@ -533,14 +535,17 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                         if (course.room != null)
                           _buildDetailRow(context, 'Room', course.room!),
                         if (course.schedule != null)
-                          _buildDetailRow(context, 'Schedule', course.schedule!),
-                        _buildDetailRow(context, 'Grade Level', course.gradeLevel),
-                        _buildDetailRow(context, 'Academic Year', course.academicYear),
+                          _buildDetailRow(
+                              context, 'Schedule', course.schedule!),
+                        _buildDetailRow(
+                            context, 'Grade Level', course.gradeLevel),
+                        _buildDetailRow(
+                            context, 'Academic Year', course.academicYear),
                         _buildDetailRow(context, 'Semester', course.semester),
-                        _buildDetailRow(context, 'Students Enrolled', '${course.studentIds.length}${course.maxStudents != null ? ' / ${course.maxStudents}' : ''}'),
+                        _buildDetailRow(context, 'Students Enrolled',
+                            '${course.studentIds.length}${course.maxStudents != null ? ' / ${course.maxStudents}' : ''}'),
                       ],
                     ),
-                    
                     if (course.description != null) ...[
                       const SizedBox(height: 24),
                       _buildDetailSection(
@@ -554,9 +559,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                         ],
                       ),
                     ],
-                    
                     const SizedBox(height: 24),
-                    
                     _buildDetailSection(
                       context,
                       'Quick Actions',
@@ -567,7 +570,8 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           onTap: () {
                             Navigator.pop(context);
-                            context.push('/assignments', extra: {'courseId': course.id});
+                            context.push('/assignments',
+                                extra: {'courseId': course.id});
                           },
                         ),
                         ListTile(
@@ -576,7 +580,8 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           onTap: () {
                             Navigator.pop(context);
-                            context.push('/grades', extra: {'courseId': course.id});
+                            context.push('/grades',
+                                extra: {'courseId': course.id});
                           },
                         ),
                         ListTile(
@@ -585,7 +590,8 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           onTap: () {
                             Navigator.pop(context);
-                            context.push('/discussions', extra: {'courseId': course.id});
+                            context.push('/discussions',
+                                extra: {'courseId': course.id});
                           },
                         ),
                       ],
@@ -593,7 +599,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Actions
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -615,15 +621,16 @@ class CourseDetailSheetFirebase extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailSection(BuildContext context, String title, List<Widget> children) {
+  Widget _buildDetailSection(
+      BuildContext context, String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 12),
         ...children,
@@ -641,16 +648,16 @@ class CourseDetailSheetFirebase extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
           Expanded(
             child: Text(
               value,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
           ),
         ],

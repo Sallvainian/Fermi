@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:web/web.dart' as web;
 import 'dart:js_interop';
 
-
 // Optional JavaScript functions - may not exist
 @JS('applyUpdate')
 external void _applyUpdateJS();
@@ -11,7 +10,7 @@ external void _applyUpdateJS();
 @JS('flutterUpdateAvailable')
 external set _flutterUpdateAvailableJS(JSFunction? f);
 
-@JS('canAutoRefresh') 
+@JS('canAutoRefresh')
 external set _canAutoRefreshJS(JSFunction? f);
 
 // Safe wrapper to check if JavaScript functions exist
@@ -61,7 +60,7 @@ class PWAUpdateNotifier extends StatefulWidget {
   final Widget child;
   final GlobalKey<NavigatorState> navigatorKey;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
-  
+
   const PWAUpdateNotifier({
     super.key,
     required this.child,
@@ -82,7 +81,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
   @override
   void initState() {
     super.initState();
-    
+
     if (kIsWeb) {
       _checkJSFunctions();
       _setupUpdateListener();
@@ -98,14 +97,14 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
           _updateAvailable = true;
           // Version info can be passed through event detail if needed
         });
-        
+
         // Show update notification
         _showUpdateNotification();
       }
     }).toJS;
-    
+
     web.document.addEventListener('pwa-update-available', listener);
-    
+
     // Register Flutter callback for JavaScript to call (fallback)
     _setFlutterUpdateAvailable(((JSAny? data) {
       if (mounted && data != null) {
@@ -113,12 +112,12 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
           _updateAvailable = true;
           // Parse version info from data if available
         });
-        
+
         // Show update notification
         _showUpdateNotification();
       }
     }.toJS as JSFunction));
-    
+
     // Register auto-refresh check
     _setCanAutoRefresh((() {
       // Return false if user has unsaved work or is in middle of something
@@ -130,7 +129,8 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
   void _checkInitialVersion() {
     try {
       // Get current version from DOM if available
-      final versionMeta = web.document.querySelector('meta[name="app-version"]');
+      final versionMeta =
+          web.document.querySelector('meta[name="app-version"]');
       if (versionMeta != null) {
         _currentVersion = versionMeta.getAttribute('content') ?? '';
         debugPrint('Current app version: $_currentVersion');
@@ -142,60 +142,60 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
 
   void _showUpdateNotification() {
     if (!_updateAvailable || !mounted) return;
-    
+
     // Defer until after MaterialApp is mounted
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final messenger = widget.scaffoldMessengerKey.currentState;
       if (messenger == null) return;
-      
+
       messenger.showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.system_update, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Update Available!',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.system_update, color: Colors.white),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Update Available!',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    if (_newVersion.isNotEmpty)
+                      Text(
+                        'Version $_currentVersion → $_newVersion',
+                        style: const TextStyle(fontSize: 12),
                       ),
-                      if (_newVersion.isNotEmpty)
-                        Text(
-                          'Version $_currentVersion → $_newVersion',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-            duration: const Duration(days: 1), // Keep visible until action
-            action: SnackBarAction(
-              label: 'Update Now',
-              textColor: Colors.lightBlueAccent,
-              onPressed: _applyUpdate,
-            ),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.blueGrey.shade800,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+              ),
+            ],
           ),
-        );
+          duration: const Duration(days: 1), // Keep visible until action
+          action: SnackBarAction(
+            label: 'Update Now',
+            textColor: Colors.lightBlueAccent,
+            onPressed: _applyUpdate,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.blueGrey.shade800,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
     });
   }
 
   Future<void> _applyUpdate() async {
     if (_isRefreshing || !mounted) return;
-    
+
     setState(() {
       _isRefreshing = true;
     });
-    
+
     // Safe dialog via navigatorKey (no ancestor Navigator required)
     final ctx = widget.navigatorKey.currentContext;
     if (ctx != null) {
@@ -223,7 +223,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
         ),
       );
     }
-    
+
     // Give the dialog a beat, then trigger the JS update
     await Future.delayed(const Duration(seconds: 1));
     _callApplyUpdate();
@@ -235,7 +235,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
       alignment: Alignment.topCenter, // Use non-directional alignment
       children: [
         widget.child,
-        
+
         // Floating update banner (alternative to snackbar)
         if (_updateAvailable && !_isRefreshing)
           Positioned(
@@ -297,7 +297,8 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
                           onPressed: _applyUpdate,
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.white,
-                            backgroundColor: Colors.white.withValues(alpha: 0.2),
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.2),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 4,

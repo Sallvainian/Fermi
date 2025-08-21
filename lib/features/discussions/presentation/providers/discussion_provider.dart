@@ -1,5 +1,5 @@
 /// Discussion board state management provider.
-/// 
+///
 /// This module manages discussion boards, threads, and replies for the
 /// education platform, providing forum-style collaborative discussions
 /// with real-time updates and moderation features.
@@ -14,7 +14,7 @@ import '../../../../shared/core/service_locator.dart';
 import '../../../../shared/services/logger_service.dart';
 
 /// Provider managing discussion boards and threads.
-/// 
+///
 /// This provider serves as the central state manager for discussion forums,
 /// coordinating hierarchical content organization. Key features:
 /// - Three-tier structure: boards → threads → replies
@@ -23,84 +23,86 @@ import '../../../../shared/services/logger_service.dart';
 /// - Moderation tools (pin, lock, delete)
 /// - Tag-based organization and search
 /// - Role-based permissions (teacher/student)
-/// 
+///
 /// Maintains separate caches for boards, threads, and replies
 /// with automatic stream management.
 class DiscussionProvider with ChangeNotifier {
   /// Logger tag for this provider.
   static const String _tag = 'DiscussionProvider';
-  
+
   /// Repository for discussion data operations.
   late final DiscussionRepository _repository;
-  
+
   /// Firebase Auth for user identification.
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // State variables
-  
+
   /// All available discussion boards.
   List<DiscussionBoard> _boards = [];
-  
+
   /// Threads grouped by board ID.
   final Map<String, List<DiscussionThread>> _boardThreads = {};
-  
+
   /// Replies grouped by board_thread ID.
   final Map<String, List<ThreadReply>> _threadReplies = {};
-  
+
   /// Currently selected board.
   DiscussionBoard? _currentBoard;
-  
+
   /// Currently selected thread.
   DiscussionThread? _currentThread;
-  
+
   /// Loading state for async operations.
   bool _isLoading = false;
-  
+
   /// Latest error message for UI display.
   String? _error;
 
   // Stream subscriptions
-  
+
   /// Subscription for board list updates.
   StreamSubscription<List<DiscussionBoard>>? _boardsSubscription;
-  
+
   /// Thread subscriptions keyed by board ID.
-  final Map<String, StreamSubscription<List<DiscussionThread>>> _threadSubscriptions = {};
-  
+  final Map<String, StreamSubscription<List<DiscussionThread>>>
+      _threadSubscriptions = {};
+
   /// Reply subscriptions keyed by board_thread ID.
-  final Map<String, StreamSubscription<List<ThreadReply>>> _replySubscriptions = {};
+  final Map<String, StreamSubscription<List<ThreadReply>>> _replySubscriptions =
+      {};
 
   /// Creates discussion provider with repository dependency.
-  /// 
+  ///
   /// Retrieves discussion repository from dependency injection.
   DiscussionProvider() {
     _repository = getIt<DiscussionRepository>();
   }
 
   // Getters
-  
+
   /// List of all discussion boards.
   List<DiscussionBoard> get boards => _boards;
-  
+
   /// Currently selected board or null.
   DiscussionBoard? get currentBoard => _currentBoard;
-  
+
   /// Currently selected thread or null.
   DiscussionThread? get currentThread => _currentThread;
-  
+
   /// Whether an operation is in progress.
   bool get isLoading => _isLoading;
-  
+
   /// Latest error message or null.
   String? get error => _error;
-  
+
   /// Current user's ID from Firebase Auth.
   String get currentUserId => _auth.currentUser?.uid ?? '';
 
   /// Gets threads for a specific board.
-  /// 
+  ///
   /// Returns cached threads or empty list if not loaded.
-  /// 
+  ///
   /// @param boardId Board to get threads from
   /// @return List of discussion threads
   List<DiscussionThread> getBoardThreads(String boardId) {
@@ -108,10 +110,10 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Gets replies for a specific thread.
-  /// 
+  ///
   /// Uses composite key of board and thread IDs.
   /// Returns cached replies or empty list if not loaded.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread to get replies from
   /// @return List of thread replies
@@ -121,13 +123,13 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Initializes real-time board monitoring.
-  /// 
+  ///
   /// Sets up stream subscription for discussion boards,
   /// automatically updating when boards are added, modified,
   /// or removed. Cancels any existing subscription first.
   void initializeBoards() {
     _boardsSubscription?.cancel();
-    
+
     _boardsSubscription = _repository.streamBoards().listen(
       (boards) {
         _boards = boards;
@@ -143,16 +145,17 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Loads and subscribes to threads for a board.
-  /// 
+  ///
   /// Sets up real-time stream for thread updates including
   /// new threads, edits, and engagement metrics. Cancels
   /// any existing subscription for the board.
-  /// 
+  ///
   /// @param boardId Board to load threads from
   void loadBoardThreads(String boardId) {
     _threadSubscriptions[boardId]?.cancel();
-    
-    _threadSubscriptions[boardId] = _repository.streamBoardThreads(boardId).listen(
+
+    _threadSubscriptions[boardId] =
+        _repository.streamBoardThreads(boardId).listen(
       (threads) {
         _boardThreads[boardId] = threads;
         _error = null;
@@ -167,18 +170,19 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Loads and subscribes to replies for a thread.
-  /// 
+  ///
   /// Sets up real-time stream for reply updates including
   /// new replies, edits, and likes. Uses composite key
   /// for subscription management.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread to load replies from
   void loadThreadReplies(String boardId, String threadId) {
     final key = '${boardId}_$threadId';
     _replySubscriptions[key]?.cancel();
-    
-    _replySubscriptions[key] = _repository.streamThreadReplies(boardId, threadId).listen(
+
+    _replySubscriptions[key] =
+        _repository.streamThreadReplies(boardId, threadId).listen(
       (replies) {
         _threadReplies[key] = replies;
         _error = null;
@@ -193,10 +197,10 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Sets the active discussion board.
-  /// 
+  ///
   /// Automatically loads threads for the selected board
   /// and updates UI state.
-  /// 
+  ///
   /// @param board Board to activate
   void setCurrentBoard(DiscussionBoard board) {
     _currentBoard = board;
@@ -205,10 +209,10 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Sets the active discussion thread.
-  /// 
+  ///
   /// Automatically loads replies if a board is selected.
   /// Updates UI state for thread detail views.
-  /// 
+  ///
   /// @param thread Thread to activate
   void setCurrentThread(DiscussionThread thread) {
     _currentThread = thread;
@@ -219,13 +223,13 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Creates a new discussion board.
-  /// 
+  ///
   /// Board creation includes:
   /// - Automatic author attribution
   /// - Optional class association
   /// - Tag assignment for categorization
   /// - Pin status for importance
-  /// 
+  ///
   /// @param title Board title
   /// @param description Board purpose/rules
   /// @param tags Category tags
@@ -260,7 +264,7 @@ class DiscussionProvider with ChangeNotifier {
 
       final boardId = await _repository.createBoard(board);
       LoggerService.info('Created board: $boardId', tag: _tag);
-      
+
       return boardId;
     } catch (e) {
       _error = e.toString();
@@ -273,13 +277,13 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Creates a new discussion thread.
-  /// 
+  ///
   /// Thread creation includes:
   /// - Author attribution with role
   /// - Initial content as first post
   /// - Tag assignment for searchability
   /// - Automatic timestamp tracking
-  /// 
+  ///
   /// @param boardId Parent board ID
   /// @param title Thread title
   /// @param content Initial post content
@@ -303,8 +307,8 @@ class DiscussionProvider with ChangeNotifier {
         content: content,
         authorId: currentUserId,
         authorName: _auth.currentUser?.displayName ?? 'User',
-        authorRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true 
-            ? 'teacher' 
+        authorRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true
+            ? 'teacher'
             : 'student',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -313,7 +317,7 @@ class DiscussionProvider with ChangeNotifier {
 
       final threadId = await _repository.createThread(boardId, thread);
       LoggerService.info('Created thread: $threadId', tag: _tag);
-      
+
       return threadId;
     } catch (e) {
       _error = e.toString();
@@ -326,13 +330,13 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Creates a reply to a thread.
-  /// 
+  ///
   /// Reply features:
   /// - Nested reply support (reply to reply)
   /// - Author attribution with role
   /// - Automatic thread update timestamp
   /// - Real-time delivery to participants
-  /// 
+  ///
   /// @param boardId Parent board ID
   /// @param threadId Parent thread ID
   /// @param content Reply content
@@ -357,8 +361,8 @@ class DiscussionProvider with ChangeNotifier {
         content: content,
         authorId: currentUserId,
         authorName: _auth.currentUser?.displayName ?? 'User',
-        authorRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true 
-            ? 'teacher' 
+        authorRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true
+            ? 'teacher'
             : 'student',
         createdAt: DateTime.now(),
         replyToId: replyToId,
@@ -367,7 +371,7 @@ class DiscussionProvider with ChangeNotifier {
 
       final replyId = await _repository.createReply(boardId, threadId, reply);
       LoggerService.info('Created reply: $replyId', tag: _tag);
-      
+
       return replyId;
     } catch (e) {
       _error = e.toString();
@@ -380,13 +384,13 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   // Like/unlike operations
-  
+
   /// Toggles like status for a discussion thread.
-  /// 
+  ///
   /// Adds or removes current user from thread's like list.
   /// Updates like count and UI state automatically through
   /// stream subscriptions.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread to like/unlike
   /// @throws Exception if thread not found
@@ -410,15 +414,16 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Toggles like status for a thread reply.
-  /// 
+  ///
   /// Adds or removes current user from reply's like list.
   /// Uses composite key for efficient lookup.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread containing the reply
   /// @param replyId Reply to like/unlike
   /// @throws Exception if reply not found
-  Future<void> toggleReplyLike(String boardId, String threadId, String replyId) async {
+  Future<void> toggleReplyLike(
+      String boardId, String threadId, String replyId) async {
     try {
       final key = '${boardId}_$threadId';
       final reply = _threadReplies[key]?.firstWhere(
@@ -427,7 +432,8 @@ class DiscussionProvider with ChangeNotifier {
       );
 
       if (reply?.likedBy.contains(currentUserId) ?? false) {
-        await _repository.unlikeReply(boardId, threadId, replyId, currentUserId);
+        await _repository.unlikeReply(
+            boardId, threadId, replyId, currentUserId);
       } else {
         await _repository.likeReply(boardId, threadId, replyId, currentUserId);
       }
@@ -439,13 +445,13 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   // Delete operations
-  
+
   /// Permanently deletes a discussion thread.
-  /// 
+  ///
   /// Removes thread and all associated replies from Firestore.
   /// This operation cannot be undone. Consider implementing
   /// soft deletion for content moderation.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread to delete
   /// @return true if deletion successful
@@ -469,15 +475,16 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Permanently deletes a thread reply.
-  /// 
+  ///
   /// Removes reply from Firestore. Parent thread remains intact.
   /// This operation cannot be undone.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread containing the reply
   /// @param replyId Reply to delete
   /// @return true if deletion successful
-  Future<bool> deleteReply(String boardId, String threadId, String replyId) async {
+  Future<bool> deleteReply(
+      String boardId, String threadId, String replyId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -497,12 +504,12 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   // Admin operations
-  
+
   /// Pins or unpins a discussion board.
-  /// 
+  ///
   /// Pinned boards appear at the top of the board list.
   /// Typically restricted to teacher/admin roles.
-  /// 
+  ///
   /// @param boardId Board to pin/unpin
   /// @param isPinned true to pin, false to unpin
   Future<void> pinBoard(String boardId, bool isPinned) async {
@@ -516,10 +523,10 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Pins or unpins a discussion thread.
-  /// 
+  ///
   /// Pinned threads appear at the top of the thread list.
   /// Useful for important announcements or FAQs.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread to pin/unpin
   /// @param isPinned true to pin, false to unpin
@@ -534,14 +541,15 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Locks or unlocks a discussion thread.
-  /// 
+  ///
   /// Locked threads prevent new replies while preserving
   /// existing content. Useful for closing resolved discussions.
-  /// 
+  ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread to lock/unlock
   /// @param isLocked true to lock, false to unlock
-  Future<void> lockThread(String boardId, String threadId, bool isLocked) async {
+  Future<void> lockThread(
+      String boardId, String threadId, bool isLocked) async {
     try {
       await _repository.lockThread(boardId, threadId, isLocked);
     } catch (e) {
@@ -552,13 +560,13 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   // Search
-  
+
   /// Searches for threads across all boards.
-  /// 
+  ///
   /// Performs text search on thread titles and content.
   /// Returns matching threads from any board. Consider
   /// implementing filters for board-specific search.
-  /// 
+  ///
   /// @param query Search terms
   /// @return List of matching threads or empty list
   Future<List<DiscussionThread>> searchThreads(String query) async {
@@ -573,9 +581,9 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   // Clean up
-  
+
   /// Clears the current board selection.
-  /// 
+  ///
   /// Resets board context for navigation or refresh.
   void clearCurrentBoard() {
     _currentBoard = null;
@@ -583,7 +591,7 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Clears the current thread selection.
-  /// 
+  ///
   /// Resets thread context for navigation or refresh.
   void clearCurrentThread() {
     _currentThread = null;
@@ -591,22 +599,22 @@ class DiscussionProvider with ChangeNotifier {
   }
 
   /// Cleans up resources when provider is disposed.
-  /// 
+  ///
   /// Cancels all stream subscriptions for boards, threads,
   /// and replies to prevent memory leaks. Also disposes
   /// the repository instance.
   @override
   void dispose() {
     _boardsSubscription?.cancel();
-    
+
     for (final subscription in _threadSubscriptions.values) {
       subscription.cancel();
     }
-    
+
     for (final subscription in _replySubscriptions.values) {
       subscription.cancel();
     }
-    
+
     _repository.dispose();
     super.dispose();
   }

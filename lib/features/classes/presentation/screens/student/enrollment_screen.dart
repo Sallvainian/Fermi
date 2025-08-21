@@ -7,7 +7,7 @@ import '../../../../../shared/theme/app_spacing.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 
 /// Screen for students to enroll in classes using enrollment codes.
-/// 
+///
 /// This screen provides a simple interface where students can enter
 /// a 6-character enrollment code to join a class. It includes:
 /// - Input field with proper formatting and validation
@@ -36,7 +36,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return AdaptiveLayout(
       title: 'Join a Class',
       showBackButton: true,
@@ -75,7 +75,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  
+
                   // Code input field
                   TextFormField(
                     controller: _codeController,
@@ -89,7 +89,8 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       hintText: 'XXXXXX',
                       hintStyle: theme.textTheme.headlineMedium?.copyWith(
                         letterSpacing: 8,
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                        color: theme.colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.3),
                       ),
                       errorText: _errorMessage,
                       filled: true,
@@ -101,7 +102,8 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSpacing.md),
                         borderSide: BorderSide(
-                          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                          color:
+                              theme.colorScheme.outline.withValues(alpha: 0.2),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -152,19 +154,22 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       }
                     },
                     maxLength: 6,
-                    buildCounter: (context, {required currentLength, required isFocused, required maxLength}) {
+                    buildCounter: (context,
+                        {required currentLength,
+                        required isFocused,
+                        required maxLength}) {
                       return Text(
                         '$currentLength / $maxLength',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: currentLength == maxLength 
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurfaceVariant,
+                          color: currentLength == maxLength
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
                         ),
                       );
                     },
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  
+
                   // Enroll button
                   FilledButton(
                     onPressed: _isEnrolling ? null : _handleEnrollment,
@@ -174,26 +179,27 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       ),
                     ),
                     child: _isEnrolling
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Join Class',
+                            style: TextStyle(fontSize: 16),
                           ),
-                        )
-                      : const Text(
-                          'Join Class',
-                          style: TextStyle(fontSize: 16),
-                        ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  
+
                   // Info box
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      color: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(AppSpacing.sm),
                       border: Border.all(
                         color: theme.colorScheme.primary.withValues(alpha: 0.2),
@@ -289,12 +295,12 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().contains('not found')
-          ? 'Invalid enrollment code. Please check and try again.'
-          : e.toString().contains('already enrolled')
-          ? 'You are already enrolled in this class.'
-          : e.toString().contains('capacity')
-          ? 'This class is full and cannot accept new enrollments.'
-          : 'An error occurred. Please try again.';
+            ? 'Invalid enrollment code. Please check and try again.'
+            : e.toString().contains('already enrolled')
+                ? 'You are already enrolled in this class.'
+                : e.toString().contains('capacity')
+                    ? 'This class is full and cannot accept new enrollments.'
+                    : 'An error occurred. Please try again.';
       });
     } finally {
       if (mounted) {

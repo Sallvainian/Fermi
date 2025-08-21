@@ -28,7 +28,8 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTeacher = context.watch<AuthProvider>().userModel?.role == UserRole.teacher;
+    final isTeacher =
+        context.watch<AuthProvider>().userModel?.role == UserRole.teacher;
 
     return AdaptiveLayout(
       title: 'Discussion Boards',
@@ -132,8 +133,9 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         onTap: () {
           // Set current board in provider
           context.read<DiscussionProvider>().setCurrentBoard(board);
-          
-          context.go('/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}');
+
+          context.go(
+              '/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}');
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -155,8 +157,8 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     child: Text(
                       board.title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Container(
@@ -211,15 +213,15 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   Text(
                     _formatLastActivity(board.updatedAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const Spacer(),
                   Text(
                     'by ${board.createdByName}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),

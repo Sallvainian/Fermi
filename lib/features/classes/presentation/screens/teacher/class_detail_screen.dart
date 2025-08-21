@@ -26,7 +26,8 @@ class ClassDetailScreen extends StatefulWidget {
   State<ClassDetailScreen> createState() => _ClassDetailScreenState();
 }
 
-class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTickerProviderStateMixin {
+class _ClassDetailScreenState extends State<ClassDetailScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   ClassModel? _classModel;
   String _searchQuery = '';
@@ -50,22 +51,22 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
     final classProvider = context.read<ClassProvider>();
     final authProvider = context.read<AuthProvider>();
     final assignmentProvider = context.read<AssignmentProvider>();
-    
+
     try {
       // Load teacher classes to get the specific class
       if (authProvider.userModel != null) {
         // Load class directly instead of waiting for stream
         final classModel = await classProvider.getClassById(widget.classId);
-        
+
         if (classModel != null) {
           setState(() {
             _classModel = classModel;
           });
-          
+
           // Set as selected class and load students
           classProvider.setSelectedClass(classModel);
           await classProvider.loadClassStudents(widget.classId);
-          
+
           // Load assignments for this class
           await assignmentProvider.loadAssignmentsForClass(widget.classId);
         } else {
@@ -79,7 +80,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
         }
       }
     } catch (e) {
-      LoggerService.error('Error loading class data', tag: 'ClassDetailScreen', error: e);
+      LoggerService.error('Error loading class data',
+          tag: 'ClassDetailScreen', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading class: $e')),
@@ -103,7 +105,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       'Music': AppTheme.subjectColors[6],
       'Physical Education': AppTheme.subjectColors[7],
     };
-    
+
     return subjectMap[subject] ?? AppTheme.subjectColors[0];
   }
 
@@ -114,7 +116,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       // If it's not a number, return as is
       return period;
     }
-    
+
     // Add ordinal suffix (1st, 2nd, 3rd, etc.)
     String suffix;
     if (number % 100 >= 11 && number % 100 <= 13) {
@@ -135,7 +137,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
           break;
       }
     }
-    
+
     return '$number$suffix';
   }
 
@@ -198,11 +200,15 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                     child: Row(
                       children: [
                         Icon(
-                          _classModel!.isActive ? Icons.archive : Icons.unarchive,
+                          _classModel!.isActive
+                              ? Icons.archive
+                              : Icons.unarchive,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
-                        Text(_classModel!.isActive ? 'Archive Class' : 'Restore Class'),
+                        Text(_classModel!.isActive
+                            ? 'Archive Class'
+                            : 'Restore Class'),
                       ],
                     ),
                   ),
@@ -259,17 +265,23 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                         children: [
                           Text(
                             'Class Information',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                           Text(
                             _classModel!.isActive ? 'Active' : 'Archived',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: _classModel!.isActive 
-                                  ? Colors.green 
-                                  : Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: _classModel!.isActive
+                                          ? Colors.green
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                    ),
                           ),
                         ],
                       ),
@@ -279,17 +291,20 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                 const SizedBox(height: 24),
                 _buildInfoRow(Icons.subject, 'Subject', _classModel!.subject),
                 const SizedBox(height: 12),
-                _buildInfoRow(Icons.grade, 'Grade Level', _classModel!.gradeLevel),
+                _buildInfoRow(
+                    Icons.grade, 'Grade Level', _classModel!.gradeLevel),
                 if (_classModel!.room != null) ...[
                   const SizedBox(height: 12),
                   _buildInfoRow(Icons.room, 'Room', _classModel!.room!),
                 ],
                 if (_classModel!.schedule != null) ...[
                   const SizedBox(height: 12),
-                  _buildInfoRow(Icons.schedule, 'Period', _formatPeriodNumber(_classModel!.schedule!)),
+                  _buildInfoRow(Icons.schedule, 'Period',
+                      _formatPeriodNumber(_classModel!.schedule!)),
                 ],
                 const SizedBox(height: 12),
-                _buildInfoRow(Icons.calendar_today, 'Academic Year', _classModel!.academicYear),
+                _buildInfoRow(Icons.calendar_today, 'Academic Year',
+                    _classModel!.academicYear),
                 if (_classModel!.description != null) ...[
                   const SizedBox(height: 16),
                   const Divider(),
@@ -297,8 +312,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                   Text(
                     'Description',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -310,7 +325,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Enrollment Code Card
           AppCard(
             child: Column(
@@ -322,8 +337,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                     Text(
                       'Enrollment Code',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.refresh),
@@ -350,11 +365,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                       const SizedBox(width: 16),
                       Text(
                         _classModel!.enrollmentCode ?? 'No Code',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                            ),
                       ),
                       const SizedBox(width: 16),
                       IconButton(
@@ -370,15 +390,15 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                 Text(
                   'Share this code with students to allow them to enroll',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                   textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Statistics Card
           AppCard(
             child: Column(
@@ -387,8 +407,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                 Text(
                   'Class Statistics',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -443,7 +463,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase();
       return student.displayName.toLowerCase().contains(query) ||
-             (student.email?.toLowerCase().contains(query) ?? false);
+          (student.email?.toLowerCase().contains(query) ?? false);
     }).toList();
 
     return Column(
@@ -459,12 +479,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                     hintText: 'Search students...',
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
-                    fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    fillColor:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -482,7 +504,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
             ],
           ),
         ),
-        
+
         // Students List
         Expanded(
           child: classProvider.isLoading
@@ -493,7 +515,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                       : const EmptyState(
                           icon: Icons.people_outline,
                           title: 'No Students Yet',
-                          message: 'Add students to this class using the enrollment code or the Add Students button',
+                          message:
+                              'Add students to this class using the enrollment code or the Add Students button',
                         )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -513,61 +536,61 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       padding: const EdgeInsets.only(bottom: 12),
       child: AppCard(
         child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            child: Text(
-              student.displayName.isNotEmpty
-                  ? student.displayName[0].toUpperCase()
-                  : 'S',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.bold,
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              child: Text(
+                student.displayName.isNotEmpty
+                    ? student.displayName[0].toUpperCase()
+                    : 'S',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  student.displayName,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    student.displayName,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
-                ),
-                Text(
-                  student.email ?? student.username,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  Text(
+                    student.email ?? student.username,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'remove') {
+                  _removeStudent(student.id, classProvider);
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'remove',
+                  child: Row(
+                    children: [
+                      Icon(Icons.remove_circle_outline, size: 20),
+                      SizedBox(width: 12),
+                      Text('Remove from Class'),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'remove') {
-                _removeStudent(student.id, classProvider);
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'remove',
-                child: Row(
-                  children: [
-                    Icon(Icons.remove_circle_outline, size: 20),
-                    SizedBox(width: 12),
-                    Text('Remove from Class'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -579,13 +602,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
         final classAssignments = assignmentProvider.assignments
             .where((assignment) => assignment.classId == widget.classId)
             .toList();
-        
+
         if (assignmentProvider.isLoading) {
           return const Center(
             child: CircularProgressIndicator(),
           );
         }
-        
+
         if (classAssignments.isEmpty) {
           return Center(
             child: Column(
@@ -605,14 +628,15 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                 Text(
                   'Create your first assignment for this class',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () {
                     // Navigate to create assignment with this class pre-selected
-                    context.push('/teacher/assignments/create?classId=${widget.classId}');
+                    context.push(
+                        '/teacher/assignments/create?classId=${widget.classId}');
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Create Assignment'),
@@ -621,7 +645,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
             ),
           );
         }
-        
+
         return Column(
           children: [
             // Header with assignment count and create button
@@ -636,7 +660,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                   ),
                   ElevatedButton.icon(
                     onPressed: () {
-                      context.push('/teacher/assignments/create?classId=${widget.classId}');
+                      context.push(
+                          '/teacher/assignments/create?classId=${widget.classId}');
                     },
                     icon: const Icon(Icons.add, size: 20),
                     label: const Text('New Assignment'),
@@ -644,7 +669,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                 ],
               ),
             ),
-            
+
             // Assignments list
             Expanded(
               child: ListView.builder(
@@ -656,7 +681,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: _getAssignmentTypeColor(assignment.type),
+                        backgroundColor:
+                            _getAssignmentTypeColor(assignment.type),
                         child: Icon(
                           _getAssignmentTypeIcon(assignment.type),
                           color: Colors.white,
@@ -706,7 +732,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
       },
     );
   }
-  
+
   Color _getAssignmentTypeColor(AssignmentType type) {
     switch (type) {
       case AssignmentType.homework:
@@ -731,7 +757,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
         return Colors.grey;
     }
   }
-  
+
   IconData _getAssignmentTypeIcon(AssignmentType type) {
     switch (type) {
       case AssignmentType.homework:
@@ -756,11 +782,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
         return Icons.assignment;
     }
   }
-  
+
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final difference = date.difference(now);
-    
+
     if (difference.inDays == 0) {
       return 'Today';
     } else if (difference.inDays == 1) {
@@ -788,16 +814,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             value,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+                  fontWeight: FontWeight.w500,
+                ),
             textAlign: TextAlign.end,
           ),
         ),
@@ -823,16 +849,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
         ],
       ),
@@ -854,13 +880,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
 
   Future<void> _regenerateEnrollmentCode() async {
     final classProvider = context.read<ClassProvider>();
-    final newCode = await classProvider.regenerateEnrollmentCode(widget.classId);
-    
+    final newCode =
+        await classProvider.regenerateEnrollmentCode(widget.classId);
+
     if (newCode != null) {
       setState(() {
         _classModel = _classModel?.copyWith(enrollmentCode: newCode);
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -900,14 +927,15 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
     });
   }
 
-
-  Future<void> _removeStudent(String? studentId, ClassProvider classProvider) async {
+  Future<void> _removeStudent(
+      String? studentId, ClassProvider classProvider) async {
     if (studentId == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Student'),
-        content: const Text('Are you sure you want to remove this student from the class?'),
+        content: const Text(
+            'Are you sure you want to remove this student from the class?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -925,7 +953,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
     );
 
     if (confirmed == true) {
-      final success = await classProvider.unenrollStudent(widget.classId, studentId);
+      final success =
+          await classProvider.unenrollStudent(widget.classId, studentId);
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -942,7 +971,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
   void _handleMenuAction(String action) async {
     final classProvider = context.read<ClassProvider>();
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    
+
     switch (action) {
       case 'regenerate_code':
         await _regenerateEnrollmentCode();
@@ -954,7 +983,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
           context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Archive Class'),
-            content: const Text('Archived classes will be read-only. Students won\'t be able to submit new work. You can restore the class later.'),
+            content: const Text(
+                'Archived classes will be read-only. Students won\'t be able to submit new work. You can restore the class later.'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -967,7 +997,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen> with SingleTicker
             ],
           ),
         );
-        
+
         if (confirmed == true) {
           final success = await classProvider.archiveClass(widget.classId);
           if (success && mounted) {

@@ -1,5 +1,5 @@
 /// Global error handler widget that listens for Firebase errors.
-/// 
+///
 /// This widget should wrap the entire app to catch and display
 /// Firebase permission errors and other errors globally.
 library;
@@ -10,7 +10,7 @@ import '../../services/error_handler_service.dart';
 /// Global error handler that displays errors as snackbars or dialogs.
 class GlobalErrorHandler extends StatefulWidget {
   final Widget child;
-  
+
   const GlobalErrorHandler({
     super.key,
     required this.child,
@@ -32,10 +32,10 @@ mixin GlobalErrorHandlerMixin<T extends StatefulWidget> on State<T> {
   /// Show error message using the nearest scaffold.
   void showError(dynamic error, {VoidCallback? onRetry}) {
     if (!mounted) return;
-    
+
     final message = ErrorHandlerService.getErrorMessage(error);
     final isPermissionError = ErrorHandlerService.isPermissionError(error);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -66,14 +66,14 @@ mixin GlobalErrorHandlerMixin<T extends StatefulWidget> on State<T> {
       ),
     );
   }
-  
+
   /// Show permission error dialog.
   void showPermissionError({
     required String resource,
     String? additionalInfo,
   }) {
     if (!mounted) return;
-    
+
     ErrorHandlerService.showPermissionDeniedDialog(
       context,
       resource: resource,
@@ -88,7 +88,7 @@ extension GlobalErrorContext on BuildContext {
   void showFirebaseError(dynamic error, {VoidCallback? onRetry}) {
     final message = ErrorHandlerService.getErrorMessage(error);
     final isPermissionError = ErrorHandlerService.isPermissionError(error);
-    
+
     final messenger = ScaffoldMessenger.maybeOf(this);
     if (messenger != null) {
       messenger.showSnackBar(

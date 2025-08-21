@@ -50,7 +50,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 _buildCommunicationScreen(context),
               ],
             ),
-            
+
             // Close button
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,
@@ -74,7 +74,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 ),
               ),
             ),
-            
+
             // Page indicator
             Positioned(
               bottom: MediaQuery.of(context).padding.bottom + 32,
@@ -82,7 +82,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               right: 0,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(24),
@@ -98,7 +99,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                     controller: _pageController,
                     count: 5,
                     effect: WormEffect(
-                      dotColor: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      dotColor:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.3),
                       activeDotColor: theme.colorScheme.primary,
                       dotHeight: 8,
                       dotWidth: 8,
@@ -108,7 +110,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 ),
               ),
             ),
-            
+
             // Navigation hint
             if (_currentPage == 0)
               Positioned(
@@ -117,7 +119,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 right: 0,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                       borderRadius: BorderRadius.circular(24),
@@ -213,7 +216,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               ],
             ),
           ),
-          
+
           // Stats row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -221,15 +224,17 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               children: [
                 _buildStatCard('Total', '156', Icons.people, Colors.blue),
                 const SizedBox(width: 12),
-                _buildStatCard('Active', '142', Icons.check_circle, Colors.green),
+                _buildStatCard(
+                    'Active', '142', Icons.check_circle, Colors.green),
                 const SizedBox(width: 12),
-                _buildStatCard('Avg Grade', '87%', Icons.trending_up, Colors.orange),
+                _buildStatCard(
+                    'Avg Grade', '87%', Icons.trending_up, Colors.orange),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Student list
           Expanded(
             child: ListView.builder(
@@ -252,7 +257,12 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                 radius: 28,
                                 backgroundColor: _getAvatarColor(index),
                                 child: Text(
-                                  student.displayName?.split(' ').map((n) => n[0]).take(2).join() ?? '?',
+                                  student.displayName
+                                          ?.split(' ')
+                                          .map((n) => n[0])
+                                          .take(2)
+                                          .join() ??
+                                      '?',
                                   style: TextStyle(
                                     color: theme.colorScheme.onPrimary,
                                     fontWeight: FontWeight.bold,
@@ -300,8 +310,10 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                     const SizedBox(width: 4),
                                     Text(
                                       'Grade ${student.gradeLevel}',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
@@ -314,8 +326,10 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                     Expanded(
                                       child: Text(
                                         student.email ?? '',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -329,7 +343,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.green.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
@@ -372,7 +387,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
 
   Widget _buildClassDetailScreen(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: CustomScrollView(
@@ -516,9 +531,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Class overview
                   Text(
                     'Class Overview',
@@ -527,7 +542,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Performance chart
                   Container(
                     height: 200,
@@ -543,7 +558,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                           drawVerticalLine: false,
                           getDrawingHorizontalLine: (value) {
                             return FlLine(
-                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                              color: theme.colorScheme.outlineVariant
+                                  .withValues(alpha: 0.3),
                               strokeWidth: 1,
                             );
                           },
@@ -565,7 +581,13 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                             sideTitles: SideTitles(
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                const months = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan'];
+                                const months = [
+                                  'Sep',
+                                  'Oct',
+                                  'Nov',
+                                  'Dec',
+                                  'Jan'
+                                ];
                                 if (value.toInt() < months.length) {
                                   return Text(
                                     months[value.toInt()],
@@ -614,16 +636,17 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                             ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.1),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Recent activity
                   Text(
                     'Recent Activity',
@@ -632,7 +655,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   _buildActivityItem(
                     'New Assignment Posted',
                     'Chapter 7: Quadratic Equations',
@@ -665,7 +688,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
 
   Widget _buildPerformanceScreen(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
@@ -710,9 +733,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Grade distribution
             Container(
               padding: const EdgeInsets.all(20),
@@ -748,9 +771,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Top performers
             Text(
               'Top Performers',
@@ -759,38 +782,39 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             ..._generateTopPerformers().map((student) => Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Text(
-                    student['initials']!,
-                    style: TextStyle(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.bold,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      child: Text(
+                        student['initials']!,
+                        style: TextStyle(
+                          color: theme.colorScheme.onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(student['name']!),
+                    subtitle: Text('Grade ${student['grade']}'),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        student['average']!,
+                        style: TextStyle(
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                title: Text(student['name']!),
-                subtitle: Text('Grade ${student['grade']}'),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    student['average']!,
-                    style: TextStyle(
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            )),
+                )),
           ],
         ),
       ),
@@ -799,7 +823,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
 
   Widget _buildAssignmentScreen(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -851,7 +875,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 ),
               ],
             ),
-            
+
             // Upcoming assignments
             ListView(
               padding: const EdgeInsets.all(16),
@@ -874,7 +898,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 ),
               ],
             ),
-            
+
             // Past assignments
             ListView(
               padding: const EdgeInsets.all(16),
@@ -909,7 +933,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
 
   Widget _buildCommunicationScreen(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
@@ -950,7 +974,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               ],
             ),
           ),
-          
+
           // Recent communications
           Expanded(
             child: ListView(
@@ -1019,7 +1043,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
     );
   }
 
-  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, IconData icon, Color color) {
     final theme = Theme.of(context);
     return Expanded(
       child: Container(
@@ -1052,7 +1077,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
     );
   }
 
-  Widget _buildQuickAction(String title, String subtitle, IconData icon, Color color) {
+  Widget _buildQuickAction(
+      String title, String subtitle, IconData icon, Color color) {
     final theme = Theme.of(context);
     return Card(
       child: InkWell(
@@ -1086,7 +1112,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
     );
   }
 
-  Widget _buildActivityItem(String title, String subtitle, IconData icon, String time, Color color) {
+  Widget _buildActivityItem(
+      String title, String subtitle, IconData icon, String time, Color color) {
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1111,10 +1138,11 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
     );
   }
 
-  Widget _buildPerformanceCard(String title, String value, String change, IconData icon, Color color) {
+  Widget _buildPerformanceCard(
+      String title, String value, String change, IconData icon, Color color) {
     final theme = Theme.of(context);
     final isPositive = change.startsWith('+');
-    
+
     return Container(
       width: 180,
       padding: const EdgeInsets.all(20),
@@ -1265,7 +1293,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
@@ -1286,7 +1315,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                       color: due.contains('Tomorrow')
                           ? Colors.orange
                           : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: due.contains('Tomorrow') ? FontWeight.w600 : null,
+                      fontWeight:
+                          due.contains('Tomorrow') ? FontWeight.w600 : null,
                     ),
                   ),
                 ],
@@ -1312,7 +1342,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                     Expanded(
                       child: LinearProgressIndicator(
                         value: progress / 100,
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(color),
                       ),
                     ),

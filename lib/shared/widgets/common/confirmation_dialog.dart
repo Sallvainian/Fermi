@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// A reusable confirmation dialog widget that follows Material 3 design principles.
-/// 
+///
 /// Used throughout the app for consistent confirmation dialogs.
 class ConfirmationDialog extends StatelessWidget {
   final String title;
@@ -24,7 +24,7 @@ class ConfirmationDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final confirmButtonColor = confirmColor ?? 
+    final confirmButtonColor = confirmColor ??
         (isDestructive ? theme.colorScheme.error : theme.colorScheme.primary);
 
     return AlertDialog(
@@ -39,8 +39,8 @@ class ConfirmationDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(true),
           style: FilledButton.styleFrom(
             backgroundColor: confirmButtonColor,
-            foregroundColor: isDestructive 
-                ? theme.colorScheme.onError 
+            foregroundColor: isDestructive
+                ? theme.colorScheme.onError
                 : theme.colorScheme.onPrimary,
           ),
           child: Text(confirmText ?? 'Confirm'),

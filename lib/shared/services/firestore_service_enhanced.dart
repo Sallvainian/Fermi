@@ -4,10 +4,11 @@ import 'firestore_service.dart';
 import 'logger_service.dart';
 
 /// Enhanced Firestore service with pagination support.
-/// 
+///
 /// Extends the base FirestoreService to add pagination capabilities
 /// while maintaining backward compatibility with existing code.
-class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMixin {
+class FirestoreServiceEnhanced<T> extends FirestoreService<T>
+    with PaginationMixin {
   /// Creates an enhanced Firestore service with pagination.
   FirestoreServiceEnhanced({
     required super.collectionPath,
@@ -16,9 +17,9 @@ class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMix
   });
 
   /// Get paginated documents from the collection.
-  /// 
+  ///
   /// Returns a page of documents with metadata for pagination.
-  /// 
+  ///
   /// @param pageSize Number of documents per page
   /// @param startAfter Optional cursor for pagination
   /// @param orderBy Field to order by (defaults to 'createdAt')
@@ -36,12 +37,12 @@ class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMix
   }) async {
     try {
       Query query = collection.orderBy(orderBy, descending: descending);
-      
+
       // Apply filtering if provided
       if (where != null && isEqualTo != null) {
         query = query.where(where, isEqualTo: isEqualTo);
       }
-      
+
       return await getPaginatedData(
         query: query,
         fromFirestore: fromFirestore,
@@ -58,7 +59,7 @@ class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMix
   }
 
   /// Get paginated stream of documents.
-  /// 
+  ///
   /// Returns a stream that emits paginated results whenever
   /// the underlying data changes.
   Stream<PaginatedResult<T>> streamPaginated({
@@ -71,12 +72,12 @@ class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMix
   }) {
     try {
       Query query = collection.orderBy(orderBy, descending: descending);
-      
+
       // Apply filtering if provided
       if (where != null && isEqualTo != null) {
         query = query.where(where, isEqualTo: isEqualTo);
       }
-      
+
       return getPaginatedStream(
         query: query,
         fromFirestore: fromFirestore,
@@ -93,7 +94,7 @@ class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMix
   }
 
   /// Get documents with compound queries and pagination.
-  /// 
+  ///
   /// Supports multiple where clauses and complex queries.
   Future<PaginatedResult<T>> queryPaginated({
     required List<QueryConstraint> constraints,
@@ -102,12 +103,12 @@ class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMix
   }) async {
     try {
       Query query = collection;
-      
+
       // Apply all constraints
       for (final constraint in constraints) {
         query = constraint.apply(query);
       }
-      
+
       return await getPaginatedData(
         query: query,
         fromFirestore: fromFirestore,
@@ -130,13 +131,13 @@ class FirestoreServiceEnhanced<T> extends FirestoreService<T> with PaginationMix
     LoggerService.warning(
       'getAll() is deprecated. Use getPaginated() for better performance.',
     );
-    
+
     // Use pagination to load all documents
     final allItems = await getAllPaginated(
       query: collection.orderBy('createdAt', descending: true),
       fromFirestore: fromFirestore,
     );
-    
+
     return allItems;
   }
 }

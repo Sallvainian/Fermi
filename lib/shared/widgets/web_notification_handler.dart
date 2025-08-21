@@ -5,7 +5,7 @@ import '../../features/notifications/data/services/web_in_app_notification_servi
 /// Widget that handles displaying in-app notifications on web
 class WebNotificationHandler extends StatefulWidget {
   final Widget child;
-  
+
   const WebNotificationHandler({
     super.key,
     required this.child,
@@ -16,8 +16,9 @@ class WebNotificationHandler extends StatefulWidget {
 }
 
 class _WebNotificationHandlerState extends State<WebNotificationHandler> {
-  final WebInAppNotificationService _notificationService = WebInAppNotificationService();
-  
+  final WebInAppNotificationService _notificationService =
+      WebInAppNotificationService();
+
   @override
   void initState() {
     super.initState();
@@ -25,7 +26,7 @@ class _WebNotificationHandlerState extends State<WebNotificationHandler> {
       _setupNotificationListener();
     }
   }
-  
+
   void _setupNotificationListener() {
     // Set up the callback to show notifications
     _notificationService.onNotificationReceived = (title, body, data) {
@@ -65,7 +66,7 @@ class _WebNotificationHandlerState extends State<WebNotificationHandler> {
       }
     };
   }
-  
+
   @override
   void dispose() {
     if (kIsWeb) {
@@ -73,7 +74,7 @@ class _WebNotificationHandlerState extends State<WebNotificationHandler> {
     }
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return widget.child;

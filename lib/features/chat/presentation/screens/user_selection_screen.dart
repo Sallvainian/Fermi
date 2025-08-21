@@ -209,11 +209,13 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                     final user = _filteredUsers[index];
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: user.photoURL != null 
-                            ? NetworkImage(user.photoURL!) 
+                        backgroundImage: user.photoURL != null
+                            ? NetworkImage(user.photoURL!)
                             : null,
-                        child: user.photoURL == null 
-                            ? Text(user.displayName?.isNotEmpty == true ? user.displayName![0] : '?')
+                        child: user.photoURL == null
+                            ? Text(user.displayName?.isNotEmpty == true
+                                ? user.displayName![0]
+                                : '?')
                             : null,
                       ),
                       title: Text(user.displayName ?? 'Unknown User'),

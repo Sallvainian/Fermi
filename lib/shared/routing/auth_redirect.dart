@@ -57,10 +57,14 @@ String? computeAuthRedirect({
   // Role‑based route protection. Once the user is fully authenticated and
   // email verified, restrict access to routes based on their assigned role.
   // Teacher routes start with `/teacher`; student routes start with `/student`.
-  if (matchedLocation.startsWith('/teacher') && role != null && role != UserRole.teacher) {
+  if (matchedLocation.startsWith('/teacher') &&
+      role != null &&
+      role != UserRole.teacher) {
     return '/dashboard';
   }
-  if (matchedLocation.startsWith('/student') && role != null && role != UserRole.student) {
+  if (matchedLocation.startsWith('/student') &&
+      role != null &&
+      role != UserRole.student) {
     return '/dashboard';
   }
 

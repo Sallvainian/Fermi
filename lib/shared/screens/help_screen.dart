@@ -9,7 +9,8 @@ class HelpScreen extends StatefulWidget {
   State<HelpScreen> createState() => _HelpScreenState();
 }
 
-class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateMixin {
+class _HelpScreenState extends State<HelpScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
   String _searchQuery = '';
@@ -107,15 +108,18 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
         'questions': [
           {
             'question': 'How do I log in to my account?',
-            'answer': 'Use your school-provided email and password to log in. If you forgot your password, click "Forgot Password" on the login screen.',
+            'answer':
+                'Use your school-provided email and password to log in. If you forgot your password, click "Forgot Password" on the login screen.',
           },
           {
             'question': 'How do I change my password?',
-            'answer': 'Go to Settings > Security & Privacy > Change Password. You\'ll need to enter your current password and a new password.',
+            'answer':
+                'Go to Settings > Security & Privacy > Change Password. You\'ll need to enter your current password and a new password.',
           },
           {
             'question': 'What browsers are supported?',
-            'answer': 'The Teacher Dashboard works best on modern browsers like Chrome, Firefox, Safari, and Edge. Make sure your browser is up to date.',
+            'answer':
+                'The Teacher Dashboard works best on modern browsers like Chrome, Firefox, Safari, and Edge. Make sure your browser is up to date.',
           },
         ],
       },
@@ -124,19 +128,23 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
         'questions': [
           {
             'question': 'How do I view my grades?',
-            'answer': 'Navigate to the Grades section from the main dashboard. You can filter by course, assignment type, or search for specific assignments.',
+            'answer':
+                'Navigate to the Grades section from the main dashboard. You can filter by course, assignment type, or search for specific assignments.',
           },
           {
             'question': 'When will new grades appear?',
-            'answer': 'Grades typically appear within 24-48 hours after your teacher enters them. You\'ll receive a notification when new grades are posted.',
+            'answer':
+                'Grades typically appear within 24-48 hours after your teacher enters them. You\'ll receive a notification when new grades are posted.',
           },
           {
             'question': 'How do I submit an assignment?',
-            'answer': 'Go to Assignments, find your assignment, and click "Submit". Follow the prompts to upload files or enter text responses.',
+            'answer':
+                'Go to Assignments, find your assignment, and click "Submit". Follow the prompts to upload files or enter text responses.',
           },
           {
             'question': 'Can I resubmit an assignment?',
-            'answer': 'This depends on your teacher\'s settings. Some assignments allow resubmission before the due date, while others do not.',
+            'answer':
+                'This depends on your teacher\'s settings. Some assignments allow resubmission before the due date, while others do not.',
           },
         ],
       },
@@ -145,15 +153,18 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
         'questions': [
           {
             'question': 'How do I message my teacher?',
-            'answer': 'Go to Messages and click "Compose". Select your teacher from the recipient list and type your message.',
+            'answer':
+                'Go to Messages and click "Compose". Select your teacher from the recipient list and type your message.',
           },
           {
             'question': 'Can parents see my messages?',
-            'answer': 'No, direct messages between students and teachers are private. However, teachers may contact parents separately about academic matters.',
+            'answer':
+                'No, direct messages between students and teachers are private. However, teachers may contact parents separately about academic matters.',
           },
           {
             'question': 'How do I get notifications?',
-            'answer': 'Enable notifications in Settings > Notifications. You can choose to receive push notifications, emails, or both.',
+            'answer':
+                'Enable notifications in Settings > Notifications. You can choose to receive push notifications, emails, or both.',
           },
         ],
       },
@@ -162,15 +173,18 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
         'questions': [
           {
             'question': 'The app is running slowly. What can I do?',
-            'answer': 'Try clearing your browser cache, closing other tabs, or restarting your browser. Make sure you have a stable internet connection.',
+            'answer':
+                'Try clearing your browser cache, closing other tabs, or restarting your browser. Make sure you have a stable internet connection.',
           },
           {
             'question': 'I can\'t upload files. What\'s wrong?',
-            'answer': 'Check that your file is under the size limit (usually 10MB) and in a supported format. Try using a different browser if the problem persists.',
+            'answer':
+                'Check that your file is under the size limit (usually 10MB) and in a supported format. Try using a different browser if the problem persists.',
           },
           {
             'question': 'The page won\'t load. What should I do?',
-            'answer': 'Refresh the page, check your internet connection, and try logging out and back in. If the problem continues, contact support.',
+            'answer':
+                'Refresh the page, check your internet connection, and try logging out and back in. If the problem continues, contact support.',
           },
         ],
       },
@@ -178,20 +192,25 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
 
     final filteredFAQs = _searchQuery.isEmpty
         ? faqs
-        : faqs.map((category) {
-            final filteredQuestions = category['questions'] as List;
-            final matchingQuestions = filteredQuestions.where((q) {
-              final question = q['question'] as String;
-              final answer = q['answer'] as String;
-              return question.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                     answer.toLowerCase().contains(_searchQuery.toLowerCase());
-            }).toList();
-            
-            return {
-              'category': category['category'],
-              'questions': matchingQuestions,
-            };
-          }).where((category) => (category['questions'] as List).isNotEmpty).toList();
+        : faqs
+            .map((category) {
+              final filteredQuestions = category['questions'] as List;
+              final matchingQuestions = filteredQuestions.where((q) {
+                final question = q['question'] as String;
+                final answer = q['answer'] as String;
+                return question
+                        .toLowerCase()
+                        .contains(_searchQuery.toLowerCase()) ||
+                    answer.toLowerCase().contains(_searchQuery.toLowerCase());
+              }).toList();
+
+              return {
+                'category': category['category'],
+                'questions': matchingQuestions,
+              };
+            })
+            .where((category) => (category['questions'] as List).isNotEmpty)
+            .toList();
 
     return ResponsiveContainer(
       child: ListView.builder(
@@ -214,12 +233,14 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
           child: Text(
             category['category'] as String,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
           ),
         ),
-        ...((category['questions'] as List).map((q) => _buildFAQItem(q)).toList()),
+        ...((category['questions'] as List)
+            .map((q) => _buildFAQItem(q))
+            .toList()),
         const SizedBox(height: 24),
       ],
     );
@@ -232,8 +253,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
         title: Text(
           faq['question']!,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+                fontWeight: FontWeight.w600,
+              ),
         ),
         children: [
           Padding(
@@ -241,8 +262,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
             child: Text(
               faq['answer']!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ),
         ],
@@ -266,7 +287,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
       },
       {
         'title': 'Student Guide to Grades',
-        'description': 'Everything you need to know about viewing and understanding your grades',
+        'description':
+            'Everything you need to know about viewing and understanding your grades',
         'icon': Icons.grade,
         'duration': '8 min read',
         'sections': [
@@ -290,7 +312,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
       },
       {
         'title': 'Communication Best Practices',
-        'description': 'How to effectively communicate with teachers and classmates',
+        'description':
+            'How to effectively communicate with teachers and classmates',
         'icon': Icons.message,
         'duration': '4 min read',
         'sections': [
@@ -368,15 +391,16 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                     Text(
                       guide['title'] as String,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       guide['description'] as String,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -389,10 +413,13 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                         const SizedBox(width: 4),
                         Text(
                           guide['duration'] as String,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                       ],
                     ),
@@ -411,21 +438,24 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
     final videos = [
       {
         'title': 'Teacher Dashboard Overview',
-        'description': 'A complete walkthrough of the Teacher Dashboard interface',
+        'description':
+            'A complete walkthrough of the Teacher Dashboard interface',
         'duration': '12:34',
         'thumbnail': 'overview',
         'category': 'Getting Started',
       },
       {
         'title': 'How to Submit Assignments',
-        'description': 'Step-by-step guide to submitting your homework and projects',
+        'description':
+            'Step-by-step guide to submitting your homework and projects',
         'duration': '8:45',
         'thumbnail': 'assignments',
         'category': 'Assignments',
       },
       {
         'title': 'Understanding Your Grades',
-        'description': 'Learn how grades are calculated and how to track your progress',
+        'description':
+            'Learn how grades are calculated and how to track your progress',
         'duration': '15:20',
         'thumbnail': 'grades',
         'category': 'Grades',
@@ -479,7 +509,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
               height: 180,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(12)),
               ),
               child: Stack(
                 children: [
@@ -494,7 +525,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                     bottom: 8,
                     right: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(4),
@@ -519,7 +551,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
@@ -527,24 +560,26 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                     child: Text(
                       video['category']!,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
-                        fontWeight: FontWeight.w600,
-                      ),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSecondaryContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     video['title']!,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     video['description']!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                   ),
                 ],
               ),
@@ -572,15 +607,16 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                     Text(
                       'Share Your Feedback',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Help us improve the Teacher Dashboard by sharing your thoughts and suggestions.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                     const SizedBox(height: 24),
                     // Feedback Type
@@ -590,10 +626,15 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'bug', child: Text('Bug Report')),
-                        DropdownMenuItem(value: 'feature', child: Text('Feature Request')),
-                        DropdownMenuItem(value: 'improvement', child: Text('Improvement Suggestion')),
-                        DropdownMenuItem(value: 'general', child: Text('General Feedback')),
+                        DropdownMenuItem(
+                            value: 'bug', child: Text('Bug Report')),
+                        DropdownMenuItem(
+                            value: 'feature', child: Text('Feature Request')),
+                        DropdownMenuItem(
+                            value: 'improvement',
+                            child: Text('Improvement Suggestion')),
+                        DropdownMenuItem(
+                            value: 'general', child: Text('General Feedback')),
                       ],
                       onChanged: (value) {},
                     ),
@@ -634,18 +675,18 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Quick Feedback Options
             Text(
               'Quick Feedback',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 12),
-            
+
             Row(
               children: [
                 Expanded(
@@ -667,9 +708,9 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Contact Information
             Card(
               child: Padding(
@@ -680,8 +721,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                     Text(
                       'Need Immediate Help?',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     const SizedBox(height: 12),
                     ListTile(
@@ -694,7 +735,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
                     ListTile(
                       leading: const Icon(Icons.phone),
                       title: const Text('Phone Support'),
-                      subtitle: const Text('1-800-TEACHER (Available 9 AM - 5 PM EST)'),
+                      subtitle: const Text(
+                          '1-800-TEACHER (Available 9 AM - 5 PM EST)'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => _contactSupport('phone'),
                     ),
@@ -738,16 +780,16 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -807,7 +849,9 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
           children: [
             TextField(
               decoration: InputDecoration(
-                labelText: type == 'feature' ? 'Feature Description' : 'Bug Description',
+                labelText: type == 'feature'
+                    ? 'Feature Description'
+                    : 'Bug Description',
                 border: const OutlineInputBorder(),
               ),
               maxLines: 3,
@@ -863,8 +907,8 @@ class _HelpScreenState extends State<HelpScreen> with SingleTickerProviderStateM
             Text(
               'Contact Support',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -926,7 +970,8 @@ class GuideDetailSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1008,27 +1053,29 @@ class GuideDetailSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ...((guide['sections'] as List<String>).map((section) => 
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 20,
-                            color: theme.colorScheme.primary,
+                  ...((guide['sections'] as List<String>)
+                      .map(
+                        (section) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                size: 20,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  section,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              section,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ).toList()),
+                        ),
+                      )
+                      .toList()),
                   const SizedBox(height: 32),
                 ],
               ),

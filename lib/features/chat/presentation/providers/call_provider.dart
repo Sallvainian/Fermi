@@ -7,14 +7,14 @@ import '../../../../shared/services/logger_service.dart';
 /// Placeholder Call Provider - actual implementation pending
 class CallProvider extends ChangeNotifier {
   static const String _tag = 'CallProvider';
-  
+
   final WebRTCService _webrtcService = WebRTCService();
-  
+
   Call? _currentCall;
   Call? _incomingCall;
   StreamSubscription? _incomingCallSubscription;
   bool _isNavigationInProgress = false;
-  
+
   Call? get currentCall => _currentCall;
   Call? get incomingCall => _incomingCall;
   bool get hasIncomingCall => _incomingCall != null;
@@ -31,13 +31,15 @@ class CallProvider extends ChangeNotifier {
       _setupNotificationHandlers();
       _setupFirebaseMessagingHandlers();
     } catch (e) {
-      LoggerService.error('Failed to initialize call provider', tag: _tag, error: e);
+      LoggerService.error('Failed to initialize call provider',
+          tag: _tag, error: e);
     }
   }
 
   void _setupNotificationHandlers() {
     // Placeholder - notification handlers for incoming calls will be implemented later
-    LoggerService.info('Setting up notification handlers (placeholder)', tag: _tag);
+    LoggerService.info('Setting up notification handlers (placeholder)',
+        tag: _tag);
   }
 
   void _setupFirebaseMessagingHandlers() {
@@ -55,7 +57,7 @@ class CallProvider extends ChangeNotifier {
     try {
       // Placeholder implementation
       final callId = DateTime.now().millisecondsSinceEpoch.toString();
-      
+
       _currentCall = Call(
         id: callId,
         callerId: 'current_user',
@@ -69,14 +71,14 @@ class CallProvider extends ChangeNotifier {
         startedAt: DateTime.now(),
         chatRoomId: chatRoomId,
       );
-      
+
       await _webrtcService.makeCall(
         receiverId: receiverId,
         isVideoCall: isVideoCall,
         receiverName: receiverName,
         receiverPhotoUrl: receiverPhotoUrl,
       );
-      
+
       notifyListeners();
       return callId;
     } catch (e) {

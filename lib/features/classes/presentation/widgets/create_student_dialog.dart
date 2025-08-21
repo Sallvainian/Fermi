@@ -27,9 +27,7 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
   String? _generatedUsername;
   String? _generatedPassword;
 
-  final List<String> _grades = [
-    '9', '10', '11', '12'
-  ];
+  final List<String> _grades = ['9', '10', '11', '12'];
 
   @override
   void initState() {
@@ -49,7 +47,7 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
   void _generateCredentials() {
     // Generate username from name (will be updated when name is entered)
     _updateUsername();
-    
+
     // Generate a random temporary password
     _generatedPassword = _generatePassword();
   }
@@ -57,13 +55,14 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
   void _updateUsername() {
     final firstName = _firstNameController.text.trim().toLowerCase();
     final lastName = _lastNameController.text.trim().toLowerCase();
-    
+
     if (firstName.isNotEmpty && lastName.isNotEmpty) {
       // Create username from first initial + last name + random number
       final random = Random();
       final number = random.nextInt(100);
       setState(() {
-        _generatedUsername = '${firstName[0]}$lastName${number.toString().padLeft(2, '0')}';
+        _generatedUsername =
+            '${firstName[0]}$lastName${number.toString().padLeft(2, '0')}';
       });
     }
   }
@@ -94,10 +93,11 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
       final parentEmail = _parentEmailController.text.trim();
       final gradeLevel = _selectedGrade;
       final displayName = '$firstName $lastName';
-      
+
       // Generate a unique student ID
-      final studentId = FirebaseFirestore.instance.collection('students').doc().id;
-      
+      final studentId =
+          FirebaseFirestore.instance.collection('students').doc().id;
+
       // Create student document directly in Firestore
       final student = Student(
         id: studentId,
@@ -136,7 +136,7 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
         'studentCount': FieldValue.increment(1),
         'updatedAt': FieldValue.serverTimestamp(),
       });
-        
+
       if (mounted) {
         // Show success dialog with credentials
         await showDialog(
@@ -150,7 +150,8 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
               children: [
                 Text('Student: $displayName'),
                 const SizedBox(height: 16),
-                const Text('Login Credentials:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Login Credentials:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 SelectableText('Username: $_generatedUsername'),
                 SelectableText('Temporary Password: $_generatedPassword'),
@@ -219,7 +220,6 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                     ],
                   ),
                 ),
-
               TextFormField(
                 controller: _firstNameController,
                 decoration: const InputDecoration(
@@ -235,7 +235,6 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                 },
               ),
               const SizedBox(height: 16),
-
               TextFormField(
                 controller: _lastNameController,
                 decoration: const InputDecoration(
@@ -251,7 +250,6 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                 },
               ),
               const SizedBox(height: 16),
-
               DropdownButtonFormField<String>(
                 initialValue: _selectedGrade,
                 decoration: const InputDecoration(
@@ -271,7 +269,6 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                 },
               ),
               const SizedBox(height: 16),
-
               TextFormField(
                 controller: _parentEmailController,
                 decoration: const InputDecoration(
@@ -279,13 +276,14 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (value) {
-                  if (value != null && value.isNotEmpty && !value.contains('@')) {
+                  if (value != null &&
+                      value.isNotEmpty &&
+                      !value.contains('@')) {
                     return 'Please enter a valid email';
                   }
                   return null;
                 },
               ),
-              
               if (_generatedUsername != null) ...[
                 const SizedBox(height: 16),
                 Container(
@@ -301,7 +299,8 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                         'Generated Username',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -310,7 +309,8 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ],

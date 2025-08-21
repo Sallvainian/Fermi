@@ -19,12 +19,12 @@ enum WebRTCErrorType {
 class WebRTCException implements Exception {
   final String message;
   final WebRTCErrorType type;
-  
+
   const WebRTCException(this.message, this.type);
-  
+
   @override
   String toString() => 'WebRTCException: $message';
-  
+
   // User-friendly error messages
   String get userFriendlyMessage {
     switch (type) {
@@ -59,24 +59,29 @@ class WebRTCService {
   final _iceConnectionStateController = BehaviorSubject<String>();
   final _signalingStateController = BehaviorSubject<String>();
   final _remoteVideoEnabledController = BehaviorSubject<bool>.seeded(true);
-  final _callDurationController = BehaviorSubject<Duration>.seeded(Duration.zero);
+  final _callDurationController =
+      BehaviorSubject<Duration>.seeded(Duration.zero);
 
   // Public streams
   Stream<CallState> get callStateStream => _callStateController.stream;
   Stream<dynamic> get remoteStreamStream => _remoteStreamController.stream;
   Stream<dynamic> get localStreamStream => _localStreamController.stream;
-  Stream<dynamic> get connectionStateStream => _connectionStateController.stream;
-  Stream<String> get iceConnectionStateStream => _iceConnectionStateController.stream;
+  Stream<dynamic> get connectionStateStream =>
+      _connectionStateController.stream;
+  Stream<String> get iceConnectionStateStream =>
+      _iceConnectionStateController.stream;
   Stream<String> get signalingStateStream => _signalingStateController.stream;
-  Stream<bool> get remoteVideoEnabledStream => _remoteVideoEnabledController.stream;
+  Stream<bool> get remoteVideoEnabledStream =>
+      _remoteVideoEnabledController.stream;
   Stream<Duration> get callDurationStream => _callDurationController.stream;
 
   // Current call state
-  CallState get currentCallState => _callStateController.valueOrNull ?? CallState.idle;
+  CallState get currentCallState =>
+      _callStateController.valueOrNull ?? CallState.idle;
   bool get isInCall => currentCallState != CallState.idle;
   String? _currentCallId;
   String? get currentCallId => _currentCallId;
-  
+
   // Placeholder properties
   dynamic _localRenderer;
   dynamic _remoteRenderer;
@@ -120,19 +125,20 @@ class WebRTCService {
     String? receiverPhotoUrl,
   }) async {
     try {
-      LoggerService.info('WebRTC makeCall placeholder - video calling coming soon', tag: _tag);
+      LoggerService.info(
+          'WebRTC makeCall placeholder - video calling coming soon',
+          tag: _tag);
       _updateCallState(CallState.calling);
-      
+
       // Simulate call setup
       await Future.delayed(const Duration(seconds: 2));
-      
+
       // For now, just update state to show UI is working
       _updateCallState(CallState.connected);
-      
+
       // Then disconnect after a moment to show the feature isn't ready
       await Future.delayed(const Duration(seconds: 3));
       _updateCallState(CallState.idle);
-      
     } catch (e) {
       LoggerService.error('Error in makeCall placeholder', tag: _tag, error: e);
       _updateCallState(CallState.error);
@@ -146,13 +152,13 @@ class WebRTCService {
       LoggerService.info('WebRTC answerCall placeholder', tag: _tag);
       _currentCallId = callId;
       _updateCallState(CallState.connecting);
-      
+
       // Simulate answer
       await Future.delayed(const Duration(seconds: 2));
       _updateCallState(CallState.connected);
-      
     } catch (e) {
-      LoggerService.error('Error in answerCall placeholder', tag: _tag, error: e);
+      LoggerService.error('Error in answerCall placeholder',
+          tag: _tag, error: e);
       _updateCallState(CallState.error);
       rethrow;
     }
@@ -173,13 +179,15 @@ class WebRTCService {
   /// Toggle video - placeholder
   Future<void> toggleVideo() async {
     _isVideoEnabled = !_isVideoEnabled;
-    LoggerService.info('Video toggled: $_isVideoEnabled (placeholder)', tag: _tag);
+    LoggerService.info('Video toggled: $_isVideoEnabled (placeholder)',
+        tag: _tag);
   }
 
   /// Toggle audio - placeholder
   Future<void> toggleAudio() async {
     _isAudioEnabled = !_isAudioEnabled;
-    LoggerService.info('Audio toggled: $_isAudioEnabled (placeholder)', tag: _tag);
+    LoggerService.info('Audio toggled: $_isAudioEnabled (placeholder)',
+        tag: _tag);
   }
 
   /// Switch camera - placeholder
@@ -189,14 +197,16 @@ class WebRTCService {
 
   /// Enable speaker - placeholder
   Future<void> enableSpeaker(bool enable) async {
-    LoggerService.info('Speaker ${enable ? "enabled" : "disabled"} (placeholder)', tag: _tag);
+    LoggerService.info(
+        'Speaker ${enable ? "enabled" : "disabled"} (placeholder)',
+        tag: _tag);
   }
 
   // Private helper methods
   void _updateCallState(CallState state) {
     _callStateController.add(state);
     onCallStateChanged?.call(state);
-    
+
     if (state == CallState.connected) {
       _startCallDurationTimer();
     } else if (state == CallState.idle || state == CallState.error) {

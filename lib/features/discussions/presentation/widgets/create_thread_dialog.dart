@@ -138,7 +138,7 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
   void _createThread() async {
     if (_formKey.currentState!.validate()) {
       final discussionProvider = context.read<DiscussionProvider>();
-      
+
       // Show loading dialog
       showDialog(
         context: context,
@@ -147,7 +147,7 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
           child: CircularProgressIndicator(),
         ),
       );
-      
+
       try {
         // Create the thread with the provided information
         final threadId = await discussionProvider.createThread(
@@ -156,14 +156,14 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
           content: _contentController.text.trim(),
           tags: _selectedTags,
         );
-        
+
         // Remove loading dialog
         if (mounted) Navigator.pop(context);
-        
+
         if (threadId != null && mounted) {
           // Close the dialog
           Navigator.pop(context);
-          
+
           // Show success message
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -175,7 +175,8 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
           // Show error if thread creation failed
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(discussionProvider.error ?? 'Failed to create thread'),
+              content:
+                  Text(discussionProvider.error ?? 'Failed to create thread'),
               backgroundColor: Colors.red,
             ),
           );
@@ -183,7 +184,7 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
       } catch (e) {
         // Remove loading dialog if still showing
         if (mounted) Navigator.pop(context);
-        
+
         // Show error message
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

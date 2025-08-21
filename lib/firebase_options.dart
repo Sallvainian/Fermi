@@ -52,7 +52,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
     authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
     measurementId: 'G-V4QCVHTDRC',
   );
@@ -62,7 +63,8 @@ class DefaultFirebaseOptions {
     appId: '1:218352465432:android:a7d591b9db6bef6038b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
   );
 
@@ -71,10 +73,13 @@ class DefaultFirebaseOptions {
     appId: '1:218352465432:ios:c28649d0752fecc138b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    androidClientId: '218352465432-2kmehjp1b5g8r4n5t2ul09t5gqiuajop.apps.googleusercontent.com',
-    iosClientId: '218352465432-h1hq9jomlotvjosr31eic5rtdubhup0a.apps.googleusercontent.com',
+    androidClientId:
+        '218352465432-2kmehjp1b5g8r4n5t2ul09t5gqiuajop.apps.googleusercontent.com',
+    iosClientId:
+        '218352465432-h1hq9jomlotvjosr31eic5rtdubhup0a.apps.googleusercontent.com',
     iosBundleId: 'com.frank.teacherDashboard',
   );
 }

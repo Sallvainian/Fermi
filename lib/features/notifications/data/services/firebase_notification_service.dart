@@ -44,13 +44,12 @@ class FirebaseNotificationService {
       return snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))
           .where((notification) {
-            // Filter out expired notifications
-            if (notification.isExpired) return false;
-            // Filter out scheduled notifications not yet due
-            if (notification.isScheduled) return false;
-            return true;
-          })
-          .toList();
+        // Filter out expired notifications
+        if (notification.isExpired) return false;
+        // Filter out scheduled notifications not yet due
+        if (notification.isScheduled) return false;
+        return true;
+      }).toList();
     });
   }
 
@@ -74,11 +73,10 @@ class FirebaseNotificationService {
           return snapshot.docs
               .map((doc) => NotificationModel.fromFirestore(doc))
               .where((notification) {
-                if (notification.isExpired) return false;
-                if (notification.isScheduled) return false;
-                return true;
-              })
-              .toList();
+            if (notification.isExpired) return false;
+            if (notification.isScheduled) return false;
+            return true;
+          }).toList();
         });
   }
 
@@ -94,15 +92,14 @@ class FirebaseNotificationService {
         .where('isRead', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs
-              .map((doc) => NotificationModel.fromFirestore(doc))
-              .where((notification) {
-                if (notification.isExpired) return false;
-                if (notification.isScheduled) return false;
-                return true;
-              })
-              .length;
-        });
+      return snapshot.docs
+          .map((doc) => NotificationModel.fromFirestore(doc))
+          .where((notification) {
+        if (notification.isExpired) return false;
+        if (notification.isScheduled) return false;
+        return true;
+      }).length;
+    });
   }
 
   // Mark notification as read
@@ -204,7 +201,8 @@ class FirebaseNotificationService {
       userId: studentId,
       type: NotificationType.grade,
       title: 'New Grade Posted',
-      message: 'Your grade for $assignmentName in $courseName has been posted: $grade',
+      message:
+          'Your grade for $assignmentName in $courseName has been posted: $grade',
       priority: NotificationPriority.normal,
       actionData: {
         'courseId': courseId,

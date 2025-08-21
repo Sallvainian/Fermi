@@ -87,9 +87,9 @@ class AppDrawer extends StatelessWidget {
                 children: [
                   // Quick Access Favorites Section
                   _buildFavoritesSection(context),
-                  
+
                   const Divider(height: 32),
-                  
+
                   // All Navigation Items
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -101,7 +101,7 @@ class AppDrawer extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   _buildNavItem(
                     context,
                     icon: Icons.dashboard_outlined,
@@ -313,7 +313,7 @@ class AppDrawer extends StatelessWidget {
       onTap: () {
         // Close drawer using Scaffold
         Scaffold.of(context).closeDrawer();
-        
+
         // Navigate to the route after drawer closes
         Future.delayed(const Duration(milliseconds: 200), () {
           if (context.mounted) {
@@ -323,16 +323,16 @@ class AppDrawer extends StatelessWidget {
       },
     );
   }
-  
+
   Widget _buildFavoritesSection(BuildContext context) {
     final theme = Theme.of(context);
     final navigationProvider = context.watch<NavigationProvider>();
     final favoriteItems = navigationProvider.favoriteItems;
-    
+
     if (favoriteItems.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -356,7 +356,7 @@ class AppDrawer extends StatelessWidget {
             ],
           ),
         ),
-        
+
         // Favorites Grid
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -373,11 +373,12 @@ class AppDrawer extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = favoriteItems[index];
               final router = GoRouter.of(context);
-              final currentRoute = router.routeInformationProvider.value.uri.path;
+              final currentRoute =
+                  router.routeInformationProvider.value.uri.path;
               final isSelected = currentRoute == item.route;
-              
+
               return Material(
-                color: isSelected 
+                color: isSelected
                     ? theme.colorScheme.primaryContainer
                     : theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
@@ -392,7 +393,8 @@ class AppDrawer extends StatelessWidget {
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     child: Row(
                       children: [
                         Icon(
@@ -410,7 +412,9 @@ class AppDrawer extends StatelessWidget {
                               color: isSelected
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.onSurface,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),

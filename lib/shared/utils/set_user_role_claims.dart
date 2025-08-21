@@ -8,7 +8,7 @@ class UserRoleClaims {
 
   /// Sets the custom role claim for a user.
   /// This should be called after a user's role is set in Firestore.
-  /// 
+  ///
   /// For new users: Call this after they complete signup and role selection.
   /// For existing users: The Cloud Function trigger will handle it automatically.
   static Future<void> setRoleClaim({
@@ -73,7 +73,7 @@ class UserRoleClaims {
 }
 
 // Example usage in your auth flow:
-// 
+//
 // After user signup and role selection in Firestore:
 // await UserRoleClaims.setRoleClaim(
 //   uid: user.uid,

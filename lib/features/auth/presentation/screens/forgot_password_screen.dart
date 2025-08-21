@@ -30,7 +30,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: _emailController.text.trim(),
       );
-      
+
       setState(() => _emailSent = true);
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred';
@@ -39,7 +39,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       } else if (e.code == 'invalid-email') {
         message = 'Invalid email address';
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message)),
@@ -55,7 +55,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -84,14 +84,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 32),
-          
           Icon(
             Icons.lock_reset,
             size: 64,
             color: theme.colorScheme.primary,
           ),
           const SizedBox(height: 24),
-          
           Text(
             'Forgot Password?',
             style: theme.textTheme.headlineMedium?.copyWith(
@@ -100,7 +98,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          
           Text(
             'Enter your email address and we\'ll send you a link to reset your password.',
             style: theme.textTheme.bodyLarge?.copyWith(
@@ -109,7 +106,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-
           TextFormField(
             controller: _emailController,
             decoration: const InputDecoration(
@@ -129,7 +125,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             },
           ),
           const SizedBox(height: 24),
-
           FilledButton(
             onPressed: _isLoading ? null : _resetPassword,
             style: FilledButton.styleFrom(
@@ -158,7 +153,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           color: theme.colorScheme.primary,
         ),
         const SizedBox(height: 24),
-        
         Text(
           'Email Sent!',
           style: theme.textTheme.headlineMedium?.copyWith(
@@ -167,7 +161,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        
         Text(
           'We\'ve sent a password reset link to ${_emailController.text}',
           style: theme.textTheme.bodyLarge?.copyWith(
@@ -176,7 +169,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
-
         OutlinedButton(
           onPressed: () {
             if (context.canPop()) {

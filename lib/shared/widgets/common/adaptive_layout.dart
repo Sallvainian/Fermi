@@ -124,10 +124,11 @@ class AdaptiveLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     // Get providers
     final authProvider = context.watch<AuthProvider>();
-    
+
     // Schedule role update after build completes
     if (authProvider.userModel != null) {
-      final role = authProvider.userModel!.role.toString().split('.').last.toLowerCase();
+      final role =
+          authProvider.userModel!.role.toString().split('.').last.toLowerCase();
       // Use a microtask to ensure this happens after the current build
       Future.microtask(() {
         if (context.mounted) {
@@ -231,4 +232,3 @@ class AdaptiveLayout extends StatelessWidget {
     );
   }
 }
-

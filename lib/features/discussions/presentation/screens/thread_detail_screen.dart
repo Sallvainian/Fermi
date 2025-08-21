@@ -90,7 +90,8 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
         }
       });
     } catch (e) {
-      LoggerService.error('Error loading thread', tag: 'ThreadDetailScreen', error: e);
+      LoggerService.error('Error loading thread',
+          tag: 'ThreadDetailScreen', error: e);
       setState(() {
         _isLoading = false;
       });
@@ -104,26 +105,27 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
     try {
       final authProvider = context.read<AuthProvider>();
       final userModel = authProvider.userModel;
-      
+
       // Get the user's display name, preferring firstName + lastName
       String authorName = 'Unknown User';
       if (userModel != null) {
         if (userModel.firstName != null && userModel.lastName != null) {
           authorName = '${userModel.firstName} ${userModel.lastName}'.trim();
-        } else if (userModel.displayName != null && userModel.displayName!.isNotEmpty) {
+        } else if (userModel.displayName != null &&
+            userModel.displayName!.isNotEmpty) {
           authorName = userModel.displayName!;
         } else if (userModel.email != null) {
           // Fallback to email prefix if no name is available
           authorName = userModel.email!.split('@').first;
         }
       }
-      
+
       final userId = authProvider.firebaseUser?.uid ?? '';
-      
+
       if (userId.isEmpty) {
         throw Exception('User not authenticated');
       }
-      
+
       await _firestore
           .collection('discussion_boards')
           .doc(widget.boardId)
@@ -158,7 +160,8 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
         );
       }
     } catch (e) {
-      LoggerService.error('Failed to add comment', tag: 'ThreadDetailScreen', error: e);
+      LoggerService.error('Failed to add comment',
+          tag: 'ThreadDetailScreen', error: e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -366,7 +369,8 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                color: theme.colorScheme.surfaceContainerHighest
+                    .withValues(alpha: 0.5),
               ),
               child: Row(
                 children: [
@@ -403,7 +407,8 @@ class _CommentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final createdAt = (comment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+    final createdAt =
+        (comment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),

@@ -9,7 +9,7 @@ import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 
 class AssignmentCreateScreen extends StatefulWidget {
   final String? classId;
-  
+
   const AssignmentCreateScreen({
     super.key,
     this.classId,
@@ -25,7 +25,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
   final _descriptionController = TextEditingController();
   final _instructionsController = TextEditingController();
   final _maxPointsController = TextEditingController();
-  
+
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay _dueTime = const TimeOfDay(hour: 23, minute: 59);
   AssignmentType _selectedType = AssignmentType.essay;
@@ -34,12 +34,11 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
   bool _allowLateSubmissions = true;
   int _latePenaltyPercentage = 10;
   bool _isLoading = false;
-  
+
   // Scheduled publishing
   int _publishOption = 0; // 0: draft, 1: immediate, 2: scheduled
   DateTime _publishDate = DateTime.now();
   TimeOfDay _publishTime = TimeOfDay.now();
-
 
   @override
   void dispose() {
@@ -91,21 +90,20 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
       return;
     }
 
-
     setState(() => _isLoading = true);
 
     try {
       final authProvider = context.read<AuthProvider>();
       final assignmentProvider = context.read<AssignmentProvider>();
       final user = authProvider.userModel;
-      
+
       if (user == null) {
         throw Exception('User not authenticated');
       }
 
       // Determine publish at date based on publish option
       DateTime? publishAt;
-      
+
       if (_publishOption == 1) {
         // Publish immediately
         publishAt = null;
@@ -119,7 +117,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
           _publishTime.minute,
         );
       }
-      
+
       final assignment = Assignment(
         id: '',
         title: _titleController.text.trim(),
@@ -147,7 +145,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Assignment "${assignment.title}" created successfully'),
+            content:
+                Text('Assignment "${assignment.title}" created successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -172,7 +171,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -364,7 +363,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                     const SizedBox(height: 16),
                     SwitchListTile(
                       title: const Text('Allow Late Submissions'),
-                      subtitle: const Text('Students can submit after due date with penalty'),
+                      subtitle: const Text(
+                          'Students can submit after due date with penalty'),
                       value: _allowLateSubmissions,
                       onChanged: (value) {
                         setState(() {
@@ -415,7 +415,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                     const SizedBox(height: 16),
                     CustomRadioListTile<int>(
                       title: const Text('Save as Draft'),
-                      subtitle: const Text('Assignment will not be visible to students'),
+                      subtitle: const Text(
+                          'Assignment will not be visible to students'),
                       value: 0,
                       groupValue: _publishOption,
                       onChanged: (value) {
@@ -428,7 +429,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                     ),
                     CustomRadioListTile<int>(
                       title: const Text('Publish Immediately'),
-                      subtitle: const Text('Students can see and submit the assignment'),
+                      subtitle: const Text(
+                          'Students can see and submit the assignment'),
                       value: 1,
                       groupValue: _publishOption,
                       onChanged: (value) {
@@ -441,7 +443,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                     ),
                     CustomRadioListTile<int>(
                       title: const Text('Schedule for Later'),
-                      subtitle: const Text('Assignment will become visible at a future date'),
+                      subtitle: const Text(
+                          'Assignment will become visible at a future date'),
                       value: 2,
                       groupValue: _publishOption,
                       onChanged: (value) {

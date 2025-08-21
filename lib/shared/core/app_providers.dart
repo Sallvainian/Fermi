@@ -25,13 +25,13 @@ class AppProviders {
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => AuthProvider()),
       ChangeNotifierProvider(create: (_) => NavigationProvider()),
-      
+
       // LAZY: Dashboard provider - only create when dashboard is accessed
       ChangeNotifierProvider(
         create: (_) => DashboardProvider(),
         lazy: true,
       ),
-      
+
       // LAZY: Feature-specific providers loaded on demand
       ChangeNotifierProvider(
         create: (_) => ClassProvider(),
@@ -77,7 +77,7 @@ class AppProviders {
         create: (_) => GradeProvider(),
         lazy: true,
       ),
-      
+
       // REMOVE: JeopardyProvider - unused game feature
       // Commented out to remove from production
       // ChangeNotifierProvider(create: (_) => JeopardyProvider()),

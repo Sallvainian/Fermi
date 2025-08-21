@@ -4,8 +4,9 @@ import '../../domain/models/notification_model.dart';
 import '../../data/services/firebase_notification_service.dart';
 
 class NotificationProvider extends ChangeNotifier {
-  final FirebaseNotificationService _notificationService = FirebaseNotificationService();
-  
+  final FirebaseNotificationService _notificationService =
+      FirebaseNotificationService();
+
   List<NotificationModel> _notifications = [];
   List<NotificationModel> _filteredNotifications = [];
   bool _isLoading = false;
@@ -13,7 +14,7 @@ class NotificationProvider extends ChangeNotifier {
   String _searchQuery = '';
   String _selectedFilter = 'All';
   StreamSubscription<List<NotificationModel>>? _notificationSubscription;
-  
+
   // Getters
   List<NotificationModel> get notifications => _notifications;
   List<NotificationModel> get filteredNotifications => _filteredNotifications;
@@ -22,20 +23,21 @@ class NotificationProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   String get selectedFilter => _selectedFilter;
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
-  
+
   // Initialize and start listening to notifications
   void initialize() {
     _loadNotifications();
   }
-  
+
   // Load notifications from Firebase
   void _loadNotifications() {
     _isLoading = true;
     _error = '';
     notifyListeners();
-    
+
     _notificationSubscription?.cancel();
-    _notificationSubscription = _notificationService.getUserNotifications().listen(
+    _notificationSubscription =
+        _notificationService.getUserNotifications().listen(
       (notifications) {
         _notifications = notifications;
         _applyFilters();
@@ -49,7 +51,7 @@ class NotificationProvider extends ChangeNotifier {
       },
     );
   }
-  
+
   // Apply search and filter
   void _applyFilters() {
     _filteredNotifications = _notifications.where((notification) {
@@ -61,7 +63,7 @@ class NotificationProvider extends ChangeNotifier {
           return false;
         }
       }
-      
+
       // Apply type filter
       if (_selectedFilter != 'All') {
         switch (_selectedFilter) {
@@ -79,25 +81,25 @@ class NotificationProvider extends ChangeNotifier {
             break;
         }
       }
-      
+
       return true;
     }).toList();
   }
-  
+
   // Update search query
   void updateSearchQuery(String query) {
     _searchQuery = query;
     _applyFilters();
     notifyListeners();
   }
-  
+
   // Update filter
   void updateFilter(String filter) {
     _selectedFilter = filter;
     _applyFilters();
     notifyListeners();
   }
-  
+
   // Get notifications by tab
   List<NotificationModel> getNotificationsByTab(String tab) {
     switch (tab) {
@@ -106,16 +108,17 @@ class NotificationProvider extends ChangeNotifier {
       case 'unread':
         return filteredNotifications.where((n) => !n.isRead).toList();
       case 'academic':
-        return filteredNotifications.where((n) => 
-          n.type == NotificationType.grade ||
-          n.type == NotificationType.assignment ||
-          n.type == NotificationType.submission
-        ).toList();
+        return filteredNotifications
+            .where((n) =>
+                n.type == NotificationType.grade ||
+                n.type == NotificationType.assignment ||
+                n.type == NotificationType.submission)
+            .toList();
       default:
         return filteredNotifications;
     }
   }
-  
+
   // Mark notification as read
   Future<void> markAsRead(String notificationId) async {
     try {
@@ -132,7 +135,7 @@ class NotificationProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Mark notification as unread
   Future<void> markAsUnread(String notificationId) async {
     try {
@@ -149,15 +152,14 @@ class NotificationProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Mark all as read
   Future<void> markAllAsRead() async {
     try {
       await _notificationService.markAllAsRead();
       // Update local state
-      _notifications = _notifications.map((n) => 
-        n.copyWith(isRead: true)
-      ).toList();
+      _notifications =
+          _notifications.map((n) => n.copyWith(isRead: true)).toList();
       _applyFilters();
       notifyListeners();
     } catch (e) {
@@ -165,7 +167,7 @@ class NotificationProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Delete notification
   Future<void> deleteNotification(String notificationId) async {
     try {
@@ -179,7 +181,7 @@ class NotificationProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Delete all read notifications
   Future<void> deleteAllRead() async {
     try {
@@ -193,7 +195,7 @@ class NotificationProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   // Get notification settings
   Future<Map<String, bool>> getNotificationSettings() async {
     try {
@@ -204,7 +206,7 @@ class NotificationProvider extends ChangeNotifier {
       return {};
     }
   }
-  
+
   // Update notification settings
   Future<void> updateNotificationSettings(Map<String, bool> settings) async {
     try {
@@ -214,7 +216,7 @@ class NotificationProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   @override
   void dispose() {
     _notificationSubscription?.cancel();

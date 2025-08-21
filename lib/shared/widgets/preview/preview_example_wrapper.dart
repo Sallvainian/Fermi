@@ -1,5 +1,5 @@
 /// PreviewExampleWrapper widget with explicit DataState enum.
-/// 
+///
 /// This widget provides a robust state management solution for showing
 /// example/preview content when real data is empty, with clear visual
 /// indicators and smooth transitions.
@@ -12,19 +12,19 @@ import 'example_badge.dart';
 enum DataState {
   /// Data is currently being loaded
   loading,
-  
+
   /// No data available (empty state)
   empty,
-  
+
   /// Real data is available and populated
   populated,
-  
+
   /// Error occurred while loading data
   error,
 }
 
 /// A wrapper widget that intelligently shows example data when real data is empty.
-/// 
+///
 /// This widget provides:
 /// - Explicit state management with DataState enum
 /// - Visual indicators for example content
@@ -34,34 +34,35 @@ enum DataState {
 class PreviewExampleWrapper<T> extends StatelessWidget {
   /// Real data from the application
   final List<T>? realData;
-  
+
   /// Example/preview data to show when real data is empty
   final List<T> exampleData;
-  
+
   /// Builder function to render the data
-  final Widget Function(BuildContext context, List<T> data, bool isExample) builder;
-  
+  final Widget Function(BuildContext context, List<T> data, bool isExample)
+      builder;
+
   /// Whether data is currently loading
   final bool isLoading;
-  
+
   /// Error message if data loading failed
   final String? error;
-  
+
   /// Callback when user taps on an example item
   final VoidCallback? onExampleTap;
-  
+
   /// Custom empty state widget
   final Widget? emptyWidget;
-  
+
   /// Custom loading widget
   final Widget? loadingWidget;
-  
+
   /// Custom error widget
   final Widget? errorWidget;
-  
+
   /// Whether to show the example badge
   final bool showExampleBadge;
-  
+
   /// Animation duration for state transitions
   final Duration animationDuration;
 
@@ -87,7 +88,6 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
     if (realData != null && realData!.isNotEmpty) return DataState.populated;
     return DataState.empty;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -116,13 +116,13 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
     switch (_currentState) {
       case DataState.loading:
         return _buildLoadingState(context);
-      
+
       case DataState.error:
         return _buildErrorState(context);
-      
+
       case DataState.empty:
         return _buildExampleState(context);
-      
+
       case DataState.populated:
         return _buildPopulatedState(context);
     }
@@ -130,7 +130,7 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
 
   Widget _buildLoadingState(BuildContext context) {
     if (loadingWidget != null) return loadingWidget!;
-    
+
     return const Center(
       child: Padding(
         padding: EdgeInsets.all(32.0),
@@ -148,7 +148,7 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
 
   Widget _buildErrorState(BuildContext context) {
     if (errorWidget != null) return errorWidget!;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -178,7 +178,8 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
     }
 
     return Semantics(
-      label: 'Preview examples - showing sample content to demonstrate features',
+      label:
+          'Preview examples - showing sample content to demonstrate features',
       child: Stack(
         children: [
           // Example content with interaction guard
@@ -186,7 +187,7 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
             onTap: onExampleTap,
             child: builder(context, exampleData, true),
           ),
-          
+
           // Example badge
           if (showExampleBadge)
             Positioned(
@@ -207,7 +208,7 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
 
   Widget _buildTrueEmptyState(BuildContext context) {
     if (emptyWidget != null) return emptyWidget!;
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -228,8 +229,8 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
             Text(
               'Create your first item to get started',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),

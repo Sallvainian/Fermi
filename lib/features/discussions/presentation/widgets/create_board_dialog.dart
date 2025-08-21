@@ -132,7 +132,7 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
   void _createBoard() async {
     if (_formKey.currentState!.validate()) {
       final provider = context.read<DiscussionProvider>();
-      
+
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -151,7 +151,7 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
         Navigator.pop(context); // Close create dialog
-        
+
         if (boardId != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

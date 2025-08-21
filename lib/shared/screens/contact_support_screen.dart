@@ -16,7 +16,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
   final _formKey = GlobalKey<FormState>();
   final _subjectController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   String _selectedCategory = 'bug_report';
   String _selectedPriority = 'medium';
   bool _isSubmitting = false;
@@ -31,7 +31,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return AdaptiveLayout(
       title: 'Contact Support',
       showBackButton: true,
@@ -60,7 +60,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  
+
                   // Category Selection
                   Text(
                     'Issue Type',
@@ -107,7 +107,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  
+
                   // Priority Selection
                   Text(
                     'Priority',
@@ -150,7 +150,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  
+
                   // Subject Field
                   Text(
                     'Subject',
@@ -180,7 +180,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  
+
                   // Description Field
                   Text(
                     'Description',
@@ -193,7 +193,8 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     controller: _descriptionController,
                     maxLines: 8,
                     decoration: const InputDecoration(
-                      hintText: 'Please provide detailed information about the issue:\n'
+                      hintText:
+                          'Please provide detailed information about the issue:\n'
                           '• What were you trying to do?\n'
                           '• What happened instead?\n'
                           '• Steps to reproduce the issue\n'
@@ -220,7 +221,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  
+
                   // Device Info (automatically collected)
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -265,7 +266,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  
+
                   // Submit Button
                   SizedBox(
                     width: double.infinity,
@@ -291,20 +292,20 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
       ),
     );
   }
-  
+
   Future<void> _submitReport() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     setState(() {
       _isSubmitting = true;
     });
-    
+
     try {
       final authProvider = context.read<AuthProvider>();
       final user = authProvider.userModel;
-      
+
       // Prepare bug report data
       final reportData = {
         'category': _selectedCategory,
@@ -318,29 +319,32 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'new',
         'platform': Theme.of(context).platform.name,
-        'appVersion': '1.0.0', // You might want to get this from package_info_plus
+        'appVersion':
+            '1.0.0', // You might want to get this from package_info_plus
         'deviceInfo': {
           'platform': Theme.of(context).platform.name,
-          'screenSize': '${MediaQuery.of(context).size.width}x${MediaQuery.of(context).size.height}',
+          'screenSize':
+              '${MediaQuery.of(context).size.width}x${MediaQuery.of(context).size.height}',
           'pixelRatio': MediaQuery.of(context).devicePixelRatio,
         },
       };
-      
+
       // Submit to Firestore
       await FirebaseFirestore.instance
           .collection('bug_reports')
           .add(reportData);
-      
+
       if (!mounted) return;
-      
+
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Bug report submitted successfully! Thank you for your feedback.'),
+          content: Text(
+              'Bug report submitted successfully! Thank you for your feedback.'),
           backgroundColor: Colors.green,
         ),
       );
-      
+
       // Clear form
       _subjectController.clear();
       _descriptionController.clear();
@@ -348,17 +352,16 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
         _selectedCategory = 'bug_report';
         _selectedPriority = 'medium';
       });
-      
+
       // Navigate back after a short delay
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           Navigator.of(context).pop();
         }
       });
-      
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to submit report: $e'),

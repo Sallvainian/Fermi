@@ -5,7 +5,7 @@ class PWAUpdateNotifier extends StatelessWidget {
   final Widget child;
   final GlobalKey<NavigatorState>? navigatorKey;
   final GlobalKey<ScaffoldMessengerState>? scaffoldMessengerKey;
-  
+
   const PWAUpdateNotifier({
     super.key,
     required this.child,

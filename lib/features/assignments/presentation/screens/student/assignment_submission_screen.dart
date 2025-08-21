@@ -19,10 +19,12 @@ class AssignmentSubmissionScreen extends StatefulWidget {
   });
 
   @override
-  State<AssignmentSubmissionScreen> createState() => _AssignmentSubmissionScreenState();
+  State<AssignmentSubmissionScreen> createState() =>
+      _AssignmentSubmissionScreenState();
 }
 
-class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen> {
+class _AssignmentSubmissionScreenState
+    extends State<AssignmentSubmissionScreen> {
   final _textController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   StudentAssignment? _studentAssignment;
@@ -45,16 +47,16 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
 
   Future<void> _loadAssignment() async {
     final studentProvider = context.read<StudentAssignmentProvider>();
-    
+
     try {
       await studentProvider.loadAssignmentDetails(widget.assignmentId);
       final assignment = studentProvider.getAssignmentById(widget.assignmentId);
-      
+
       if (mounted) {
         setState(() {
           _studentAssignment = assignment;
           _isLoading = false;
-          
+
           // If there's an existing submission, load its content
           if (assignment?.submission?.textContent != null) {
             _textController.text = assignment!.submission!.textContent!;
@@ -77,7 +79,7 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
   Future<void> _pickFile() async {
     try {
       setState(() => _fileError = null);
-      
+
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'png', 'jpg', 'jpeg'],
@@ -86,13 +88,13 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
-        
+
         // Check file size (max 10MB)
         if (file.size > 10 * 1024 * 1024) {
           setState(() => _fileError = 'File size must be less than 10MB');
           return;
         }
-        
+
         setState(() => _selectedFile = file);
       }
     } catch (e) {
@@ -102,7 +104,7 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
 
   Future<void> _submitAssignment() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     if (_textController.text.trim().isEmpty && _selectedFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -118,7 +120,7 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
     try {
       final authProvider = context.read<AuthProvider>();
       final studentProvider = context.read<StudentAssignmentProvider>();
-      
+
       final success = await studentProvider.submitAssignment(
         assignmentId: widget.assignmentId,
         studentName: authProvider.userModel?.displayName ?? 'Student',
@@ -153,7 +155,7 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
 
   Future<void> _updateSubmission() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -215,12 +217,13 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
                 const SizedBox(height: 16),
 
                 // Submission Form
-                if (!isSubmitted || _studentAssignment!.submission?.status == SubmissionStatus.submitted)
+                if (!isSubmitted ||
+                    _studentAssignment!.submission?.status ==
+                        SubmissionStatus.submitted)
                   _buildSubmissionForm(theme, assignment, canSubmit),
 
                 // Grading Info (if graded)
-                if (_studentAssignment!.isGraded)
-                  _buildGradingCard(theme),
+                if (_studentAssignment!.isGraded) _buildGradingCard(theme),
               ],
             ),
           ),
@@ -293,7 +296,7 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
 
   Widget _buildSubmissionStatusCard(ThemeData theme) {
     final submission = _studentAssignment!.submission!;
-    
+
     return Card(
       color: theme.colorScheme.primaryContainer,
       child: Padding(
@@ -352,7 +355,8 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
     );
   }
 
-  Widget _buildSubmissionForm(ThemeData theme, Assignment assignment, bool canSubmit) {
+  Widget _buildSubmissionForm(
+      ThemeData theme, Assignment assignment, bool canSubmit) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -366,7 +370,7 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Instructions
             Container(
               padding: const EdgeInsets.all(12),
@@ -409,7 +413,8 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
               maxLength: 5000,
               maxLengthEnforcement: MaxLengthEnforcement.enforced,
               validator: (value) {
-                if ((value == null || value.trim().isEmpty) && _selectedFile == null) {
+                if ((value == null || value.trim().isEmpty) &&
+                    _selectedFile == null) {
                   return 'Please provide an answer or upload a file';
                 }
                 return null;
@@ -425,7 +430,8 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
                   child: OutlinedButton.icon(
                     onPressed: canSubmit && !_isSubmitting ? _pickFile : null,
                     icon: const Icon(Icons.attach_file),
-                    label: Text(_selectedFile == null ? 'Attach File' : 'Change File'),
+                    label: Text(
+                        _selectedFile == null ? 'Attach File' : 'Change File'),
                   ),
                 ),
                 if (_selectedFile != null) ...[
@@ -440,7 +446,7 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
                 ],
               ],
             ),
-            
+
             // Selected File Display
             if (_selectedFile != null) ...[
               const SizedBox(height: 8),
@@ -507,7 +513,9 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: canSubmit && !_isSubmitting
-                    ? (_studentAssignment!.isSubmitted ? _updateSubmission : _submitAssignment)
+                    ? (_studentAssignment!.isSubmitted
+                        ? _updateSubmission
+                        : _submitAssignment)
                     : null,
                 icon: _isSubmitting
                     ? const SizedBox(
@@ -515,11 +523,15 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Icon(_studentAssignment!.isSubmitted ? Icons.update : Icons.upload),
+                    : Icon(_studentAssignment!.isSubmitted
+                        ? Icons.update
+                        : Icons.upload),
                 label: Text(
                   _isSubmitting
                       ? 'Submitting...'
-                      : (_studentAssignment!.isSubmitted ? 'Update Submission' : 'Submit Assignment'),
+                      : (_studentAssignment!.isSubmitted
+                          ? 'Update Submission'
+                          : 'Submit Assignment'),
                 ),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.all(16),
@@ -591,7 +603,9 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _getGradeColor(_studentAssignment!.letterGrade ?? 'N/A').withValues(alpha: 0.2),
+                    color:
+                        _getGradeColor(_studentAssignment!.letterGrade ?? 'N/A')
+                            .withValues(alpha: 0.2),
                   ),
                   child: Center(
                     child: Column(
@@ -602,14 +616,16 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: _getGradeColor(_studentAssignment!.letterGrade ?? 'N/A'),
+                            color: _getGradeColor(
+                                _studentAssignment!.letterGrade ?? 'N/A'),
                           ),
                         ),
                         Text(
                           '${_studentAssignment!.percentage?.toStringAsFixed(1) ?? 0}%',
                           style: TextStyle(
                             fontSize: 12,
-                            color: _getGradeColor(_studentAssignment!.letterGrade ?? 'N/A'),
+                            color: _getGradeColor(
+                                _studentAssignment!.letterGrade ?? 'N/A'),
                           ),
                         ),
                       ],
@@ -630,7 +646,8 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
                       if (_studentAssignment!.submission?.gradedAt != null)
                         _buildGradeRow(
                           'Graded On',
-                          _formatDate(_studentAssignment!.submission!.gradedAt!),
+                          _formatDate(
+                              _studentAssignment!.submission!.gradedAt!),
                         ),
                     ],
                   ),
@@ -666,7 +683,8 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value, Color? color) {
+  Widget _buildInfoRow(
+      IconData icon, String label, String value, Color? color) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -745,8 +763,18 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -760,12 +788,12 @@ class _AssignmentSubmissionScreenState extends State<AssignmentSubmissionScreen>
     const units = ['B', 'KB', 'MB', 'GB'];
     int unitIndex = 0;
     double size = bytes.toDouble();
-    
+
     while (size >= 1024 && unitIndex < units.length - 1) {
       size /= 1024;
       unitIndex++;
     }
-    
+
     return '${size.toStringAsFixed(1)} ${units[unitIndex]}';
   }
 }

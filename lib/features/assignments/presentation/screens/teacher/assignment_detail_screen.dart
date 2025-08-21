@@ -30,9 +30,10 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   Future<void> _loadAssignment() async {
     final assignmentProvider = context.read<AssignmentProvider>();
-    
+
     try {
-      final assignment = await assignmentProvider.getAssignmentById(widget.assignmentId);
+      final assignment =
+          await assignmentProvider.getAssignmentById(widget.assignmentId);
       if (mounted) {
         setState(() {
           _assignment = assignment;
@@ -168,7 +169,8 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
       if (_assignment!.publishAt != null) {
         statusColor = Colors.blue;
         statusIcon = Icons.schedule;
-        statusText = 'Scheduled to publish on ${_formatDate(_assignment!.publishAt ?? DateTime.now())}';
+        statusText =
+            'Scheduled to publish on ${_formatDate(_assignment!.publishAt ?? DateTime.now())}';
       } else {
         statusColor = Colors.orange;
         statusIcon = Icons.visibility_off;
@@ -263,7 +265,8 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
             _buildDetailRow('Points', '${_assignment!.maxPoints.toInt()}'),
             _buildDetailRow('Created', _formatDate(_assignment!.createdAt)),
             if (_assignment!.updatedAt != null)
-              _buildDetailRow('Last Updated', _formatDate(_assignment!.updatedAt!)),
+              _buildDetailRow(
+                  'Last Updated', _formatDate(_assignment!.updatedAt!)),
           ],
         ),
       ),
@@ -321,11 +324,11 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
             const SizedBox(height: 16),
             ListTile(
               leading: Icon(
-                _assignment!.allowLateSubmissions 
-                    ? Icons.check_circle 
+                _assignment!.allowLateSubmissions
+                    ? Icons.check_circle
                     : Icons.cancel,
-                color: _assignment!.allowLateSubmissions 
-                    ? Colors.green 
+                color: _assignment!.allowLateSubmissions
+                    ? Colors.green
                     : Colors.red,
               ),
               title: const Text('Late Submissions'),
@@ -411,7 +414,8 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, Color color, IconData icon) {
+  Widget _buildStatItem(
+      String label, String value, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -449,7 +453,8 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () {
-              context.go('/teacher/gradebook?assignmentId=${widget.assignmentId}');
+              context
+                  .go('/teacher/gradebook?assignmentId=${widget.assignmentId}');
             },
             icon: const Icon(Icons.grading),
             label: const Text('Grade Submissions'),
@@ -463,7 +468,8 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
           child: FilledButton.icon(
             onPressed: () {
               // Navigate to submissions view
-              context.go('/teacher/assignments/${widget.assignmentId}/submissions');
+              context.go(
+                  '/teacher/assignments/${widget.assignmentId}/submissions');
             },
             icon: const Icon(Icons.folder_open),
             label: const Text('View Submissions'),
@@ -505,8 +511,18 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   String _formatDate(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -518,7 +534,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   Future<void> _publishAssignment() async {
     final assignmentProvider = context.read<AssignmentProvider>();
-    
+
     try {
       await assignmentProvider.togglePublishStatus(widget.assignmentId, true);
       if (mounted) {
@@ -545,9 +561,9 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   Future<void> _duplicateAssignment() async {
     final assignmentProvider = context.read<AssignmentProvider>();
     final assignment = assignmentProvider.selectedAssignment;
-    
+
     if (assignment == null) return;
-    
+
     try {
       // Create a copy with a new ID and modified title
       final duplicatedAssignment = Assignment(
@@ -557,7 +573,8 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         title: 'Copy of ${assignment.title}',
         description: assignment.description,
         instructions: assignment.instructions,
-        dueDate: DateTime.now().add(const Duration(days: 7)), // Set new due date
+        dueDate:
+            DateTime.now().add(const Duration(days: 7)), // Set new due date
         totalPoints: assignment.totalPoints,
         maxPoints: assignment.maxPoints,
         attachmentUrl: assignment.attachmentUrl,
@@ -572,9 +589,10 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         latePenaltyPercentage: assignment.latePenaltyPercentage,
         publishAt: null,
       );
-      
-      final success = await assignmentProvider.createAssignment(duplicatedAssignment);
-      
+
+      final success =
+          await assignmentProvider.createAssignment(duplicatedAssignment);
+
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -599,10 +617,10 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
   Future<void> _archiveAssignment() async {
     final assignmentProvider = context.read<AssignmentProvider>();
-    
+
     try {
       await assignmentProvider.updateAssignmentStatus(
-        widget.assignmentId, 
+        widget.assignmentId,
         AssignmentStatus.archived,
       );
       if (mounted) {
@@ -653,7 +671,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
 
     if (confirmed == true && mounted) {
       final assignmentProvider = context.read<AssignmentProvider>();
-      
+
       try {
         await assignmentProvider.deleteAssignment(widget.assignmentId);
         if (mounted) {

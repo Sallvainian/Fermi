@@ -7,7 +7,8 @@ class UpdateDisplayNameScreen extends StatefulWidget {
   const UpdateDisplayNameScreen({super.key});
 
   @override
-  State<UpdateDisplayNameScreen> createState() => _UpdateDisplayNameScreenState();
+  State<UpdateDisplayNameScreen> createState() =>
+      _UpdateDisplayNameScreenState();
 }
 
 class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
@@ -102,22 +103,24 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
                     children: [
                       Text(
                         'Current Information',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                       const SizedBox(height: 8),
                       Text('Email: ${user?.email ?? 'N/A'}'),
                       Text('Display Name: "${user?.displayName ?? ''}"'),
                       Text('First Name: "${user?.firstName ?? ''}"'),
                       Text('Last Name: "${user?.lastName ?? ''}"'),
-                      Text('Role: ${user?.role?.toString().split('.').last ?? 'N/A'}'),
+                      Text(
+                          'Role: ${user?.role?.toString().split('.').last ?? 'N/A'}'),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Update form
               TextFormField(
                 controller: _displayNameController,
@@ -135,7 +138,7 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _firstNameController,
                 decoration: const InputDecoration(
@@ -150,7 +153,7 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               TextFormField(
                 controller: _lastNameController,
                 decoration: const InputDecoration(
@@ -159,7 +162,7 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               SizedBox(
                 width: double.infinity,
                 height: 48,

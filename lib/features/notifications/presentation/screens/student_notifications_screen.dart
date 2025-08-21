@@ -10,15 +10,16 @@ class StudentNotificationsScreen extends StatefulWidget {
   const StudentNotificationsScreen({super.key});
 
   @override
-  State<StudentNotificationsScreen> createState() => _StudentNotificationsScreenState();
+  State<StudentNotificationsScreen> createState() =>
+      _StudentNotificationsScreenState();
 }
 
-class _StudentNotificationsScreenState extends State<StudentNotificationsScreen> 
+class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _searchController = TextEditingController();
   String _selectedFilter = 'All';
-  
+
   @override
   void initState() {
     super.initState();
@@ -95,7 +96,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                       ),
                     ),
                     onChanged: (value) {
-                      context.read<NotificationProvider>().updateSearchQuery(value);
+                      context
+                          .read<NotificationProvider>()
+                          .updateSearchQuery(value);
                     },
                   ),
                 ),
@@ -111,18 +114,27 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                     onSelected: (value) {
                       setState(() {
                         _selectedFilter = value;
-                        context.read<NotificationProvider>().updateFilter(value);
+                        context
+                            .read<NotificationProvider>()
+                            .updateFilter(value);
                       });
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(value: 'All', child: Text('All Types')),
-                      const PopupMenuItem(value: 'Grades', child: Text('Grades')),
-                      const PopupMenuItem(value: 'Assignments', child: Text('Assignments')),
-                      const PopupMenuItem(value: 'Announcements', child: Text('Announcements')),
-                      const PopupMenuItem(value: 'Messages', child: Text('Messages from Teachers')),
+                      const PopupMenuItem(
+                          value: 'All', child: Text('All Types')),
+                      const PopupMenuItem(
+                          value: 'Grades', child: Text('Grades')),
+                      const PopupMenuItem(
+                          value: 'Assignments', child: Text('Assignments')),
+                      const PopupMenuItem(
+                          value: 'Announcements', child: Text('Announcements')),
+                      const PopupMenuItem(
+                          value: 'Messages',
+                          child: Text('Messages from Teachers')),
                     ],
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -160,7 +172,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (provider.error.isNotEmpty) {
           return Center(
             child: Column(
@@ -178,7 +190,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
             ),
           );
         }
-        
+
         final notifications = provider.getNotificationsByTab('all');
         if (notifications.isEmpty) {
           return _buildEmptyState(
@@ -187,7 +199,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
             subtitle: 'You\'ll see updates from your classes here',
           );
         }
-        
+
         return _buildNotificationsList(notifications);
       },
     );
@@ -199,7 +211,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final notifications = provider.getNotificationsByTab('unread');
         if (notifications.isEmpty) {
           return _buildEmptyState(
@@ -208,7 +220,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
             subtitle: 'No unread notifications',
           );
         }
-        
+
         return _buildNotificationsList(notifications);
       },
     );
@@ -220,14 +232,15 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         // Filter for class-related notifications
-        final notifications = provider.getNotificationsByTab('all').where((notif) {
+        final notifications =
+            provider.getNotificationsByTab('all').where((notif) {
           return notif.type == NotificationType.announcement ||
-                 notif.type == NotificationType.calendar ||
-                 notif.type == NotificationType.discussion;
+              notif.type == NotificationType.calendar ||
+              notif.type == NotificationType.discussion;
         }).toList();
-        
+
         if (notifications.isEmpty) {
           return _buildEmptyState(
             icon: Icons.class_outlined,
@@ -235,7 +248,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
             subtitle: 'Class announcements will appear here',
           );
         }
-        
+
         return _buildNotificationsList(notifications);
       },
     );
@@ -247,13 +260,14 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         // Filter for grade-related notifications
-        final notifications = provider.getNotificationsByTab('all').where((notif) {
+        final notifications =
+            provider.getNotificationsByTab('all').where((notif) {
           return notif.type == NotificationType.grade ||
-                 notif.type == NotificationType.submission;
+              notif.type == NotificationType.submission;
         }).toList();
-        
+
         if (notifications.isEmpty) {
           return _buildEmptyState(
             icon: Icons.grade_outlined,
@@ -261,7 +275,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
             subtitle: 'New grades will appear here',
           );
         }
-        
+
         return _buildNotificationsList(notifications);
       },
     );
@@ -318,7 +332,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
   Widget _buildNotificationCard(NotificationModel notification) {
     final theme = Theme.of(context);
     final isUnread = !notification.isRead;
-    
+
     Color typeColor;
     IconData typeIcon;
     switch (notification.type) {
@@ -366,8 +380,10 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: isUnread 
-                ? Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.3), width: 1)
+            border: isUnread
+                ? Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                    width: 1)
                 : null,
           ),
           child: Row(
@@ -378,7 +394,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isUnread 
+                      color: isUnread
                           ? typeColor.withValues(alpha: 0.2)
                           : Colors.grey.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
@@ -417,7 +433,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                           child: Text(
                             notification.title,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
+                              fontWeight:
+                                  isUnread ? FontWeight.bold : FontWeight.w600,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -426,7 +443,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                           _formatNotificationTime(notification.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight:
+                                isUnread ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -437,7 +455,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                       notification.message,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
+                        fontWeight:
+                            isUnread ? FontWeight.w500 : FontWeight.normal,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -446,7 +465,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                     // Course Tag if available
                     if (notification.actionData?['courseName'] != null)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
@@ -476,7 +496,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                     child: Row(
                       children: [
                         Icon(
-                          isUnread ? Icons.mark_email_read : Icons.mark_email_unread,
+                          isUnread
+                              ? Icons.mark_email_read
+                              : Icons.mark_email_unread,
                           size: 18,
                         ),
                         const SizedBox(width: 8),
@@ -495,7 +517,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                     ),
                   ),
                 ],
-                onSelected: (value) => _handleNotificationAction(value, notification),
+                onSelected: (value) =>
+                    _handleNotificationAction(value, notification),
               ),
             ],
           ),
@@ -507,7 +530,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
   String _formatNotificationTime(DateTime time) {
     final now = DateTime.now();
     final difference = now.difference(time);
-    
+
     if (difference.inMinutes < 60) {
       return '${difference.inMinutes}m';
     } else if (difference.inHours < 24) {
@@ -521,7 +544,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
 
   void _handleNotificationTap(NotificationModel notification) {
     final provider = context.read<NotificationProvider>();
-    
+
     // Mark as read if unread
     if (!notification.isRead) {
       provider.markAsRead(notification.id);
@@ -536,7 +559,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
       case NotificationType.assignment:
         // Navigate to assignments screen with specific assignment
         if (notification.actionData?['assignmentId'] != null) {
-          context.go('/student/assignments/${notification.actionData!['assignmentId']}');
+          context.go(
+              '/student/assignments/${notification.actionData!['assignmentId']}');
         } else {
           context.go('/student/assignments');
         }
@@ -544,7 +568,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
       case NotificationType.message:
         // Navigate to messages/chat
         if (notification.actionData?['conversationId'] != null) {
-          context.go('/student/messages/${notification.actionData!['conversationId']}');
+          context.go(
+              '/student/messages/${notification.actionData!['conversationId']}');
         } else {
           context.go('/student/messages');
         }
@@ -556,7 +581,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
       case NotificationType.submission:
         // Navigate to specific submission
         if (notification.actionData?['assignmentId'] != null) {
-          context.go('/student/assignments/${notification.actionData!['assignmentId']}');
+          context.go(
+              '/student/assignments/${notification.actionData!['assignmentId']}');
         }
         break;
       case NotificationType.calendar:
@@ -566,7 +592,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
       case NotificationType.discussion:
         // Navigate to class discussions
         if (notification.actionData?['discussionId'] != null) {
-          context.go('/student/discussions/${notification.actionData!['discussionId']}');
+          context.go(
+              '/student/discussions/${notification.actionData!['discussionId']}');
         } else {
           context.go('/student/discussions');
         }
@@ -591,9 +618,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                 Text(
                   notification.actionData!['courseName'],
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -614,7 +641,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
             FilledButton(
               onPressed: () {
                 Navigator.pop(context);
-                context.go('/student/classes/${notification.actionData!['classId']}');
+                context.go(
+                    '/student/classes/${notification.actionData!['classId']}');
               },
               child: const Text('View Class'),
             ),
@@ -639,9 +667,10 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
     );
   }
 
-  void _handleNotificationAction(String action, NotificationModel notification) {
+  void _handleNotificationAction(
+      String action, NotificationModel notification) {
     final provider = context.read<NotificationProvider>();
-    
+
     switch (action) {
       case 'mark_read':
         if (notification.isRead) {
@@ -652,9 +681,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              notification.isRead 
-                  ? 'Marked as unread' 
-                  : 'Marked as read',
+              notification.isRead ? 'Marked as unread' : 'Marked as read',
             ),
           ),
         );
@@ -670,7 +697,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Notification'),
-        content: const Text('Are you sure you want to delete this notification?'),
+        content:
+            const Text('Are you sure you want to delete this notification?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -679,7 +707,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              context.read<NotificationProvider>().deleteNotification(notification.id);
+              context
+                  .read<NotificationProvider>()
+                  .deleteNotification(notification.id);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Notification deleted'),
@@ -696,7 +726,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
   void _markAllAsRead() {
     final provider = context.read<NotificationProvider>();
     provider.markAllAsRead();
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('All notifications marked as read'),
@@ -719,11 +749,11 @@ class StudentNotificationSettingsSheet extends StatefulWidget {
   const StudentNotificationSettingsSheet({super.key});
 
   @override
-  State<StudentNotificationSettingsSheet> createState() => 
+  State<StudentNotificationSettingsSheet> createState() =>
       _StudentNotificationSettingsSheetState();
 }
 
-class _StudentNotificationSettingsSheetState 
+class _StudentNotificationSettingsSheetState
     extends State<StudentNotificationSettingsSheet> {
   bool _pushNotifications = true;
   bool _emailNotifications = true;
@@ -753,7 +783,8 @@ class _StudentNotificationSettingsSheetState
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -812,9 +843,9 @@ class _StudentNotificationSettingsSheetState
                       });
                     },
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Academic Notifications
                   Text(
                     'Academic Updates',
@@ -835,7 +866,8 @@ class _StudentNotificationSettingsSheetState
                   ),
                   SwitchListTile(
                     title: const Text('Assignment Updates'),
-                    subtitle: const Text('New assignments and due date reminders'),
+                    subtitle:
+                        const Text('New assignments and due date reminders'),
                     value: _assignmentNotifications,
                     onChanged: (value) {
                       setState(() {
@@ -843,7 +875,7 @@ class _StudentNotificationSettingsSheetState
                       });
                     },
                   ),
-                  
+
                   // Assignment Reminder Timing
                   ListTile(
                     title: const Text('Assignment Reminders'),
@@ -851,9 +883,9 @@ class _StudentNotificationSettingsSheetState
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () => _showReminderOptions(),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Communication Notifications
                   Text(
                     'Communications',
@@ -892,7 +924,7 @@ class _StudentNotificationSettingsSheetState
                       });
                     },
                   ),
-                  
+
                   const SizedBox(height: 32),
                 ],
               ),
@@ -950,7 +982,7 @@ class _StudentNotificationSettingsSheetState
                 });
                 Navigator.pop(context);
               },
-              trailing: _assignmentReminder == '1 hour' 
+              trailing: _assignmentReminder == '1 hour'
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
             ),
@@ -962,7 +994,7 @@ class _StudentNotificationSettingsSheetState
                 });
                 Navigator.pop(context);
               },
-              trailing: _assignmentReminder == '6 hours' 
+              trailing: _assignmentReminder == '6 hours'
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
             ),
@@ -974,7 +1006,7 @@ class _StudentNotificationSettingsSheetState
                 });
                 Navigator.pop(context);
               },
-              trailing: _assignmentReminder == '24 hours' 
+              trailing: _assignmentReminder == '24 hours'
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
             ),
@@ -986,7 +1018,7 @@ class _StudentNotificationSettingsSheetState
                 });
                 Navigator.pop(context);
               },
-              trailing: _assignmentReminder == '2 days' 
+              trailing: _assignmentReminder == '2 days'
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
             ),
@@ -998,7 +1030,7 @@ class _StudentNotificationSettingsSheetState
                 });
                 Navigator.pop(context);
               },
-              trailing: _assignmentReminder == '1 week' 
+              trailing: _assignmentReminder == '1 week'
                   ? const Icon(Icons.check, color: Colors.green)
                   : null,
             ),

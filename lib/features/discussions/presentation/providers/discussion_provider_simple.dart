@@ -1,5 +1,5 @@
 /// Simplified discussion board provider with direct Firestore integration.
-/// 
+///
 /// Removes repository pattern for simpler, more maintainable code.
 library;
 
@@ -123,11 +123,32 @@ class SimpleDiscussionThread {
 /// Simplified discussion provider with direct Firestore access
 class SimpleDiscussionProvider with ChangeNotifier {
   static const String _tag = 'SimpleDiscussionProvider';
-  
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  SimpleDiscussionProvider() {
+  // State variables
+  List<SimpleDiscussionBoard> _boards = [];
+  final Map<String, List<SimpleDiscussionThread>> _boardThreads = {};
+  SimpleDiscussionBoard? _currentBoard;
+  SimpleDiscussionThread? _currentThread;
+  bool _isLoading = false;
+  String? _error;
+
+  // Cache for user display name to avoid repeated Firestore calls
+  // Addresses Copilot PR recommendation for performance optimization
+  String? _cachedDisplayName;
+  UserModel? _cachedUserModel;
+
+  // Stream subscriptions
+  StreamSubscription<QuerySnapshot>? _boardsSubscription;
+  final Map<String, StreamSubscription<QuerySnapshot>> _threadSubscriptions =
+      {};
+
+  // Default constructor for Provider
+  SimpleDiscussionProvider();
+
+  // Private constructor
   SimpleDiscussionProvider._();
 
   /// Factory constructor to handle async initialization
@@ -136,48 +157,6 @@ class SimpleDiscussionProvider with ChangeNotifier {
     await provider._loadUserModel();
     return provider;
   }
-  
-  /// Load and cache the user model for display name
-  Future<void> _loadUserModel() async {
-    try {
-      final userId = currentUserId;
-      if (userId.isEmpty) return;
-      
-      final doc = await _firestore.collection('users').doc(userId).get();
-      if (doc.exists) {
-        _cachedUserModel = UserModel.fromFirestore(doc);
-        _cachedDisplayName = _cachedUserModel.displayNameOrFallback;
-        notifyListeners();
-      }
-    } catch (e) {
-      LoggerService.error('Failed to load user model for display name', tag: _tag, error: e);
-      // Fallback to Firebase Auth display name
-      _cachedDisplayName = _auth.currentUser?.displayName ?? 'Unknown User';
-    }
-  }
-  
-  /// Clear cached user data (call on logout)
-  void clearUserCache() {
-    _cachedDisplayName = null;
-    _cachedUserModel = null;
-  }
-
-  // State
-  List<SimpleDiscussionBoard> _boards = [];
-  final Map<String, List<SimpleDiscussionThread>> _boardThreads = {};
-  SimpleDiscussionBoard? _currentBoard;
-  SimpleDiscussionThread? _currentThread;
-  bool _isLoading = false;
-  String? _error;
-  
-  // Cache for user display name to avoid repeated Firestore calls
-  // Addresses Copilot PR recommendation for performance optimization
-  String? _cachedDisplayName;
-  UserModel? _cachedUserModel;
-
-  // Stream subscriptions
-  StreamSubscription<QuerySnapshot>? _boardsSubscription;
-  final Map<String, StreamSubscription<QuerySnapshot>> _threadSubscriptions = {};
 
   // Getters
   List<SimpleDiscussionBoard> get boards => _boards;
@@ -186,17 +165,55 @@ class SimpleDiscussionProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get currentUserId => _auth.currentUser?.uid ?? '';
-  
+
   /// Returns cached display name or fetches and caches it
   String get currentUserName {
     // Return cached name if available
     if (_cachedDisplayName != null) {
       return _cachedDisplayName!;
     }
-    
+
     // Use UserModel extension for consistent display name logic
-    _cachedDisplayName = _cachedUserModel.displayNameOrFallback;
+    if (_cachedUserModel != null) {
+      _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
+      return _cachedDisplayName!;
+    }
+
+    // Fallback to Firebase Auth display name
+    _cachedDisplayName = _auth.currentUser?.displayName ?? 'Unknown User';
     return _cachedDisplayName!;
+  }
+
+  /// Set loading state
+  void _setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+
+  /// Load and cache the user model for display name
+  Future<void> _loadUserModel() async {
+    try {
+      final userId = currentUserId;
+      if (userId.isEmpty) return;
+
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        _cachedUserModel = UserModel.fromFirestore(doc);
+        _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
+        notifyListeners();
+      }
+    } catch (e) {
+      LoggerService.error('Failed to load user model for display name',
+          tag: _tag, error: e);
+      // Fallback to Firebase Auth display name
+      _cachedDisplayName = _auth.currentUser?.displayName ?? 'Unknown User';
+    }
+  }
+
+  /// Clear cached user data (call on logout)
+  void clearUserCache() {
+    _cachedDisplayName = null;
+    _cachedUserModel = null;
   }
 
   List<SimpleDiscussionThread> getThreadsForBoard(String boardId) {
@@ -207,11 +224,11 @@ class SimpleDiscussionProvider with ChangeNotifier {
   Future<void> loadBoards() async {
     _setLoading(true);
     _error = null;
-    
+
     try {
       // Cancel existing subscription
       await _boardsSubscription?.cancel();
-      
+
       // Listen to boards collection
       _boardsSubscription = _firestore
           .collection('discussion_boards')
@@ -220,14 +237,15 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .snapshots()
           .listen(
         (snapshot) {
-          LoggerService.debug('Loaded ${snapshot.docs.length} boards', tag: _tag);
-          _boards = snapshot.docs
-              .map((doc) {
-                final board = SimpleDiscussionBoard.fromFirestore(doc);
-                LoggerService.debug('Board loaded - ID: ${board.id}, Title: ${board.title}', tag: _tag);
-                return board;
-              })
-              .toList();
+          LoggerService.debug('Loaded ${snapshot.docs.length} boards',
+              tag: _tag);
+          _boards = snapshot.docs.map((doc) {
+            final board = SimpleDiscussionBoard.fromFirestore(doc);
+            LoggerService.debug(
+                'Board loaded - ID: ${board.id}, Title: ${board.title}',
+                tag: _tag);
+            return board;
+          }).toList();
           _setLoading(false);
           notifyListeners();
         },
@@ -239,7 +257,8 @@ class SimpleDiscussionProvider with ChangeNotifier {
         },
       );
     } catch (e) {
-      LoggerService.error('Failed to setup board listener', tag: _tag, error: e);
+      LoggerService.error('Failed to setup board listener',
+          tag: _tag, error: e);
       _error = 'Failed to load discussion boards';
       _setLoading(false);
       notifyListeners();
@@ -254,7 +273,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
   }) async {
     _setLoading(true);
     _error = null;
-    
+
     try {
       final board = SimpleDiscussionBoard(
         id: '', // Will be set by Firestore
@@ -265,9 +284,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
         tags: tags,
       );
 
-      await _firestore
-          .collection('discussion_boards')
-          .add(board.toFirestore());
+      await _firestore.collection('discussion_boards').add(board.toFirestore());
 
       LoggerService.info('Created discussion board: $title', tag: _tag);
       _setLoading(false);
@@ -285,7 +302,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
     try {
       // Cancel existing subscription for this board
       await _threadSubscriptions[boardId]?.cancel();
-      
+
       // Listen to threads subcollection
       _threadSubscriptions[boardId] = _firestore
           .collection('discussion_boards')
@@ -302,12 +319,13 @@ class SimpleDiscussionProvider with ChangeNotifier {
           notifyListeners();
         },
         onError: (error) {
-          LoggerService.error('Failed to load threads for board $boardId', 
+          LoggerService.error('Failed to load threads for board $boardId',
               tag: _tag, error: error);
         },
       );
     } catch (e) {
-      LoggerService.error('Failed to setup thread listener', tag: _tag, error: e);
+      LoggerService.error('Failed to setup thread listener',
+          tag: _tag, error: e);
     }
   }
 
@@ -316,7 +334,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
     try {
       final userId = currentUserId;
       if (userId.isEmpty) return 'Unknown User';
-      
+
       // Try to get user data from Firestore
       final userDoc = await _firestore.collection('users').doc(userId).get();
       if (userDoc.exists) {
@@ -340,11 +358,12 @@ class SimpleDiscussionProvider with ChangeNotifier {
           }
         }
       }
-      
+
       // Fallback to Firebase Auth displayName
       return _auth.currentUser?.displayName ?? 'Unknown User';
     } catch (e) {
-      LoggerService.error('Failed to get user display name', tag: _tag, error: e);
+      LoggerService.error('Failed to get user display name',
+          tag: _tag, error: e);
       return _auth.currentUser?.displayName ?? 'Unknown User';
     }
   }
@@ -357,11 +376,11 @@ class SimpleDiscussionProvider with ChangeNotifier {
   }) async {
     _setLoading(true);
     _error = null;
-    
+
     try {
       // Get the proper user display name
       final authorName = await _getCurrentUserDisplayName();
-      
+
       final thread = SimpleDiscussionThread(
         id: '', // Will be set by Firestore
         boardId: boardId,
@@ -408,12 +427,6 @@ class SimpleDiscussionProvider with ChangeNotifier {
   void clearSelection() {
     _currentBoard = null;
     _currentThread = null;
-    notifyListeners();
-  }
-
-  /// Set loading state
-  void _setLoading(bool loading) {
-    _isLoading = loading;
     notifyListeners();
   }
 

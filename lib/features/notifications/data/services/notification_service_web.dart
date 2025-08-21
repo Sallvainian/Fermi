@@ -15,7 +15,7 @@ class WebNotification {
       return false;
     }
   }
-  
+
   static String? get permission {
     try {
       return web.Notification.permission;
@@ -23,15 +23,15 @@ class WebNotification {
       return null;
     }
   }
-  
+
   static Future<String> requestPermission() async {
     try {
       // requestPermission() returns JSPromise<JSString>
       final jsPromise = web.Notification.requestPermission();
-      
+
       // Convert JSPromise<JSString> to Future<JSString> using .toDart
       final jsString = await jsPromise.toDart;
-      
+
       // Convert JSString to Dart String using .toDart
       return jsString.toDart;
     } catch (e) {

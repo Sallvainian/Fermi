@@ -1,5 +1,5 @@
 /// Central repository for example/preview data used across the app.
-/// 
+///
 /// This module provides consistent, realistic example data that appears
 /// in empty states to help users understand the app's potential.
 library;
@@ -16,14 +16,14 @@ enum ExampleDomain {
 }
 
 /// Central repository for managing example data across the application.
-/// 
+///
 /// Provides consistent, realistic example data for empty states.
 /// All example data is clearly distinguishable from real content.
 class ExampleRepository {
   ExampleRepository._();
   static final ExampleRepository _instance = ExampleRepository._();
   static ExampleRepository get instance => _instance;
-  
+
   /// Get example data for a specific domain and type.
   static List<T> of<T>(ExampleDomain domain) {
     switch (domain) {
@@ -37,7 +37,7 @@ class ExampleRepository {
         return _exampleGrades.cast<T>();
     }
   }
-  
+
   /// Example students with realistic but clearly fake data.
   static final List<Student> _exampleStudents = [
     Student(
@@ -116,7 +116,7 @@ class ExampleRepository {
       isActive: true,
     ),
   ];
-  
+
   /// Example classes with realistic scheduling and enrollment data.
   static final List<ClassModel> _exampleClasses = [
     ClassModel(
@@ -127,7 +127,11 @@ class ExampleRepository {
       gradeLevel: '10th Grade',
       room: 'Room 205',
       schedule: 'MWF 9:00-10:00 AM',
-      studentIds: ['example_student_1', 'example_student_2', 'example_student_4'],
+      studentIds: [
+        'example_student_1',
+        'example_student_2',
+        'example_student_4'
+      ],
       maxStudents: 30,
       enrollmentCode: 'MATH205',
       description: 'Advanced algebra and introduction to calculus concepts.',
@@ -164,7 +168,8 @@ class ExampleRepository {
       studentIds: ['example_student_2', 'example_student_5'],
       maxStudents: 24,
       enrollmentCode: 'ENG312',
-      description: 'Develop writing skills through poetry, short stories, and essays.',
+      description:
+          'Develop writing skills through poetry, short stories, and essays.',
       academicYear: '2024-2025',
       semester: 'Fall',
       isActive: true,
@@ -188,7 +193,7 @@ class ExampleRepository {
       createdAt: DateTime.now().subtract(const Duration(days: 105)),
     ),
   ];
-  
+
   /// Example assignments for gradebook demonstrations.
   static final List<dynamic> _exampleAssignments = [
     {
@@ -237,42 +242,167 @@ class ExampleRepository {
       'description': 'Review exercises for upcoming test.',
     },
   ];
-  
+
   /// Example grades for gradebook demonstrations.
   static final List<dynamic> _exampleGrades = [
     // Emma Example's grades
-    {'studentId': 'example_student_1', 'assignmentId': 'example_assignment_1', 'points': 23.0, 'status': 'graded'},
-    {'studentId': 'example_student_1', 'assignmentId': 'example_assignment_2', 'points': 47.0, 'status': 'graded'},
-    {'studentId': 'example_student_1', 'assignmentId': 'example_assignment_3', 'points': 94.0, 'status': 'graded'},
-    {'studentId': 'example_student_1', 'assignmentId': 'example_assignment_4', 'points': null, 'status': 'not_submitted'},
-    {'studentId': 'example_student_1', 'assignmentId': 'example_assignment_5', 'points': null, 'status': 'not_submitted'},
-    
+    {
+      'studentId': 'example_student_1',
+      'assignmentId': 'example_assignment_1',
+      'points': 23.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_1',
+      'assignmentId': 'example_assignment_2',
+      'points': 47.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_1',
+      'assignmentId': 'example_assignment_3',
+      'points': 94.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_1',
+      'assignmentId': 'example_assignment_4',
+      'points': null,
+      'status': 'not_submitted'
+    },
+    {
+      'studentId': 'example_student_1',
+      'assignmentId': 'example_assignment_5',
+      'points': null,
+      'status': 'not_submitted'
+    },
+
     // Marcus Sample's grades
-    {'studentId': 'example_student_2', 'assignmentId': 'example_assignment_1', 'points': 21.0, 'status': 'graded'},
-    {'studentId': 'example_student_2', 'assignmentId': 'example_assignment_2', 'points': 43.0, 'status': 'graded'},
-    {'studentId': 'example_student_2', 'assignmentId': 'example_assignment_3', 'points': 87.0, 'status': 'graded'},
-    {'studentId': 'example_student_2', 'assignmentId': 'example_assignment_4', 'points': null, 'status': 'not_submitted'},
-    {'studentId': 'example_student_2', 'assignmentId': 'example_assignment_5', 'points': null, 'status': 'not_submitted'},
-    
+    {
+      'studentId': 'example_student_2',
+      'assignmentId': 'example_assignment_1',
+      'points': 21.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_2',
+      'assignmentId': 'example_assignment_2',
+      'points': 43.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_2',
+      'assignmentId': 'example_assignment_3',
+      'points': 87.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_2',
+      'assignmentId': 'example_assignment_4',
+      'points': null,
+      'status': 'not_submitted'
+    },
+    {
+      'studentId': 'example_student_2',
+      'assignmentId': 'example_assignment_5',
+      'points': null,
+      'status': 'not_submitted'
+    },
+
     // Aisha Demo's grades
-    {'studentId': 'example_student_3', 'assignmentId': 'example_assignment_1', 'points': 25.0, 'status': 'graded'},
-    {'studentId': 'example_student_3', 'assignmentId': 'example_assignment_2', 'points': 49.0, 'status': 'graded'},
-    {'studentId': 'example_student_3', 'assignmentId': 'example_assignment_3', 'points': 98.0, 'status': 'graded'},
-    {'studentId': 'example_student_3', 'assignmentId': 'example_assignment_4', 'points': null, 'status': 'not_submitted'},
-    {'studentId': 'example_student_3', 'assignmentId': 'example_assignment_5', 'points': null, 'status': 'not_submitted'},
-    
+    {
+      'studentId': 'example_student_3',
+      'assignmentId': 'example_assignment_1',
+      'points': 25.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_3',
+      'assignmentId': 'example_assignment_2',
+      'points': 49.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_3',
+      'assignmentId': 'example_assignment_3',
+      'points': 98.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_3',
+      'assignmentId': 'example_assignment_4',
+      'points': null,
+      'status': 'not_submitted'
+    },
+    {
+      'studentId': 'example_student_3',
+      'assignmentId': 'example_assignment_5',
+      'points': null,
+      'status': 'not_submitted'
+    },
+
     // David Preview's grades
-    {'studentId': 'example_student_4', 'assignmentId': 'example_assignment_1', 'points': 18.0, 'status': 'graded'},
-    {'studentId': 'example_student_4', 'assignmentId': 'example_assignment_2', 'points': null, 'status': 'missing'},
-    {'studentId': 'example_student_4', 'assignmentId': 'example_assignment_3', 'points': 82.0, 'status': 'graded'},
-    {'studentId': 'example_student_4', 'assignmentId': 'example_assignment_4', 'points': null, 'status': 'not_submitted'},
-    {'studentId': 'example_student_4', 'assignmentId': 'example_assignment_5', 'points': null, 'status': 'not_submitted'},
-    
+    {
+      'studentId': 'example_student_4',
+      'assignmentId': 'example_assignment_1',
+      'points': 18.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_4',
+      'assignmentId': 'example_assignment_2',
+      'points': null,
+      'status': 'missing'
+    },
+    {
+      'studentId': 'example_student_4',
+      'assignmentId': 'example_assignment_3',
+      'points': 82.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_4',
+      'assignmentId': 'example_assignment_4',
+      'points': null,
+      'status': 'not_submitted'
+    },
+    {
+      'studentId': 'example_student_4',
+      'assignmentId': 'example_assignment_5',
+      'points': null,
+      'status': 'not_submitted'
+    },
+
     // Sophie Test's grades
-    {'studentId': 'example_student_5', 'assignmentId': 'example_assignment_1', 'points': 22.0, 'status': 'graded'},
-    {'studentId': 'example_student_5', 'assignmentId': 'example_assignment_2', 'points': 45.0, 'status': 'graded'},
-    {'studentId': 'example_student_5', 'assignmentId': 'example_assignment_3', 'points': 91.0, 'status': 'graded'},
-    {'studentId': 'example_student_5', 'assignmentId': 'example_assignment_4', 'points': null, 'status': 'not_submitted'},
-    {'studentId': 'example_student_5', 'assignmentId': 'example_assignment_5', 'points': null, 'status': 'not_submitted'},
+    {
+      'studentId': 'example_student_5',
+      'assignmentId': 'example_assignment_1',
+      'points': 22.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_5',
+      'assignmentId': 'example_assignment_2',
+      'points': 45.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_5',
+      'assignmentId': 'example_assignment_3',
+      'points': 91.0,
+      'status': 'graded'
+    },
+    {
+      'studentId': 'example_student_5',
+      'assignmentId': 'example_assignment_4',
+      'points': null,
+      'status': 'not_submitted'
+    },
+    {
+      'studentId': 'example_student_5',
+      'assignmentId': 'example_assignment_5',
+      'points': null,
+      'status': 'not_submitted'
+    },
   ];
 }

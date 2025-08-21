@@ -24,7 +24,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
   late final TextEditingController _roomController;
   late final TextEditingController _scheduleController;
   late final TextEditingController _maxStudentsController;
-  
+
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
@@ -33,9 +33,11 @@ class _EditClassDialogState extends State<EditClassDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.classModel.name);
     _subjectController = TextEditingController(text: widget.classModel.subject);
-    _gradeLevelController = TextEditingController(text: widget.classModel.gradeLevel);
+    _gradeLevelController =
+        TextEditingController(text: widget.classModel.gradeLevel);
     _roomController = TextEditingController(text: widget.classModel.room ?? '');
-    _scheduleController = TextEditingController(text: widget.classModel.schedule ?? '');
+    _scheduleController =
+        TextEditingController(text: widget.classModel.schedule ?? '');
     _maxStudentsController = TextEditingController(
       text: widget.classModel.maxStudents?.toString() ?? '',
     );
@@ -92,7 +94,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
-              
+
               // Subject
               TextFormField(
                 controller: _subjectController,
@@ -110,7 +112,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
-              
+
               // Grade Level
               TextFormField(
                 controller: _gradeLevelController,
@@ -127,7 +129,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Room (Optional)
               TextFormField(
                 controller: _roomController,
@@ -139,7 +141,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                 textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
-              
+
               // Schedule (Optional)
               TextFormField(
                 controller: _scheduleController,
@@ -150,7 +152,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Max Students (Optional)
               TextFormField(
                 controller: _maxStudentsController,
@@ -177,7 +179,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                 },
               ),
               const SizedBox(height: 8),
-              
+
               // Enrollment Code (Read-only)
               Container(
                 padding: const EdgeInsets.all(12),
@@ -203,10 +205,13 @@ class _EditClassDialogState extends State<EditClassDialog> {
                           ),
                           Text(
                             widget.classModel.enrollmentCode ?? 'No Code',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.2,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
                           ),
                         ],
                       ),
@@ -266,16 +271,20 @@ class _EditClassDialogState extends State<EditClassDialog> {
       final classProvider = context.read<ClassProvider>();
       final navigator = Navigator.of(context);
       final scaffoldMessenger = ScaffoldMessenger.of(context);
-      
+
       // Create updated class model
       final updatedClass = widget.classModel.copyWith(
         name: _nameController.text.trim(),
         subject: _subjectController.text.trim(),
         gradeLevel: _gradeLevelController.text.trim(),
-        room: _roomController.text.trim().isEmpty ? null : _roomController.text.trim(),
-        schedule: _scheduleController.text.trim().isEmpty ? null : _scheduleController.text.trim(),
-        maxStudents: _maxStudentsController.text.trim().isEmpty 
-            ? null 
+        room: _roomController.text.trim().isEmpty
+            ? null
+            : _roomController.text.trim(),
+        schedule: _scheduleController.text.trim().isEmpty
+            ? null
+            : _scheduleController.text.trim(),
+        maxStudents: _maxStudentsController.text.trim().isEmpty
+            ? null
             : int.tryParse(_maxStudentsController.text.trim()),
       );
 
@@ -319,7 +328,8 @@ class _EditClassDialogState extends State<EditClassDialog> {
       builder: (BuildContext dialogContext) {
         return ConfirmationDialog(
           title: 'Delete Class',
-          content: 'Are you sure you want to delete "${widget.classModel.name}"? '
+          content:
+              'Are you sure you want to delete "${widget.classModel.name}"? '
               'This action cannot be undone.',
           confirmText: 'Delete',
           confirmColor: Theme.of(dialogContext).colorScheme.error,
@@ -346,7 +356,8 @@ class _EditClassDialogState extends State<EditClassDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Class "${widget.classModel.name}" deleted successfully'),
+            content:
+                Text('Class "${widget.classModel.name}" deleted successfully'),
             backgroundColor: Colors.green,
           ),
         );

@@ -14,7 +14,7 @@ class AssignmentModel {
   final bool needsGrading;
   final int totalPoints;
   final List<String> attachments;
-  
+
   AssignmentModel({
     required this.id,
     required this.title,
@@ -30,7 +30,7 @@ class AssignmentModel {
     this.totalPoints = 100,
     this.attachments = const [],
   });
-  
+
   factory AssignmentModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return AssignmentModel(
@@ -49,7 +49,7 @@ class AssignmentModel {
       attachments: List<String>.from(data['attachments'] ?? []),
     );
   }
-  
+
   Map<String, dynamic> toMap() {
     return {
       'title': title,
@@ -66,11 +66,11 @@ class AssignmentModel {
       'attachments': attachments,
     };
   }
-  
+
   String get dueDateFormatted {
     final now = DateTime.now();
     final difference = dueDate.difference(now);
-    
+
     if (difference.isNegative) {
       return 'Overdue';
     } else if (difference.inDays == 0) {
@@ -83,11 +83,11 @@ class AssignmentModel {
       return 'Due in ${(difference.inDays / 7).round()} weeks';
     }
   }
-  
+
   String get priority {
     final now = DateTime.now();
     final difference = dueDate.difference(now);
-    
+
     if (difference.isNegative || difference.inDays <= 1) {
       return 'High';
     } else if (difference.inDays <= 3) {

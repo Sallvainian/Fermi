@@ -38,11 +38,9 @@
 	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>voip</string>
 		<string>remote-notification</string>
 		<string>processing</string>
 		<string>fetch</string>
-		<string>audio</string>
 	</array>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
@@ -63,6 +61,8 @@
 	<string>Allow Bluetooth access to connect with accessories</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSChinaCallKitCompliance</key>
+	<string>This app complies with China MIIT requirements by disabling CallKit in China region</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>mailto</string>

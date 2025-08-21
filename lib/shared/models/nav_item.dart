@@ -51,24 +51,24 @@ class NavItem {
 
   // Convert to/from JSON for storage
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'route': route,
-    'icon': _iconToString(icon),
-    'activeIcon': _iconToString(activeIcon),
-    'category': category,
-    'roles': roles,
-  };
+        'id': id,
+        'title': title,
+        'route': route,
+        'icon': _iconToString(icon),
+        'activeIcon': _iconToString(activeIcon),
+        'category': category,
+        'roles': roles,
+      };
 
   factory NavItem.fromJson(Map<String, dynamic> json) => NavItem(
-    id: json['id'],
-    title: json['title'],
-    route: json['route'],
-    icon: _iconFromString(json['icon'] ?? 'help_outline'),
-    activeIcon: _iconFromString(json['activeIcon'] ?? 'help'),
-    category: json['category'],
-    roles: List<String>.from(json['roles']),
-  );
+        id: json['id'],
+        title: json['title'],
+        route: json['route'],
+        icon: _iconFromString(json['icon'] ?? 'help_outline'),
+        activeIcon: _iconFromString(json['activeIcon'] ?? 'help'),
+        category: json['category'],
+        roles: List<String>.from(json['roles']),
+      );
 
   // Scalable helper methods using Maps
   static String _iconToString(IconData icon) {

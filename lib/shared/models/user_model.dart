@@ -120,8 +120,11 @@ class UserModel {
       studentId: asString(data['studentId']),
       gradeLevel: asString(data['gradeLevel']),
       enrolledClassIds: (data['enrolledClassIds'] as List?)?.cast<String>(),
-      createdAt: data['createdAt'] is DateTime ? data['createdAt'] as DateTime? : null,
-      lastActive: data['lastActive'] is DateTime ? data['lastActive'] as DateTime? : null,
+      createdAt:
+          data['createdAt'] is DateTime ? data['createdAt'] as DateTime? : null,
+      lastActive: data['lastActive'] is DateTime
+          ? data['lastActive'] as DateTime?
+          : null,
       role: _roleFromString(asString(data['role'])),
     );
   }
@@ -199,7 +202,8 @@ class UserModel {
     if (displayName != null && displayName!.isNotEmpty) {
       return displayName!;
     }
-    final nameParts = [firstName, lastName].where((e) => e != null && e.isNotEmpty).toList();
+    final nameParts =
+        [firstName, lastName].where((e) => e != null && e.isNotEmpty).toList();
     if (nameParts.isNotEmpty) {
       return nameParts.join(' ');
     }
@@ -239,25 +243,25 @@ extension UserModelDisplayName on UserModel? {
   /// 4. 'Unknown User' as final fallback
   String get displayNameOrFallback {
     if (this == null) return 'Unknown User';
-    
+
     final user = this!;
-    
+
     // Prefer firstName + lastName if both exist
     if (user.firstName != null && user.lastName != null) {
       final fullName = '${user.firstName} ${user.lastName}'.trim();
       if (fullName.isNotEmpty) return fullName;
     }
-    
+
     // Fall back to displayName
     if (user.displayName != null && user.displayName!.isNotEmpty) {
       return user.displayName!;
     }
-    
+
     // Fall back to email prefix
     if (user.email != null && user.email!.isNotEmpty) {
       return user.email!.split('@').first;
     }
-    
+
     return 'Unknown User';
   }
 }

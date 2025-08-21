@@ -1,5 +1,5 @@
 /// ExampleBadge component with accessibility support.
-/// 
+///
 /// This widget provides a clear visual indicator that content is example/preview
 /// data with proper accessibility labels and interaction handling.
 library;
@@ -7,7 +7,7 @@ library;
 import 'package:flutter/material.dart';
 
 /// A badge widget that clearly indicates example/preview content.
-/// 
+///
 /// Features:
 /// - Clear visual design with example text and icon
 /// - Accessibility support with semantic labels
@@ -17,22 +17,22 @@ import 'package:flutter/material.dart';
 class ExampleBadge extends StatelessWidget {
   /// Callback when the badge is tapped
   final VoidCallback? onTap;
-  
+
   /// Custom text for the badge (defaults to "Example")
   final String? text;
-  
+
   /// Custom icon for the badge
   final IconData? icon;
-  
+
   /// Size variant of the badge
   final ExampleBadgeSize size;
-  
+
   /// Whether the badge should be interactive
   final bool interactive;
-  
+
   /// Custom background color
   final Color? backgroundColor;
-  
+
   /// Custom text/icon color
   final Color? foregroundColor;
 
@@ -73,14 +73,15 @@ class ExampleBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     // Determine colors
-    final bgColor = backgroundColor ?? colorScheme.tertiary.withValues(alpha: 0.9);
+    final bgColor =
+        backgroundColor ?? colorScheme.tertiary.withValues(alpha: 0.9);
     final fgColor = foregroundColor ?? colorScheme.onTertiary;
-    
+
     // Get size-specific properties
     final sizeProps = _getSizeProperties();
-    
+
     final badgeContent = Container(
       padding: sizeProps.padding,
       decoration: BoxDecoration(
@@ -174,10 +175,10 @@ class ExampleBadge extends StatelessWidget {
 enum ExampleBadgeSize {
   /// Compact size - icon only
   compact,
-  
+
   /// Medium size - icon and text (default)
   medium,
-  
+
   /// Large size - larger icon and text
   large,
 }
@@ -203,20 +204,21 @@ class _BadgeSizeProperties {
 class ExampleInfoDialog extends StatelessWidget {
   /// Title for the dialog
   final String title;
-  
+
   /// Message content for the dialog
   final String message;
-  
+
   /// Optional action button text
   final String? actionText;
-  
+
   /// Optional action callback
   final VoidCallback? onAction;
 
   const ExampleInfoDialog({
     super.key,
     this.title = 'Example Content',
-    this.message = 'This is preview content to show you how the app works. Create your own content to replace these examples.',
+    this.message =
+        'This is preview content to show you how the app works. Create your own content to replace these examples.',
     this.actionText,
     this.onAction,
   });
@@ -233,7 +235,8 @@ class ExampleInfoDialog extends StatelessWidget {
       context: context,
       builder: (context) => ExampleInfoDialog(
         title: title ?? 'Example Content',
-        message: message ?? 'This is preview content to show you how the app works. Create your own content to replace these examples.',
+        message: message ??
+            'This is preview content to show you how the app works. Create your own content to replace these examples.',
         actionText: actionText,
         onAction: onAction,
       ),

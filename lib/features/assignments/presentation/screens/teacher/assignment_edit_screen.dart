@@ -10,7 +10,7 @@ import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 
 class AssignmentEditScreen extends StatefulWidget {
   final String assignmentId;
-  
+
   const AssignmentEditScreen({
     super.key,
     required this.assignmentId,
@@ -26,7 +26,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
   final _descriptionController = TextEditingController();
   final _instructionsController = TextEditingController();
   final _maxPointsController = TextEditingController();
-  
+
   Assignment? _assignment;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay _dueTime = const TimeOfDay(hour: 23, minute: 59);
@@ -35,7 +35,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
   int _latePenaltyPercentage = 10;
   bool _isLoading = true;
   bool _isSaving = false;
-  
+
   // Publishing options
   bool _updatePublishStatus = false;
   bool _publishNow = false;
@@ -59,9 +59,10 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
 
   Future<void> _loadAssignment() async {
     final assignmentProvider = context.read<AssignmentProvider>();
-    
+
     try {
-      final assignment = await assignmentProvider.getAssignmentById(widget.assignmentId);
+      final assignment =
+          await assignmentProvider.getAssignmentById(widget.assignmentId);
       if (assignment != null && mounted) {
         setState(() {
           _assignment = assignment;
@@ -74,12 +75,13 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
           _dueTime = TimeOfDay.fromDateTime(assignment.dueDate);
           _allowLateSubmissions = assignment.allowLateSubmissions;
           _latePenaltyPercentage = assignment.latePenaltyPercentage;
-          
+
           if (assignment.publishAt != null) {
             _scheduledPublishDate = assignment.publishAt;
-            _scheduledPublishTime = TimeOfDay.fromDateTime(assignment.publishAt!);
+            _scheduledPublishTime =
+                TimeOfDay.fromDateTime(assignment.publishAt!);
           }
-          
+
           _isLoading = false;
         });
       } else if (mounted) {
@@ -151,21 +153,23 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
 
     try {
       final assignmentProvider = context.read<AssignmentProvider>();
-      
+
       // Determine new publish status and date
       DateTime? newPublishAt = _assignment!.publishAt;
       bool newIsPublished = _assignment!.isPublished;
-      
+
       if (_updatePublishStatus) {
         if (_publishNow) {
           newIsPublished = true;
           newPublishAt = null;
-        } else if (_scheduledPublishDate != null && _scheduledPublishTime != null) {
+        } else if (_scheduledPublishDate != null &&
+            _scheduledPublishTime != null) {
           newIsPublished = false;
-          newPublishAt = _combineDateAndTime(_scheduledPublishDate!, _scheduledPublishTime!);
+          newPublishAt = _combineDateAndTime(
+              _scheduledPublishDate!, _scheduledPublishTime!);
         }
       }
-      
+
       final updatedAssignment = _assignment!.copyWith(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -182,12 +186,14 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
         publishAt: newPublishAt,
       );
 
-      final success = await assignmentProvider.updateAssignment(updatedAssignment);
+      final success =
+          await assignmentProvider.updateAssignment(updatedAssignment);
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Assignment "${updatedAssignment.title}" updated successfully'),
+            content: Text(
+                'Assignment "${updatedAssignment.title}" updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -212,7 +218,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -224,7 +230,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
         body: Center(child: Text('Assignment not found')),
       );
     }
-    
+
     return AdaptiveLayout(
       title: 'Edit Assignment',
       actions: [
@@ -306,7 +312,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Instructions Card
               Card(
                 child: Padding(
@@ -325,7 +331,8 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                         controller: _instructionsController,
                         decoration: const InputDecoration(
                           labelText: 'Detailed Instructions',
-                          hintText: 'Provide clear instructions for students...',
+                          hintText:
+                              'Provide clear instructions for students...',
                           prefixIcon: Icon(Icons.article),
                           alignLabelWithHint: true,
                         ),
@@ -342,7 +349,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Grading & Submission Card
               Card(
                 child: Padding(
@@ -415,7 +422,8 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                       const SizedBox(height: 16),
                       SwitchListTile(
                         title: const Text('Allow Late Submissions'),
-                        subtitle: const Text('Students can submit after due date with penalty'),
+                        subtitle: const Text(
+                            'Students can submit after due date with penalty'),
                         value: _allowLateSubmissions,
                         onChanged: (value) {
                           setState(() {
@@ -453,7 +461,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Publishing Status Card
               Card(
                 child: Padding(
@@ -483,7 +491,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _assignment!.isPublished 
+                        _assignment!.isPublished
                             ? 'Currently Published'
                             : _assignment!.publishAt != null
                                 ? 'Scheduled for ${_formatDateTime(_assignment!.publishAt!)}'
@@ -496,7 +504,8 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                         const SizedBox(height: 16),
                         CustomRadioListTile<bool>(
                           title: const Text('Publish Now'),
-                          subtitle: const Text('Make assignment visible to students immediately'),
+                          subtitle: const Text(
+                              'Make assignment visible to students immediately'),
                           value: true,
                           groupValue: _publishNow,
                           onChanged: (value) {
@@ -507,14 +516,17 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                         ),
                         CustomRadioListTile<bool>(
                           title: const Text('Schedule for Later'),
-                          subtitle: const Text('Set a future date for automatic publication'),
+                          subtitle: const Text(
+                              'Set a future date for automatic publication'),
                           value: false,
                           groupValue: _publishNow,
                           onChanged: (value) {
                             setState(() {
                               _publishNow = value!;
-                              if (!_publishNow && _scheduledPublishDate == null) {
-                                _scheduledPublishDate = DateTime.now().add(const Duration(days: 1));
+                              if (!_publishNow &&
+                                  _scheduledPublishDate == null) {
+                                _scheduledPublishDate =
+                                    DateTime.now().add(const Duration(days: 1));
                                 _scheduledPublishTime = TimeOfDay.now();
                               }
                             });
@@ -527,9 +539,11 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                               Expanded(
                                 child: InkWell(
                                   onTap: () async {
-                                    final DateTime? picked = await showDatePicker(
+                                    final DateTime? picked =
+                                        await showDatePicker(
                                       context: context,
-                                      initialDate: _scheduledPublishDate ?? DateTime.now(),
+                                      initialDate: _scheduledPublishDate ??
+                                          DateTime.now(),
                                       firstDate: DateTime.now(),
                                       lastDate: _dueDate,
                                     );
@@ -556,9 +570,11 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                               Expanded(
                                 child: InkWell(
                                   onTap: () async {
-                                    final TimeOfDay? picked = await showTimePicker(
+                                    final TimeOfDay? picked =
+                                        await showTimePicker(
                                       context: context,
-                                      initialTime: _scheduledPublishTime ?? TimeOfDay.now(),
+                                      initialTime: _scheduledPublishTime ??
+                                          TimeOfDay.now(),
                                     );
                                     if (picked != null) {
                                       setState(() {
@@ -572,7 +588,8 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                                       prefixIcon: Icon(Icons.access_time),
                                     ),
                                     child: Text(
-                                      _scheduledPublishTime?.format(context) ?? 'Select time',
+                                      _scheduledPublishTime?.format(context) ??
+                                          'Select time',
                                     ),
                                   ),
                                 ),
@@ -586,7 +603,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               // Action Buttons
               Row(
                 children: [
@@ -629,8 +646,18 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
 
   String _formatDateTime(DateTime date) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     final time = TimeOfDay.fromDateTime(date);
     return '${months[date.month - 1]} ${date.day}, ${date.year} at ${time.format(context)}';

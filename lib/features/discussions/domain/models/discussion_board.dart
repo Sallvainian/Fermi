@@ -1,5 +1,5 @@
 /// Discussion board models for educational forum functionality.
-/// 
+///
 /// This module contains data models for discussion boards, threads,
 /// and replies, enabling structured academic discussions within the
 /// education platform.
@@ -8,7 +8,7 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Core discussion board model representing a forum category.
-/// 
+///
 /// Discussion boards serve as top-level containers for organizing
 /// academic discussions by topic, class, or subject area. Features:
 /// - Class-specific or general discussion areas
@@ -19,37 +19,37 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class DiscussionBoard {
   /// Unique identifier for the discussion board
   final String id;
-  
+
   /// Board title displayed in listings
   final String title;
-  
+
   /// Detailed description of board purpose and guidelines
   final String description;
-  
+
   /// User ID of the board creator
   final String createdBy;
-  
+
   /// Cached name of the board creator for display
   final String createdByName;
-  
+
   /// Optional class ID for class-specific boards
   final String? classId;
-  
+
   /// List of user IDs allowed to participate
   final List<String> participantIds;
-  
+
   /// Timestamp when the board was created
   final DateTime createdAt;
-  
+
   /// Timestamp of last activity or modification
   final DateTime updatedAt;
-  
+
   /// Number of threads in this board
   final int threadCount;
-  
+
   /// Whether this board is pinned to top of listings
   final bool isPinned;
-  
+
   /// Tags for categorizing board content
   final List<String> tags;
 
@@ -69,13 +69,13 @@ class DiscussionBoard {
   });
 
   /// Factory constructor to create DiscussionBoard from Firestore document.
-  /// 
+  ///
   /// Handles data parsing with safe defaults including:
   /// - Timestamp conversions for date fields
   /// - List casting for participant IDs and tags
   /// - Default values for counts and flags
   /// - Null safety for optional fields
-  /// 
+  ///
   /// @param doc Firestore document snapshot containing board data
   /// @return Parsed DiscussionBoard instance
   factory DiscussionBoard.fromFirestore(DocumentSnapshot doc) {
@@ -97,12 +97,12 @@ class DiscussionBoard {
   }
 
   /// Converts the DiscussionBoard instance to a Map for Firestore storage.
-  /// 
+  ///
   /// Serializes all board data including:
   /// - DateTime fields to Firestore Timestamps
   /// - Direct storage of lists and primitive types
   /// - Preservation of null values for optional fields
-  /// 
+  ///
   /// @return Map containing all board data for Firestore
   Map<String, dynamic> toFirestore() {
     return {
@@ -121,16 +121,16 @@ class DiscussionBoard {
   }
 
   /// Creates a copy of the DiscussionBoard with updated fields.
-  /// 
+  ///
   /// Follows immutable data pattern for state management.
   /// Useful for:
   /// - Updating board metadata
   /// - Managing participant lists
   /// - Toggling pin status
   /// - Updating thread counts
-  /// 
+  ///
   /// All parameters are optional - only provided fields will be updated.
-  /// 
+  ///
   /// @return New DiscussionBoard instance with updated fields
   DiscussionBoard copyWith({
     String? id,
@@ -164,7 +164,7 @@ class DiscussionBoard {
 }
 
 /// Discussion thread model representing individual topics within boards.
-/// 
+///
 /// Threads are the primary discussion units where users post topics
 /// and engage in conversations. Features include:
 /// - Author tracking with role information
@@ -176,46 +176,46 @@ class DiscussionBoard {
 class DiscussionThread {
   /// Unique identifier for the thread
   final String id;
-  
+
   /// ID of the parent discussion board
   final String boardId;
-  
+
   /// Thread title/subject
   final String title;
-  
+
   /// Main content/body of the thread post
   final String content;
-  
+
   /// User ID of the thread author
   final String authorId;
-  
+
   /// Cached name of the thread author
   final String authorName;
-  
+
   /// Role of the author (teacher/student)
   final String authorRole;
-  
+
   /// Timestamp when the thread was created
   final DateTime createdAt;
-  
+
   /// Timestamp of last activity (new reply or edit)
   final DateTime updatedAt;
-  
+
   /// Number of replies to this thread
   final int replyCount;
-  
+
   /// Number of likes/reactions
   final int likeCount;
-  
+
   /// List of user IDs who liked this thread
   final List<String> likedBy;
-  
+
   /// Whether this thread is pinned to top
   final bool isPinned;
-  
+
   /// Whether new replies are disabled
   final bool isLocked;
-  
+
   /// Tags for categorizing thread content
   final List<String> tags;
 
@@ -238,13 +238,13 @@ class DiscussionThread {
   });
 
   /// Factory constructor to create DiscussionThread from Firestore document.
-  /// 
+  ///
   /// Handles data parsing with comprehensive defaults:
   /// - Timestamp conversions for date fields
   /// - Safe list casting for likedBy and tags
   /// - Default values for counters and flags
   /// - Author information caching
-  /// 
+  ///
   /// @param doc Firestore document snapshot containing thread data
   /// @return Parsed DiscussionThread instance
   factory DiscussionThread.fromFirestore(DocumentSnapshot doc) {
@@ -269,12 +269,12 @@ class DiscussionThread {
   }
 
   /// Converts the DiscussionThread instance to a Map for Firestore storage.
-  /// 
+  ///
   /// Serializes all thread data including:
   /// - DateTime fields to Firestore Timestamps
   /// - Lists and engagement data
   /// - Boolean flags for thread state
-  /// 
+  ///
   /// @return Map containing all thread data for Firestore
   Map<String, dynamic> toFirestore() {
     return {
@@ -296,16 +296,16 @@ class DiscussionThread {
   }
 
   /// Creates a copy of the DiscussionThread with updated fields.
-  /// 
+  ///
   /// Follows immutable data pattern for state management.
   /// Useful for:
   /// - Updating engagement counters
   /// - Managing like states
   /// - Toggling pin/lock status
   /// - Editing thread content
-  /// 
+  ///
   /// All parameters are optional - only provided fields will be updated.
-  /// 
+  ///
   /// @return New DiscussionThread instance with updated fields
   DiscussionThread copyWith({
     String? id,
@@ -345,7 +345,7 @@ class DiscussionThread {
 }
 
 /// Reply model for thread responses and nested discussions.
-/// 
+///
 /// Replies represent individual responses within discussion threads,
 /// supporting nested conversations and engagement tracking. Features:
 /// - Nested reply support (reply to specific comments)
@@ -356,40 +356,40 @@ class DiscussionThread {
 class ThreadReply {
   /// Unique identifier for the reply
   final String id;
-  
+
   /// ID of the parent thread
   final String threadId;
-  
+
   /// Reply content/message
   final String content;
-  
+
   /// User ID of the reply author
   final String authorId;
-  
+
   /// Cached name of the reply author
   final String authorName;
-  
+
   /// Role of the author (teacher/student)
   final String authorRole;
-  
+
   /// Timestamp when the reply was posted
   final DateTime createdAt;
-  
+
   /// Whether the reply has been edited
   final bool isEdited;
-  
+
   /// Timestamp of last edit (null if never edited)
   final DateTime? editedAt;
-  
+
   /// Number of likes/reactions
   final int likeCount;
-  
+
   /// List of user IDs who liked this reply
   final List<String> likedBy;
-  
+
   /// ID of the reply being responded to (for nested replies)
   final String? replyToId;
-  
+
   /// Cached author name of the reply being responded to
   final String? replyToAuthor;
 
@@ -410,13 +410,13 @@ class ThreadReply {
   });
 
   /// Factory constructor to create ThreadReply from Firestore document.
-  /// 
+  ///
   /// Handles data parsing including:
   /// - Timestamp conversions with null safety
   /// - Edit tracking field management
   /// - Nested reply reference preservation
   /// - Engagement data casting
-  /// 
+  ///
   /// @param doc Firestore document snapshot containing reply data
   /// @return Parsed ThreadReply instance
   factory ThreadReply.fromFirestore(DocumentSnapshot doc) {
@@ -430,8 +430,8 @@ class ThreadReply {
       authorRole: data['authorRole'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       isEdited: data['isEdited'] ?? false,
-      editedAt: data['editedAt'] != null 
-          ? (data['editedAt'] as Timestamp).toDate() 
+      editedAt: data['editedAt'] != null
+          ? (data['editedAt'] as Timestamp).toDate()
           : null,
       likeCount: data['likeCount'] ?? 0,
       likedBy: List<String>.from(data['likedBy'] ?? []),
@@ -441,12 +441,12 @@ class ThreadReply {
   }
 
   /// Converts the ThreadReply instance to a Map for Firestore storage.
-  /// 
+  ///
   /// Serializes all reply data including:
   /// - DateTime fields to Firestore Timestamps
   /// - Edit tracking with conditional timestamp
   /// - Engagement and nested reply data
-  /// 
+  ///
   /// @return Map containing all reply data for Firestore
   Map<String, dynamic> toFirestore() {
     return {
@@ -466,16 +466,16 @@ class ThreadReply {
   }
 
   /// Creates a copy of the ThreadReply with updated fields.
-  /// 
+  ///
   /// Follows immutable data pattern for state management.
   /// Useful for:
   /// - Marking replies as edited
   /// - Updating engagement counters
   /// - Managing like states
   /// - Updating content after edits
-  /// 
+  ///
   /// All parameters are optional - only provided fields will be updated.
-  /// 
+  ///
   /// @return New ThreadReply instance with updated fields
   ThreadReply copyWith({
     String? id,

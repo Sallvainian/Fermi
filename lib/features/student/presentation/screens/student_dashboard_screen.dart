@@ -36,7 +36,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final dashboardProvider = context.read<DashboardProvider>();
     final assignmentProvider = context.read<StudentAssignmentProvider>();
     final studentId = authProvider.userModel?.uid;
-    
+
     if (studentId != null) {
       classProvider.loadStudentClasses(studentId);
       // Wait for classes to load, then load dashboard data
@@ -60,12 +60,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final theme = Theme.of(context);
 
     // Handle incoming calls
-    if (callProvider.hasIncomingCall && 
+    if (callProvider.hasIncomingCall &&
         callProvider.incomingCall != null &&
         !callProvider.isNavigationInProgress) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         callProvider.setNavigationInProgress(true);
-        context.push('/incoming-call', extra: callProvider.incomingCall).then((_) {
+        context
+            .push('/incoming-call', extra: callProvider.incomingCall)
+            .then((_) {
           // Reset navigation state after call screen is popped
           callProvider.setNavigationInProgress(false);
           // Optional: Add any post-call logic here
@@ -95,97 +97,98 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           children: [
             // Welcome Header
             Card(
-                child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundColor: theme.colorScheme.primary,
-                          child: Text(
-                            user?.displayName?.isNotEmpty == true
-                                ? user!.displayName![0].toUpperCase()
-                                : 'S',
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              color: theme.colorScheme.onPrimary,
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: theme.colorScheme.primary,
+                      child: Text(
+                        user?.displayName?.isNotEmpty == true
+                            ? user!.displayName![0].toUpperCase()
+                            : 'S',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          color: theme.colorScheme.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome Back',
+                            style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome Back',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                _getUserFirstName(user, authProvider),
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                          Text(
+                            _getUserFirstName(user, authProvider),
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              const SizedBox(height: 16),
-              
-              // PWA Install Prompt for iOS users
-              const PWAInstallPrompt(),
-              const SizedBox(height: 8),
+              ),
+            ),
+            const SizedBox(height: 16),
 
-              // Quick Stats - Smaller section
-              _buildQuickStats(context, classProvider, dashboardProvider),
-              const SizedBox(height: 24),
+            // PWA Install Prompt for iOS users
+            const PWAInstallPrompt(),
+            const SizedBox(height: 8),
 
-              // My Classes
-              Text(
-                  'My Classes',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.md),
-              _buildClassesSection(context, classProvider),
-              const SizedBox(height: AppSpacing.lg),
+            // Quick Stats - Smaller section
+            _buildQuickStats(context, classProvider, dashboardProvider),
+            const SizedBox(height: 24),
 
-              // Upcoming Assignments
-              Text(
-                  'Upcoming Assignments',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.md),
-              _buildUpcomingAssignmentsCard(context, dashboardProvider),
-              const SizedBox(height: AppSpacing.lg),
+            // My Classes
+            Text(
+              'My Classes',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildClassesSection(context, classProvider),
+            const SizedBox(height: AppSpacing.lg),
 
-              // Recent Grades
-              Text(
-                  'Recent Grades',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.md),
-              _buildRecentGradesCard(context, dashboardProvider),
-            ],
-          ),
+            // Upcoming Assignments
+            Text(
+              'Upcoming Assignments',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildUpcomingAssignmentsCard(context, dashboardProvider),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Recent Grades
+            Text(
+              'Recent Grades',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildRecentGradesCard(context, dashboardProvider),
+          ],
         ),
-      );
+      ),
+    );
   }
 
-  Widget _buildQuickStats(BuildContext context, ClassProvider classProvider, DashboardProvider dashboardProvider) {
+  Widget _buildQuickStats(BuildContext context, ClassProvider classProvider,
+      DashboardProvider dashboardProvider) {
     final enrolledClasses = classProvider.studentClasses;
-    
+
     return SizedBox(
       height: 80,
       child: ListView(
@@ -230,16 +233,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildClassesSection(BuildContext context, ClassProvider classProvider) {
-    
+  Widget _buildClassesSection(
+      BuildContext context, ClassProvider classProvider) {
     if (classProvider.isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
-    
+
     final enrolledClasses = classProvider.studentClasses;
-    
+
     if (enrolledClasses.isEmpty) {
       return Card(
         child: Padding(
@@ -261,8 +264,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 Text(
                   'Join a class to get started',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
@@ -275,16 +278,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         ),
       );
     }
-    
+
     // Show max 4 classes on dashboard
     final displayClasses = enrolledClasses.take(4).toList();
-    
+
     return Column(
       children: [
         ...displayClasses.map((course) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildClassCard(context, course),
-        )),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildClassCard(context, course),
+            )),
         if (enrolledClasses.length > 4) ...[
           const SizedBox(height: 4),
           SizedBox(
@@ -303,7 +306,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final theme = Theme.of(context);
     final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
     final color = AppTheme.subjectColors[colorIndex];
-    
+
     return AppCard(
       onTap: () => _navigateToClass(context, course),
       child: Row(
@@ -318,7 +321,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // Class info
           Expanded(
             child: Column(
@@ -353,7 +356,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               ],
             ),
           ),
-          
+
           // Arrow icon
           Icon(
             Icons.arrow_forward_ios,
@@ -369,7 +372,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     // Set the selected class in the provider
     context.read<ClassProvider>().setSelectedClass(course);
     // Navigate to class detail or assignments
-    context.go('/student/courses'); // You can change this to a specific class detail route
+    context.go(
+        '/student/courses'); // You can change this to a specific class detail route
   }
 
   Widget _buildCompactStatCard(
@@ -381,7 +385,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
-    
+
     return SizedBox(
       width: 120,
       child: Card(
@@ -456,9 +460,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildUpcomingAssignmentsCard(BuildContext context, DashboardProvider dashboardProvider) {
+  Widget _buildUpcomingAssignmentsCard(
+      BuildContext context, DashboardProvider dashboardProvider) {
     final assignments = dashboardProvider.upcomingAssignments;
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -486,8 +491,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     Text(
                       'Your assignments will appear here when available',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                       textAlign: TextAlign.center,
                     ),
                   ] else ...[
@@ -516,11 +522,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       ),
     );
   }
-  
+
   String _getDueDateText(DateTime dueDate) {
     final now = DateTime.now();
     final difference = dueDate.difference(now);
-    
+
     if (difference.isNegative) {
       return 'Overdue';
     } else if (difference.inDays == 0) {
@@ -533,11 +539,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       return 'Due in ${(difference.inDays / 7).round()} weeks';
     }
   }
-  
+
   String _getPriority(DateTime dueDate) {
     final now = DateTime.now();
     final difference = dueDate.difference(now);
-    
+
     if (difference.isNegative || difference.inDays <= 1) {
       return 'High';
     } else if (difference.inDays <= 3) {
@@ -546,7 +552,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       return 'Low';
     }
   }
-  
+
   Color _getPriorityColor(DateTime dueDate) {
     final priority = _getPriority(dueDate);
     switch (priority) {
@@ -568,7 +574,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     required Color color,
   }) {
     final theme = Theme.of(context);
-    
+
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.1),
@@ -604,9 +610,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildRecentGradesCard(BuildContext context, DashboardProvider dashboardProvider) {
+  Widget _buildRecentGradesCard(
+      BuildContext context, DashboardProvider dashboardProvider) {
     final grades = dashboardProvider.recentGrades;
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -634,8 +641,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     Text(
                       'Your grades will appear here once available',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                       textAlign: TextAlign.center,
                     ),
                   ] else ...[
@@ -645,8 +653,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         subject: grades[i].category,
                         assignment: grades[i].assignmentTitle,
                         grade: grades[i].grade.letterGrade ?? '-',
-                        points: '${grades[i].grade.pointsEarned.toInt()}/${grades[i].grade.pointsPossible.toInt()}',
-                        color: _getGradeColor(grades[i].grade.letterGrade ?? 'F'),
+                        points:
+                            '${grades[i].grade.pointsEarned.toInt()}/${grades[i].grade.pointsPossible.toInt()}',
+                        color:
+                            _getGradeColor(grades[i].grade.letterGrade ?? 'F'),
                       ),
                       if (i < grades.take(3).length - 1) const Divider(),
                     ],
@@ -664,7 +674,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       ),
     );
   }
-  
+
   Color _getGradeColor(String letterGrade) {
     if (letterGrade.startsWith('A')) return Colors.green;
     if (letterGrade.startsWith('B')) return Colors.blue;
@@ -681,7 +691,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     required Color color,
   }) {
     final theme = Theme.of(context);
-    
+
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.1),
@@ -704,13 +714,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       contentPadding: EdgeInsets.zero,
     );
   }
-  
+
   String _getUserFirstName(UserModel? user, AuthProvider authProvider) {
     // Try firstName field first
     if (user?.firstName?.isNotEmpty == true) {
       return '${user!.firstName}!';
     }
-    
+
     // Try displayName from user model
     if (user?.displayName?.isNotEmpty == true) {
       final nameParts = user!.displayName!.split(' ');
@@ -718,10 +728,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         return '${nameParts.first}!';
       }
     }
-    
+
     // Firebase User doesn't have displayName getter anymore
     // UserModel should be the single source of truth for user data
-    
+
     // Default fallback
     return 'Student!';
   }

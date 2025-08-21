@@ -13,15 +13,16 @@ class PreviewDialog extends StatefulWidget {
   State<PreviewDialog> createState() => _PreviewDialogState();
 }
 
-class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProviderStateMixin {
+class _PreviewDialogState extends State<PreviewDialog>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -32,7 +33,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenSize = MediaQuery.of(context).size;
-    
+
     return Dialog(
       backgroundColor: theme.colorScheme.surface,
       surfaceTintColor: theme.colorScheme.surfaceTint,
@@ -52,7 +53,8 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -92,7 +94,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
                 ],
               ),
             ),
-            
+
             // Tabs
             Container(
               color: theme.colorScheme.surfaceContainerHighest,
@@ -109,7 +111,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
                 ],
               ),
             ),
-            
+
             // Tab Content
             Expanded(
               child: TabBarView(
@@ -127,18 +129,18 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       ),
     );
   }
-  
+
   Widget _buildAllStudentsTab(BuildContext context) {
     final theme = Theme.of(context);
     final students = _generateMockStudents();
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(AppSpacing.lg),
       itemCount: students.length,
       itemBuilder: (context, index) {
         final student = students[index];
         final avatarColor = theme.colorScheme.primary;
-        
+
         return Card(
           margin: const EdgeInsets.only(bottom: AppSpacing.sm),
           child: ListTile(
@@ -158,7 +160,8 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
                 fontWeight: FontWeight.w600,
               ),
             ),
-            subtitle: Text('Grade ${student.gradeLevel ?? ''} • ${student.email}'),
+            subtitle:
+                Text('Grade ${student.gradeLevel ?? ''} • ${student.email}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -175,11 +178,11 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       },
     );
   }
-  
+
   Widget _buildClassesTab(BuildContext context) {
     final theme = Theme.of(context);
     final classes = _generateMockClasses();
-    
+
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: ResponsiveGrid(
@@ -189,80 +192,83 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
         tabletColumns: 2,
         desktopColumns: 3,
         children: classes.map((classModel) {
-        final colorIndex = classModel.subject.hashCode % AppTheme.subjectColors.length;
-        final color = AppTheme.subjectColors[colorIndex];
-        
-        return Card(
-          child: InkWell(
-            onTap: () {},
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
+          final colorIndex =
+              classModel.subject.hashCode % AppTheme.subjectColors.length;
+          final color = AppTheme.subjectColors[colorIndex];
+
+          return Card(
+            child: InkWell(
+              onTap: () {},
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getSubjectIcon(classModel.subject),
+                            color: color,
+                            size: 24,
+                          ),
                         ),
-                        child: Icon(
-                          _getSubjectIcon(classModel.subject),
-                          color: color,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              classModel.name,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                classModel.name,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            Text(
-                              classModel.subject,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                              Text(
+                                classModel.subject,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Row(
+                      children: [
+                        _buildClassInfo(Icons.people,
+                            '${classModel.studentCount} students'),
+                        const SizedBox(width: AppSpacing.md),
+                        _buildClassInfo(
+                            Icons.schedule, classModel.schedule ?? 'Daily'),
+                      ],
+                    ),
+                    if (classModel.room != null) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _buildClassInfo(Icons.room, classModel.room!),
                     ],
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Row(
-                    children: [
-                      _buildClassInfo(Icons.people, '${classModel.studentCount} students'),
-                      const SizedBox(width: AppSpacing.md),
-                      _buildClassInfo(Icons.schedule, classModel.schedule ?? 'Daily'),
-                    ],
-                  ),
-                  if (classModel.room != null) ...[
-                    const SizedBox(height: AppSpacing.sm),
-                    _buildClassInfo(Icons.room, classModel.room!),
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        );
+          );
         }).toList(),
       ),
     );
   }
-  
+
   Widget _buildPerformanceTab(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -278,15 +284,19 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
             tabletColumns: 4,
             desktopColumns: 4,
             children: [
-              _buildSummaryCard('Class Average', '87.5%', Icons.school, Colors.blue),
-              _buildSummaryCard('Top Performer', 'Sarah Johnson', Icons.star, Colors.amber),
-              _buildSummaryCard('Attendance', '94%', Icons.check_circle, Colors.green),
-              _buildSummaryCard('Assignments', '142', Icons.assignment, Colors.purple),
+              _buildSummaryCard(
+                  'Class Average', '87.5%', Icons.school, Colors.blue),
+              _buildSummaryCard(
+                  'Top Performer', 'Sarah Johnson', Icons.star, Colors.amber),
+              _buildSummaryCard(
+                  'Attendance', '94%', Icons.check_circle, Colors.green),
+              _buildSummaryCard(
+                  'Assignments', '142', Icons.assignment, Colors.purple),
             ],
           ),
-          
+
           const SizedBox(height: AppSpacing.xl),
-          
+
           // Performance Chart
           Card(
             child: Padding(
@@ -306,9 +316,9 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
               ),
             ),
           ),
-          
+
           const SizedBox(height: AppSpacing.xl),
-          
+
           // Recent Assessments
           Text(
             'Recent Assessments',
@@ -322,7 +332,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       ),
     );
   }
-  
+
   Widget _buildReportsTab(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -386,7 +396,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       ],
     );
   }
-  
+
   Widget _buildStatusChip(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -404,7 +414,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       ),
     );
   }
-  
+
   Widget _buildClassInfo(IconData icon, String text) {
     final theme = Theme.of(context);
     return Row(
@@ -425,8 +435,9 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       ],
     );
   }
-  
-  Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
+
+  Widget _buildSummaryCard(
+      String title, String value, IconData icon, Color color) {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
@@ -454,13 +465,19 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       ),
     );
   }
-  
+
   Widget _buildGradeDistribution(BuildContext context) {
     final theme = Theme.of(context);
     final grades = ['A', 'B', 'C', 'D', 'F'];
     final percentages = [35, 40, 20, 4, 1];
-    final colors = [Colors.green, Colors.blue, Colors.orange, Colors.deepOrange, Colors.red];
-    
+    final colors = [
+      Colors.green,
+      Colors.blue,
+      Colors.orange,
+      Colors.deepOrange,
+      Colors.red
+    ];
+
     return Column(
       children: List.generate(grades.length, (index) {
         return Padding(
@@ -517,14 +534,18 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       }),
     );
   }
-  
+
   List<Widget> _buildRecentAssessments(BuildContext context) {
     final assessments = [
-      {'title': 'Math Quiz - Chapter 5', 'date': 'Jan 18, 2025', 'average': '85%'},
+      {
+        'title': 'Math Quiz - Chapter 5',
+        'date': 'Jan 18, 2025',
+        'average': '85%'
+      },
       {'title': 'Science Lab Report', 'date': 'Jan 15, 2025', 'average': '92%'},
       {'title': 'English Essay', 'date': 'Jan 12, 2025', 'average': '88%'},
     ];
-    
+
     return assessments.map((assessment) {
       return Card(
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -538,15 +559,15 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
               Text(
                 assessment['average']!,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
               ),
               Text(
                 'Class Average',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
             ],
           ),
@@ -554,7 +575,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       );
     }).toList();
   }
-  
+
   IconData _getSubjectIcon(String subject) {
     switch (subject.toLowerCase()) {
       case 'mathematics':
@@ -579,7 +600,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
         return Icons.school;
     }
   }
-  
+
   // Mock Data Generators
   List<UserModel> _generateMockStudents() {
     final now = DateTime.now();
@@ -670,7 +691,7 @@ class _PreviewDialogState extends State<PreviewDialog> with SingleTickerProvider
       ),
     ];
   }
-  
+
   List<ClassModel> _generateMockClasses() {
     final now = DateTime.now();
     return [

@@ -19,7 +19,7 @@ class ClassesScreen extends StatefulWidget {
 
 class _ClassesScreenState extends State<ClassesScreen> {
   String _searchQuery = '';
-  
+
   @override
   void initState() {
     super.initState();
@@ -28,11 +28,11 @@ class _ClassesScreenState extends State<ClassesScreen> {
       _loadClasses();
     });
   }
-  
+
   Future<void> _loadClasses() async {
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
-    
+
     if (authProvider.userModel != null) {
       classProvider.loadTeacherClasses(authProvider.userModel!.uid);
     }
@@ -54,16 +54,22 @@ class _ClassesScreenState extends State<ClassesScreen> {
       'Music': AppTheme.subjectColors[6],
       'Physical Education': AppTheme.subjectColors[7],
     };
-    
+
     return subjectMap[subject] ?? AppTheme.subjectColors[0];
   }
 
   List<ClassModel> _getFilteredClasses(List<ClassModel> classes) {
     if (_searchQuery.isEmpty) return classes;
     return classes.where((classModel) {
-      return classModel.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             classModel.subject.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             classModel.gradeLevel.toLowerCase().contains(_searchQuery.toLowerCase());
+      return classModel.name
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+          classModel.subject
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+          classModel.gradeLevel
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase());
     }).toList();
   }
 
@@ -71,8 +77,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
   Widget build(BuildContext context) {
     return Consumer<ClassProvider>(
       builder: (context, classProvider, _) {
-        final filteredClasses = _getFilteredClasses(classProvider.teacherClasses);
-        
+        final filteredClasses =
+            _getFilteredClasses(classProvider.teacherClasses);
+
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(
@@ -93,10 +100,10 @@ class _ClassesScreenState extends State<ClassesScreen> {
             children: [
               // Header with stats
               _buildStatsHeader(classProvider),
-              
+
               // Search bar
               _buildSearchBar(),
-              
+
               // Classes list
               Expanded(
                 child: classProvider.isLoading
@@ -108,7 +115,8 @@ class _ClassesScreenState extends State<ClassesScreen> {
                       )
                     : filteredClasses.isEmpty
                         ? _searchQuery.isNotEmpty
-                            ? EmptyState.noSearchResults(searchTerm: _searchQuery)
+                            ? EmptyState.noSearchResults(
+                                searchTerm: _searchQuery)
                             : const EmptyState.noClasses()
                         : _buildClassesList(filteredClasses),
               ),
@@ -125,10 +133,11 @@ class _ClassesScreenState extends State<ClassesScreen> {
 
   Widget _buildStatsHeader(ClassProvider classProvider) {
     final classes = classProvider.teacherClasses;
-    final totalStudents = classes.fold<int>(0, (sum, classModel) => sum + classModel.studentCount);
+    final totalStudents = classes.fold<int>(
+        0, (sum, classModel) => sum + classModel.studentCount);
     // For now, we'll use a placeholder for average grade since we don't have grade data yet
     const avgGrade = 'B+';
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -190,7 +199,8 @@ class _ClassesScreenState extends State<ClassesScreen> {
               width: 1,
             ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
         style: Theme.of(context).textTheme.bodyMedium,
         onChanged: (value) {
@@ -238,14 +248,15 @@ class _ClassesScreenState extends State<ClassesScreen> {
                     Text(
                       classModel.name,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     Text(
                       '${classModel.subject} • ${classModel.gradeLevel}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                   ],
                 ),
@@ -269,31 +280,36 @@ class _ClassesScreenState extends State<ClassesScreen> {
                     Text(
                       classModel.enrollmentCode ?? 'No Code',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Info row
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildInfoChip(Icons.people, '${classModel.studentCount} students'),
-              if (classModel.room != null) _buildInfoChip(Icons.room, classModel.room!),
-              if (classModel.schedule != null) _buildInfoChip(Icons.schedule, classModel.schedule!),
+              _buildInfoChip(
+                  Icons.people, '${classModel.studentCount} students'),
+              if (classModel.room != null)
+                _buildInfoChip(Icons.room, classModel.room!),
+              if (classModel.schedule != null)
+                _buildInfoChip(Icons.schedule, classModel.schedule!),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Action buttons row
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -310,7 +326,8 @@ class _ClassesScreenState extends State<ClassesScreen> {
                 tooltip: 'Edit Class',
               ),
               TextButton.icon(
-                onPressed: () => _copyEnrollmentCode(classModel.enrollmentCode ?? ''),
+                onPressed: () =>
+                    _copyEnrollmentCode(classModel.enrollmentCode ?? ''),
                 icon: const Icon(Icons.copy, size: 16),
                 label: const Text('Copy Code'),
                 style: TextButton.styleFrom(
@@ -348,8 +365,8 @@ class _ClassesScreenState extends State<ClassesScreen> {
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
         ],
       ),
@@ -358,7 +375,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
 
   void _copyEnrollmentCode(String code) {
     if (code.isEmpty) return;
-    
+
     Clipboard.setData(ClipboardData(text: code));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -401,7 +418,8 @@ class _ClassesScreenState extends State<ClassesScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Class'),
-        content: Text('Are you sure you want to delete "${classModel.name}"?\n\nThis action cannot be undone and will remove all associated data.'),
+        content: Text(
+            'Are you sure you want to delete "${classModel.name}"?\n\nThis action cannot be undone and will remove all associated data.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -426,7 +444,7 @@ class _ClassesScreenState extends State<ClassesScreen> {
     try {
       final classProvider = context.read<ClassProvider>();
       await classProvider.deleteClass(classModel.id);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

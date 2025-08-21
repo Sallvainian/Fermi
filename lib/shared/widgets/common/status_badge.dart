@@ -26,10 +26,10 @@ class StatusBadge extends StatelessWidget {
     required String grade,
     this.icon,
     this.isSmall = false,
-  }) : label = grade,
-       type = StatusType.grade,
-       customType = null,
-       customColor = null;
+  })  : label = grade,
+        type = StatusType.grade,
+        customType = null,
+        customColor = null;
 
   /// Create a priority badge
   const StatusBadge.priority({
@@ -37,10 +37,10 @@ class StatusBadge extends StatelessWidget {
     required String priority,
     this.icon,
     this.isSmall = false,
-  }) : label = priority,
-       type = StatusType.priority,
-       customType = null,
-       customColor = null;
+  })  : label = priority,
+        type = StatusType.priority,
+        customType = null,
+        customColor = null;
 
   /// Create an assignment type badge
   const StatusBadge.assignmentType({
@@ -48,10 +48,10 @@ class StatusBadge extends StatelessWidget {
     required String type,
     this.icon,
     this.isSmall = false,
-  }) : label = type,
-       type = StatusType.assignmentType,
-       customType = null,
-       customColor = null;
+  })  : label = type,
+        type = StatusType.assignmentType,
+        customType = null,
+        customColor = null;
 
   /// Create a custom badge
   const StatusBadge.custom({
@@ -60,15 +60,15 @@ class StatusBadge extends StatelessWidget {
     required Color color,
     this.icon,
     this.isSmall = false,
-  }) : type = StatusType.custom,
-       customType = null,
-       customColor = color;
+  })  : type = StatusType.custom,
+        customType = null,
+        customColor = color;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     Color backgroundColor;
     Color textColor;
 

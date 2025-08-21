@@ -47,7 +47,7 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
     try {
       final classProvider = context.read<ClassProvider>();
       final results = await classProvider.searchAvailableStudents(query);
-      
+
       setState(() {
         _searchResults = results;
         _isSearching = false;
@@ -64,7 +64,7 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
     if (_selectedStudentIds.isEmpty) return;
 
     final classProvider = context.read<ClassProvider>();
-    
+
     // Show loading
     showDialog(
       context: context,
@@ -82,12 +82,13 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
 
       if (mounted) {
         Navigator.of(context).pop(); // Remove loading dialog
-        
+
         if (success) {
           Navigator.of(context).pop(true); // Close the enroll dialog
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Successfully enrolled ${_selectedStudentIds.length} student(s)'),
+              content: Text(
+                  'Successfully enrolled ${_selectedStudentIds.length} student(s)'),
               backgroundColor: Colors.green,
             ),
           );
@@ -156,7 +157,8 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
                       )
                     : null,
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                fillColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -165,11 +167,12 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
               onChanged: (value) => _searchStudents(),
             ),
             const SizedBox(height: 16),
-            
+
             // Selected count
             if (_selectedStudentIds.isNotEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(8),
@@ -183,7 +186,7 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
                 ),
               ),
             const SizedBox(height: 8),
-            
+
             // Results list
             Expanded(
               child: _buildResultsList(),
@@ -203,7 +206,8 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed: _selectedStudentIds.isEmpty ? null : _enrollSelectedStudents,
+          onPressed:
+              _selectedStudentIds.isEmpty ? null : _enrollSelectedStudents,
           child: Text('Add ${_selectedStudentIds.length} Student(s)'),
         ),
       ],
@@ -260,8 +264,8 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
             Text(
               'Type a student name or email above',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),
@@ -287,8 +291,8 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
             Text(
               'Try a different search term',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
             ),
           ],
         ),
@@ -300,7 +304,7 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
       itemBuilder: (context, index) {
         final student = _searchResults[index];
         final isSelected = _selectedStudentIds.contains(student.id);
-        
+
         return CheckboxListTile(
           value: isSelected,
           onChanged: (bool? value) {

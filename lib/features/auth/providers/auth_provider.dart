@@ -52,7 +52,10 @@ class AuthProvider extends ChangeNotifier {
   /// Whether the user has chosen to persist their authentication session.
   bool _rememberMe = false;
 
-  AuthProvider({AuthService? authService, AuthStatus initialStatus = AuthStatus.uninitialized, UserModel? userModel})
+  AuthProvider(
+      {AuthService? authService,
+      AuthStatus initialStatus = AuthStatus.uninitialized,
+      UserModel? userModel})
       : _authService = authService ?? AuthService(),
         _status = initialStatus,
         _userModel = userModel,
@@ -70,16 +73,17 @@ class AuthProvider extends ChangeNotifier {
         // User is logged in, fetch their profile
         _status = AuthStatus.authenticating;
         notifyListeners();
-        
+
         // Get user model from Firestore
         final uid = user.uid;
         final userData = await _authService.getUserData(uid);
-        final currentUserModel = userData != null ? UserModel.fromFirestore(userData) : null;
-        
+        final currentUserModel =
+            userData != null ? UserModel.fromFirestore(userData) : null;
+
         if (currentUserModel != null) {
           _userModel = currentUserModel;
           _status = AuthStatus.authenticated;
-          
+
           // Start web in-app notifications if on web
           if (kIsWeb) {
             WebInAppNotificationService().startWebInAppNotifications();
@@ -107,7 +111,8 @@ class AuthProvider extends ChangeNotifier {
   UserModel? get userModel => _userModel;
 
   /// The Firebase Auth user, or null if not signed in.
-  firebase_auth.User? get firebaseUser => firebase_auth.FirebaseAuth.instance.currentUser;
+  firebase_auth.User? get firebaseUser =>
+      firebase_auth.FirebaseAuth.instance.currentUser;
 
   /// A human‑readable error message, if an authentication error occurred.
   String? get errorMessage => _errorMessage;
@@ -152,14 +157,14 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    
+
     // Basic validation
     if (email.isEmpty || password.isEmpty) {
       _isLoading = false;
       setError('Email and password are required.');
       return;
     }
-    
+
     try {
       // Call the real Firebase authentication
       final user = await _authService.signIn(
@@ -171,7 +176,7 @@ class AuthProvider extends ChangeNotifier {
         final userData = await _authService.getUserData(user.uid);
         userModel = userData != null ? UserModel.fromFirestore(userData) : null;
       }
-      
+
       if (userModel != null) {
         _userModel = userModel;
         _status = AuthStatus.authenticated;
@@ -200,7 +205,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    
+
     try {
       // Call the real Google Sign-In
       final user = await _authService.signInWithGoogle();
@@ -209,7 +214,7 @@ class AuthProvider extends ChangeNotifier {
         final userData = await _authService.getUserData(user.uid);
         userModel = userData != null ? UserModel.fromFirestore(userData) : null;
       }
-      
+
       if (userModel != null) {
         // Existing user - sign them in directly
         _userModel = userModel;
@@ -227,13 +232,55 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Completes the Google sign‑in by assigning a role and finishing
-  /// profile setup.
-  Future<void> completeGoogleSignUp({required UserRole role, String? parentEmail, String? gradeLevel}) async {
+  /// Signs in the user with Apple.
+  ///
+  /// Required for App Store compliance (Guideline 4.8) when other social
+  /// sign-in methods are offered. For new users, returns null and sets status 
+  /// to authenticating to trigger role selection. For existing users, signs 
+  /// them in directly with their stored profile.
+  Future<void> signInWithApple() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    
+
+    try {
+      // Call the real Apple Sign-In
+      final user = await _authService.signInWithApple();
+      UserModel? userModel;
+      if (user != null) {
+        final userData = await _authService.getUserData(user.uid);
+        userModel = userData != null ? UserModel.fromFirestore(userData) : null;
+      }
+
+      if (userModel != null) {
+        // Existing user - sign them in directly
+        _userModel = userModel;
+        _status = AuthStatus.authenticated;
+        // Start web in-app notifications if on web
+        if (kIsWeb) {
+          WebInAppNotificationService().startWebInAppNotifications();
+        }
+      } else {
+        // New user - need role selection
+        _status = AuthStatus.authenticating;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _status = AuthStatus.unauthenticated;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Completes the Google sign‑in by assigning a role and finishing
+  /// profile setup.
+  Future<void> completeGoogleSignUp(
+      {required UserRole role, String? parentEmail, String? gradeLevel}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
       // Call the real repository to complete Google sign-up
       // After Google sign-in, update the user's role
@@ -244,7 +291,7 @@ class AuthProvider extends ChangeNotifier {
         final userData = await _authService.getUserData(user.uid);
         userModel = userData != null ? UserModel.fromFirestore(userData) : null;
       }
-      
+
       if (userModel != null) {
         _userModel = userModel;
         _status = AuthStatus.authenticated;
@@ -268,13 +315,13 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    
+
     if (email.isEmpty || password.isEmpty) {
       _isLoading = false;
       setError('Email and password are required.');
       return;
     }
-    
+
     try {
       // Call the real Firebase sign-up (Auth account only)
       final user = await _authService.signUp(
@@ -282,7 +329,7 @@ class AuthProvider extends ChangeNotifier {
         password: password,
         displayName: email.split('@')[0], // Use email prefix as display name
       );
-      
+
       if (user != null) {
         // Don't assign role or set authenticated - let router handle role selection
         _status = AuthStatus.authenticating;
@@ -299,12 +346,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Updates the user profile with new display name or names.
-  Future<void> updateProfile({String? displayName, String? firstName, String? lastName}) async {
+  Future<void> updateProfile(
+      {String? displayName, String? firstName, String? lastName}) async {
     if (_userModel == null) return;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    
+
     try {
       // Call the real Firebase update
       // Update display name in Firebase Auth
@@ -312,7 +360,7 @@ class AuthProvider extends ChangeNotifier {
       if (user != null && displayName != null) {
         await user.updateDisplayName(displayName);
       }
-      
+
       // Update local model
       _userModel = _userModel!.copyWith(
         displayName: displayName ?? _userModel!.displayName,
@@ -333,14 +381,14 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    
+
     try {
       // Update Firebase Auth profile
       final user = firebase_auth.FirebaseAuth.instance.currentUser;
       if (user != null) {
         await user.updatePhotoURL(photoURL);
       }
-      
+
       // Update local model
       _userModel = _userModel!.copyWith(photoURL: photoURL);
     } catch (e) {
@@ -355,7 +403,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Stop web in-app notifications if on web
       if (kIsWeb) {
@@ -387,7 +435,8 @@ class AuthProvider extends ChangeNotifier {
       await user.reload();
       // Refresh user model from repository
       final userData = await _authService.getUserData(user.uid);
-      final currentUser = userData != null ? UserModel.fromFirestore(userData) : null;
+      final currentUser =
+          userData != null ? UserModel.fromFirestore(userData) : null;
       if (currentUser != null) {
         _userModel = currentUser;
       }
@@ -405,7 +454,8 @@ class AuthProvider extends ChangeNotifier {
       UserModel? currentUser;
       if (user != null) {
         final userData = await _authService.getUserData(user.uid);
-        currentUser = userData != null ? UserModel.fromFirestore(userData) : null;
+        currentUser =
+            userData != null ? UserModel.fromFirestore(userData) : null;
       }
       if (currentUser != null) {
         _userModel = currentUser;
@@ -413,6 +463,95 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       // Silently fail - custom claims refresh is not critical
+    }
+  }
+
+  /// Deletes the user account and all associated data.
+  /// 
+  /// Required for privacy compliance (GDPR, App Store guidelines).
+  /// For security, may require recent authentication.
+  Future<void> deleteAccount() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Stop web notifications if on web
+      if (kIsWeb) {
+        WebInAppNotificationService().stopWebInAppNotifications();
+      }
+
+      // Delete account via AuthService
+      await _authService.deleteAccount();
+      
+      // Reset state after successful deletion
+      _resetState();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Re-authenticates user with email and password.
+  /// 
+  /// Required before sensitive operations like account deletion.
+  Future<void> reauthenticateWithEmail(String email, String password) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    // Basic validation
+    if (email.isEmpty || password.isEmpty) {
+      _isLoading = false;
+      setError('Email and password are required for re-authentication.');
+      return;
+    }
+
+    try {
+      await _authService.reauthenticateWithEmail(email, password);
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Re-authenticates user with Google Sign In.
+  /// 
+  /// Required before sensitive operations like account deletion for Google users.
+  Future<void> reauthenticateWithGoogle() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _authService.reauthenticateWithGoogle();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Re-authenticates user with Apple Sign In.
+  /// 
+  /// Required before sensitive operations like account deletion for Apple users.
+  Future<void> reauthenticateWithApple() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _authService.reauthenticateWithApple();
+    } catch (e) {
+      _errorMessage = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -425,12 +564,12 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     _userModel = null;
     _status = AuthStatus.uninitialized;
-    
+
     // Stop web notifications if on web
     if (kIsWeb) {
       WebInAppNotificationService().stopWebInAppNotifications();
     }
-    
+
     super.dispose();
   }
 

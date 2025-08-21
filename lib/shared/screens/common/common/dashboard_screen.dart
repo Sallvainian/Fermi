@@ -3,16 +3,16 @@ import 'package:provider/provider.dart';
 import '../../../../features/auth/presentation/providers/auth_provider.dart';
 
 /// Temporary fallback dashboard screen for admin users or unspecified roles.
-/// 
+///
 /// This screen is displayed when:
 /// - User role is neither teacher nor student (e.g., admin users)
 /// - User role cannot be determined
-/// 
+///
 /// Features:
 /// - Displays user welcome message with name
 /// - Shows current user role
 /// - Provides logout functionality
-/// 
+///
 /// This is a temporary implementation that should be replaced with
 /// proper admin dashboard functionality in future iterations.
 class DashboardScreen extends StatelessWidget {

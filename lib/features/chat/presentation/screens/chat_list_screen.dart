@@ -85,7 +85,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   final authProvider = context.read<AuthProvider>();
                   final currentUserId = authProvider.userModel?.uid ?? '';
                   final displayName = room.getDisplayName(currentUserId);
-                  
+
                   return displayName
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase()) ||
@@ -150,7 +150,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final hasUnread = chatRoom.unreadCount > 0;
     final authProvider = context.read<AuthProvider>();
     final currentUserId = authProvider.userModel?.uid ?? '';
-    
+
     // Get the display name and photo for this chat room from current user's perspective
     final displayName = chatRoom.getDisplayName(currentUserId);
     final displayPhotoUrl = chatRoom.getDisplayPhotoUrl(currentUserId);
@@ -228,7 +228,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       onTap: () {
         context.read<ChatProvider>().setCurrentChatRoom(chatRoom);
         // Use the new simple chat screen that actually works
-        context.push('/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
+        context.push(
+            '/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
       },
       onLongPress: () {
         // Option to use old chat screen if needed
@@ -248,7 +249,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  context.push('/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
+                  context.push(
+                      '/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
                 },
                 child: const Text('Simple (recommended)'),
               ),

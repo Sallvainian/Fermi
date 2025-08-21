@@ -15,7 +15,8 @@ import '../../features/classes/presentation/screens/teacher/classes_screen.dart'
 import '../../features/classes/presentation/screens/teacher/class_detail_screen.dart';
 import '../../features/grades/presentation/screens/teacher/gradebook_screen.dart';
 import '../../features/grades/presentation/screens/teacher/grade_analytics_screen.dart';
-import '../../features/assignments/presentation/screens/teacher/assignments_list_screen.dart' as teacher_assignments;
+import '../../features/assignments/presentation/screens/teacher/assignments_list_screen.dart'
+    as teacher_assignments;
 import '../../features/assignments/presentation/screens/teacher/assignment_create_screen.dart';
 import '../../features/assignments/presentation/screens/teacher/assignment_detail_screen.dart';
 import '../../features/assignments/presentation/screens/teacher/assignment_edit_screen.dart';
@@ -23,7 +24,8 @@ import '../../features/student/presentation/screens/teacher/students_screen.dart
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 import '../../features/classes/presentation/screens/student/courses_screen.dart';
 import '../../features/grades/presentation/screens/student/grades_screen.dart';
-import '../../features/assignments/presentation/screens/student/assignments_list_screen.dart' as student_assignments;
+import '../../features/assignments/presentation/screens/student/assignments_list_screen.dart'
+    as student_assignments;
 import '../../features/assignments/presentation/screens/student/assignment_submission_screen.dart';
 import '../../features/classes/presentation/screens/student/enrollment_screen.dart';
 // import '../../features/notifications/presentation/screens/student_notifications_screen.dart' as student_notifications;
@@ -143,7 +145,8 @@ class AppRouter {
     // Determine broad auth buckets. Unauthenticated covers error states
     final bool unauthenticated = !isAuthenticated;
     final bool needsRoleSelection = status == AuthStatus.authenticating;
-    final bool needsEmailVerification = isAuthenticated && !needsRoleSelection && !emailVerified;
+    final bool needsEmailVerification =
+        isAuthenticated && !needsRoleSelection && !emailVerified;
 
     // Unauthenticated users are only allowed to access auth routes. Any
     // non‑auth route is redirected to the login page.
@@ -185,10 +188,14 @@ class AppRouter {
     // email verified, restrict access to routes based on the assigned
     // role. Teacher routes start with `/teacher`; student routes start
     // with `/student`. Admins are allowed to access both.
-    if (matchedLocation.startsWith('/teacher') && role != null && role != UserRole.teacher) {
+    if (matchedLocation.startsWith('/teacher') &&
+        role != null &&
+        role != UserRole.teacher) {
       return '/dashboard';
     }
-    if (matchedLocation.startsWith('/student') && role != null && role != UserRole.student) {
+    if (matchedLocation.startsWith('/student') &&
+        role != null &&
+        role != UserRole.student) {
       return '/dashboard';
     }
 
@@ -379,8 +386,8 @@ class AppRouter {
           name: 'discussionDetail',
           builder: (context, state) {
             final boardId = state.pathParameters['boardId']!;
-            final boardTitle = state.uri.queryParameters['title'] ??
-                'Discussion Board';
+            final boardTitle =
+                state.uri.queryParameters['title'] ?? 'Discussion Board';
             return DiscussionBoardDetailScreen(
               boardId: boardId,
               boardTitle: boardTitle,
@@ -476,9 +483,11 @@ class AppRouter {
   static GoRoute _rootRedirect() => GoRoute(
         path: '/',
         redirect: (context, state) {
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final isAuthenticated = authProvider.status == AuthStatus.authenticated;
-          
+          final authProvider =
+              Provider.of<AuthProvider>(context, listen: false);
+          final isAuthenticated =
+              authProvider.status == AuthStatus.authenticated;
+
           if (isAuthenticated) {
             return '/dashboard';
           }

@@ -20,12 +20,73 @@ import '../../../auth/presentation/providers/auth_provider.dart' as app_auth;
 
 // Transparent placeholder for FadeInImage
 final Uint8List kTransparentImage = Uint8List.fromList(<int>[
-  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
-  0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-  0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
-  0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
 ]);
 
 class ChatDetailScreen extends StatefulWidget {
@@ -56,7 +117,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     // Load chat room and messages when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final chatProvider = context.read<ChatProvider>();
-      
+
       try {
         // Find the chat room from the list
         final chatRoom = chatProvider.chatRooms.firstWhere(
@@ -106,9 +167,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             final chatRoom = chatProvider.currentChatRoom;
             final authProvider = context.read<app_auth.AuthProvider>();
             final currentUserId = authProvider.userModel?.uid ?? '';
-            
-            final displayName = chatRoom?.getDisplayName(currentUserId) ?? 'Chat';
-            
+
+            final displayName =
+                chatRoom?.getDisplayName(currentUserId) ?? 'Chat';
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -144,7 +206,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   final chatProvider = context.read<ChatProvider>();
                   showSearch(
                     context: context,
-                    delegate: ChatSearchDelegate(messages: chatProvider.currentMessages),
+                    delegate: ChatSearchDelegate(
+                        messages: chatProvider.currentMessages),
                   );
                   break;
                 case 'mute':
@@ -187,7 +250,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const Icon(Icons.error_outline,
+                            size: 48, color: Colors.red),
                         const SizedBox(height: 16),
                         Text('Error: $error'),
                         const SizedBox(height: 16),
@@ -271,8 +335,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           child: Text(
             dateText,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
         ),
       ),
@@ -283,7 +347,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final isMe = message.senderId == currentUserId;
     final theme = Theme.of(context);
-    
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -326,10 +389,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 children: [
                   if (message.attachmentUrl != null) _buildAttachment(message),
                   // Only show text if it's not a placeholder OR if there's no attachment
-                  if (message.attachmentUrl == null || 
-                      (message.content != 'Sent an image' && 
-                       message.content != 'Sent a video' &&
-                       message.content.isNotEmpty))
+                  if (message.attachmentUrl == null ||
+                      (message.content != 'Sent an image' &&
+                          message.content != 'Sent a video' &&
+                          message.content.isNotEmpty))
                     Text(
                       message.content,
                       style: TextStyle(
@@ -360,7 +423,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Widget _buildAttachment(Message message) {
     if (message.attachmentType == 'image' && message.attachmentUrl != null) {
       // DEBUG: Log when trying to display image
-      
+
       // Simplified approach - just use Image.network without any containers
       return Image.network(
         message.attachmentUrl!,
@@ -379,7 +442,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         },
       );
     }
-    
+
     if (message.attachmentType == 'video' && message.attachmentUrl != null) {
       return GestureDetector(
         onTap: () => _viewFullScreenVideo(message.attachmentUrl!),
@@ -558,7 +621,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       await context.read<ChatProvider>().sendMessage(content: message);
     } catch (e) {
       if (mounted) {
-        LoggerService.error('Failed to send message in ChatDetailScreen', error: e);
+        LoggerService.error('Failed to send message in ChatDetailScreen',
+            error: e);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to send message: $e')),
         );
@@ -614,19 +678,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _startCall(bool isVideoCall) async {
     final chatProvider = context.read<ChatProvider>();
     final chatRoom = chatProvider.currentChatRoom;
-    
+
     if (chatRoom == null) return;
-    
+
     // For direct chats, find the other participant
     if (chatRoom.type == 'direct') {
       final otherParticipant = chatRoom.participants.firstWhere(
         (p) => p.id != FirebaseAuth.instance.currentUser?.uid,
       );
-      
+
       // Fetch receiver's photo URL from Firestore
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(otherParticipant.id).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(otherParticipant.id)
+          .get();
       final receiverPhotoUrl = userDoc.data()?['photoUrl'] ?? '';
-      
+
       // Navigate to call screen
       if (mounted) {
         context.push(
@@ -684,8 +751,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    List<String> mutedChats = List<String>.from(userDoc.data()?['mutedChats'] ?? []);
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    List<String> mutedChats =
+        List<String>.from(userDoc.data()?['mutedChats'] ?? []);
 
     final isCurrentlyMuted = mutedChats.contains(widget.chatRoomId);
 
@@ -695,12 +764,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       mutedChats.add(widget.chatRoomId);
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(userId).update({'mutedChats': mutedChats});
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .update({'mutedChats': mutedChats});
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isCurrentlyMuted ? 'Notifications unmuted' : 'Notifications muted'),
+          content: Text(isCurrentlyMuted
+              ? 'Notifications unmuted'
+              : 'Notifications muted'),
         ),
       );
     }
@@ -756,12 +830,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   String _inferMimeType(String filename) {
     final ext = filename.split('.').last.toLowerCase();
     switch (ext) {
-      case 'png': return 'image/png';
+      case 'png':
+        return 'image/png';
       case 'jpg':
-      case 'jpeg': return 'image/jpeg';
-      case 'gif': return 'image/gif';
-      case 'webp': return 'image/webp';
-      default: return 'application/octet-stream';
+      case 'jpeg':
+        return 'image/jpeg';
+      case 'gif':
+        return 'image/gif';
+      case 'webp':
+        return 'image/webp';
+      default:
+        return 'application/octet-stream';
     }
   }
 
@@ -789,7 +868,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   Future<void> _uploadAndSendImage(XFile image) async {
     // Validate file size (10MB limit)
     const int maxSizeBytes = 10 * 1024 * 1024;
-    
+
     // Get file size based on platform
     int fileSize;
     if (kIsWeb) {
@@ -799,7 +878,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final file = File(image.path);
       fileSize = await file.length();
     }
-    
+
     if (fileSize > maxSizeBytes) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -852,7 +931,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       // Wait for upload to complete
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
-      
+
       // DEBUG: Log the download URL
       debugPrint('DEBUG: Download URL length: ${downloadUrl.length}');
 
@@ -906,7 +985,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     const int maxSizeBytesWeb = 50 * 1024 * 1024; // 50MB for web
     const int maxSizeBytesMobile = 100 * 1024 * 1024; // 100MB for mobile
     final int maxSizeBytes = kIsWeb ? maxSizeBytesWeb : maxSizeBytesMobile;
-    
+
     // Get file size based on platform
     int fileSize;
     if (kIsWeb) {
@@ -916,7 +995,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final file = File(video.path);
       fileSize = await file.length();
     }
-    
+
     if (fileSize > maxSizeBytes) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -934,7 +1013,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
     try {
       XFile videoToUpload = video;
-      
+
       // Video compression only on mobile (not supported on web)
       if (!kIsWeb) {
         const int compressionThreshold = 10 * 1024 * 1024; // 10MB
@@ -949,7 +1028,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             );
           }
         }
-        
+
         try {
           // Set compression quality based on file size
           VideoQuality quality = VideoQuality.MediumQuality;
@@ -960,7 +1039,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           } else {
             quality = VideoQuality.HighestQuality;
           }
-          
+
           // Compress the video
           final MediaInfo? info = await VideoCompress.compressVideo(
             video.path,
@@ -969,16 +1048,20 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             includeAudio: true,
             frameRate: 30, // Standard frame rate
           );
-          
+
           if (info != null && info.file != null) {
             videoToUpload = XFile(info.file!.path);
-            final originalSizeMB = (await file.length() / (1024 * 1024)).toStringAsFixed(1);
+            final originalSizeMB =
+                (await file.length() / (1024 * 1024)).toStringAsFixed(1);
             final compressedFile = File(info.file!.path);
-            final compressedSizeMB = (await compressedFile.length() / (1024 * 1024)).toStringAsFixed(1);
+            final compressedSizeMB =
+                (await compressedFile.length() / (1024 * 1024))
+                    .toStringAsFixed(1);
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Video compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB'),
+                  content: Text(
+                      'Video compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB'),
                   duration: const Duration(seconds: 2),
                 ),
               );
@@ -1047,7 +1130,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
         _messageController.clear();
       }
-      
+
       // Clean up compressed file if different from original (mobile only)
       if (!kIsWeb && videoToUpload.path != video.path) {
         try {
@@ -1070,12 +1153,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         _isUploading = false;
         _uploadProgress = 0.0;
       });
-      
+
       // Cancel any ongoing compression
       await VideoCompress.cancelCompression();
     }
   }
-
 
   void _viewFullScreenVideo(String videoUrl) {
     Navigator.push(
@@ -1125,7 +1207,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           context: context,
                           initialDate: selectedDate,
                           firstDate: DateTime.now(),
-                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                          lastDate:
+                              DateTime.now().add(const Duration(days: 365)),
                         );
                         if (date != null) {
                           setState(() {
@@ -1262,7 +1345,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             const Divider(),
             Expanded(
               child: StreamBuilder<List<ScheduledMessage>>(
-                stream: _scheduledMessagesService.getScheduledMessages(widget.chatRoomId),
+                stream: _scheduledMessagesService
+                    .getScheduledMessages(widget.chatRoomId),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -1292,7 +1376,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           icon: const Icon(Icons.delete_outline),
                           onPressed: () async {
                             final messenger = ScaffoldMessenger.of(context);
-                            await _scheduledMessagesService.cancelScheduledMessage(
+                            await _scheduledMessagesService
+                                .cancelScheduledMessage(
                               scheduled.id,
                             );
                             if (mounted) {
@@ -1452,7 +1537,9 @@ class _VideoControlsOverlay extends StatelessWidget {
     final hours = twoDigits(duration.inHours);
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+    return duration.inHours > 0
+        ? '$hours:$minutes:$seconds'
+        : '$minutes:$seconds';
   }
 }
 
@@ -1494,8 +1581,10 @@ class ChatSearchDelegate extends SearchDelegate<Message?> {
   }
 
   Widget _buildSearchResults() {
-    final results = messages.where((message) =>
-        message.content.toLowerCase().contains(query.toLowerCase())).toList();
+    final results = messages
+        .where((message) =>
+            message.content.toLowerCase().contains(query.toLowerCase()))
+        .toList();
 
     return ListView.builder(
       itemCount: results.length,

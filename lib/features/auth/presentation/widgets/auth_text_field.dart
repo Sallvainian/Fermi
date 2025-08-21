@@ -27,7 +27,7 @@ class AuthTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return TextFormField(
       controller: controller,
       obscureText: obscureText,

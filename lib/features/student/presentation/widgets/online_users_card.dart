@@ -4,15 +4,15 @@ import '../../data/services/presence_service.dart';
 
 class OnlineUsersCard extends StatelessWidget {
   final PresenceService _presenceService = PresenceService();
-  
+
   final bool excludeSelf;
-  
+
   OnlineUsersCard({super.key, this.excludeSelf = true});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,7 +67,7 @@ class OnlineUsersCard extends StatelessWidget {
                   ),
                 );
               }
-              
+
               if (!snapshot.hasData) {
                 return const Center(
                   child: Padding(
@@ -76,9 +76,9 @@ class OnlineUsersCard extends StatelessWidget {
                   ),
                 );
               }
-              
+
               final onlineUsers = snapshot.data!;
-              
+
               if (onlineUsers.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.all(32),
@@ -88,7 +88,8 @@ class OnlineUsersCard extends StatelessWidget {
                         Icon(
                           Icons.people_outline,
                           size: 48,
-                          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurfaceVariant
+                              .withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -102,7 +103,7 @@ class OnlineUsersCard extends StatelessWidget {
                   ),
                 );
               }
-              
+
               return ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -118,10 +119,10 @@ class OnlineUsersCard extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildUserTile(BuildContext context, OnlineUser user) {
     final theme = Theme.of(context);
-    
+
     return ListTile(
       leading: Stack(
         children: [
@@ -165,12 +166,12 @@ class OnlineUsersCard extends StatelessWidget {
       },
     );
   }
-  
+
   String _getStatusText(OnlineUser user) {
     // Show role and activity status
     final role = user.role ?? 'user';
     final roleText = role.substring(0, 1).toUpperCase() + role.substring(1);
-    
+
     // Use the relative time helper from the model
     if (user.isActive) {
       return '$roleText • Active now';
@@ -178,7 +179,7 @@ class OnlineUsersCard extends StatelessWidget {
       return '$roleText • ${user.relativeTime}';
     }
   }
-  
+
   Widget _buildUserAvatar(ThemeData theme, OnlineUser user) {
     // Helper to build initials avatar
     Widget buildInitialsAvatar() {
@@ -191,9 +192,9 @@ class OnlineUsersCard extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            user.displayName.isNotEmpty 
-              ? user.displayName[0].toUpperCase()
-              : 'U',
+            user.displayName.isNotEmpty
+                ? user.displayName[0].toUpperCase()
+                : 'U',
             style: TextStyle(
               color: theme.colorScheme.onPrimary,
               fontWeight: FontWeight.bold,
@@ -202,14 +203,14 @@ class OnlineUsersCard extends StatelessWidget {
         ),
       );
     }
-    
+
     // If no photo URL, return initials
     if (user.photoURL == null) {
       return buildInitialsAvatar();
     }
-    
+
     // CORS is now configured, so we can load images on localhost
-    
+
     // Otherwise, try to load the image
     return ClipOval(
       child: Image.network(
@@ -220,7 +221,8 @@ class OnlineUsersCard extends StatelessWidget {
         errorBuilder: (context, error, stackTrace) {
           // Log error for debugging but don't show it to user
           if (error.toString().contains('CORS')) {
-            debugPrint('CORS error loading profile image. Run apply_cors.sh to fix.');
+            debugPrint(
+                'CORS error loading profile image. Run apply_cors.sh to fix.');
           }
           return buildInitialsAvatar();
         },

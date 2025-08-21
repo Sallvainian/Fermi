@@ -1,4 +1,3 @@
-
 /// Analytics data for grades
 class GradeAnalytics {
   final String classId;
@@ -33,10 +32,9 @@ class GradeAnalytics {
   Map<String, double> get gradeDistributionPercentages {
     final total = gradeDistribution.values.fold(0, (sum, count) => sum + count);
     if (total == 0) return {};
-    
-    return gradeDistribution.map((grade, count) => 
-      MapEntry(grade, (count / total) * 100)
-    );
+
+    return gradeDistribution
+        .map((grade, count) => MapEntry(grade, (count / total) * 100));
   }
 
   /// Get completion rate

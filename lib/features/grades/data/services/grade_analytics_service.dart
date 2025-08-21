@@ -12,7 +12,8 @@ class GradeAnalyticsService {
   Future<GradeAnalytics> generateClassAnalytics(String classId) async {
     try {
       // Get class info
-      final classDoc = await _firestore.collection('classes').doc(classId).get();
+      final classDoc =
+          await _firestore.collection('classes').doc(classId).get();
       if (!classDoc.exists) {
         throw Exception('Class not found');
       }
@@ -31,9 +32,10 @@ class GradeAnalyticsService {
       // Get all students in the class
       final studentIds = List<String>.from(classDoc.data()?['students'] ?? []);
       final students = <Student>[];
-      
+
       for (final studentId in studentIds) {
-        final studentDoc = await _firestore.collection('users').doc(studentId).get();
+        final studentDoc =
+            await _firestore.collection('users').doc(studentId).get();
         if (studentDoc.exists) {
           students.add(Student.fromFirestore(studentDoc));
         }
@@ -53,7 +55,7 @@ class GradeAnalyticsService {
         for (final submissionDoc in submissionsSnapshot.docs) {
           final submission = Submission.fromFirestore(submissionDoc);
           final studentId = submission.studentId;
-          
+
           submissionsByStudent[studentId] ??= [];
           submissionsByStudent[studentId]!.add(submission);
 
@@ -102,17 +104,18 @@ class GradeAnalyticsService {
   }) {
     // Calculate overall statistics
     final gradeValues = allGrades.map((g) => g.percentage).toList();
-    final averageGrade = gradeValues.isEmpty ? 0.0 : 
-        gradeValues.reduce((a, b) => a + b) / gradeValues.length;
-    
+    final averageGrade = gradeValues.isEmpty
+        ? 0.0
+        : gradeValues.reduce((a, b) => a + b) / gradeValues.length;
+
     final medianGrade = _calculateMedian(gradeValues);
-    
+
     // Calculate grade distribution
     final gradeDistribution = _calculateGradeDistribution(gradeValues);
-    
+
     // Calculate category averages
     final categoryAverages = _calculateCategoryAverages(assignments, allGrades);
-    
+
     // Calculate student performances
     final studentPerformances = _calculateStudentPerformances(
       students: students,
@@ -120,7 +123,7 @@ class GradeAnalyticsService {
       submissionsByStudent: submissionsByStudent,
       gradesByStudent: gradesByStudent,
     );
-    
+
     // Calculate assignment statistics
     final assignmentStats = _calculateAssignmentStats(
       assignments: assignments,
@@ -131,10 +134,11 @@ class GradeAnalyticsService {
     // Count pending submissions
     int pendingSubmissions = 0;
     for (final submissions in submissionsByStudent.values) {
-      pendingSubmissions += submissions.where((s) => 
-        s.status == SubmissionStatus.submitted && 
-        !gradesByStudent.containsKey(s.studentId)
-      ).length;
+      pendingSubmissions += submissions
+          .where((s) =>
+              s.status == SubmissionStatus.submitted &&
+              !gradesByStudent.containsKey(s.studentId))
+          .length;
     }
 
     return GradeAnalytics(
@@ -156,10 +160,10 @@ class GradeAnalyticsService {
   /// Calculate median value
   double _calculateMedian(List<double> values) {
     if (values.isEmpty) return 0;
-    
+
     final sorted = List<double>.from(values)..sort();
     final middle = sorted.length ~/ 2;
-    
+
     if (sorted.length % 2 == 0) {
       return (sorted[middle - 1] + sorted[middle]) / 2;
     } else {
@@ -170,8 +174,18 @@ class GradeAnalyticsService {
   /// Calculate grade distribution (A, B, C, etc.)
   Map<String, int> _calculateGradeDistribution(List<double> gradeValues) {
     final distribution = <String, int>{
-      'A': 0, 'A-': 0, 'B+': 0, 'B': 0, 'B-': 0,
-      'C+': 0, 'C': 0, 'C-': 0, 'D+': 0, 'D': 0, 'D-': 0, 'F': 0,
+      'A': 0,
+      'A-': 0,
+      'B+': 0,
+      'B': 0,
+      'B-': 0,
+      'C+': 0,
+      'C': 0,
+      'C-': 0,
+      'D+': 0,
+      'D': 0,
+      'D-': 0,
+      'F': 0,
     };
 
     for (final grade in gradeValues) {
@@ -204,24 +218,25 @@ class GradeAnalyticsService {
     List<Grade> grades,
   ) {
     final categoryGrades = <String, List<double>>{};
-    
+
     for (final grade in grades) {
       final assignment = assignments.firstWhere(
         (a) => a.id == grade.assignmentId,
         orElse: () => assignments.first,
       );
-      
+
       categoryGrades[assignment.category] ??= [];
       categoryGrades[assignment.category]!.add(grade.percentage);
     }
-    
+
     final categoryAverages = <String, double>{};
     categoryGrades.forEach((category, grades) {
       if (grades.isNotEmpty) {
-        categoryAverages[category] = grades.reduce((a, b) => a + b) / grades.length;
+        categoryAverages[category] =
+            grades.reduce((a, b) => a + b) / grades.length;
       }
     });
-    
+
     return categoryAverages;
   }
 
@@ -233,25 +248,28 @@ class GradeAnalyticsService {
     required Map<String, List<Grade>> gradesByStudent,
   }) {
     final performances = <StudentPerformance>[];
-    
+
     for (final student in students) {
       final studentGrades = gradesByStudent[student.id] ?? [];
       final studentSubmissions = submissionsByStudent[student.id] ?? [];
-      
+
       if (studentGrades.isEmpty && studentSubmissions.isEmpty) continue;
-      
+
       // Calculate average grade
       final gradeValues = studentGrades.map((g) => g.percentage).toList();
-      final averageGrade = gradeValues.isEmpty ? 0.0 :
-          gradeValues.reduce((a, b) => a + b) / gradeValues.length;
-      
+      final averageGrade = gradeValues.isEmpty
+          ? 0.0
+          : gradeValues.reduce((a, b) => a + b) / gradeValues.length;
+
       // Count missing assignments
-      final submittedAssignmentIds = studentSubmissions.map((s) => s.assignmentId).toSet();
-      final missingAssignments = assignments.where((a) => 
-        !submittedAssignmentIds.contains(a.id) &&
-        a.dueDate.isBefore(DateTime.now())
-      ).length;
-      
+      final submittedAssignmentIds =
+          studentSubmissions.map((s) => s.assignmentId).toSet();
+      final missingAssignments = assignments
+          .where((a) =>
+              !submittedAssignmentIds.contains(a.id) &&
+              a.dueDate.isBefore(DateTime.now()))
+          .length;
+
       // Count late submissions
       final lateSubmissions = studentSubmissions.where((s) {
         final assignment = assignments.firstWhere(
@@ -260,16 +278,16 @@ class GradeAnalyticsService {
         );
         return s.submittedAt.isAfter(assignment.dueDate);
       }).length;
-      
+
       // Calculate category scores
       final categoryScores = _calculateStudentCategoryScores(
         studentGrades,
         assignments,
       );
-      
+
       // Calculate trend (simplified - comparing last 3 grades to overall average)
       final trend = _calculateStudentTrend(studentGrades);
-      
+
       performances.add(StudentPerformance(
         studentId: student.id,
         studentName: student.displayName,
@@ -282,7 +300,7 @@ class GradeAnalyticsService {
         letterGrade: _getLetterGrade(averageGrade),
       ));
     }
-    
+
     return performances;
   }
 
@@ -292,50 +310,53 @@ class GradeAnalyticsService {
     List<Assignment> assignments,
   ) {
     final categoryGrades = <String, List<double>>{};
-    
+
     for (final grade in grades) {
       final assignment = assignments.firstWhere(
         (a) => a.id == grade.assignmentId,
         orElse: () => assignments.first,
       );
-      
+
       categoryGrades[assignment.category] ??= [];
       categoryGrades[assignment.category]!.add(grade.percentage);
     }
-    
+
     final categoryScores = <String, double>{};
     categoryGrades.forEach((category, grades) {
       if (grades.isNotEmpty) {
-        categoryScores[category] = grades.reduce((a, b) => a + b) / grades.length;
+        categoryScores[category] =
+            grades.reduce((a, b) => a + b) / grades.length;
       }
     });
-    
+
     return categoryScores;
   }
 
   /// Calculate student's grade trend
   double _calculateStudentTrend(List<Grade> grades) {
     if (grades.length < 2) return 0;
-    
+
     // Sort by date, filtering out grades without gradedAt
-    final sortedGrades = List<Grade>.from(
-      grades.where((g) => g.gradedAt != null)
-    )..sort((a, b) => a.gradedAt!.compareTo(b.gradedAt!));
-    
+    final sortedGrades =
+        List<Grade>.from(grades.where((g) => g.gradedAt != null))
+          ..sort((a, b) => a.gradedAt!.compareTo(b.gradedAt!));
+
     // Compare last 3 grades to first 3 grades
     final recentCount = sortedGrades.length < 3 ? sortedGrades.length : 3;
     final earlyCount = sortedGrades.length < 3 ? sortedGrades.length : 3;
-    
+
     final recentAvg = sortedGrades
-        .skip(sortedGrades.length - recentCount)
-        .map((g) => g.percentage)
-        .reduce((a, b) => a + b) / recentCount;
-    
+            .skip(sortedGrades.length - recentCount)
+            .map((g) => g.percentage)
+            .reduce((a, b) => a + b) /
+        recentCount;
+
     final earlyAvg = sortedGrades
-        .take(earlyCount)
-        .map((g) => g.percentage)
-        .reduce((a, b) => a + b) / earlyCount;
-    
+            .take(earlyCount)
+            .map((g) => g.percentage)
+            .reduce((a, b) => a + b) /
+        earlyCount;
+
     return recentAvg - earlyAvg;
   }
 
@@ -346,31 +367,29 @@ class GradeAnalyticsService {
     required Map<String, List<Submission>> submissionsByStudent,
   }) {
     final stats = <AssignmentStats>[];
-    
+
     for (final assignment in assignments) {
-      final assignmentGrades = allGrades
-          .where((g) => g.assignmentId == assignment.id)
-          .toList();
-      
+      final assignmentGrades =
+          allGrades.where((g) => g.assignmentId == assignment.id).toList();
+
       if (assignmentGrades.isEmpty) continue;
-      
+
       final scores = assignmentGrades.map((g) => g.percentage).toList();
       final averageScore = scores.reduce((a, b) => a + b) / scores.length;
       final medianScore = _calculateMedian(scores);
       final maxScore = scores.reduce((a, b) => a > b ? a : b);
       final minScore = scores.reduce((a, b) => a < b ? a : b);
-      
+
       // Count total submissions for this assignment
       int totalSubmissions = 0;
       for (final submissions in submissionsByStudent.values) {
-        totalSubmissions += submissions
-            .where((s) => s.assignmentId == assignment.id)
-            .length;
+        totalSubmissions +=
+            submissions.where((s) => s.assignmentId == assignment.id).length;
       }
-      
+
       // Calculate score distribution
       final scoreDistribution = _calculateScoreDistribution(scores);
-      
+
       stats.add(AssignmentStats(
         assignmentId: assignment.id,
         assignmentTitle: assignment.title,
@@ -385,7 +404,7 @@ class GradeAnalyticsService {
         scoreDistribution: scoreDistribution,
       ));
     }
-    
+
     return stats;
   }
 
@@ -398,7 +417,7 @@ class GradeAnalyticsService {
       '60-69': 0,
       '0-59': 0,
     };
-    
+
     for (final score in scores) {
       if (score >= 90) {
         distribution['90-100'] = (distribution['90-100'] ?? 0) + 1;
@@ -412,38 +431,39 @@ class GradeAnalyticsService {
         distribution['0-59'] = (distribution['0-59'] ?? 0) + 1;
       }
     }
-    
+
     return distribution;
   }
 
   /// Get grade trends over time for a class
-  Future<List<GradeTrend>> getGradeTrends(String classId, {int days = 30}) async {
+  Future<List<GradeTrend>> getGradeTrends(String classId,
+      {int days = 30}) async {
     final endDate = DateTime.now();
     final startDate = endDate.subtract(Duration(days: days));
-    
+
     final gradesSnapshot = await _firestore
         .collectionGroup('grades')
         .where('classId', isEqualTo: classId)
         .where('gradedAt', isGreaterThanOrEqualTo: startDate)
         .orderBy('gradedAt')
         .get();
-    
+
     final gradesByDate = <DateTime, List<double>>{};
-    
+
     for (final doc in gradesSnapshot.docs) {
       final grade = Grade.fromFirestore(doc);
       if (grade.gradedAt == null) continue;
-      
+
       final dateKey = DateTime(
         grade.gradedAt!.year,
         grade.gradedAt!.month,
         grade.gradedAt!.day,
       );
-      
+
       gradesByDate[dateKey] ??= [];
       gradesByDate[dateKey]!.add(grade.percentage);
     }
-    
+
     final trends = <GradeTrend>[];
     gradesByDate.forEach((date, grades) {
       final average = grades.reduce((a, b) => a + b) / grades.length;
@@ -453,7 +473,7 @@ class GradeAnalyticsService {
         assignmentCount: grades.length,
       ));
     });
-    
+
     return trends;
   }
 }

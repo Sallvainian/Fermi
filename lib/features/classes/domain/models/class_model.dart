@@ -1,5 +1,5 @@
 /// Class model for managing educational classes and courses.
-/// 
+///
 /// This module contains the data model for classes, representing
 /// the courses taught by teachers and attended by students in
 /// the education management system.
@@ -8,14 +8,14 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Core class model representing an educational class or course.
-/// 
+///
 /// This model encapsulates all data related to a class, including:
 /// - Basic information (name, subject, grade level)
 /// - Teacher and student associations
 /// - Scheduling and location details
 /// - Academic period information
 /// - Configuration settings
-/// 
+///
 /// Classes serve as the primary organizational unit for:
 /// - Assignment distribution
 /// - Grade tracking
@@ -24,55 +24,55 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ClassModel {
   /// Unique identifier for the class
   final String id;
-  
+
   /// ID of the teacher who manages this class
   final String teacherId;
-  
+
   /// Display name of the class (e.g., "Advanced Mathematics")
   final String name;
-  
+
   /// Subject area of the class (e.g., "Mathematics", "Science")
   final String subject;
-  
+
   /// Optional detailed description of the class content and objectives
   final String? description;
-  
+
   /// Grade level for the class (e.g., "10", "11-12", "AP")
   final String gradeLevel;
-  
+
   /// Physical classroom location (e.g., "Room 201", "Lab A")
   final String? room;
-  
+
   /// Class meeting schedule (e.g., "MWF 10:00-11:00 AM")
   final String? schedule;
-  
+
   /// List of student IDs enrolled in this class
   final List<String> studentIds;
-  
+
   /// Optional URL to the class syllabus document
   final String? syllabusUrl;
-  
+
   /// Timestamp when the class was created
   final DateTime createdAt;
-  
+
   /// Timestamp of last modification (null if never updated)
   final DateTime? updatedAt;
-  
+
   /// Whether the class is currently active
   final bool isActive;
-  
+
   /// Academic year for the class (e.g., "2023-2024")
   final String academicYear;
-  
+
   /// Semester or term (e.g., "Fall", "Spring", "Q1")
   final String semester;
-  
+
   /// Optional maximum number of students allowed in the class
   final int? maxStudents;
-  
+
   /// Unique enrollment code for students to join the class
   final String? enrollmentCode;
-  
+
   /// Flexible settings map for class-specific configurations
   final Map<String, dynamic>? settings;
 
@@ -98,24 +98,24 @@ class ClassModel {
   });
 
   /// Factory constructor to create ClassModel from Firestore document.
-  /// 
+  ///
   /// Handles data parsing and type conversions including:
   /// - Timestamp to DateTime conversions
   /// - List casting for student IDs
   /// - Null safety for optional fields
   /// - Default values for required fields
-  /// 
+  ///
   /// @param doc Firestore document snapshot containing class data
   /// @return Parsed ClassModel instance
   factory ClassModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     // Safe timestamp parsing with fallback
     DateTime parseTimestamp(dynamic value, {DateTime? fallback}) {
       if (value == null) {
         return fallback ?? DateTime.now();
       }
-      
+
       try {
         if (value is Timestamp) {
           return value.toDate();
@@ -132,7 +132,7 @@ class ClassModel {
         return fallback ?? DateTime.now();
       }
     }
-    
+
     try {
       return ClassModel(
         id: doc.id,
@@ -146,8 +146,8 @@ class ClassModel {
         studentIds: List<String>.from(data['studentIds'] ?? []),
         syllabusUrl: data['syllabusUrl'],
         createdAt: parseTimestamp(data['createdAt']),
-        updatedAt: data['updatedAt'] != null 
-            ? parseTimestamp(data['updatedAt']) 
+        updatedAt: data['updatedAt'] != null
+            ? parseTimestamp(data['updatedAt'])
             : null,
         isActive: data['isActive'] ?? true,
         academicYear: data['academicYear'] ?? '2024-2025',
@@ -161,7 +161,7 @@ class ClassModel {
       // Error: $e
       // Document ID: ${doc.id}
       // Data: $data
-      
+
       // Return a minimal valid ClassModel to prevent crashes
       return ClassModel(
         id: doc.id,
@@ -179,12 +179,12 @@ class ClassModel {
   }
 
   /// Converts the ClassModel instance to a Map for Firestore storage.
-  /// 
+  ///
   /// Serializes all class data for persistence, including:
   /// - DateTime fields to Firestore Timestamps
   /// - Null checks for optional fields
   /// - Direct storage of complex types (lists, maps)
-  /// 
+  ///
   /// @return Map containing all class data ready for Firestore
   Map<String, dynamic> toFirestore() {
     return {
@@ -209,16 +209,16 @@ class ClassModel {
   }
 
   /// Creates a copy of the ClassModel with updated fields.
-  /// 
+  ///
   /// Follows the immutable data pattern, allowing selective field updates
   /// while preserving all other values. Useful for:
   /// - Updating class details
   /// - Adding/removing students
   /// - Changing scheduling information
   /// - Modifying settings
-  /// 
+  ///
   /// All parameters are optional - only provided fields will be updated.
-  /// 
+  ///
   /// @return New ClassModel instance with updated fields
   ClassModel copyWith({
     String? id,
@@ -261,11 +261,11 @@ class ClassModel {
       settings: settings ?? this.settings,
     );
   }
-  
+
   /// Gets the current number of students enrolled in the class.
   /// @return Count of students in the studentIds list
   int get studentCount => studentIds.length;
-  
+
   /// Checks if the class has reached its maximum capacity.
   /// @return true if class is at or above max capacity, false otherwise
   bool get isFull => maxStudents != null && studentCount >= maxStudents!;

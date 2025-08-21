@@ -29,7 +29,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
       duration: const Duration(seconds: 1),
       vsync: this,
     )..repeat(reverse: true);
-    
+
     _scaleAnimation = Tween<double>(
       begin: 0.95,
       end: 1.05,
@@ -73,7 +73,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
   @override
   Widget build(BuildContext context) {
     final isVideoCall = widget.call.type == CallType.video;
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -108,7 +108,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                   ),
                 ],
               ),
-              
+
               // Caller info
               Column(
                 children: [
@@ -118,7 +118,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                       radius: 80,
                       backgroundColor: Colors.white24,
                       backgroundImage: widget.call.callerPhotoUrl.isNotEmpty
-                          ? CachedNetworkImageProvider(widget.call.callerPhotoUrl)
+                          ? CachedNetworkImageProvider(
+                              widget.call.callerPhotoUrl)
                           : null,
                       child: widget.call.callerPhotoUrl.isEmpty
                           ? Text(
@@ -145,7 +146,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                   ),
                 ],
               ),
-              
+
               // Action buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -165,7 +166,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                       onPressed: _rejectCall,
                     ),
                   ),
-                  
+
                   // Accept button
                   Container(
                     width: 80,

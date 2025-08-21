@@ -18,7 +18,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -57,7 +57,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
     final displayName = '$firstName $lastName'.trim();
-    
+
     // First sign up with email and password
     await authProvider.signUpWithEmailOnly(
       _emailController.text.trim(),
@@ -82,7 +82,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -93,7 +93,8 @@ class _SignupScreenState extends State<SignupScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 48.0), // Extra bottom padding
+            padding: const EdgeInsets.fromLTRB(
+                24.0, 24.0, 24.0, 48.0), // Extra bottom padding
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
@@ -206,7 +207,8 @@ class _SignupScreenState extends State<SignupScreen> {
                                 : Icons.visibility_off_outlined),
                             onPressed: () {
                               setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
                               });
                             },
                           ),

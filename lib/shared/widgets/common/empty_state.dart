@@ -27,10 +27,11 @@ class EmptyState extends StatelessWidget {
     this.actionLabel = 'Create Class',
     this.onAction,
     this.isLoading = false,
-  }) : icon = Icons.class_,
-       title = 'No Classes Yet',
-       message = 'Create your first class to start managing students and assignments.',
-       customIcon = null;
+  })  : icon = Icons.class_,
+        title = 'No Classes Yet',
+        message =
+            'Create your first class to start managing students and assignments.',
+        customIcon = null;
 
   /// Empty state for when no students are available
   const EmptyState.noStudents({
@@ -38,10 +39,11 @@ class EmptyState extends StatelessWidget {
     this.actionLabel = 'Add Student',
     this.onAction,
     this.isLoading = false,
-  }) : icon = Icons.person_add,
-       title = 'No Students Yet',
-       message = 'Add students to this class to start tracking their progress.',
-       customIcon = null;
+  })  : icon = Icons.person_add,
+        title = 'No Students Yet',
+        message =
+            'Add students to this class to start tracking their progress.',
+        customIcon = null;
 
   /// Empty state for when no assignments are available
   const EmptyState.noAssignments({
@@ -49,10 +51,10 @@ class EmptyState extends StatelessWidget {
     this.actionLabel = 'Create Assignment',
     this.onAction,
     this.isLoading = false,
-  }) : icon = Icons.assignment,
-       title = 'No Assignments Yet',
-       message = 'Create assignments to track student progress and grades.',
-       customIcon = null;
+  })  : icon = Icons.assignment,
+        title = 'No Assignments Yet',
+        message = 'Create assignments to track student progress and grades.',
+        customIcon = null;
 
   /// Empty state for when no grades are available
   const EmptyState.noGrades({
@@ -60,10 +62,11 @@ class EmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.isLoading = false,
-  }) : icon = Icons.grade,
-       title = 'No Grades Yet',
-       message = 'Grades will appear here once assignments are submitted and graded.',
-       customIcon = null;
+  })  : icon = Icons.grade,
+        title = 'No Grades Yet',
+        message =
+            'Grades will appear here once assignments are submitted and graded.',
+        customIcon = null;
 
   /// Empty state for when no messages are available
   const EmptyState.noMessages({
@@ -71,10 +74,10 @@ class EmptyState extends StatelessWidget {
     this.actionLabel = 'Start Conversation',
     this.onAction,
     this.isLoading = false,
-  }) : icon = Icons.message,
-       title = 'No Messages',
-       message = 'Start a conversation with students or parents.',
-       customIcon = null;
+  })  : icon = Icons.message,
+        title = 'No Messages',
+        message = 'Start a conversation with students or parents.',
+        customIcon = null;
 
   /// Empty state for search results
   const EmptyState.noSearchResults({
@@ -83,10 +86,11 @@ class EmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.isLoading = false,
-  }) : icon = Icons.search_off,
-       title = 'No Results Found',
-       message = 'No results found for "$searchTerm". Try a different search term.',
-       customIcon = null;
+  })  : icon = Icons.search_off,
+        title = 'No Results Found',
+        message =
+            'No results found for "$searchTerm". Try a different search term.',
+        customIcon = null;
 
   @override
   Widget build(BuildContext context) {
@@ -120,11 +124,12 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            customIcon ?? Icon(
-              icon,
-              size: 80,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-            ),
+            customIcon ??
+                Icon(
+                  icon,
+                  size: 80,
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
             const SizedBox(height: 24),
             Text(
               title,

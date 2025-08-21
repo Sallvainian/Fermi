@@ -12,14 +12,15 @@ class JeopardyScreen extends StatefulWidget {
   State<JeopardyScreen> createState() => _JeopardyScreenState();
 }
 
-class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProviderStateMixin {
+class _JeopardyScreenState extends State<JeopardyScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 0);
-    
+
     // Initialize the Jeopardy provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<JeopardyProvider>().initialize();
@@ -83,7 +84,7 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (provider.error != null) {
           return Center(
             child: Column(
@@ -101,42 +102,48 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
             ),
           );
         }
-        
+
         final myGames = provider.teacherGames;
-        
+
         if (myGames.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.grid_view_rounded,
-              size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.grid_view_rounded,
+                  size: 64,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No games created yet',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Create your first Jeopardy game',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withValues(alpha: 0.7),
+                      ),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: _createNewGame,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create Game'),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'No games created yet',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create your first Jeopardy game',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _createNewGame,
-              icon: const Icon(Icons.add),
-              label: const Text('Create Game'),
-            ),
-          ],
-        ),
-      );
+          );
         }
 
         return ListView.builder(
@@ -154,9 +161,9 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         final publicGames = provider.publicGames;
-        
+
         if (publicGames.isEmpty) {
           return const Center(
             child: Text('No public games available'),
@@ -180,7 +187,7 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
 
   Widget _buildGameCard(JeopardyGame game) {
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -227,7 +234,8 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
                     Text(
                       'Updated ${_formatDate(game.updatedAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurfaceVariant
+                            .withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -240,7 +248,8 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'play', child: Text('Play')),
                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                  const PopupMenuItem(value: 'duplicate', child: Text('Duplicate')),
+                  const PopupMenuItem(
+                      value: 'duplicate', child: Text('Duplicate')),
                   PopupMenuItem(
                     value: 'share',
                     child: Text(game.isPublic ? 'Make Private' : 'Make Public'),
@@ -317,16 +326,16 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
               final navigator = Navigator.of(context);
               final provider = context.read<JeopardyProvider>();
               final scaffoldMessenger = ScaffoldMessenger.of(context);
-              
+
               navigator.pop();
               final success = await provider.deleteGame(game.id);
               if (!mounted) return;
-              
+
               scaffoldMessenger.showSnackBar(
                 SnackBar(
-                  content: Text(success 
-                    ? 'Deleted "${game.title}"' 
-                    : 'Failed to delete game'),
+                  content: Text(success
+                      ? 'Deleted "${game.title}"'
+                      : 'Failed to delete game'),
                   backgroundColor: success ? null : Colors.red,
                 ),
               );
@@ -337,26 +346,26 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
       ),
     );
   }
-  
+
   void _togglePublicStatus(JeopardyGame game) async {
     final provider = context.read<JeopardyProvider>();
     final success = await provider.togglePublicStatus(game.id, !game.isPublic);
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success 
-            ? (game.isPublic ? 'Made private' : 'Made public') 
-            : 'Failed to update game visibility'),
+          content: Text(success
+              ? (game.isPublic ? 'Made private' : 'Made public')
+              : 'Failed to update game visibility'),
           backgroundColor: success ? null : Colors.red,
         ),
       );
     }
   }
-  
+
   void _duplicateGame(JeopardyGame game) async {
     final provider = context.read<JeopardyProvider>();
-    
+
     // Create a copy with a new title
     final duplicatedGame = JeopardyGame(
       id: '',
@@ -368,9 +377,9 @@ class _JeopardyScreenState extends State<JeopardyScreen> with SingleTickerProvid
       updatedAt: DateTime.now(),
       isPublic: false,
     );
-    
+
     final gameId = await provider.createGame(duplicatedGame);
-    
+
     if (mounted) {
       if (gameId != null) {
         ScaffoldMessenger.of(context).showSnackBar(

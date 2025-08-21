@@ -162,7 +162,8 @@ class NavigationService {
         return List<String>.from(json.decode(favoritesJson));
       }
     } catch (e) {
-      LoggerService.error('Error loading favorites', tag: 'NavigationService', error: e);
+      LoggerService.error('Error loading favorites',
+          tag: 'NavigationService', error: e);
     }
     return [];
   }
@@ -173,9 +174,11 @@ class NavigationService {
       final prefs = await SharedPreferences.getInstance();
       // Limit to max favorites
       final limitedFavorites = favoriteIds.take(maxFavorites).toList();
-      return await prefs.setString(_favoritesKey, json.encode(limitedFavorites));
+      return await prefs.setString(
+          _favoritesKey, json.encode(limitedFavorites));
     } catch (e) {
-      LoggerService.error('Error saving favorites', tag: 'NavigationService', error: e);
+      LoggerService.error('Error saving favorites',
+          tag: 'NavigationService', error: e);
       return false;
     }
   }

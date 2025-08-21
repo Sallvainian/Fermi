@@ -5,20 +5,20 @@ import 'mixins/pagination_mixin.dart';
 import 'base_repository.dart';
 
 /// Enhanced base repository with pagination support.
-/// 
+///
 /// This abstract class extends the base repository pattern to include
 /// pagination capabilities while maintaining backward compatibility.
 /// All repositories that need pagination should extend this class.
 abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
   /// Enhanced Firestore service with pagination
   late final FirestoreServiceEnhanced<T> _service;
-  
+
   /// Logging tag for this repository
   final String tag;
-  
+
   /// Function to serialize model instances into Firestore data
   late final Map<String, dynamic> Function(T) _toFirestore;
-  
+
   /// Creates an enhanced repository with pagination support
   FirestoreRepositoryEnhanced({
     required FirebaseFirestore firestore,
@@ -30,13 +30,14 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
     _toFirestore = toFirestore;
     _service = FirestoreServiceEnhanced<T>(
       collectionPath: collectionPath,
-      fromFirestore: (DocumentSnapshot doc) => fromFirestore(doc as DocumentSnapshot<Map<String, dynamic>>),
+      fromFirestore: (DocumentSnapshot doc) =>
+          fromFirestore(doc as DocumentSnapshot<Map<String, dynamic>>),
       toFirestore: toFirestore,
     );
   }
-  
+
   /// Get paginated items from the collection.
-  /// 
+  ///
   /// @param pageSize Number of items per page
   /// @param startAfter Optional cursor for pagination
   /// @param orderBy Field to order by
@@ -53,7 +54,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
         'Getting paginated items (pageSize: $pageSize, orderBy: $orderBy)',
         tag: tag,
       );
-      
+
       return await _service.getPaginated(
         pageSize: pageSize,
         startAfter: startAfter,
@@ -69,9 +70,9 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       rethrow;
     }
   }
-  
+
   /// Get paginated stream of items.
-  /// 
+  ///
   /// Returns a stream that emits paginated results whenever
   /// the underlying data changes.
   Stream<PaginatedResult<T>> streamPaginated({
@@ -84,7 +85,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       'Starting paginated stream (pageSize: $pageSize, orderBy: $orderBy)',
       tag: tag,
     );
-    
+
     return _service.streamPaginated(
       pageSize: pageSize,
       startAfter: startAfter,
@@ -92,9 +93,9 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       descending: descending,
     );
   }
-  
+
   /// Query with pagination and filters.
-  /// 
+  ///
   /// Supports complex queries with multiple constraints.
   Future<PaginatedResult<T>> queryPaginated({
     required List<QueryConstraint> constraints,
@@ -106,7 +107,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
         'Executing paginated query (pageSize: $pageSize, constraints: ${constraints.length})',
         tag: tag,
       );
-      
+
       return await _service.queryPaginated(
         constraints: constraints,
         pageSize: pageSize,
@@ -121,9 +122,9 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       rethrow;
     }
   }
-  
+
   // Standard CRUD operations (maintained for compatibility)
-  
+
   /// Create a new document
   Future<String> create(T item) async {
     try {
@@ -134,7 +135,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       rethrow;
     }
   }
-  
+
   /// Read a document by ID
   Future<T?> read(String id) async {
     try {
@@ -145,7 +146,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       rethrow;
     }
   }
-  
+
   /// Update a document
   Future<void> update(String id, T item) async {
     try {
@@ -156,7 +157,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       rethrow;
     }
   }
-  
+
   /// Delete a document
   Future<void> delete(String id) async {
     try {
@@ -167,7 +168,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       rethrow;
     }
   }
-  
+
   /// Get all documents (DEPRECATED - use getPaginated instead)
   @Deprecated('Use getPaginated() for better performance')
   Future<List<T>> getAll() async {
@@ -175,18 +176,18 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       'getAll() is deprecated. Consider using getPaginated() for better performance.',
       tag: tag,
     );
-    
+
     // Load all using pagination internally
     final result = await _service.getAll();
     return result;
   }
-  
+
   /// Stream all documents
   Stream<List<T>> streamAll() {
     LoggerService.info('Starting stream for all documents', tag: tag);
     return _service.query();
   }
-  
+
   /// Query documents
   Future<List<T>> query({
     required String field,
@@ -197,21 +198,21 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
         'Querying documents (field: $field, value: $isEqualTo)',
         tag: tag,
       );
-      
+
       // Use pagination for queries too
       final result = await _service.getPaginated(
         where: field,
         isEqualTo: isEqualTo,
         pageSize: PaginationMixin.maxPageSize,
       );
-      
+
       return result.items;
     } catch (e) {
       LoggerService.error('Failed to query documents', tag: tag, error: e);
       rethrow;
     }
   }
-  
+
   /// Batch write operations
   Future<void> batchWrite(List<BatchOperation<T>> operations) async {
     try {
@@ -219,12 +220,12 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
         'Executing batch write (operations: ${operations.length})',
         tag: tag,
       );
-      
+
       final batch = FirebaseFirestore.instance.batch();
-      
+
       for (final op in operations) {
         final docRef = _service.collection.doc(op.id);
-        
+
         switch (op.type) {
           case BatchOperationType.create:
             batch.set(docRef, _toFirestore(op.data as T));
@@ -237,7 +238,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
             break;
         }
       }
-      
+
       await batch.commit();
       LoggerService.info('Batch write completed successfully', tag: tag);
     } catch (e) {
@@ -245,7 +246,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       rethrow;
     }
   }
-  
+
   @override
   void dispose() {
     LoggerService.info('Disposing repository', tag: tag);
@@ -261,7 +262,7 @@ class BatchOperation<T> {
   final String? id;
   final BatchOperationType type;
   final T? data;
-  
+
   const BatchOperation({
     this.id,
     required this.type,

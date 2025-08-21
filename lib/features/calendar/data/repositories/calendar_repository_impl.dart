@@ -1,5 +1,5 @@
 /// Concrete implementation of the calendar repository.
-/// 
+///
 /// This module implements the CalendarRepository interface using
 /// Firebase Firestore for data persistence, providing full CRUD
 /// operations for calendar events with recurrence support.
@@ -10,7 +10,7 @@ import '../../domain/models/calendar_event.dart';
 import '../../domain/repositories/calendar_repository.dart';
 
 /// Firebase implementation of CalendarRepository.
-/// 
+///
 /// Manages calendar events in Firestore with support for:
 /// - Multiple event types (classes, assignments, meetings, etc.)
 /// - Recurrence patterns for repeating events
@@ -19,42 +19,42 @@ import '../../domain/repositories/calendar_repository.dart';
 class CalendarRepositoryImpl implements CalendarRepository {
   final FirebaseFirestore _firestore;
   static const String _collection = 'calendar_events';
-  
+
   /// Creates repository with Firestore instance.
   CalendarRepositoryImpl(this._firestore);
-  
+
   @override
   Future<CalendarEvent> createEvent(CalendarEvent event) async {
     final docRef = await _firestore.collection(_collection).add(
-      event.toFirestore(),
-    );
-    
+          event.toFirestore(),
+        );
+
     return event.copyWith(id: docRef.id);
   }
-  
+
   @override
   Future<CalendarEvent> updateEvent(CalendarEvent event) async {
     await _firestore.collection(_collection).doc(event.id).update(
-      event.copyWith(updatedAt: DateTime.now()).toFirestore(),
-    );
-    
+          event.copyWith(updatedAt: DateTime.now()).toFirestore(),
+        );
+
     return event.copyWith(updatedAt: DateTime.now());
   }
-  
+
   @override
   Future<void> deleteEvent(String eventId) async {
     await _firestore.collection(_collection).doc(eventId).delete();
   }
-  
+
   @override
   Future<CalendarEvent?> getEvent(String eventId) async {
     final doc = await _firestore.collection(_collection).doc(eventId).get();
-    
+
     if (!doc.exists) return null;
-    
+
     return CalendarEvent.fromFirestore(doc);
   }
-  
+
   @override
   Stream<List<CalendarEvent>> getUserEvents(String userId) {
     // Get events where user is creator or participant
@@ -73,7 +73,7 @@ class CalendarRepositoryImpl implements CalendarRepository {
             .map((doc) => CalendarEvent.fromFirestore(doc))
             .toList());
   }
-  
+
   @override
   Stream<List<CalendarEvent>> getEventsByDateRange(
     String userId,
@@ -86,20 +86,22 @@ class CalendarRepositoryImpl implements CalendarRepository {
         // Check if event or its recurrences fall within range
         if (event.recurrence == RecurrenceType.none) {
           // Single event - check if it's in range
-          return event.startTime.isAfter(startDate.subtract(const Duration(days: 1))) &&
-                 event.startTime.isBefore(endDate.add(const Duration(days: 1)));
+          return event.startTime
+                  .isAfter(startDate.subtract(const Duration(days: 1))) &&
+              event.startTime.isBefore(endDate.add(const Duration(days: 1)));
         } else {
           // Recurring event - check if any instance is in range
           final eventEnd = event.recurrenceEndDate ?? endDate;
-          
+
           // Event starts before range end and ends after range start
-          return event.startTime.isBefore(endDate.add(const Duration(days: 1))) &&
-                 eventEnd.isAfter(startDate.subtract(const Duration(days: 1)));
+          return event.startTime
+                  .isBefore(endDate.add(const Duration(days: 1))) &&
+              eventEnd.isAfter(startDate.subtract(const Duration(days: 1)));
         }
       }).toList();
     });
   }
-  
+
   @override
   Stream<List<CalendarEvent>> getClassEvents(String classId) {
     return _firestore
@@ -112,16 +114,16 @@ class CalendarRepositoryImpl implements CalendarRepository {
             .map((doc) => CalendarEvent.fromFirestore(doc))
             .toList());
   }
-  
+
   @override
   Stream<List<CalendarEvent>> getEventsByType(
     String userId,
     EventType type,
   ) {
-    return getUserEvents(userId).map((events) =>
-        events.where((event) => event.type == type).toList());
+    return getUserEvents(userId)
+        .map((events) => events.where((event) => event.type == type).toList());
   }
-  
+
   @override
   Stream<List<CalendarEvent>> getUpcomingEvents(
     String userId,
@@ -129,10 +131,10 @@ class CalendarRepositoryImpl implements CalendarRepository {
   ) {
     final now = DateTime.now();
     final endDate = now.add(Duration(days: daysAhead));
-    
+
     return getEventsByDateRange(userId, now, endDate);
   }
-  
+
   @override
   Future<List<CalendarEvent>> getEventsForDate(
     String userId,
@@ -149,15 +151,14 @@ class CalendarRepositoryImpl implements CalendarRepository {
           ),
         )
         .get();
-    
-    final events = snapshot.docs
-        .map((doc) => CalendarEvent.fromFirestore(doc))
-        .toList();
-    
+
+    final events =
+        snapshot.docs.map((doc) => CalendarEvent.fromFirestore(doc)).toList();
+
     // Filter events that occur on the specified date
     return events.where((event) => event.occursOn(date)).toList();
   }
-  
+
   @override
   Future<void> addParticipant(String eventId, String participantId) async {
     await _firestore.collection(_collection).doc(eventId).update({
@@ -165,7 +166,7 @@ class CalendarRepositoryImpl implements CalendarRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
-  
+
   @override
   Future<void> removeParticipant(String eventId, String participantId) async {
     await _firestore.collection(_collection).doc(eventId).update({
@@ -173,27 +174,27 @@ class CalendarRepositoryImpl implements CalendarRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
-  
+
   @override
   Future<List<String>> getEventParticipants(String eventId) async {
     final doc = await _firestore.collection(_collection).doc(eventId).get();
-    
+
     if (!doc.exists) return [];
-    
+
     final data = doc.data() as Map<String, dynamic>;
     return List<String>.from(data['participantIds'] ?? []);
   }
-  
+
   @override
   Future<bool> canEditEvent(String userId, String eventId) async {
     final event = await getEvent(eventId);
-    
+
     if (event == null) return false;
-    
+
     // User can edit if they are the creator
     return event.createdBy == userId;
   }
-  
+
   @override
   Stream<List<CalendarEvent>> getEventsNeedingReminders(
     DateTime fromTime,
@@ -207,17 +208,16 @@ class CalendarRepositoryImpl implements CalendarRepository {
         .where('startTime', isLessThanOrEqualTo: Timestamp.fromDate(toTime))
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => CalendarEvent.fromFirestore(doc))
-            .where((event) {
+                .map((doc) => CalendarEvent.fromFirestore(doc))
+                .where((event) {
               if (event.reminderMinutes == null) return false;
-              
+
               final reminderTime = event.startTime.subtract(
                 Duration(minutes: event.reminderMinutes!),
               );
-              
+
               return reminderTime.isAfter(fromTime) &&
-                     reminderTime.isBefore(toTime);
-            })
-            .toList());
+                  reminderTime.isBefore(toTime);
+            }).toList());
   }
 }

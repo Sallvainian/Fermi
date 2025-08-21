@@ -1,8 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum CallType { voice, video }
+
 enum CallStatus { ringing, accepted, rejected, ended, missed }
-enum CallState { idle, calling, ringing, connecting, connected, reconnecting, error }
+
+enum CallState {
+  idle,
+  calling,
+  ringing,
+  connecting,
+  connected,
+  reconnecting,
+  error
+}
 
 class Call {
   final String id;
@@ -55,13 +65,13 @@ class Call {
         orElse: () => CallStatus.ended,
       ),
       startedAt: (map['startedAt'] as Timestamp).toDate(),
-      endedAt: map['endedAt'] != null 
-          ? (map['endedAt'] as Timestamp).toDate() 
+      endedAt: map['endedAt'] != null
+          ? (map['endedAt'] as Timestamp).toDate()
           : null,
       duration: map['duration'],
       chatRoomId: map['chatRoomId'],
-      expireAt: map['expireAt'] != null 
-          ? (map['expireAt'] as Timestamp).toDate() 
+      expireAt: map['expireAt'] != null
+          ? (map['expireAt'] as Timestamp).toDate()
           : null,
     );
   }

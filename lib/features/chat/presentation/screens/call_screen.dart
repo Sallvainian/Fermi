@@ -83,12 +83,14 @@ class _CallScreenState extends State<CallScreen> {
                       shape: BoxShape.circle,
                       color: Colors.grey[800],
                     ),
-                    child: widget.receiverPhotoUrl != null && widget.receiverPhotoUrl!.isNotEmpty
+                    child: widget.receiverPhotoUrl != null &&
+                            widget.receiverPhotoUrl!.isNotEmpty
                         ? ClipOval(
                             child: CachedNetworkImage(
                               imageUrl: widget.receiverPhotoUrl!,
                               fit: BoxFit.cover,
-                              placeholder: (context, url) => const CircularProgressIndicator(),
+                              placeholder: (context, url) =>
+                                  const CircularProgressIndicator(),
                               errorWidget: (context, url, error) => const Icon(
                                 Icons.person,
                                 size: 80,
@@ -113,7 +115,9 @@ class _CallScreenState extends State<CallScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isConnecting ? 'Connecting...' : 'Video calling coming soon',
+                    _isConnecting
+                        ? 'Connecting...'
+                        : 'Video calling coming soon',
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
@@ -158,13 +162,15 @@ class _CallScreenState extends State<CallScreen> {
                   // Video toggle button (for video calls)
                   if (widget.isVideoCall)
                     _buildControlButton(
-                      icon: _isVideoEnabled ? Icons.videocam : Icons.videocam_off,
+                      icon:
+                          _isVideoEnabled ? Icons.videocam : Icons.videocam_off,
                       onPressed: () {
                         setState(() {
                           _isVideoEnabled = !_isVideoEnabled;
                         });
                       },
-                      backgroundColor: _isVideoEnabled ? Colors.white12 : Colors.white24,
+                      backgroundColor:
+                          _isVideoEnabled ? Colors.white12 : Colors.white24,
                     )
                   else
                     // Speaker button (for voice calls)
@@ -175,7 +181,8 @@ class _CallScreenState extends State<CallScreen> {
                           _isSpeakerOn = !_isSpeakerOn;
                         });
                       },
-                      backgroundColor: _isSpeakerOn ? Colors.white24 : Colors.white12,
+                      backgroundColor:
+                          _isSpeakerOn ? Colors.white24 : Colors.white12,
                     ),
                 ],
               ),

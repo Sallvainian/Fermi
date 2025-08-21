@@ -19,7 +19,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final ImagePicker _picker = ImagePicker();
-  
+
   // User Preferences
   bool _darkMode = false;
   bool _pushNotifications = true;
@@ -27,16 +27,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _language = 'English';
   String _timeZone = 'America/New_York';
   String _dateFormat = 'MM/dd/yyyy';
-  
+
   // Privacy Settings
   bool _crashReporting = true;
-  
+
   // Academic Settings
   bool _gradeNotifications = true;
   bool _assignmentReminders = true;
   bool _attendanceAlerts = true;
   String _defaultView = 'Dashboard';
-  
+
   // Security Settings
   bool _biometricAuth = false;
   bool _autoLock = true;
@@ -67,9 +67,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // User Profile Section
             _buildProfileSection(),
-            
+
             const SizedBox(height: 24),
-            
+
             // Appearance Settings
             _buildSettingsSection(
               title: 'Appearance',
@@ -111,9 +111,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Notification Settings
             _buildSettingsSection(
               title: 'Notifications',
@@ -177,9 +177,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Academic Settings
             _buildSettingsSection(
               title: 'Academic',
@@ -223,9 +223,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Security & Privacy
             _buildSettingsSection(
               title: 'Security & Privacy',
@@ -257,11 +257,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: 'Time before auto lock activates',
                   value: _autoLockTime,
                   items: ['1 minute', '5 minutes', '10 minutes', '30 minutes'],
-                  onChanged: _autoLock ? (value) {
-                    setState(() {
-                      _autoLockTime = value!;
-                    });
-                  } : null,
+                  onChanged: _autoLock
+                      ? (value) {
+                          setState(() {
+                            _autoLockTime = value!;
+                          });
+                        }
+                      : null,
                 ),
                 _buildActionTile(
                   title: 'Change Password',
@@ -277,9 +279,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Data & Storage
             _buildSettingsSection(
               title: 'Data & Storage',
@@ -309,9 +311,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Support & About
             _buildSettingsSection(
               title: 'Support & About',
@@ -331,9 +333,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Account Actions
             _buildSettingsSection(
               title: 'Account',
@@ -346,9 +348,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: _showSignOutDialog,
                   isDestructive: true,
                 ),
+                _buildActionTile(
+                  title: 'Delete Account',
+                  subtitle: 'Permanently delete your account and all data',
+                  icon: Icons.delete_forever,
+                  onTap: _showDeleteAccountDialog,
+                  isDestructive: true,
+                ),
               ],
             ),
-            
+
             const SizedBox(height: 32),
           ],
         ),
@@ -359,7 +368,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildProfileSection() {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.userModel;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -374,9 +383,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           CircleAvatar(
             radius: 30,
             backgroundColor: Theme.of(context).colorScheme.primary,
-            backgroundImage: user?.photoURL != null && user!.photoURL!.isNotEmpty
-                ? CachedNetworkImageProvider(user.photoURL!)
-                : null,
+            backgroundImage:
+                user?.photoURL != null && user!.photoURL!.isNotEmpty
+                    ? CachedNetworkImageProvider(user.photoURL!)
+                    : null,
             child: user?.photoURL == null || user!.photoURL!.isEmpty
                 ? const Icon(
                     Icons.person,
@@ -393,22 +403,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Text(
                   user?.displayName ?? 'User',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 Text(
                   user?.email ?? '',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   user?.role.toString().split('.').last.toUpperCase() ?? 'USER',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
               ],
             ),
@@ -449,9 +459,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
               ),
             ],
           ),
@@ -461,7 +471,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              color:
+                  Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
@@ -500,10 +511,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       subtitle: Text(subtitle),
       trailing: DropdownButton<String>(
         value: value,
-        items: items.map((item) => DropdownMenuItem(
-          value: item,
-          child: Text(item),
-        )).toList(),
+        items: items
+            .map((item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(item),
+                ))
+            .toList(),
         onChanged: onChanged,
         underline: const SizedBox(),
       ),
@@ -520,7 +533,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       leading: Icon(
         icon,
-        color: isDestructive ? Colors.red : Theme.of(context).colorScheme.onSurfaceVariant,
+        color: isDestructive
+            ? Colors.red
+            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       title: Text(
         title,
@@ -627,7 +642,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-
   void _showFeedbackDialog() {
     showDialog(
       context: context,
@@ -692,7 +706,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       children: const [
-        Text('A comprehensive educational management platform for students and teachers.'),
+        Text(
+            'A comprehensive educational management platform for students and teachers.'),
         SizedBox(height: 16),
         Text('Built with Flutter and Firebase.'),
       ],
@@ -726,6 +741,199 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Are you sure you want to permanently delete your account?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Text('This action cannot be undone and will:'),
+            SizedBox(height: 8),
+            Text('• Delete all your personal data'),
+            Text('• Remove all your courses and grades'),
+            Text('• Cancel any active subscriptions'),
+            Text('• Sign you out permanently'),
+            SizedBox(height: 16),
+            Text(
+              'You may need to re-authenticate to confirm this action.',
+              style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              _confirmDeleteAccount();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    // Show re-authentication dialog
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.firebaseUser;
+    
+    if (user == null) return;
+    
+    // Check if user signed in with Apple
+    bool isAppleUser = user.providerData.any((info) => info.providerId == 'apple.com');
+    bool isGoogleUser = user.providerData.any((info) => info.providerId == 'google.com');
+    
+    if (isAppleUser) {
+      // Re-authenticate with Apple
+      try {
+        await authProvider.reauthenticateWithApple();
+        await _deleteAccount();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Re-authentication failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } else if (isGoogleUser) {
+      // Re-authenticate with Google
+      try {
+        await authProvider.reauthenticateWithGoogle();
+        await _deleteAccount();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Re-authentication failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } else {
+      // Re-authenticate with email/password
+      _showReauthenticationDialog();
+    }
+  }
+
+  void _showReauthenticationDialog() {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Your Identity'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Please enter your credentials to confirm account deletion.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+              ),
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final authProvider = context.read<AuthProvider>();
+              
+              try {
+                await authProvider.reauthenticateWithEmail(
+                  emailController.text.trim(),
+                  passwordController.text,
+                );
+                await _deleteAccount();
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Re-authentication failed: ${e.toString()}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Confirm & Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    try {
+      final authProvider = context.read<AuthProvider>();
+      
+      // Show loading
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Deleting account...'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
+      await authProvider.deleteAccount();
+      
+      // Account deleted successfully - the user will be automatically signed out
+      // and redirected to login by the auth provider
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete account: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _showFeatureComingSoon() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -733,7 +941,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  
+
   void _showProfilePictureOptions() {
     showModalBottomSheet(
       context: context,
@@ -771,7 +979,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(source: source);
@@ -788,14 +996,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-  
+
   Future<void> _uploadProfilePicture(XFile image) async {
     try {
       final authProvider = context.read<AuthProvider>();
       final user = authProvider.userModel;
-      
+
       if (user == null) return;
-      
+
       // Show loading
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -803,7 +1011,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           duration: Duration(seconds: 2),
         ),
       );
-      
+
       // Create a reference to Firebase Storage
       final storageRef = FirebaseStorage.instance
           .ref()
@@ -811,17 +1019,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .child(user.uid)
           .child('profile')
           .child('avatar.jpg');
-      
+
       // Upload the file
       final file = File(image.path);
       await storageRef.putFile(file);
-      
+
       // Get the download URL
       final downloadUrl = await storageRef.getDownloadURL();
-      
+
       // Update user profile with new photo URL
       await authProvider.updateProfilePicture(downloadUrl);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -839,14 +1047,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-  
+
   Future<void> _removeProfilePicture() async {
     try {
       final authProvider = context.read<AuthProvider>();
       final user = authProvider.userModel;
-      
+
       if (user == null || user.photoURL == null) return;
-      
+
       // Show loading
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -854,7 +1062,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           duration: Duration(seconds: 2),
         ),
       );
-      
+
       // Delete from Firebase Storage
       final storageRef = FirebaseStorage.instance
           .ref()
@@ -862,17 +1070,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           .child(user.uid)
           .child('profile')
           .child('avatar.jpg');
-      
+
       try {
         await storageRef.delete();
       } catch (e) {
         // File might not exist, continue with profile update
       }
-      
-      // Update user profile to remove photo URL  
+
+      // Update user profile to remove photo URL
       // Note: photoURL is not directly updateable through updateProfile
       // This would need to be handled through a separate method or database update
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -890,13 +1098,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-  
+
   void _showEditProfileDialog() {
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.userModel;
     final firstNameController = TextEditingController(text: user?.firstName);
     final lastNameController = TextEditingController(text: user?.lastName);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -931,21 +1139,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               final firstName = firstNameController.text.trim();
               final lastName = lastNameController.text.trim();
-              
+
               if (firstName.isNotEmpty || lastName.isNotEmpty) {
                 final displayName = '$firstName $lastName'.trim();
-                
+
                 final authProvider = context.read<AuthProvider>();
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
-                
+
                 await authProvider.updateProfile(
                   displayName: displayName,
                   firstName: firstName,
                   lastName: lastName,
                 );
-                
+
                 if (!mounted) return;
-                
+
                 scaffoldMessenger.showSnackBar(
                   const SnackBar(
                     content: Text('Profile updated successfully!'),
@@ -966,10 +1174,12 @@ class AdvancedNotificationSettingsSheet extends StatefulWidget {
   const AdvancedNotificationSettingsSheet({super.key});
 
   @override
-  State<AdvancedNotificationSettingsSheet> createState() => _AdvancedNotificationSettingsSheetState();
+  State<AdvancedNotificationSettingsSheet> createState() =>
+      _AdvancedNotificationSettingsSheetState();
 }
 
-class _AdvancedNotificationSettingsSheetState extends State<AdvancedNotificationSettingsSheet> {
+class _AdvancedNotificationSettingsSheetState
+    extends State<AdvancedNotificationSettingsSheet> {
   bool _quietHours = true;
   String _quietStart = '22:00';
   String _quietEnd = '08:00';
@@ -997,7 +1207,8 @@ class _AdvancedNotificationSettingsSheetState extends State<AdvancedNotification
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color:
+                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1028,7 +1239,8 @@ class _AdvancedNotificationSettingsSheetState extends State<AdvancedNotification
               children: [
                 SwitchListTile(
                   title: const Text('Quiet Hours'),
-                  subtitle: const Text('Disable notifications during specified hours'),
+                  subtitle: const Text(
+                      'Disable notifications during specified hours'),
                   value: _quietHours,
                   onChanged: (value) {
                     setState(() {
@@ -1130,7 +1342,8 @@ class _AdvancedNotificationSettingsSheetState extends State<AdvancedNotification
     );
 
     if (picked != null) {
-      final formattedTime = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      final formattedTime =
+          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
       setState(() {
         if (isStart) {
           _quietStart = formattedTime;
@@ -1154,17 +1367,19 @@ class _AdvancedNotificationSettingsSheetState extends State<AdvancedNotification
             'Chime',
             'Ding',
             'None',
-          ].map((sound) => CustomRadioListTile<String>(
-            title: Text(sound),
-            value: sound,
-            groupValue: _notificationSound,
-            onChanged: (value) {
-              setState(() {
-                _notificationSound = value!;
-              });
-              Navigator.pop(context);
-            },
-          )).toList(),
+          ]
+              .map((sound) => CustomRadioListTile<String>(
+                    title: Text(sound),
+                    value: sound,
+                    groupValue: _notificationSound,
+                    onChanged: (value) {
+                      setState(() {
+                        _notificationSound = value!;
+                      });
+                      Navigator.pop(context);
+                    },
+                  ))
+              .toList(),
         ),
         actions: [
           TextButton(

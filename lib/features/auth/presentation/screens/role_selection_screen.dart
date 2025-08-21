@@ -46,11 +46,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Complete Your Profile'),
@@ -92,12 +91,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Display student info
                     ListTile(
                       leading: const Icon(Icons.school),
                       title: const Text('Student Account'),
-                      subtitle: const Text('Access your assignments, grades, and chat with your teacher'),
+                      subtitle: const Text(
+                          'Access your assignments, grades, and chat with your teacher'),
                     ),
                   ],
                 ),

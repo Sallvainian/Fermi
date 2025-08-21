@@ -556,7 +556,8 @@ class _HintBarState extends State<_HintBar>
         return Container(
           width: double.infinity,
           height: 3,
-          color: theme.colorScheme.primary.withAlpha((255 * _animation.value).round()),
+          color: theme.colorScheme.primary
+              .withAlpha((255 * _animation.value).round()),
         );
       },
     );

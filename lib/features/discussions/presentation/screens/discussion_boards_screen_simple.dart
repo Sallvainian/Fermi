@@ -12,10 +12,12 @@ class SimpleDiscussionBoardsScreen extends StatefulWidget {
   const SimpleDiscussionBoardsScreen({super.key});
 
   @override
-  State<SimpleDiscussionBoardsScreen> createState() => _SimpleDiscussionBoardsScreenState();
+  State<SimpleDiscussionBoardsScreen> createState() =>
+      _SimpleDiscussionBoardsScreenState();
 }
 
-class _SimpleDiscussionBoardsScreenState extends State<SimpleDiscussionBoardsScreen> {
+class _SimpleDiscussionBoardsScreenState
+    extends State<SimpleDiscussionBoardsScreen> {
   @override
   void initState() {
     super.initState();
@@ -28,7 +30,8 @@ class _SimpleDiscussionBoardsScreenState extends State<SimpleDiscussionBoardsScr
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SimpleDiscussionProvider>();
-    final isTeacher = context.watch<AuthProvider>().userModel?.role == UserRole.teacher;
+    final isTeacher =
+        context.watch<AuthProvider>().userModel?.role == UserRole.teacher;
 
     return AdaptiveLayout(
       title: 'Discussion Boards',
@@ -177,15 +180,18 @@ class _BoardCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          LoggerService.debug('Board clicked - ID: ${board.id}, Title: ${board.title}', tag: 'SimpleDiscussionBoardsScreen');
-          
+          LoggerService.debug(
+              'Board clicked - ID: ${board.id}, Title: ${board.title}',
+              tag: 'SimpleDiscussionBoardsScreen');
+
           // Select the board in provider
           context.read<SimpleDiscussionProvider>().selectBoard(board);
-          
+
           // Navigate to board detail
           final route = '/discussions/${board.id}';
-          LoggerService.debug('Navigating to: $route', tag: 'SimpleDiscussionBoardsScreen');
-          
+          LoggerService.debug('Navigating to: $route',
+              tag: 'SimpleDiscussionBoardsScreen');
+
           // Use push instead of go to properly navigate
           context.push(route);
         },
@@ -258,12 +264,14 @@ class _BoardCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,
-                  children: board.tags.map((tag) => Chip(
-                    label: Text(tag),
-                    labelStyle: theme.textTheme.labelSmall,
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                  )).toList(),
+                  children: board.tags
+                      .map((tag) => Chip(
+                            label: Text(tag),
+                            labelStyle: theme.textTheme.labelSmall,
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                          ))
+                      .toList(),
                 ),
               ],
             ],

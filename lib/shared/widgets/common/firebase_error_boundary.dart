@@ -1,5 +1,5 @@
 /// A widget that wraps content and handles Firebase errors globally.
-/// 
+///
 /// This widget acts as an error boundary for Firebase operations,
 /// catching and displaying errors in a user-friendly way.
 library;
@@ -9,14 +9,14 @@ import 'package:firebase_core/firebase_core.dart';
 import '../../services/error_handler_service.dart';
 
 /// Wraps child widgets to catch and handle Firebase errors.
-/// 
+///
 /// This widget creates an error boundary that catches Firebase
 /// exceptions that bubble up from child widgets and displays
 /// them using the ErrorHandlerService.
 class FirebaseErrorBoundary extends StatefulWidget {
   final Widget child;
   final VoidCallback? onRetry;
-  
+
   const FirebaseErrorBoundary({
     super.key,
     required this.child,
@@ -30,7 +30,7 @@ class FirebaseErrorBoundary extends StatefulWidget {
 class _FirebaseErrorBoundaryState extends State<FirebaseErrorBoundary> {
   bool _hasError = false;
   dynamic _error;
-  
+
   @override
   void initState() {
     super.initState();
@@ -38,14 +38,14 @@ class _FirebaseErrorBoundaryState extends State<FirebaseErrorBoundary> {
     _hasError = false;
     _error = null;
   }
-  
+
   void _handleError(dynamic error) {
     setState(() {
       _hasError = true;
       _error = error;
     });
   }
-  
+
   void _retry() {
     setState(() {
       _hasError = false;
@@ -53,24 +53,24 @@ class _FirebaseErrorBoundaryState extends State<FirebaseErrorBoundary> {
     });
     widget.onRetry?.call();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
       return _buildErrorWidget(context);
     }
-    
+
     // Wrap child in error handler
     return ErrorBoundary(
       onError: _handleError,
       child: widget.child,
     );
   }
-  
+
   Widget _buildErrorWidget(BuildContext context) {
     final theme = Theme.of(context);
     final isPermissionError = ErrorHandlerService.isPermissionError(_error);
-    
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -114,13 +114,13 @@ class _FirebaseErrorBoundaryState extends State<FirebaseErrorBoundary> {
 class ErrorBoundary extends StatefulWidget {
   final Widget child;
   final void Function(dynamic error)? onError;
-  
+
   const ErrorBoundary({
     super.key,
     required this.child,
     this.onError,
   });
-  
+
   @override
   State<ErrorBoundary> createState() => _ErrorBoundaryState();
 }
@@ -134,11 +134,11 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
           details.exception.toString().contains('permission-denied')) {
         widget.onError?.call(details.exception);
       }
-      
+
       // Return a widget that displays the error
       return Container();
     };
-    
+
     return widget.child;
   }
 }

@@ -20,7 +20,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   late TabController _tabController;
   final _searchController = TextEditingController();
   String _selectedGrade = 'All';
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,11 +34,13 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
       // First load classes, then load students in those classes
       final classProvider = context.read<ClassProvider>();
       classProvider.loadTeacherClasses(auth.userModel!.uid);
-      
+
       // Load students after classes are loaded
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (classProvider.teacherClasses.isNotEmpty) {
-          context.read<StudentProvider>().loadTeacherStudents(classProvider.teacherClasses);
+          context
+              .read<StudentProvider>()
+              .loadTeacherStudents(classProvider.teacherClasses);
         }
       });
     }
@@ -54,12 +56,17 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   List<Student> _filterStudents(List<Student> students) {
     return students.where((s) {
       final matchesSearch = _searchController.text.isEmpty ||
-          '${s.firstName} ${s.lastName}'.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-          (s.email?.toLowerCase().contains(_searchController.text.toLowerCase()) ?? false);
-      
-      final matchesGrade = _selectedGrade == 'All' || 
+          '${s.firstName} ${s.lastName}'
+              .toLowerCase()
+              .contains(_searchController.text.toLowerCase()) ||
+          (s.email
+                  ?.toLowerCase()
+                  .contains(_searchController.text.toLowerCase()) ??
+              false);
+
+      final matchesGrade = _selectedGrade == 'All' ||
           s.gradeLevel == int.tryParse(_selectedGrade);
-      
+
       return matchesSearch && matchesGrade;
     }).toList();
   }
@@ -67,7 +74,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return AdaptiveLayout(
       title: 'Students',
       showBackButton: true,
@@ -122,11 +129,13 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
-                        onPressed: () => setState(() => _searchController.clear()),
+                        onPressed: () =>
+                            setState(() => _searchController.clear()),
                       )
                     : null,
                 border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -143,15 +152,19 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
               itemBuilder: (context) => ['All', '9', '10', '11', '12']
                   .map((grade) => PopupMenuItem(
                         value: grade,
-                        child: Text(grade == 'All' ? 'All Grades' : 'Grade $grade'),
+                        child: Text(
+                            grade == 'All' ? 'All Grades' : 'Grade $grade'),
                       ))
                   .toList(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Text(
-                      _selectedGrade == 'All' ? 'All Grades' : 'Grade $_selectedGrade',
+                      _selectedGrade == 'All'
+                          ? 'All Grades'
+                          : 'Grade $_selectedGrade',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(width: 8),
@@ -172,26 +185,29 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
         if (studentProvider.isLoading || classProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         // Reload students when classes change
-        if (classProvider.teacherClasses.isNotEmpty && studentProvider.students.isEmpty) {
+        if (classProvider.teacherClasses.isNotEmpty &&
+            studentProvider.students.isEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             studentProvider.loadTeacherStudents(classProvider.teacherClasses);
           });
         }
-        
+
         final students = _filterStudents(studentProvider.students);
-        
+
         if (students.isEmpty) {
           return EmptyState(
             icon: Icons.people_outline,
-            title: _searchController.text.isNotEmpty ? 'No students found' : 'No Students Yet',
+            title: _searchController.text.isNotEmpty
+                ? 'No students found'
+                : 'No Students Yet',
             message: _searchController.text.isNotEmpty
                 ? 'Try adjusting your search or filters'
                 : 'No students enrolled in your classes yet',
           );
         }
-        
+
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: students.length,
@@ -204,10 +220,11 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   Widget _buildByClassTab() {
     return Consumer<ClassProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading) return const Center(child: CircularProgressIndicator());
-        
+        if (provider.isLoading)
+          return const Center(child: CircularProgressIndicator());
+
         final classes = provider.teacherClasses;
-        
+
         if (classes.isEmpty) {
           return const EmptyState(
             icon: Icons.class_outlined,
@@ -215,7 +232,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
             message: 'Create classes to organize your students',
           );
         }
-        
+
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: classes.length,
@@ -237,8 +254,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
 
   Widget _buildStudentCard(Student student) {
     final fullName = '${student.firstName} ${student.lastName}';
-    final initials = '${student.firstName[0]}${student.lastName[0]}'.toUpperCase();
-    
+    final initials =
+        '${student.firstName[0]}${student.lastName[0]}'.toUpperCase();
+
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -295,7 +313,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
             )
           else
             FutureBuilder<List<Student>>(
-              future: context.read<StudentProvider>().loadStudentsByIds(classModel.studentIds),
+              future: context
+                  .read<StudentProvider>()
+                  .loadStudentsByIds(classModel.studentIds),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Padding(
@@ -303,15 +323,19 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                     child: CircularProgressIndicator(),
                   );
                 }
-                
+
                 return Column(
                   children: snapshot.data!.map((student) {
                     final fullName = '${student.firstName} ${student.lastName}';
-                    final initials = '${student.firstName[0]}${student.lastName[0]}'.toUpperCase();
-                    
+                    final initials =
+                        '${student.firstName[0]}${student.lastName[0]}'
+                            .toUpperCase();
+
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
                         child: Text(initials),
                       ),
                       title: Text(fullName),
@@ -332,7 +356,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add Student'),
-        content: const Text('Student creation functionality will be implemented here.'),
+        content: const Text(
+            'Student creation functionality will be implemented here.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -349,8 +374,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
 
   void _showStudentDetails(BuildContext context, Student student) {
     final fullName = '${student.firstName} ${student.lastName}';
-    final initials = '${student.firstName[0]}${student.lastName[0]}'.toUpperCase();
-    
+    final initials =
+        '${student.firstName[0]}${student.lastName[0]}'.toUpperCase();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -368,16 +394,21 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                   CircleAvatar(
                     radius: 30,
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 20)),
+                    child: Text(initials,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 20)),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(fullName, style: Theme.of(context).textTheme.titleLarge),
-                        Text(student.email ?? student.username, style: Theme.of(context).textTheme.bodyMedium),
-                        Text('Grade ${student.gradeLevel}', style: Theme.of(context).textTheme.bodySmall),
+                        Text(fullName,
+                            style: Theme.of(context).textTheme.titleLarge),
+                        Text(student.email ?? student.username,
+                            style: Theme.of(context).textTheme.bodyMedium),
+                        Text('Grade ${student.gradeLevel}',
+                            style: Theme.of(context).textTheme.bodySmall),
                       ],
                     ),
                   ),
@@ -397,12 +428,16 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                   _buildDetailRow('Student ID', student.id),
                   _buildDetailRow('Username', student.username),
                   _buildDetailRow('Email', student.email ?? 'Not provided'),
-                  _buildDetailRow('Parent Email', student.parentEmail ?? 'Not provided'),
-                  _buildDetailRow('Account Status', student.accountClaimed ? 'Claimed' : 'Pending'),
-                  _buildDetailRow('Password Changed', student.passwordChanged ? 'Yes' : 'No'),
+                  _buildDetailRow(
+                      'Parent Email', student.parentEmail ?? 'Not provided'),
+                  _buildDetailRow('Account Status',
+                      student.accountClaimed ? 'Claimed' : 'Pending'),
+                  _buildDetailRow('Password Changed',
+                      student.passwordChanged ? 'Yes' : 'No'),
                   if (student.backupEmail != null)
                     _buildDetailRow('Backup Email', student.backupEmail!),
-                  _buildDetailRow('Created', '${student.createdAt.month}/${student.createdAt.day}/${student.createdAt.year}'),
+                  _buildDetailRow('Created',
+                      '${student.createdAt.month}/${student.createdAt.day}/${student.createdAt.year}'),
                 ],
               ),
             ),
@@ -420,7 +455,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
         children: [
           SizedBox(
             width: 120,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(label,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           Expanded(child: Text(value)),
         ],
@@ -451,7 +487,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
           ),
           ListTile(
             leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text('Remove Student', style: TextStyle(color: Colors.red)),
+            title: const Text('Remove Student',
+                style: TextStyle(color: Colors.red)),
             onTap: () => Navigator.of(context).pop(),
           ),
         ],

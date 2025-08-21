@@ -23,11 +23,13 @@ import '../../features/classes/presentation/screens/teacher/classes_screen.dart'
 import '../../features/classes/presentation/screens/teacher/class_detail_screen.dart';
 import '../../features/classes/presentation/screens/student/courses_screen.dart';
 import '../../features/classes/presentation/screens/student/enrollment_screen.dart';
-import '../../features/assignments/presentation/screens/teacher/assignments_list_screen.dart' as teacher_assignments;
+import '../../features/assignments/presentation/screens/teacher/assignments_list_screen.dart'
+    as teacher_assignments;
 import '../../features/assignments/presentation/screens/teacher/assignment_create_screen.dart';
 import '../../features/assignments/presentation/screens/teacher/assignment_detail_screen.dart';
 import '../../features/assignments/presentation/screens/teacher/assignment_edit_screen.dart';
-import '../../features/assignments/presentation/screens/student/assignments_list_screen.dart' as student_assignments;
+import '../../features/assignments/presentation/screens/student/assignments_list_screen.dart'
+    as student_assignments;
 import '../../features/assignments/presentation/screens/student/assignment_submission_screen.dart';
 import '../../features/grades/presentation/screens/teacher/gradebook_screen.dart';
 import '../../features/grades/presentation/screens/teacher/grade_analytics_screen.dart';
@@ -45,16 +47,15 @@ import '../screens/settings_screen.dart';
 import '../models/user_model.dart';
 
 /// Simplified router following Flutter best practices for auth handling.
-/// 
+///
 /// Key principles:
 /// 1. Simple redirect logic - only handle auth vs unauth
-/// 2. No initialLocation - preserves browser URL on refresh  
+/// 2. No initialLocation - preserves browser URL on refresh
 /// 3. Let UI components handle complex state (role selection, email verification)
 /// 4. Router just routes - doesn't enforce business logic
 class AppRouter {
-  
   /// Creates the app router with auth-aware navigation.
-  /// 
+  ///
   /// Standard Flutter pattern:
   /// - Watches auth state changes via refreshListenable
   /// - Simple redirect: unauthenticated users go to login
@@ -67,24 +68,24 @@ class AppRouter {
       redirect: (context, state) {
         final isAuth = authProvider.status == AuthStatus.authenticated;
         final isAuthRoute = state.matchedLocation.startsWith('/auth');
-        
+
         // During initialization, don't redirect
         // The app shows a loading screen before router is created
         if (authProvider.status == AuthStatus.uninitialized) {
           return null;
         }
-        
+
         // Simple redirect logic - standard Flutter pattern
         if (!isAuth && !isAuthRoute) {
           // Not authenticated and trying to access protected route
           return '/auth/login';
         }
-        
+
         if (isAuth && isAuthRoute) {
           // Authenticated but on auth route - go to dashboard
           return '/dashboard';
         }
-        
+
         // Allow everything else
         return null;
       },
@@ -97,14 +98,14 @@ class AppRouter {
             return auth.isAuthenticated ? '/dashboard' : '/auth/login';
           },
         ),
-        
+
         // Auth routes
         GoRoute(
           path: '/auth/login',
           builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
-          path: '/auth/signup', 
+          path: '/auth/signup',
           builder: (context, state) => const SignupScreen(),
         ),
         GoRoute(
@@ -119,28 +120,28 @@ class AppRouter {
           path: '/auth/verify-email',
           builder: (context, state) => const VerifyEmailScreen(),
         ),
-        
+
         // Main app routes
         GoRoute(
           path: '/dashboard',
           builder: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             final user = auth.userModel;
-            
+
             // Simple role-based dashboard
             if (user?.role == UserRole.teacher) {
               return const TeacherDashboardScreen();
             } else if (user?.role == UserRole.student) {
               return const StudentDashboardScreen();
             }
-            
+
             // Fallback - shouldn't happen if auth is working
             return const Scaffold(
               body: Center(child: Text('Loading dashboard...')),
             );
           },
         ),
-        
+
         // Chat routes
         GoRoute(
           path: '/messages',
@@ -182,7 +183,7 @@ class AppRouter {
             );
           },
         ),
-        
+
         // Chat creation routes
         GoRoute(
           path: '/chat/user-selection',
@@ -196,13 +197,13 @@ class AppRouter {
           path: '/chat/class-selection',
           builder: (context, state) => const ClassSelectionScreen(),
         ),
-        
+
         // Settings
         GoRoute(
           path: '/settings',
           builder: (context, state) => const SettingsScreen(),
         ),
-        
+
         // Teacher routes
         GoRoute(
           path: '/teacher/classes',
@@ -281,10 +282,10 @@ class AppRouter {
         ),
         GoRoute(
           path: '/assignments',
-          builder: (context, state) => 
+          builder: (context, state) =>
               const teacher_assignments.TeacherAssignmentsScreen(),
         ),
-        
+
         // Student routes
         GoRoute(
           path: '/student/courses',
@@ -329,7 +330,7 @@ class AppRouter {
           path: '/student/discussions',
           builder: (context, state) => const SimpleDiscussionBoardsScreen(),
         ),
-        
+
         // Common routes
         GoRoute(
           path: '/calendar',
@@ -386,10 +387,10 @@ class AppRouter {
             return IncomingCallScreen(call: call);
           },
         ),
-        
+
         // Add other routes as needed, keeping them simple and flat
       ],
-      
+
       // Error handling
       errorBuilder: (context, state) => Scaffold(
         body: Center(

@@ -1,5 +1,5 @@
 /// Calendar event model for educational scheduling.
-/// 
+///
 /// This module defines the event structure for calendar functionality,
 /// supporting various educational event types like classes, assignments,
 /// meetings, and exams with Firebase integration.
@@ -11,30 +11,30 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 enum EventType {
   /// Regular class sessions
   class_('Class'),
-  
+
   /// Assignment deadlines
   assignment('Assignment'),
-  
+
   /// Meetings with parents, staff, or students
   meeting('Meeting'),
-  
+
   /// Exams and assessments
   exam('Exam'),
-  
+
   /// Personal reminders and events
   personal('Personal'),
-  
+
   /// School-wide events
   school('School'),
-  
+
   /// Other event types
   other('Other');
 
   /// Display name for the event type
   final String displayName;
-  
+
   const EventType(this.displayName);
-  
+
   /// Creates EventType from string value
   static EventType fromString(String value) {
     return EventType.values.firstWhere(
@@ -48,22 +48,22 @@ enum EventType {
 enum RecurrenceType {
   /// One-time event
   none,
-  
+
   /// Repeats daily
   daily,
-  
+
   /// Repeats weekly on same day
   weekly,
-  
+
   /// Repeats monthly on same date
   monthly,
-  
+
   /// Repeats yearly on same date
   yearly,
-  
+
   /// Custom recurrence pattern
   custom;
-  
+
   /// Creates RecurrenceType from string value
   static RecurrenceType fromString(String value) {
     return RecurrenceType.values.firstWhere(
@@ -74,86 +74,86 @@ enum RecurrenceType {
 }
 
 /// Calendar event model representing scheduled activities.
-/// 
+///
 /// This model supports various educational events with features:
 /// - Multiple event types (classes, assignments, meetings, etc.)
 /// - Recurrence patterns for repeating events
 /// - Participant tracking for meetings and classes
 /// - Color coding for visual organization
 /// - Rich metadata for event details
-/// 
+///
 /// Events can be associated with classes, assignments, or standalone
 /// activities in the educational platform.
 class CalendarEvent {
   /// Unique identifier for the event
   final String id;
-  
+
   /// Event title/name
   final String title;
-  
+
   /// Detailed event description (optional)
   final String? description;
-  
+
   /// Event category type
   final EventType type;
-  
+
   /// Event start date and time
   final DateTime startTime;
-  
+
   /// Event end date and time (optional)
   final DateTime? endTime;
-  
+
   /// Whether this is an all-day event
   final bool isAllDay;
-  
+
   /// Event location or room (optional)
   final String? location;
-  
+
   /// Creator's user ID (teacher or admin)
   final String createdBy;
-  
+
   /// Creator's display name for quick reference
   final String createdByName;
-  
+
   /// Associated class ID (optional)
   final String? classId;
-  
+
   /// Associated assignment ID (optional)
   final String? assignmentId;
-  
+
   /// List of participant user IDs (optional)
   final List<String>? participantIds;
-  
+
   /// List of participant emails for external attendees (optional)
   final List<String>? participantEmails;
-  
+
   /// Event color for calendar display (hex string)
   final String? colorHex;
-  
+
   /// Recurrence pattern for repeating events
   final RecurrenceType recurrence;
-  
+
   /// End date for recurring events (optional)
   final DateTime? recurrenceEndDate;
-  
+
   /// Custom recurrence pattern details (optional)
   final Map<String, dynamic>? recurrenceDetails;
-  
+
   /// Whether to send reminders for this event
   final bool hasReminder;
-  
+
   /// Reminder time in minutes before event
   final int? reminderMinutes;
-  
+
   /// Additional metadata for extensibility
   final Map<String, dynamic>? metadata;
-  
+
   /// Creation timestamp
   final DateTime createdAt;
-  
+
   /// Last update timestamp
   final DateTime updatedAt;
-  
+
   /// Whether the event is active (not cancelled)
   final bool isActive;
 
@@ -188,15 +188,15 @@ class CalendarEvent {
   /// Creates a CalendarEvent from Firestore document.
   factory CalendarEvent.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     return CalendarEvent(
       id: doc.id,
       title: data['title'] ?? '',
       description: data['description'],
       type: EventType.fromString(data['type'] ?? 'other'),
       startTime: (data['startTime'] as Timestamp).toDate(),
-      endTime: data['endTime'] != null 
-          ? (data['endTime'] as Timestamp).toDate() 
+      endTime: data['endTime'] != null
+          ? (data['endTime'] as Timestamp).toDate()
           : null,
       isAllDay: data['isAllDay'] ?? false,
       location: data['location'],
@@ -243,8 +243,8 @@ class CalendarEvent {
       'participantEmails': participantEmails,
       'colorHex': colorHex,
       'recurrence': recurrence.name,
-      'recurrenceEndDate': recurrenceEndDate != null 
-          ? Timestamp.fromDate(recurrenceEndDate!) 
+      'recurrenceEndDate': recurrenceEndDate != null
+          ? Timestamp.fromDate(recurrenceEndDate!)
           : null,
       'recurrenceDetails': recurrenceDetails,
       'hasReminder': hasReminder,
@@ -312,70 +312,71 @@ class CalendarEvent {
   }
 
   /// Checks if the event occurs on a specific date.
-  /// 
+  ///
   /// Takes into account recurrence patterns to determine
   /// if the event should appear on the given date.
   bool occursOn(DateTime date) {
     final dateOnly = DateTime(date.year, date.month, date.day);
-    final eventDateOnly = DateTime(startTime.year, startTime.month, startTime.day);
-    
+    final eventDateOnly =
+        DateTime(startTime.year, startTime.month, startTime.day);
+
     // Check if it's the original event date
     if (dateOnly == eventDateOnly) return true;
-    
+
     // Check recurrence
     if (recurrence == RecurrenceType.none) return false;
-    
+
     // Check if date is before event start or after recurrence end
     if (dateOnly.isBefore(eventDateOnly)) return false;
     if (recurrenceEndDate != null && dateOnly.isAfter(recurrenceEndDate!)) {
       return false;
     }
-    
+
     switch (recurrence) {
       case RecurrenceType.daily:
         return true;
-        
+
       case RecurrenceType.weekly:
         return date.weekday == startTime.weekday;
-        
+
       case RecurrenceType.monthly:
         return date.day == startTime.day;
-        
+
       case RecurrenceType.yearly:
         return date.month == startTime.month && date.day == startTime.day;
-        
+
       case RecurrenceType.custom:
         // Handle custom recurrence logic based on recurrenceDetails
         return _checkCustomRecurrence(date);
-        
+
       case RecurrenceType.none:
         return false;
     }
   }
-  
+
   /// Checks custom recurrence pattern.
   bool _checkCustomRecurrence(DateTime date) {
     if (recurrenceDetails == null) return false;
-    
+
     // Example custom patterns:
     // - Every other week
     // - First Monday of each month
     // - Every weekday
     // Implementation depends on specific requirements
-    
+
     return false;
   }
-  
+
   /// Gets the event duration.
   Duration? get duration {
     if (endTime == null) return null;
     return endTime!.difference(startTime);
   }
-  
+
   /// Checks if the event is in the past.
-  bool get isPast => endTime?.isBefore(DateTime.now()) ?? 
-                     startTime.isBefore(DateTime.now());
-  
+  bool get isPast =>
+      endTime?.isBefore(DateTime.now()) ?? startTime.isBefore(DateTime.now());
+
   /// Checks if the event is happening now.
   bool get isHappeningNow {
     final now = DateTime.now();
@@ -384,11 +385,11 @@ class CalendarEvent {
     }
     return false;
   }
-  
+
   /// Gets a display color for the event type.
   String get displayColor {
     if (colorHex != null) return colorHex!;
-    
+
     switch (type) {
       case EventType.class_:
         return '#2196F3'; // Blue

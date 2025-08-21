@@ -38,11 +38,12 @@ class DefaultFirebaseOptions {
   }
 
   static FirebaseOptions web = FirebaseOptions(
-    apiKey: const String.fromEnvironment('FIREBASE_API_KEY', 
+    apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
         defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
         defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
-    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+    messagingSenderId: const String.fromEnvironment(
+        'FIREBASE_MESSAGING_SENDER_ID',
         defaultValue: '218352465432'),
     projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
         defaultValue: 'teacher-dashboard-flutterfire'),
@@ -51,7 +52,8 @@ class DefaultFirebaseOptions {
     storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
         defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
     databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
-        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+        defaultValue:
+            'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 
   static FirebaseOptions android = FirebaseOptions(
@@ -59,14 +61,16 @@ class DefaultFirebaseOptions {
         defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_ANDROID',
         defaultValue: '1:218352465432:android:a7d591b9db6bef6038b56d'),
-    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+    messagingSenderId: const String.fromEnvironment(
+        'FIREBASE_MESSAGING_SENDER_ID',
         defaultValue: '218352465432'),
     projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
         defaultValue: 'teacher-dashboard-flutterfire'),
     storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
         defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
     databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
-        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+        defaultValue:
+            'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 
   static FirebaseOptions ios = FirebaseOptions(
@@ -74,14 +78,16 @@ class DefaultFirebaseOptions {
         defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_IOS',
         defaultValue: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99'),
-    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+    messagingSenderId: const String.fromEnvironment(
+        'FIREBASE_MESSAGING_SENDER_ID',
         defaultValue: '218352465432'),
     projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
         defaultValue: 'teacher-dashboard-flutterfire'),
     storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
         defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
     databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
-        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+        defaultValue:
+            'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
     iosBundleId: const String.fromEnvironment('IOS_BUNDLE_ID',
         defaultValue: 'com.teacherdashboard.teacherDashboardFlutter'),
   );
@@ -91,14 +97,16 @@ class DefaultFirebaseOptions {
         defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_IOS',
         defaultValue: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99'),
-    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+    messagingSenderId: const String.fromEnvironment(
+        'FIREBASE_MESSAGING_SENDER_ID',
         defaultValue: '218352465432'),
     projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
         defaultValue: 'teacher-dashboard-flutterfire'),
     storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
         defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
     databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
-        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+        defaultValue:
+            'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
     iosBundleId: const String.fromEnvironment('IOS_BUNDLE_ID',
         defaultValue: 'com.teacherdashboard.teacherDashboardFlutter'),
   );
@@ -108,7 +116,8 @@ class DefaultFirebaseOptions {
         defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
         defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
-    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+    messagingSenderId: const String.fromEnvironment(
+        'FIREBASE_MESSAGING_SENDER_ID',
         defaultValue: '218352465432'),
     projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
         defaultValue: 'teacher-dashboard-flutterfire'),
@@ -117,7 +126,8 @@ class DefaultFirebaseOptions {
     storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
         defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
     databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
-        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+        defaultValue:
+            'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 
   static FirebaseOptions linux = FirebaseOptions(
@@ -125,7 +135,8 @@ class DefaultFirebaseOptions {
         defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
         defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
-    messagingSenderId: const String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID',
+    messagingSenderId: const String.fromEnvironment(
+        'FIREBASE_MESSAGING_SENDER_ID',
         defaultValue: '218352465432'),
     projectId: const String.fromEnvironment('FIREBASE_PROJECT_ID',
         defaultValue: 'teacher-dashboard-flutterfire'),
@@ -134,6 +145,7 @@ class DefaultFirebaseOptions {
     storageBucket: const String.fromEnvironment('FIREBASE_STORAGE_BUCKET',
         defaultValue: 'teacher-dashboard-flutterfire.firebasestorage.app'),
     databaseURL: const String.fromEnvironment('FIREBASE_DATABASE_URL',
-        defaultValue: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
+        defaultValue:
+            'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com'),
   );
 }
