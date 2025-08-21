@@ -71,6 +71,10 @@ post_install do |installer|
     # CRITICAL FIX: leveldb C++ compilation with Xcode 16.4
     if target.name == 'leveldb-library'
       target.build_configurations.each do |config|
+        # Fix for App Store submission: Ensure CFBundleShortVersionString is set
+        config.build_settings['MARKETING_VERSION'] = '1.22.6'
+        config.build_settings['CURRENT_PROJECT_VERSION'] = '1'
+        
         # Use C++17 standard (required for modern C++ features)
         config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
         config.build_settings['CLANG_CXX_LIBRARY'] = 'libc++'
@@ -130,6 +134,10 @@ post_install do |installer|
         # Module map settings
         config.build_settings['DEFINES_MODULE'] = 'YES'
         config.build_settings['GENERATE_INFOPLIST_FILE'] = 'YES'
+        
+        # Ensure Info.plist has all required keys for App Store
+        config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = 'org.cocoapods.leveldb-library'
+        config.build_settings['INFOPLIST_KEY_CFBundleShortVersionString'] = '1.22.6'
         
         # CRITICAL: Ensure proper C++ runtime
         config.build_settings['CLANG_ENABLE_OBJC_ARC'] = 'YES'
