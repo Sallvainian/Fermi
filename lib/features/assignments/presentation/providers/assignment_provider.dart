@@ -139,6 +139,34 @@ class AssignmentProvider with ChangeNotifier {
       ..sort((a, b) => b.dueDate.compareTo(a.dueDate));
   }
 
+  /// Gets deduplicated assignments for a specific class.
+  ///
+  /// Merges teacherAssignments and assignments lists, removes duplicates,
+  /// and filters by classId. This method is optimized to avoid unnecessary
+  /// computation on widget rebuilds.
+  ///
+  /// @param classId The class ID to filter assignments for
+  /// @return List of unique assignments for the specified class, sorted by creation date
+  List<Assignment> getAssignmentsForClass(String classId) {
+    // Merge both lists
+    final allAssignments = [
+      ..._teacherAssignments,
+      ..._assignments,
+    ];
+    
+    // Remove duplicates using a Map (keeps last occurrence)
+    final uniqueAssignments = <String, Assignment>{};
+    for (final assignment in allAssignments) {
+      uniqueAssignments[assignment.id] = assignment;
+    }
+    
+    // Filter for the specific class and sort by creation date (newest first)
+    return uniqueAssignments.values
+        .where((assignment) => assignment.classId == classId)
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
   /// Loads and subscribes to assignments for a class.
   ///
   /// Sets up real-time stream for assignment updates.

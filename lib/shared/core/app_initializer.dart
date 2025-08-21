@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -9,7 +8,6 @@ import '../../config/firebase_options.dart';
 import '../services/logger_service.dart';
 import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
-import '../../features/notifications/data/services/voip_token_service.dart';
 import '../services/performance_service.dart';
 import 'service_locator.dart';
 
@@ -47,11 +45,8 @@ class AppInitializer {
       // Notifications can be initialized later
       _initializeNotifications(),
 
-      // Messaging services for VoIP
+      // Messaging services for push notifications
       if (!kIsWeb) _initializeFirebaseMessaging(),
-
-      // iOS-specific VoIP
-      if (!kIsWeb && Platform.isIOS) _initializeVoIPTokenService(),
     ]);
 
     LoggerService.info('Deferred services initialized', tag: 'AppInitializer');
@@ -184,7 +179,7 @@ class AppInitializer {
     }
   }
 
-  /// Initialize Firebase Messaging for VoIP support
+  /// Initialize Firebase Messaging for push notifications
   static Future<void> _initializeFirebaseMessaging() async {
     if (kIsWeb) {
       // Foreground-only on web → do not initialize FCM at all
@@ -193,23 +188,10 @@ class AppInitializer {
     try {
       final messagingService = FirebaseMessagingService();
       await messagingService.initialize();
-      LoggerService.info('Firebase Messaging initialized for VoIP',
+      LoggerService.info('Firebase Messaging initialized',
           tag: 'AppInitializer');
     } catch (e) {
       LoggerService.error('Firebase Messaging initialization error',
-          tag: 'AppInitializer', error: e);
-    }
-  }
-
-  /// Initialize VoIP token service for iOS
-  static Future<void> _initializeVoIPTokenService() async {
-    try {
-      final voipTokenService = VoIPTokenService();
-      await voipTokenService.initialize();
-      LoggerService.info('VoIP token service initialized',
-          tag: 'AppInitializer');
-    } catch (e) {
-      LoggerService.error('VoIP token service initialization error',
           tag: 'AppInitializer', error: e);
     }
   }
