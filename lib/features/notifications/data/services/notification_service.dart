@@ -5,7 +5,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import '../../../calendar/domain/models/calendar_event.dart';
 import '../../../assignments/domain/models/assignment.dart';
-import '../../../chat/domain/models/call.dart';
 import '../../domain/models/notification.dart' as app_notification;
 import '../../../../shared/services/logger_service.dart';
 // Conditional import for web notification permissions
@@ -26,9 +25,6 @@ class NotificationService {
   bool _isInitialized = false;
   bool _notificationPermissionDenied = false;
 
-  // Callbacks for call actions
-  Function(String callId)? onCallAccepted;
-  Function(String callId)? onCallDeclined;
 
   // Notification channel IDs
   static const String _channelId = 'teacher_dashboard_calls';
@@ -341,154 +337,11 @@ class NotificationService {
     }
   }
 
-  // Show incoming call notification (using standard notifications only)
-  Future<void> showIncomingCall(Call call) async {
-    // Use local notifications on all platforms
-    await _showCallNotification(call);
-  }
-
-  Future<void> _showCallNotification(Call call) async {
-    final title = 'Incoming ${call.isVideo ? "Video" : "Voice"} Call';
-    final body = '${call.callerName} is calling you';
-
-    if (!kIsWeb && Platform.isAndroid) {
-      final androidDetails = AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
-        importance: Importance.max,
-        priority: Priority.max,
-        showWhen: true,
-        ongoing: true,
-        autoCancel: false,
-        fullScreenIntent: true,
-        category: AndroidNotificationCategory.call,
-        actions: [
-          const AndroidNotificationAction(
-            'accept_call',
-            'Accept',
-            showsUserInterface: true,
-          ),
-          const AndroidNotificationAction(
-            'decline_call',
-            'Decline',
-            cancelNotification: true,
-          ),
-        ],
-      );
-
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        NotificationDetails(android: androidDetails),
-        payload: call.id,
-      );
-    } else if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
-      // iOS/macOS notification
-      const iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: 'default',
-        categoryIdentifier: 'INCOMING_CALL',
-      );
-
-      const macOSDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: 'default',
-      );
-
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        const NotificationDetails(
-          iOS: iosDetails,
-          macOS: macOSDetails,
-        ),
-        payload: call.id,
-      );
-    } else if (!kIsWeb && Platform.isLinux) {
-      // Linux notification
-      const linuxDetails = LinuxNotificationDetails(
-        urgency: LinuxNotificationUrgency.critical,
-        actions: [
-          LinuxNotificationAction(
-            key: 'accept_call',
-            label: 'Accept',
-          ),
-          LinuxNotificationAction(
-            key: 'decline_call',
-            label: 'Decline',
-          ),
-        ],
-      );
-
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        const NotificationDetails(linux: linuxDetails),
-        payload: call.id,
-      );
-    } else if (!kIsWeb && Platform.isWindows) {
-      // Windows notification - basic support
-      // Note: Windows notifications through flutter_local_notifications
-      // have limited functionality compared to other platforms
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        null, // Windows uses default notification settings
-        payload: call.id,
-      );
-
-      LoggerService.info(
-        'Windows notification shown. Note: Action buttons not supported on Windows yet.',
-        tag: 'NotificationService',
-      );
-    } else if (kIsWeb) {
-      // Web notification fallback
-      LoggerService.info(
-        'Web platform detected. Call notifications require browser permission.',
-        tag: 'NotificationService',
-      );
-    }
-  }
-
-  // End call notification
-  Future<void> endCall(String callId) async {
-    await _localNotifications.cancel(callId.hashCode);
-  }
 
   void _onNotificationResponse(NotificationResponse response) {
-    final callId = response.payload;
-
-    if (response.actionId == 'accept_call') {
-      LoggerService.info('Call accepted via notification: $callId',
-          tag: 'NotificationService');
-      if (callId != null) {
-        onCallAccepted?.call(callId);
-      }
-    } else if (response.actionId == 'decline_call') {
-      LoggerService.info('Call declined via notification: $callId',
-          tag: 'NotificationService');
-      if (callId != null) {
-        onCallDeclined?.call(callId);
-        endCall(callId);
-      }
-    } else if (response.notificationResponseType ==
-        NotificationResponseType.selectedNotification) {
-      LoggerService.info('Notification tapped: $callId',
-          tag: 'NotificationService');
-      // Tapping notification should accept the call
-      if (callId != null) {
-        onCallAccepted?.call(callId);
-      }
-    }
+    // Handle notification responses for assignments and other features
+    LoggerService.info('Notification response: ${response.actionId}',
+        tag: 'NotificationService');
   }
 
   /// Show guidance when notification permission is denied
