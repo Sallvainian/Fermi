@@ -55,8 +55,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     if (teacherId != null) {
       _isInitialized = true; // Set this BEFORE loading to prevent re-runs
 
-      // Load data only once
-      classProvider.loadTeacherClasses(teacherId);
+      // Load data and capture the stream
+      _classesStream = classProvider.loadTeacherClasses(teacherId);
       dashboardProvider.loadTeacherDashboard(teacherId);
       assignmentProvider.loadAssignmentsForTeacher(teacherId);
     }
@@ -271,7 +271,43 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   Widget _buildClassesSection(
       BuildContext context, ClassProvider classProvider) {
-    // If not initialized, show loading
+    // Check if we have a valid teacher ID
+    final authProvider = context.read<AuthProvider>();
+    final teacherId = authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
+    
+    if (teacherId == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.error_outline,
+                    size: 48, color: Colors.orange),
+                const SizedBox(height: 16),
+                const Text('Unable to load classes'),
+                const SizedBox(height: 8),
+                const Text('Please try logging out and back in'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _isInitialized = false;
+                      _classesStream = null;
+                      _initializeDashboard();
+                    });
+                  },
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    
+    // If not initialized or stream is null, show loading
     if (!_isInitialized || _classesStream == null) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -281,7 +317,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     return StreamBuilder<List<ClassModel>>(
       stream: _classesStream,
       builder: (context, snapshot) {
-        // Simple error handling
+        // Handle connection state
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+        
+        // Handle errors
         if (snapshot.hasError) {
           return Card(
             child: Padding(
@@ -293,13 +336,21 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     const Icon(Icons.error_outline,
                         size: 48, color: Colors.red),
                     const SizedBox(height: 16),
-                    Text('Error: ${snapshot.error}'),
+                    Text('Error loading classes',
+                        style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    Text('${snapshot.error}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                        textAlign: TextAlign.center),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
                         setState(() {
                           _isInitialized = false;
                           _classesStream = null;
+                        });
+                        // Re-initialize after a small delay
+                        Future.delayed(const Duration(milliseconds: 100), () {
                           _initializeDashboard();
                         });
                       },
@@ -312,15 +363,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           );
         }
 
-        // Show loading only if no data yet
-        if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-
         // We have data - show it
-        final teacherClasses = snapshot.data!;
+        final teacherClasses = snapshot.data ?? [];
 
         if (teacherClasses.isEmpty) {
           return Card(
