@@ -52,6 +52,9 @@ class AssignmentProvider with ChangeNotifier {
 
   /// Selected assignment for detail view.
   Assignment? _selectedAssignment;
+  
+  /// Track recently created assignment IDs to prevent stream overwrites.
+  final Set<String> _recentlyCreatedIds = {};
 
   // Stream subscriptions
 
@@ -150,7 +153,24 @@ class AssignmentProvider with ChangeNotifier {
       _classAssignmentsSubscription =
           _assignmentRepository.getClassAssignments(classId).listen(
         (assignmentList) {
-          _assignments = assignmentList;
+          // Preserve recently created assignments that might not be in the stream yet
+          final recentAssignments = _assignments
+              .where((a) => _recentlyCreatedIds.contains(a.id))
+              .toList();
+          
+          // Merge the stream data with recently created assignments
+          final mergedList = [...recentAssignments];
+          for (final assignment in assignmentList) {
+            // Add assignment if it's not a recently created one (to avoid duplicates)
+            if (!_recentlyCreatedIds.contains(assignment.id)) {
+              mergedList.add(assignment);
+            }
+          }
+          
+          // Sort by creation date (newest first)
+          mergedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          
+          _assignments = mergedList;
           _setLoading(false);
           // Defer notification to next frame to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -186,7 +206,24 @@ class AssignmentProvider with ChangeNotifier {
       _teacherAssignmentsSubscription =
           _assignmentRepository.getTeacherAssignments(teacherId).listen(
         (assignmentList) {
-          _teacherAssignments = assignmentList;
+          // Preserve recently created assignments that might not be in the stream yet
+          final recentAssignments = _teacherAssignments
+              .where((a) => _recentlyCreatedIds.contains(a.id))
+              .toList();
+          
+          // Merge the stream data with recently created assignments
+          final mergedList = [...recentAssignments];
+          for (final assignment in assignmentList) {
+            // Add assignment if it's not a recently created one (to avoid duplicates)
+            if (!_recentlyCreatedIds.contains(assignment.id)) {
+              mergedList.add(assignment);
+            }
+          }
+          
+          // Sort by creation date (newest first)
+          mergedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          
+          _teacherAssignments = mergedList;
           _setLoading(false);
           // Defer notification to next frame to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -245,7 +282,8 @@ class AssignmentProvider with ChangeNotifier {
   /// Process:
   /// 1. Creates assignment in Firestore
   /// 2. If published, initializes grade records for all students
-  /// 3. Updates local state through stream subscription
+  /// 3. Updates local state immediately for responsive UI
+  /// 4. Stream subscription will sync any additional updates
   ///
   /// @param assignment Assignment data to create
   /// @return true if creation successful
@@ -264,6 +302,33 @@ class AssignmentProvider with ChangeNotifier {
           assignment.totalPoints,
         );
       }
+
+      // Create the assignment with the new ID for local state
+      final createdAssignment = assignment.copyWith(
+        id: assignmentId,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Add to local teacher assignments list immediately
+      _teacherAssignments.insert(0, createdAssignment); // Insert at beginning for visibility
+      
+      // Also add to class assignments if it matches the current class
+      // This ensures the assignment appears in student views if the same class is loaded
+      if (assignment.classId.isNotEmpty) {
+        _assignments.insert(0, createdAssignment); // Insert at beginning for visibility
+      }
+
+      // Store the newly created assignment ID to prevent stream overwrites
+      _recentlyCreatedIds.add(assignmentId);
+      
+      // Clear the recently created ID after a delay to allow stream to catch up
+      Future.delayed(const Duration(seconds: 5), () {
+        _recentlyCreatedIds.remove(assignmentId);
+      });
+
+      // Notify listeners immediately for responsive UI
+      notifyListeners();
 
       _setLoading(false);
       return true;
