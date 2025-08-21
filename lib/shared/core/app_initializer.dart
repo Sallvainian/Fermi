@@ -77,11 +77,31 @@ class AppInitializer {
       LoggerService.info('Starting Firebase initialization...',
           tag: 'AppInitializer');
 
-      // Use simple Firebase initialization with DefaultFirebaseOptions
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-      _firebaseInitialized = true;
+      // Check if Firebase is already initialized to avoid duplicate app error
+      try {
+        if (Firebase.apps.isEmpty) {
+          // Use simple Firebase initialization with DefaultFirebaseOptions
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+          LoggerService.info('Firebase initialized successfully',
+              tag: 'AppInitializer');
+        } else {
+          LoggerService.info('Firebase already initialized, reusing existing instance',
+              tag: 'AppInitializer');
+        }
+        _firebaseInitialized = true;
+      } catch (e) {
+        // If it's a duplicate app error, we can still proceed
+        if (e.toString().contains('duplicate-app')) {
+          LoggerService.warning('Firebase duplicate app error ignored',
+              tag: 'AppInitializer');
+          _firebaseInitialized = true;
+        } else {
+          // For other errors, rethrow
+          throw e;
+        }
+      }
 
       LoggerService.info('Firebase core initialized successfully',
           tag: 'AppInitializer');
@@ -114,9 +134,13 @@ class AppInitializer {
             tag: 'AppInitializer');
       }
     } catch (e) {
-      _firebaseInitialized = false;
-      LoggerService.error('Firebase initialization error',
-          tag: 'AppInitializer', error: e);
+      // Only set to false if we didn't handle the error above
+      if (!_firebaseInitialized) {
+        _firebaseInitialized = false;
+        LoggerService.error('Firebase initialization error',
+            tag: 'AppInitializer', error: e);
+        // Don't rethrow - we've handled duplicate app errors above
+      }
     }
   }
 

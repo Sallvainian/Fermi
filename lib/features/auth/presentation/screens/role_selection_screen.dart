@@ -48,23 +48,30 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         gradeLevel: null,
       );
 
-      // Longer delay to ensure Firestore propagation AND provider update
-      await Future.delayed(const Duration(milliseconds: 1500));
+      // CRITICAL: Wait a moment for provider to fully update
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
-        // Re-read the provider to get the latest state
+        // Re-read the provider to get the absolutely latest state
         final authProvider = context.read<AuthProvider>();
+        
+        // Double-check everything is set properly
         final currentStatus = authProvider.status;
-        final hasRole = authProvider.userModel?.role != null;
         final userModel = authProvider.userModel;
+        final hasRole = userModel?.role != null;
         
-        debugPrint('Role selection complete - Status: $currentStatus, Has role: $hasRole, Role: ${userModel?.role}');
+        debugPrint('=== ROLE SELECTION COMPLETE ===');
+        debugPrint('Status: $currentStatus');
         debugPrint('UserModel exists: ${userModel != null}');
-        debugPrint('UserModel details: id=${userModel?.id}, email=${userModel?.email}');
+        debugPrint('Has role: $hasRole');
+        debugPrint('Role: ${userModel?.role}');
+        debugPrint('UID: ${userModel?.uid}');
+        debugPrint('Email: ${userModel?.email}');
+        debugPrint('==============================');
         
-        if (currentStatus == AuthStatus.authenticated && hasRole && userModel != null) {
-          // Force navigation to dashboard
-          debugPrint('Successfully authenticated with role, navigating to dashboard');
+        // Only navigate if EVERYTHING is properly set
+        if (currentStatus == AuthStatus.authenticated && userModel != null && hasRole) {
+          debugPrint('✅ All checks passed, navigating to dashboard');
           context.go('/dashboard');
         } else if (currentStatus == AuthStatus.error || 
                    currentStatus == AuthStatus.unauthenticated) {

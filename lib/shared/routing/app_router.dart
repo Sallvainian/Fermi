@@ -210,28 +210,33 @@ class AppRouter {
             }
 
             // Fallback - check if we're truly authenticated but missing user data
-            // This can happen briefly during OAuth flow completion
+            // This should NEVER happen, but if it does, we need to handle it
             if (auth.status == AuthStatus.authenticated && user == null) {
-              // This is a CRITICAL BUG - if we're authenticated, we MUST have a user model
-              // Otherwise we're stuck in an infinite loading state
               debugPrint('CRITICAL: Dashboard in authenticated state but userModel is null!');
               debugPrint('Auth status: ${auth.status}');
               debugPrint('User model: ${auth.userModel}');
               debugPrint('Firebase user: ${auth.firebaseUser?.uid}');
               
-              // Try to reload the user data
-              WidgetsBinding.instance.addPostFrameCallback((_) async {
-                if (context.mounted) {
-                  debugPrint('Attempting to reload user data...');
-                  await auth.reloadUser();
-                  // If still no user model, we have a serious problem
-                  if (auth.userModel == null) {
-                    debugPrint('FAILED to load user model after reload!');
-                    // Navigate back to login to reset the state
-                    if (context.mounted) {
-                      GoRouter.of(context).go('/auth/login');
-                    }
+              // Immediately try to reload user data
+              Future.microtask(() async {
+                debugPrint('Emergency reload of user data...');
+                await auth.reloadUser();
+                
+                // If we still don't have a user model, sign out and restart
+                if (auth.userModel == null && context.mounted) {
+                  debugPrint('CRITICAL: Cannot load user model, signing out...');
+                  await auth.signOut();
+                  if (context.mounted) {
+                    GoRouter.of(context).go('/auth/login');
                   }
+                }
+              });
+              
+              // Show loading for max 3 seconds then redirect to login
+              Future.delayed(const Duration(seconds: 3), () {
+                if (context.mounted && auth.userModel == null) {
+                  debugPrint('Timeout waiting for user model, redirecting to login...');
+                  GoRouter.of(context).go('/auth/login');
                 }
               });
               
@@ -245,6 +250,11 @@ class AppRouter {
                       Text(
                         'Loading your profile...',
                         style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'This is taking longer than expected...',
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),

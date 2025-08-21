@@ -543,7 +543,7 @@ class AuthProvider extends ChangeNotifier {
             try {
               userModel = UserModel.fromFirestore(userData);
               debugPrint('Successfully created UserModel with role: ${userModel.role} on attempt ${retryCount + 1}');
-              debugPrint('UserModel details: id=${userModel.id}, email=${userModel.email}, displayName=${userModel.displayName}');
+              debugPrint('UserModel details: uid=${userModel.uid}, email=${userModel.email}, displayName=${userModel.displayName}');
               break;
             } catch (e) {
               debugPrint('ERROR creating UserModel from Firestore data: $e');
@@ -564,7 +564,7 @@ class AuthProvider extends ChangeNotifier {
           if (userData != null) {
             try {
               userModel = UserModel.fromFirestore(userData);
-              debugPrint('Final attempt created UserModel: role=${userModel.role}, id=${userModel.id}');
+              debugPrint('Final attempt created UserModel: role=${userModel.role}, uid=${userModel.uid}');
             } catch (e) {
               debugPrint('Final attempt ERROR creating UserModel: $e');
               debugPrint('Final attempt userData was: $userData');
@@ -578,12 +578,19 @@ class AuthProvider extends ChangeNotifier {
 
       if (userModel != null && userModel.role != null) {
         _userModel = userModel;
+        // CRITICAL: Ensure status is set AFTER userModel is assigned
         _status = AuthStatus.authenticated;
         debugPrint('OAuth sign-up successful - Status set to: $_status, Role: ${userModel.role}');
         debugPrint('UserModel assigned: ${_userModel != null}');
-        debugPrint('UserModel ID: ${_userModel?.id}');
+        debugPrint('UserModel UID: ${_userModel?.uid}');
         debugPrint('UserModel email: ${_userModel?.email}');
         debugPrint('UserModel role: ${_userModel?.role}');
+        
+        // CRITICAL: Call notifyListeners immediately to ensure UI updates
+        notifyListeners();
+        
+        // Add a small delay to ensure provider state propagates
+        await Future.delayed(const Duration(milliseconds: 100));
         
         // Start web in-app notifications if on web
         if (kIsWeb) {
