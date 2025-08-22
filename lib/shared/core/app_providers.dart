@@ -15,6 +15,7 @@ import '../../features/classes/presentation/providers/class_provider.dart';
 import '../../features/dashboard/presentation/providers/dashboard_provider.dart';
 import '../../features/student/presentation/providers/student_provider.dart';
 import '../../features/grades/presentation/providers/grade_provider.dart';
+import '../../features/games/presentation/providers/jeopardy_provider.dart';
 
 /// Centralized provider configuration
 class AppProviders {
@@ -78,9 +79,11 @@ class AppProviders {
         lazy: true,
       ),
 
-      // REMOVE: JeopardyProvider - unused game feature
-      // Commented out to remove from production
-      // ChangeNotifierProvider(create: (_) => JeopardyProvider()),
+      // Jeopardy game provider
+      ChangeNotifierProvider(
+        create: (_) => JeopardyProvider(),
+        lazy: true,
+      ),
     ];
   }
 }

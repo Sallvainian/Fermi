@@ -39,8 +39,14 @@ class JeopardyProvider with ChangeNotifier {
   /// Teacher's games.
   List<JeopardyGame> _teacherGames = [];
 
+  /// Saved games (template library).
+  List<JeopardyGame> _savedGames = [];
+
   /// Public games available to all.
   List<JeopardyGame> _publicGames = [];
+
+  /// Active game sessions.
+  List<JeopardyGameSession> _activeSessions = [];
 
   /// Currently selected/editing game.
   JeopardyGame? _currentGame;
@@ -71,8 +77,14 @@ class JeopardyProvider with ChangeNotifier {
   /// Teacher's games list.
   List<JeopardyGame> get teacherGames => _teacherGames;
 
+  /// Saved games list (reusable templates).
+  List<JeopardyGame> get savedGames => _savedGames;
+
   /// Public games list.
   List<JeopardyGame> get publicGames => _publicGames;
+
+  /// Active game sessions.
+  List<JeopardyGameSession> get activeSessions => _activeSessions;
 
   /// Currently selected game or null.
   JeopardyGame? get currentGame => _currentGame;
@@ -95,6 +107,21 @@ class JeopardyProvider with ChangeNotifier {
 
     final query = _searchQuery.toLowerCase();
     return _teacherGames.where((game) {
+      return game.title.toLowerCase().contains(query) ||
+          game.categories.any((cat) =>
+              cat.name.toLowerCase().contains(query) ||
+              cat.questions.any((q) =>
+                  q.question.toLowerCase().contains(query) ||
+                  q.answer.toLowerCase().contains(query)));
+    }).toList();
+  }
+
+  /// Filtered saved games based on search query.
+  List<JeopardyGame> get filteredSavedGames {
+    if (_searchQuery.isEmpty) return _savedGames;
+
+    final query = _searchQuery.toLowerCase();
+    return _savedGames.where((game) {
       return game.title.toLowerCase().contains(query) ||
           game.categories.any((cat) =>
               cat.name.toLowerCase().contains(query) ||
@@ -134,6 +161,8 @@ class JeopardyProvider with ChangeNotifier {
           _repository.streamTeacherGames(currentUserId).listen(
         (games) {
           _teacherGames = games;
+          // Saved games are the teacher's reusable templates
+          _savedGames = games.where((g) => !g.isPublic).toList();
           _error = null;
           notifyListeners();
         },
@@ -150,6 +179,9 @@ class JeopardyProvider with ChangeNotifier {
 
       // Load public games
       await loadPublicGames();
+      
+      // Load active sessions
+      await loadActiveSessions();
     } catch (e) {
       _error = e.toString();
       LoggerService.error(
@@ -369,6 +401,107 @@ class JeopardyProvider with ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  /// Loads active game sessions for the teacher.
+  Future<void> loadActiveSessions() async {
+    try {
+      // For now, we'll use a placeholder implementation
+      // In a real implementation, this would fetch from Firestore
+      _activeSessions = [];
+      notifyListeners();
+    } catch (e) {
+      LoggerService.error(
+        'Failed to load active sessions',
+        tag: _tag,
+        error: e,
+      );
+    }
+  }
+
+  /// Assigns a game to multiple classes.
+  ///
+  /// @param gameId Game to assign
+  /// @param classIds List of class IDs to assign to
+  /// @return true if assignment successful
+  Future<bool> assignGameToClasses(String gameId, List<String> classIds) async {
+    _setLoading(true);
+    _error = null;
+
+    try {
+      final game = _teacherGames.firstWhere((g) => g.id == gameId);
+      final updatedGame = game.copyWith(
+        assignedClassIds: {...game.assignedClassIds, ...classIds}.toList(),
+      );
+      
+      await _repository.updateGame(gameId, updatedGame);
+      LoggerService.info('Assigned game $gameId to ${classIds.length} classes', tag: _tag);
+      
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      LoggerService.error(
+        'Failed to assign game to classes',
+        tag: _tag,
+        error: e,
+      );
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Removes a game assignment from a class.
+  ///
+  /// @param gameId Game to unassign
+  /// @param classId Class to remove assignment from
+  /// @return true if removal successful
+  Future<bool> unassignGameFromClass(String gameId, String classId) async {
+    try {
+      final game = _teacherGames.firstWhere((g) => g.id == gameId);
+      final updatedClassIds = game.assignedClassIds.where((id) => id != classId).toList();
+      final updatedGame = game.copyWith(assignedClassIds: updatedClassIds);
+      
+      await _repository.updateGame(gameId, updatedGame);
+      LoggerService.info('Unassigned game $gameId from class $classId', tag: _tag);
+      
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      LoggerService.error(
+        'Failed to unassign game from class',
+        tag: _tag,
+        error: e,
+      );
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Updates the game mode (realtime vs async).
+  ///
+  /// @param gameId Game to update
+  /// @param mode New game mode
+  /// @return true if update successful
+  Future<bool> updateGameMode(String gameId, GameMode mode) async {
+    try {
+      final game = _teacherGames.firstWhere((g) => g.id == gameId);
+      final updatedGame = game.copyWith(gameMode: mode);
+      
+      await _repository.updateGame(gameId, updatedGame);
+      LoggerService.info('Updated game $gameId mode to ${mode.name}', tag: _tag);
+      
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      LoggerService.error(
+        'Failed to update game mode',
+        tag: _tag,
+        error: e,
+      );
+      notifyListeners();
+      return false;
+    }
   }
 
   // Helper methods
