@@ -452,7 +452,7 @@ class JeopardyProvider with ChangeNotifier {
       );
       
       await _repository.updateGame(gameId, updatedGame);
-      LoggerService.info('Assigned game $gameId to ${classIds.length} classes', tag: _tag);
+      LoggerService.debug('Assigned game $gameId to ${classIds.length} classes', tag: _tag);
       
       return true;
     } catch (e) {
