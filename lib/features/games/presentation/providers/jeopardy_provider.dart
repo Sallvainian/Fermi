@@ -480,7 +480,7 @@ class JeopardyProvider with ChangeNotifier {
       final updatedGame = game.copyWith(assignedClassIds: updatedClassIds);
       
       await _repository.updateGame(gameId, updatedGame);
-      LoggerService.info('Unassigned game $gameId from class $classId', tag: _tag);
+      LoggerService.debug('Unassigned game $gameId from class $classId', tag: _tag);
       
       return true;
     } catch (e) {
