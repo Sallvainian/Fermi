@@ -1,22 +1,19 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_callkit_incoming/flutter_callkit_incoming.dart';
-import 'package:flutter_callkit_incoming/entities/entities.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import '../../../calendar/domain/models/calendar_event.dart';
 import '../../../assignments/domain/models/assignment.dart';
-import '../../../chat/domain/models/call.dart';
 import '../../domain/models/notification.dart' as app_notification;
 import '../../../../shared/services/logger_service.dart';
-import '../../../../shared/services/region_detector_service.dart';
 // Conditional import for web notification permissions
 import 'notification_service_stub.dart'
     if (dart.library.html) 'notification_service_web.dart' as platform;
 
 /// Service for managing local notifications and reminders
-/// Now with full WebRTC call notification support for all platforms
+/// Uses standard push notifications for all platforms
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -25,16 +22,10 @@ class NotificationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  final RegionDetectorService _regionDetector = RegionDetectorService();
-  // FlutterCallkitIncoming is a singleton, no instantiation needed
 
   bool _isInitialized = false;
-  bool _isCallKitSupported = false;
   bool _notificationPermissionDenied = false;
 
-  // Callbacks for call actions
-  Function(String callId)? onCallAccepted;
-  Function(String callId)? onCallDeclined;
 
   // Notification channel IDs
   static const String _channelId = 'teacher_dashboard_calls';
@@ -49,32 +40,12 @@ class NotificationService {
       // Initialize timezone
       tz.initializeTimeZones();
 
-      // Initialize region detector
-      await _regionDetector.initialize();
-
-      // Check platform support for CallKit with region restrictions
-      _isCallKitSupported = !kIsWeb && 
-          (Platform.isIOS || Platform.isAndroid) &&
-          _regionDetector.isCallKitAllowed;
-
-      if (!_regionDetector.isCallKitAllowed && Platform.isIOS) {
-        LoggerService.info(
-          'CallKit disabled due to regional restrictions (China MIIT requirement)',
-          tag: 'NotificationService'
-        );
-      }
-
       // Initialize local notifications for all platforms
       await _initializeLocalNotifications();
 
-      // Initialize CallKit for mobile platforms (if allowed)
-      if (_isCallKitSupported) {
-        await _initializeCallKit();
-      }
-
       _isInitialized = true;
       LoggerService.info(
-        'Notification service initialized. CallKit supported: $_isCallKitSupported, Region restricted: ${_regionDetector.isInRestrictedRegion}',
+        'Notification service initialized. Using standard notifications only.',
         tag: 'NotificationService'
       );
     } catch (e) {
@@ -367,269 +338,34 @@ class NotificationService {
     }
   }
 
-  Future<void> _initializeCallKit() async {
-    // Set up event listeners
-    FlutterCallkitIncoming.onEvent.listen((CallEvent? event) {
-      if (event == null) return;
-
-      switch (event.event) {
-        case Event.actionCallAccept:
-          _handleAcceptCall(event);
-          break;
-        case Event.actionCallDecline:
-          _handleDeclineCall(event);
-          break;
-        case Event.actionCallEnded:
-          _handleEndCall(event);
-          break;
-        case Event.actionCallTimeout:
-          _handleCallTimeout(event);
-          break;
-        default:
-          break;
-      }
-    });
-  }
-
-  // Show incoming call notification
-  Future<void> showIncomingCall(Call call) async {
-    if (_isCallKitSupported && !kIsWeb) {
-      // Use native call UI on mobile (if not in restricted region)
-      await _showNativeCallUI(call);
-    } else {
-      // Use local notifications on desktop/web or when CallKit is restricted
-      await _showCallNotification(call, isBackup: !_regionDetector.isCallKitAllowed);
-      
-      if (_regionDetector.isInRestrictedRegion && Platform.isIOS) {
-        LoggerService.info(
-          'Using standard notifications instead of CallKit due to regional restrictions',
-          tag: 'NotificationService'
-        );
-      }
-    }
-  }
-
-  Future<void> _showNativeCallUI(Call call) async {
-    final params = CallKitParams(
-      id: call.id,
-      nameCaller: call.callerName,
-      appName: 'Teacher Dashboard',
-      avatar: call.callerPhotoUrl,
-      handle: call.callerId,
-      type: call.isVideo ? 1 : 0, // 0 for audio, 1 for video
-      duration: 30000, // 30 seconds
-      textAccept: 'Accept',
-      textDecline: 'Decline',
-      android: const AndroidParams(
-        isCustomNotification: true,
-        isShowLogo: false,
-        ringtonePath: 'system_ringtone_default',
-        backgroundColor: '#0955fa',
-        actionColor: '#4CAF50',
-      ),
-      ios: const IOSParams(
-        iconName: 'CallKitLogo',
-        handleType: 'generic',
-        supportsVideo: true,
-        maximumCallGroups: 1,
-        maximumCallsPerCallGroup: 1,
-        audioSessionMode: 'default',
-        audioSessionActive: true,
-        audioSessionPreferredSampleRate: 44100.0,
-        audioSessionPreferredIOBufferDuration: 0.005,
-        supportsDTMF: true,
-        supportsHolding: true,
-        supportsGrouping: false,
-        supportsUngrouping: false,
-        ringtonePath: 'system_ringtone_default',
-      ),
-    );
-
-    await FlutterCallkitIncoming.showCallkitIncoming(params);
-  }
-
-  Future<void> _showCallNotification(Call call, {bool isBackup = false}) async {
-    final title = isBackup
-        ? 'Call from ${call.callerName}'
-        : 'Incoming ${call.isVideo ? "Video" : "Voice"} Call';
-    final body = '${call.callerName} is calling you';
-
-    if (!kIsWeb && Platform.isAndroid) {
-      final androidDetails = AndroidNotificationDetails(
-        _channelId,
-        _channelName,
-        channelDescription: _channelDescription,
-        importance: Importance.max,
-        priority: Priority.max,
-        showWhen: true,
-        ongoing: true,
-        autoCancel: false,
-        fullScreenIntent: true,
-        category: AndroidNotificationCategory.call,
-        actions: [
-          const AndroidNotificationAction(
-            'accept_call',
-            'Accept',
-            showsUserInterface: true,
-          ),
-          const AndroidNotificationAction(
-            'decline_call',
-            'Decline',
-            cancelNotification: true,
-          ),
-        ],
-      );
-
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        NotificationDetails(android: androidDetails),
-        payload: call.id,
-      );
-    } else if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
-      // iOS/macOS notification
-      const iosDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: 'default',
-        categoryIdentifier: 'INCOMING_CALL',
-      );
-
-      const macOSDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-        sound: 'default',
-      );
-
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        const NotificationDetails(
-          iOS: iosDetails,
-          macOS: macOSDetails,
-        ),
-        payload: call.id,
-      );
-    } else if (!kIsWeb && Platform.isLinux) {
-      // Linux notification
-      const linuxDetails = LinuxNotificationDetails(
-        urgency: LinuxNotificationUrgency.critical,
-        actions: [
-          LinuxNotificationAction(
-            key: 'accept_call',
-            label: 'Accept',
-          ),
-          LinuxNotificationAction(
-            key: 'decline_call',
-            label: 'Decline',
-          ),
-        ],
-      );
-
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        const NotificationDetails(linux: linuxDetails),
-        payload: call.id,
-      );
-    } else if (!kIsWeb && Platform.isWindows) {
-      // Windows notification - basic support
-      // Note: Windows notifications through flutter_local_notifications
-      // have limited functionality compared to other platforms
-      await _localNotifications.show(
-        call.id.hashCode,
-        title,
-        body,
-        null, // Windows uses default notification settings
-        payload: call.id,
-      );
-
-      LoggerService.info(
-        'Windows notification shown. Note: Action buttons not supported on Windows yet.',
-        tag: 'NotificationService',
-      );
-    } else if (kIsWeb) {
-      // Web notification fallback
-      LoggerService.info(
-        'Web platform detected. Call notifications require browser permission.',
-        tag: 'NotificationService',
-      );
-    }
-  }
-
-  // End call notification
-  Future<void> endCall(String callId) async {
-    if (_isCallKitSupported) {
-      await FlutterCallkitIncoming.endCall(callId);
-    }
-    await _localNotifications.cancel(callId.hashCode);
-  }
-
-  // CallKit event handlers
-  void _handleAcceptCall(CallEvent event) {
-    final callUUID = event.body['id'] as String?;
-    if (callUUID != null) {
-      LoggerService.info('Call accepted: $callUUID',
-          tag: 'NotificationService');
-      // Invoke callback if provided
-      onCallAccepted?.call(callUUID);
-    }
-  }
-
-  void _handleDeclineCall(CallEvent event) {
-    final callUUID = event.body['id'] as String?;
-    if (callUUID != null) {
-      LoggerService.info('Call declined: $callUUID',
-          tag: 'NotificationService');
-      onCallDeclined?.call(callUUID);
-      endCall(callUUID);
-    }
-  }
-
-  void _handleEndCall(CallEvent event) {
-    final callUUID = event.body['id'] as String?;
-    if (callUUID != null) {
-      LoggerService.info('Call ended: $callUUID', tag: 'NotificationService');
-      endCall(callUUID);
-    }
-  }
-
-  void _handleCallTimeout(CallEvent event) {
-    final callUUID = event.body['id'] as String?;
-    if (callUUID != null) {
-      LoggerService.info('Call timeout: $callUUID', tag: 'NotificationService');
-      endCall(callUUID);
-    }
-  }
 
   void _onNotificationResponse(NotificationResponse response) {
-    final callId = response.payload;
-
-    if (response.actionId == 'accept_call') {
-      LoggerService.info('Call accepted via notification: $callId',
+    // Handle notification taps
+    if (response.payload != null) {
+      LoggerService.info('Notification tapped with payload: ${response.payload}',
           tag: 'NotificationService');
-      if (callId != null) {
-        onCallAccepted?.call(callId);
-      }
-    } else if (response.actionId == 'decline_call') {
-      LoggerService.info('Call declined via notification: $callId',
-          tag: 'NotificationService');
-      if (callId != null) {
-        onCallDeclined?.call(callId);
-        endCall(callId);
-      }
-    } else if (response.notificationResponseType ==
-        NotificationResponseType.selectedNotification) {
-      LoggerService.info('Notification tapped: $callId',
-          tag: 'NotificationService');
-      // Tapping notification should accept the call
-      if (callId != null) {
-        onCallAccepted?.call(callId);
+      
+      // Parse payload to determine notification type
+      try {
+        final Map<String, dynamic> data = json.decode(response.payload!);
+        final String? type = data['type'];
+        final String? id = data['id'];
+        
+        if (type == 'assignment' && id != null) {
+          // Navigate to assignment details
+          // Navigation will be handled by the app's router when it implements deep linking
+          LoggerService.info('Assignment notification tapped: $id',
+              tag: 'NotificationService');
+        } else if (type == 'message' && id != null) {
+          // Navigate to message/chat
+          LoggerService.info('Message notification tapped: $id',
+              tag: 'NotificationService');
+        }
+        // Add more types as needed
+      } catch (e) {
+        // If payload isn't JSON, just log it
+        LoggerService.info('Notification tapped: ${response.payload}',
+            tag: 'NotificationService');
       }
     }
   }

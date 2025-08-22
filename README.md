@@ -90,10 +90,8 @@ Fermi is a modern, cross-platform educational management system that connects te
 |----------|--------|-------|
 | **Web** | ✅ Production | Primary platform, PWA enabled |
 | **Android** | ✅ Production | Full feature support |
-| **iOS** | ✅ Production | Full feature support |
-| **macOS** | ❌ Not Supported | Firebase SDK limitations |
-| **Windows** | ❌ Not Supported | Firebase SDK limitations |
-| **Linux** | ❌ Not Supported | Firebase SDK limitations |
+| **iOS** | ✅ App Store Ready | v0.9.2 - Submitted for review |
+
 
 ## 🏗️ Architecture
 
@@ -407,6 +405,13 @@ We welcome contributions! Please follow these guidelines:
 - Verify Firebase configuration files
 
 ## 📈 Roadmap
+
+### Recently Completed (v0.9.2)
+- [x] Apple App Store compliance (removed VoIP/CallKit)
+- [x] Fixed class-specific assignment display
+- [x] Optimized assignment deduplication
+- [x] Updated all dependencies to latest stable versions
+- [x] Improved notification handling
 
 ### Current Sprint
 - [ ] Complete performance analytics dashboard

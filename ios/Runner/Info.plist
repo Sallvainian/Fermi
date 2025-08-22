@@ -27,9 +27,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Allow camera access for video calls</string>
+	<string>Allow camera access to take photos for assignments</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Allow microphone access for voice and video calls</string>
+	<string>Allow microphone access to record audio for assignments</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Allow access to photo library to select profile pictures</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
@@ -61,8 +61,6 @@
 	<string>Allow Bluetooth access to connect with accessories</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>NSChinaCallKitCompliance</key>
-	<string>This app complies with China MIIT requirements by disabling CallKit in China region</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>mailto</string>

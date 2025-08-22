@@ -370,7 +370,10 @@ class AppRouter {
         ),
         GoRoute(
           path: '/teacher/assignments/create',
-          builder: (context, state) => const AssignmentCreateScreen(),
+          builder: (context, state) {
+            final classId = state.uri.queryParameters['classId'];
+            return AssignmentCreateScreen(classId: classId);
+          },
         ),
         GoRoute(
           path: '/teacher/assignments/:assignmentId',
@@ -426,11 +429,6 @@ class AppRouter {
         GoRoute(
           path: '/grades',
           builder: (context, state) => const GradebookScreen(),
-        ),
-        GoRoute(
-          path: '/assignments',
-          builder: (context, state) =>
-              const teacher_assignments.TeacherAssignmentsScreen(),
         ),
 
         // Student routes

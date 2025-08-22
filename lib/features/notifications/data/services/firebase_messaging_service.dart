@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'notification_service.dart';
-import '../../../chat/domain/models/call.dart';
 import '../../../../shared/services/logger_service.dart';
 
 /// Background message handler - must be top-level function
@@ -15,61 +14,10 @@ import '../../../../shared/services/logger_service.dart';
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Initialize Firebase if needed
   LoggerService.info('Handling background message: ${message.messageId}');
-
-  // Check if this is a VoIP call notification
-  if (message.data['type'] == 'voip_call') {
-    await _handleBackgroundVoIPCall(message);
-  }
+  // Handle standard push notifications only
 }
 
-/// Handle VoIP call in background
-Future<void> _handleBackgroundVoIPCall(RemoteMessage message) async {
-  try {
-    final callData = message.data;
-    if (callData.isEmpty) {
-      LoggerService.warning('Empty call data - discarding');
-      return;
-    }
-
-    // Check if notification is stale (older than 60 seconds)
-    final timestampStr = callData['timestamp'] as String?;
-    if (timestampStr == null) {
-      LoggerService.warning('No timestamp - discarding as stale');
-      return;
-    }
-
-    final timestamp = int.tryParse(timestampStr);
-    if (timestamp == null ||
-        (DateTime.now().millisecondsSinceEpoch - timestamp > 60000)) {
-      // 60s
-      LoggerService.info('Stale/invalid timestamp - discarded');
-      return;
-    }
-
-    final call = Call(
-      id: callData['callId'] ?? '',
-      callerId: callData['callerId'] ?? '',
-      callerName: callData['callerName'] ?? 'Unknown',
-      callerPhotoUrl: callData['callerPhotoUrl'] ?? '',
-      receiverId: callData['receiverId'] ?? '',
-      receiverName: callData['receiverName'] ?? '',
-      receiverPhotoUrl: callData['receiverPhotoUrl'] ?? '',
-      type: callData['isVideo'] == 'true' ? CallType.video : CallType.voice,
-      status: CallStatus.ringing,
-      startedAt: DateTime.now(),
-      chatRoomId: callData['chatRoomId'],
-    );
-
-    // Show call notification
-    final notificationService = NotificationService();
-    await notificationService.initialize();
-    await notificationService.showIncomingCall(call);
-  } catch (e) {
-    LoggerService.error('Error handling background VoIP call', error: e);
-  }
-}
-
-/// Firebase Cloud Messaging service for push notifications and VoIP
+/// Firebase Cloud Messaging service for push notifications
 class FirebaseMessagingService {
   static final FirebaseMessagingService _instance =
       FirebaseMessagingService._internal();
@@ -89,7 +37,6 @@ class FirebaseMessagingService {
   StreamSubscription<RemoteMessage>? _messageOpenedSubscription;
 
   // Callbacks
-  Function(Call)? onIncomingCall;
   Function(RemoteMessage)? onMessage;
 
   /// Initialize Firebase Messaging
@@ -297,22 +244,17 @@ class FirebaseMessagingService {
     LoggerService.info('Received foreground message: ${message.messageId}',
         tag: 'FirebaseMessagingService');
 
-    // Check if this is a VoIP call
-    if (message.data['type'] == 'voip_call') {
-      _handleVoIPCall(message);
-    } else {
-      // Handle other message types
-      onMessage?.call(message);
+    // Handle standard message types
+    onMessage?.call(message);
 
-      // Show local notification for non-VoIP messages
-      if (message.notification != null) {
-        final notificationService = NotificationService();
-        notificationService.sendImmediateNotification(
-          title: message.notification!.title ?? 'New Message',
-          body: message.notification!.body ?? '',
-          payload: message.data['payload'],
-        );
-      }
+    // Show local notification for messages
+    if (message.notification != null) {
+      final notificationService = NotificationService();
+      notificationService.sendImmediateNotification(
+        title: message.notification!.title ?? 'New Message',
+        body: message.notification!.body ?? '',
+        payload: message.data['payload'],
+      );
     }
   }
 
@@ -322,11 +264,7 @@ class FirebaseMessagingService {
         tag: 'FirebaseMessagingService');
 
     // Navigate based on notification type
-    if (message.data['type'] == 'voip_call') {
-      // Call should already be shown, just log
-      LoggerService.info('Opened app from VoIP call notification',
-          tag: 'FirebaseMessagingService');
-    } else if (message.data['type'] == 'chat') {
+    if (message.data['type'] == 'chat') {
       // Navigate to chat screen
       final chatRoomId = message.data['chatRoomId'];
       if (chatRoomId != null && _navigationCallback != null) {
@@ -335,136 +273,6 @@ class FirebaseMessagingService {
         _navigationCallback!('/messages/chat/$chatRoomId',
             params: {'chatRoomId': chatRoomId});
       }
-    }
-  }
-
-  /// Handle VoIP call notification
-  void _handleVoIPCall(RemoteMessage message) {
-    try {
-      final callData = message.data;
-      if (callData.isEmpty) {
-        LoggerService.warning('Empty call data - discarding',
-            tag: 'FirebaseMessagingService');
-        return;
-      }
-
-      // Check if notification is stale (older than 60 seconds)
-      final timestampStr = callData['timestamp'] as String?;
-      if (timestampStr == null) {
-        LoggerService.warning('No timestamp - discarding as stale',
-            tag: 'FirebaseMessagingService');
-        return;
-      }
-
-      final timestamp = int.tryParse(timestampStr);
-      if (timestamp == null ||
-          (DateTime.now().millisecondsSinceEpoch - timestamp > 60000)) {
-        // 60s
-        LoggerService.info('Stale/invalid timestamp - discarded',
-            tag: 'FirebaseMessagingService');
-        return;
-      }
-
-      final call = Call(
-        id: callData['callId'] ?? '',
-        callerId: callData['callerId'] ?? '',
-        callerName: callData['callerName'] ?? 'Unknown',
-        callerPhotoUrl: callData['callerPhotoUrl'] ?? '',
-        receiverId: callData['receiverId'] ?? '',
-        receiverName: callData['receiverName'] ?? '',
-        receiverPhotoUrl: callData['receiverPhotoUrl'] ?? '',
-        type: callData['isVideo'] == 'true' ? CallType.video : CallType.voice,
-        status: CallStatus.ringing,
-        startedAt: DateTime.now(),
-        chatRoomId: callData['chatRoomId'],
-      );
-
-      // Invoke callback
-      onIncomingCall?.call(call);
-
-      // Show call notification
-      final notificationService = NotificationService();
-      notificationService.showIncomingCall(call);
-    } catch (e) {
-      LoggerService.error('Error handling VoIP call',
-          error: e, tag: 'FirebaseMessagingService');
-    }
-  }
-
-  /// Send call notification to receiver
-  Future<void> sendCallNotification({
-    required String receiverId,
-    required String callId,
-    required String callerName,
-    required bool isVideo,
-    String? callerPhotoUrl,
-    String? chatRoomId,
-  }) async {
-    try {
-      // Get receiver's FCM token
-      final tokenDoc =
-          await _firestore.collection('fcm_tokens').doc(receiverId).get();
-      if (!tokenDoc.exists) {
-        LoggerService.error('No FCM token found for receiver',
-            tag: 'FirebaseMessagingService');
-        return;
-      }
-
-      final token = tokenDoc.data()?['token'] as String?;
-      if (token == null) return;
-
-      // Create notification payload
-      // Note: In production, you would send this to your backend server
-      // which would then send the FCM message using the Firebase Admin SDK
-      final payload = {
-        'to': token,
-        'priority': 'high',
-        'data': {
-          'type': 'voip_call',
-          'callId': callId,
-          'callerId': _auth.currentUser?.uid ?? '',
-          'callerName': callerName,
-          'callerPhotoUrl': callerPhotoUrl ?? '',
-          'receiverId': receiverId,
-          'isVideo': isVideo.toString(),
-          'chatRoomId': chatRoomId ?? '',
-          'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
-        },
-        // For iOS, we need to include notification for it to wake up the app
-        'notification': {
-          'title': isVideo ? 'Incoming Video Call' : 'Incoming Voice Call',
-          'body': '$callerName is calling you',
-          'sound': 'default',
-        },
-        // iOS specific options for VoIP
-        'apns': {
-          'headers': {
-            'apns-priority': '10',
-            'apns-push-type': 'voip',
-          },
-          'payload': {
-            'aps': {
-              'content-available': 1,
-            },
-          },
-        },
-        // Android specific options
-        'android': {
-          'priority': 'high',
-          'ttl': '30s',
-        },
-      };
-
-      // In a real app, you would call your backend API here
-      // For now, just log the payload
-      LoggerService.info('Would send FCM notification: $payload',
-          tag: 'FirebaseMessagingService');
-
-      // TODO: Implement backend API call to send FCM message
-      // await yourBackendAPI.sendFCMMessage(payload);
-    } catch (e) {
-      LoggerService.error('Failed to send call notification',
-          error: e, tag: 'FirebaseMessagingService');
     }
   }
 

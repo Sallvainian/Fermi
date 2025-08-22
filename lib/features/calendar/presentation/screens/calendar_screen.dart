@@ -778,15 +778,19 @@ class _CalendarScreenState extends State<CalendarScreen>
           Navigator.pop(context);
           try {
             await provider.deleteEvent(event.id);
-            // ignore: use_build_context_synchronously
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Event deleted successfully')),
-            );
+            // Check if widget is still mounted before showing snackbar
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Event deleted successfully')),
+              );
+            }
           } catch (e) {
-            // ignore: use_build_context_synchronously
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error deleting event: $e')),
-            );
+            // Check if widget is still mounted before showing snackbar
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error deleting event: $e')),
+              );
+            }
           }
         },
       ),
@@ -814,15 +818,19 @@ class _CalendarScreenState extends State<CalendarScreen>
               reminderMinutes: event['reminderMinutes'],
               syncToDeviceCalendar: event['syncToDeviceCalendar'] ?? false,
             );
-            // ignore: use_build_context_synchronously
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Event created successfully')),
-            );
+            // Check if widget is still mounted before showing snackbar
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Event created successfully')),
+              );
+            }
           } catch (e) {
-            // ignore: use_build_context_synchronously
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error creating event: $e')),
-            );
+            // Check if widget is still mounted before showing snackbar
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error creating event: $e')),
+              );
+            }
           }
         },
       ),

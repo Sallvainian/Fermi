@@ -26,13 +26,17 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
   void initState() {
     super.initState();
     // Load assignments when screen loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = context.read<AuthProvider>();
       final assignmentProvider = context.read<AssignmentProvider>();
       final user = authProvider.userModel;
 
       if (user != null && user.role == UserRole.teacher) {
-        assignmentProvider.loadAssignmentsForTeacher(user.uid);
+        // Clear any previous error before loading
+        assignmentProvider.clearError();
+        
+        // Load teacher assignments
+        await assignmentProvider.loadAssignmentsForTeacher(user.uid);
       }
     });
   }
@@ -289,7 +293,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () => context.go('/teacher/assignments/${assignment.id}'),
+        onTap: () => context.push('/teacher/assignments/${assignment.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -411,7 +415,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   if (assignment.status == AssignmentStatus.active)
                     TextButton.icon(
                       onPressed: () {
-                        context.go(
+                        context.push(
                             '/teacher/gradebook?assignmentId=${assignment.id}');
                       },
                       icon: const Icon(Icons.grading, size: 18),
@@ -430,7 +434,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                     ),
                   TextButton.icon(
                     onPressed: () {
-                      context.go('/teacher/assignments/${assignment.id}');
+                      context.push('/teacher/assignments/${assignment.id}');
                     },
                     icon: const Icon(Icons.visibility, size: 18),
                     label: const Text('View'),
@@ -584,7 +588,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
   }
 
   void _showCreateAssignmentSheet(BuildContext context) {
-    context.go('/teacher/assignments/create');
+    context.push('/teacher/assignments/create');
   }
 }
 

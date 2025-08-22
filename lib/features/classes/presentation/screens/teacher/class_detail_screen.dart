@@ -67,8 +67,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
           classProvider.setSelectedClass(classModel);
           await classProvider.loadClassStudents(widget.classId);
 
-          // Load assignments for this class
+          // Load assignments for this class AND teacher's assignments
+          // This ensures we have all assignments available immediately
           await assignmentProvider.loadAssignmentsForClass(widget.classId);
+          
+          // Also load teacher assignments if not already loaded
+          if (authProvider.userModel != null) {
+            await assignmentProvider.loadAssignmentsForTeacher(authProvider.userModel!.uid);
+          }
         } else {
           // Class not found - navigate back
           if (mounted) {
@@ -598,10 +604,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   Widget _buildAssignmentsTab() {
     return Consumer<AssignmentProvider>(
       builder: (context, assignmentProvider, _) {
-        // Filter assignments for this specific class
-        final classAssignments = assignmentProvider.assignments
-            .where((assignment) => assignment.classId == widget.classId)
-            .toList();
+        // Use the optimized method from the provider to get deduplicated assignments
+        final classAssignments = assignmentProvider.getAssignmentsForClass(widget.classId);
 
         if (assignmentProvider.isLoading) {
           return const Center(

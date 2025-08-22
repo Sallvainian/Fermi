@@ -12,6 +12,7 @@ import '../../../grades/domain/models/grade.dart';
 import '../../domain/repositories/assignment_repository.dart';
 import '../../../grades/domain/repositories/grade_repository.dart';
 import '../../../../shared/core/service_locator.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Provider managing assignment and grade state.
 ///
@@ -52,6 +53,12 @@ class AssignmentProvider with ChangeNotifier {
 
   /// Selected assignment for detail view.
   Assignment? _selectedAssignment;
+  
+  /// Track recently created assignment IDs to prevent stream overwrites.
+  final Set<String> _recentlyCreatedIds = {};
+  
+  /// Duration to retain recently created IDs before allowing stream updates.
+  static const Duration recentlyCreatedIdRetentionDuration = Duration(seconds: 5);
 
   // Stream subscriptions
 
@@ -132,6 +139,34 @@ class AssignmentProvider with ChangeNotifier {
       ..sort((a, b) => b.dueDate.compareTo(a.dueDate));
   }
 
+  /// Gets deduplicated assignments for a specific class.
+  ///
+  /// Merges teacherAssignments and assignments lists, removes duplicates,
+  /// and filters by classId. This method is optimized to avoid unnecessary
+  /// computation on widget rebuilds.
+  ///
+  /// @param classId The class ID to filter assignments for
+  /// @return List of unique assignments for the specified class, sorted by creation date
+  List<Assignment> getAssignmentsForClass(String classId) {
+    // Merge both lists
+    final allAssignments = [
+      ..._teacherAssignments,
+      ..._assignments,
+    ];
+    
+    // Remove duplicates using a Map (keeps last occurrence)
+    final uniqueAssignments = <String, Assignment>{};
+    for (final assignment in allAssignments) {
+      uniqueAssignments[assignment.id] = assignment;
+    }
+    
+    // Filter for the specific class and sort by creation date (newest first)
+    return uniqueAssignments.values
+        .where((assignment) => assignment.classId == classId)
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
   /// Loads and subscribes to assignments for a class.
   ///
   /// Sets up real-time stream for assignment updates.
@@ -141,7 +176,15 @@ class AssignmentProvider with ChangeNotifier {
   /// @param classId Class to load assignments from
   /// @throws Exception if loading fails
   Future<void> loadAssignmentsForClass(String classId) async {
+    // Validate classId
+    if (classId.isEmpty) {
+      LoggerService.warning('loadAssignmentsForClass called with empty classId');
+      _setError('Invalid class ID');
+      return;
+    }
+    
     _setLoading(true);
+    LoggerService.info('Loading assignments for class: $classId');
     try {
       // Cancel existing subscription before creating new one
       _classAssignmentsSubscription?.cancel();
@@ -150,7 +193,24 @@ class AssignmentProvider with ChangeNotifier {
       _classAssignmentsSubscription =
           _assignmentRepository.getClassAssignments(classId).listen(
         (assignmentList) {
-          _assignments = assignmentList;
+          // Preserve recently created assignments that might not be in the stream yet
+          final recentAssignments = _assignments
+              .where((a) => _recentlyCreatedIds.contains(a.id))
+              .toList();
+          
+          // Merge the stream data with recently created assignments
+          final mergedList = [...recentAssignments];
+          for (final assignment in assignmentList) {
+            // Add assignment if it's not a recently created one (to avoid duplicates)
+            if (!_recentlyCreatedIds.contains(assignment.id)) {
+              mergedList.add(assignment);
+            }
+          }
+          
+          // Sort by creation date (newest first)
+          mergedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          
+          _assignments = mergedList;
           _setLoading(false);
           // Defer notification to next frame to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -160,6 +220,10 @@ class AssignmentProvider with ChangeNotifier {
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          // Notify listeners about the error
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
@@ -177,7 +241,15 @@ class AssignmentProvider with ChangeNotifier {
   /// @param teacherId Teacher's unique identifier
   /// @throws Exception if loading fails
   Future<void> loadAssignmentsForTeacher(String teacherId) async {
+    // Validate teacherId
+    if (teacherId.isEmpty) {
+      LoggerService.warning('loadAssignmentsForTeacher called with empty teacherId');
+      _setError('Invalid teacher ID');
+      return;
+    }
+    
     _setLoading(true);
+    LoggerService.info('Loading assignments for teacher: $teacherId');
     try {
       // Cancel existing subscription before creating new one
       _teacherAssignmentsSubscription?.cancel();
@@ -186,6 +258,23 @@ class AssignmentProvider with ChangeNotifier {
       _teacherAssignmentsSubscription =
           _assignmentRepository.getTeacherAssignments(teacherId).listen(
         (assignmentList) {
+          // If we have recently created assignments, don't let the stream overwrite them
+          if (_recentlyCreatedIds.isNotEmpty) {
+            // Keep any assignments we just created locally
+            final recentAssignments = _teacherAssignments
+                .where((a) => _recentlyCreatedIds.contains(a.id))
+                .toList();
+            
+            // Add assignments from stream that aren't duplicates
+            final streamIds = assignmentList.map((a) => a.id).toSet();
+            for (final recentAssignment in recentAssignments) {
+              if (!streamIds.contains(recentAssignment.id)) {
+                // This assignment was just created locally but isn't in the stream yet
+                assignmentList.insert(0, recentAssignment);
+              }
+            }
+          }
+          
           _teacherAssignments = assignmentList;
           _setLoading(false);
           // Defer notification to next frame to avoid setState during build
@@ -196,6 +285,10 @@ class AssignmentProvider with ChangeNotifier {
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          // Notify listeners about the error
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
@@ -232,6 +325,10 @@ class AssignmentProvider with ChangeNotifier {
         onError: (error) {
           _setError(error.toString());
           _setLoading(false);
+          // Notify listeners about the error
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            notifyListeners();
+          });
         },
       );
     } catch (e) {
@@ -245,7 +342,8 @@ class AssignmentProvider with ChangeNotifier {
   /// Process:
   /// 1. Creates assignment in Firestore
   /// 2. If published, initializes grade records for all students
-  /// 3. Updates local state through stream subscription
+  /// 3. Updates local state immediately for responsive UI
+  /// 4. Stream subscription will sync any additional updates
   ///
   /// @param assignment Assignment data to create
   /// @return true if creation successful
@@ -264,6 +362,34 @@ class AssignmentProvider with ChangeNotifier {
           assignment.totalPoints,
         );
       }
+
+      // Create the assignment with the new ID for local state
+      final now = DateTime.now();
+      final createdAssignment = assignment.copyWith(
+        id: assignmentId,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      // Add to local teacher assignments list immediately
+      _teacherAssignments.insert(0, createdAssignment); // Insert at beginning for visibility
+      
+      // Also add to class assignments if it matches the current class
+      // This ensures the assignment appears in student views if the same class is loaded
+      if (assignment.classId.isNotEmpty) {
+        _assignments.insert(0, createdAssignment); // Insert at beginning for visibility
+      }
+
+      // Store the newly created assignment ID to prevent stream overwrites
+      _recentlyCreatedIds.add(assignmentId);
+      
+      // Clear the recently created ID after a delay to allow stream to catch up
+      Future.delayed(recentlyCreatedIdRetentionDuration, () {
+        _recentlyCreatedIds.remove(assignmentId);
+      });
+
+      // Notify listeners immediately for responsive UI
+      notifyListeners();
 
       _setLoading(false);
       return true;
