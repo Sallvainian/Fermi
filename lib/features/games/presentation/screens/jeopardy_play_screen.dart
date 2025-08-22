@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../providers/jeopardy_provider.dart';
 
@@ -49,9 +50,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       JeopardyGame gameWithDailyDoubles = loadedGame;
       
 
-      print('Daily Doubles in game: ${loadedGame.dailyDoubles.length}');
+      LoggerService.info('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
       for (final dd in loadedGame.dailyDoubles) {
-        print('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}');
+        LoggerService.info('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
       }
       
 
@@ -67,7 +68,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             final updatedQuestions = List<JeopardyQuestion>.from(updatedCategories[dd.categoryIndex].questions);
             updatedQuestions[dd.questionIndex] = updatedQuestions[dd.questionIndex].copyWith(isDailyDouble: true);
             updatedCategories[dd.categoryIndex] = updatedCategories[dd.categoryIndex].copyWith(questions: updatedQuestions);
-            print('Marked Daily Double at category ${dd.categoryIndex}, question ${dd.questionIndex}');
+            LoggerService.info('Marked Daily Double at category ${dd.categoryIndex}, question ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
           }
         }
         
