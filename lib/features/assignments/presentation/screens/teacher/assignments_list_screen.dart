@@ -187,12 +187,18 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       // Status filter
       if (_selectedStatus != 'All') {
         if (_selectedStatus == 'Active' &&
-            assignment.status != AssignmentStatus.active) return false;
+            assignment.status != AssignmentStatus.active) {
+          return false;
+        }
         if (_selectedStatus == 'Draft' &&
             (assignment.status != AssignmentStatus.draft ||
-                assignment.isPublished)) return false;
+                assignment.isPublished)) {
+          return false;
+        }
         if (_selectedStatus == 'Closed' &&
-            assignment.status != AssignmentStatus.completed) return false;
+            assignment.status != AssignmentStatus.completed) {
+          return false;
+        }
       }
 
       // Search filter

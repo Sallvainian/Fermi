@@ -99,7 +99,7 @@ class AppInitializer {
           _firebaseInitialized = true;
         } else {
           // For other errors, rethrow
-          throw e;
+          rethrow;
         }
       }
 

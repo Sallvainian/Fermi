@@ -220,8 +220,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   Widget _buildByClassTab() {
     return Consumer<ClassProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading)
+        if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         final classes = provider.teacherClasses;
 

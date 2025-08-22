@@ -130,8 +130,9 @@ class BottomNavBar extends StatelessWidget {
 
     // Determine active tab index from current route
     int currentIndex = routes.indexOf(currentRoute);
-    if (currentIndex == -1)
+    if (currentIndex == -1) {
       currentIndex = 0; // Default to first tab if route not found
+    }
 
     return BottomNavigationBar(
       items: items,

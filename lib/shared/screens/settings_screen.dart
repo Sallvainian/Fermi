@@ -876,6 +876,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               Navigator.pop(context);
               final authProvider = context.read<AuthProvider>();
+              final messenger = ScaffoldMessenger.of(context);
               
               try {
                 await authProvider.reauthenticateWithEmail(
@@ -884,14 +885,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
                 await _deleteAccount();
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Re-authentication failed: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Re-authentication failed: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: FilledButton.styleFrom(

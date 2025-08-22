@@ -48,14 +48,14 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyBl_36NLwN3O9POk5SMD86jX_LGY1IDFrM',
-    appId: '1:218352465432:web:530f4a4a745f372538b56d',
+    appId: '1:218352465432:web:4254a98138547b7138b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
     authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
     databaseURL:
         'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    measurementId: 'G-V4QCVHTDRC',
+    measurementId: 'G-VWHGE5G997',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
