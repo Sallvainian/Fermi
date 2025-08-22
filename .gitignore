@@ -120,4 +120,7 @@ web/nul!/build/
 .claude-checkpoints/
 .worktrees/
 !/.trae/
-*.p12\n*.mobileprovision\nRunner.xcarchive/\ntemp.pem
+*.p12
+*.mobileprovision
+Runner.xcarchive/
+temp.pem

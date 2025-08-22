@@ -119,18 +119,18 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
         final participantInfoList = [
           ParticipantInfo(
             id: currentUser.uid,
-            name: currentUser.displayName ?? '',
+            name: currentUser.displayNameOrFallback,
             role: '',
           ),
           ParticipantInfo(
             id: otherUser.uid,
-            name: otherUser.displayName ?? '',
+            name: otherUser.displayNameOrFallback,
             role: '',
           ),
         ];
 
         final chatRoom = await chatProvider.createGroupChat(
-          name: otherUser.displayName ?? '',
+          name: otherUser.displayNameOrFallback,
           type: 'direct',
           participantIds: participantIds,
           participants: participantInfoList,
@@ -218,7 +218,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
                                 : '?')
                             : null,
                       ),
-                      title: Text(user.displayName ?? 'Unknown User'),
+                      title: Text(user.displayNameOrFallback),
                       subtitle: Text(user.email ?? ''),
                       trailing: Chip(
                         label: Text(

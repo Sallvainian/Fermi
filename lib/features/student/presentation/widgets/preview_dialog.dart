@@ -155,7 +155,7 @@ class _PreviewDialogState extends State<PreviewDialog>
               ),
             ),
             title: Text(
-              student.displayName ?? 'Unknown Student',
+              student.displayNameOrFallback,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),

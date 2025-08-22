@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../widgets/common/adaptive_layout.dart';
 import '../theme/app_spacing.dart';
+import '../models/user_model.dart';
 
 class ContactSupportScreen extends StatefulWidget {
   const ContactSupportScreen({super.key});
@@ -314,7 +315,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
         'description': _descriptionController.text.trim(),
         'userId': user?.uid ?? 'anonymous',
         'userEmail': user?.email ?? 'unknown',
-        'userName': user?.displayName ?? 'Unknown User',
+        'userName': user.displayNameOrFallback,
         'userRole': user?.role.toString().split('.').last ?? 'unknown',
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'new',

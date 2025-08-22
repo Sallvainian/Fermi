@@ -13,6 +13,7 @@ import '../../../../shared/services/firestore_service.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../../../../shared/repositories/firestore_repository.dart';
+import '../../../../shared/models/user_model.dart';
 
 /// Firestore-based implementation of ChatRepository.
 ///
@@ -181,7 +182,11 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom>
       final participants = [
         ParticipantInfo(
           id: _currentUserId,
-          name: _auth.currentUser?.displayName ?? 'User',
+          name: UserModel(
+            uid: _auth.currentUser?.uid ?? '',
+            email: _auth.currentUser?.email,
+            displayName: _auth.currentUser?.displayName,
+          ).displayNameOrFallback,
           role: currentUserRole,
         ),
         ParticipantInfo(
@@ -281,7 +286,6 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom>
     String? userRole,
   }) async {
     try {
-      // DEBUG: Log incoming parameters
       LoggerService.info(
           'sendMessage called with attachmentUrl: $attachmentUrl, type: $attachmentType',
           tag: _tag);
@@ -289,7 +293,11 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom>
       final message = Message(
         id: '',
         senderId: _currentUserId,
-        senderName: _auth.currentUser?.displayName ?? 'User',
+        senderName: UserModel(
+          uid: _auth.currentUser?.uid ?? '',
+          email: _auth.currentUser?.email,
+          displayName: _auth.currentUser?.displayName,
+        ).displayNameOrFallback,
         senderRole:
             userRole ?? 'student', // Use actual role passed from AuthProvider
         content: content,
@@ -308,7 +316,6 @@ class ChatRepositoryImpl extends FirestoreRepository<ChatRoom>
       final messageWithId = message.copyWith(id: ref.id);
       final firestoreData = messageWithId.toFirestore();
 
-      // DEBUG: Log what we're saving to Firestore
       LoggerService.info(
           'Saving to Firestore: attachmentUrl=${firestoreData['attachmentUrl']}, type=${firestoreData['attachmentType']}',
           tag: _tag);

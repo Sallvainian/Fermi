@@ -9,6 +9,7 @@ import '../providers/theme_provider.dart';
 import '../widgets/common/adaptive_layout.dart';
 import '../widgets/common/responsive_layout.dart';
 import '../widgets/custom_radio_list_tile.dart';
+import '../models/user_model.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -401,7 +402,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user?.displayName ?? 'User',
+                  user.displayNameOrFallback,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
