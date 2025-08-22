@@ -422,7 +422,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Widget _buildAttachment(Message message) {
     if (message.attachmentType == 'image' && message.attachmentUrl != null) {
-      // DEBUG: Log when trying to display image
 
       // Simplified approach - just use Image.network without any containers
       return Image.network(
@@ -932,8 +931,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
-      // DEBUG: Log the download URL
-      debugPrint('DEBUG: Download URL length: ${downloadUrl.length}');
 
       // Send message with image attachment
       if (mounted) {

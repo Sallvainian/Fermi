@@ -294,7 +294,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  student.displayName ?? 'Unknown Student',
+                                  student.displayNameOrFallback,
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),

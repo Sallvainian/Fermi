@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import '../../../../shared/models/user_model.dart';
 
 class SimpleChatScreen extends StatefulWidget {
   final String chatRoomId;
@@ -347,7 +348,11 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           .add({
         'text': text,
         'senderId': _auth.currentUser?.uid,
-        'senderName': _auth.currentUser?.displayName ?? 'User',
+        'senderName': UserModel(
+          uid: _auth.currentUser?.uid ?? '',
+          email: _auth.currentUser?.email,
+          displayName: _auth.currentUser?.displayName,
+        ).displayNameOrFallback,
         'timestamp': FieldValue.serverTimestamp(),
         'imageUrl': null,
         'videoUrl': null,
@@ -363,10 +368,6 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
   Future<void> _pickAndSendImage() async {
     try {
-      // DEBUG: Check auth state
-      final currentUser = _auth.currentUser;
-      debugPrint('DEBUG: Current user UID: ${currentUser?.uid}');
-      debugPrint('DEBUG: User authenticated: ${currentUser != null}');
 
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
@@ -422,7 +423,11 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           .add({
         'text': '',
         'senderId': _auth.currentUser?.uid,
-        'senderName': _auth.currentUser?.displayName ?? 'User',
+        'senderName': UserModel(
+          uid: _auth.currentUser?.uid ?? '',
+          email: _auth.currentUser?.email,
+          displayName: _auth.currentUser?.displayName,
+        ).displayNameOrFallback,
         'timestamp': FieldValue.serverTimestamp(),
         'imageUrl': downloadUrl,
         'videoUrl': null,
@@ -497,7 +502,11 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           .add({
         'text': '',
         'senderId': _auth.currentUser?.uid,
-        'senderName': _auth.currentUser?.displayName ?? 'User',
+        'senderName': UserModel(
+          uid: _auth.currentUser?.uid ?? '',
+          email: _auth.currentUser?.email,
+          displayName: _auth.currentUser?.displayName,
+        ).displayNameOrFallback,
         'timestamp': FieldValue.serverTimestamp(),
         'imageUrl': null,
         'videoUrl': downloadUrl,

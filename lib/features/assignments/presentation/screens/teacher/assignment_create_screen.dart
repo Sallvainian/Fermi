@@ -6,6 +6,7 @@ import '../../../domain/models/assignment.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/assignment_provider.dart';
 import '../../../../../shared/widgets/custom_radio_list_tile.dart';
+import '../../../../../shared/models/user_model.dart';
 
 class AssignmentCreateScreen extends StatefulWidget {
   final String? classId;
@@ -128,7 +129,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
         category: _selectedType.name.toUpperCase(),
         classId: widget.classId ?? '',
         teacherId: user.uid,
-        teacherName: user.displayName ?? 'Unknown Teacher',
+        teacherName: user.displayNameOrFallback,
         totalPoints: double.parse(_maxPointsController.text),
         maxPoints: double.parse(_maxPointsController.text),
         dueDate: _combineDateAndTime(),

@@ -85,10 +85,9 @@ migrate_working_dir/
 *.env
 .envs/
 secrets.json
-# google-services.json  # Commented out - needed for CI/CD
-# GoogleService-Info.plist  # Commented out - needed for CI/CD
-.firebaserc
-**/firebase.json  # Added for Firebase CLI configs
+# google-services.json
+# GoogleService-Info.plist
+**/firebase.json
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
@@ -121,4 +120,7 @@ web/nul!/build/
 .claude-checkpoints/
 .worktrees/
 !/.trae/
-*.p12\n*.mobileprovision\nRunner.xcarchive/\ntemp.pem
+*.p12
+*.mobileprovision
+Runner.xcarchive/
+temp.pem

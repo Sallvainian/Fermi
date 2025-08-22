@@ -283,22 +283,7 @@ class FirebaseJeopardyRepository implements JeopardyRepository {
       final data = doc.data();
       if (data == null) return null;
 
-      return JeopardyGame(
-        id: doc.id,
-        title: data['title'] ?? '',
-        teacherId: data['teacherId'] ?? '',
-        categories: (data['categories'] as List? ?? [])
-            .map((c) => JeopardyCategory.fromJson(c))
-            .toList(),
-        finalJeopardy: data['finalJeopardy'] != null
-            ? FinalJeopardyData.fromJson(data['finalJeopardy'])
-            : null,
-        createdAt: DateTime.parse(
-            data['createdAt'] ?? DateTime.now().toIso8601String()),
-        updatedAt: DateTime.parse(
-            data['updatedAt'] ?? DateTime.now().toIso8601String()),
-        isPublic: data['isPublic'] ?? false,
-      );
+      return JeopardyGame.fromFirestore(data, doc.id);
     } catch (e) {
       LoggerService.error(
         'Failed to parse Jeopardy game from Firestore',

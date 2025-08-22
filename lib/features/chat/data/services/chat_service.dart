@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/models/message.dart';
 import '../../domain/models/chat_room.dart';
+import '../../../../shared/models/user_model.dart';
 
 /// Core service for managing chat rooms and messages in Firestore.
 ///
@@ -42,8 +43,7 @@ class ChatService {
   /// regardless of who initiates the chat.
   ///
   /// If the room doesn't exist, creates it with both participants'
-  /// information. The current user's role is hardcoded as 'teacher'
-  /// (TODO: fetch from user profile).
+  /// information fetched from their user profiles.
   ///
   /// @param otherUserId ID of the other participant
   /// @param otherUserName Display name of the other participant
@@ -66,7 +66,34 @@ class ChatService {
       return ChatRoom.fromFirestore(chatRoomDoc);
     }
 
-    // Create new chat room
+    // Fetch user profiles to get actual roles and photos
+    final currentUserDoc = await _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .get();
+    
+    final otherUserDoc = await _firestore
+        .collection('users')
+        .doc(otherUserId)
+        .get();
+
+    // Import UserModel to use the extension
+    String currentUserRole = 'student'; // Default fallback
+    String otherUserRole = 'student'; // Default fallback
+    String? otherUserPhoto;
+    
+    if (currentUserDoc.exists) {
+      final data = currentUserDoc.data() as Map<String, dynamic>;
+      currentUserRole = data['role'] ?? 'student';
+    }
+    
+    if (otherUserDoc.exists) {
+      final data = otherUserDoc.data() as Map<String, dynamic>;
+      otherUserRole = data['role'] ?? 'student';
+      otherUserPhoto = data['photoURL'] ?? data['photoUrl'];
+    }
+
+    // Create new chat room with actual user data
     final newChatRoom = {
       'name': otherUserName,
       'type': 'direct',
@@ -74,15 +101,19 @@ class ChatService {
       'participants': [
         {
           'id': currentUser.uid,
-          'name': currentUser.displayName ?? 'Unknown',
-          'role': 'teacher', // TODO: fetch from user profile
+          'name': UserModel(
+            uid: currentUser.uid,
+            email: currentUser.email,
+            displayName: currentUser.displayName,
+          ).displayNameOrFallback,
+          'role': currentUserRole,
           'photoUrl': currentUser.photoURL,
         },
         {
           'id': otherUserId,
           'name': otherUserName,
-          'role': 'student', // TODO: fetch from user profile
-          'photoUrl': null, // TODO: fetch from user profile
+          'role': otherUserRole,
+          'photoUrl': otherUserPhoto,
         },
       ],
       'createdAt': FieldValue.serverTimestamp(),
@@ -210,7 +241,11 @@ class ChatService {
 
     final messageData = {
       'senderId': currentUser.uid,
-      'senderName': currentUser.displayName ?? 'Unknown',
+      'senderName': UserModel(
+        uid: currentUser.uid,
+        email: currentUser.email,
+        displayName: currentUser.displayName,
+      ).displayNameOrFallback,
       'senderRole': 'teacher', // This should be fetched from user profile
       'content': content,
       'timestamp': FieldValue.serverTimestamp(),
@@ -311,7 +346,11 @@ class ChatService {
       'participants': FieldValue.arrayRemove([
         {
           'id': currentUser.uid,
-          'name': currentUser.displayName ?? 'Unknown',
+          'name': UserModel(
+            uid: currentUser.uid,
+            email: currentUser.email,
+            displayName: currentUser.displayName,
+          ).displayNameOrFallback,
           'role': 'teacher', // This should be fetched from user profile
           'photoUrl': currentUser.photoURL,
         }

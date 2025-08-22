@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/jeopardy_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../classes/data/services/class_service.dart';
+import '../../../classes/domain/models/class_model.dart';
 
 class JeopardyScreen extends StatefulWidget {
   const JeopardyScreen({super.key});
@@ -57,7 +60,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
               indicatorColor: theme.colorScheme.primary,
               tabs: const [
                 Tab(text: 'My Games'),
-                Tab(text: 'Public Games'),
+                Tab(text: 'Saved Games'),
                 Tab(text: 'Active Games'),
               ],
             ),
@@ -68,7 +71,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
               controller: _tabController,
               children: [
                 _buildMyGamesTab(),
-                _buildPublicGamesTab(),
+                _buildSavedGamesTab(),
                 _buildActiveGamesTab(),
               ],
             ),
@@ -155,33 +158,121 @@ class _JeopardyScreenState extends State<JeopardyScreen>
     );
   }
 
-  Widget _buildPublicGamesTab() {
+  Widget _buildSavedGamesTab() {
     return Consumer<JeopardyProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final publicGames = provider.publicGames;
+        final savedGames = provider.savedGames;
 
-        if (publicGames.isEmpty) {
-          return const Center(
-            child: Text('No public games available'),
+        if (savedGames.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.bookmark_outline,
+                  size: 64,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No saved games yet',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Your reusable game templates will appear here',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withValues(alpha: 0.7),
+                      ),
+                ),
+              ],
+            ),
           );
         }
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: publicGames.length,
-          itemBuilder: (context, index) => _buildGameCard(publicGames[index]),
+          itemCount: savedGames.length,
+          itemBuilder: (context, index) => _buildSavedGameCard(savedGames[index]),
         );
       },
     );
   }
 
   Widget _buildActiveGamesTab() {
-    return const Center(
-      child: Text('No active games in progress'),
+    return Consumer<JeopardyProvider>(
+      builder: (context, provider, child) {
+        final activeSessions = provider.activeSessions;
+
+        if (activeSessions.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.play_circle_outline,
+                  size: 64,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurfaceVariant
+                      .withValues(alpha: 0.5),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No active games',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Start a game from your saved templates',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurfaceVariant
+                            .withValues(alpha: 0.7),
+                      ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: activeSessions.length,
+          itemBuilder: (context, index) {
+            final session = activeSessions[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: const Icon(Icons.play_arrow, size: 32),
+                title: Text('Game Session ${index + 1}'),
+                subtitle: Text('Started ${_formatDate(session.startedAt)}'),
+                trailing: FilledButton(
+                  onPressed: () {
+                    // Navigate to active game
+                  },
+                  child: const Text('Resume'),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -247,12 +338,135 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                 onSelected: (value) => _handleGameAction(game, value),
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'play', child: Text('Play')),
+                  const PopupMenuItem(value: 'assign', child: Text('Assign to Classes')),
                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
                   const PopupMenuItem(
                       value: 'duplicate', child: Text('Duplicate')),
                   PopupMenuItem(
                     value: 'share',
                     child: Text(game.isPublic ? 'Make Private' : 'Make Public'),
+                  ),
+                  const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedGameCard(JeopardyGame game) {
+    final theme = Theme.of(context);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: () => _openGame(game),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Game icon
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.bookmark,
+                  color: theme.colorScheme.onSecondaryContainer,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Game info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            game.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (game.gameMode == GameMode.async)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiaryContainer,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Async',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onTertiaryContainer,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${game.categories.length} categories',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (game.doubleJeopardyCategories != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Double Jeopardy: ${game.doubleJeopardyCategories!.length} categories',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                    if (game.assignedClassIds.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.class_,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Assigned to ${game.assignedClassIds.length} class${game.assignedClassIds.length == 1 ? '' : 'es'}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Actions
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) => _handleGameAction(game, value),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'play', child: Text('Start Game')),
+                  const PopupMenuItem(value: 'assign', child: Text('Assign to Classes')),
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(
+                      value: 'duplicate', child: Text('Duplicate')),
+                  PopupMenuItem(
+                    value: 'mode',
+                    child: Text(game.gameMode == GameMode.realtime 
+                        ? 'Enable Async Mode' 
+                        : 'Enable Realtime Mode'),
                   ),
                   const PopupMenuItem(value: 'delete', child: Text('Delete')),
                 ],
@@ -294,6 +508,9 @@ class _JeopardyScreenState extends State<JeopardyScreen>
       case 'play':
         _openGame(game);
         break;
+      case 'assign':
+        _showAssignToClassesDialog(game);
+        break;
       case 'edit':
         context.go('/teacher/games/jeopardy/${game.id}/edit');
         break;
@@ -302,6 +519,9 @@ class _JeopardyScreenState extends State<JeopardyScreen>
         break;
       case 'share':
         _togglePublicStatus(game);
+        break;
+      case 'mode':
+        _toggleGameMode(game);
         break;
       case 'delete':
         _showDeleteConfirmation(game);
@@ -363,19 +583,51 @@ class _JeopardyScreenState extends State<JeopardyScreen>
     }
   }
 
+  void _showAssignToClassesDialog(JeopardyGame game) {
+    showDialog(
+      context: context,
+      builder: (context) => _ClassAssignmentDialog(game: game),
+    );
+  }
+
+  void _toggleGameMode(JeopardyGame game) async {
+    final provider = context.read<JeopardyProvider>();
+    final newMode = game.gameMode == GameMode.realtime 
+        ? GameMode.async 
+        : GameMode.realtime;
+    
+    final success = await provider.updateGameMode(game.id, newMode);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? 'Game mode updated to ${newMode.name}'
+              : 'Failed to update game mode'),
+          backgroundColor: success ? null : Colors.red,
+        ),
+      );
+    }
+  }
+
   void _duplicateGame(JeopardyGame game) async {
     final provider = context.read<JeopardyProvider>();
 
-    // Create a copy with a new title
+    // Create a copy with a new title including all data
     final duplicatedGame = JeopardyGame(
       id: '',
       title: 'Copy of ${game.title}',
       teacherId: game.teacherId,
       categories: game.categories,
+      doubleJeopardyCategories: game.doubleJeopardyCategories,
       finalJeopardy: game.finalJeopardy,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       isPublic: false,
+      gameMode: game.gameMode,
+      assignedClassIds: [], // Start with no classes assigned
+      dailyDoubles: game.dailyDoubles,
+      randomDailyDoubles: game.randomDailyDoubles,
     );
 
     final gameId = await provider.createGame(duplicatedGame);
@@ -385,6 +637,8 @@ class _JeopardyScreenState extends State<JeopardyScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Game duplicated successfully')),
         );
+        // Navigate to edit the duplicated game
+        context.go('/teacher/games/jeopardy/$gameId/edit');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -393,6 +647,192 @@ class _JeopardyScreenState extends State<JeopardyScreen>
           ),
         );
       }
+    }
+  }
+}
+
+// Class Assignment Dialog Widget
+class _ClassAssignmentDialog extends StatefulWidget {
+  final JeopardyGame game;
+
+  const _ClassAssignmentDialog({required this.game});
+
+  @override
+  State<_ClassAssignmentDialog> createState() => _ClassAssignmentDialogState();
+}
+
+class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
+  final _classService = ClassService();
+  List<ClassModel> _availableClasses = [];
+  List<String> _selectedClassIds = [];
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedClassIds = List.from(widget.game.assignedClassIds);
+    _loadTeacherClasses();
+  }
+
+  void _loadTeacherClasses() async {
+    final authProvider = context.read<AuthProvider>();
+    final teacherId = authProvider.userModel?.uid ?? '';
+    
+    if (teacherId.isNotEmpty) {
+      try {
+        final classesStream = _classService.getClassesByTeacher(teacherId);
+        classesStream.first.then((classes) {
+          if (mounted) {
+            setState(() {
+              _availableClasses = classes;
+              _isLoading = false;
+            });
+          }
+        });
+      } catch (e) {
+        debugPrint('Error loading classes: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return AlertDialog(
+      title: Text('Assign "${widget.game.title}" to Classes'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select classes to make this game available to:',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            if (_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_availableClasses.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text('No classes available'),
+                ),
+              )
+            else
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: _availableClasses.map((classModel) {
+                      final isSelected = _selectedClassIds.contains(classModel.id);
+                      return CheckboxListTile(
+                        title: Text(classModel.name),
+                        subtitle: Text(
+                          '${classModel.subject} - ${classModel.studentCount} students',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        value: isSelected,
+                        onChanged: (selected) {
+                          setState(() {
+                            if (selected == true) {
+                              _selectedClassIds.add(classModel.id);
+                            } else {
+                              _selectedClassIds.remove(classModel.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            if (_selectedClassIds.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.game.gameMode == GameMode.async
+                            ? 'Students can play this game unlimited times for study'
+                            : 'Students will play this game together in class',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isSaving ? null : _saveAssignments,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text('Assign (${_selectedClassIds.length})'),
+        ),
+      ],
+    );
+  }
+
+  void _saveAssignments() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    final provider = context.read<JeopardyProvider>();
+    final updatedGame = widget.game.copyWith(
+      assignedClassIds: _selectedClassIds,
+    );
+
+    final success = await provider.updateGame(widget.game.id, updatedGame);
+
+    if (mounted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? 'Game assigned to ${_selectedClassIds.length} class${_selectedClassIds.length == 1 ? '' : 'es'}'
+              : 'Failed to assign game to classes'),
+          backgroundColor: success ? null : Colors.red,
+        ),
+      );
     }
   }
 }

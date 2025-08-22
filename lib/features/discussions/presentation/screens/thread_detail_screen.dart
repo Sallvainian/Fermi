@@ -6,6 +6,7 @@ import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../shared/models/user_model.dart';
 
 class ThreadDetailScreen extends StatefulWidget {
   final String boardId;
@@ -106,19 +107,8 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
       final authProvider = context.read<AuthProvider>();
       final userModel = authProvider.userModel;
 
-      // Get the user's display name, preferring firstName + lastName
-      String authorName = 'Unknown User';
-      if (userModel != null) {
-        if (userModel.firstName != null && userModel.lastName != null) {
-          authorName = '${userModel.firstName} ${userModel.lastName}'.trim();
-        } else if (userModel.displayName != null &&
-            userModel.displayName!.isNotEmpty) {
-          authorName = userModel.displayName!;
-        } else if (userModel.email != null) {
-          // Fallback to email prefix if no name is available
-          authorName = userModel.email!.split('@').first;
-        }
-      }
+      // Get the user's display name using the standardized extension
+      String authorName = userModel.displayNameOrFallback;
 
       final userId = authProvider.firebaseUser?.uid ?? '';
 

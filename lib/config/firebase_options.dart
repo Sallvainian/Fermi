@@ -39,9 +39,9 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions web = FirebaseOptions(
     apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
-        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+        defaultValue: 'AIzaSyBl_36NLwN3O9POk5SMD86jX_LGY1IDFrM'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
-        defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
+        defaultValue: '1:218352465432:web:8ea1f54827ff10ee38b56d'),
     messagingSenderId: const String.fromEnvironment(
         'FIREBASE_MESSAGING_SENDER_ID',
         defaultValue: '218352465432'),
@@ -58,7 +58,7 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions android = FirebaseOptions(
     apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
-        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+        defaultValue: 'AIzaSyAYkswTdm5m4iX0YNq9pN4deZotb_U9JPw'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_ANDROID',
         defaultValue: '1:218352465432:android:a7d591b9db6bef6038b56d'),
     messagingSenderId: const String.fromEnvironment(
@@ -75,7 +75,7 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions ios = FirebaseOptions(
     apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
-        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+        defaultValue: 'AIzaSyAYkswTdm5m4iX0YNq9pN4deZotb_U9JPw'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_IOS',
         defaultValue: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99'),
     messagingSenderId: const String.fromEnvironment(
@@ -94,7 +94,7 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions macos = FirebaseOptions(
     apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
-        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+        defaultValue: 'AIzaSyAYkswTdm5m4iX0YNq9pN4deZotb_U9JPw'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_IOS',
         defaultValue: '1:218352465432:ios:5lt4mte28dqof4ae3igmi6m8i261jh99'),
     messagingSenderId: const String.fromEnvironment(
@@ -113,7 +113,7 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions windows = FirebaseOptions(
     apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
-        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+        defaultValue: 'AIzaSyAYkswTdm5m4iX0YNq9pN4deZotb_U9JPw'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
         defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
     messagingSenderId: const String.fromEnvironment(
@@ -132,7 +132,7 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions linux = FirebaseOptions(
     apiKey: const String.fromEnvironment('FIREBASE_API_KEY',
-        defaultValue: 'AIzaSyD_nLVRdyd6ZlIyFrRGCW5IStXnM2-uUac'),
+        defaultValue: 'AIzaSyAYkswTdm5m4iX0YNq9pN4deZotb_U9JPw'),
     appId: const String.fromEnvironment('FIREBASE_APP_ID_WEB',
         defaultValue: '1:218352465432:web:6e1c0fa4f21416df38b56d'),
     messagingSenderId: const String.fromEnvironment(

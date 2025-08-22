@@ -602,7 +602,7 @@ class ClassServiceEnhanced {
     await _cache.clearPattern('student_classes_');
     await _cache.clearPattern('class_stats_');
 
-    LoggerService.info('All class-related caches cleared');
+    LoggerService.debug('All class-related caches cleared');
   }
 
   /// Gets performance metrics for the service.

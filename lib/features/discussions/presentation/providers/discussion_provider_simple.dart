@@ -139,6 +139,9 @@ class SimpleDiscussionProvider with ChangeNotifier {
   // Addresses Copilot PR recommendation for performance optimization
   String? _cachedDisplayName;
   UserModel? _cachedUserModel;
+  DateTime? _cacheTimestamp;
+  static const Duration _cacheTTL = Duration(minutes: 5);
+  StreamSubscription<DocumentSnapshot>? _userDocSubscription;
 
   // Stream subscriptions
   StreamSubscription<QuerySnapshot>? _boardsSubscription;
@@ -168,20 +171,35 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
   /// Returns cached display name or fetches and caches it
   String get currentUserName {
-    // Return cached name if available
-    if (_cachedDisplayName != null) {
+    // Check if cache is still valid
+    if (_cachedDisplayName != null && 
+        _cacheTimestamp != null &&
+        DateTime.now().difference(_cacheTimestamp!) < _cacheTTL) {
       return _cachedDisplayName!;
     }
 
     // Use UserModel extension for consistent display name logic
     if (_cachedUserModel != null) {
       _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
+      _cacheTimestamp = DateTime.now();
       return _cachedDisplayName!;
     }
 
-    // Fallback to Firebase Auth display name
-    _cachedDisplayName = _auth.currentUser?.displayName ?? 'Unknown User';
-    return _cachedDisplayName!;
+    // Fallback to Firebase Auth display name with extension
+    final user = _auth.currentUser;
+    if (user != null) {
+      // Create a temporary UserModel from Firebase Auth user
+      final tempUser = UserModel(
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+      );
+      _cachedDisplayName = tempUser.displayNameOrFallback;
+      _cacheTimestamp = DateTime.now();
+      return _cachedDisplayName!;
+    }
+    
+    return 'Unknown User';
   }
 
   /// Set loading state
@@ -196,17 +214,53 @@ class SimpleDiscussionProvider with ChangeNotifier {
       final userId = currentUserId;
       if (userId.isEmpty) return;
 
-      final doc = await _firestore.collection('users').doc(userId).get();
-      if (doc.exists) {
-        _cachedUserModel = UserModel.fromFirestore(doc);
-        _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
-        notifyListeners();
-      }
+      // Cancel existing subscription
+      await _userDocSubscription?.cancel();
+      
+      // Listen to user document changes for cache invalidation
+      _userDocSubscription = _firestore
+          .collection('users')
+          .doc(userId)
+          .snapshots()
+          .listen(
+        (snapshot) {
+          if (snapshot.exists) {
+            _cachedUserModel = UserModel.fromFirestore(snapshot);
+            _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
+            _cacheTimestamp = DateTime.now();
+            notifyListeners();
+          }
+        },
+        onError: (error) {
+          LoggerService.error('Failed to listen to user document',
+              tag: _tag, error: error);
+          // Fallback to Firebase Auth display name
+          final user = _auth.currentUser;
+          if (user != null) {
+            final tempUser = UserModel(
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName,
+            );
+            _cachedDisplayName = tempUser.displayNameOrFallback;
+            _cacheTimestamp = DateTime.now();
+          }
+        },
+      );
     } catch (e) {
       LoggerService.error('Failed to load user model for display name',
           tag: _tag, error: e);
       // Fallback to Firebase Auth display name
-      _cachedDisplayName = _auth.currentUser?.displayName ?? 'Unknown User';
+      final user = _auth.currentUser;
+      if (user != null) {
+        final tempUser = UserModel(
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+        );
+        _cachedDisplayName = tempUser.displayNameOrFallback;
+        _cacheTimestamp = DateTime.now();
+      }
     }
   }
 
@@ -214,6 +268,9 @@ class SimpleDiscussionProvider with ChangeNotifier {
   void clearUserCache() {
     _cachedDisplayName = null;
     _cachedUserModel = null;
+    _cacheTimestamp = null;
+    _userDocSubscription?.cancel();
+    _userDocSubscription = null;
   }
 
   List<SimpleDiscussionThread> getThreadsForBoard(String boardId) {
@@ -434,9 +491,11 @@ class SimpleDiscussionProvider with ChangeNotifier {
   @override
   void dispose() {
     _boardsSubscription?.cancel();
+    _userDocSubscription?.cancel();
     for (var subscription in _threadSubscriptions.values) {
       subscription.cancel();
     }
+    clearUserCache();
     super.dispose();
   }
 }

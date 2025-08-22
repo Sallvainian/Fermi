@@ -240,7 +240,7 @@ abstract class FirestoreRepositoryEnhanced<T> extends BaseRepository {
       }
 
       await batch.commit();
-      LoggerService.info('Batch write completed successfully', tag: tag);
+      LoggerService.debug('Batch write completed successfully', tag: tag);
     } catch (e) {
       LoggerService.error('Failed to execute batch write', tag: tag, error: e);
       rethrow;

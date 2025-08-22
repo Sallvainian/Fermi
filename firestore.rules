@@ -458,6 +458,56 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     
+    // Jeopardy games collection - for educational game templates
+    match /jeopardy_games/{gameId} {
+      // Allow read if:
+      // - User is authenticated and game is public OR
+      // - User is the teacher who created the game OR
+      // - Document doesn't exist (checking before creation)
+      allow read: if isAuthenticated() && 
+                     (resource == null ||
+                      (resource.data.isPublic == true) ||
+                      (resource.data.teacherId == request.auth.uid));
+      
+      // Only teachers can create games
+      allow create: if isTheTeacher() && 
+                       request.auth.uid == request.resource.data.teacherId &&
+                       request.auth.token.email_verified == true;
+      
+      // Only the teacher who created the game can update it
+      allow update: if isTheTeacher() && 
+                       resource.data.teacherId == request.auth.uid &&
+                       // Prevent changing the teacherId
+                       request.resource.data.teacherId == resource.data.teacherId;
+      
+      // Only the teacher who created the game can delete it
+      allow delete: if isTheTeacher() && 
+                       resource.data.teacherId == request.auth.uid;
+    }
+    
+    // Jeopardy game sessions - for active gameplay
+    match /jeopardy_sessions/{sessionId} {
+      // Allow read if user is a participant or the teacher
+      allow read: if isAuthenticated() && 
+                     (resource == null ||
+                      resource.data.teacherId == request.auth.uid ||
+                      request.auth.uid in resource.data.participantIds);
+      
+      // Only teachers can create sessions
+      allow create: if isTheTeacher() && 
+                       request.auth.uid == request.resource.data.teacherId &&
+                       request.auth.token.email_verified == true;
+      
+      // Teacher or participants can update (for game state)
+      allow update: if isAuthenticated() && 
+                       (resource.data.teacherId == request.auth.uid ||
+                        request.auth.uid in resource.data.participantIds);
+      
+      // Only the teacher can delete sessions
+      allow delete: if isTheTeacher() && 
+                       resource.data.teacherId == request.auth.uid;
+    }
+    
     // Default deny rule - explicitly deny any unmatched paths
     match /{document=**} {
       allow read, write: if false;

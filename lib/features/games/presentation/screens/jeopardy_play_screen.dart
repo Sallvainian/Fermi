@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../providers/jeopardy_provider.dart';
 
@@ -31,6 +32,8 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   bool _showingDailyDouble = false;
   int _dailyDoubleWager = 0;
   JeopardyPlayer? _dailyDoublePlayer;
+  String _currentRound = 'jeopardy';
+  final Set<String> _answeredQuestions = {};
 
   @override
   void initState() {
@@ -44,23 +47,75 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     final loadedGame = await jeopardyProvider.loadGame(widget.gameId);
 
     if (loadedGame != null) {
+      JeopardyGame gameWithDailyDoubles = loadedGame;
+      
+
+      LoggerService.debug('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
+      for (final dd in loadedGame.dailyDoubles) {
+      if (kDebugMode) {
+        LoggerService.debug('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
+        for (final dd in loadedGame.dailyDoubles) {
+          LoggerService.debug('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
+        }
+      }
+      
+
+      if (loadedGame.dailyDoubles.isNotEmpty) {
+
+        List<JeopardyCategory> updatedCategories = List<JeopardyCategory>.from(loadedGame.categories);
+        
+        for (final dd in loadedGame.dailyDoubles) {
+          if (dd.round == 'jeopardy' && 
+              dd.categoryIndex < updatedCategories.length &&
+              dd.questionIndex < updatedCategories[dd.categoryIndex].questions.length) {
+            
+            final updatedQuestions = List<JeopardyQuestion>.from(updatedCategories[dd.categoryIndex].questions);
+            updatedQuestions[dd.questionIndex] = updatedQuestions[dd.questionIndex].copyWith(isDailyDouble: true);
+            updatedCategories[dd.categoryIndex] = updatedCategories[dd.categoryIndex].copyWith(questions: updatedQuestions);
+            LoggerService.debug('Marked Daily Double at category ${dd.categoryIndex}, question ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
+          }
+        }
+        
+
+        List<JeopardyCategory>? updatedDoubleCategories;
+        if (loadedGame.doubleJeopardyCategories != null) {
+          updatedDoubleCategories = List<JeopardyCategory>.from(loadedGame.doubleJeopardyCategories!);
+          
+          for (final dd in loadedGame.dailyDoubles) {
+            if (dd.round == 'doubleJeopardy' && 
+                dd.categoryIndex < updatedDoubleCategories.length &&
+                dd.questionIndex < updatedDoubleCategories[dd.categoryIndex].questions.length) {
+              
+              final updatedQuestions = List<JeopardyQuestion>.from(updatedDoubleCategories[dd.categoryIndex].questions);
+              updatedQuestions[dd.questionIndex] = updatedQuestions[dd.questionIndex].copyWith(isDailyDouble: true);
+              updatedDoubleCategories[dd.categoryIndex] = updatedDoubleCategories[dd.categoryIndex].copyWith(questions: updatedQuestions);
+            }
+          }
+        }
+        
+        gameWithDailyDoubles = loadedGame.copyWith(
+          categories: updatedCategories,
+          doubleJeopardyCategories: updatedDoubleCategories,
+        );
+      }
+      
       setState(() {
-        _game = loadedGame;
+        _game = gameWithDailyDoubles;
         _isLoading = false;
       });
     } else {
-      // Handle error - game not found
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Game not found')),
         );
-        context.pop();
+        context.go('/teacher/games/jeopardy');
       }
     }
   }
 
   void _initializePlayers() {
-    // Don't auto-add players - let users set them up
+
   }
 
   @override
@@ -88,7 +143,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               const Text('Failed to load game'),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: () => context.pop(),
+                onPressed: () => context.go('/teacher/games/jeopardy'),
                 child: const Text('Go Back'),
               ),
             ],
@@ -115,7 +170,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             Row(
               children: [
                 IconButton(
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.go('/teacher/games/jeopardy'),
                   icon: const Icon(Icons.arrow_back),
                 ),
                 Expanded(
@@ -292,8 +347,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () {
+
+                        context.go('/teacher/games/jeopardy');
+                      },
                       icon: const Icon(Icons.close),
+                      tooltip: 'Exit Game',
                     ),
                     Expanded(
                       child: Text(
@@ -345,31 +404,57 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildGameBoard() {
     final theme = Theme.of(context);
+    
+
+    final categories = _currentRound == 'doubleJeopardy' && _game?.doubleJeopardyCategories != null
+        ? _game!.doubleJeopardyCategories!
+        : _game?.categories ?? [];
 
     return Column(
       children: [
+        // Round indicator
+        if (_currentRound == 'doubleJeopardy')
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.secondary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'DOUBLE JEOPARDY',
+              style: TextStyle(
+                color: theme.colorScheme.onSecondary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        
         // Category headers row
         SizedBox(
-          height: 80,
+          height: 60,
           child: Row(
-            children: (_game?.categories ?? [])
+            children: categories
                 .map((category) => Expanded(
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(4),
                             child: Text(
                               category.name.toUpperCase(),
-                              style: theme.textTheme.titleMedium?.copyWith(
+                              style: TextStyle(
                                 color: theme.colorScheme.onPrimary,
                                 fontWeight: FontWeight.bold,
+                                fontSize: 10,
                               ),
                               textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -383,7 +468,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         // Questions grid
         Expanded(
           child: Row(
-            children: (_game?.categories ?? [])
+            children: categories
                 .map((category) => Expanded(
                       child: Column(
                         children: category.questions
@@ -404,10 +489,19 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     );
   }
 
+  // Generate unique ID for a question based on round, category, and points
+  String _getQuestionId(String categoryName, int points) {
+    return '${_currentRound}_${categoryName}_$points';
+  }
+
   Widget _buildQuestionTile(
       JeopardyCategory category, JeopardyQuestion question) {
     final theme = Theme.of(context);
-    final isAnswered = question.isAnswered;
+    final questionId = _getQuestionId(category.name, question.points);
+    final isAnswered = _answeredQuestions.contains(questionId);
+    
+
+    final displayPoints = _currentRound == 'doubleJeopardy' ? question.points * 2 : question.points;
 
     return Material(
       color: isAnswered
@@ -427,16 +521,21 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               width: 2,
             ),
           ),
-          child: Center(
-            child: Text(
-              isAnswered ? '' : '\$${question.points}',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: isAnswered
-                    ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
-                    : theme.colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.bold,
+          child: Stack(
+            children: [
+              Center(
+                child: Text(
+                  isAnswered ? '' : '\$$displayPoints',
+                  style: TextStyle(
+                    color: isAnswered
+                        ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
+                        : theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -479,9 +578,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '\$${player.score}',
-                  style: theme.textTheme.headlineSmall?.copyWith(
+                  style: TextStyle(
                     color: player.score < 0 ? theme.colorScheme.error : null,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ],
@@ -530,7 +630,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               Text(
                 _selectedQuestion!.isDailyDouble && _dailyDoubleWager > 0
                     ? '\$$_dailyDoubleWager'
-                    : '\$${_selectedQuestion!.points}',
+                    : '\$${_currentRound == 'doubleJeopardy' ? _selectedQuestion!.points * 2 : _selectedQuestion!.points}',
                 style: theme.textTheme.displaySmall?.copyWith(
                   color: theme.colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
@@ -622,17 +722,21 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _selectQuestion(JeopardyCategory category, JeopardyQuestion question) {
+
+    // We'll handle point doubling in the display and scoring logic
     setState(() {
       _selectedQuestion = question;
       _selectedCategory = category;
       _showingAnswer = false;
+      // Question index is tracked in the Set
 
       // Check if it's a Daily Double
       if (question.isDailyDouble && !_showingDailyDouble) {
         _showingDailyDouble = true;
         // The player who selected the Daily Double (current player with control) is the one who wagers
         _dailyDoublePlayer = _currentPlayer;
-        _dailyDoubleWager = 0;
+        // Set initial wager to question value
+        _dailyDoubleWager = _selectedQuestion?.points ?? 200;
       }
     });
   }
@@ -655,23 +759,18 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _awardPoints(JeopardyPlayer player) {
-    if (_selectedQuestion == null) return;
+    if (_selectedQuestion == null || _selectedCategory == null) return;
 
     setState(() {
-      // Update score
-      player.score += _selectedQuestion!.points;
+      // Update score - double points for Double Jeopardy round
+      final pointsToAward = _currentRound == 'doubleJeopardy' 
+          ? _selectedQuestion!.points * 2 
+          : _selectedQuestion!.points;
+      player.score += pointsToAward;
 
-      // Mark question as answered
-      final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
-      if (categoryIndex != -1 && _game != null) {
-        final questionIndex = _game!.categories[categoryIndex].questions
-            .indexOf(_selectedQuestion!);
-        _game!.categories[categoryIndex].questions[questionIndex] =
-            _selectedQuestion!.copyWith(
-          isAnswered: true,
-          answeredBy: player.id,
-        );
-      }
+      // Simply mark question as answered - use ORIGINAL points for ID
+      final questionId = _getQuestionId(_selectedCategory!.name, _selectedQuestion!.points);
+      _answeredQuestions.add(questionId);
 
       // Set current player for next selection
       _currentPlayer = player;
@@ -687,20 +786,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _scoreQuestion(bool correct) {
-    if (_selectedQuestion == null) return;
+    if (_selectedQuestion == null || _selectedCategory == null) return;
 
     setState(() {
-      // Mark question as answered with no winner
-      final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
-      if (categoryIndex != -1 && _game != null) {
-        final questionIndex = _game!.categories[categoryIndex].questions
-            .indexOf(_selectedQuestion!);
-        _game!.categories[categoryIndex].questions[questionIndex] =
-            _selectedQuestion!.copyWith(
-          isAnswered: true,
-          answeredBy: 'none',
-        );
-      }
+      // Simply mark question as answered (no one got it)
+      final questionId = _getQuestionId(_selectedCategory!.name, _selectedQuestion!.points);
+      _answeredQuestions.add(questionId);
 
       // Close question overlay
       _selectedQuestion = null;
@@ -713,16 +804,76 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _checkGameComplete() {
-    final allAnswered = _game?.categories.every(
-          (cat) => cat.questions.every((q) => q.isAnswered),
-        ) ??
-        false;
-
-    if (allAnswered && _game?.finalJeopardy != null) {
-      _startFinalJeopardy();
-    } else if (allAnswered) {
-      _showGameComplete();
+    // Check current round completion
+    final categories = _currentRound == 'doubleJeopardy' && _game?.doubleJeopardyCategories != null
+        ? _game!.doubleJeopardyCategories!
+        : _game?.categories ?? [];
+    
+    // Check if all questions in current round are answered
+    bool roundComplete = true;
+    for (final category in categories) {
+      for (final question in category.questions) {
+        final questionId = _getQuestionId(category.name, question.points);
+        if (!_answeredQuestions.contains(questionId)) {
+          roundComplete = false;
+          break;
+        }
+      }
+      if (!roundComplete) break;
     }
+
+    if (roundComplete) {
+      if (_currentRound == 'jeopardy' && _game?.doubleJeopardyCategories != null && _game!.doubleJeopardyCategories!.isNotEmpty) {
+        // Move to Double Jeopardy round
+        setState(() {
+          _currentRound = 'doubleJeopardy';
+        });
+        _showRoundTransition('DOUBLE JEOPARDY');
+      } else if (_game?.finalJeopardy != null) {
+        _startFinalJeopardy();
+      } else {
+        _showGameComplete();
+      }
+    }
+  }
+  
+  void _showRoundTransition(String roundName) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).colorScheme.secondary,
+        title: Text(
+          roundName,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSecondary,
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'Get ready for higher stakes!',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSecondary,
+            fontSize: 18,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          Center(
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.onSecondary,
+                foregroundColor: Theme.of(context).colorScheme.secondary,
+              ),
+              child: const Text('Continue'),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showGameComplete() {
@@ -749,7 +900,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.pop();
+              context.go('/teacher/games/jeopardy');
             },
             child: const Text('End Game'),
           ),
@@ -798,7 +949,11 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildDailyDoubleOverlay() {
     final theme = Theme.of(context);
-    final maxWager = max(_dailyDoublePlayer!.score, 1000);
+    // If player has $0, they can wager up to the question's value
+    // Otherwise, they can wager up to their current score
+    final maxWager = _dailyDoublePlayer!.score > 0 
+        ? _dailyDoublePlayer!.score
+        : (_selectedQuestion?.points ?? 200);
 
     return Container(
       color: Colors.black.withValues(alpha: 0.9),
@@ -887,7 +1042,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _scoreDailyDouble(bool correct) {
-    if (_selectedQuestion == null || _dailyDoublePlayer == null) return;
+    if (_selectedQuestion == null || _dailyDoublePlayer == null || _selectedCategory == null) return;
 
     setState(() {
       // Update score
@@ -897,17 +1052,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         _dailyDoublePlayer!.score -= _dailyDoubleWager;
       }
 
-      // Mark question as answered
-      final categoryIndex = _game?.categories.indexOf(_selectedCategory!) ?? -1;
-      if (categoryIndex != -1 && _game != null) {
-        final questionIndex = _game!.categories[categoryIndex].questions
-            .indexOf(_selectedQuestion!);
-        _game!.categories[categoryIndex].questions[questionIndex] =
-            _selectedQuestion!.copyWith(
-          isAnswered: true,
-          answeredBy: _dailyDoublePlayer!.id,
-        );
-      }
+      // Simply mark question as answered
+      final questionId = _getQuestionId(_selectedCategory!.name, _selectedQuestion!.points);
+      _answeredQuestions.add(questionId);
 
       // Set current player for next selection
       _currentPlayer = _dailyDoublePlayer;

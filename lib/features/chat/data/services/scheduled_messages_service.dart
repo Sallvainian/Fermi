@@ -8,6 +8,7 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/models/message.dart';
+import '../../../../shared/models/user_model.dart';
 import '../../../../shared/services/logger_service.dart';
 
 /// Core service for scheduling and managing future message delivery.
@@ -76,7 +77,11 @@ class ScheduledMessagesService {
       final message = Message(
         id: '',
         senderId: _currentUserId,
-        senderName: _auth.currentUser?.displayName ?? 'User',
+        senderName: UserModel(
+          uid: _auth.currentUser?.uid ?? '',
+          email: _auth.currentUser?.email,
+          displayName: _auth.currentUser?.displayName,
+        ).displayNameOrFallback,
         senderRole: 'unknown', // will be filled below
         content: content,
         timestamp: DateTime.now(),
