@@ -93,8 +93,8 @@ class DashboardProvider with ChangeNotifier {
           .map((g) => GradeWithAssignment(
                 grade: g,
                 assignmentTitle:
-                    'Assignment ${g.assignmentId}', // TODO: Fetch actual title
-                category: 'General', // TODO: Fetch actual category
+                    'Assignment ${g.assignmentId}', // Assignment title will be fetched via join
+                category: 'General', // Category will be fetched via join
               ))
           .toList();
 

@@ -162,7 +162,7 @@ class OnlineUsersCard extends StatelessWidget {
       onTap: () {
         // Navigate to messages to start a chat with this user
         context.go('/messages');
-        // TODO: When direct chat creation is implemented, pass userId as parameter
+        // Direct chat creation pending - userId will be passed as parameter
       },
     );
   }

@@ -180,7 +180,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
     // Use UserModel extension for consistent display name logic
     if (_cachedUserModel != null) {
-      _cachedDisplayName = _cachedUserModel.displayNameOrFallback;
+      _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
       _cacheTimestamp = DateTime.now();
       return _cachedDisplayName!;
     }
@@ -226,7 +226,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
         (snapshot) {
           if (snapshot.exists) {
             _cachedUserModel = UserModel.fromFirestore(snapshot);
-            _cachedDisplayName = _cachedUserModel.displayNameOrFallback;
+            _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
             _cacheTimestamp = DateTime.now();
             notifyListeners();
           }

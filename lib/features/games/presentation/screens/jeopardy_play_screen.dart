@@ -50,9 +50,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       JeopardyGame gameWithDailyDoubles = loadedGame;
       
 
-      LoggerService.info('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
+      LoggerService.debug('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
       for (final dd in loadedGame.dailyDoubles) {
-        LoggerService.info('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
+        LoggerService.debug('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
       }
       
 
@@ -68,7 +68,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             final updatedQuestions = List<JeopardyQuestion>.from(updatedCategories[dd.categoryIndex].questions);
             updatedQuestions[dd.questionIndex] = updatedQuestions[dd.questionIndex].copyWith(isDailyDouble: true);
             updatedCategories[dd.categoryIndex] = updatedCategories[dd.categoryIndex].copyWith(questions: updatedQuestions);
-            LoggerService.info('Marked Daily Double at category ${dd.categoryIndex}, question ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
+            LoggerService.debug('Marked Daily Double at category ${dd.categoryIndex}, question ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
           }
         }
         

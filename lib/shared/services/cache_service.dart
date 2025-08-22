@@ -207,7 +207,7 @@ class CacheService {
       }
     }
 
-    LoggerService.info('Cache cleared');
+    LoggerService.debug('Cache cleared');
   }
 
   /// Clear cache by pattern.
@@ -220,7 +220,7 @@ class CacheService {
       await remove(key);
     }
 
-    LoggerService.info('Cache pattern cleared: $pattern');
+    LoggerService.debug('Cache pattern cleared: $pattern');
   }
 
   /// Get cache statistics.

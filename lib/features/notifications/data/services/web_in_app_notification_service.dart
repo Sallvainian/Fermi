@@ -117,7 +117,7 @@ class WebInAppNotificationService {
         },
       });
 
-      LoggerService.info('Test notification created',
+      LoggerService.debug('Test notification created',
           tag: 'WebInAppNotification');
     } catch (e) {
       LoggerService.error('Failed to create test notification',

@@ -422,10 +422,9 @@ class JeopardyProvider with ChangeNotifier {
   }
 
   /// Loads active game sessions for the teacher.
+  /// Currently returns empty list - full implementation pending.
   Future<void> loadActiveSessions() async {
     try {
-      // For now, we'll use a placeholder implementation
-      // In a real implementation, this would fetch from Firestore
       _activeSessions = [];
       notifyListeners();
     } catch (e) {

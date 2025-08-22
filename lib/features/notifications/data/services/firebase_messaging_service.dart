@@ -221,7 +221,7 @@ class FirebaseMessagingService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      LoggerService.info('FCM token saved', tag: 'FirebaseMessagingService');
+      LoggerService.debug('FCM token saved', tag: 'FirebaseMessagingService');
     } catch (e) {
       LoggerService.error('Failed to save FCM token',
           error: e, tag: 'FirebaseMessagingService');
@@ -328,7 +328,7 @@ class FirebaseMessagingService {
         await _firestore.collection('fcm_tokens').doc(userId).delete();
       }
 
-      LoggerService.info('FCM token deleted', tag: 'FirebaseMessagingService');
+      LoggerService.debug('FCM token deleted', tag: 'FirebaseMessagingService');
     } catch (e) {
       LoggerService.error('Failed to delete token',
           error: e, tag: 'FirebaseMessagingService');
