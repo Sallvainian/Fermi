@@ -506,7 +506,7 @@ class JeopardyProvider with ChangeNotifier {
       final updatedGame = game.copyWith(gameMode: mode);
       
       await _repository.updateGame(gameId, updatedGame);
-      LoggerService.info('Updated game $gameId mode to ${mode.name}', tag: _tag);
+      LoggerService.debug('Updated game $gameId mode to ${mode.name}', tag: _tag);
       
       return true;
     } catch (e) {
