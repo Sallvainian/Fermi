@@ -22,7 +22,7 @@ class JeopardyCreateScreen extends StatefulWidget {
 class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
-  JeopardyGame? _game;  // Make nullable instead of late
+  JeopardyGame? _game;
   bool _isEditing = false;
   bool _isLoading = true;  // Start as loading
   bool _enableDailyDoubles = true;  // Whether to use Daily Doubles
