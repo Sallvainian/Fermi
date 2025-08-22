@@ -292,8 +292,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      onPressed: () => context.pop(),
+                      onPressed: () {
+                        // Navigate back to the Jeopardy games list
+                        context.go('/teacher/games/jeopardy');
+                      },
                       icon: const Icon(Icons.close),
+                      tooltip: 'Exit Game',
                     ),
                     Expanded(
                       child: Text(
@@ -350,26 +354,29 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       children: [
         // Category headers row
         SizedBox(
-          height: 80,
+          height: 60,
           child: Row(
             children: (_game?.categories ?? [])
                 .map((category) => Expanded(
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(4),
                             child: Text(
                               category.name.toUpperCase(),
-                              style: theme.textTheme.titleMedium?.copyWith(
+                              style: TextStyle(
                                 color: theme.colorScheme.onPrimary,
                                 fontWeight: FontWeight.bold,
+                                fontSize: 10,
                               ),
                               textAlign: TextAlign.center,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -430,11 +437,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
           child: Center(
             child: Text(
               isAnswered ? '' : '\$${question.points}',
-              style: theme.textTheme.headlineMedium?.copyWith(
+              style: TextStyle(
                 color: isAnswered
                     ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
                     : theme.colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
             ),
           ),
@@ -479,9 +487,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '\$${player.score}',
-                  style: theme.textTheme.headlineSmall?.copyWith(
+                  style: TextStyle(
                     color: player.score < 0 ? theme.colorScheme.error : null,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ],

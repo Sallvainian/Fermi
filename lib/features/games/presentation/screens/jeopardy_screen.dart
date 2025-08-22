@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/jeopardy_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../classes/data/services/class_service.dart';
+import '../../../classes/domain/models/class_model.dart';
 
 class JeopardyScreen extends StatefulWidget {
   const JeopardyScreen({super.key});
@@ -581,39 +584,9 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   }
 
   void _showAssignToClassesDialog(JeopardyGame game) {
-    // For now, show a simple dialog
-    // In a real implementation, this would show a list of classes to select from
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Assign to Classes'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Select classes to assign "${game.title}" to:'),
-            const SizedBox(height: 16),
-            // Placeholder for class selection
-            const Text('Class selection coming soon...'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Class assignment feature coming soon'),
-                ),
-              );
-            },
-            child: const Text('Assign'),
-          ),
-        ],
-      ),
+      builder: (context) => _ClassAssignmentDialog(game: game),
     );
   }
 
@@ -640,16 +613,21 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   void _duplicateGame(JeopardyGame game) async {
     final provider = context.read<JeopardyProvider>();
 
-    // Create a copy with a new title
+    // Create a copy with a new title including all data
     final duplicatedGame = JeopardyGame(
       id: '',
       title: 'Copy of ${game.title}',
       teacherId: game.teacherId,
       categories: game.categories,
+      doubleJeopardyCategories: game.doubleJeopardyCategories,
       finalJeopardy: game.finalJeopardy,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       isPublic: false,
+      gameMode: game.gameMode,
+      assignedClassIds: [], // Start with no classes assigned
+      dailyDoubles: game.dailyDoubles,
+      randomDailyDoubles: game.randomDailyDoubles,
     );
 
     final gameId = await provider.createGame(duplicatedGame);
@@ -659,6 +637,8 @@ class _JeopardyScreenState extends State<JeopardyScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Game duplicated successfully')),
         );
+        // Navigate to edit the duplicated game
+        context.go('/teacher/games/jeopardy/$gameId/edit');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -667,6 +647,192 @@ class _JeopardyScreenState extends State<JeopardyScreen>
           ),
         );
       }
+    }
+  }
+}
+
+// Class Assignment Dialog Widget
+class _ClassAssignmentDialog extends StatefulWidget {
+  final JeopardyGame game;
+
+  const _ClassAssignmentDialog({required this.game});
+
+  @override
+  State<_ClassAssignmentDialog> createState() => _ClassAssignmentDialogState();
+}
+
+class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
+  final _classService = ClassService();
+  List<ClassModel> _availableClasses = [];
+  List<String> _selectedClassIds = [];
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedClassIds = List.from(widget.game.assignedClassIds);
+    _loadTeacherClasses();
+  }
+
+  void _loadTeacherClasses() async {
+    final authProvider = context.read<AuthProvider>();
+    final teacherId = authProvider.userModel?.uid ?? '';
+    
+    if (teacherId.isNotEmpty) {
+      try {
+        final classesStream = _classService.getClassesByTeacher(teacherId);
+        classesStream.first.then((classes) {
+          if (mounted) {
+            setState(() {
+              _availableClasses = classes;
+              _isLoading = false;
+            });
+          }
+        });
+      } catch (e) {
+        debugPrint('Error loading classes: $e');
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return AlertDialog(
+      title: Text('Assign "${widget.game.title}" to Classes'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Select classes to make this game available to:',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            if (_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_availableClasses.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text('No classes available'),
+                ),
+              )
+            else
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: _availableClasses.map((classModel) {
+                      final isSelected = _selectedClassIds.contains(classModel.id);
+                      return CheckboxListTile(
+                        title: Text(classModel.name),
+                        subtitle: Text(
+                          '${classModel.subject} - ${classModel.studentCount} students',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        value: isSelected,
+                        onChanged: (selected) {
+                          setState(() {
+                            if (selected == true) {
+                              _selectedClassIds.add(classModel.id);
+                            } else {
+                              _selectedClassIds.remove(classModel.id);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            if (_selectedClassIds.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.game.gameMode == GameMode.async
+                            ? 'Students can play this game unlimited times for study'
+                            : 'Students will play this game together in class',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _isSaving ? null : _saveAssignments,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text('Assign (${_selectedClassIds.length})'),
+        ),
+      ],
+    );
+  }
+
+  void _saveAssignments() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    final provider = context.read<JeopardyProvider>();
+    final updatedGame = widget.game.copyWith(
+      assignedClassIds: _selectedClassIds,
+    );
+
+    final success = await provider.updateGame(widget.game.id, updatedGame);
+
+    if (mounted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success
+              ? 'Game assigned to ${_selectedClassIds.length} class${_selectedClassIds.length == 1 ? '' : 'es'}'
+              : 'Failed to assign game to classes'),
+          backgroundColor: success ? null : Colors.red,
+        ),
+      );
     }
   }
 }
