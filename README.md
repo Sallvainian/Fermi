@@ -91,9 +91,7 @@ Fermi is a modern, cross-platform educational management system that connects te
 | **Web** | ✅ Production | Primary platform, PWA enabled |
 | **Android** | ✅ Production | Full feature support |
 | **iOS** | ✅ App Store Ready | v0.9.2 - Submitted for review |
-| **macOS** | ❌ Not Supported | Firebase SDK limitations |
-| **Windows** | ❌ Not Supported | Firebase SDK limitations |
-| **Linux** | ❌ Not Supported | Firebase SDK limitations |
+
 
 ## 🏗️ Architecture
 
