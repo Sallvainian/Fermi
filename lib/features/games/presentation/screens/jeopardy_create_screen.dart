@@ -24,7 +24,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   final _titleController = TextEditingController();
   JeopardyGame? _game;
   bool _isEditing = false;
-  bool _isLoading = true;  // Start as loading
+  bool _isLoading = true;
   bool _enableDailyDoubles = true;  // Whether to use Daily Doubles
 
   @override
