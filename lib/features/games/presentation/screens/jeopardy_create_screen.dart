@@ -393,7 +393,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, 3));
         
         // Note: Currently all 3 Daily Doubles are in regular Jeopardy.
-        // Standard game format: 1 in Jeopardy, 2 in Double Jeopardy.
+        dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, 3));
       }
       
       _game = JeopardyGame(
