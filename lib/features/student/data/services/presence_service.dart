@@ -55,7 +55,6 @@ class PresenceService {
           ? (user.displayName ?? 'Anonymous User')
           : _getInitials(user.displayName ?? 'AU'),
       // Never expose email in presence data
-      // 'email': _showEmail ? user.email : null, // Removed for security
       'photoURL': _showPhoto ? user.photoURL : null,
       'role': _showRole ? userRole : null,
       // Add privacy-safe metadata

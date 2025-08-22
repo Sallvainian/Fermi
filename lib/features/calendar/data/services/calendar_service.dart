@@ -50,8 +50,6 @@ class CalendarService {
     String? colorHex,
     bool syncToDeviceCalendar = false,
   }) async {
-    // Removed user validation - just use the createdBy ID directly
-
     // Validate class if provided
     if (classId != null) {
       final classExists = await _classRepository.getClass(classId);
@@ -270,8 +268,6 @@ class CalendarService {
     String participantId,
   ) async {
     // Verify participant exists
-    // Removed participant validation - just use the participantId directly
-
     await _calendarRepository.addParticipant(eventId, participantId);
   }
 

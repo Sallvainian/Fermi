@@ -318,6 +318,24 @@ class JeopardyProvider with ChangeNotifier {
     }
   }
 
+  /// Load game without notifying listeners (for use during build)
+  Future<JeopardyGame?> loadGameWithoutNotify(String gameId) async {
+    _error = null;
+
+    try {
+      _currentGame = await _repository.getGame(gameId);
+      return _currentGame;
+    } catch (e) {
+      _error = e.toString();
+      LoggerService.error(
+        'Failed to load game without notify',
+        tag: _tag,
+        error: e,
+      );
+      return null;
+    }
+  }
+
   /// Deletes a Jeopardy game.
   ///
   /// Removes game from Firestore and local cache.

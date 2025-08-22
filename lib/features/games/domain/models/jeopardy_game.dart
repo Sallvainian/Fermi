@@ -123,6 +123,15 @@ class JeopardyCategory {
     required this.questions,
   });
 
+  JeopardyCategory copyWith({
+    String? name,
+    List<JeopardyQuestion>? questions,
+  }) =>
+      JeopardyCategory(
+        name: name ?? this.name,
+        questions: questions ?? this.questions,
+      );
+
   Map<String, dynamic> toJson() => {
         'name': name,
         'questions': questions.map((q) => q.toJson()).toList(),
