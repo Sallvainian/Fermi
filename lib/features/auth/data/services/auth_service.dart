@@ -1,42 +1,65 @@
+import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as all_platforms;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'desktop_oauth_handler.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
-  // Use all_platforms constructor for Windows support
-  late final all_platforms.GoogleSignIn _googleSignIn;
+  // Use all_platforms constructor for mobile/web
+  all_platforms.GoogleSignIn? _googleSignIn;
+  // Desktop OAuth handler for Windows/Mac/Linux
+  final DesktopOAuthHandler _desktopOAuthHandler = DesktopOAuthHandler();
 
   AuthService() {
     _auth = FirebaseAuth.instance;
     _firestore = FirebaseFirestore.instance;
     
-    // Initialize Google Sign-In with OAuth credentials from .env
-    // Check if credentials are available before initializing
-    final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
-    final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
-    
-    _googleSignIn = all_platforms.GoogleSignIn(
-      params: all_platforms.GoogleSignInParams(
-        clientId: clientId,
-        clientSecret: clientSecret,
-        redirectPort: 3000,
-      ),
-    );
-    
-    if (clientId.isEmpty || clientSecret.isEmpty) {
-      debugPrint('Warning: Google OAuth credentials not found in .env file');
-      debugPrint('Windows Google Sign-In will not work without credentials');
-    }
+    // Initialize Google Sign-In based on platform
+    _initializeGoogleSignIn();
     
     // Web persistence
     if (kIsWeb) {
       _auth!.setPersistence(Persistence.LOCAL);
+    }
+  }
+  
+  void _initializeGoogleSignIn() {
+    final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
+    final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
+    
+    // Debug output to verify .env is loading
+    debugPrint('=== OAuth Credentials Debug ===');
+    debugPrint('Platform: ${kIsWeb ? "Web" : Platform.operatingSystem}');
+    debugPrint('Client ID loaded: ${clientId.isNotEmpty ? "Yes (${clientId.substring(0, 10)}...)" : "No"}');
+    debugPrint('Client Secret loaded: ${clientSecret.isNotEmpty ? "Yes" : "No"}');
+    
+    // Don't initialize all_platforms for desktop - we'll use DesktopOAuthHandler
+    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+      debugPrint('Using DesktopOAuthHandler for desktop platform');
+      if (clientId.isEmpty || clientSecret.isEmpty) {
+        debugPrint('ERROR: Google OAuth credentials not found in .env file');
+        debugPrint('Windows Google Sign-In will not work without credentials');
+      }
+      // Don't initialize _googleSignIn for desktop
+      _googleSignIn = null;
+    } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      // Mobile platforms use standard Google Sign-In
+      debugPrint('Using standard Google Sign-In for mobile');
+      _googleSignIn = all_platforms.GoogleSignIn(
+        params: all_platforms.GoogleSignInParams(
+          clientId: clientId,
+        ),
+      );
+    } else if (kIsWeb) {
+      // Web doesn't need client configuration (uses Firebase Auth popup)
+      debugPrint('Using Firebase Auth popup for web');
+      _googleSignIn = null;
     }
   }
 
@@ -109,22 +132,71 @@ class AuthService {
   // Sign in with Google
   Future<User?> signInWithGoogle() async {
     if (_auth == null || _firestore == null) {
-      throw UnsupportedError('Firebase not available on Windows. Use mock authentication.');
+      throw UnsupportedError('Firebase not available. Check Firebase initialization.');
     }
     
     User? user;
 
     if (kIsWeb) {
-      // Web: Use popup
+      // Web: Use Firebase Auth popup
+      debugPrint('Google Sign-In: Using Firebase popup for web');
       final provider = GoogleAuthProvider();
       final cred = await _auth!.signInWithPopup(provider);
       user = cred.user;
-    } else {
-      // Desktop/Mobile: Use all_platforms Sign-In SDK
-      final googleCredentials = await _googleSignIn.signIn();
+    } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+      // Desktop: Use manual OAuth flow
+      debugPrint('Google Sign-In: Using OAuth flow for desktop');
+      
+      final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
+      final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
+      
+      if (clientId.isEmpty || clientSecret.isEmpty) {
+        throw Exception('Google OAuth credentials not configured. Please check .env file.');
+      }
+      
+      try {
+        // Perform OAuth flow
+        final credentials = await _desktopOAuthHandler.performOAuthFlow(
+          clientId: clientId,
+          clientSecret: clientSecret,
+        );
+        
+        if (credentials == null) {
+          debugPrint('Google Sign-In: User cancelled or flow failed');
+          return null;
+        }
+        
+        debugPrint('Google Sign-In: Got OAuth credentials');
+        debugPrint('ID Token present: ${credentials.idToken != null}');
+        debugPrint('Access Token present: ${credentials.accessToken != null}');
+        
+        // Create Firebase credential
+        final authCredential = GoogleAuthProvider.credential(
+          idToken: credentials.idToken,
+          accessToken: credentials.accessToken,
+        );
+        
+        // Sign in to Firebase
+        final cred = await _auth!.signInWithCredential(authCredential);
+        user = cred.user;
+        
+        debugPrint('Google Sign-In: Successfully signed in user ${user?.email}');
+      } catch (e) {
+        debugPrint('Google Sign-In error: $e');
+        rethrow;
+      }
+    } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+      // Mobile: Use standard Google Sign-In SDK
+      debugPrint('Google Sign-In: Using standard SDK for mobile');
+      
+      if (_googleSignIn == null) {
+        throw Exception('Google Sign-In not initialized for mobile platform');
+      }
+      
+      final googleCredentials = await _googleSignIn!.signIn();
       if (googleCredentials == null) return null;
 
-      // Create Firebase credential from all_platforms credentials
+      // Create Firebase credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleCredentials.accessToken,
         idToken: googleCredentials.idToken,
@@ -132,6 +204,8 @@ class AuthService {
 
       final cred = await _auth!.signInWithCredential(credential);
       user = cred.user;
+    } else {
+      throw UnsupportedError('Google Sign-In not supported on this platform');
     }
 
     // Check if user document exists, create if not (for new Google users)
@@ -255,11 +329,25 @@ class AuthService {
   Future<void> signOut() async {
     await _auth!.signOut();
 
-    // Also sign out of Google on mobile
+    // Platform-specific sign out
     if (!kIsWeb) {
-      try {
-        await _googleSignIn.signOut();
-      } catch (_) {}
+      if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        // Desktop: Revoke OAuth token
+        try {
+          await _desktopOAuthHandler.signOutFromGoogle();
+          debugPrint('Sign Out: Revoked desktop OAuth token');
+        } catch (e) {
+          debugPrint('Sign Out: Failed to revoke token: $e');
+        }
+      } else if (_googleSignIn != null) {
+        // Mobile: Sign out from Google Sign-In SDK
+        try {
+          await _googleSignIn!.signOut();
+          debugPrint('Sign Out: Signed out from Google SDK');
+        } catch (e) {
+          debugPrint('Sign Out: Failed to sign out from Google: $e');
+        }
+      }
     }
   }
 
@@ -433,9 +521,29 @@ class AuthService {
         // Web: Use popup re-authentication
         final provider = GoogleAuthProvider();
         await user.reauthenticateWithPopup(provider);
-      } else {
-        // Desktop/Mobile: Use all_platforms Sign-In SDK
-        final googleCredentials = await _googleSignIn.signIn();
+      } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+        // Desktop: Use OAuth flow for re-authentication
+        final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
+        final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
+        
+        final credentials = await _desktopOAuthHandler.performOAuthFlow(
+          clientId: clientId,
+          clientSecret: clientSecret,
+        );
+        
+        if (credentials == null) {
+          throw Exception('Google re-authentication was cancelled');
+        }
+        
+        final authCredential = GoogleAuthProvider.credential(
+          idToken: credentials.idToken,
+          accessToken: credentials.accessToken,
+        );
+        
+        await user.reauthenticateWithCredential(authCredential);
+      } else if (_googleSignIn != null) {
+        // Mobile: Use standard Google Sign-In SDK
+        final googleCredentials = await _googleSignIn!.signIn();
         if (googleCredentials == null) {
           throw Exception('Google sign-in was cancelled');
         }
@@ -446,6 +554,8 @@ class AuthService {
         );
 
         await user.reauthenticateWithCredential(credential);
+      } else {
+        throw Exception('Google re-authentication not available on this platform');
       }
     } catch (e) {
       debugPrint('Google re-authentication failed: $e');

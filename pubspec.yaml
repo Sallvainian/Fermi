@@ -46,6 +46,12 @@ dependencies:
   google_sign_in: ^6.3.0  # Required by all_platforms
   google_sign_in_all_platforms: ^1.2.1  # Windows desktop support
   
+  # OAuth2 for Windows desktop authentication
+  oauth2: ^2.0.0
+  http: ^1.0.0
+  window_to_front: ^0.0.3
+  url_launcher: ^6.0.0
+  
   # Sign in with Apple (required for App Store compliance - Guideline 4.8)
   sign_in_with_apple: ^7.0.1
   
