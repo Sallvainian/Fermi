@@ -54,6 +54,16 @@ import '../models/user_model.dart';
 /// 3. Let UI components handle complex state (role selection, email verification)
 /// 4. Router just routes - doesn't enforce business logic
 class AppRouter {
+  /// Reusable redirect function for student-only routes.
+  /// Returns '/dashboard' if the user is not a student, null otherwise.
+  static String? _studentOnlyRedirect(BuildContext context, GoRouterState state) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (auth.userModel?.role != UserRole.student) {
+      return '/dashboard';
+    }
+    return null;
+  }
+
   /// Creates the app router with auth-aware navigation.
   ///
   /// Standard Flutter pattern:
@@ -434,35 +444,17 @@ class AppRouter {
         // Student routes with middleware role-based guards
         GoRoute(
           path: '/student/courses',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) => const StudentCoursesScreen(),
         ),
         GoRoute(
           path: '/student/assignments',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) => const student_assignments.StudentAssignmentsScreen(),
         ),
         GoRoute(
           path: '/student/assignments/:assignmentId/submit',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) {
             final assignmentId = state.pathParameters['assignmentId']!;
             return AssignmentSubmissionScreen(assignmentId: assignmentId);
@@ -470,46 +462,22 @@ class AppRouter {
         ),
         GoRoute(
           path: '/student/grades',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) => const StudentGradesScreen(),
         ),
         GoRoute(
           path: '/student/enroll',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) => const EnrollmentScreen(),
         ),
         GoRoute(
           path: '/student/messages',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) => const ChatListScreen(),
         ),
         GoRoute(
           path: '/student/messages/:chatRoomId',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             return ChatDetailScreen(chatRoomId: chatRoomId);
@@ -517,24 +485,12 @@ class AppRouter {
         ),
         GoRoute(
           path: '/student/notifications',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) => const NotificationsScreen(),
         ),
         GoRoute(
           path: '/student/discussions',
-          redirect: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            if (auth.userModel?.role != UserRole.student) {
-              return '/dashboard';
-            }
-            return null;
-          },
+          redirect: _studentOnlyRedirect,
           builder: (context, state) => const SimpleDiscussionBoardsScreen(),
         ),
 
