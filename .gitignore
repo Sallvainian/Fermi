@@ -16,6 +16,14 @@ app.*.symbols
 app.*.map.json
 *.hprof
 
+# Security - NEVER commit these
+keys/
+*.p8
+*.p12
+*.pem
+*.key
+**/AuthKey_*.p8
+
 # IDE/Editor specific (trim if you don't use these)
 .idea/
 .vscode/
