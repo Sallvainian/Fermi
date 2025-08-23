@@ -344,16 +344,13 @@ class _GradebookScreenState extends State<GradebookScreen> {
             .toList(),
         onGradeUpdate: (assignmentId, newPoints, newStatus) async {
           // Find the grade and update it - handle case where grade doesn't exist
-          // Build a lookup map for grades by (assignmentId, studentId)
-          final Map<String, Grade> gradeLookup = {
-            for (var g in gradeProvider.studentGrades)
-              '${g.assignmentId}_${g.studentId}': g
-          };
           final existingGrade = gradeLookup['${assignmentId}_${student.id}'];
           
           if (existingGrade != null) {
             // Update existing grade
             await gradeProvider.submitGrade(existingGrade.id, newPoints ?? 0, null);
+            // Optionally update the gradeLookup if gradeProvider.studentGrades is not updated immediately
+            // gradeLookup['${assignmentId}_${student.id}'] = updatedGrade;
           } else {
             // Grade doesn't exist yet, create a new one
             debugPrint('Creating new grade for assignment $assignmentId');
