@@ -173,6 +173,8 @@ class AuthProvider extends ChangeNotifier {
       _userModel = loadedUserModel;
       _setAuthState(AuthStatus.authenticated);
       _startNotificationsIfNeeded();
+      _updatePresenceOnline();
+      _updatePresenceOnline();
       
     } catch (e) {
       debugPrint('Email sign-in error: $e');
@@ -340,6 +342,7 @@ class AuthProvider extends ChangeNotifier {
       _userModel = loadedUserModel;
       _setAuthState(AuthStatus.authenticated);
       _startNotificationsIfNeeded();
+      _updatePresenceOnline();
       
       // Extra delay to ensure state propagates to UI
       await Future.delayed(const Duration(milliseconds: 100));
@@ -410,6 +413,7 @@ class AuthProvider extends ChangeNotifier {
       _userModel = loadedUserModel;
       _setAuthState(AuthStatus.authenticated);
       _startNotificationsIfNeeded();
+      _updatePresenceOnline();
       
     } catch (e) {
       debugPrint('Sign-up error: $e');
