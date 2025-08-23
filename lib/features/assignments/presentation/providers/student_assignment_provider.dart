@@ -341,14 +341,11 @@ class StudentAssignmentProvider with ChangeNotifier {
           final auth = FirebaseAuth.instance;
           final currentUser = auth.currentUser;
           if (currentUser != null) {
-            final created = await StudentService.createStudentDocumentIfMissing(currentUser);
-            if (created) {
+            final createdStudent = await StudentService.createStudentDocumentIfMissing(currentUser);
+            if (createdStudent != null) {
               debugPrint('[StudentAssignmentProvider] Created missing student document');
-              // Try to fetch the student document again
-              student = await _studentRepository.getStudentByUserId(_currentStudentId!);
-              if (student != null) {
-                classIds = student.classIds;
-              }
+              student = createdStudent;
+              classIds = student.classIds;
             }
           }
         } catch (e) {
