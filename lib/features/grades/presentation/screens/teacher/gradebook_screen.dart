@@ -334,6 +334,12 @@ class _GradebookScreenState extends State<GradebookScreen> {
     // Load grades for this specific student
     gradeProvider.loadStudentClassGrades(student.id, _selectedClassId!);
 
+    // Create a lookup map for quick grade access
+    final Map<String, Grade> gradeLookup = {};
+    for (final grade in gradeProvider.studentGrades) {
+      gradeLookup['${grade.assignmentId}_${grade.studentId}'] = grade;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

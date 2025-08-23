@@ -5,6 +5,7 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/models/student.dart';
 
 /// Core service for managing students in Firestore.
@@ -507,6 +508,88 @@ class StudentService {
       return stats;
     } catch (e) {
       // Error getting grade level statistics: $e
+      rethrow;
+    }
+  }
+
+  /// Creates a student document if it doesn't exist for the given user.
+  ///
+  /// This method handles cases where users were created through authentication
+  /// but don't have corresponding student documents in Firestore.
+  ///
+  /// @param user Firebase Auth User object
+  /// @return true if a new document was created, false if it already exists
+  /// @throws Exception if creation fails
+  static Future<bool> createStudentDocumentIfMissing(User user) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final studentsCollection = firestore.collection('students');
+      
+      // Check if a student document already exists for this user
+      final query = await studentsCollection
+          .where('uid', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      
+      if (query.docs.isNotEmpty) {
+        // Student document already exists
+        return false;
+      }
+      
+      // Parse display name for first and last name
+      String firstName = '';
+      String lastName = '';
+      String displayName = user.displayName ?? '';
+      
+      if (displayName.isNotEmpty) {
+        final nameParts = displayName.split(' ');
+        firstName = nameParts.isNotEmpty ? nameParts.first : '';
+        lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      } else if (user.email != null) {
+        // Fallback: use email username as display name
+        firstName = user.email!.split('@').first;
+        displayName = firstName;
+      }
+      
+      // Generate a username from email or uid
+      String username = '';
+      if (user.email != null) {
+        username = user.email!.split('@').first.toLowerCase();
+      } else {
+        username = 'student_${user.uid.substring(0, 8)}';
+      }
+      
+      // Create the student document
+      final now = DateTime.now();
+      final studentData = {
+        'uid': user.uid,
+        'username': username,
+        'email': user.email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'displayName': displayName.isNotEmpty ? displayName : firstName,
+        'gradeLevel': 0, // Default grade level, should be updated by teacher
+        'classIds': [], // Empty initially, student needs to be enrolled
+        'photoURL': user.photoURL,
+        'createdAt': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
+        'isActive': true,
+        'accountClaimed': true, // Since they're already authenticated
+        'passwordChanged': true, // They're using their own auth
+        'metadata': {
+          'createdFrom': 'auto_creation',
+          'authProvider': user.providerData.isNotEmpty 
+              ? user.providerData.first.providerId 
+              : 'unknown',
+        },
+      };
+      
+      // Add the student document to Firestore
+      await studentsCollection.add(studentData);
+      
+      return true;
+    } catch (e) {
+      // Error creating student document: $e
       rethrow;
     }
   }
