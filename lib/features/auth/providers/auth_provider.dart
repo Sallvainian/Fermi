@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../shared/models/user_model.dart';
 import '../data/services/auth_service.dart';
 import '../../notifications/data/services/web_in_app_notification_service.dart';
+import '../../student/data/services/presence_service.dart';
 
 /// Authentication states for the application.
 enum AuthStatus {
@@ -40,6 +41,7 @@ class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
   final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PresenceService _presenceService = PresenceService();
   
   // State management
   AuthStatus _status = AuthStatus.uninitialized;
@@ -116,6 +118,7 @@ class AuthProvider extends ChangeNotifier {
         _userModel = loadedUserModel;
         _setAuthState(AuthStatus.authenticated);
         _startNotificationsIfNeeded();
+        _updatePresenceOnline();
       } else {
         // User exists in Auth but incomplete profile in Firestore
         // Could be mid-registration or data corruption
@@ -208,6 +211,7 @@ class AuthProvider extends ChangeNotifier {
         _userModel = loadedUserModel;
         _setAuthState(AuthStatus.authenticated);
         _startNotificationsIfNeeded();
+        _updatePresenceOnline();
       } else {
         // New user - needs role selection
         // Keep status as authenticating to trigger role selection flow
@@ -261,6 +265,7 @@ class AuthProvider extends ChangeNotifier {
         _userModel = loadedUserModel;
         _setAuthState(AuthStatus.authenticated);
         _startNotificationsIfNeeded();
+        _updatePresenceOnline();
       } else {
         // New user - needs role selection
         _setAuthState(AuthStatus.authenticating);
@@ -611,6 +616,18 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
+  // ============= Presence Management =============
+  
+  void _updatePresenceOnline() {
+    if (_userModel != null) {
+      _presenceService.updateUserPresence(true, userRole: _userModel!.role.toString());
+    }
+  }
+  
+  void _updatePresenceOffline() {
+    _presenceService.updateUserPresence(false);
+  }
+  
   void _stopNotificationsIfNeeded() {
     if (kIsWeb) {
       WebInAppNotificationService.instance.dispose();
@@ -664,7 +681,7 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Failed to update display name: $e');
-      throw e;
+      rethrow;
     }
   }
   
@@ -687,7 +704,7 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Failed to update photo URL: $e');
-      throw e;
+      rethrow;
     }
   }
   
@@ -749,6 +766,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     try {
       _stopNotificationsIfNeeded();
+      _updatePresenceOffline();  // Update presence before signing out
       await _authService.signOut();
       _userModel = null;
       _errorMessage = null;

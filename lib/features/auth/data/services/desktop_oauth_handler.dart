@@ -135,7 +135,7 @@ class DesktopOAuthHandler {
       
       debugPrint('OAuth: Successfully obtained access token');
       debugPrint('OAuth: ID Token present: ${client.credentials.idToken != null}');
-      debugPrint('OAuth: Access Token present: ${client.credentials.accessToken != null}');
+      debugPrint('OAuth: Access Token present: ${client.credentials.accessToken.isNotEmpty}');
       debugPrint('OAuth: Refresh Token present: ${client.credentials.refreshToken != null}');
       
       return client;

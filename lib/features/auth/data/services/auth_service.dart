@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as all_platforms;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'desktop_oauth_handler.dart';
 
@@ -12,9 +11,8 @@ import 'desktop_oauth_handler.dart';
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
-  // Use regular GoogleSignIn for mobile, all_platforms for desktop
+  // Use regular GoogleSignIn for mobile
   GoogleSignIn? _googleSignIn;
-  all_platforms.GoogleSignIn? _googleSignInDesktop;
   // Desktop OAuth handler for Windows/Mac/Linux
   final DesktopOAuthHandler _desktopOAuthHandler = DesktopOAuthHandler();
 
@@ -48,9 +46,8 @@ class AuthService {
         debugPrint('ERROR: Google OAuth credentials not found in .env file');
         debugPrint('Windows Google Sign-In will not work without credentials');
       }
-      // Don't initialize _googleSignIn or _googleSignInDesktop for desktop
+      // Don't initialize _googleSignIn for desktop
       _googleSignIn = null;
-      _googleSignInDesktop = null;
     } else if (!kIsWeb && Platform.isIOS) {
       // iOS uses standard Google Sign-In with GoogleService-Info.plist
       debugPrint('Using standard Google Sign-In for iOS');
@@ -171,7 +168,7 @@ class AuthService {
         
         debugPrint('Google Sign-In: Got OAuth credentials');
         debugPrint('ID Token present: ${credentials.idToken != null}');
-        debugPrint('Access Token present: ${credentials.accessToken != null}');
+        debugPrint('Access Token present: ${credentials.accessToken.isNotEmpty}');
         
         // Create Firebase credential
         final authCredential = GoogleAuthProvider.credential(

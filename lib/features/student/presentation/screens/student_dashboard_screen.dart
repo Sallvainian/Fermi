@@ -149,10 +149,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             _buildQuickStats(context, classProvider, dashboardProvider),
             const SizedBox(height: 24),
 
-            // Online Users
-            OnlineUsersCard(),
-            const SizedBox(height: 24),
-
             // My Classes
             Text(
               'My Classes',
@@ -184,6 +180,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             _buildRecentGradesCard(context, dashboardProvider),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Online Users
+            OnlineUsersCard(),
           ],
         ),
       ),
