@@ -354,17 +354,18 @@ class StudentAssignmentProvider with ChangeNotifier {
         } catch (e) {
           debugPrint('[StudentAssignmentProvider] Error creating student document: $e');
         }
-        
-        // If still no student document, emit empty list
-        if (student == null) {
-          _assignments = [];
-          _isLoading = false;
-          notifyListeners();
-          _studentAssignmentsController.add([]);
-          return;
-        }
       }
 
+      // If still no student document, emit empty list
+      if (student == null) {
+        _assignments = [];
+        _isLoading = false;
+        notifyListeners();
+        _studentAssignmentsController.add([]);
+        return;
+      }
+
+      // After all attempts, if classIds is empty, emit empty list
       if (classIds.isEmpty) {
         _assignments = [];
         _isLoading = false;
