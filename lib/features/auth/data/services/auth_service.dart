@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as all_platforms;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -18,14 +17,22 @@ class AuthService {
     _firestore = FirebaseFirestore.instance;
     
     // Initialize Google Sign-In with OAuth credentials from .env
-    // Simple: just read from .env file
+    // Check if credentials are available before initializing
+    final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
+    final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
+    
     _googleSignIn = all_platforms.GoogleSignIn(
       params: all_platforms.GoogleSignInParams(
-        clientId: dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '',
-        clientSecret: dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '',
+        clientId: clientId,
+        clientSecret: clientSecret,
         redirectPort: 3000,
       ),
     );
+    
+    if (clientId.isEmpty || clientSecret.isEmpty) {
+      debugPrint('Warning: Google OAuth credentials not found in .env file');
+      debugPrint('Windows Google Sign-In will not work without credentials');
+    }
     
     // Web persistence
     if (kIsWeb) {
