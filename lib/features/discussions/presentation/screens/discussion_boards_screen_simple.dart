@@ -236,26 +236,26 @@ class _BoardCard extends StatelessWidget {
                   Icon(
                     Icons.forum_outlined,
                     size: 16,
-                    color: theme.colorScheme.outline,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${board.threadCount} threads',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Icon(
                     Icons.calendar_today_outlined,
                     size: 16,
-                    color: theme.colorScheme.outline,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     dateFormat.format(board.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.outline,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                 ],

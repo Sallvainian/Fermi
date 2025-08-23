@@ -172,7 +172,9 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     ),
                     child: Text(
                       '${board.threadCount} threads',
-                      style: theme.textTheme.labelSmall,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSecondaryContainer,
+                      ),
                     ),
                   ),
                 ],
@@ -207,20 +209,20 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   Icon(
                     Icons.access_time,
                     size: 14,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     _formatLastActivity(board.updatedAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                   const Spacer(),
                   Text(
                     'by ${board.createdByName}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                 ],
