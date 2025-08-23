@@ -193,10 +193,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
-              SizedBox(
-                height: 300,
-                child: OnlineUsersCard(),
-              ),
+              OnlineUsersCard(),
               const SizedBox(height: AppSpacing.lg),
 
               // Quick Actions
