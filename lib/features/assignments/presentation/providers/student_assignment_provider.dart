@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../main.dart';
 import '../../domain/models/assignment.dart';
 import '../../domain/models/submission.dart';
@@ -17,6 +18,7 @@ import '../../domain/repositories/assignment_repository.dart';
 import '../../domain/repositories/submission_repository.dart';
 import '../../../grades/domain/repositories/grade_repository.dart';
 import '../../../student/domain/repositories/student_repository.dart';
+import '../../../student/data/services/student_service.dart';
 import '../../../../shared/core/service_locator.dart';
 
 /// Combined model for student assignment view.
@@ -316,7 +318,7 @@ class StudentAssignmentProvider with ChangeNotifier {
       // Get student document to get enrolled classes
       debugPrint(
           '[StudentAssignmentProvider] Getting student document for userId: $_currentStudentId');
-      final student =
+      var student =
           await _studentRepository.getStudentByUserId(_currentStudentId!);
       debugPrint(
           '[StudentAssignmentProvider] Student found: ${student != null}');
@@ -331,7 +333,31 @@ class StudentAssignmentProvider with ChangeNotifier {
       } else {
         debugPrint(
             '[StudentAssignmentProvider] No student document found for userId: $_currentStudentId');
-        // Student document doesn't exist yet, emit empty list
+        
+        // Try to create a student document if it doesn't exist
+        // This handles cases where users were created before the student document logic
+        try {
+          debugPrint('[StudentAssignmentProvider] Attempting to create missing student document...');
+          final auth = FirebaseAuth.instance;
+          final currentUser = auth.currentUser;
+          if (currentUser != null) {
+            final created = await StudentService.createStudentDocumentIfMissing(currentUser);
+            if (created) {
+              debugPrint('[StudentAssignmentProvider] Created missing student document');
+              // Try to fetch the student document again
+              student = await _studentRepository.getStudentByUserId(_currentStudentId!);
+              if (student != null) {
+                classIds = student.classIds;
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('[StudentAssignmentProvider] Error creating student document: $e');
+        }
+      }
+
+      // If still no student document, emit empty list
+      if (student == null) {
         _assignments = [];
         _isLoading = false;
         notifyListeners();
@@ -339,6 +365,7 @@ class StudentAssignmentProvider with ChangeNotifier {
         return;
       }
 
+      // After all attempts, if classIds is empty, emit empty list
       if (classIds.isEmpty) {
         _assignments = [];
         _isLoading = false;

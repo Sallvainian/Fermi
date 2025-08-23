@@ -262,13 +262,15 @@ class AuthService {
       final userData = userDoc.data();
       if (userData != null) {
         await _firestore.collection('students').doc(uid).set({
-          'uid': uid,
+          'id': uid,  // Document ID
+          'userId': uid,  // This is what getStudentByUserId looks for
           'email': userData['email'] ?? '',
           'displayName': userData['displayName'] ?? 'Student',
           'firstName': userData['firstName'] ?? '',
           'lastName': userData['lastName'] ?? '',
           'isActive': true,
           'classIds': [],
+          'gradeLevel': 9,  // Default grade level, can be updated later
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));

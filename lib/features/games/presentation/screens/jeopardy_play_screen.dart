@@ -49,16 +49,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     if (loadedGame != null) {
       JeopardyGame gameWithDailyDoubles = loadedGame;
       
-
       LoggerService.debug('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
       for (final dd in loadedGame.dailyDoubles) {
-      if (kDebugMode) {
-        LoggerService.debug('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
-        for (final dd in loadedGame.dailyDoubles) {
-          LoggerService.debug('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
-        }
+        LoggerService.debug('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
       }
-      
 
       if (loadedGame.dailyDoubles.isNotEmpty) {
 
