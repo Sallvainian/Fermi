@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as all_platforms;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'desktop_oauth_handler.dart';
@@ -11,8 +12,9 @@ import 'desktop_oauth_handler.dart';
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
-  // Use all_platforms constructor for mobile/web
-  all_platforms.GoogleSignIn? _googleSignIn;
+  // Use regular GoogleSignIn for mobile, all_platforms for desktop
+  GoogleSignIn? _googleSignIn;
+  all_platforms.GoogleSignIn? _googleSignInDesktop;
   // Desktop OAuth handler for Windows/Mac/Linux
   final DesktopOAuthHandler _desktopOAuthHandler = DesktopOAuthHandler();
 
@@ -45,17 +47,24 @@ class AuthService {
       if (clientId.isEmpty || clientSecret.isEmpty) {
         debugPrint('ERROR: Google OAuth credentials not found in .env file');
         debugPrint('Windows Google Sign-In will not work without credentials');
+      } else {
+        // Initialize all_platforms GoogleSignIn for desktop with OAuth credentials
+        _googleSignInDesktop = all_platforms.GoogleSignIn(
+          params: all_platforms.GoogleSignInParams(
+            clientId: clientId,
+          ),
+        );
       }
-      // Don't initialize _googleSignIn for desktop
+      // Don't initialize regular _googleSignIn for desktop
       _googleSignIn = null;
-    } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      // Mobile platforms use standard Google Sign-In
-      debugPrint('Using standard Google Sign-In for mobile');
-      _googleSignIn = all_platforms.GoogleSignIn(
-        params: all_platforms.GoogleSignInParams(
-          clientId: clientId,
-        ),
-      );
+    } else if (!kIsWeb && Platform.isIOS) {
+      // iOS uses standard Google Sign-In with GoogleService-Info.plist
+      debugPrint('Using standard Google Sign-In for iOS');
+      _googleSignIn = GoogleSignIn();
+    } else if (!kIsWeb && Platform.isAndroid) {
+      // Android uses standard Google Sign-In with google-services.json
+      debugPrint('Using standard Google Sign-In for Android');
+      _googleSignIn = GoogleSignIn();
     } else if (kIsWeb) {
       // Web doesn't need client configuration (uses Firebase Auth popup)
       debugPrint('Using Firebase Auth popup for web');
@@ -193,13 +202,16 @@ class AuthService {
         throw Exception('Google Sign-In not initialized for mobile platform');
       }
       
-      final googleCredentials = await _googleSignIn!.signIn();
-      if (googleCredentials == null) return null;
+      final googleUser = await _googleSignIn!.signIn();
+      if (googleUser == null) return null;
 
+      // Get authentication tokens
+      final googleAuth = await googleUser.authentication;
+      
       // Create Firebase credential
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleCredentials.accessToken,
-        idToken: googleCredentials.idToken,
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
 
       final cred = await _auth!.signInWithCredential(credential);
@@ -543,14 +555,17 @@ class AuthService {
         await user.reauthenticateWithCredential(authCredential);
       } else if (_googleSignIn != null) {
         // Mobile: Use standard Google Sign-In SDK
-        final googleCredentials = await _googleSignIn!.signIn();
-        if (googleCredentials == null) {
+        final googleUser = await _googleSignIn!.signIn();
+        if (googleUser == null) {
           throw Exception('Google sign-in was cancelled');
         }
 
+        // Get authentication tokens
+        final googleAuth = await googleUser.authentication;
+        
         final credential = GoogleAuthProvider.credential(
-          accessToken: googleCredentials.accessToken,
-          idToken: googleCredentials.idToken,
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
         );
 
         await user.reauthenticateWithCredential(credential);

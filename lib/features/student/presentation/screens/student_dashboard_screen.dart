@@ -13,6 +13,7 @@ import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../assignments/presentation/providers/student_assignment_provider.dart';
+import '../widgets/online_users_card.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -146,6 +147,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
             // Quick Stats - Smaller section
             _buildQuickStats(context, classProvider, dashboardProvider),
+            const SizedBox(height: 24),
+
+            // Online Users
+            const OnlineUsersCard(),
             const SizedBox(height: 24),
 
             // My Classes

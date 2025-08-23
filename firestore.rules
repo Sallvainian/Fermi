@@ -508,6 +508,24 @@ service cloud.firestore {
                        resource.data.teacherId == request.auth.uid;
     }
     
+    // Presence collection - for tracking online users
+    match /presence/{userId} {
+      // All authenticated users can read presence documents to see who's online
+      allow read: if isAuthenticated();
+      
+      // Users can only create/update their own presence document
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId;
+      
+      // Users can only update their own presence document
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == userId;
+      
+      // Users can delete their own presence document (when going offline)
+      allow delete: if isAuthenticated() && 
+                       request.auth.uid == userId;
+    }
+    
     // Default deny rule - explicitly deny any unmatched paths
     match /{document=**} {
       allow read, write: if false;
