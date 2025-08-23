@@ -74,10 +74,6 @@ dependencies:
   file_picker: ^10.3.2
   path_provider: ^2.1.5
 
-  # Windows Desktop Support
-  firebase_dart: ^1.1.0
-  firebase_dart_flutter: ^1.0.16
-  desktop_webview_auth: ^0.0.15
 
   # Image caching for performance
   cached_network_image: ^3.4.1

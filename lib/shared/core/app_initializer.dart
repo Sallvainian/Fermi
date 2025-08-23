@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_dart/firebase_dart.dart' as firebase_dart;
 import 'dart:async';
 import '../../config/firebase_options.dart';
 import '../services/logger_service.dart';
-import '../utils/platform_utils.dart';
 import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
 import '../services/performance_service.dart';
@@ -57,27 +55,6 @@ class AppInitializer {
   /// Initialize Firebase services
   static Future<void> _initializeFirebase() async {
     try {
-      // Check if we need Windows-specific initialization
-      if (PlatformUtils.needsWindowsServices) {
-        LoggerService.info(
-            'Initializing Firebase using firebase_dart for Windows desktop',
-            tag: 'AppInitializer');
-        
-        await _initializeFirebaseDart();
-        _firebaseInitialized = true;
-        return;
-      }
-
-      // On Linux desktop (non-Windows), Firebase is not supported natively
-      if (defaultTargetPlatform == TargetPlatform.linux && !kIsWeb) {
-        LoggerService.warning(
-            'Firebase is not supported on Linux desktop. '
-            'Consider running with: flutter run -d web-server',
-            tag: 'AppInitializer');
-        _firebaseInitialized = false;
-        return;
-      }
-
       LoggerService.info('Starting Firebase initialization...',
           tag: 'AppInitializer');
 
@@ -145,38 +122,6 @@ class AppInitializer {
             tag: 'AppInitializer', error: e);
         // Don't rethrow - we've handled duplicate app errors above
       }
-    }
-  }
-
-  /// Initialize firebase_dart for Windows desktop
-  static Future<void> _initializeFirebaseDart() async {
-    try {
-      LoggerService.info('Initializing firebase_dart...', tag: 'AppInitializer');
-      
-      // Get Windows configuration from firebase_options
-      final windowsOptions = DefaultFirebaseOptions.windows;
-      
-      // Initialize firebase_dart with project configuration
-      await firebase_dart.Firebase.initializeApp(
-        options: firebase_dart.FirebaseOptions(
-          apiKey: windowsOptions.apiKey,
-          authDomain: windowsOptions.authDomain ?? 'teacher-dashboard-flutterfire.firebaseapp.com',
-          projectId: windowsOptions.projectId,
-          storageBucket: windowsOptions.storageBucket ?? 'teacher-dashboard-flutterfire.firebasestorage.app',
-          messagingSenderId: windowsOptions.messagingSenderId,
-          appId: windowsOptions.appId,
-          databaseURL: windowsOptions.databaseURL,
-        ),
-      );
-      
-      LoggerService.info('firebase_dart initialized successfully', tag: 'AppInitializer');
-      
-      // Configure Firestore settings
-      LoggerService.info('Firestore configured for Windows via firebase_dart', tag: 'AppInitializer');
-      
-    } catch (e) {
-      LoggerService.error('firebase_dart initialization failed', tag: 'AppInitializer', error: e);
-      rethrow;
     }
   }
 
