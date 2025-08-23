@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
@@ -90,60 +91,106 @@ class PresenceService {
 
     debugPrint('PresenceService: Setting up stream for online users, excludeSelf: $excludeSelf');
 
+    // Platform-specific implementation due to Windows Firebase limitations
+    if (!kIsWeb && Platform.isWindows) {
+      debugPrint('PresenceService: Using polling fallback for Windows');
+      return _getOnlineUsersPolling(excludeSelf: excludeSelf);
+    } else {
+      debugPrint('PresenceService: Using real-time listeners for web/mobile');
+      return _getOnlineUsersRealtime(excludeSelf: excludeSelf);
+    }
+  }
+
+  // Real-time implementation for web/mobile
+  Stream<List<OnlineUser>> _getOnlineUsersRealtime({bool excludeSelf = false}) {
+    final currentUser = _auth.currentUser!;
+    
     return _firestore
         .collection('presence')
         .where('online', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
-      debugPrint('PresenceService: Stream update - received ${snapshot.docs.length} online users');
-      
-      final List<OnlineUser> onlineUsers = [];
-
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final uid = data['uid'] ?? '';
-        
-        debugPrint('PresenceService: Processing user ${data['displayName']} (${data['role']}) - UID: $uid');
-        
-        // Filter out self if requested
-        if (!excludeSelf || uid != currentUser.uid) {
-          // Handle Firestore Timestamp conversion
-          DateTime lastSeen;
-          if (data['lastSeen'] is Timestamp) {
-            lastSeen = (data['lastSeen'] as Timestamp).toDate();
-          } else {
-            lastSeen = DateTime.now();
-          }
-          
-          onlineUsers.add(OnlineUser(
-            uid: uid,
-            displayName: data['displayName'] ?? 'Anonymous User',
-            photoURL: data['photoURL'],
-            role: data['role'],
-            lastSeen: lastSeen,
-            isAnonymous: data['isAnonymous'] ?? false,
-            metadata: data['metadata'] != null
-                ? PresenceMetadata.fromMap(data['metadata'])
-                : null,
-          ));
-          
-          debugPrint('PresenceService: Added ${data['displayName']} to online users list');
-        } else {
-          debugPrint('PresenceService: Excluded self (${data['displayName']}) from list');
-        }
-      }
-
-      // Sort by last seen (most recent first)
-      onlineUsers.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
-
-      debugPrint('PresenceService: Returning ${onlineUsers.length} users after filtering and sorting');
-      return onlineUsers;
+      debugPrint('PresenceService: Real-time update - received ${snapshot.docs.length} online users');
+      return _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
     }).handleError((error) {
       // Log the error but return empty list to keep UI functional
-      debugPrint('PresenceService: Stream error: $error');
+      debugPrint('PresenceService: Real-time stream error: $error');
       LoggerService.error('Error fetching online users', error: error);
       return <OnlineUser>[];
     });
+  }
+
+  // Polling implementation for Windows
+  Stream<List<OnlineUser>> _getOnlineUsersPolling({bool excludeSelf = false}) async* {
+    final currentUser = _auth.currentUser!;
+    
+    while (true) {
+      try {
+        debugPrint('PresenceService: Polling for online users...');
+        
+        final snapshot = await _firestore
+            .collection('presence')
+            .where('online', isEqualTo: true)
+            .get();
+        
+        debugPrint('PresenceService: Polling update - received ${snapshot.docs.length} online users');
+        yield _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
+        
+        // Poll every 3 seconds for Windows
+        await Future.delayed(const Duration(seconds: 3));
+      } catch (error) {
+        debugPrint('PresenceService: Polling error: $error');
+        LoggerService.error('Error polling online users', error: error);
+        yield <OnlineUser>[];
+        // Continue polling even on error, but with longer delay
+        await Future.delayed(const Duration(seconds: 5));
+      }
+    }
+  }
+
+  // Common data processing logic
+  List<OnlineUser> _processOnlineUsersData(List<QueryDocumentSnapshot> docs, User currentUser, bool excludeSelf) {
+    final List<OnlineUser> onlineUsers = [];
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final uid = data['uid'] ?? '';
+      
+      debugPrint('PresenceService: Processing user ${data['displayName']} (${data['role']}) - UID: $uid');
+      
+      // Filter out self if requested
+      if (!excludeSelf || uid != currentUser.uid) {
+        // Handle Firestore Timestamp conversion
+        DateTime lastSeen;
+        if (data['lastSeen'] is Timestamp) {
+          lastSeen = (data['lastSeen'] as Timestamp).toDate();
+        } else {
+          lastSeen = DateTime.now();
+        }
+        
+        onlineUsers.add(OnlineUser(
+          uid: uid,
+          displayName: data['displayName'] ?? 'Anonymous User',
+          photoURL: data['photoURL'],
+          role: data['role'],
+          lastSeen: lastSeen,
+          isAnonymous: data['isAnonymous'] ?? false,
+          metadata: data['metadata'] != null
+              ? PresenceMetadata.fromMap(data['metadata'])
+              : null,
+        ));
+        
+        debugPrint('PresenceService: Added ${data['displayName']} to online users list');
+      } else {
+        debugPrint('PresenceService: Excluded self (${data['displayName']}) from list');
+      }
+    }
+
+    // Sort by last seen (most recent first)
+    onlineUsers.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
+
+    debugPrint('PresenceService: Returning ${onlineUsers.length} users after filtering and sorting');
+    return onlineUsers;
   }
 
   // Get specific user's online status
