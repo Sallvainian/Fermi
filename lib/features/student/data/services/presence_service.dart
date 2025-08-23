@@ -16,22 +16,32 @@ class PresenceService {
   Future<void> updateUserPresence(bool isOnline, {String? userRole}) async {
     try {
       final user = _auth.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        debugPrint('PresenceService: No current user, cannot update presence');
+        return;
+      }
+
+      debugPrint('PresenceService: Updating presence for ${user.email} - online: $isOnline, role: $userRole');
 
       final userStatusDoc = _firestore.collection('presence').doc(user.uid);
 
       if (isOnline) {
         // User is online - store only necessary public information
         final presenceData = _buildPresenceData(user, true, userRole);
+        debugPrint('PresenceService: Setting online presence data: $presenceData');
         await userStatusDoc.set(presenceData);
+        debugPrint('PresenceService: Successfully set online presence for ${user.email}');
       } else {
         // User is offline
+        debugPrint('PresenceService: Setting user offline');
         await userStatusDoc.update({
           'online': false,
           'lastSeen': FieldValue.serverTimestamp(),
         });
+        debugPrint('PresenceService: Successfully set offline presence for ${user.email}');
       }
     } catch (error) {
+      debugPrint('PresenceService: ERROR updating presence: $error');
       LoggerService.error('Error updating user presence', error: error);
     }
   }
@@ -73,20 +83,27 @@ class PresenceService {
     // Check if user is authenticated before accessing database
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
+      debugPrint('PresenceService: No current user, returning empty stream');
       // Return an empty list if no user is logged in
       return Stream.value([]);
     }
+
+    debugPrint('PresenceService: Setting up stream for online users, excludeSelf: $excludeSelf');
 
     return _firestore
         .collection('presence')
         .where('online', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
+      debugPrint('PresenceService: Stream update - received ${snapshot.docs.length} online users');
+      
       final List<OnlineUser> onlineUsers = [];
 
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final uid = data['uid'] ?? '';
+        
+        debugPrint('PresenceService: Processing user ${data['displayName']} (${data['role']}) - UID: $uid');
         
         // Filter out self if requested
         if (!excludeSelf || uid != currentUser.uid) {
@@ -109,15 +126,21 @@ class PresenceService {
                 ? PresenceMetadata.fromMap(data['metadata'])
                 : null,
           ));
+          
+          debugPrint('PresenceService: Added ${data['displayName']} to online users list');
+        } else {
+          debugPrint('PresenceService: Excluded self (${data['displayName']}) from list');
         }
       }
 
       // Sort by last seen (most recent first)
       onlineUsers.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
 
+      debugPrint('PresenceService: Returning ${onlineUsers.length} users after filtering and sorting');
       return onlineUsers;
     }).handleError((error) {
       // Log the error but return empty list to keep UI functional
+      debugPrint('PresenceService: Stream error: $error');
       LoggerService.error('Error fetching online users', error: error);
       return <OnlineUser>[];
     });

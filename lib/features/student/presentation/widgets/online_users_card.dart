@@ -153,12 +153,7 @@ class OnlineUsersCard extends StatelessWidget {
         user.displayName,
         style: theme.textTheme.titleSmall,
       ),
-      subtitle: Text(
-        _getStatusText(user),
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
+      subtitle: _buildUserSubtitle(context, user),
       onTap: () {
         // Navigate to messages to start a chat with this user
         context.go('/messages');
@@ -169,8 +164,15 @@ class OnlineUsersCard extends StatelessWidget {
 
   String _getStatusText(OnlineUser user) {
     // Show role and activity status
-    final role = user.role ?? 'user';
-    final roleText = role.substring(0, 1).toUpperCase() + role.substring(1);
+    final rawRole = user.role ?? 'user';
+    
+    // Clean the role text (remove "user role " prefix if present)
+    String cleanRole = rawRole;
+    if (rawRole.contains('user role ')) {
+      cleanRole = rawRole.replaceFirst('user role ', '');
+    }
+    
+    final roleText = cleanRole.substring(0, 1).toUpperCase() + cleanRole.substring(1);
 
     // Use the relative time helper from the model
     if (user.isActive) {
@@ -178,6 +180,71 @@ class OnlineUsersCard extends StatelessWidget {
     } else {
       return '$roleText • ${user.relativeTime}';
     }
+  }
+
+  Widget _buildUserSubtitle(BuildContext context, OnlineUser user) {
+    final theme = Theme.of(context);
+    final rawRole = user.role ?? 'user';
+    
+    // Clean the role text (remove "user role " prefix if present)
+    String cleanRole = rawRole;
+    if (rawRole.contains('user role ')) {
+      cleanRole = rawRole.replaceFirst('user role ', '');
+    }
+    
+    final roleText = cleanRole.substring(0, 1).toUpperCase() + cleanRole.substring(1);
+    
+    // Get activity status
+    final activityText = user.isActive ? 'Active now' : user.relativeTime;
+    
+    return Row(
+      children: [
+        _buildRoleChip(context, roleText),
+        const SizedBox(width: 8),
+        Text(
+          '• $activityText',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleChip(BuildContext context, String role) {
+    final theme = Theme.of(context);
+    
+    // Define role colors
+    Color backgroundColor;
+    Color textColor = Colors.white;
+    
+    switch (role.toLowerCase()) {
+      case 'teacher':
+        backgroundColor = Colors.red.shade700;
+        break;
+      case 'student':
+        backgroundColor = Colors.blue.shade700;
+        break;
+      default:
+        backgroundColor = theme.colorScheme.primary;
+        textColor = theme.colorScheme.onPrimary;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        role,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w500,
+          fontSize: 11,
+        ),
+      ),
+    );
   }
 
   Widget _buildUserAvatar(ThemeData theme, OnlineUser user) {
