@@ -47,16 +47,10 @@ class AuthService {
       if (clientId.isEmpty || clientSecret.isEmpty) {
         debugPrint('ERROR: Google OAuth credentials not found in .env file');
         debugPrint('Windows Google Sign-In will not work without credentials');
-      } else {
-        // Initialize all_platforms GoogleSignIn for desktop with OAuth credentials
-        _googleSignInDesktop = all_platforms.GoogleSignIn(
-          params: all_platforms.GoogleSignInParams(
-            clientId: clientId,
-          ),
-        );
       }
-      // Don't initialize regular _googleSignIn for desktop
+      // Don't initialize _googleSignIn or _googleSignInDesktop for desktop
       _googleSignIn = null;
+      _googleSignInDesktop = null;
     } else if (!kIsWeb && Platform.isIOS) {
       // iOS uses standard Google Sign-In with GoogleService-Info.plist
       debugPrint('Using standard Google Sign-In for iOS');

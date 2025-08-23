@@ -150,7 +150,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             const SizedBox(height: 24),
 
             // Online Users
-            const OnlineUsersCard(),
+            OnlineUsersCard(),
             const SizedBox(height: 24),
 
             // My Classes
