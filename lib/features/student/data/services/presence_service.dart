@@ -206,6 +206,24 @@ class PresenceService {
     await updateUserPresence(false);
   }
 
+  // Force clear all presence data (for debugging/cleanup)
+  Future<void> clearAllPresenceData() async {
+    try {
+      debugPrint('PresenceService: Clearing all presence data...');
+      final snapshot = await _firestore.collection('presence').get();
+      
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+        debugPrint('PresenceService: Deleted presence for ${doc.id}');
+      }
+      
+      debugPrint('PresenceService: Cleared ${snapshot.docs.length} presence documents');
+    } catch (error) {
+      debugPrint('PresenceService: Error clearing presence data: $error');
+      LoggerService.error('Error clearing presence data', error: error);
+    }
+  }
+
   // Batch update presence for multiple users (admin function)
   Future<void> batchUpdatePresence(Map<String, bool> userStatuses) async {
     try {

@@ -2,12 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/services/presence_service.dart';
 
-class OnlineUsersCard extends StatelessWidget {
-  final PresenceService _presenceService = PresenceService();
-
+class OnlineUsersCard extends StatefulWidget {
   final bool excludeSelf;
 
-  OnlineUsersCard({super.key, this.excludeSelf = true});
+  const OnlineUsersCard({super.key, this.excludeSelf = true});
+
+  @override
+  State<OnlineUsersCard> createState() => _OnlineUsersCardState();
+}
+
+class _OnlineUsersCardState extends State<OnlineUsersCard> {
+  late final PresenceService _presenceService;
+  late final Stream<List<OnlineUser>> _onlineUsersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _presenceService = PresenceService();
+    _onlineUsersStream = _presenceService.getOnlineUsers(excludeSelf: widget.excludeSelf);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +54,7 @@ class OnlineUsersCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           StreamBuilder<List<OnlineUser>>(
-            stream: _presenceService.getOnlineUsers(excludeSelf: excludeSelf),
+            stream: _onlineUsersStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 // Handle error state
