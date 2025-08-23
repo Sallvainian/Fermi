@@ -9,6 +9,8 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../main.dart';
 import '../../domain/models/assignment.dart';
 import '../../domain/models/submission.dart';
@@ -316,7 +318,7 @@ class StudentAssignmentProvider with ChangeNotifier {
       // Get student document to get enrolled classes
       debugPrint(
           '[StudentAssignmentProvider] Getting student document for userId: $_currentStudentId');
-      final student =
+      var student =
           await _studentRepository.getStudentByUserId(_currentStudentId!);
       debugPrint(
           '[StudentAssignmentProvider] Student found: ${student != null}');
@@ -331,12 +333,71 @@ class StudentAssignmentProvider with ChangeNotifier {
       } else {
         debugPrint(
             '[StudentAssignmentProvider] No student document found for userId: $_currentStudentId');
-        // Student document doesn't exist yet, emit empty list
-        _assignments = [];
-        _isLoading = false;
-        notifyListeners();
-        _studentAssignmentsController.add([]);
-        return;
+        
+        // Try to create a student document if it doesn't exist
+        // This handles cases where users were created before the student document logic
+        try {
+          debugPrint('[StudentAssignmentProvider] Attempting to create missing student document...');
+          
+          // Get user data from Firebase Auth
+          final auth = FirebaseAuth.instance;
+          final currentUser = auth.currentUser;
+          
+          if (currentUser != null) {
+            // Get user document from users collection
+            final userDoc = await FirebaseFirestore.instance
+                .collection('users')
+                .doc(currentUser.uid)
+                .get();
+            
+            if (userDoc.exists) {
+              final userData = userDoc.data()!;
+              final userRole = userData['role'] as String?;
+              
+              // Only create student document if user has student role
+              if (userRole == 'student') {
+                // Create the missing student document
+                await FirebaseFirestore.instance
+                    .collection('students')
+                    .doc(currentUser.uid)
+                    .set({
+                  'id': currentUser.uid,
+                  'userId': currentUser.uid,
+                  'email': userData['email'] ?? currentUser.email ?? '',
+                  'displayName': userData['displayName'] ?? currentUser.displayName ?? 'Student',
+                  'firstName': userData['firstName'] ?? '',
+                  'lastName': userData['lastName'] ?? '',
+                  'isActive': true,
+                  'classIds': [],
+                  'gradeLevel': 9,
+                  'createdAt': FieldValue.serverTimestamp(),
+                  'updatedAt': FieldValue.serverTimestamp(),
+                }, SetOptions(merge: true));
+                
+                debugPrint('[StudentAssignmentProvider] Created missing student document');
+                
+                // Try to fetch the student document again
+                student = await _studentRepository.getStudentByUserId(_currentStudentId!);
+                if (student != null) {
+                  classIds = student.classIds;
+                }
+              } else {
+                debugPrint('[StudentAssignmentProvider] User has role: $userRole, not creating student document');
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint('[StudentAssignmentProvider] Error creating student document: $e');
+        }
+        
+        // If still no student document, emit empty list
+        if (student == null) {
+          _assignments = [];
+          _isLoading = false;
+          notifyListeners();
+          _studentAssignmentsController.add([]);
+          return;
+        }
       }
 
       if (classIds.isEmpty) {
