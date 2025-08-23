@@ -3,23 +3,30 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../../shared/utils/platform_utils.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseAuth? _auth;
+  FirebaseFirestore? _firestore;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   AuthService() {
-    // Web persistence
-    if (kIsWeb) {
-      _auth.setPersistence(Persistence.LOCAL);
+    // Skip Firebase initialization on Windows
+    if (!PlatformUtils.needsWindowsServices) {
+      _auth = FirebaseAuth.instance;
+      _firestore = FirebaseFirestore.instance;
+      
+      // Web persistence
+      if (kIsWeb) {
+        _auth!.setPersistence(Persistence.LOCAL);
+      }
     }
   }
 
   // Current user
-  User? get currentUser => _auth.currentUser;
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  User? get currentUser => _auth?.currentUser;
+  Stream<User?> get authStateChanges => _auth?.authStateChanges() ?? Stream.value(null);
 
   // Sign up
   Future<User?> signUp({
@@ -27,7 +34,11 @@ class AuthService {
     required String password,
     required String displayName,
   }) async {
-    final cred = await _auth.createUserWithEmailAndPassword(
+    if (_auth == null || _firestore == null) {
+      throw UnsupportedError('Firebase not available on Windows. Use mock authentication.');
+    }
+    
+    final cred = await _auth!.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
@@ -42,7 +53,7 @@ class AuthService {
           nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
       // Create user document with proper structure
-      await _firestore.collection('users').doc(cred.user!.uid).set({
+      await _firestore!.collection('users').doc(cred.user!.uid).set({
         'uid': cred.user!.uid,
         'email': email,
         'displayName': displayName,
@@ -63,14 +74,18 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final cred = await _auth.signInWithEmailAndPassword(
+    if (_auth == null || _firestore == null) {
+      throw UnsupportedError('Firebase not available on Windows. Use mock authentication.');
+    }
+    
+    final cred = await _auth!.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
 
     // Update last active
     if (cred.user != null) {
-      await _firestore.collection('users').doc(cred.user!.uid).update({
+      await _firestore!.collection('users').doc(cred.user!.uid).update({
         'lastActive': FieldValue.serverTimestamp(),
       }).catchError((_) {});
     }
@@ -80,12 +95,16 @@ class AuthService {
 
   // Sign in with Google
   Future<User?> signInWithGoogle() async {
+    if (_auth == null || _firestore == null) {
+      throw UnsupportedError('Firebase not available on Windows. Use mock authentication.');
+    }
+    
     User? user;
 
     if (kIsWeb) {
       // Web: Use popup
       final provider = GoogleAuthProvider();
-      final cred = await _auth.signInWithPopup(provider);
+      final cred = await _auth!.signInWithPopup(provider);
       user = cred.user;
     } else {
       // Mobile: Use Google Sign-In SDK
@@ -98,13 +117,13 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-      final cred = await _auth.signInWithCredential(credential);
+      final cred = await _auth!.signInWithCredential(credential);
       user = cred.user;
     }
 
     // Check if user document exists, create if not (for new Google users)
     if (user != null) {
-      final doc = await _firestore.collection('users').doc(user.uid).get();
+      final doc = await _firestore!.collection('users').doc(user.uid).get();
       if (!doc.exists) {
         // Parse name from Google account
         final nameParts = (user.displayName ?? '').split(' ');
@@ -113,7 +132,7 @@ class AuthService {
             nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
         // Create user document
-        await _firestore.collection('users').doc(user.uid).set({
+        await _firestore!.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': user.email,
           'displayName':
@@ -127,7 +146,7 @@ class AuthService {
         });
       } else {
         // Update last active
-        await _firestore.collection('users').doc(user.uid).update({
+        await _firestore!.collection('users').doc(user.uid).update({
           'lastActive': FieldValue.serverTimestamp(),
         });
       }
@@ -167,12 +186,12 @@ class AuthService {
       );
 
       // Sign in to Firebase with Apple credential
-      final userCredential = await _auth.signInWithCredential(oauthCredential);
+      final userCredential = await _auth!.signInWithCredential(oauthCredential);
       final user = userCredential.user;
 
       // Handle user data (similar to Google Sign-In)
       if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
+        final doc = await _firestore!.collection('users').doc(user.uid).get();
         if (!doc.exists) {
           // Create user document for new Apple users
           String firstName = '';
@@ -192,7 +211,7 @@ class AuthService {
             displayName = user.email?.split('@').first ?? 'User';
           }
 
-          await _firestore.collection('users').doc(user.uid).set({
+          await _firestore!.collection('users').doc(user.uid).set({
             'uid': user.uid,
             'email': user.email,
             'displayName': displayName,
@@ -206,7 +225,7 @@ class AuthService {
           });
         } else {
           // Update last active for existing users
-          await _firestore.collection('users').doc(user.uid).update({
+          await _firestore!.collection('users').doc(user.uid).update({
             'lastActive': FieldValue.serverTimestamp(),
           });
         }
@@ -221,7 +240,7 @@ class AuthService {
 
   // Sign out
   Future<void> signOut() async {
-    await _auth.signOut();
+    await _auth!.signOut();
 
     // Also sign out of Google on mobile
     if (!kIsWeb) {
@@ -233,7 +252,7 @@ class AuthService {
 
   // Password reset
   Future<void> resetPassword(String email) async {
-    await _auth.sendPasswordResetEmail(email: email);
+    await _auth!.sendPasswordResetEmail(email: email);
   }
 
   // Email verification
@@ -251,17 +270,17 @@ class AuthService {
 
     // Use set with merge to handle both existing and new documents
     // This ensures it works even if the document doesn't exist yet
-    await _firestore.collection('users').doc(uid).set({
+    await _firestore!.collection('users').doc(uid).set({
       'role': roleStr,
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
     // If student, also create student document
     if (roleStr == 'student') {
-      final userDoc = await _firestore.collection('users').doc(uid).get();
+      final userDoc = await _firestore!.collection('users').doc(uid).get();
       final userData = userDoc.data();
       if (userData != null) {
-        await _firestore.collection('students').doc(uid).set({
+        await _firestore!.collection('students').doc(uid).set({
           'uid': uid,
           'email': userData['email'] ?? '',
           'displayName': userData['displayName'] ?? 'Student',
@@ -278,7 +297,7 @@ class AuthService {
 
   // Get user data
   Future<Map<String, dynamic>?> getUserData(String uid) async {
-    final doc = await _firestore.collection('users').doc(uid).get();
+    final doc = await _firestore!.collection('users').doc(uid).get();
     final data = doc.data();
     if (data != null) {
       // Ensure uid field exists
@@ -303,13 +322,13 @@ class AuthService {
       final userRole = userData?['role'] as String?;
 
       // Delete user document from Firestore
-      await _firestore.collection('users').doc(uid).delete().catchError((_) {
+      await _firestore!.collection('users').doc(uid).delete().catchError((_) {
         // Continue even if user document doesn't exist
       });
 
       // If user is a student, also delete from students collection
       if (userRole == 'student') {
-        await _firestore.collection('students').doc(uid).delete().catchError((_) {
+        await _firestore!.collection('students').doc(uid).delete().catchError((_) {
           // Continue even if student document doesn't exist
         });
       }

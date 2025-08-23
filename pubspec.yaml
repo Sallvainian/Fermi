@@ -46,7 +46,7 @@ dependencies:
   google_sign_in: ^6.2.1
   
   # Sign in with Apple (required for App Store compliance - Guideline 4.8)
-  sign_in_with_apple: ^7.0.1
+  sign_in_with_apple: ^6.1.4
   
   # Environment variables
   flutter_dotenv: ^5.1.0
@@ -72,6 +72,12 @@ dependencies:
 
   # File handling
   file_picker: ^10.3.2
+  path_provider: ^2.1.5
+
+  # Windows Desktop Support
+  firebase_dart: ^1.1.0
+  firebase_dart_flutter: ^1.0.16
+  desktop_webview_auth: ^0.0.15
 
   # Image caching for performance
   cached_network_image: ^3.4.1

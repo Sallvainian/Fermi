@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../../../shared/models/user_model.dart';
 import '../data/services/auth_service.dart';
 import '../../notifications/data/services/web_in_app_notification_service.dart';
+import '../../../shared/utils/platform_utils.dart';
 
 /// Authentication states for the application.
 enum AuthStatus {
@@ -60,14 +61,23 @@ class AuthProvider extends ChangeNotifier {
   }) : _authService = authService ?? AuthService(),
         _status = initialStatus ?? AuthStatus.uninitialized,
         _userModel = initialUserModel {
-    _initializeAuthState();
+    // Skip initialization on Windows
+    if (!PlatformUtils.needsWindowsServices) {
+      _initializeAuthState();
+    } else {
+      // Set unauthenticated for Windows offline mode
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+    }
   }
   
   // ============= Getters =============
   
   AuthStatus get status => _status;
   UserModel? get userModel => _userModel;
-  firebase_auth.User? get firebaseUser => firebase_auth.FirebaseAuth.instance.currentUser;
+  firebase_auth.User? get firebaseUser => PlatformUtils.needsWindowsServices 
+      ? null 
+      : firebase_auth.FirebaseAuth.instance.currentUser;
   String? get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _status == AuthStatus.authenticated && _userModel != null;
