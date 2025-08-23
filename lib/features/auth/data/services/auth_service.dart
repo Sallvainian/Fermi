@@ -4,31 +4,27 @@ import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as all_platforms;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
   // Use all_platforms constructor for Windows support
-  final all_platforms.GoogleSignIn _googleSignIn = all_platforms.GoogleSignIn(
-    params: all_platforms.GoogleSignInParams(
-      clientId: const String.fromEnvironment(
-        'GOOGLE_OAUTH_CLIENT_ID',
-        defaultValue: '', // Empty default, must be provided via environment
-      ),
-      clientSecret: const String.fromEnvironment(
-        'GOOGLE_OAUTH_CLIENT_SECRET',
-        defaultValue: '', // Empty default, must be provided via environment
-      ),
-      redirectPort: 3000,
-    ),
-  );
+  late final all_platforms.GoogleSignIn _googleSignIn;
 
   AuthService() {
     _auth = FirebaseAuth.instance;
     _firestore = FirebaseFirestore.instance;
     
-    // Google Sign-In initialization handled automatically in v6.x
+    // Initialize Google Sign-In with OAuth credentials from environment
+    _googleSignIn = all_platforms.GoogleSignIn(
+      params: all_platforms.GoogleSignInParams(
+        clientId: dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '',
+        clientSecret: dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '',
+        redirectPort: 3000,
+      ),
+    );
     
     // Web persistence
     if (kIsWeb) {
