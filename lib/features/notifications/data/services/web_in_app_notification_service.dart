@@ -8,6 +8,9 @@ import '../../../../shared/services/logger_service.dart';
 class WebInAppNotificationService {
   static final WebInAppNotificationService _instance =
       WebInAppNotificationService._internal();
+  
+  static WebInAppNotificationService get instance => _instance;
+  
   factory WebInAppNotificationService() => _instance;
   WebInAppNotificationService._internal();
 
@@ -74,6 +77,16 @@ class WebInAppNotificationService {
         tag: 'WebInAppNotification');
   }
 
+  /// Initialize the service (alias for startWebInAppNotifications)
+  void initialize() {
+    startWebInAppNotifications();
+  }
+  
+  /// Dispose the service (alias for stopWebInAppNotifications)
+  void dispose() {
+    stopWebInAppNotifications();
+  }
+  
   /// Stop listening for in-app notifications
   void stopWebInAppNotifications() {
     _notificationSubscription?.cancel();

@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import '../../../../shared/utils/platform_utils.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
@@ -12,15 +11,12 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   AuthService() {
-    // Skip Firebase initialization on Windows
-    if (!PlatformUtils.needsWindowsServices) {
-      _auth = FirebaseAuth.instance;
-      _firestore = FirebaseFirestore.instance;
-      
-      // Web persistence
-      if (kIsWeb) {
-        _auth!.setPersistence(Persistence.LOCAL);
-      }
+    _auth = FirebaseAuth.instance;
+    _firestore = FirebaseFirestore.instance;
+    
+    // Web persistence
+    if (kIsWeb) {
+      _auth!.setPersistence(Persistence.LOCAL);
     }
   }
 
@@ -32,11 +28,8 @@ class AuthService {
   Future<User?> signUp({
     required String email,
     required String password,
-    required String displayName,
+    String? displayName,
   }) async {
-    if (_auth == null || _firestore == null) {
-      throw UnsupportedError('Firebase not available on Windows. Use mock authentication.');
-    }
     
     final cred = await _auth!.createUserWithEmailAndPassword(
       email: email,
@@ -293,6 +286,30 @@ class AuthService {
         }, SetOptions(merge: true));
       }
     }
+  }
+
+  // Save user role
+  Future<void> saveUserRole({
+    required String uid,
+    required String role,
+    required String email,
+    String? displayName,
+    String? photoURL,
+  }) async {
+    await _firestore!.collection('users').doc(uid).set({
+      'uid': uid,
+      'role': role,
+      'email': email,
+      'displayName': displayName,
+      'photoURL': photoURL,
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  // Send password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _auth!.sendPasswordResetEmail(email: email);
   }
 
   // Get user data

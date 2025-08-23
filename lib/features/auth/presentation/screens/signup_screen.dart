@@ -58,20 +58,14 @@ class _SignupScreenState extends State<SignupScreen> {
     final lastName = _lastNameController.text.trim();
     final displayName = '$firstName $lastName'.trim();
 
-    // First sign up with email and password
-    await authProvider.signUpWithEmailOnly(
-      _emailController.text.trim(),
-      _passwordController.text,
+    // Sign up with email, password, and display name
+    // Role will be selected after signup
+    await authProvider.signUpWithEmail(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      role: '', // Role will be selected in the next screen
+      displayName: displayName,
     );
-
-    // Then update the profile with additional information
-    if (authProvider.isAuthenticated) {
-      await authProvider.updateProfile(
-        displayName: displayName,
-        firstName: firstName,
-        lastName: lastName,
-      );
-    }
 
     if (authProvider.isAuthenticated && mounted) {
       // Router will automatically redirect to role selection

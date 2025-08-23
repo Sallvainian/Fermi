@@ -778,6 +778,56 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
+  // ============= Additional Methods (Stubs for compatibility) =============
+  
+  /// Send email verification
+  Future<void> sendEmailVerification() async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
+    }
+  }
+  
+  /// Re-authenticate with Apple
+  Future<void> reauthenticateWithApple() async {
+    // TODO: Implement Apple re-authentication
+    throw UnimplementedError('Apple re-authentication not implemented');
+  }
+  
+  /// Re-authenticate with Google
+  Future<void> reauthenticateWithGoogle() async {
+    // TODO: Implement Google re-authentication
+    throw UnimplementedError('Google re-authentication not implemented');
+  }
+  
+  /// Re-authenticate with email and password
+  Future<void> reauthenticateWithEmail(String email, String password) async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      final credential = firebase_auth.EmailAuthProvider.credential(
+        email: email,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+    }
+  }
+  
+  /// Update profile picture
+  Future<void> updateProfilePicture(String photoURL) async {
+    await updatePhotoURL(photoURL);
+  }
+  
+  /// Update profile (compatibility method)
+  Future<void> updateProfile({
+    String? displayName,
+    String? firstName,
+    String? lastName,
+  }) async {
+    if (displayName != null) {
+      await updateDisplayName(displayName);
+    }
+  }
+  
   @override
   void dispose() {
     _stopNotificationsIfNeeded();

@@ -20,7 +20,6 @@ import '../../features/assignments/data/services/assignment_service.dart';
 import '../../features/chat/data/services/chat_service.dart';
 import '../../features/assignments/data/services/submission_service.dart';
 import '../services/logger_service.dart';
-import '../utils/platform_utils.dart';
 import 'app_initializer.dart';
 import '../../features/assignments/domain/repositories/assignment_repository.dart';
 import '../../features/assignments/data/repositories/assignment_repository_impl.dart';
@@ -93,89 +92,74 @@ Future<void> setupServiceLocator() async {
     tag: 'ServiceLocator'
   );
 
-  // Register Firebase instances (works with both firebase_core and firebase_dart)
-  if (PlatformUtils.needsWindowsServices) {
-    // For Windows, we use firebase_dart instances
-    // These are accessed through our platform-specific services
-    LoggerService.info('Registering firebase_dart instances for Windows', tag: 'ServiceLocator');
-  } else {
-    // For other platforms, use regular Firebase instances
+  // Register Firebase instances
+  try {
     getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-    getIt.registerLazySingleton<FirebaseFirestore>(
-        () => FirebaseFirestore.instance);
+    getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
     getIt.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
-    LoggerService.info('Registered standard Firebase instances', tag: 'ServiceLocator');
+    LoggerService.info('Registered Firebase instances', tag: 'ServiceLocator');
+  } catch (e) {
+    LoggerService.error('Failed to register Firebase instances', tag: 'ServiceLocator', error: e);
   }
 
   // Register services
   getIt.registerLazySingleton<AuthService>(() => AuthService());
   getIt.registerLazySingleton<LoggerService>(() => LoggerService());
 
-  // Register repositories (these will use platform-specific services via ServiceFactory)
-  if (!PlatformUtils.needsWindowsServices) {
-    getIt.registerLazySingleton<AssignmentRepository>(
-      () => AssignmentRepositoryImpl(getIt<FirebaseFirestore>()),
-    );
-  } else {
-    // For Windows, repositories will use firebase_dart through ServiceFactory
-    LoggerService.info('Windows repositories will use ServiceFactory pattern', tag: 'ServiceLocator');
-  }
+  // Register repositories
+  getIt.registerLazySingleton<AssignmentRepository>(
+    () => AssignmentRepositoryImpl(getIt<FirebaseFirestore>()),
+  );
+  
+  getIt.registerLazySingleton<ClassRepository>(
+    () => ClassRepositoryImpl(getIt<FirebaseFirestore>()),
+  );
 
-  if (!PlatformUtils.needsWindowsServices) {
-    getIt.registerLazySingleton<ClassRepository>(
-      () => ClassRepositoryImpl(getIt<FirebaseFirestore>()),
-    );
+  getIt.registerLazySingleton<GradeRepository>(
+    () => GradeRepositoryImpl(getIt<FirebaseFirestore>()),
+  );
 
-    getIt.registerLazySingleton<GradeRepository>(
-      () => GradeRepositoryImpl(getIt<FirebaseFirestore>()),
-    );
+  getIt.registerLazySingleton<StudentRepository>(
+    () => StudentRepositoryImpl(getIt<FirebaseFirestore>()),
+  );
 
-    getIt.registerLazySingleton<StudentRepository>(
-      () => StudentRepositoryImpl(getIt<FirebaseFirestore>()),
-    );
+  getIt.registerLazySingleton<SubmissionRepository>(
+    () => SubmissionRepositoryImpl(getIt<FirebaseFirestore>()),
+  );
 
-    getIt.registerLazySingleton<SubmissionRepository>(
-      () => SubmissionRepositoryImpl(getIt<FirebaseFirestore>()),
-    );
-
-    getIt.registerLazySingleton<ChatRepository>(
-      () => ChatRepositoryImpl(getIt<FirebaseFirestore>(), getIt<FirebaseAuth>()),
-    );
-  }
+  getIt.registerLazySingleton<ChatRepository>(
+    () => ChatRepositoryImpl(getIt<FirebaseFirestore>(), getIt<FirebaseAuth>()),
+  );
 
   // Discussion repository removed - using direct Firestore in SimpleDiscussionProvider
   // getIt.registerLazySingleton<DiscussionRepository>(
   //   () => DiscussionRepositoryImpl(getIt<FirebaseFirestore>(), getIt<FirebaseAuth>()),
   // );
 
-  if (!PlatformUtils.needsWindowsServices) {
-    getIt.registerLazySingleton<CalendarRepository>(
-      () => CalendarRepositoryImpl(getIt<FirebaseFirestore>()),
-    );
+  getIt.registerLazySingleton<CalendarRepository>(
+    () => CalendarRepositoryImpl(getIt<FirebaseFirestore>()),
+  );
 
-    getIt.registerLazySingleton<JeopardyRepository>(
-      () => FirebaseJeopardyRepository(firestore: getIt<FirebaseFirestore>()),
-    );
-  }
+  getIt.registerLazySingleton<JeopardyRepository>(
+    () => FirebaseJeopardyRepository(firestore: getIt<FirebaseFirestore>()),
+  );
 
-  // Register services with dependencies (if not Windows)
-  if (!PlatformUtils.needsWindowsServices) {
-    getIt.registerFactory<AssignmentService>(
-      () => AssignmentService(firestore: getIt<FirebaseFirestore>()),
-    );
+  // Register services with dependencies
+  getIt.registerFactory<AssignmentService>(
+    () => AssignmentService(firestore: getIt<FirebaseFirestore>()),
+  );
 
-    getIt.registerFactory<ChatService>(() => ChatService());
-    getIt.registerFactory<SubmissionService>(
-      () => SubmissionService(firestore: getIt<FirebaseFirestore>()),
-    );
+  getIt.registerFactory<ChatService>(() => ChatService());
+  getIt.registerFactory<SubmissionService>(
+    () => SubmissionService(firestore: getIt<FirebaseFirestore>()),
+  );
 
-    getIt.registerFactory<CalendarService>(
-      () => CalendarService(
-        getIt<CalendarRepository>(),
-        getIt<ClassRepository>(),
-      ),
-    );
-  }
+  getIt.registerFactory<CalendarService>(
+    () => CalendarService(
+      getIt<CalendarRepository>(),
+      getIt<ClassRepository>(),
+    ),
+  );
 
   LoggerService.info('Service locator setup complete', tag: 'ServiceLocator');
 }
