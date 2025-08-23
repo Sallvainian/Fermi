@@ -9,8 +9,6 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../main.dart';
 import '../../domain/models/assignment.dart';
 import '../../domain/models/submission.dart';
@@ -336,21 +334,29 @@ class StudentAssignmentProvider with ChangeNotifier {
         
         // Try to create a student document if it doesn't exist
         // This handles cases where users were created before the student document logic
+        // TODO: Implement createStudentDocumentIfMissing method in StudentService
+        // For now, this is commented out to fix compilation error
+        /*
         try {
           debugPrint('[StudentAssignmentProvider] Attempting to create missing student document...');
           final auth = FirebaseAuth.instance;
           final currentUser = auth.currentUser;
           if (currentUser != null) {
-            final createdStudent = await StudentService.createStudentDocumentIfMissing(currentUser);
-            if (createdStudent != null) {
-              debugPrint('[StudentAssignmentProvider] Created missing student document');
-              student = createdStudent;
-              classIds = student.classIds;
-            }
+            // This method needs to be implemented in StudentService
+            // final created = await StudentService.createStudentDocumentIfMissing(currentUser);
+            // if (created) {
+            //   debugPrint('[StudentAssignmentProvider] Created missing student document');
+            //   // Try to fetch the student document again
+            //   student = await _studentRepository.getStudentByUserId(_currentStudentId!);
+            //   if (student != null) {
+            //     classIds = student.classIds;
+            //   }
+            // }
           }
         } catch (e) {
           debugPrint('[StudentAssignmentProvider] Error creating student document: $e');
         }
+        */
         
         // If still no student document, emit empty list
         if (student == null) {

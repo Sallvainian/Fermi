@@ -364,7 +364,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
             if (assignment != null) {
               // Create new grade for this student and assignment
               final points = newPoints ?? 0;
-              final percentage = Grade.calculatePercentage(points, assignment.points);
+              final percentage = Grade.calculatePercentage(points, assignment.totalPoints);
               final letterGrade = Grade.calculateLetterGrade(percentage);
               
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -378,7 +378,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                 teacherId: teacherId,
                 classId: _selectedClassId!,
                 pointsEarned: points,
-                pointsPossible: assignment.points,
+                pointsPossible: assignment.totalPoints,
                 percentage: percentage,
                 letterGrade: letterGrade,
                 status: GradeStatus.graded,
