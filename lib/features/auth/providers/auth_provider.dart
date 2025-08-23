@@ -620,7 +620,9 @@ class AuthProvider extends ChangeNotifier {
   
   void _updatePresenceOnline() {
     if (_userModel != null) {
-      _presenceService.updateUserPresence(true, userRole: _userModel!.role.toString());
+      // Extract just the role name without the enum prefix
+      final roleString = _userModel!.role.toString().split('.').last;
+      _presenceService.updateUserPresence(true, userRole: roleString);
     }
   }
   
