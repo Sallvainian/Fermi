@@ -3,16 +3,32 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_sign_in_all_platforms/google_sign_in_all_platforms.dart' as all_platforms;
 
 /// Simple authentication service - does one thing well
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // Use all_platforms constructor for Windows support
+  final all_platforms.GoogleSignIn _googleSignIn = all_platforms.GoogleSignIn(
+    params: all_platforms.GoogleSignInParams(
+      clientId: const String.fromEnvironment(
+        'GOOGLE_OAUTH_CLIENT_ID',
+        defaultValue: '', // Empty default, must be provided via environment
+      ),
+      clientSecret: const String.fromEnvironment(
+        'GOOGLE_OAUTH_CLIENT_SECRET',
+        defaultValue: '', // Empty default, must be provided via environment
+      ),
+      redirectPort: 3000,
+    ),
+  );
 
   AuthService() {
     _auth = FirebaseAuth.instance;
     _firestore = FirebaseFirestore.instance;
+    
+    // Google Sign-In initialization handled automatically in v6.x
     
     // Web persistence
     if (kIsWeb) {
@@ -40,7 +56,7 @@ class AuthService {
       await cred.user!.updateDisplayName(displayName);
 
       // Parse name parts
-      final nameParts = displayName.split(' ');
+      final nameParts = displayName?.split(' ') ?? [];
       final firstName = nameParts.isNotEmpty ? nameParts.first : '';
       final lastName =
           nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
@@ -100,14 +116,14 @@ class AuthService {
       final cred = await _auth!.signInWithPopup(provider);
       user = cred.user;
     } else {
-      // Mobile: Use Google Sign-In SDK
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return null;
+      // Desktop/Mobile: Use all_platforms Sign-In SDK
+      final googleCredentials = await _googleSignIn.signIn();
+      if (googleCredentials == null) return null;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      // Create Firebase credential from all_platforms credentials
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        accessToken: googleCredentials.accessToken,
+        idToken: googleCredentials.idToken,
       );
 
       final cred = await _auth!.signInWithCredential(credential);
@@ -414,17 +430,15 @@ class AuthService {
         final provider = GoogleAuthProvider();
         await user.reauthenticateWithPopup(provider);
       } else {
-        // Mobile: Use Google Sign-In SDK
-        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-        if (googleUser == null) {
+        // Desktop/Mobile: Use all_platforms Sign-In SDK
+        final googleCredentials = await _googleSignIn.signIn();
+        if (googleCredentials == null) {
           throw Exception('Google sign-in was cancelled');
         }
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
         final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
+          accessToken: googleCredentials.accessToken,
+          idToken: googleCredentials.idToken,
         );
 
         await user.reauthenticateWithCredential(credential);

@@ -138,8 +138,6 @@ class WebInAppNotificationService {
     }
   }
 
-  /// Dispose of resources
-  void dispose() {
-    stopWebInAppNotifications();
-  }
+  /// Dispose of resources (duplicate method removed)
+  // void dispose() method already exists above at line 86
 }

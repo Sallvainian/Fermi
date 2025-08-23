@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../shared/models/user_model.dart';
 import '../data/services/auth_service.dart';
@@ -41,7 +40,6 @@ class AuthProvider extends ChangeNotifier {
   final AuthService _authService;
   final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
   
   // State management
   AuthStatus _status = AuthStatus.uninitialized;

@@ -42,7 +42,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       }
       
       // Complete OAuth sign-in with selected role
-      await authProvider.completeOAuthSignIn(_selectedRole);
+      await authProvider.completeOAuthSignIn(_selectedRole.toString().split('.').last);
 
       // CRITICAL: Wait a moment for provider to fully update
       await Future.delayed(const Duration(milliseconds: 500));
