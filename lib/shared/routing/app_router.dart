@@ -431,170 +431,111 @@ class AppRouter {
           builder: (context, state) => const GradebookScreen(),
         ),
 
-        // Student routes with role-based guards
+        // Student routes with middleware role-based guards
         GoRoute(
           path: '/student/courses',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
-            return const StudentCoursesScreen();
+            return null;
           },
+          builder: (context, state) => const StudentCoursesScreen(),
         ),
         GoRoute(
           path: '/student/assignments',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
-            return const student_assignments.StudentAssignmentsScreen();
+            return null;
           },
+          builder: (context, state) => const student_assignments.StudentAssignmentsScreen(),
         ),
         GoRoute(
           path: '/student/assignments/:assignmentId/submit',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
+            return null;
+          },
+          builder: (context, state) {
             final assignmentId = state.pathParameters['assignmentId']!;
             return AssignmentSubmissionScreen(assignmentId: assignmentId);
           },
         ),
         GoRoute(
           path: '/student/grades',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
-            return const StudentGradesScreen();
+            return null;
           },
+          builder: (context, state) => const StudentGradesScreen(),
         ),
         GoRoute(
           path: '/student/enroll',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
-            return const EnrollmentScreen();
+            return null;
           },
+          builder: (context, state) => const EnrollmentScreen(),
         ),
         GoRoute(
           path: '/student/messages',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
-            return const ChatListScreen();
+            return null;
           },
+          builder: (context, state) => const ChatListScreen(),
         ),
         GoRoute(
           path: '/student/messages/:chatRoomId',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
+            return null;
+          },
+          builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             return ChatDetailScreen(chatRoomId: chatRoomId);
           },
         ),
         GoRoute(
           path: '/student/notifications',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
-            return const NotificationsScreen();
+            return null;
           },
+          builder: (context, state) => const NotificationsScreen(),
         ),
         GoRoute(
           path: '/student/discussions',
-          builder: (context, state) {
+          redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
             if (auth.userModel?.role != UserRole.student) {
-              // Redirect non-students to dashboard
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/dashboard');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              return '/dashboard';
             }
-            return const SimpleDiscussionBoardsScreen();
+            return null;
           },
+          builder: (context, state) => const SimpleDiscussionBoardsScreen(),
         ),
 
         // Common routes
