@@ -344,9 +344,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
             .toList(),
         onGradeUpdate: (assignmentId, newPoints, newStatus) async {
           // Find the grade and update it - handle case where grade doesn't exist
-          final existingGrade = gradeProvider.studentGrades
+          final grades = gradeProvider.studentGrades
               .where((g) => g.assignmentId == assignmentId && g.studentId == student.id)
-              .firstOrNull;
+              .toList();
+          final existingGrade = grades.isEmpty ? null : grades.first;
           
           if (existingGrade != null) {
             // Update existing grade
@@ -356,9 +357,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
             debugPrint('Creating new grade for assignment $assignmentId');
             
             // Get the assignment to get its details
-            final assignment = assignmentProvider.teacherAssignments
+            final assignments = assignmentProvider.teacherAssignments
                 .where((a) => a.id == assignmentId)
-                .firstOrNull;
+                .toList();
+            final assignment = assignments.isEmpty ? null : assignments.first;
             
             if (assignment != null) {
               // Create new grade for this student and assignment
