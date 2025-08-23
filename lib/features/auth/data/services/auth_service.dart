@@ -17,7 +17,8 @@ class AuthService {
     _auth = FirebaseAuth.instance;
     _firestore = FirebaseFirestore.instance;
     
-    // Initialize Google Sign-In with OAuth credentials from environment
+    // Initialize Google Sign-In with OAuth credentials from .env
+    // Simple: just read from .env file
     _googleSignIn = all_platforms.GoogleSignIn(
       params: all_platforms.GoogleSignInParams(
         clientId: dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '',
