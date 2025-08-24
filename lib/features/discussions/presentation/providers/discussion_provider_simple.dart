@@ -404,44 +404,15 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .listen(
-        (snapshot) async {
-          // For each thread, check if current user has liked it
-          final threads = <SimpleDiscussionThread>[];
-          for (final doc in snapshot.docs) {
-            final thread = SimpleDiscussionThread.fromFirestore(doc);
-            
-            // Check if current user has liked this thread
-            if (currentUserId.isNotEmpty) {
-              final likeDoc = await _firestore
-                  .collection('discussion_boards')
-                  .doc(boardId)
-                  .collection('threads')
-                  .doc(doc.id)
-                  .collection('likes')
-                  .doc(currentUserId)
-                  .get();
-              
-              threads.add(SimpleDiscussionThread(
-                id: thread.id,
-                boardId: thread.boardId,
-                title: thread.title,
-                content: thread.content,
-                authorId: thread.authorId,
-                authorName: thread.authorName,
-                createdAt: thread.createdAt,
-                replyCount: thread.replyCount,
-                likeCount: thread.likeCount,
-                isPinned: thread.isPinned,
-                isLocked: thread.isLocked,
-                isLikedByCurrentUser: likeDoc.exists,
-              ));
-            } else {
-              threads.add(thread);
-            }
-          }
-          
-          _boardThreads[boardId] = threads;
+        (snapshot) {
+          // Simple load first, then check likes asynchronously
+          _boardThreads[boardId] = snapshot.docs
+              .map((doc) => SimpleDiscussionThread.fromFirestore(doc))
+              .toList();
           notifyListeners();
+          
+          // Then update with like status
+          _updateThreadLikes(boardId, snapshot.docs);
         },
         onError: (error) {
           LoggerService.error('Failed to load threads for board $boardId',
@@ -561,6 +532,60 @@ class SimpleDiscussionProvider with ChangeNotifier {
     _currentBoard = null;
     _currentThread = null;
     notifyListeners();
+  }
+
+  /// Update thread like status for current user
+  Future<void> _updateThreadLikes(String boardId, List<QueryDocumentSnapshot> threadDocs) async {
+    try {
+      final userId = currentUserId;
+      if (userId.isEmpty) return;
+      
+      // Create a list to hold updated threads
+      final updatedThreads = <SimpleDiscussionThread>[];
+      
+      for (final doc in threadDocs) {
+        var thread = SimpleDiscussionThread.fromFirestore(doc);
+        
+        // Check if current user has liked this thread
+        try {
+          final likeDoc = await _firestore
+              .collection('discussion_boards')
+              .doc(boardId)
+              .collection('threads')
+              .doc(thread.id)
+              .collection('likes')
+              .doc(userId)
+              .get();
+          
+          // Create a new thread with updated like status
+          thread = SimpleDiscussionThread(
+            id: thread.id,
+            boardId: thread.boardId,
+            title: thread.title,
+            content: thread.content,
+            authorId: thread.authorId,
+            authorName: thread.authorName,
+            createdAt: thread.createdAt,
+            replyCount: thread.replyCount,
+            likeCount: thread.likeCount,
+            isPinned: thread.isPinned,
+            isLocked: thread.isLocked,
+            isLikedByCurrentUser: likeDoc.exists,
+          );
+        } catch (e) {
+          LoggerService.debug('Failed to check like status for thread ${thread.id}: $e', 
+              tag: _tag);
+        }
+        
+        updatedThreads.add(thread);
+      }
+      
+      // Update the threads list with like status
+      _boardThreads[boardId] = updatedThreads;
+      notifyListeners();
+    } catch (e) {
+      LoggerService.error('Failed to update thread likes', tag: _tag, error: e);
+    }
   }
 
   /// Clean up resources
