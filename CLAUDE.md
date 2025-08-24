@@ -133,8 +133,14 @@ flutter build windows --release
 
 ### Firebase Setup
 ```bash
-# Configure Firebase (project ID: teacher-dashboard-flutterfire)
-flutterfire configure --project=teacher-dashboard-flutterfire
+# Install Firebase CLI (if not already installed)
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Configure Firebase for your Flutter project
+flutterfire configure --project=your-project-id
 
 # Deploy to Firebase Hosting
 flutter build web && firebase deploy --only hosting
