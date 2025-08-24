@@ -244,20 +244,54 @@ class _DiscussionBoardDetailScreenState
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Icon(
-                    Icons.thumb_up_outlined,
-                    size: 16,
-                    color: theme.brightness == Brightness.dark 
-                        ? Colors.white
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${thread.likeCount} likes',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.brightness == Brightness.dark 
-                          ? Colors.white70
-                          : theme.colorScheme.onSurfaceVariant,
+                  InkWell(
+                    onTap: () async {
+                      // Increment the like count
+                      try {
+                        await FirebaseFirestore.instance
+                            .collection('discussion_boards')
+                            .doc(widget.boardId)
+                            .collection('threads')
+                            .doc(thread.id)
+                            .update({
+                          'likeCount': FieldValue.increment(1),
+                        });
+                        // Reload threads to show updated count
+                        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to like thread: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.thumb_up_outlined,
+                            size: 16,
+                            color: theme.brightness == Brightness.dark 
+                                ? Colors.white
+                                : theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${thread.likeCount} likes',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.brightness == Brightness.dark 
+                                  ? Colors.white70
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
