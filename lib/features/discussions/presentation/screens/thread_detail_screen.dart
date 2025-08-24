@@ -253,13 +253,17 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                             Icon(
                               Icons.access_time,
                               size: 14,
-                              color: theme.colorScheme.outline,
+                              color: theme.brightness == Brightness.dark 
+                                  ? Colors.white70
+                                  : theme.colorScheme.outline,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               dateFormat.format(_thread!.createdAt),
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.outline,
+                                color: theme.brightness == Brightness.dark 
+                                    ? Colors.white70
+                                    : theme.colorScheme.outline,
                               ),
                             ),
                           ],
@@ -507,7 +511,9 @@ class _ReplyCard extends StatelessWidget {
               Text(
                 dateFormat.format(createdAt),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.outline,
+                  color: theme.brightness == Brightness.dark 
+                      ? Colors.white70
+                      : theme.colorScheme.outline,
                 ),
               ),
               const Spacer(),
