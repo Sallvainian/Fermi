@@ -845,8 +845,42 @@ class AuthProvider extends ChangeNotifier {
     String? firstName,
     String? lastName,
   }) async {
-    if (displayName != null) {
-      await updateDisplayName(displayName);
+    if (_userModel == null) return;
+    
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) return;
+      
+      // Update Firebase Auth displayName if provided
+      if (displayName != null) {
+        await user.updateDisplayName(displayName);
+      }
+      
+      // Prepare Firestore update
+      final updates = <String, dynamic>{};
+      if (displayName != null) updates['displayName'] = displayName;
+      if (firstName != null) updates['firstName'] = firstName;
+      if (lastName != null) updates['lastName'] = lastName;
+      
+      // Update Firestore if there are changes
+      if (updates.isNotEmpty) {
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .update(updates);
+        
+        // Update local model
+        _userModel = _userModel!.copyWith(
+          displayName: displayName ?? _userModel!.displayName,
+          firstName: firstName ?? _userModel!.firstName,
+          lastName: lastName ?? _userModel!.lastName,
+        );
+        
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Failed to update profile: $e');
+      rethrow;
     }
   }
   
