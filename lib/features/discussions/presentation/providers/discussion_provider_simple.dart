@@ -324,16 +324,68 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .listen(
-        (snapshot) {
+        (snapshot) async {
           LoggerService.debug('Loaded ${snapshot.docs.length} boards',
               tag: _tag);
-          _boards = snapshot.docs.map((doc) {
-            final board = SimpleDiscussionBoard.fromFirestore(doc);
+          
+          // Load boards and resolve user IDs to display names
+          final boardsList = <SimpleDiscussionBoard>[];
+          
+          for (final doc in snapshot.docs) {
+            var board = SimpleDiscussionBoard.fromFirestore(doc);
+            
+            // Check if createdBy looks like a user ID (typically 28 chars)
+            if (board.createdBy.length == 28 && !board.createdBy.contains(' ')) {
+              // Try to resolve user ID to display name
+              try {
+                final userDoc = await _firestore
+                    .collection('users')
+                    .doc(board.createdBy)
+                    .get();
+                    
+                if (userDoc.exists) {
+                  final userData = userDoc.data();
+                  if (userData != null) {
+                    String displayName = board.createdBy; // Keep ID as fallback
+                    
+                    // Try firstName + lastName first
+                    final firstName = userData['firstName'] as String?;
+                    final lastName = userData['lastName'] as String?;
+                    if (firstName != null && lastName != null) {
+                      displayName = '$firstName $lastName'.trim();
+                    } else if (userData['displayName'] != null) {
+                      displayName = userData['displayName'] as String;
+                    } else if (userData['email'] != null) {
+                      final email = userData['email'] as String;
+                      displayName = email.split('@').first;
+                    }
+                    
+                    // Create new board with resolved display name
+                    board = SimpleDiscussionBoard(
+                      id: board.id,
+                      title: board.title,
+                      description: board.description,
+                      createdBy: displayName,
+                      createdAt: board.createdAt,
+                      threadCount: board.threadCount,
+                      isPinned: board.isPinned,
+                      tags: board.tags,
+                    );
+                  }
+                }
+              } catch (e) {
+                LoggerService.debug('Failed to resolve user name for board ${board.id}',
+                    tag: _tag);
+              }
+            }
+            
             LoggerService.debug(
                 'Board loaded - ID: ${board.id}, Title: ${board.title}',
                 tag: _tag);
-            return board;
-          }).toList();
+            boardsList.add(board);
+          }
+          
+          _boards = boardsList;
           _setLoading(false);
           notifyListeners();
         },
