@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
@@ -192,6 +193,10 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
     return AdaptiveLayout(
       title: 'Discussion',
       showBackButton: true,
+      onBackPressed: () {
+        // Navigate back to the thread list (second tier)
+        context.go('/discussions/${widget.boardId}');
+      },
       body: Column(
         children: [
           Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
 import '../widgets/create_thread_dialog.dart';
@@ -41,6 +42,10 @@ class _DiscussionBoardDetailScreenState
     return AdaptiveLayout(
       title: widget.boardTitle,
       showBackButton: true,
+      onBackPressed: () {
+        // Navigate back to the discussion boards list (first tier)
+        context.go('/discussions');
+      },
       actions: [
         PopupMenuButton<String>(
           onSelected: (value) {
