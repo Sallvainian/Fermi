@@ -119,15 +119,27 @@ class _ChatListScreenState extends State<ChatListScreen> {
           }
 
           if (chatRooms.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_bubble_outline, size: 64),
-                  SizedBox(height: 16),
-                  Text('No conversations yet'),
-                  SizedBox(height: 8),
-                  Text('Start a new chat to begin messaging'),
+                  const Icon(Icons.chat_bubble_outline, size: 64),
+                  const SizedBox(height: 16),
+                  const Text('No conversations yet'),
+                  const SizedBox(height: 8),
+                  const Text('Start a new chat to begin messaging'),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => _showNewChatDialog(context),
+                    icon: const Icon(Icons.add_comment),
+                    label: const Text('Start Your First Chat'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             );
