@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/models/calendar_event.dart';
 
 /// Simplified calendar service - direct Firestore access
@@ -56,7 +57,7 @@ class SimpleCalendarService {
         );
       }).toList();
     } catch (e) {
-      print('Error loading events: $e');
+      debugPrint('Error loading events: $e');
       return [];
     }
   }
@@ -181,8 +182,8 @@ class SimpleCalendarService {
 
       return docRef.id;
     } catch (e) {
-      print('Error creating event: $e');
-      throw e;
+      debugPrint('Error creating event: $e');
+      rethrow;
     }
   }
 
@@ -192,8 +193,8 @@ class SimpleCalendarService {
       updates['updatedAt'] = FieldValue.serverTimestamp();
       await _firestore.collection('calendar_events').doc(eventId).update(updates);
     } catch (e) {
-      print('Error updating event: $e');
-      throw e;
+      debugPrint('Error updating event: $e');
+      rethrow;
     }
   }
 
@@ -202,8 +203,8 @@ class SimpleCalendarService {
     try {
       await _firestore.collection('calendar_events').doc(eventId).delete();
     } catch (e) {
-      print('Error deleting event: $e');
-      throw e;
+      debugPrint('Error deleting event: $e');
+      rethrow;
     }
   }
 
@@ -259,7 +260,7 @@ class SimpleCalendarService {
         );
       }).toList();
     } catch (e) {
-      print('Error loading events in range: $e');
+      debugPrint('Error loading events in range: $e');
       return [];
     }
   }
@@ -344,7 +345,7 @@ class SimpleCalendarService {
 
       return conflicts;
     } catch (e) {
-      print('Error checking conflicts: $e');
+      debugPrint('Error checking conflicts: $e');
       return [];
     }
   }
@@ -357,8 +358,8 @@ class SimpleCalendarService {
           .doc(event.id)
           .update(event.toFirestore());
     } catch (e) {
-      print('Error updating calendar event: $e');
-      throw e;
+      debugPrint('Error updating calendar event: $e');
+      rethrow;
     }
   }
 
@@ -367,8 +368,8 @@ class SimpleCalendarService {
     try {
       await _firestore.collection('calendar_events').doc(eventId).delete();
     } catch (e) {
-      print('Error deleting calendar event: $e');
-      throw e;
+      debugPrint('Error deleting calendar event: $e');
+      rethrow;
     }
   }
 }

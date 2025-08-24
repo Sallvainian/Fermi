@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
 
@@ -49,17 +50,17 @@ Future<void> main() async {
     },
   ];
 
-  print('Adding test users to Firestore...');
+  debugPrint('Adding test users to Firestore...');
   
   for (final user in testUsers) {
     try {
       await firestore.collection('users').doc(user['uid'] as String).set(user);
-      print('Added user: ${user['displayName']}');
+      debugPrint('Added user: ${user['displayName']}');
     } catch (e) {
-      print('Error adding user ${user['displayName']}: $e');
+      debugPrint('Error adding user ${user['displayName']}: $e');
     }
   }
   
-  print('\nTest users added successfully!');
-  print('You can now test the user search functionality.');
+  debugPrint('\nTest users added successfully!');
+  debugPrint('You can now test the user search functionality.');
 }

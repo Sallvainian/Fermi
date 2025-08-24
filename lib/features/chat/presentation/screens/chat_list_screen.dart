@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/chat_provider_simple.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../domain/models/chat_room.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -346,14 +345,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
               leading: const Icon(Icons.person),
               title: const Text('Direct Message'),
               onTap: () {
-                print('DEBUG: Direct Message clicked');
+                debugPrint('DEBUG: Direct Message clicked');
                 // Close dialog FIRST
                 Navigator.of(dialogContext).pop();
                 
                 // Navigate directly without delay - just GO there!
-                print('DEBUG: About to navigate to user selection');
+                debugPrint('DEBUG: About to navigate to user selection');
                 parentContext.go('/messages/select-user'); // Try a different route
-                print('DEBUG: Navigation command sent');
+                debugPrint('DEBUG: Navigation command sent');
               },
             ),
             ListTile(
@@ -362,7 +361,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
               onTap: () {
                 Navigator.of(dialogContext).pop();
                 Future.delayed(const Duration(milliseconds: 100), () {
-                  parentContext.go('/chat/group-creation');
+                  if (parentContext.mounted) {
+                    parentContext.go('/chat/group-creation');
+                  }
                 });
               },
             ),
@@ -372,7 +373,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
               onTap: () {
                 Navigator.of(dialogContext).pop();
                 Future.delayed(const Duration(milliseconds: 100), () {
-                  parentContext.go('/chat/class-selection');
+                  if (parentContext.mounted) {
+                    parentContext.go('/chat/class-selection');
+                  }
                 });
               },
             ),

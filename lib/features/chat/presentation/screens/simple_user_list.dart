@@ -8,9 +8,9 @@ class SimpleUserList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('DEBUG: SimpleUserList build() called');
+    debugPrint('DEBUG: SimpleUserList build() called');
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    print('DEBUG: Current user ID: $currentUserId');
+    debugPrint('DEBUG: Current user ID: $currentUserId');
     
     return Scaffold(
       appBar: AppBar(
@@ -78,7 +78,9 @@ class SimpleUserList extends StatelessWidget {
                   
                   if (existingChatId != null) {
                     // Go to existing chat
-                    context.go('/simple-chat/$existingChatId?title=${Uri.encodeComponent(displayName)}');
+                    if (context.mounted) {
+                      context.go('/simple-chat/$existingChatId?title=${Uri.encodeComponent(displayName)}');
+                    }
                   } else {
                     // Create new chat
                     final newChat = await FirebaseFirestore.instance.collection('chatRooms').add({
@@ -103,7 +105,9 @@ class SimpleUserList extends StatelessWidget {
                       'lastMessageSenderId': null,
                     });
                     
-                    context.go('/simple-chat/${newChat.id}?title=${Uri.encodeComponent(displayName)}');
+                    if (context.mounted) {
+                      context.go('/simple-chat/${newChat.id}?title=${Uri.encodeComponent(displayName)}');
+                    }
                   }
                 },
               );

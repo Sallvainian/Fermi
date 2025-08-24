@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
-import '../../../domain/models/assignment.dart';
 import '../../../../../shared/models/user_model.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/assignment_provider_simple.dart';

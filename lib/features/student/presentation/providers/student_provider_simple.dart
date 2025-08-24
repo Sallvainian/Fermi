@@ -6,7 +6,6 @@ import '../../domain/models/student.dart';
 /// Simplified student provider with direct Firestore access
 class SimpleStudentProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   List<Student> _students = [];
   Map<String, dynamic>? _currentStudent;

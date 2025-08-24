@@ -11,7 +11,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/models/discussion_board.dart';
 // Repository removed - using direct Firestore access
-import '../../../../shared/core/service_locator.dart';
 import '../../../../shared/services/logger_service.dart';
 
 /// Provider managing discussion boards and threads.

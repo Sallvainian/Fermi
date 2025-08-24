@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/models/jeopardy_game.dart';
 
 /// Simplified Jeopardy provider - stub implementation
 class SimpleJeopardyProvider with ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   List<JeopardyGame> _games = [];
-  List<JeopardyGame> _teacherGames = [];
-  List<JeopardyGame> _savedGames = [];
-  List<Map<String, dynamic>> _activeSessions = [];
+  final List<JeopardyGame> _teacherGames = [];
+  final List<JeopardyGame> _savedGames = [];
+  final List<Map<String, dynamic>> _activeSessions = [];
   JeopardyGame? _currentGame;
   bool _isLoading = false;
   String? _error;

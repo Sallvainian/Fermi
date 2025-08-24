@@ -175,26 +175,6 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
     );
   }
 
-  String _getStatusText(OnlineUser user) {
-    // Show role and activity status
-    final rawRole = user.role ?? 'user';
-    
-    // Clean the role text (remove "user role " prefix if present)
-    String cleanRole = rawRole;
-    if (rawRole.contains('user role ')) {
-      cleanRole = rawRole.replaceFirst('user role ', '');
-    }
-    
-    final roleText = cleanRole.substring(0, 1).toUpperCase() + cleanRole.substring(1);
-
-    // Use the relative time helper from the model
-    if (user.isActive) {
-      return '$roleText • Active now';
-    } else {
-      return '$roleText • ${user.relativeTime}';
-    }
-  }
-
   Widget _buildUserSubtitle(BuildContext context, OnlineUser user) {
     final theme = Theme.of(context);
     final rawRole = user.role ?? 'user';

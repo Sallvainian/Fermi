@@ -43,9 +43,7 @@ class CalendarProvider with ChangeNotifier {
 
   /// Gets the calendar service lazily.
   SimpleCalendarService get calendarService {
-    if (_calendarService == null) {
-      _calendarService = SimpleCalendarService();
-    }
+    _calendarService ??= SimpleCalendarService();
     return _calendarService!;
   }
 

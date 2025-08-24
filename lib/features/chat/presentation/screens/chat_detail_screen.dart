@@ -14,7 +14,6 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../providers/chat_provider_simple.dart';
-import '../../domain/models/message.dart';
 import '../../data/services/scheduled_messages_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart' as app_auth;
 

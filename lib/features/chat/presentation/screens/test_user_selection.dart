@@ -19,7 +19,7 @@ class TestUserSelectionNavigation extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                print('Navigating to /chat/user-selection');
+                debugPrint('Navigating to /chat/user-selection');
                 context.push('/chat/user-selection');
               },
               child: const Text('Go to User Selection'),

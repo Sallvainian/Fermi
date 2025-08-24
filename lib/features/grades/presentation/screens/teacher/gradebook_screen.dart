@@ -6,8 +6,6 @@ import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/grade.dart';
 import '../../providers/grade_provider_simple.dart';
 import '../../../../assignments/presentation/providers/assignment_provider_simple.dart';
-import '../../../../assignments/domain/models/assignment.dart'
-    as assignment_model;
 import '../../../../classes/presentation/providers/class_provider.dart';
 import '../../../../classes/domain/models/class_model.dart';
 import '../../../../student/domain/models/student.dart';
@@ -150,7 +148,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
   Widget _buildStatsHeader(BuildContext context, SimpleGradeProvider gradeProvider) {
     final stats = gradeProvider.classStatistics;
 
-    final classAverage = stats?['average'] ?? 0.0;
+    final classAverage = (stats['average'] as double?) ?? 0.0;
     // Calculate completion rate from grades
     final totalGrades = gradeProvider.classGrades.length;
     final completedGrades = gradeProvider.classGrades
@@ -410,7 +408,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                           ),
                     ),
                     Text(
-                      student.email ?? student.username ?? '',
+                      student.email ?? student.username,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,
@@ -672,7 +670,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
                               ),
                     ),
                     Text(
-                      student.email ?? student.username ?? '',
+                      student.email ?? student.username,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color:
                                 Theme.of(context).colorScheme.onSurfaceVariant,

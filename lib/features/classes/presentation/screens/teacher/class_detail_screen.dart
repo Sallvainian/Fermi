@@ -12,7 +12,6 @@ import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../widgets/edit_class_dialog.dart';
 import '../../widgets/enroll_students_dialog.dart';
 import '../../../../../features/assignments/presentation/providers/assignment_provider_simple.dart';
-import '../../../../../features/assignments/domain/models/assignment.dart';
 
 class ClassDetailScreen extends StatefulWidget {
   final String classId;
