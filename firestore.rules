@@ -257,8 +257,12 @@ service cloud.firestore {
                          (request.auth.uid == resource.data.authorId ||
                           // Allow any authenticated user to update only the likeCount
                           (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount']) &&
-                           request.resource.data.likeCount == resource.data.likeCount + 1 ||
-                           request.resource.data.likeCount == resource.data.likeCount - 1));
+                           (request.resource.data.likeCount == resource.data.likeCount + 1 ||
+                            request.resource.data.likeCount == resource.data.likeCount - 1)) ||
+                          // Allow any authenticated user to update only the replyCount
+                          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount']) &&
+                           (request.resource.data.replyCount == resource.data.replyCount + 1 ||
+                            request.resource.data.replyCount == resource.data.replyCount - 1)));
         allow delete: if isTheTeacher() || 
                          (isAuthenticated() && request.auth.uid == resource.data.authorId);
                          
@@ -368,8 +372,12 @@ service cloud.firestore {
           && (resource.data.authorId == request.auth.uid ||
               // Allow any authenticated user to update only the likeCount
               (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount']) &&
-               request.resource.data.likeCount == resource.data.likeCount + 1 ||
-               request.resource.data.likeCount == resource.data.likeCount - 1));
+               (request.resource.data.likeCount == resource.data.likeCount + 1 ||
+                request.resource.data.likeCount == resource.data.likeCount - 1)) ||
+              // Allow any authenticated user to update only the replyCount
+              (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount']) &&
+               (request.resource.data.replyCount == resource.data.replyCount + 1 ||
+                request.resource.data.replyCount == resource.data.replyCount - 1)));
         allow delete: if request.auth != null 
           && (isTheTeacher() || resource.data.authorId == request.auth.uid);
         
