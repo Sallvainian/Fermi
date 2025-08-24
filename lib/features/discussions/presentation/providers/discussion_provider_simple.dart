@@ -361,13 +361,17 @@ class SimpleDiscussionProvider with ChangeNotifier {
     _error = null;
 
     try {
+      // Get the display name instead of user ID
+      final displayName = await currentUserDisplayName;
+      
       final board = SimpleDiscussionBoard(
         id: '', // Will be set by Firestore
         title: title,
         description: description,
-        createdBy: currentUserId,
+        createdBy: displayName,
         createdAt: DateTime.now(),
         tags: tags,
+        threadCount: 0, // Initialize with 0
       );
 
       await _firestore.collection('discussion_boards').add(board.toFirestore());
@@ -477,12 +481,20 @@ class SimpleDiscussionProvider with ChangeNotifier {
         createdAt: DateTime.now(),
       );
 
-      // Single write operation - no secondary updates
+      // Add the thread
       await _firestore
           .collection('discussion_boards')
           .doc(boardId)
           .collection('threads')
           .add(thread.toFirestore());
+
+      // Update the thread count on the board
+      await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .update({
+        'threadCount': FieldValue.increment(1),
+      });
 
       LoggerService.info('Created thread in board $boardId', tag: _tag);
       _setLoading(false);

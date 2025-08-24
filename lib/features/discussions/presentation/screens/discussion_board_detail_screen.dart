@@ -344,6 +344,14 @@ class _DiscussionBoardDetailScreenState
                     .collection('threads')
                     .doc(thread.id)
                     .delete();
+                
+                // Decrement the thread count
+                await FirebaseFirestore.instance
+                    .collection('discussion_boards')
+                    .doc(widget.boardId)
+                    .update({
+                  'threadCount': FieldValue.increment(-1),
+                });
                     
                 // Refresh the threads list
                 if (context.mounted) {
