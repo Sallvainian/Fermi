@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,79 +13,158 @@ class UserSelectionScreen extends StatefulWidget {
   const UserSelectionScreen({super.key});
 
   @override
-  State<UserSelectionScreen> createState() => _UserSelectionScreenState();
+  State<UserSelectionScreen> createState() =>
+      _UserSelectionScreenState();
 }
 
-class _UserSelectionScreenState extends State<UserSelectionScreen> {
+class _UserSelectionScreenState
+    extends State<UserSelectionScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  
+  Timer? _debounceTimer;
+  String _searchQuery = '';
+  DocumentSnapshot? _lastDocument;
   List<UserModel> _users = [];
-  List<UserModel> _filteredUsers = [];
-  bool _isLoading = true;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  static const int _pageSize = 20;
+  
+  // Stream for real-time search
+  Stream<QuerySnapshot>? _searchStream;
 
   @override
   void initState() {
     super.initState();
-    _loadUsers();
-    _searchController.addListener(_filterUsers);
+    _searchController.addListener(_onSearchChanged);
+    _scrollController.addListener(_onScroll);
+    _initializeSearch();
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUsers() async {
+  void _initializeSearch() {
+    setState(() {
+      _searchStream = _buildSearchQuery();
+    });
+  }
+
+  Stream<QuerySnapshot> _buildSearchQuery() {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) {
+      return const Stream.empty();
+    }
+
+    Query query = FirebaseFirestore.instance
+        .collection('users')
+        .where(FieldPath.documentId, isNotEqualTo: currentUserId);
+
+    // If there's a search query, we need to use a different approach
+    // Firestore doesn't support full-text search natively
+    // We'll implement a workaround using case-insensitive partial matching
+    if (_searchQuery.isNotEmpty) {
+      // For search, we'll fetch all users and filter client-side
+      // In production, consider using Algolia or ElasticSearch for better search
+      query = query.orderBy(FieldPath.documentId);
+    } else {
+      // For initial load, order by display name or creation time
+      query = query.orderBy('displayName').limit(_pageSize);
+    }
+
+    return query.snapshots();
+  }
+
+  void _onSearchChanged() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (_searchQuery != _searchController.text) {
+        setState(() {
+          _searchQuery = _searchController.text;
+          _users.clear();
+          _lastDocument = null;
+          _hasMore = true;
+          _initializeSearch();
+        });
+      }
+    });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasMore &&
+        _searchQuery.isEmpty) {
+      _loadMoreUsers();
+    }
+  }
+
+  Future<void> _loadMoreUsers() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
     try {
       final currentUserId = FirebaseAuth.instance.currentUser?.uid;
       if (currentUserId == null) return;
 
-      // Get users with optimized query - limit to avoid loading too many at once
-      final allUsersSnapshot = await FirebaseFirestore.instance
+      Query query = FirebaseFirestore.instance
           .collection('users')
-          .limit(50) // Limit to avoid loading all users at once
-          .get();
+          .where(FieldPath.documentId, isNotEqualTo: currentUserId)
+          .orderBy('displayName')
+          .limit(_pageSize);
 
-      // Filter out current user and process in chunks to avoid blocking UI
-      final users = <UserModel>[];
-      for (final doc in allUsersSnapshot.docs) {
-        if (doc.id != currentUserId) {
-          users.add(UserModel.fromFirestore(doc));
-        }
-        // Yield control back to the UI thread after every 10 users
-        if (users.length % 10 == 0) {
-          await Future.delayed(Duration.zero);
-        }
+      if (_lastDocument != null) {
+        query = query.startAfterDocument(_lastDocument!);
       }
 
-      if (mounted) {
+      final snapshot = await query.get();
+      
+      if (snapshot.docs.isNotEmpty) {
+        _lastDocument = snapshot.docs.last;
+        final newUsers = snapshot.docs
+            .map((doc) => UserModel.fromFirestore(doc))
+            .toList();
+        
         setState(() {
-          _users = users;
-          _filteredUsers = users;
-          _isLoading = false;
+          _users.addAll(newUsers);
+          _hasMore = snapshot.docs.length == _pageSize;
+        });
+      } else {
+        setState(() {
+          _hasMore = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading users: $e')),
+          SnackBar(content: Text('Error loading more users: $e')),
         );
       }
+    } finally {
+      setState(() {
+        _isLoadingMore = false;
+      });
     }
   }
 
-  void _filterUsers() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredUsers = _users.where((user) {
-        final name = user.displayName?.toLowerCase() ?? '';
-        final email = user.email?.toLowerCase() ?? '';
-        return name.contains(query) || email.contains(query);
-      }).toList();
-    });
+  List<UserModel> _filterUsers(List<UserModel> users) {
+    if (_searchQuery.isEmpty) return users;
+    
+    final query = _searchQuery.toLowerCase();
+    return users.where((user) {
+      final name = user.displayName?.toLowerCase() ?? '';
+      final email = user.email?.toLowerCase() ?? '';
+      return name.contains(query) || email.contains(query);
+    }).toList();
   }
 
   Future<void> _startChat(UserModel otherUser) async {
@@ -173,8 +253,20 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search users...',
+                hintText: 'Search by name or email...',
                 prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                            _initializeSearch();
+                          });
+                        },
+                      )
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -185,51 +277,137 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
           ),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _filteredUsers.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.person_search, size: 64),
-                      const SizedBox(height: 16),
-                      Text(
-                        _searchController.text.isEmpty
-                            ? 'No users found'
-                            : 'No users match your search',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ],
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _searchStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Error: ${snapshot.error}'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _initializeSearch,
+                    child: const Text('Retry'),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: _filteredUsers.length,
-                  itemBuilder: (context, index) {
-                    final user = _filteredUsers[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: user.photoURL != null
-                            ? NetworkImage(user.photoURL!)
-                            : null,
-                        child: user.photoURL == null
-                            ? Text(user.displayName?.isNotEmpty == true
-                                ? user.displayName![0]
-                                : '?')
-                            : null,
-                      ),
-                      title: Text(user.displayNameOrFallback),
-                      subtitle: Text(user.email ?? ''),
-                      trailing: Chip(
-                        label: Text(
-                          user.role?.toString().split('.').last ?? 'user',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ),
-                      onTap: () => _startChat(user),
-                    );
-                  },
-                ),
+                ],
+              ),
+            );
+          }
+
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Convert documents to UserModel and filter
+          final allUsers = snapshot.data!.docs
+              .map((doc) => UserModel.fromFirestore(doc))
+              .toList();
+          
+          // If not searching, use paginated list; otherwise use filtered stream data
+          final displayUsers = _searchQuery.isEmpty ? _users : _filterUsers(allUsers);
+
+          // For initial non-search load, populate the users list
+          if (_searchQuery.isEmpty && _users.isEmpty && allUsers.isNotEmpty) {
+            _users = allUsers.take(_pageSize).toList();
+            if (snapshot.data!.docs.isNotEmpty && allUsers.length == _pageSize) {
+              _lastDocument = snapshot.data!.docs.last;
+            }
+          }
+
+          if (displayUsers.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    _searchQuery.isEmpty ? Icons.people_outline : Icons.person_search,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _searchQuery.isEmpty
+                        ? 'No users found'
+                        : 'No users match "$_searchQuery"',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  if (_searchQuery.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Try a different search term',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              setState(() {
+                _users.clear();
+                _lastDocument = null;
+                _hasMore = true;
+                _initializeSearch();
+              });
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              itemCount: displayUsers.length + (_isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == displayUsers.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                final user = displayUsers[index];
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: user.photoURL != null
+                        ? NetworkImage(user.photoURL!)
+                        : null,
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    child: user.photoURL == null
+                        ? Text(
+                            user.displayName?.isNotEmpty == true
+                                ? user.displayName![0].toUpperCase()
+                                : user.email?.isNotEmpty == true
+                                    ? user.email![0].toUpperCase()
+                                    : '?',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  ),
+                  title: Text(user.displayNameOrFallback),
+                  subtitle: Text(user.email ?? 'No email'),
+                  trailing: Chip(
+                    label: Text(
+                      user.role?.toString().split('.').last ?? 'user',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+                  ),
+                  onTap: () => _startChat(user),
+                );
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }
