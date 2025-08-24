@@ -13,13 +13,20 @@ class OnlineUsersCard extends StatefulWidget {
 
 class _OnlineUsersCardState extends State<OnlineUsersCard> {
   late final PresenceService _presenceService;
-  late final Stream<List<OnlineUser>> _onlineUsersStream;
+  Stream<List<OnlineUser>>? _onlineUsersStream;
 
   @override
   void initState() {
     super.initState();
     _presenceService = PresenceService();
-    _onlineUsersStream = _presenceService.getOnlineUsers(excludeSelf: widget.excludeSelf);
+    // Create broadcast stream to allow multiple listeners
+    _onlineUsersStream = _presenceService.getOnlineUsers(excludeSelf: widget.excludeSelf).asBroadcastStream();
+  }
+  
+  @override
+  void dispose() {
+    // Clean up stream subscription
+    super.dispose();
   }
 
   @override
@@ -56,6 +63,9 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
           StreamBuilder<List<OnlineUser>>(
             stream: _onlineUsersStream,
             builder: (context, snapshot) {
+              // Debug output
+              debugPrint('OnlineUsersCard: StreamBuilder rebuild - connectionState: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data length: ${snapshot.data?.length ?? 0}');
+              
               if (snapshot.hasError) {
                 // Handle error state
                 return Padding(
