@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 // import '../../../domain/models/assignment.dart'; // Using Map<String, dynamic> instead
 // import '../../../domain/models/submission.dart'; // Using Map<String, dynamic> instead
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
@@ -779,7 +780,17 @@ class _AssignmentSubmissionScreenState
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  String _formatDateTime(DateTime date) {
+  String _formatDateTime(dynamic dateValue) {
+    // Handle both Timestamp and DateTime
+    final DateTime date;
+    if (dateValue is Timestamp) {
+      date = dateValue.toDate();
+    } else if (dateValue is DateTime) {
+      date = dateValue;
+    } else {
+      return 'No date';
+    }
+    
     final time = TimeOfDay.fromDateTime(date);
     return '${_formatDate(date)} at ${time.format(context)}';
   }

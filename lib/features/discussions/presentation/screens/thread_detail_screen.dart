@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
-import '../../../auth/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/models/user_model.dart';
 
 class ThreadDetailScreen extends StatefulWidget {
@@ -281,6 +281,9 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                   ..._comments.map((comment) => _CommentCard(
                         comment: comment,
                         dateFormat: dateFormat,
+                        boardId: widget.boardId,
+                        threadId: widget.threadId,
+                        onDeleted: _loadThreadAndComments,
                       )),
                 ] else ...[
                   Center(
@@ -388,60 +391,191 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
 class _CommentCard extends StatelessWidget {
   final Map<String, dynamic> comment;
   final DateFormat dateFormat;
+  final String boardId;
+  final String threadId;
+  final VoidCallback onDeleted;
 
   const _CommentCard({
     required this.comment,
     required this.dateFormat,
+    required this.boardId,
+    required this.threadId,
+    required this.onDeleted,
   });
+  
+  Future<void> _deleteComment(BuildContext context) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .collection('comments')
+          .doc(comment['id'])
+          .delete();
+      
+      // Update reply count
+      await FirebaseFirestore.instance
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .update({
+        'replyCount': FieldValue.increment(-1),
+      });
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Comment deleted'),
+          ),
+        );
+      }
+      onDeleted();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete comment: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
+  Future<bool> _showDeleteDialog(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Delete Comment?'),
+        content: const Text(
+          'Are you sure you want to delete this comment? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.firebaseUser?.uid ?? '';
+    final isTeacher = authProvider.userModel?.role == UserRole.teacher;
+    final canDelete = isTeacher || comment['authorId'] == currentUserId;
     final createdAt =
         (comment['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
+    final cardContent = Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                child: Text(
+                  comment['authorName']?.isNotEmpty == true
+                      ? comment['authorName'][0].toUpperCase()
+                      : '?',
+                  style: theme.textTheme.labelSmall,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                comment['authorName'] ?? 'Unknown',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                dateFormat.format(createdAt),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+              const Spacer(),
+              if (canDelete)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  onPressed: () async {
+                    if (await _showDeleteDialog(context)) {
+                      await _deleteComment(context);
+                    }
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  color: theme.colorScheme.error,
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            comment['content'] ?? '',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
+
+    // Wrap with Dismissible if user can delete
+    if (canDelete) {
+      return Dismissible(
+        key: Key('comment_${comment['id']}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.delete,
+            color: Colors.white,
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          return await _showDeleteDialog(context);
+        },
+        onDismissed: (direction) async {
+          await _deleteComment(context);
+        },
+        child: Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: InkWell(
+            onLongPress: () async {
+              if (await _showDeleteDialog(context)) {
+                await _deleteComment(context);
+              }
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: cardContent,
+          ),
+        ),
+      );
+    }
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 12,
-                  child: Text(
-                    comment['authorName']?.isNotEmpty == true
-                        ? comment['authorName'][0].toUpperCase()
-                        : '?',
-                    style: theme.textTheme.labelSmall,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  comment['authorName'] ?? 'Unknown',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  dateFormat.format(createdAt),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.outline,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              comment['content'] ?? '',
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
+      child: cardContent,
     );
   }
 }

@@ -290,31 +290,20 @@ class _ChatListScreenState extends State<ChatListScreen> {
             '/simple-chat/${chatRoom['id']}?title=${Uri.encodeComponent(displayName)}');
       },
       onLongPress: () {
-        // Option to use old chat screen if needed
+        // Show delete confirmation directly
         showDialog(
           context: context,
           builder: (BuildContext dialogContext) => AlertDialog(
-            title: const Text('Choose Chat Version'),
-            content: const Text('Which chat interface would you like to use?'),
+            title: const Text('Delete Chat?'),
+            content: Text('Are you sure you want to delete your chat with $displayName?'),
             actions: [
               TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
-                  context.push('/chat/${chatRoom['id']}');
-                },
-                child: const Text('Original (may have issues)'),
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(dialogContext);
-                  context.push(
-                      '/simple-chat/${chatRoom['id']}?title=${Uri.encodeComponent(displayName)}');
-                },
-                child: const Text('Simple (recommended)'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(dialogContext);
+                  Navigator.of(dialogContext).pop();
                   _deleteChat(chatRoom['id']).then((_) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -323,12 +312,21 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         ),
                       );
                     }
+                  }).catchError((error) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to delete chat: $error'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   });
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.red,
                 ),
-                child: const Text('Delete Chat'),
+                child: const Text('Delete'),
               ),
             ],
           ),

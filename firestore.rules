@@ -56,14 +56,11 @@ service cloud.firestore {
       // - User is the teacher OR
       // - Document doesn't exist (checking before creation) OR
       // - Student is enrolled OR
-      // - Student checking enrollment code
+      // - Any authenticated student with verified email (for enrollment code queries)
       allow read: if isTheTeacher() || 
                      resource == null ||
-                     (isStudent() && 
-                      (request.auth.uid in resource.data.studentIds ||
-                       // Allow reading for enrollment code validation only
-                       (resource.data.enrollmentCode != null && 
-                        request.auth.token.email_verified == true)));
+                     (isStudent() && request.auth.token.email_verified == true) ||
+                     (isStudent() && request.auth.uid in resource.data.studentIds);
       
       // Only THE teacher can create classes
       allow create: if isTheTeacher() && 
@@ -243,14 +240,13 @@ service cloud.firestore {
     }
     
     // Discussion Boards - authenticated users can participate
-    match /discussionBoards/{boardId} {
+    match /discussion_boards/{boardId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && 
                        request.auth.token.email_verified == true;
       allow update: if isAuthenticated() && 
                        request.auth.uid == resource.data.createdBy;
-      allow delete: if isTheTeacher() || 
-                       (isAuthenticated() && request.auth.uid == resource.data.createdBy);
+      allow delete: if isTheTeacher();
                        
       // Discussion threads within boards
       match /threads/{threadId} {
@@ -262,8 +258,19 @@ service cloud.firestore {
         allow delete: if isTheTeacher() || 
                          (isAuthenticated() && request.auth.uid == resource.data.authorId);
                          
-        // Posts within threads
-        match /posts/{postId} {
+        // Comments within threads (used by thread_detail_screen.dart)
+        match /comments/{commentId} {
+          allow read: if isAuthenticated();
+          allow create: if isAuthenticated() && 
+                           request.auth.token.email_verified == true;
+          allow update: if isAuthenticated() && 
+                           request.auth.uid == resource.data.authorId;
+          allow delete: if isTheTeacher() || 
+                           (isAuthenticated() && request.auth.uid == resource.data.authorId);
+        }
+        
+        // Replies within threads (used by discussion_provider.dart)
+        match /replies/{replyId} {
           allow read: if isAuthenticated();
           allow create: if isAuthenticated() && 
                            request.auth.token.email_verified == true;
@@ -313,7 +320,7 @@ service cloud.firestore {
       allow create: if isTheTeacher();
       allow update: if request.auth != null 
         && resource.data.createdBy == request.auth.uid;
-      allow delete: if false; // Don't allow deletion
+      allow delete: if isTheTeacher(); // Only teachers can delete boards
       
       // Discussion threads
       match /threads/{threadId} {

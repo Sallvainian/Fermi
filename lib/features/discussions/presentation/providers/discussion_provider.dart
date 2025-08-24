@@ -101,6 +101,11 @@ class DiscussionProvider with ChangeNotifier {
 
   /// Current user's ID from Firebase Auth.
   String get currentUserId => _auth.currentUser?.uid ?? '';
+  
+  /// Current user's role (teacher or student).
+  String get userRole => _auth.currentUser?.email?.endsWith('@teacher.edu') == true
+      ? 'teacher'
+      : 'student';
 
   /// Gets threads for a specific board.
   ///
@@ -295,6 +300,85 @@ class DiscussionProvider with ChangeNotifier {
       _error = e.toString();
       LoggerService.error('Failed to create board', tag: _tag, error: e);
       return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+  
+  /// Deletes a discussion board and all its threads and replies.
+  /// 
+  /// Only teachers can delete boards. Performs batch deletion of:
+  /// - All replies in all threads
+  /// - All threads in the board
+  /// - The board itself
+  /// 
+  /// @param boardId Board ID to delete
+  /// @throws Exception if deletion fails
+  Future<void> deleteBoard(String boardId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      // Get all threads in the board
+      final threadsSnapshot = await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .get();
+      
+      // Delete all replies/comments in all threads
+      for (var threadDoc in threadsSnapshot.docs) {
+        // Try to delete 'replies' subcollection
+        final repliesSnapshot = await _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .doc(threadDoc.id)
+            .collection('replies')
+            .get();
+        
+        for (var replyDoc in repliesSnapshot.docs) {
+          await replyDoc.reference.delete();
+        }
+        
+        // Also try to delete 'comments' subcollection (used by thread_detail_screen)
+        final commentsSnapshot = await _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .doc(threadDoc.id)
+            .collection('comments')
+            .get();
+        
+        for (var commentDoc in commentsSnapshot.docs) {
+          await commentDoc.reference.delete();
+        }
+        
+        // Delete the thread itself
+        await threadDoc.reference.delete();
+      }
+      
+      // Delete the board
+      await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .delete();
+      
+      // Remove from local state
+      _boards.removeWhere((board) => board.id == boardId);
+      _boardThreads.remove(boardId);
+      
+      // Clear thread replies for this board
+      _threadReplies.removeWhere((key, value) => key.startsWith('${boardId}_'));
+      
+      LoggerService.info('Deleted board: $boardId', tag: _tag);
+      
+    } catch (e) {
+      _error = e.toString();
+      LoggerService.error('Failed to delete board', tag: _tag, error: e);
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -535,25 +619,59 @@ class DiscussionProvider with ChangeNotifier {
   ///
   /// @param boardId Board containing the thread
   /// @param threadId Thread to delete
-  /// @return true if deletion successful
-  Future<bool> deleteThread(String boardId, String threadId) async {
+  /// @throws Exception if deletion fails
+  Future<void> deleteThread(String boardId, String threadId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
+      // Delete all replies first
+      final repliesSnapshot = await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .collection('replies')
+          .get();
+      
+      for (var replyDoc in repliesSnapshot.docs) {
+        await replyDoc.reference.delete();
+      }
+      
+      // Also delete all comments (used by thread_detail_screen)
+      final commentsSnapshot = await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .collection('comments')
+          .get();
+      
+      for (var commentDoc in commentsSnapshot.docs) {
+        await commentDoc.reference.delete();
+      }
+      
+      // Delete the thread
       await _firestore
           .collection('discussion_boards')
           .doc(boardId)
           .collection('threads')
           .doc(threadId)
           .delete();
+      
+      // Remove from local state
+      _boardThreads[boardId]?.removeWhere((thread) => thread.id == threadId);
+      
+      // Clear replies for this thread
+      final replyKey = '${boardId}_$threadId';
+      _threadReplies.remove(replyKey);
+      
       LoggerService.info('Deleted thread: $threadId', tag: _tag);
-      return true;
     } catch (e) {
       _error = e.toString();
       LoggerService.error('Failed to delete thread', tag: _tag, error: e);
-      return false;
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -117,49 +117,36 @@ class _DiscussionBoardDetailScreenState
           itemCount: sortedThreads.length,
           itemBuilder: (context, index) {
             final thread = sortedThreads[index];
-            return _buildThreadCard(
-              title: thread.title,
-              author: thread.authorName,
-              authorRole: thread.authorRole,
-              content: thread.content,
-              createdAt: thread.createdAt,
-              replyCount: thread.replyCount,
-              likeCount: thread.likeCount,
-              isPinned: thread.isPinned,
-              tags: thread.tags,
-            );
+            return _buildThreadCard(thread: thread);
           },
         );
       },
     );
   }
 
-  Widget _buildThreadCard({
-    required String title,
-    required String author,
-    required String authorRole,
-    required String content,
-    required DateTime createdAt,
-    required int replyCount,
-    required int likeCount,
-    bool isPinned = false,
-    List<String> tags = const [],
-  }) {
+  Widget _buildThreadCard({required DiscussionThread thread}) {
     final theme = Theme.of(context);
-
-    return Card(
+    final provider = context.read<DiscussionProvider>();
+    final currentUserId = provider.currentUserId;
+    final isTeacher = provider.userRole == 'teacher';
+    final canDelete = isTeacher || thread.authorId == currentUserId;
+    
+    final cardContent = Card(
       child: InkWell(
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ThreadDetailScreen(
-                threadId: 'temp-id',
+                threadId: thread.id,
                 boardId: widget.boardId,
               ),
             ),
           );
         },
+        onLongPress: canDelete ? () {
+          _showDeleteThreadDialog(thread);
+        } : null,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -171,13 +158,13 @@ class _DiscussionBoardDetailScreenState
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: authorRole == 'teacher'
+                    backgroundColor: thread.authorRole == 'teacher'
                         ? theme.colorScheme.primary
                         : theme.colorScheme.secondary,
                     child: Text(
-                      author[0].toUpperCase(),
+                      thread.authorName.isNotEmpty ? thread.authorName[0].toUpperCase() : '?',
                       style: TextStyle(
-                        color: authorRole == 'teacher'
+                        color: thread.authorRole == 'teacher'
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.onSecondary,
                       ),
@@ -191,7 +178,7 @@ class _DiscussionBoardDetailScreenState
                         Row(
                           children: [
                             Text(
-                              author,
+                              thread.authorName,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -203,28 +190,30 @@ class _DiscussionBoardDetailScreenState
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: authorRole == 'teacher'
+                                color: thread.authorRole == 'teacher'
                                     ? theme.colorScheme.primaryContainer
                                     : theme.colorScheme.secondaryContainer,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                authorRole,
+                                thread.authorRole,
                                 style: theme.textTheme.labelSmall,
                               ),
                             ),
                           ],
                         ),
                         Text(
-                          _formatTime(createdAt),
+                          _formatTime(thread.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: theme.brightness == Brightness.dark 
+                                ? Colors.white
+                                : theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (isPinned)
+                  if (thread.isPinned)
                     Icon(
                       Icons.push_pin,
                       size: 20,
@@ -235,7 +224,7 @@ class _DiscussionBoardDetailScreenState
               const SizedBox(height: 12),
               // Title
               Text(
-                title,
+                thread.title,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -243,16 +232,16 @@ class _DiscussionBoardDetailScreenState
               const SizedBox(height: 8),
               // Content preview
               Text(
-                content,
+                thread.content,
                 style: theme.textTheme.bodyMedium,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (tags.isNotEmpty) ...[
+              if (thread.tags.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 8,
-                  children: tags.map((tag) {
+                  children: thread.tags.map((tag) {
                     return Chip(
                       label: Text(tag),
                       labelStyle: theme.textTheme.labelSmall,
@@ -269,23 +258,35 @@ class _DiscussionBoardDetailScreenState
                   Icon(
                     Icons.comment_outlined,
                     size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: theme.brightness == Brightness.dark 
+                        ? Colors.white
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '$replyCount replies',
-                    style: theme.textTheme.bodySmall,
+                    '${thread.replyCount} replies',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.brightness == Brightness.dark 
+                          ? Colors.white70
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Icon(
                     Icons.thumb_up_outlined,
                     size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: theme.brightness == Brightness.dark 
+                        ? Colors.white
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '$likeCount likes',
-                    style: theme.textTheme.bodySmall,
+                    '${thread.likeCount} likes',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.brightness == Brightness.dark 
+                          ? Colors.white70
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -294,6 +295,35 @@ class _DiscussionBoardDetailScreenState
         ),
       ),
     );
+    
+    // Wrap with Dismissible if user can delete
+    if (canDelete) {
+      return Dismissible(
+        key: Key('thread_${thread.id}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.delete,
+            color: Colors.white,
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          return await _showDeleteThreadDialog(thread);
+        },
+        onDismissed: (direction) {
+          // Deletion is handled in confirmDismiss
+        },
+        child: cardContent,
+      );
+    }
+    
+    return cardContent;
   }
 
   String _formatTime(DateTime dateTime) {
@@ -316,5 +346,55 @@ class _DiscussionBoardDetailScreenState
       context: context,
       builder: (context) => CreateThreadDialog(boardId: widget.boardId),
     );
+  }
+  
+  Future<bool> _showDeleteThreadDialog(DiscussionThread thread) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Delete Thread?'),
+        content: Text(
+          'Are you sure you want to delete "${thread.title}"? This will also delete all replies. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop(true);
+              try {
+                await context.read<DiscussionProvider>().deleteThread(
+                  widget.boardId,
+                  thread.id,
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Thread "${thread.title}" deleted'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete thread: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 }

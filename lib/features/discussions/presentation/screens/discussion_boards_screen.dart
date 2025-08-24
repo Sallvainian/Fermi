@@ -128,7 +128,9 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
 
   Widget _buildBoardCard({required DiscussionBoard board}) {
     final theme = Theme.of(context);
-    return Card(
+    final isTeacher = context.read<AuthProvider>().userModel?.role == UserRole.teacher;
+    
+    final cardContent = Card(
       child: InkWell(
         onTap: () {
           // Set current board in provider
@@ -137,6 +139,9 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
           context.go(
               '/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}');
         },
+        onLongPress: isTeacher ? () {
+          _showDeleteBoardDialog(board);
+        } : null,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -172,7 +177,12 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     ),
                     child: Text(
                       '${board.threadCount} threads',
-                      style: theme.textTheme.labelSmall,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.brightness == Brightness.dark 
+                            ? Colors.white
+                            : theme.colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
@@ -213,14 +223,18 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   Text(
                     _formatLastActivity(board.updatedAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: theme.brightness == Brightness.dark 
+                          ? Colors.white
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const Spacer(),
                   Text(
                     'by ${board.createdByName}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: theme.brightness == Brightness.dark 
+                          ? Colors.white
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -230,6 +244,35 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         ),
       ),
     );
+    
+    // Wrap with Dismissible for teachers only
+    if (isTeacher) {
+      return Dismissible(
+        key: Key('board_${board.id}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.delete,
+            color: Colors.white,
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          return await _showDeleteBoardDialog(board);
+        },
+        onDismissed: (direction) {
+          // Deletion is handled in confirmDismiss
+        },
+        child: cardContent,
+      );
+    }
+    
+    return cardContent;
   }
 
   String _formatLastActivity(DateTime date) {
@@ -254,5 +297,52 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
       context: context,
       builder: (context) => const CreateBoardDialog(),
     );
+  }
+  
+  Future<bool> _showDeleteBoardDialog(DiscussionBoard board) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Delete Discussion Board?'),
+        content: Text(
+          'Are you sure you want to delete "${board.title}"? This will also delete all threads and comments within this board. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop(true);
+              try {
+                await context.read<DiscussionProvider>().deleteBoard(board.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Board "${board.title}" deleted'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete board: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 }
