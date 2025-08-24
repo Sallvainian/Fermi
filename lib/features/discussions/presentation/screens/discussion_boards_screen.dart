@@ -7,7 +7,7 @@ import '../../domain/models/discussion_board.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../providers/discussion_provider.dart';
+import '../providers/discussion_provider_simple.dart';
 import '../widgets/create_board_dialog.dart';
 
 class DiscussionBoardsScreen extends StatefulWidget {
@@ -23,7 +23,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
     super.initState();
     // Initialize boards when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DiscussionProvider>().initializeBoards();
+      context.read<SimpleSimpleDiscussionProvider>().initializeBoards();
     });
   }
 
@@ -61,7 +61,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
   }
 
   Widget _buildBoardsList() {
-    return Consumer<DiscussionProvider>(
+    return Consumer<SimpleDiscussionProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.boards.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -135,7 +135,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
       child: InkWell(
         onTap: () {
           // Set current board in provider
-          context.read<DiscussionProvider>().setCurrentBoard(board);
+          context.read<SimpleDiscussionProvider>().setCurrentBoard(board);
 
           context.go(
               '/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}');
@@ -325,7 +325,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     
                 // Refresh the boards list
                 if (context.mounted) {
-                  context.read<DiscussionProvider>().initializeBoards();
+                  context.read<SimpleSimpleDiscussionProvider>().initializeBoards();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Board "${board.title}" deleted'),

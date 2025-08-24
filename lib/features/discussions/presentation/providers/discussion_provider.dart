@@ -449,9 +449,7 @@ class DiscussionProvider with ChangeNotifier {
         'content': content,
         'authorId': currentUserId,
         'authorName': _auth.currentUser?.displayName ?? 'User',
-        'authorRole': _auth.currentUser?.email?.endsWith('@teacher.edu') == true
-            ? 'teacher'
-            : 'student',
+        'authorRole': _userRole,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'tags': tags,
@@ -512,9 +510,7 @@ class DiscussionProvider with ChangeNotifier {
         'content': content,
         'authorId': currentUserId,
         'authorName': _auth.currentUser?.displayName ?? 'User',
-        'authorRole': _auth.currentUser?.email?.endsWith('@teacher.edu') == true
-            ? 'teacher'
-            : 'student',
+        'authorRole': _userRole,
         'createdAt': FieldValue.serverTimestamp(),
         'replyToId': replyToId,
         'replyToAuthor': replyToAuthor,

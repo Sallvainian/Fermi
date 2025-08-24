@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../providers/discussion_provider.dart';
+import '../providers/discussion_provider_simple.dart';
 import '../widgets/create_thread_dialog.dart';
 import 'thread_detail_screen.dart';
 import '../../domain/models/discussion_board.dart';
@@ -31,7 +31,7 @@ class _DiscussionBoardDetailScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DiscussionProvider>().loadBoardThreads(widget.boardId);
+      context.read<SimpleDiscussionProvider>().loadBoardThreads(widget.boardId);
     });
   }
 
@@ -90,7 +90,7 @@ class _DiscussionBoardDetailScreenState
   }
 
   Widget _buildThreadsList() {
-    return Consumer<DiscussionProvider>(
+    return Consumer<SimpleDiscussionProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -127,7 +127,7 @@ class _DiscussionBoardDetailScreenState
 
   Widget _buildThreadCard({required DiscussionThread thread}) {
     final theme = Theme.of(context);
-    final provider = context.read<DiscussionProvider>();
+    final provider = context.read<SimpleDiscussionProvider>();
     final currentUserId = provider.currentUserId;
     final isTeacher = provider.userRole == 'teacher';
     final canDelete = isTeacher || thread.authorId == currentUserId;
@@ -376,7 +376,7 @@ class _DiscussionBoardDetailScreenState
                     
                 // Refresh the threads list
                 if (context.mounted) {
-                  context.read<DiscussionProvider>().loadBoardThreads(widget.boardId);
+                  context.read<SimpleDiscussionProvider>().loadBoardThreads(widget.boardId);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Thread "${thread.title}" deleted'),

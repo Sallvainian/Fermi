@@ -168,6 +168,27 @@ class SimpleDiscussionProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get currentUserId => _auth.currentUser?.uid ?? '';
+  
+  /// Current user's role (teacher or student).
+  String _userRole = 'student';
+  String get userRole => _userRole;
+  
+  /// Fetches and caches the user's role from Firestore.
+  Future<void> _fetchUserRole() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid != null) {
+        final userDoc = await _firestore.collection('users').doc(uid).get();
+        if (userDoc.exists) {
+          _userRole = userDoc.data()?['role'] ?? 'student';
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      LoggerService.error('Failed to fetch user role', error: e, tag: _logTag);
+      _userRole = 'student'; // Default to student on error
+    }
+  }
 
   /// Returns cached display name or fetches and caches it
   String get currentUserName {
@@ -277,10 +298,18 @@ class SimpleDiscussionProvider with ChangeNotifier {
     return _boardThreads[boardId] ?? [];
   }
 
+  /// Initialize boards (alias for loadBoards for compatibility)
+  Future<void> initializeBoards() async {
+    await loadBoards();
+  }
+  
   /// Load all discussion boards
   Future<void> loadBoards() async {
     _setLoading(true);
     _error = null;
+    
+    // Fetch user role first
+    await _fetchUserRole();
 
     try {
       // Cancel existing subscription
