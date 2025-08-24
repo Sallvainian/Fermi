@@ -332,7 +332,13 @@ class AppRouter {
           },
         ),
 
-        // Chat creation routes
+        // NEW SIMPLE ROUTE FOR USER SELECTION
+        GoRoute(
+          path: '/messages/select-user',
+          builder: (context, state) => const SimpleUserList(),
+        ),
+        
+        // Chat creation routes (keeping old one for compatibility)
         GoRoute(
           path: '/chat/user-selection',
           builder: (context, state) => const SimpleUserList(), // USING SIMPLE VERSION

@@ -301,13 +301,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
               title: const Text('Direct Message'),
               onTap: () {
                 print('DEBUG: Direct Message clicked');
-                // Close dialog FIRST with the right context
+                // Close dialog FIRST
                 Navigator.of(dialogContext).pop();
-                // Small delay to ensure dialog is closed
-                Future.delayed(const Duration(milliseconds: 100), () {
-                  print('DEBUG: Navigating to /chat/user-selection');
-                  parentContext.go('/chat/user-selection'); // Use GO instead of PUSH
-                });
+                
+                // Navigate directly without delay - just GO there!
+                print('DEBUG: About to navigate to user selection');
+                parentContext.go('/messages/select-user'); // Try a different route
+                print('DEBUG: Navigation command sent');
               },
             ),
             ListTile(
