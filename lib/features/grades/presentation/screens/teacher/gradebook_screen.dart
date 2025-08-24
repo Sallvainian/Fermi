@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/grade.dart';
@@ -787,7 +788,9 @@ class StudentGradeDetailSheet extends StatelessWidget {
 
   Widget _buildAssignmentGradeCard(BuildContext context,
       Map<String, dynamic> assignment, Map<String, dynamic> grade) {
-    final isOverdue = (assignment['dueDate'] as DateTime?)?.isBefore(DateTime.now()) ?? false;
+    final dueDate = assignment['dueDate'];
+    final isOverdue = dueDate != null && 
+        (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now());
 
     Color statusColor;
     String statusText;

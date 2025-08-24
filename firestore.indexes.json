@@ -276,6 +276,14 @@
       ]
     },
     {
+      "collectionGroup": "calendar_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "startTime", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "files",
       "queryScope": "COLLECTION",
       "fields": [

@@ -570,7 +570,7 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                           contentPadding: EdgeInsets.zero,
                           onTap: () {
                             Navigator.pop(context);
-                            context.push('/assignments',
+                            context.push('/student/assignments',
                                 extra: {'courseId': course.id});
                           },
                         ),

@@ -385,7 +385,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      _getAssignmentIcon(assignment.type),
+                      _getAssignmentIcon(assignment['type']),
                       color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
@@ -396,13 +396,13 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          assignment.title,
+                          assignment['title'] ?? 'Untitled',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          '${assignment.category} • ${assignment.teacherName}',
+                          '${assignment['category'] ?? 'General'} • ${assignment['teacherName'] ?? 'Unknown'}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -593,7 +593,32 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     );
   }
 
-  IconData _getAssignmentIcon(AssignmentType type) {
+  IconData _getAssignmentIcon(dynamic type) {
+    // Handle both string and AssignmentType
+    if (type is String) {
+      switch (type.toLowerCase()) {
+        case 'homework':
+          return Icons.home_work_outlined;
+        case 'essay':
+          return Icons.article_outlined;
+        case 'quiz':
+          return Icons.quiz_outlined;
+        case 'test':
+        case 'exam':
+          return Icons.assignment_outlined;
+        case 'lab':
+          return Icons.science_outlined;
+        case 'project':
+          return Icons.folder_special_outlined;
+        case 'presentation':
+          return Icons.present_to_all_outlined;
+        case 'classwork':
+          return Icons.work_outline;
+        default:
+          return Icons.assignment_outlined;
+      }
+    }
+    if (type is! AssignmentType) return Icons.assignment_outlined;
     switch (type) {
       case AssignmentType.homework:
         return Icons.home_work_outlined;
@@ -807,7 +832,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            assignment.title,
+                            assignment['title'] ?? 'Untitled',
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -827,7 +852,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${assignment.category} • ${assignment.teacherName}',
+                          '${assignment['category'] ?? 'General'} • ${assignment['teacherName'] ?? 'Unknown'}',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -837,7 +862,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     // Description
-                    if (assignment.description.isNotEmpty) ...[
+                    if ((assignment['description'] ?? '').isNotEmpty) ...[
                       Text(
                         'Description',
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -846,7 +871,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        assignment.description,
+                        assignment['description'] ?? '',
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 24),
@@ -861,7 +886,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      assignment.instructions,
+                      assignment['instructions'] ?? 'No instructions provided',
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 24),
@@ -874,14 +899,14 @@ class AssignmentDetailSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildDetailRow('Type', assignment.type.name.toUpperCase()),
+                    _buildDetailRow('Type', (assignment['type'] ?? 'assignment').toString().toUpperCase()),
                     _buildDetailRow(
-                        'Points', '${assignment.totalPoints.toInt()}'),
+                        'Points', '${(assignment['totalPoints'] ?? 0).toInt()}'),
                     _buildDetailRow(
-                        'Due Date', _formatDetailDate(assignment.dueDate)),
-                    if (assignment.allowLateSubmissions)
+                        'Due Date', _formatDetailDate((assignment['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now())),
+                    if (assignment['allowLateSubmissions'] ?? false)
                       _buildDetailRow('Late Penalty',
-                          '${assignment.latePenaltyPercentage}% per day'),
+                          '${assignment['latePenaltyPercentage'] ?? 0}% per day'),
 
                     if (studentAssignment['isSubmitted'] ?? false) ...[
                       const SizedBox(height: 24),

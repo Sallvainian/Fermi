@@ -150,11 +150,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             const SizedBox(height: 24),
 
             // My Classes
-            Text(
-              'My Classes',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'My Classes',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () => context.go('/student/enroll'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Join Class'),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.md),
             _buildClassesSection(context, classProvider),

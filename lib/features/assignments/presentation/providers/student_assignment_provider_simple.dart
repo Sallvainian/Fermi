@@ -29,10 +29,27 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
         return;
       }
 
-      // Query assignments for this student
+      // First, get all classes the student is enrolled in
+      final classesSnapshot = await _firestore
+          .collection('classes')
+          .where('studentIds', arrayContains: user.uid)
+          .get();
+      
+      if (classesSnapshot.docs.isEmpty) {
+        _assignments = [];
+        _error = null;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // Get all class IDs
+      final classIds = classesSnapshot.docs.map((doc) => doc.id).toList();
+
+      // Query assignments for those classes
       final snapshot = await _firestore
           .collection('assignments')
-          .where('studentIds', arrayContains: user.uid)
+          .where('classId', whereIn: classIds)
           .orderBy('dueDate')
           .get();
 
@@ -40,8 +57,9 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
         final data = doc.data();
         data['id'] = doc.id;
         // Add computed fields
-        data['isOverdue'] = data['dueDate'] != null && 
-            (data['dueDate'] as Timestamp).toDate().isBefore(DateTime.now());
+        final dueDate = data['dueDate'];
+        data['isOverdue'] = dueDate != null && 
+            (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now());
         data['isSubmitted'] = false; // Will check submissions collection
         data['isGraded'] = false;
         return data;
@@ -120,8 +138,9 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
             _currentAssignment!['isGraded'] = false;
           }
           
-          _currentAssignment!['isOverdue'] = _currentAssignment!['dueDate'] != null && 
-              (_currentAssignment!['dueDate'] as Timestamp).toDate().isBefore(DateTime.now());
+          final dueDate = _currentAssignment!['dueDate'];
+          _currentAssignment!['isOverdue'] = dueDate != null && 
+              (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now());
         }
       }
       

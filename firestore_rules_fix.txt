@@ -1,7 +1,0 @@
-    // Users collection
-    match /users/{userId} {
-      // Allow authenticated users to read basic user info for user selection
-      allow read: if isAuthenticated();
-      // Users can only write their own document (including initial creation)
-      allow write: if isOwner(userId);
-    }

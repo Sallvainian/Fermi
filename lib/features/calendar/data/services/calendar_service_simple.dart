@@ -214,15 +214,23 @@ class SimpleCalendarService {
       final user = _auth.currentUser;
       if (user == null) return [];
 
+      // Note: Firestore doesn't support multiple inequality filters with array-contains
+      // So we only filter by start date and manually filter the end date
       final snapshot = await _firestore
           .collection('calendar_events')
           .where('participantIds', arrayContains: user.uid)
           .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .where('startTime', isLessThanOrEqualTo: Timestamp.fromDate(end))
           .orderBy('startTime')
           .get();
 
-      return snapshot.docs.map((doc) {
+      // Filter by end date in memory
+      final endTimestamp = Timestamp.fromDate(end);
+      final filteredDocs = snapshot.docs.where((doc) {
+        final startTime = doc.data()['startTime'] as Timestamp;
+        return startTime.compareTo(endTimestamp) <= 0;
+      }).toList();
+
+      return filteredDocs.map((doc) {
         final data = doc.data();
         return CalendarEvent(
           id: doc.id,

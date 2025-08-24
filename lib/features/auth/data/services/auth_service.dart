@@ -51,11 +51,21 @@ class AuthService {
     } else if (!kIsWeb && Platform.isIOS) {
       // iOS uses standard Google Sign-In with GoogleService-Info.plist
       debugPrint('Using standard Google Sign-In for iOS');
-      _googleSignIn = GoogleSignIn();
+      _googleSignIn = GoogleSignIn(
+        scopes: [
+          'email',
+          'profile',
+        ],
+      );
     } else if (!kIsWeb && Platform.isAndroid) {
       // Android uses standard Google Sign-In with google-services.json
       debugPrint('Using standard Google Sign-In for Android');
-      _googleSignIn = GoogleSignIn();
+      _googleSignIn = GoogleSignIn(
+        scopes: [
+          'email',
+          'profile',
+        ],
+      );
     } else if (kIsWeb) {
       // Web doesn't need client configuration (uses Firebase Auth popup)
       debugPrint('Using Firebase Auth popup for web');
@@ -141,6 +151,8 @@ class AuthService {
       // Web: Use Firebase Auth popup
       debugPrint('Google Sign-In: Using Firebase popup for web');
       final provider = GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
       final cred = await _auth!.signInWithPopup(provider);
       user = cred.user;
     } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
@@ -523,6 +535,8 @@ class AuthService {
       if (kIsWeb) {
         // Web: Use popup re-authentication
         final provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
         await user.reauthenticateWithPopup(provider);
       } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
         // Desktop: Use OAuth flow for re-authentication

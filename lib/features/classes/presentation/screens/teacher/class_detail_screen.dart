@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../../shared/services/logger_service.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
@@ -698,9 +699,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                         children: [
                           Text((assignment['type'] ?? 'essay').toUpperCase()),
                           Text(
-                            'Due: ${_formatDate(assignment['dueDate'] ?? DateTime.now())}',
+                            'Due: ${_formatDate(assignment['dueDate'] != null 
+                                ? (assignment['dueDate'] is Timestamp 
+                                    ? (assignment['dueDate'] as Timestamp).toDate() 
+                                    : assignment['dueDate'] as DateTime)
+                                : DateTime.now())}',
                             style: TextStyle(
-                              color: (assignment['dueDate'] ?? DateTime.now()).isBefore(DateTime.now())
+                              color: assignment['dueDate'] != null && 
+                                  (assignment['dueDate'] is Timestamp 
+                                      ? (assignment['dueDate'] as Timestamp).toDate() 
+                                      : assignment['dueDate'] as DateTime).isBefore(DateTime.now())
                                   ? Colors.red
                                   : null,
                             ),

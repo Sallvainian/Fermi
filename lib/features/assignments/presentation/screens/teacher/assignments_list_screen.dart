@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../../shared/models/user_model.dart';
@@ -255,7 +256,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
   Widget _buildAssignmentCard(Map<String, dynamic> assignment) {
     final theme = Theme.of(context);
     final dueDate = assignment['dueDate'];
-    final isOverdue = dueDate.isBefore(DateTime.now()) &&
+    final isOverdue = dueDate != null && 
+        (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now()) &&
         assignment['status'] == 'active';
 
     Color statusColor;

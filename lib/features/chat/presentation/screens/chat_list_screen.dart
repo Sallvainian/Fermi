@@ -167,7 +167,53 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final String displayName = _getDisplayName(chatRoom, currentUserId);
     final String? displayPhotoUrl = _getDisplayPhotoUrl(chatRoom, currentUserId);
 
-    return ListTile(
+    return Dismissible(
+      key: Key(chatRoom['id']),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: Colors.red,
+        child: const Icon(
+          Icons.delete,
+          color: Colors.white,
+        ),
+      ),
+      confirmDismiss: (direction) async {
+        return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Delete Chat'),
+              content: Text('Are you sure you want to delete this chat with $displayName? This action cannot be undone.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.red,
+                  ),
+                  child: const Text('Delete'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) async {
+        await _deleteChat(chatRoom['id']);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Chat with $displayName deleted'),
+            ),
+          );
+        }
+      },
+      child: ListTile(
       leading: CircleAvatar(
         backgroundColor: theme.colorScheme.primaryContainer,
         backgroundImage: displayPhotoUrl != null
@@ -266,16 +312,58 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 },
                 child: const Text('Simple (recommended)'),
               ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  _deleteChat(chatRoom['id']).then((_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Chat with $displayName deleted'),
+                        ),
+                      );
+                    }
+                  });
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.red,
+                ),
+                child: const Text('Delete Chat'),
+              ),
             ],
           ),
         );
       },
+      ),
     );
+  }
+  
+  Future<void> _deleteChat(String chatRoomId) async {
+    try {
+      // Use the provider's delete method which properly updates local state
+      final chatProvider = context.read<SimpleChatProvider>();
+      await chatProvider.deleteChatRoom(chatRoomId);
+      debugPrint('Chat room $chatRoomId deleted successfully');
+    } catch (e) {
+      debugPrint('Error deleting chat: $e');
+      rethrow;
+    }
   }
 
   String _getDisplayName(Map<String, dynamic> chatRoom, String currentUserId) {
     // For direct chats, show the other participant's name
     if (chatRoom['type'] == 'direct') {
+      // First check participantNames (new structure)
+      final participantNames = chatRoom['participantNames'] as Map<String, dynamic>?;
+      if (participantNames != null) {
+        for (var entry in participantNames.entries) {
+          if (entry.key != currentUserId) {
+            return entry.value ?? 'Unknown User';
+          }
+        }
+      }
+      
+      // Then check participants array (legacy structure)
       final participants = chatRoom['participants'] as List<dynamic>?;
       if (participants != null) {
         for (var participant in participants) {

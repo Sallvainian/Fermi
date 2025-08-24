@@ -17,7 +17,10 @@ class SimpleUserList extends StatelessWidget {
         title: const Text('Select a User'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            // Always go back to messages instead of trying to pop
+            context.go('/messages');
+          },
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -82,31 +85,19 @@ class SimpleUserList extends StatelessWidget {
                       context.go('/simple-chat/$existingChatId?title=${Uri.encodeComponent(displayName)}');
                     }
                   } else {
-                    // Create new chat
-                    final newChat = await FirebaseFirestore.instance.collection('chatRooms').add({
-                      'type': 'direct',
-                      'participantIds': [currentUser.uid, userId],
-                      'participants': [
-                        {
-                          'id': currentUser.uid,
-                          'name': currentUser.displayName ?? currentUser.email ?? 'You',
-                          'role': '',
-                        },
-                        {
-                          'id': userId,
-                          'name': displayName,
-                          'role': '',
-                        },
-                      ],
-                      'createdAt': FieldValue.serverTimestamp(),
-                      'createdBy': currentUser.uid,
-                      'lastMessage': null,
-                      'lastMessageTime': null,
-                      'lastMessageSenderId': null,
-                    });
-                    
+                    // Don't create chat yet - just navigate with recipient info
+                    // Chat will be created when first message is sent
                     if (context.mounted) {
-                      context.go('/simple-chat/${newChat.id}?title=${Uri.encodeComponent(displayName)}');
+                      // Pass recipient info as query parameters for new chat
+                      final params = {
+                        'title': displayName,
+                        'recipientId': userId,
+                        'recipientName': displayName,
+                      };
+                      final queryString = params.entries
+                          .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+                          .join('&');
+                      context.go('/simple-chat/new?$queryString');
                     }
                   }
                 },

@@ -124,7 +124,9 @@ service cloud.firestore {
       // Allow participants to update
       allow update: if isAuthenticated() && 
                        request.auth.uid in resource.data.participantIds;
-      allow delete: if false; // Don't allow deletion
+      // Allow participants to delete chat rooms they're part of
+      allow delete: if isAuthenticated() && 
+                       request.auth.uid in resource.data.participantIds;
       
       match /messages/{messageId} {
         allow read: if isAuthenticated() && 
@@ -134,7 +136,8 @@ service cloud.firestore {
                         request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds &&
                         request.auth.token.email_verified == true;
         allow update: if false; // Messages are immutable
-        allow delete: if false;
+        // Allow authenticated users to delete messages (simplified for chat deletion)
+        allow delete: if isAuthenticated();
       }
     }
     

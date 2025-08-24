@@ -152,11 +152,50 @@ class DesktopOAuthHandler {
   
   /// Opens the authorization URL in the default browser
   Future<void> _redirect(Uri authorizationUri) async {
-    if (await canLaunchUrl(authorizationUri)) {
-      await launchUrl(authorizationUri);
-    } else {
-      throw Exception('Cannot launch authorization URL: $authorizationUri');
+    try {
+      // Try url_launcher first
+      if (await canLaunchUrl(authorizationUri)) {
+        await launchUrl(authorizationUri);
+        return;
+      }
+    } catch (e) {
+      debugPrint('url_launcher failed: $e, trying fallback...');
     }
+    
+    // Fallback for Windows - directly open URL using system command
+    if (Platform.isWindows) {
+      try {
+        await Process.run('cmd', ['/c', 'start', authorizationUri.toString()]);
+        debugPrint('OAuth: Opened browser using Windows fallback');
+        return;
+      } catch (e) {
+        debugPrint('Windows fallback failed: $e');
+      }
+    }
+    
+    // Fallback for Mac
+    if (Platform.isMacOS) {
+      try {
+        await Process.run('open', [authorizationUri.toString()]);
+        debugPrint('OAuth: Opened browser using macOS fallback');
+        return;
+      } catch (e) {
+        debugPrint('macOS fallback failed: $e');
+      }
+    }
+    
+    // Fallback for Linux
+    if (Platform.isLinux) {
+      try {
+        await Process.run('xdg-open', [authorizationUri.toString()]);
+        debugPrint('OAuth: Opened browser using Linux fallback');
+        return;
+      } catch (e) {
+        debugPrint('Linux fallback failed: $e');
+      }
+    }
+    
+    throw Exception('Cannot launch authorization URL: $authorizationUri');
   }
   
   /// Listens for the OAuth redirect and extracts query parameters

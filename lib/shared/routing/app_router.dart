@@ -318,9 +318,14 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             final title = state.uri.queryParameters['title'] ?? 'Chat';
+            final recipientId = state.uri.queryParameters['recipientId'];
+            final recipientName = state.uri.queryParameters['recipientName'];
+            
             return SimpleChatScreen(
               chatRoomId: chatRoomId,
               chatTitle: title,
+              recipientId: recipientId,
+              recipientName: recipientName,
             );
           },
         ),

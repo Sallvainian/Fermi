@@ -249,6 +249,48 @@ class SimpleChatProvider with ChangeNotifier {
     }
   }
 
+  /// Delete a chat room completely
+  Future<void> deleteChatRoom(String chatRoomId) async {
+    try {
+      // Delete all messages in the chat first (subcollection)
+      final messagesSnapshot = await _firestore
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .collection('messages')
+          .get();
+      
+      // Batch delete messages for better performance
+      final batch = _firestore.batch();
+      for (var doc in messagesSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+      
+      // Now delete the chat room document itself
+      await _firestore
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .delete();
+      
+      // Remove from local state immediately
+      _chatRooms.removeWhere((chat) => chat['id'] == chatRoomId);
+      
+      // Clear current room if it's the one being deleted
+      if (_currentChatRoom?['id'] == chatRoomId) {
+        _currentChatRoom = null;
+        _currentMessages = [];
+      }
+      
+      notifyListeners();
+      LoggerService.info('Chat room $chatRoomId deleted successfully');
+    } catch (e) {
+      LoggerService.error('Failed to delete chat room', error: e);
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Create a group chat
   Future<Map<String, dynamic>> createGroupChat({
     required String name,
