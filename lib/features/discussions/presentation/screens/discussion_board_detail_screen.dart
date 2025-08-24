@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider.dart';
 import '../widgets/create_thread_dialog.dart';
@@ -365,11 +366,17 @@ class _DiscussionBoardDetailScreenState
             onPressed: () async {
               Navigator.of(dialogContext).pop(true);
               try {
-                await context.read<DiscussionProvider>().deleteThread(
-                  widget.boardId,
-                  thread.id,
-                );
+                // Use direct Firestore call like working comments
+                await FirebaseFirestore.instance
+                    .collection('discussion_boards')
+                    .doc(widget.boardId)
+                    .collection('threads')
+                    .doc(thread.id)
+                    .delete();
+                    
+                // Refresh the threads list
                 if (context.mounted) {
+                  context.read<DiscussionProvider>().loadBoardThreads(widget.boardId);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Thread "${thread.title}" deleted'),
