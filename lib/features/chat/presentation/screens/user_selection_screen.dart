@@ -36,6 +36,7 @@ class _UserSelectionScreenState
   @override
   void initState() {
     super.initState();
+    print('UserSelectionScreen: initState called');
     _searchController.addListener(_onSearchChanged);
     _scrollController.addListener(_onScroll);
     _initializeSearch();
@@ -58,25 +59,22 @@ class _UserSelectionScreenState
   Stream<QuerySnapshot> _buildSearchQuery() {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
+      print('UserSelectionScreen: No current user ID');
       return const Stream.empty();
     }
 
+    // Simple query - just get all users and filter client-side
+    // This avoids Firestore index issues with inequality filters
     Query query = FirebaseFirestore.instance
         .collection('users')
-        .where(FieldPath.documentId, isNotEqualTo: currentUserId);
+        .orderBy('displayName');
 
-    // If there's a search query, we need to use a different approach
-    // Firestore doesn't support full-text search natively
-    // We'll implement a workaround using case-insensitive partial matching
-    if (_searchQuery.isNotEmpty) {
-      // For search, we'll fetch all users and filter client-side
-      // In production, consider using Algolia or ElasticSearch for better search
-      query = query.orderBy(FieldPath.documentId);
-    } else {
-      // For initial load, order by display name or creation time
-      query = query.orderBy('displayName').limit(_pageSize);
+    // For pagination on initial load
+    if (_searchQuery.isEmpty && _lastDocument == null) {
+      query = query.limit(_pageSize);
     }
 
+    print('UserSelectionScreen: Building query for users');
     return query.snapshots();
   }
 
@@ -302,13 +300,17 @@ class _UserSelectionScreenState
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Convert documents to UserModel and filter
+          // Convert documents to UserModel and filter out current user
+          final currentUserId = FirebaseAuth.instance.currentUser?.uid;
           final allUsers = snapshot.data!.docs
               .map((doc) => UserModel.fromFirestore(doc))
+              .where((user) => user.uid != currentUserId) // Filter out current user
               .toList();
           
+          print('UserSelectionScreen: Loaded ${allUsers.length} users (excluding current user)');
+          
           // If not searching, use paginated list; otherwise use filtered stream data
-          final displayUsers = _searchQuery.isEmpty ? _users : _filterUsers(allUsers);
+          final displayUsers = _searchQuery.isEmpty ? allUsers : _filterUsers(allUsers);
 
           // For initial non-search load, populate the users list
           if (_searchQuery.isEmpty && _users.isEmpty && allUsers.isNotEmpty) {
