@@ -39,11 +39,8 @@ service cloud.firestore {
     
     // Users collection
     match /users/{userId} {
-      // Users can read their own profile, teachers can read all, students can read limited info
-      // CRITICAL: Allow users without roles to read their own data during OAuth setup
-      allow read: if isOwner(userId) || 
-                     (isAuthenticated() && resource != null && resource.data.role == 'teacher') ||
-                     (isAuthenticated() && resource != null && resource.data.keys().hasAll(['displayName', 'role', 'photoURL']));
+      // Allow ANY authenticated user to read users (needed for user selection in messaging)
+      allow read: if isAuthenticated();
       // Users can only write their own document (including initial creation)
       allow write: if isOwner(userId);
     }
@@ -116,7 +113,32 @@ service cloud.firestore {
       }
     }
     
-    // Chat rooms (primary chat implementation)
+    // Chat rooms (NEW - camelCase version used by SimpleUserList)
+    match /chatRooms/{chatRoomId} {
+      // Allow authenticated users to read chatRooms to check for existing chats
+      allow read: if isAuthenticated();
+      // Allow authenticated users to create new chat rooms if they're a participant
+      allow create: if isAuthenticated() && 
+                       request.auth.uid in request.resource.data.participantIds &&
+                       request.auth.token.email_verified == true;
+      // Allow participants to update
+      allow update: if isAuthenticated() && 
+                       request.auth.uid in resource.data.participantIds;
+      allow delete: if false; // Don't allow deletion
+      
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && 
+                      request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds;
+        allow create: if isAuthenticated() && 
+                        request.auth.uid == request.resource.data.senderId &&
+                        request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds &&
+                        request.auth.token.email_verified == true;
+        allow update: if false; // Messages are immutable
+        allow delete: if false;
+      }
+    }
+    
+    // Chat rooms (OLD - snake_case version, keeping for compatibility)
     match /chat_rooms/{chatRoomId} {
       // Allow read if authenticated AND either:
       // - User is the teacher OR

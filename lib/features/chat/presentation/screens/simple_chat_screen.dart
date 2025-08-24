@@ -59,7 +59,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _firestore
-                  .collection('chat_rooms')
+                  .collection('chatRooms')
                   .doc(widget.chatRoomId)
                   .collection('messages')
                   .orderBy('timestamp', descending: true)
@@ -342,7 +342,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
     try {
       await _firestore
-          .collection('chat_rooms')
+          .collection('chatRooms')
           .doc(widget.chatRoomId)
           .collection('messages')
           .add({
@@ -417,7 +417,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       // Send message with image URL
       await _firestore
-          .collection('chat_rooms')
+          .collection('chatRooms')
           .doc(widget.chatRoomId)
           .collection('messages')
           .add({
@@ -496,7 +496,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       // Send message with video URL
       await _firestore
-          .collection('chat_rooms')
+          .collection('chatRooms')
           .doc(widget.chatRoomId)
           .collection('messages')
           .add({
