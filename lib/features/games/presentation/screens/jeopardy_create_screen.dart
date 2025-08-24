@@ -347,10 +347,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
               question: '',
               answer: '',
               points: (index + 1) * 100,
-            ),
-          ),
-        ),
-      );
+      ),
       _game = _game!.copyWith(categories: updatedCategories);
     });
   }
