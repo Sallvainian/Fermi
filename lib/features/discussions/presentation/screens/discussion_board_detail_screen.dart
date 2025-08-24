@@ -119,6 +119,7 @@ class _DiscussionBoardDetailScreenState
         }
 
         return ListView.builder(
+          physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: sortedThreads.length,
           itemBuilder: (context, index) {

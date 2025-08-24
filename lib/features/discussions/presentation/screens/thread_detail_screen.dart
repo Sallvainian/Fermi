@@ -201,6 +201,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
         children: [
           Expanded(
             child: ListView(
+              physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
               padding: const EdgeInsets.all(16),
               children: [
                 // Thread header

@@ -112,6 +112,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         }
 
         return ListView.builder(
+          physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
           padding: const EdgeInsets.all(16),
           itemCount: provider.boards.length,
           itemBuilder: (context, index) {
