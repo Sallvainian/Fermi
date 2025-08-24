@@ -7,9 +7,10 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/models/discussion_board.dart';
-import '../../domain/repositories/discussion_repository.dart';
+// Repository removed - using direct Firestore access
 import '../../../../shared/core/service_locator.dart';
 import '../../../../shared/services/logger_service.dart';
 
@@ -31,7 +32,10 @@ class DiscussionProvider with ChangeNotifier {
   static const String _tag = 'DiscussionProvider';
 
   /// Repository for discussion data operations.
-  late final DiscussionRepository _repository;
+  // Repository removed - using direct Firestore access
+  
+  /// Firestore instance for database access.
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Firebase Auth for user identification.
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -39,7 +43,7 @@ class DiscussionProvider with ChangeNotifier {
   // State variables
 
   /// All available discussion boards.
-  List<DiscussionBoard> _boards = [];
+  final List<DiscussionBoard> _boards = [];
 
   /// Threads grouped by board ID.
   final Map<String, List<DiscussionThread>> _boardThreads = {};
@@ -76,7 +80,7 @@ class DiscussionProvider with ChangeNotifier {
   ///
   /// Retrieves discussion repository from dependency injection.
   DiscussionProvider() {
-    _repository = getIt<DiscussionRepository>();
+    // Repository initialization removed
   }
 
   // Getters
@@ -130,18 +134,19 @@ class DiscussionProvider with ChangeNotifier {
   void initializeBoards() {
     _boardsSubscription?.cancel();
 
-    _boardsSubscription = _repository.streamBoards().listen(
-      (boards) {
-        _boards = boards;
-        _error = null;
-        notifyListeners();
-      },
-      onError: (error) {
-        _error = error.toString();
-        LoggerService.error('Failed to load boards', tag: _tag, error: error);
-        notifyListeners();
-      },
-    );
+    // Repository methods need to be reimplemented with direct Firestore access
+    // _boardsSubscription = _repository.streamBoards().listen(
+    //   (boards) {
+    //     _boards = boards;
+    //     _error = null;
+    //     notifyListeners();
+    //   },
+    //   onError: (error) {
+    //     _error = error.toString();
+    //     LoggerService.error('Failed to load boards', tag: _tag, error: error);
+    //     notifyListeners();
+    //   },
+    // );
   }
 
   /// Loads and subscribes to threads for a board.
@@ -155,7 +160,17 @@ class DiscussionProvider with ChangeNotifier {
     _threadSubscriptions[boardId]?.cancel();
 
     _threadSubscriptions[boardId] =
-        _repository.streamBoardThreads(boardId).listen(
+        _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .orderBy('isPinned', descending: true)
+            .orderBy('lastActivityAt', descending: true)
+            .snapshots()
+            .map((snapshot) => snapshot.docs.map((doc) {
+                  return DiscussionThread.fromFirestore(doc);
+                }).toList())
+            .listen(
       (threads) {
         _boardThreads[boardId] = threads;
         _error = null;
@@ -182,7 +197,18 @@ class DiscussionProvider with ChangeNotifier {
     _replySubscriptions[key]?.cancel();
 
     _replySubscriptions[key] =
-        _repository.streamThreadReplies(boardId, threadId).listen(
+        _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .doc(threadId)
+            .collection('replies')
+            .orderBy('createdAt')
+            .snapshots()
+            .map((snapshot) => snapshot.docs.map((doc) {
+                  return ThreadReply.fromFirestore(doc);
+                }).toList())
+            .listen(
       (replies) {
         _threadReplies[key] = replies;
         _error = null;
@@ -248,21 +274,21 @@ class DiscussionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final board = DiscussionBoard(
-        id: '',
-        title: title,
-        description: description,
-        createdBy: currentUserId,
-        createdByName: _auth.currentUser?.displayName ?? 'User',
-        classId: classId,
-        participantIds: [currentUserId],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        isPinned: isPinned,
-        tags: tags,
-      );
+      final board = {
+        'title': title,
+        'description': description,
+        'createdBy': currentUserId,
+        'createdByName': _auth.currentUser?.displayName ?? 'User',
+        'classId': classId,
+        'participantIds': [currentUserId],
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'isPinned': isPinned,
+        'tags': tags,
+      };
 
-      final boardId = await _repository.createBoard(board);
+      final docRef = await _firestore.collection('discussion_boards').add(board);
+      final boardId = docRef.id;
       LoggerService.info('Created board: $boardId', tag: _tag);
 
       return boardId;
@@ -300,22 +326,31 @@ class DiscussionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final thread = DiscussionThread(
-        id: '',
-        boardId: boardId,
-        title: title,
-        content: content,
-        authorId: currentUserId,
-        authorName: _auth.currentUser?.displayName ?? 'User',
-        authorRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true
+      final thread = {
+        'boardId': boardId,
+        'title': title,
+        'content': content,
+        'authorId': currentUserId,
+        'authorName': _auth.currentUser?.displayName ?? 'User',
+        'authorRole': _auth.currentUser?.email?.endsWith('@teacher.edu') == true
             ? 'teacher'
             : 'student',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        tags: tags,
-      );
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+        'tags': tags,
+        'isPinned': false,
+        'isLocked': false,
+        'viewCount': 0,
+        'replyCount': 0,
+        'lastActivityAt': FieldValue.serverTimestamp(),
+      };
 
-      final threadId = await _repository.createThread(boardId, thread);
+      final docRef = await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .add(thread);
+      final threadId = docRef.id;
       LoggerService.info('Created thread: $threadId', tag: _tag);
 
       return threadId;
@@ -355,21 +390,29 @@ class DiscussionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final reply = ThreadReply(
-        id: '',
-        threadId: threadId,
-        content: content,
-        authorId: currentUserId,
-        authorName: _auth.currentUser?.displayName ?? 'User',
-        authorRole: _auth.currentUser?.email?.endsWith('@teacher.edu') == true
+      final reply = {
+        'threadId': threadId,
+        'content': content,
+        'authorId': currentUserId,
+        'authorName': _auth.currentUser?.displayName ?? 'User',
+        'authorRole': _auth.currentUser?.email?.endsWith('@teacher.edu') == true
             ? 'teacher'
             : 'student',
-        createdAt: DateTime.now(),
-        replyToId: replyToId,
-        replyToAuthor: replyToAuthor,
-      );
+        'createdAt': FieldValue.serverTimestamp(),
+        'replyToId': replyToId,
+        'replyToAuthor': replyToAuthor,
+        'likes': [],
+        'isEdited': false,
+      };
 
-      final replyId = await _repository.createReply(boardId, threadId, reply);
+      final docRef = await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .collection('replies')
+          .add(reply);
+      final replyId = docRef.id;
       LoggerService.info('Created reply: $replyId', tag: _tag);
 
       return replyId;
@@ -402,9 +445,27 @@ class DiscussionProvider with ChangeNotifier {
       );
 
       if (thread?.likedBy.contains(currentUserId) ?? false) {
-        await _repository.unlikeThread(boardId, threadId, currentUserId);
+        // Remove like
+        await _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .doc(threadId)
+            .update({
+          'likedBy': FieldValue.arrayRemove([currentUserId]),
+          'likes': FieldValue.increment(-1),
+        });
       } else {
-        await _repository.likeThread(boardId, threadId, currentUserId);
+        // Add like
+        await _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .doc(threadId)
+            .update({
+          'likedBy': FieldValue.arrayUnion([currentUserId]),
+          'likes': FieldValue.increment(1),
+        });
       }
     } catch (e) {
       _error = e.toString();
@@ -432,10 +493,31 @@ class DiscussionProvider with ChangeNotifier {
       );
 
       if (reply?.likedBy.contains(currentUserId) ?? false) {
-        await _repository.unlikeReply(
-            boardId, threadId, replyId, currentUserId);
+        // Remove like from reply
+        await _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .doc(threadId)
+            .collection('replies')
+            .doc(replyId)
+            .update({
+          'likedBy': FieldValue.arrayRemove([currentUserId]),
+          'likes': FieldValue.increment(-1),
+        });
       } else {
-        await _repository.likeReply(boardId, threadId, replyId, currentUserId);
+        // Add like to reply
+        await _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .doc(threadId)
+            .collection('replies')
+            .doc(replyId)
+            .update({
+          'likedBy': FieldValue.arrayUnion([currentUserId]),
+          'likes': FieldValue.increment(1),
+        });
       }
     } catch (e) {
       _error = e.toString();
@@ -461,7 +543,12 @@ class DiscussionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repository.deleteThread(boardId, threadId);
+      await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .delete();
       LoggerService.info('Deleted thread: $threadId', tag: _tag);
       return true;
     } catch (e) {
@@ -490,7 +577,14 @@ class DiscussionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repository.deleteReply(boardId, threadId, replyId);
+      await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .collection('replies')
+          .doc(replyId)
+          .delete();
       LoggerService.info('Deleted reply: $replyId', tag: _tag);
       return true;
     } catch (e) {
@@ -514,7 +608,10 @@ class DiscussionProvider with ChangeNotifier {
   /// @param isPinned true to pin, false to unpin
   Future<void> pinBoard(String boardId, bool isPinned) async {
     try {
-      await _repository.pinBoard(boardId, isPinned);
+      await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .update({'isPinned': isPinned});
     } catch (e) {
       _error = e.toString();
       LoggerService.error('Failed to pin/unpin board', tag: _tag, error: e);
@@ -532,7 +629,12 @@ class DiscussionProvider with ChangeNotifier {
   /// @param isPinned true to pin, false to unpin
   Future<void> pinThread(String boardId, String threadId, bool isPinned) async {
     try {
-      await _repository.pinThread(boardId, threadId, isPinned);
+      await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .update({'isPinned': isPinned});
     } catch (e) {
       _error = e.toString();
       LoggerService.error('Failed to pin/unpin thread', tag: _tag, error: e);
@@ -551,7 +653,12 @@ class DiscussionProvider with ChangeNotifier {
   Future<void> lockThread(
       String boardId, String threadId, bool isLocked) async {
     try {
-      await _repository.lockThread(boardId, threadId, isLocked);
+      await _firestore
+          .collection('discussion_boards')
+          .doc(boardId)
+          .collection('threads')
+          .doc(threadId)
+          .update({'isLocked': isLocked});
     } catch (e) {
       _error = e.toString();
       LoggerService.error('Failed to lock/unlock thread', tag: _tag, error: e);
@@ -569,9 +676,31 @@ class DiscussionProvider with ChangeNotifier {
   ///
   /// @param query Search terms
   /// @return List of matching threads or empty list
-  Future<List<DiscussionThread>> searchThreads(String query) async {
+  Future<List<Map<String, dynamic>>> searchThreads(String query) async {
     try {
-      return await _repository.searchThreads(query);
+      // Simple search implementation
+      final results = <Map<String, dynamic>>[];
+      for (final boardId in _boardThreads.keys) {
+        final threads = _boardThreads[boardId] ?? [];
+        for (final thread in threads) {
+          // Convert DiscussionThread to Map for search results
+          final title = thread.title.toLowerCase();
+          final content = thread.content.toLowerCase();
+          final searchQuery = query.toLowerCase();
+          if (title.contains(searchQuery) || content.contains(searchQuery)) {
+            // Convert to Map for compatibility with existing UI
+            results.add({
+              'id': thread.id,
+              'title': thread.title,
+              'content': thread.content,
+              'boardId': thread.boardId,
+              'authorName': thread.authorName,
+              'createdAt': thread.createdAt.toIso8601String(),
+            });
+          }
+        }
+      }
+      return results;
     } catch (e) {
       _error = e.toString();
       LoggerService.error('Failed to search threads', tag: _tag, error: e);
@@ -605,17 +734,14 @@ class DiscussionProvider with ChangeNotifier {
   /// the repository instance.
   @override
   void dispose() {
+    // Clean up subscriptions
     _boardsSubscription?.cancel();
-
     for (final subscription in _threadSubscriptions.values) {
       subscription.cancel();
     }
-
     for (final subscription in _replySubscriptions.values) {
       subscription.cancel();
     }
-
-    _repository.dispose();
     super.dispose();
   }
 }

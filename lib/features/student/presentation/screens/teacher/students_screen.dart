@@ -4,7 +4,7 @@ import '../../../domain/models/student.dart';
 import '../../../../../features/classes/domain/models/class_model.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
-import '../../providers/student_provider.dart';
+import '../../providers/student_provider_simple.dart';
 import '../../../../../features/classes/presentation/providers/class_provider.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 
@@ -39,7 +39,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (classProvider.teacherClasses.isNotEmpty) {
           context
-              .read<StudentProvider>()
+              .read<SimpleStudentProvider>()
               .loadTeacherStudents(classProvider.teacherClasses);
         }
       });
@@ -180,7 +180,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   }
 
   Widget _buildAllStudentsTab() {
-    return Consumer2<StudentProvider, ClassProvider>(
+    return Consumer2<SimpleStudentProvider, ClassProvider>(
       builder: (context, studentProvider, classProvider, _) {
         if (studentProvider.isLoading || classProvider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -315,7 +315,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
           else
             FutureBuilder<List<Student>>(
               future: context
-                  .read<StudentProvider>()
+                  .read<SimpleStudentProvider>()
                   .loadStudentsByIds(classModel.studentIds),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {

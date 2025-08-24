@@ -141,6 +141,7 @@ class SimpleChatProvider with ChangeNotifier {
   Future<void> sendMessage({
     required String content,
     String? attachmentUrl,
+    String? attachmentType,
   }) async {
     if (_currentChatRoom == null) return;
 
@@ -151,10 +152,15 @@ class SimpleChatProvider with ChangeNotifier {
     try {
       final messageData = {
         'text': content,
+        'content': content,
         'senderId': userId,
         'senderName': userEmail?.split('@')[0] ?? 'User',
+        'senderRole': 'user',
         'timestamp': FieldValue.serverTimestamp(),
         'imageUrl': attachmentUrl,
+        'attachmentUrl': attachmentUrl,
+        'attachmentType': attachmentType,
+        'isRead': false,
       };
 
       await _firestore
@@ -170,6 +176,7 @@ class SimpleChatProvider with ChangeNotifier {
           .update({
         'lastMessage': content,
         'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageSenderId': userId,
       });
     } catch (e) {
       _error = e.toString();
@@ -191,6 +198,104 @@ class SimpleChatProvider with ChangeNotifier {
     } catch (e) {
       LoggerService.error('Failed to mark as read', error: e);
     }
+  }
+
+  /// Set the current chat room
+  void setCurrentChatRoom(Map<String, dynamic> chatRoom) {
+    _currentChatRoom = chatRoom;
+    loadChatMessages(chatRoom['id']);
+    notifyListeners();
+  }
+
+  /// Get a specific chat room by ID
+  Future<Map<String, dynamic>?> getChatRoom(String chatRoomId) async {
+    try {
+      final doc = await _firestore.collection('chatRooms').doc(chatRoomId).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        data['id'] = doc.id;
+        return data;
+      }
+      return null;
+    } catch (e) {
+      LoggerService.error('Failed to get chat room', error: e);
+      _error = e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Leave a chat room (for group chats)
+  Future<void> leaveChatRoom(String chatRoomId) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      await _firestore.collection('chatRooms').doc(chatRoomId).update({
+        'participantIds': FieldValue.arrayRemove([userId]),
+      });
+      
+      // Clear current room if it's the one being left
+      if (_currentChatRoom?['id'] == chatRoomId) {
+        _currentChatRoom = null;
+        _currentMessages = [];
+        notifyListeners();
+      }
+    } catch (e) {
+      LoggerService.error('Failed to leave chat room', error: e);
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Create a group chat
+  Future<Map<String, dynamic>> createGroupChat({
+    required String name,
+    required String type,
+    required List<String> participantIds,
+    required List<Map<String, dynamic>> participants,
+    String? classId,
+  }) async {
+    final currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null) throw Exception('Not authenticated');
+
+    try {
+      final chatData = {
+        'name': name,
+        'type': type,
+        'participantIds': participantIds,
+        'participants': participants,
+        'classId': classId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdBy': currentUserId,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessage': '',
+        'mutedUsers': [],
+        'unreadCount': 0,
+        'unreadCounts': {},
+      };
+
+      final docRef = await _firestore.collection('chatRooms').add(chatData);
+      chatData['id'] = docRef.id;
+      
+      // Set as current chat room
+      _currentChatRoom = chatData;
+      loadChatMessages(docRef.id);
+      
+      return chatData;
+    } catch (e) {
+      LoggerService.error('Failed to create group chat', error: e);
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Set auth provider (compatibility method)
+  void setAuthProvider(dynamic authProvider) {
+    // This is a compatibility method that doesn't need to do anything
+    // since we're using FirebaseAuth directly
   }
 
   @override

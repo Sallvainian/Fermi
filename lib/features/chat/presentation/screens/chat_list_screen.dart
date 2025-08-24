@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../providers/chat_provider.dart';
+import '../providers/chat_provider_simple.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/chat_room.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
@@ -23,7 +23,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final chatProvider = context.read<ChatProvider>();
+      final chatProvider = context.read<SimpleChatProvider>();
       final authProvider = context.read<AuthProvider>();
       chatProvider.setAuthProvider(authProvider);
       chatProvider.initializeChatRooms();
@@ -56,7 +56,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           },
         ),
       ],
-      body: Consumer<ChatProvider>(
+      body: Consumer<SimpleChatProvider>(
         builder: (context, chatProvider, child) {
           if (chatProvider.error != null) {
             return Center(
@@ -84,13 +84,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
               : allChatRooms.where((room) {
                   final authProvider = context.read<AuthProvider>();
                   final currentUserId = authProvider.userModel?.uid ?? '';
-                  final displayName = room.getDisplayName(currentUserId);
+                  final displayName = _getDisplayName(room, currentUserId);
 
                   return displayName
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase()) ||
-                      (room.lastMessage
-                              ?.toLowerCase()
+                      (room['lastMessage']
+                              ?.toString()
+                              .toLowerCase()
                               .contains(_searchQuery.toLowerCase()) ??
                           false);
                 }).toList();
@@ -157,15 +158,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _buildChatRoomTile(BuildContext context, ChatRoom chatRoom) {
+  Widget _buildChatRoomTile(BuildContext context, Map<String, dynamic> chatRoom) {
     final theme = Theme.of(context);
-    final hasUnread = chatRoom.unreadCount > 0;
+    final hasUnread = (chatRoom['unreadCount'] ?? 0) > 0;
     final authProvider = context.read<AuthProvider>();
     final currentUserId = authProvider.userModel?.uid ?? '';
 
     // Get the display name and photo for this chat room from current user's perspective
-    final displayName = chatRoom.getDisplayName(currentUserId);
-    final displayPhotoUrl = chatRoom.getDisplayPhotoUrl(currentUserId);
+    final String displayName = _getDisplayName(chatRoom, currentUserId);
+    final String? displayPhotoUrl = _getDisplayPhotoUrl(chatRoom, currentUserId);
 
     return ListTile(
       leading: CircleAvatar(
@@ -193,9 +194,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
               ),
             ),
           ),
-          if (chatRoom.lastMessageTime != null)
+          if (chatRoom['lastMessageTime'] != null)
             Text(
-              _formatTime(chatRoom.lastMessageTime!),
+              _formatTime(chatRoom['lastMessageTime'].toDate()),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: hasUnread
                     ? theme.colorScheme.primary
@@ -208,7 +209,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         children: [
           Expanded(
             child: Text(
-              chatRoom.lastMessage ?? 'No messages yet',
+              chatRoom['lastMessage'] ?? 'No messages yet',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -227,7 +228,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                chatRoom.unreadCount.toString(),
+                (chatRoom['unreadCount'] ?? 0).toString(),
                 style: TextStyle(
                   color: theme.colorScheme.onPrimary,
                   fontSize: 12,
@@ -238,10 +239,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ],
       ),
       onTap: () {
-        context.read<ChatProvider>().setCurrentChatRoom(chatRoom);
+        context.read<SimpleChatProvider>().setCurrentChatRoom(chatRoom);
         // Use the new simple chat screen that actually works
         context.push(
-            '/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
+            '/simple-chat/${chatRoom['id']}?title=${Uri.encodeComponent(displayName)}');
       },
       onLongPress: () {
         // Option to use old chat screen if needed
@@ -254,7 +255,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(dialogContext);
-                  context.push('/chat/${chatRoom.id}');
+                  context.push('/chat/${chatRoom['id']}');
                 },
                 child: const Text('Original (may have issues)'),
               ),
@@ -262,7 +263,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 onPressed: () {
                   Navigator.pop(dialogContext);
                   context.push(
-                      '/simple-chat/${chatRoom.id}?title=${Uri.encodeComponent(displayName)}');
+                      '/simple-chat/${chatRoom['id']}?title=${Uri.encodeComponent(displayName)}');
                 },
                 child: const Text('Simple (recommended)'),
               ),
@@ -271,6 +272,51 @@ class _ChatListScreenState extends State<ChatListScreen> {
         );
       },
     );
+  }
+
+  String _getDisplayName(Map<String, dynamic> chatRoom, String currentUserId) {
+    // For direct chats, show the other participant's name
+    if (chatRoom['type'] == 'direct') {
+      final participants = chatRoom['participants'] as List<dynamic>?;
+      if (participants != null) {
+        for (var participant in participants) {
+          if (participant is Map<String, dynamic> && 
+              participant['uid'] != currentUserId) {
+            return participant['displayName'] ?? participant['email'] ?? 'Unknown User';
+          }
+        }
+      }
+      // Fallback: use participantIds if participants array not available
+      final participantIds = chatRoom['participantIds'] as List<dynamic>?;
+      if (participantIds != null && participantIds.length == 2) {
+        final otherUserId = participantIds.firstWhere(
+          (id) => id != currentUserId,
+          orElse: () => null,
+        );
+        return chatRoom['name'] ?? otherUserId ?? 'Direct Chat';
+      }
+    }
+    
+    // For group/class chats, use the chat room name
+    return chatRoom['name'] ?? 'Unnamed Chat';
+  }
+
+  String? _getDisplayPhotoUrl(Map<String, dynamic> chatRoom, String currentUserId) {
+    // For direct chats, show the other participant's photo
+    if (chatRoom['type'] == 'direct') {
+      final participants = chatRoom['participants'] as List<dynamic>?;
+      if (participants != null) {
+        for (var participant in participants) {
+          if (participant is Map<String, dynamic> && 
+              participant['uid'] != currentUserId) {
+            return participant['photoUrl'];
+          }
+        }
+      }
+    }
+    
+    // For group/class chats, could return a default group icon URL
+    return null;
   }
 
   String _formatTime(DateTime time) {

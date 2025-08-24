@@ -6,7 +6,7 @@ import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../domain/models/assignment.dart';
 import '../../../../../shared/models/user_model.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/assignment_provider.dart';
+import '../../providers/assignment_provider_simple.dart';
 import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 
 class TeacherAssignmentsScreen extends StatefulWidget {
@@ -28,7 +28,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     // Load assignments when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = context.read<AuthProvider>();
-      final assignmentProvider = context.read<AssignmentProvider>();
+      final assignmentProvider = context.read<SimpleAssignmentProvider>();
       final user = authProvider.userModel;
 
       if (user != null && user.role == UserRole.teacher) {
@@ -36,7 +36,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
         assignmentProvider.clearError();
         
         // Load teacher assignments
-        await assignmentProvider.loadAssignmentsForTeacher(user.uid);
+        await assignmentProvider.loadAssignmentsForTeacher();
       }
     });
   }
@@ -150,7 +150,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
 
   Widget _buildAssignmentsList() {
     final authProvider = context.watch<AuthProvider>();
-    final assignmentProvider = context.watch<AssignmentProvider>();
+    final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final user = authProvider.userModel;
 
     if (user == null) {
@@ -175,7 +175,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
             ElevatedButton(
               onPressed: () {
                 assignmentProvider.clearError();
-                assignmentProvider.loadAssignmentsForTeacher(user.uid);
+                assignmentProvider.loadAssignmentsForTeacher();
               },
               child: const Text('Retry'),
             ),
@@ -191,16 +191,16 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       // Status filter
       if (_selectedStatus != 'All') {
         if (_selectedStatus == 'Active' &&
-            assignment.status != AssignmentStatus.active) {
+            assignment['status'] != 'active') {
           return false;
         }
         if (_selectedStatus == 'Draft' &&
-            (assignment.status != AssignmentStatus.draft ||
-                assignment.isPublished)) {
+            (assignment['status'] != 'draft' ||
+                (assignment['isPublished'] ?? false))) {
           return false;
         }
         if (_selectedStatus == 'Closed' &&
-            assignment.status != AssignmentStatus.completed) {
+            assignment['status'] != 'completed') {
           return false;
         }
       }
@@ -208,8 +208,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       // Search filter
       if (_searchController.text.isNotEmpty) {
         final searchLower = _searchController.text.toLowerCase();
-        return assignment.title.toLowerCase().contains(searchLower) ||
-            assignment.description.toLowerCase().contains(searchLower);
+        return (assignment['title'] ?? '').toLowerCase().contains(searchLower) ||
+            (assignment['description'] ?? '').toLowerCase().contains(searchLower);
       }
 
       return true;
@@ -253,35 +253,39 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     );
   }
 
-  Widget _buildAssignmentCard(Assignment assignment) {
+  Widget _buildAssignmentCard(Map<String, dynamic> assignment) {
     final theme = Theme.of(context);
-    final dueDate = assignment.dueDate;
+    final dueDate = assignment['dueDate'];
     final isOverdue = dueDate.isBefore(DateTime.now()) &&
-        assignment.status == AssignmentStatus.active;
+        assignment['status'] == 'active';
 
     Color statusColor;
     IconData statusIcon;
-    switch (assignment.status) {
-      case AssignmentStatus.active:
+    switch (assignment['status']) {
+      case 'active':
         statusColor = Colors.green;
         statusIcon = Icons.play_circle_outline;
         break;
-      case AssignmentStatus.draft:
+      case 'draft':
         statusColor = Colors.orange;
         statusIcon = Icons.edit_outlined;
         break;
-      case AssignmentStatus.completed:
+      case 'completed':
         statusColor = Colors.grey;
         statusIcon = Icons.check_circle_outline;
         break;
-      case AssignmentStatus.archived:
+      case 'archived':
         statusColor = Colors.grey;
         statusIcon = Icons.archive_outlined;
         break;
+      default:
+        statusColor = Colors.grey;
+        statusIcon = Icons.help_outline;
+        break;
     }
 
-    if (!assignment.isPublished) {
-      if (assignment.publishAt != null) {
+    if (!(assignment['isPublished'] ?? false)) {
+      if (assignment['publishAt'] != null) {
         statusColor = Colors.blue;
         statusIcon = Icons.schedule;
       } else {
@@ -293,7 +297,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () => context.push('/teacher/assignments/${assignment.id}'),
+        onTap: () => context.push('/teacher/assignments/${assignment['id']}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -311,7 +315,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      _getAssignmentTypeIcon(assignment.type),
+                      _getAssignmentTypeIcon(assignment['type'] ?? 'essay'),
                       color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
@@ -322,13 +326,13 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          assignment.title,
+                          assignment['title'] ?? 'Untitled',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          assignment.category,
+                          assignment['category'] ?? 'OTHER',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -350,9 +354,9 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                         Icon(statusIcon, size: 16, color: statusColor),
                         const SizedBox(width: 4),
                         Text(
-                          assignment.isPublished
-                              ? assignment.status.name.toUpperCase()
-                              : assignment.publishAt != null
+                          (assignment['isPublished'] ?? false)
+                              ? (assignment['status'] ?? 'draft').toUpperCase()
+                              : assignment['publishAt'] != null
                                   ? 'SCHEDULED'
                                   : 'UNPUBLISHED',
                           style: TextStyle(
@@ -385,23 +389,23 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                     child: _buildInfoItem(
                       icon: Icons.star_outline,
                       label: 'Points',
-                      value: '${assignment.maxPoints.toInt()}',
+                      value: '${(assignment['maxPoints'] ?? 0).toInt()}',
                     ),
                   ),
                   // Type or Publish Date
                   Expanded(
                     child:
-                        assignment.publishAt != null && !assignment.isPublished
+                        assignment['publishAt'] != null && !(assignment['isPublished'] ?? false)
                             ? _buildInfoItem(
                                 icon: Icons.schedule,
                                 label: 'Publishes',
-                                value: _formatDate(assignment.publishAt!),
+                                value: _formatDate(assignment['publishAt']),
                                 color: Colors.blue,
                               )
                             : _buildInfoItem(
                                 icon: Icons.assignment_outlined,
                                 label: 'Type',
-                                value: assignment.type.name.toUpperCase(),
+                                value: (assignment['type'] ?? 'essay').toUpperCase(),
                               ),
                   ),
                 ],
@@ -412,29 +416,29 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  if (assignment.status == AssignmentStatus.active)
+                  if (assignment['status'] == 'active')
                     TextButton.icon(
                       onPressed: () {
                         context.push(
-                            '/teacher/gradebook?assignmentId=${assignment.id}');
+                            '/teacher/gradebook?assignmentId=${assignment['id']}');
                       },
                       icon: const Icon(Icons.grading, size: 18),
                       label: const Text('Grade'),
                     ),
-                  if (!assignment.isPublished)
+                  if (!(assignment['isPublished'] ?? false))
                     TextButton.icon(
                       onPressed: () async {
                         final assignmentProvider =
-                            context.read<AssignmentProvider>();
+                            context.read<SimpleAssignmentProvider>();
                         await assignmentProvider.togglePublishStatus(
-                            assignment.id, true);
+                            assignment['id']);
                       },
                       icon: const Icon(Icons.publish, size: 18),
                       label: const Text('Publish'),
                     ),
                   TextButton.icon(
                     onPressed: () {
-                      context.push('/teacher/assignments/${assignment.id}');
+                      context.push('/teacher/assignments/${assignment['id']}');
                     },
                     icon: const Icon(Icons.visibility, size: 18),
                     label: const Text('View'),
@@ -483,27 +487,28 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     );
   }
 
-  IconData _getAssignmentTypeIcon(AssignmentType type) {
+  IconData _getAssignmentTypeIcon(String type) {
     switch (type) {
-      case AssignmentType.homework:
+      case 'homework':
         return Icons.home_work_outlined;
-      case AssignmentType.essay:
+      case 'essay':
         return Icons.article_outlined;
-      case AssignmentType.exam:
+      case 'exam':
         return Icons.quiz_outlined;
-      case AssignmentType.test:
+      case 'test':
         return Icons.quiz_outlined;
-      case AssignmentType.lab:
+      case 'lab':
         return Icons.science_outlined;
-      case AssignmentType.project:
+      case 'project':
         return Icons.folder_special_outlined;
-      case AssignmentType.quiz:
+      case 'quiz':
         return Icons.quiz_outlined;
-      case AssignmentType.presentation:
+      case 'presentation':
         return Icons.present_to_all_outlined;
-      case AssignmentType.classwork:
+      case 'classwork':
         return Icons.work_outlined;
-      case AssignmentType.other:
+      case 'other':
+      default:
         return Icons.assignment_outlined;
     }
   }

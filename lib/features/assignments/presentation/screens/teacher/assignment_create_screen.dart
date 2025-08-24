@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../domain/models/assignment.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/assignment_provider.dart';
+import '../../providers/assignment_provider_simple.dart';
 import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 import '../../../../../shared/models/user_model.dart';
 
@@ -29,8 +28,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
 
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay _dueTime = const TimeOfDay(hour: 23, minute: 59);
-  AssignmentType _selectedType = AssignmentType.essay;
-  AssignmentStatus _selectedStatus = AssignmentStatus.draft;
+  String _selectedType = 'essay';
+  String _selectedStatus = 'draft';
   bool _isPublished = false;
   bool _allowLateSubmissions = true;
   int _latePenaltyPercentage = 10;
@@ -95,7 +94,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final assignmentProvider = context.read<AssignmentProvider>();
+      final assignmentProvider = context.read<SimpleAssignmentProvider>();
       final user = authProvider.userModel;
 
       if (user == null) {
@@ -119,27 +118,27 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
         );
       }
 
-      final assignment = Assignment(
-        id: '',
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        instructions: _instructionsController.text.trim(),
-        type: _selectedType,
-        status: _selectedStatus,
-        category: _selectedType.name.toUpperCase(),
-        classId: widget.classId ?? '',
-        teacherId: user.uid,
-        teacherName: user.displayNameOrFallback,
-        totalPoints: double.parse(_maxPointsController.text),
-        maxPoints: double.parse(_maxPointsController.text),
-        dueDate: _combineDateAndTime(),
-        isPublished: _isPublished,
-        allowLateSubmissions: _allowLateSubmissions,
-        latePenaltyPercentage: _latePenaltyPercentage,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        publishAt: publishAt,
-      );
+      final assignment = {
+        'id': '',
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'instructions': _instructionsController.text.trim(),
+        'type': _selectedType,
+        'status': _selectedStatus,
+        'category': _selectedType.toUpperCase(),
+        'classId': widget.classId ?? '',
+        'teacherId': user.uid,
+        'teacherName': user.displayNameOrFallback,
+        'totalPoints': double.parse(_maxPointsController.text),
+        'maxPoints': double.parse(_maxPointsController.text),
+        'dueDate': _combineDateAndTime(),
+        'isPublished': _isPublished,
+        'allowLateSubmissions': _allowLateSubmissions,
+        'latePenaltyPercentage': _latePenaltyPercentage,
+        'createdAt': DateTime.now(),
+        'updatedAt': DateTime.now(),
+        'publishAt': publishAt,
+      };
 
       final success = await assignmentProvider.createAssignment(assignment);
 
@@ -147,7 +146,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content:
-                Text('Assignment "${assignment.title}" created successfully'),
+                Text('Assignment "${assignment['title']}" created successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -249,16 +248,16 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<AssignmentType>(
-                      initialValue: _selectedType,
+                    DropdownButtonFormField<String>(
+                      value: _selectedType,
                       decoration: const InputDecoration(
                         labelText: 'Assignment Type',
                         prefixIcon: Icon(Icons.category),
                       ),
-                      items: AssignmentType.values.map((type) {
+                      items: ['essay', 'quiz', 'project', 'lab', 'worksheet', 'other'].map((type) {
                         return DropdownMenuItem(
                           value: type,
-                          child: Text(type.name.toUpperCase()),
+                          child: Text(type.toUpperCase()),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -436,7 +435,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         setState(() {
                           _publishOption = value!;
                           _isPublished = false;
-                          _selectedStatus = AssignmentStatus.draft;
+                          _selectedStatus = 'draft';
                         });
                       },
                     ),
@@ -450,7 +449,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         setState(() {
                           _publishOption = value!;
                           _isPublished = true;
-                          _selectedStatus = AssignmentStatus.active;
+                          _selectedStatus = 'active';
                         });
                       },
                     ),
@@ -464,7 +463,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                         setState(() {
                           _publishOption = value!;
                           _isPublished = false;
-                          _selectedStatus = AssignmentStatus.draft;
+                          _selectedStatus = 'draft';
                         });
                       },
                     ),

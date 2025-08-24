@@ -11,7 +11,7 @@ import '../../../../../features/student/domain/models/student.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../widgets/edit_class_dialog.dart';
 import '../../widgets/enroll_students_dialog.dart';
-import '../../../../../features/assignments/presentation/providers/assignment_provider.dart';
+import '../../../../../features/assignments/presentation/providers/assignment_provider_simple.dart';
 import '../../../../../features/assignments/domain/models/assignment.dart';
 
 class ClassDetailScreen extends StatefulWidget {
@@ -50,7 +50,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   Future<void> _loadClassData() async {
     final classProvider = context.read<ClassProvider>();
     final authProvider = context.read<AuthProvider>();
-    final assignmentProvider = context.read<AssignmentProvider>();
+    final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
     try {
       // Load teacher classes to get the specific class
@@ -73,7 +73,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
           
           // Also load teacher assignments if not already loaded
           if (authProvider.userModel != null) {
-            await assignmentProvider.loadAssignmentsForTeacher(authProvider.userModel!.uid);
+            await assignmentProvider.loadAssignmentsForTeacher();
           }
         } else {
           // Class not found - navigate back
@@ -602,7 +602,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   }
 
   Widget _buildAssignmentsTab() {
-    return Consumer<AssignmentProvider>(
+    return Consumer<SimpleAssignmentProvider>(
       builder: (context, assignmentProvider, _) {
         // Use the optimized method from the provider to get deduplicated assignments
         final classAssignments = assignmentProvider.getAssignmentsForClass(widget.classId);
@@ -686,22 +686,22 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                     child: ListTile(
                       leading: CircleAvatar(
                         backgroundColor:
-                            _getAssignmentTypeColor(assignment.type),
+                            _getAssignmentTypeColor(assignment['type'] ?? 'essay'),
                         child: Icon(
-                          _getAssignmentTypeIcon(assignment.type),
+                          _getAssignmentTypeIcon(assignment['type'] ?? 'essay'),
                           color: Colors.white,
                           size: 20,
                         ),
                       ),
-                      title: Text(assignment.title),
+                      title: Text(assignment['title'] ?? 'Untitled'),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(assignment.type.name),
+                          Text((assignment['type'] ?? 'essay').toUpperCase()),
                           Text(
-                            'Due: ${_formatDate(assignment.dueDate)}',
+                            'Due: ${_formatDate(assignment['dueDate'] ?? DateTime.now())}',
                             style: TextStyle(
-                              color: assignment.dueDate.isBefore(DateTime.now())
+                              color: (assignment['dueDate'] ?? DateTime.now()).isBefore(DateTime.now())
                                   ? Colors.red
                                   : null,
                             ),
@@ -711,20 +711,20 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (assignment.isPublished)
+                          if (assignment['isPublished'] ?? false)
                             const Icon(Icons.visibility, size: 20)
                           else
                             const Icon(Icons.visibility_off, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            '${assignment.totalPoints.toInt()} pts',
+                            '${(assignment['totalPoints'] ?? 0).toInt()} pts',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ],
                       ),
                       onTap: () {
                         // Navigate to assignment detail
-                        context.push('/teacher/assignments/${assignment.id}');
+                        context.push('/teacher/assignments/${assignment['id']}');
                       },
                     ),
                   );
@@ -737,52 +737,54 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
     );
   }
 
-  Color _getAssignmentTypeColor(AssignmentType type) {
+  Color _getAssignmentTypeColor(String type) {
     switch (type) {
-      case AssignmentType.homework:
+      case 'homework':
         return Colors.blue;
-      case AssignmentType.quiz:
+      case 'quiz':
         return Colors.orange;
-      case AssignmentType.test:
+      case 'test':
         return Colors.red;
-      case AssignmentType.exam:
+      case 'exam':
         return Colors.purple;
-      case AssignmentType.project:
+      case 'project':
         return Colors.green;
-      case AssignmentType.classwork:
+      case 'classwork':
         return Colors.teal;
-      case AssignmentType.essay:
+      case 'essay':
         return Colors.indigo;
-      case AssignmentType.lab:
+      case 'lab':
         return Colors.amber;
-      case AssignmentType.presentation:
+      case 'presentation':
         return Colors.pink;
-      case AssignmentType.other:
+      case 'other':
+      default:
         return Colors.grey;
     }
   }
 
-  IconData _getAssignmentTypeIcon(AssignmentType type) {
+  IconData _getAssignmentTypeIcon(String type) {
     switch (type) {
-      case AssignmentType.homework:
+      case 'homework':
         return Icons.home_work;
-      case AssignmentType.quiz:
+      case 'quiz':
         return Icons.quiz;
-      case AssignmentType.test:
+      case 'test':
         return Icons.assignment_turned_in;
-      case AssignmentType.exam:
+      case 'exam':
         return Icons.school;
-      case AssignmentType.project:
+      case 'project':
         return Icons.folder_special;
-      case AssignmentType.classwork:
+      case 'classwork':
         return Icons.class_;
-      case AssignmentType.essay:
+      case 'essay':
         return Icons.edit_note;
-      case AssignmentType.lab:
+      case 'lab':
         return Icons.science;
-      case AssignmentType.presentation:
+      case 'presentation':
         return Icons.present_to_all;
-      case AssignmentType.other:
+      case 'other':
+      default:
         return Icons.assignment;
     }
   }

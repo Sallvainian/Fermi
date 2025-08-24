@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../providers/chat_provider.dart';
+import '../providers/chat_provider_simple.dart';
 import '../../domain/models/chat_room.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
@@ -84,7 +84,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
 
     try {
       final currentUser = context.read<AuthProvider>().userModel!;
-      final chatProvider = context.read<ChatProvider>();
+      final chatProvider = context.read<SimpleChatProvider>();
 
       // Prepare participants list
       final participantIds = [
@@ -92,18 +92,18 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
         ..._selectedUsers.map((u) => u.uid)
       ];
       final participants = [
-        ParticipantInfo(
-          id: currentUser.uid,
-          name: currentUser.name,
-          role: currentUser.role?.name ?? 'user',
-          photoUrl: currentUser.photoUrl,
-        ),
-        ..._selectedUsers.map((user) => ParticipantInfo(
-              id: user.uid,
-              name: user.name,
-              role: user.role?.name ?? 'user',
-              photoUrl: user.photoUrl,
-            )),
+        {
+          'id': currentUser.uid,
+          'name': currentUser.name,
+          'role': currentUser.role?.name ?? 'user',
+          'photoUrl': currentUser.photoUrl,
+        },
+        ..._selectedUsers.map((user) => {
+              'id': user.uid,
+              'name': user.name,
+              'role': user.role?.name ?? 'user',
+              'photoUrl': user.photoUrl,
+            }),
       ];
 
       final chatRoom = await chatProvider.createGroupChat(
@@ -114,7 +114,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
       );
 
       if (mounted) {
-        context.go('/chat/${chatRoom.id}');
+        context.go('/chat/${chatRoom['id']}');
       }
     } catch (e) {
       setState(() => _isCreating = false);

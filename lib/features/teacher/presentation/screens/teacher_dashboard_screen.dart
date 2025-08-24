@@ -15,7 +15,7 @@ import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../dashboard/domain/models/activity_model.dart';
-import '../../../assignments/presentation/providers/assignment_provider.dart';
+import '../../../assignments/presentation/providers/assignment_provider_simple.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -45,7 +45,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
     final dashboardProvider = context.read<DashboardProvider>();
-    final assignmentProvider = context.read<AssignmentProvider>();
+    final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
     final teacherId =
         authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
@@ -58,7 +58,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       // Load data and capture the stream
       _classesStream = classProvider.loadTeacherClasses(teacherId);
       dashboardProvider.loadTeacherDashboard(teacherId);
-      assignmentProvider.loadAssignmentsForTeacher(teacherId);
+      assignmentProvider.loadAssignmentsForTeacher();
     }
   }
 
@@ -68,7 +68,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final callProvider = context.watch<CallProvider>();
     final classProvider = context.watch<ClassProvider>();
     final dashboardProvider = context.watch<DashboardProvider>();
-    final assignmentProvider = context.watch<AssignmentProvider>();
+    final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final user = authProvider.userModel;
     final theme = Theme.of(context);
 
@@ -216,7 +216,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       BuildContext context,
       ClassProvider classProvider,
       DashboardProvider dashboardProvider,
-      AssignmentProvider assignmentProvider) {
+      SimpleAssignmentProvider assignmentProvider) {
     final teacherClasses = classProvider.teacherClasses;
     final totalStudents = teacherClasses.fold<int>(
         0, (sum, classModel) => sum + classModel.studentCount);

@@ -12,7 +12,7 @@ import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
-import '../../../assignments/presentation/providers/student_assignment_provider.dart';
+import '../../../assignments/presentation/providers/student_assignment_provider_simple.dart';
 import '../widgets/online_users_card.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
@@ -35,7 +35,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
     final dashboardProvider = context.read<DashboardProvider>();
-    final assignmentProvider = context.read<StudentAssignmentProvider>();
+    final assignmentProvider = context.read<SimpleStudentAssignmentProvider>();
     final studentId = authProvider.userModel?.uid;
 
     if (studentId != null) {
@@ -45,7 +45,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         final classIds = classProvider.studentClasses.map((c) => c.id).toList();
         dashboardProvider.loadStudentDashboard(studentId, classIds);
         if (classIds.isNotEmpty) {
-          assignmentProvider.loadAssignmentsForStudent(studentId, classIds);
+          assignmentProvider.loadAssignmentsForStudent(studentId);
         }
       });
     }
