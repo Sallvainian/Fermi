@@ -13,7 +13,6 @@ import '../../features/student/presentation/screens/student_dashboard_screen.dar
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/simple_chat_screen.dart';
-import '../../features/chat/presentation/screens/user_selection_screen.dart';
 import '../../features/chat/presentation/screens/simple_user_list.dart';
 import '../../features/chat/presentation/screens/group_creation_screen.dart';
 import '../../features/chat/presentation/screens/class_selection_screen.dart';
