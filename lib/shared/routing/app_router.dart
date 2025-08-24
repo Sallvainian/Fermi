@@ -14,6 +14,7 @@ import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/simple_chat_screen.dart';
 import '../../features/chat/presentation/screens/user_selection_screen.dart';
+import '../../features/chat/presentation/screens/simple_user_list.dart';
 import '../../features/chat/presentation/screens/group_creation_screen.dart';
 import '../../features/chat/presentation/screens/class_selection_screen.dart';
 import '../../features/chat/presentation/screens/call_screen.dart';
@@ -334,7 +335,7 @@ class AppRouter {
         // Chat creation routes
         GoRoute(
           path: '/chat/user-selection',
-          builder: (context, state) => const UserSelectionScreen(),
+          builder: (context, state) => const SimpleUserList(), // USING SIMPLE VERSION
         ),
         GoRoute(
           path: '/chat/group-creation',
