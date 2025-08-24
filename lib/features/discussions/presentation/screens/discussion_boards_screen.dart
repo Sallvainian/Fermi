@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/discussion_board.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
@@ -316,8 +317,15 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
             onPressed: () async {
               Navigator.of(dialogContext).pop(true);
               try {
-                await context.read<DiscussionProvider>().deleteBoard(board.id);
+                // Use direct Firestore call like working comments
+                await FirebaseFirestore.instance
+                    .collection('discussion_boards')
+                    .doc(board.id)
+                    .delete();
+                    
+                // Refresh the boards list
                 if (context.mounted) {
+                  context.read<DiscussionProvider>().initializeBoards();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Board "${board.title}" deleted'),
