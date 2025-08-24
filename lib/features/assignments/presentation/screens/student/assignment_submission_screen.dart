@@ -6,7 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../../domain/models/assignment.dart';
 import '../../../domain/models/submission.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/student_assignment_provider.dart';
+import '../../providers/student_assignment_provider_simple.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 
