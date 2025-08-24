@@ -288,10 +288,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 
-  void _showNewChatDialog(BuildContext context) {
+  void _showNewChatDialog(BuildContext parentContext) {
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+      context: parentContext,
+      builder: (dialogContext) => AlertDialog(
         title: const Text('New Chat'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -300,24 +300,34 @@ class _ChatListScreenState extends State<ChatListScreen> {
               leading: const Icon(Icons.person),
               title: const Text('Direct Message'),
               onTap: () {
-                Navigator.pop(context);
-                context.push('/chat/user-selection');
+                print('DEBUG: Direct Message clicked');
+                // Close dialog FIRST with the right context
+                Navigator.of(dialogContext).pop();
+                // Small delay to ensure dialog is closed
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  print('DEBUG: Navigating to /chat/user-selection');
+                  parentContext.go('/chat/user-selection'); // Use GO instead of PUSH
+                });
               },
             ),
             ListTile(
               leading: const Icon(Icons.group),
               title: const Text('Group Chat'),
               onTap: () {
-                Navigator.pop(context);
-                context.push('/chat/group-creation');
+                Navigator.of(dialogContext).pop();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  parentContext.go('/chat/group-creation');
+                });
               },
             ),
             ListTile(
               leading: const Icon(Icons.school),
               title: const Text('Class Chat'),
               onTap: () {
-                Navigator.pop(context);
-                context.push('/chat/class-selection');
+                Navigator.of(dialogContext).pop();
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  parentContext.go('/chat/class-selection');
+                });
               },
             ),
           ],
