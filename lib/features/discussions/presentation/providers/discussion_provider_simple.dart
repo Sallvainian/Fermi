@@ -72,6 +72,7 @@ class SimpleDiscussionThread {
   final int likeCount;
   final bool isPinned;
   final bool isLocked;
+  final bool isLikedByCurrentUser;
 
   SimpleDiscussionThread({
     required this.id,
@@ -85,6 +86,7 @@ class SimpleDiscussionThread {
     this.likeCount = 0,
     this.isPinned = false,
     this.isLocked = false,
+    this.isLikedByCurrentUser = false,
   });
 
   factory SimpleDiscussionThread.fromFirestore(DocumentSnapshot doc) {
@@ -402,10 +404,43 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .listen(
-        (snapshot) {
-          _boardThreads[boardId] = snapshot.docs
-              .map((doc) => SimpleDiscussionThread.fromFirestore(doc))
-              .toList();
+        (snapshot) async {
+          // For each thread, check if current user has liked it
+          final threads = <SimpleDiscussionThread>[];
+          for (final doc in snapshot.docs) {
+            final thread = SimpleDiscussionThread.fromFirestore(doc);
+            
+            // Check if current user has liked this thread
+            if (currentUserId.isNotEmpty) {
+              final likeDoc = await _firestore
+                  .collection('discussion_boards')
+                  .doc(boardId)
+                  .collection('threads')
+                  .doc(doc.id)
+                  .collection('likes')
+                  .doc(currentUserId)
+                  .get();
+              
+              threads.add(SimpleDiscussionThread(
+                id: thread.id,
+                boardId: thread.boardId,
+                title: thread.title,
+                content: thread.content,
+                authorId: thread.authorId,
+                authorName: thread.authorName,
+                createdAt: thread.createdAt,
+                replyCount: thread.replyCount,
+                likeCount: thread.likeCount,
+                isPinned: thread.isPinned,
+                isLocked: thread.isLocked,
+                isLikedByCurrentUser: likeDoc.exists,
+              ));
+            } else {
+              threads.add(thread);
+            }
+          }
+          
+          _boardThreads[boardId] = threads;
           notifyListeners();
         },
         onError: (error) {

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
 import '../widgets/create_thread_dialog.dart';
-import 'thread_detail_screen.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/models/user_model.dart';
 
@@ -141,15 +140,8 @@ class _DiscussionBoardDetailScreenState
     final cardContent = Card(
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ThreadDetailScreen(
-                threadId: thread.id,
-                boardId: widget.boardId,
-              ),
-            ),
-          );
+          // Use GoRouter for consistent navigation
+          context.go('/discussions/${widget.boardId}/thread/${thread.id}');
         },
         onLongPress: canDelete ? () {
           _showDeleteThreadDialog(thread);
@@ -246,23 +238,45 @@ class _DiscussionBoardDetailScreenState
                   const SizedBox(width: 16),
                   InkWell(
                     onTap: () async {
-                      // Increment the like count
+                      // Toggle like for this user
                       try {
-                        await FirebaseFirestore.instance
+                        final currentUserId = context.read<AuthProvider>().firebaseUser?.uid ?? '';
+                        if (currentUserId.isEmpty) return;
+                        
+                        final threadRef = FirebaseFirestore.instance
                             .collection('discussion_boards')
                             .doc(widget.boardId)
                             .collection('threads')
-                            .doc(thread.id)
-                            .update({
-                          'likeCount': FieldValue.increment(1),
-                        });
+                            .doc(thread.id);
+                            
+                        // Check if user has already liked
+                        final likeRef = threadRef.collection('likes').doc(currentUserId);
+                        final likeDoc = await likeRef.get();
+                        
+                        if (likeDoc.exists) {
+                          // User has liked, so remove the like
+                          await likeRef.delete();
+                          await threadRef.update({
+                            'likeCount': FieldValue.increment(-1),
+                          });
+                        } else {
+                          // User hasn't liked, so add the like
+                          await likeRef.set({
+                            'userId': currentUserId,
+                            'likedAt': FieldValue.serverTimestamp(),
+                          });
+                          await threadRef.update({
+                            'likeCount': FieldValue.increment(1),
+                          });
+                        }
+                        
                         // Reload threads to show updated count
                         context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Failed to like thread: $e'),
+                              content: Text('Failed to update like: $e'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -275,19 +289,25 @@ class _DiscussionBoardDetailScreenState
                       child: Row(
                         children: [
                           Icon(
-                            Icons.thumb_up_outlined,
+                            thread.isLikedByCurrentUser 
+                                ? Icons.thumb_up 
+                                : Icons.thumb_up_outlined,
                             size: 16,
-                            color: theme.brightness == Brightness.dark 
-                                ? Colors.white
-                                : theme.colorScheme.onSurfaceVariant,
+                            color: thread.isLikedByCurrentUser
+                                ? theme.colorScheme.primary
+                                : (theme.brightness == Brightness.dark 
+                                    ? Colors.white
+                                    : theme.colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${thread.likeCount} likes',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.brightness == Brightness.dark 
-                                  ? Colors.white70
-                                  : theme.colorScheme.onSurfaceVariant,
+                              color: thread.isLikedByCurrentUser
+                                  ? theme.colorScheme.primary
+                                  : (theme.brightness == Brightness.dark 
+                                      ? Colors.white70
+                                      : theme.colorScheme.onSurfaceVariant),
                             ),
                           ),
                         ],
