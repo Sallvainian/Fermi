@@ -362,7 +362,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
     try {
       // Get the display name instead of user ID
-      final displayName = await currentUserDisplayName;
+      final displayName = await _getCurrentUserDisplayName();
       
       final board = SimpleDiscussionBoard(
         id: '', // Will be set by Firestore
