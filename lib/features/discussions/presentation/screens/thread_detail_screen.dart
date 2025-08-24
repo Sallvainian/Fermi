@@ -397,7 +397,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
   }
 }
 
-class _ReplyCard extends StatelessWidget {
+class _ReplyCard extends StatefulWidget {
   final Map<String, dynamic> reply;
   final DateFormat dateFormat;
   final String boardId;
@@ -412,23 +412,116 @@ class _ReplyCard extends StatelessWidget {
     required this.onDeleted,
   });
   
+  @override
+  State<_ReplyCard> createState() => _ReplyCardState();
+}
+
+class _ReplyCardState extends State<_ReplyCard> {
+  bool _isLiked = false;
+  int _likeCount = 0;
+  final dateFormat = DateFormat('MMM d, h:mm a');
+  
+  @override
+  void initState() {
+    super.initState();
+    _likeCount = widget.reply['likeCount'] ?? 0;
+    _checkIfLiked();
+  }
+  
+  Future<void> _checkIfLiked() async {
+    final currentUserId = context.read<AuthProvider>().firebaseUser?.uid ?? '';
+    if (currentUserId.isEmpty) return;
+    
+    try {
+      final likeDoc = await FirebaseFirestore.instance
+          .collection('discussion_boards')
+          .doc(widget.boardId)
+          .collection('threads')
+          .doc(widget.threadId)
+          .collection('replies')
+          .doc(widget.reply['id'])
+          .collection('likes')
+          .doc(currentUserId)
+          .get();
+      
+      if (mounted) {
+        setState(() {
+          _isLiked = likeDoc.exists;
+        });
+      }
+    } catch (e) {
+      LoggerService.debug('Failed to check like status: $e', tag: '_ReplyCard');
+    }
+  }
+  
+  Future<void> _toggleLike() async {
+    final currentUserId = context.read<AuthProvider>().firebaseUser?.uid ?? '';
+    if (currentUserId.isEmpty) return;
+    
+    try {
+      final replyRef = FirebaseFirestore.instance
+          .collection('discussion_boards')
+          .doc(widget.boardId)
+          .collection('threads')
+          .doc(widget.threadId)
+          .collection('replies')
+          .doc(widget.reply['id']);
+      
+      final likeRef = replyRef.collection('likes').doc(currentUserId);
+      
+      if (_isLiked) {
+        // Unlike
+        await likeRef.delete();
+        await replyRef.update({
+          'likeCount': FieldValue.increment(-1),
+        });
+        setState(() {
+          _isLiked = false;
+          _likeCount--;
+        });
+      } else {
+        // Like
+        await likeRef.set({
+          'userId': currentUserId,
+          'likedAt': FieldValue.serverTimestamp(),
+        });
+        await replyRef.update({
+          'likeCount': FieldValue.increment(1),
+        });
+        setState(() {
+          _isLiked = true;
+          _likeCount++;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update like: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+  
   Future<void> _deleteReply(BuildContext context) async {
     try {
       await FirebaseFirestore.instance
           .collection('discussion_boards')
-          .doc(boardId)
+          .doc(widget.boardId)
           .collection('threads')
-          .doc(threadId)
+          .doc(widget.threadId)
           .collection('replies')
-          .doc(reply['id'])
+          .doc(widget.reply['id'])
           .delete();
       
       // Update reply count
       await FirebaseFirestore.instance
           .collection('discussion_boards')
-          .doc(boardId)
+          .doc(widget.boardId)
           .collection('threads')
-          .doc(threadId)
+          .doc(widget.threadId)
           .update({
         'replyCount': FieldValue.increment(-1),
       });
@@ -440,7 +533,7 @@ class _ReplyCard extends StatelessWidget {
           ),
         );
       }
-      onDeleted();
+      widget.onDeleted();
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -485,9 +578,9 @@ class _ReplyCard extends StatelessWidget {
     final authProvider = context.read<AuthProvider>();
     final currentUserId = authProvider.firebaseUser?.uid ?? '';
     final isTeacher = authProvider.userModel?.role == UserRole.teacher;
-    final canDelete = isTeacher || reply['authorId'] == currentUserId;
+    final canDelete = isTeacher || widget.reply['authorId'] == currentUserId;
     final createdAt =
-        (reply['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+        (widget.reply['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
     final cardContent = Padding(
       padding: const EdgeInsets.all(12),
@@ -499,15 +592,15 @@ class _ReplyCard extends StatelessWidget {
               CircleAvatar(
                 radius: 12,
                 child: Text(
-                  reply['authorName']?.isNotEmpty == true
-                      ? reply['authorName'][0].toUpperCase()
+                  widget.reply['authorName']?.isNotEmpty == true
+                      ? widget.reply['authorName'][0].toUpperCase()
                       : '?',
                   style: theme.textTheme.labelSmall,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
-                reply['authorName'] ?? 'Unknown',
+                widget.reply['authorName'] ?? 'Unknown',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -538,8 +631,36 @@ class _ReplyCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            reply['content'] ?? '',
+            widget.reply['content'] ?? '',
             style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              InkWell(
+                onTap: _toggleLike,
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                        size: 16,
+                        color: _isLiked ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _likeCount.toString(),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: _isLiked ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -548,7 +669,7 @@ class _ReplyCard extends StatelessWidget {
     // Wrap with Dismissible if user can delete
     if (canDelete) {
       return Dismissible(
-        key: Key('reply_${reply['id']}'),
+        key: Key('reply_${widget.reply['id']}'),
         direction: DismissDirection.endToStart,
         background: Container(
           alignment: Alignment.centerRight,

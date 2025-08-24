@@ -328,56 +328,56 @@ class SimpleDiscussionProvider with ChangeNotifier {
           LoggerService.debug('Loaded ${snapshot.docs.length} boards',
               tag: _tag);
           
-          // Load boards and resolve user IDs to display names
+          // Load boards and fetch display names for all
           final boardsList = <SimpleDiscussionBoard>[];
           
           for (final doc in snapshot.docs) {
             var board = SimpleDiscussionBoard.fromFirestore(doc);
+            String displayName = 'Unknown User';
             
-            // Check if createdBy looks like a user ID (typically 28 chars)
-            if (board.createdBy.length == 28 && !board.createdBy.contains(' ')) {
-              // Try to resolve user ID to display name
-              try {
-                final userDoc = await _firestore
-                    .collection('users')
-                    .doc(board.createdBy)
-                    .get();
-                    
-                if (userDoc.exists) {
-                  final userData = userDoc.data();
-                  if (userData != null) {
-                    String displayName = board.createdBy; // Keep ID as fallback
-                    
-                    // Try firstName + lastName first
-                    final firstName = userData['firstName'] as String?;
-                    final lastName = userData['lastName'] as String?;
-                    if (firstName != null && lastName != null) {
-                      displayName = '$firstName $lastName'.trim();
-                    } else if (userData['displayName'] != null) {
-                      displayName = userData['displayName'] as String;
-                    } else if (userData['email'] != null) {
-                      final email = userData['email'] as String;
-                      displayName = email.split('@').first;
-                    }
-                    
-                    // Create new board with resolved display name
-                    board = SimpleDiscussionBoard(
-                      id: board.id,
-                      title: board.title,
-                      description: board.description,
-                      createdBy: displayName,
-                      createdAt: board.createdAt,
-                      threadCount: board.threadCount,
-                      isPinned: board.isPinned,
-                      tags: board.tags,
-                    );
+            // Always try to fetch display name using createdBy as user ID
+            try {
+              final userDoc = await _firestore
+                  .collection('users')
+                  .doc(board.createdBy)
+                  .get();
+                  
+              if (userDoc.exists) {
+                final userData = userDoc.data();
+                if (userData != null) {
+                  // Try firstName + lastName first
+                  final firstName = userData['firstName'] as String?;
+                  final lastName = userData['lastName'] as String?;
+                  if (firstName != null && lastName != null) {
+                    displayName = '$firstName $lastName'.trim();
+                  } else if (userData['displayName'] != null) {
+                    displayName = userData['displayName'] as String;
+                  } else if (userData['email'] != null) {
+                    final email = userData['email'] as String;
+                    displayName = email.split('@').first;
                   }
                 }
-              } catch (e) {
-                LoggerService.debug('Failed to resolve user name for board ${board.id}',
-                    tag: _tag);
               }
+            } catch (e) {
+              // If it fails, createdBy might already be a display name
+              if (board.createdBy.contains(' ') || board.createdBy.contains('@')) {
+                displayName = board.createdBy; // Use as-is if it looks like a name
+              }
+              LoggerService.debug('Using createdBy as-is for board ${board.id}',
+                  tag: _tag);
             }
+            
+            // Create board with display name
+            board = SimpleDiscussionBoard(
+              id: board.id,
+              title: board.title,
+              description: board.description,
+              createdBy: displayName,
+              createdAt: board.createdAt,
+              threadCount: board.threadCount,
+              isPinned: board.isPinned,
+              tags: board.tags,
+            );
             
             LoggerService.debug(
                 'Board loaded - ID: ${board.id}, Title: ${board.title}',
@@ -415,14 +415,14 @@ class SimpleDiscussionProvider with ChangeNotifier {
     _error = null;
 
     try {
-      // Get the display name instead of user ID
-      final displayName = await _getCurrentUserDisplayName();
+      // Store user ID in createdBy field
+      final userId = currentUserId;
       
       final board = SimpleDiscussionBoard(
         id: '', // Will be set by Firestore
         title: title,
         description: description,
-        createdBy: displayName,
+        createdBy: userId, // Store user ID, fetch display name when loading
         createdAt: DateTime.now(),
         tags: tags,
         threadCount: 0, // Initialize with 0
