@@ -103,9 +103,25 @@ class DiscussionProvider with ChangeNotifier {
   String get currentUserId => _auth.currentUser?.uid ?? '';
   
   /// Current user's role (teacher or student).
-  String get userRole => _auth.currentUser?.email?.endsWith('@teacher.edu') == true
-      ? 'teacher'
-      : 'student';
+  String _userRole = 'student';
+  String get userRole => _userRole;
+  
+  /// Fetches and caches the user's role from Firestore.
+  Future<void> _fetchUserRole() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      if (uid != null) {
+        final userDoc = await _firestore.collection('users').doc(uid).get();
+        if (userDoc.exists) {
+          _userRole = userDoc.data()?['role'] ?? 'student';
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      LoggerService.error('Failed to fetch user role', error: e, tag: _tag);
+      _userRole = 'student'; // Default to student on error
+    }
+  }
 
   /// Gets threads for a specific board.
   ///
@@ -135,22 +151,40 @@ class DiscussionProvider with ChangeNotifier {
   /// Sets up stream subscription for discussion boards,
   /// automatically updating when boards are added, modified,
   /// or removed. Cancels any existing subscription first.
-  void initializeBoards() {
+  void initializeBoards() async {
     _boardsSubscription?.cancel();
+    
+    // Fetch user role first
+    await _fetchUserRole();
+    
+    // Set loading state
+    _isLoading = true;
+    notifyListeners();
 
-    // Repository methods need to be reimplemented with direct Firestore access
-    // _boardsSubscription = _repository.streamBoards().listen(
-    //   (boards) {
-    //     _boards = boards;
-    //     _error = null;
-    //     notifyListeners();
-    //   },
-    //   onError: (error) {
-    //     _error = error.toString();
-    //     LoggerService.error('Failed to load boards', tag: _tag, error: error);
-    //     notifyListeners();
-    //   },
-    // );
+    // Subscribe to boards collection
+    _boardsSubscription = _firestore
+        .collection('discussion_boards')
+        .orderBy('isPinned', descending: true)
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              return DiscussionBoard.fromFirestore(doc);
+            }).toList())
+        .listen(
+      (boardsList) {
+        _boards.clear();
+        _boards.addAll(boardsList);
+        _error = null;
+        _isLoading = false;
+        notifyListeners();
+      },
+      onError: (error) {
+        _error = error.toString();
+        _isLoading = false;
+        LoggerService.error('Failed to load boards', tag: _tag, error: error);
+        notifyListeners();
+      },
+    );
   }
 
   /// Loads and subscribes to threads for a board.
