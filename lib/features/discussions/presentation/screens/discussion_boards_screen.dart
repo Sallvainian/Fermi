@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/models/discussion_board.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -23,7 +22,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
     super.initState();
     // Initialize boards when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SimpleSimpleDiscussionProvider>().initializeBoards();
+      context.read<SimpleDiscussionProvider>().initializeBoards();
     });
   }
 
@@ -127,7 +126,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
     );
   }
 
-  Widget _buildBoardCard({required DiscussionBoard board}) {
+  Widget _buildBoardCard({required SimpleDiscussionBoard board}) {
     final theme = Theme.of(context);
     final isTeacher = context.read<AuthProvider>().userModel?.role == UserRole.teacher;
     
@@ -135,7 +134,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
       child: InkWell(
         onTap: () {
           // Set current board in provider
-          context.read<SimpleDiscussionProvider>().setCurrentBoard(board);
+          context.read<SimpleDiscussionProvider>().selectBoard(board);
 
           context.go(
               '/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}');
@@ -222,7 +221,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatLastActivity(board.updatedAt),
+                    _formatLastActivity(board.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.brightness == Brightness.dark 
                           ? Colors.white
@@ -231,7 +230,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    'by ${board.createdByName}',
+                    'by ${board.createdBy}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.brightness == Brightness.dark 
                           ? Colors.white
@@ -300,7 +299,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
     );
   }
   
-  Future<bool> _showDeleteBoardDialog(DiscussionBoard board) async {
+  Future<bool> _showDeleteBoardDialog(SimpleDiscussionBoard board) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -325,7 +324,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     
                 // Refresh the boards list
                 if (context.mounted) {
-                  context.read<SimpleSimpleDiscussionProvider>().initializeBoards();
+                  context.read<SimpleDiscussionProvider>().initializeBoards();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Board "${board.title}" deleted'),

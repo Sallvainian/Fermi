@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/discussion_provider.dart';
+import '../providers/discussion_provider_simple.dart';
 
 class CreateThreadDialog extends StatefulWidget {
   final String boardId;
@@ -137,7 +137,7 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
 
   void _createThread() async {
     if (_formKey.currentState!.validate()) {
-      final discussionProvider = context.read<DiscussionProvider>();
+      final discussionProvider = context.read<SimpleDiscussionProvider>();
 
       // Show loading dialog
       showDialog(
@@ -150,17 +150,16 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
 
       try {
         // Create the thread with the provided information
-        final threadId = await discussionProvider.createThread(
+        await discussionProvider.createThread(
           boardId: widget.boardId,
           title: _titleController.text.trim(),
           content: _contentController.text.trim(),
-          tags: _selectedTags,
         );
 
         // Remove loading dialog
         if (mounted) Navigator.pop(context);
 
-        if (threadId != null && mounted) {
+        if (mounted) {
           // Close the dialog
           Navigator.pop(context);
 

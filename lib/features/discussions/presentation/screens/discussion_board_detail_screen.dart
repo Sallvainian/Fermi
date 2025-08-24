@@ -6,7 +6,8 @@ import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../providers/discussion_provider_simple.dart';
 import '../widgets/create_thread_dialog.dart';
 import 'thread_detail_screen.dart';
-import '../../domain/models/discussion_board.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/models/user_model.dart';
 
 class DiscussionBoardDetailScreen extends StatefulWidget {
   final String boardId;
@@ -31,7 +32,7 @@ class _DiscussionBoardDetailScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SimpleDiscussionProvider>().loadBoardThreads(widget.boardId);
+      context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
     });
   }
 
@@ -95,12 +96,12 @@ class _DiscussionBoardDetailScreenState
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        final threads = provider.getBoardThreads(widget.boardId);
+        final threads = provider.getThreadsForBoard(widget.boardId);
         if (threads.isEmpty) {
           return const Center(child: Text('No threads yet. Start one!'));
         }
 
-        List<DiscussionThread> sortedThreads = List.from(threads);
+        List<SimpleDiscussionThread> sortedThreads = List.from(threads);
         switch (_sortType) {
           case 'recent':
             sortedThreads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -125,11 +126,11 @@ class _DiscussionBoardDetailScreenState
     );
   }
 
-  Widget _buildThreadCard({required DiscussionThread thread}) {
+  Widget _buildThreadCard({required SimpleDiscussionThread thread}) {
     final theme = Theme.of(context);
-    final provider = context.read<SimpleDiscussionProvider>();
-    final currentUserId = provider.currentUserId;
-    final isTeacher = provider.userRole == 'teacher';
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.firebaseUser?.uid ?? '';
+    final isTeacher = authProvider.userModel?.role == UserRole.teacher;
     final canDelete = isTeacher || thread.authorId == currentUserId;
     
     final cardContent = Card(
@@ -159,15 +160,11 @@ class _DiscussionBoardDetailScreenState
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: thread.authorRole == 'teacher'
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.secondary,
+                    backgroundColor: theme.colorScheme.secondary,
                     child: Text(
                       thread.authorName.isNotEmpty ? thread.authorName[0].toUpperCase() : '?',
                       style: TextStyle(
-                        color: thread.authorRole == 'teacher'
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSecondary,
+                        color: theme.colorScheme.onSecondary,
                       ),
                     ),
                   ),
@@ -182,23 +179,6 @@ class _DiscussionBoardDetailScreenState
                               thread.authorName,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: thread.authorRole == 'teacher'
-                                    ? theme.colorScheme.primaryContainer
-                                    : theme.colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                thread.authorRole,
-                                style: theme.textTheme.labelSmall,
                               ),
                             ),
                           ],
@@ -238,20 +218,6 @@ class _DiscussionBoardDetailScreenState
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (thread.tags.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  children: thread.tags.map((tag) {
-                    return Chip(
-                      label: Text(tag),
-                      labelStyle: theme.textTheme.labelSmall,
-                      padding: EdgeInsets.zero,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    );
-                  }).toList(),
-                ),
-              ],
               const SizedBox(height: 12),
               // Stats
               Row(
@@ -349,7 +315,7 @@ class _DiscussionBoardDetailScreenState
     );
   }
   
-  Future<bool> _showDeleteThreadDialog(DiscussionThread thread) async {
+  Future<bool> _showDeleteThreadDialog(SimpleDiscussionThread thread) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(
@@ -376,7 +342,7 @@ class _DiscussionBoardDetailScreenState
                     
                 // Refresh the threads list
                 if (context.mounted) {
-                  context.read<SimpleDiscussionProvider>().loadBoardThreads(widget.boardId);
+                  context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Thread "${thread.title}" deleted'),
