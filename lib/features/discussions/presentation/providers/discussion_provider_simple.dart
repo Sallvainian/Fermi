@@ -185,7 +185,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      LoggerService.error('Failed to fetch user role', error: e, tag: _logTag);
+      LoggerService.error('Failed to fetch user role', error: e, tag: _tag);
       _userRole = 'student'; // Default to student on error
     }
   }
