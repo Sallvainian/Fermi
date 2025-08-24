@@ -63,19 +63,11 @@ class _UserSelectionScreenState
       return const Stream.empty();
     }
 
-    // Simple query - just get all users and filter client-side
-    // This avoids Firestore index issues with inequality filters
-    Query query = FirebaseFirestore.instance
+    // SIMPLIFIED - just get ALL users, no fancy ordering or limits
+    print('UserSelectionScreen: Getting ALL users from Firestore');
+    return FirebaseFirestore.instance
         .collection('users')
-        .orderBy('displayName');
-
-    // For pagination on initial load
-    if (_searchQuery.isEmpty && _lastDocument == null) {
-      query = query.limit(_pageSize);
-    }
-
-    print('UserSelectionScreen: Building query for users');
-    return query.snapshots();
+        .snapshots();
   }
 
   void _onSearchChanged() {
