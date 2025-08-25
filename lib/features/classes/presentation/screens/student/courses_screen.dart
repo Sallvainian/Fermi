@@ -22,7 +22,10 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
   @override
   void initState() {
     super.initState();
-    _loadStudentClasses();
+    // Defer loading to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStudentClasses();
+    });
   }
 
   void _loadStudentClasses() {

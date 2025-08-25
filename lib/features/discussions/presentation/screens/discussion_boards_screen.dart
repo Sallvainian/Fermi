@@ -254,7 +254,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   Icon(
                     Icons.access_time,
                     size: 14,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
                   const SizedBox(width: 4),
                   Text(

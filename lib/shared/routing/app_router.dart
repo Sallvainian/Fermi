@@ -70,6 +70,7 @@ class AppRouter {
         final isAuthenticating = authProvider.status == AuthStatus.authenticating;
         final isAuthRoute = state.matchedLocation.startsWith('/auth');
         final hasError = authProvider.status == AuthStatus.error;
+        final isStudentRoute = state.matchedLocation.startsWith('/student');
 
         // During initialization, don't redirect
         // The app shows a loading screen before router is created
@@ -98,6 +99,16 @@ class AppRouter {
         if (isAuth && isAuthRoute) {
           // Authenticated but on auth route - go to dashboard
           return '/dashboard';
+        }
+
+        // MIDDLEWARE: Role-based access control for student routes
+        // This is the proper GoRouter middleware pattern - centralized in the global redirect
+        if (isAuth && isStudentRoute) {
+          final userRole = authProvider.userModel?.role;
+          if (userRole != UserRole.student) {
+            // Non-students trying to access student routes get redirected to dashboard
+            return '/dashboard';
+          }
         }
 
         // Allow everything else
@@ -441,15 +452,14 @@ class AppRouter {
           builder: (context, state) => const GradebookScreen(),
         ),
 
-        // Student routes
+        // Student routes with middleware role-based guards
         GoRoute(
           path: '/student/courses',
           builder: (context, state) => const StudentCoursesScreen(),
         ),
         GoRoute(
           path: '/student/assignments',
-          builder: (context, state) =>
-              const student_assignments.StudentAssignmentsScreen(),
+          builder: (context, state) => const student_assignments.StudentAssignmentsScreen(),
         ),
         GoRoute(
           path: '/student/assignments/:assignmentId/submit',

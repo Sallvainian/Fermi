@@ -11,6 +11,7 @@ import '../../../../classes/presentation/providers/class_provider.dart';
 import '../../../../classes/domain/models/class_model.dart';
 import '../../../../student/domain/models/student.dart';
 import '../../../../student/presentation/providers/student_provider_simple.dart';
+import '../../../../auth/presentation/providers/auth_provider.dart';
 
 class GradebookScreen extends StatefulWidget {
   const GradebookScreen({super.key});
@@ -330,6 +331,12 @@ class _GradebookScreenState extends State<GradebookScreen> {
 
     // Load grades for this specific student
     gradeProvider.loadStudentClassGrades(student.id, _selectedClassId!);
+
+    // Create a lookup map for quick grade access
+    final Map<String, Grade> gradeLookup = {};
+    for (final grade in gradeProvider.studentGrades) {
+      gradeLookup['${grade.assignmentId}_${grade.studentId}'] = grade;
+    }
 
     showModalBottomSheet(
       context: context,

@@ -53,7 +53,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       for (final dd in loadedGame.dailyDoubles) {
         LoggerService.debug('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
       }
-      
 
       if (loadedGame.dailyDoubles.isNotEmpty) {
 
