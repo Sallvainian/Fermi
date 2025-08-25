@@ -65,7 +65,7 @@ jobs:
             --build-number=${{ github.run_number }}
             
       - name: Code signing (if certificates are available)
-        if: ${{ secrets.MACOS_CERTIFICATE && secrets.MACOS_CERTIFICATE_PASSWORD }}
+        if: secrets.MACOS_CERTIFICATE && secrets.MACOS_CERTIFICATE_PASSWORD
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
@@ -88,7 +88,7 @@ jobs:
             "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
             
       - name: Notarize app (if credentials are available)
-        if: ${{ secrets.APPLE_ID && secrets.APPLE_ID_PASSWORD && secrets.APPLE_TEAM_ID }}
+        if: secrets.APPLE_ID && secrets.APPLE_ID_PASSWORD && secrets.APPLE_TEAM_ID
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
@@ -127,7 +127,7 @@ jobs:
             "build/macos/Build/Products/Release/"
             
       - name: Sign DMG (if certificates are available)
-        if: ${{ secrets.MACOS_IDENTITY }}
+        if: secrets.MACOS_IDENTITY
         env:
           MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
         run: |
@@ -135,7 +135,7 @@ jobs:
             "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg"
             
       - name: Notarize DMG (if credentials are available)
-        if: ${{ secrets.APPLE_ID && secrets.APPLE_ID_PASSWORD && secrets.APPLE_TEAM_ID }}
+        if: secrets.APPLE_ID && secrets.APPLE_ID_PASSWORD && secrets.APPLE_TEAM_ID
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
