@@ -4,232 +4,107 @@ on:
   push:
     tags:
       - 'windows-v*'
-      - 'v*'  # Also trigger on general version tags
+      - 'v*'
   workflow_dispatch:
     inputs:
       version:
         description: 'Version number (e.g., 1.0.0)'
         required: true
         type: string
-      release_notes:
-        description: 'Release notes'
-        required: false
-        type: string
-        default: 'Windows release'
-
-concurrency:
-  group: windows-release-${{ github.ref }}
-  cancel-in-progress: true
 
 permissions:
-  contents: write  # Needed to create releases
-  packages: write
+  contents: write
 
 jobs:
   build-windows:
     name: Build Windows Desktop
     runs-on: windows-latest
-    outputs:
-      version: ${{ steps.get_version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Get version
         id: get_version
-        shell: pwsh
+        shell: bash
         run: |
-          $version = ""
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            $version = "${{ github.event.inputs.version }}"
-          } else {
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
             # Extract version from tag
-            $tag = "${{ github.ref_name }}"
-            if ($tag -match "v(.+)") {
-              $version = $matches[1]
-            } elseif ($tag -match "windows-v(.+)") {
-              $version = $matches[1]
-            }
-          }
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "Version: $version"
+            TAG="${{ github.ref_name }}"
+            VERSION=${TAG#v}
+            VERSION=${VERSION#windows-v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true
+          flutter-version: '3.24.5'
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Generate launcher icons
-        run: |
-          flutter pub get
-          flutter pub run flutter_launcher_icons
+      - name: Enable Windows build
+        run: flutter config --enable-windows-desktop
 
-      - name: Build Windows Desktop (unsigned)
-        shell: pwsh
-        run: |
-          flutter build windows --release `
-            --build-name=${{ steps.get_version.outputs.version }} `
-            --build-number=${{ github.run_number }}
-
-      - name: Create MSIX package (unsigned)
-        shell: pwsh
-        run: |
-          # Install MSIX packaging tool
-          flutter pub global activate msix
-          
-          # Create MSIX package
-          flutter pub run msix:create `
-            --build-windows false `
-            --version ${{ steps.get_version.outputs.version }}.0 `
-            --display-name "Fermi" `
-            --publisher-display-name "Fermi Education" `
-            --identity-name "com.fermi.education" `
-            --publisher "CN=Fermi Education, O=Fermi Education, L=San Francisco, S=California, C=US" `
-            --logo "assets/icons/icon.png" `
-            --capabilities "internetClient,privateNetworkClientServer" `
-            --file-extension ".fermi" `
-            --protocol-activation "fermi"
+      - name: Build Windows Desktop
+        run: flutter build windows --release --build-name=${{ steps.get_version.outputs.version }} --build-number=${{ github.run_number }}
 
       - name: Create portable ZIP
-        shell: pwsh
+        shell: bash
         run: |
-          $version = "${{ steps.get_version.outputs.version }}"
-          $zipName = "Fermi-Windows-v${version}-Portable.zip"
-          
-          # Navigate to build output
-          cd build\windows\x64\runner\Release
-          
-          # Create ZIP archive
-          Compress-Archive -Path * -DestinationPath "..\..\..\..\..\$zipName"
-          
-          # Move back to root
-          cd ..\..\..\..\..\
-          
-          echo "Created portable ZIP: $zipName"
+          cd build/windows/x64/runner/Release
+          7z a -tzip "../../../../../Fermi-Windows-v${{ steps.get_version.outputs.version }}-Portable.zip" .
+          cd ../../../../../
+          echo "Created portable ZIP"
 
-      - name: Create installer with Inno Setup
-        shell: pwsh
-        run: |
-          # Download Inno Setup
-          $innoSetupUrl = "https://jrsoftware.org/download.php/is.exe"
-          Invoke-WebRequest -Uri $innoSetupUrl -OutFile "inno-setup.exe"
-          
-          # Install Inno Setup silently
-          Start-Process -FilePath "inno-setup.exe" -ArgumentList "/VERYSILENT" -Wait
-          
-          # Create Inno Setup script
-          $version = "${{ steps.get_version.outputs.version }}"
-          $script = @"
-[Setup]
-AppId={{A1B2C3D4-5678-90AB-CDEF-1234567890AB}
-AppName=Fermi
-AppVersion=$version
-AppPublisher=Fermi Education
-AppPublisherURL=https://github.com/Sallvainian/Fermi
-AppSupportURL=https://github.com/Sallvainian/Fermi/issues
-DefaultDirName={autopf}\Fermi
-DefaultGroupName=Fermi
-AllowNoIcons=yes
-OutputDir=.
-OutputBaseFilename=Fermi-Windows-v$version-Setup
-Compression=lzma
-SolidCompression=yes
-WizardStyle=modern
-PrivilegesRequired=lowest
-ArchitecturesInstallIn64BitMode=x64
-
-[Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
-
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-
-[Files]
-Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-
-[Icons]
-Name: "{group}\Fermi"; Filename: "{app}\fermi.exe"
-Name: "{group}\{cm:UninstallProgram,Fermi}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\Fermi"; Filename: "{app}\fermi.exe"; Tasks: desktopicon
-
-[Run]
-Filename: "{app}\fermi.exe"; Description: "{cm:LaunchProgram,Fermi}"; Flags: nowait postinstall skipifsilent
-"@
-          
-          $script | Out-File -FilePath "fermi-installer.iss" -Encoding UTF8
-          
-          # Compile installer
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "fermi-installer.iss"
-
-      - name: Upload portable ZIP
+      - name: Upload portable ZIP artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-portable
           path: Fermi-Windows-v${{ steps.get_version.outputs.version }}-Portable.zip
 
-      - name: Upload installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-installer
-          path: Fermi-Windows-v${{ steps.get_version.outputs.version }}-Setup.exe
-
-      - name: Upload MSIX
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-msix
-          path: build/windows/x64/runner/Release/**/*.msix
-
   create-release:
     name: Create GitHub Release
     needs: build-windows
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          name: windows-portable
+          path: ./
 
-      - name: List artifacts
+      - name: Get version from tag
+        id: get_version
         run: |
-          echo "Downloaded artifacts:"
-          ls -la artifacts/
-          find artifacts -type f -name "*"
+          TAG="${{ github.ref_name }}"
+          VERSION=${TAG#v}
+          VERSION=${VERSION#windows-v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name != '' && github.ref_name || format('windows-v{0}', needs.build-windows.outputs.version) }}
-          release_name: Fermi Windows v${{ needs.build-windows.outputs.version }}
+          name: Fermi Windows v${{ steps.get_version.outputs.version }}
           body: |
-            ## Fermi Education Platform - Windows Release v${{ needs.build-windows.outputs.version }}
+            ## Fermi Education Platform - Windows Release v${{ steps.get_version.outputs.version }}
             
-            ### Installation Options
-            
-            #### 🎯 Recommended: Installer
-            Download and run `Fermi-Windows-Setup.exe` for a standard Windows installation with Start Menu shortcuts and uninstaller.
-            
-            #### 📦 Portable Version
+            ### 📦 Download
             Download `Fermi-Windows-Portable.zip` and extract to any folder. No installation required.
-            
-            #### 🏪 Microsoft Store Package
-            Download `Fermi.msix` for sideloading or Microsoft Store submission.
             
             ### System Requirements
             - Windows 10 version 1809 or higher
             - Windows 11 (all versions)
             - x64 architecture
             - 200 MB free disk space
-            
-            ### What's New
-            ${{ github.event.inputs.release_notes || 'See CHANGELOG.md for details' }}
             
             ### Features
             - ✅ Google Sign-In support
@@ -242,42 +117,7 @@ Filename: "{app}\fermi.exe"; Description: "{cm:LaunchProgram,Fermi}"; Flags: now
             ### Known Issues
             - Some antivirus software may flag the unsigned executable. This is a false positive.
             - For code signing in future releases, we'll need an EV certificate.
+          files: |
+            Fermi-Windows-v${{ steps.get_version.outputs.version }}-Portable.zip
           draft: false
           prerelease: false
-
-      - name: Upload Release Asset - Portable
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/windows-portable/Fermi-Windows-v${{ needs.build-windows.outputs.version }}-Portable.zip
-          asset_name: Fermi-Windows-v${{ needs.build-windows.outputs.version }}-Portable.zip
-          asset_content_type: application/zip
-
-      - name: Upload Release Asset - Installer
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: artifacts/windows-installer/Fermi-Windows-v${{ needs.build-windows.outputs.version }}-Setup.exe
-          asset_name: Fermi-Windows-v${{ needs.build-windows.outputs.version }}-Setup.exe
-          asset_content_type: application/octet-stream
-
-      - name: Find and Upload MSIX
-        shell: bash
-        run: |
-          # Find the MSIX file
-          MSIX_FILE=$(find artifacts/windows-msix -name "*.msix" -type f | head -1)
-          if [ -n "$MSIX_FILE" ]; then
-            echo "Found MSIX: $MSIX_FILE"
-            # Upload using curl with GitHub API
-            curl -X POST \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: application/octet-stream" \
-              --data-binary @"$MSIX_FILE" \
-              "${{ steps.create_release.outputs.upload_url }}?name=Fermi-Windows-v${{ needs.build-windows.outputs.version }}.msix&label=Windows%20Store%20Package"
-          else
-            echo "No MSIX file found"
-          fi
