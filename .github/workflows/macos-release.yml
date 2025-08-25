@@ -182,13 +182,30 @@ jobs:
             checksums.txt
             
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('macos-v{0}', env.APP_VERSION) || github.ref_name }}
+          name: Fermi macOS v${{ env.APP_VERSION }}
           files: |
             ${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg
             checksums.txt
-          generate_release_notes: true
+          body: |
+            ## Fermi Education Platform - macOS Release v${{ env.APP_VERSION }}
+            
+            ### 📦 Installation
+            1. Download the DMG file
+            2. Open the DMG
+            3. Drag Fermi to your Applications folder
+            
+            ### System Requirements
+            - macOS 11.0 Big Sur or later
+            - Apple Silicon (M1/M2/M3) or Intel processor
+            
+            ### Features
+            - ✅ Native macOS application
+            - ✅ Google & Apple Sign-In
+            - ✅ Real-time messaging
+            - ✅ Offline support
           draft: false
           prerelease: false
           
