@@ -12,7 +12,8 @@ import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
-import '../../../assignments/presentation/providers/student_assignment_provider.dart';
+import '../../../assignments/presentation/providers/student_assignment_provider_simple.dart';
+import '../widgets/online_users_card.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -34,7 +35,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
     final dashboardProvider = context.read<DashboardProvider>();
-    final assignmentProvider = context.read<StudentAssignmentProvider>();
+    final assignmentProvider = context.read<SimpleStudentAssignmentProvider>();
     final studentId = authProvider.userModel?.uid;
 
     if (studentId != null) {
@@ -44,7 +45,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         final classIds = classProvider.studentClasses.map((c) => c.id).toList();
         dashboardProvider.loadStudentDashboard(studentId, classIds);
         if (classIds.isNotEmpty) {
-          assignmentProvider.loadAssignmentsForStudent(studentId, classIds);
+          assignmentProvider.loadAssignmentsForStudent(studentId);
         }
       });
     }
@@ -149,11 +150,21 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             const SizedBox(height: 24),
 
             // My Classes
-            Text(
-              'My Classes',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'My Classes',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () => context.go('/student/enroll'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Join Class'),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.md),
             _buildClassesSection(context, classProvider),
@@ -179,6 +190,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             _buildRecentGradesCard(context, dashboardProvider),
+            const SizedBox(height: AppSpacing.lg),
+
+            // Online Users
+            OnlineUsersCard(),
           ],
         ),
       ),

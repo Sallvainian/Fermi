@@ -1,15 +1,12 @@
+import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../shared/services/logger_service.dart';
 
 class PresenceService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  FirebaseDatabase? _database;
-
-  FirebaseDatabase get database {
-    _database ??= FirebaseDatabase.instance;
-    return _database!;
-  }
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Privacy settings - can be extended to user preferences
   static const bool _showFullName = true;
@@ -20,26 +17,32 @@ class PresenceService {
   Future<void> updateUserPresence(bool isOnline, {String? userRole}) async {
     try {
       final user = _auth.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        debugPrint('PresenceService: No current user, cannot update presence');
+        return;
+      }
 
-      final userStatusRef = database.ref('presence/${user.uid}');
+      debugPrint('PresenceService: Updating presence for ${user.email} - online: $isOnline, role: $userRole');
+
+      final userStatusDoc = _firestore.collection('presence').doc(user.uid);
 
       if (isOnline) {
         // User is online - store only necessary public information
         final presenceData = _buildPresenceData(user, true, userRole);
-        await userStatusRef.set(presenceData);
-
-        // Set up disconnect handler
-        final offlineData = _buildPresenceData(user, false, userRole);
-        await userStatusRef.onDisconnect().set(offlineData);
+        debugPrint('PresenceService: Setting online presence data: $presenceData');
+        await userStatusDoc.set(presenceData);
+        debugPrint('PresenceService: Successfully set online presence for ${user.email}');
       } else {
         // User is offline
-        await userStatusRef.update({
+        debugPrint('PresenceService: Setting user offline');
+        await userStatusDoc.update({
           'online': false,
-          'lastSeen': ServerValue.timestamp,
+          'lastSeen': FieldValue.serverTimestamp(),
         });
+        debugPrint('PresenceService: Successfully set offline presence for ${user.email}');
       }
     } catch (error) {
+      debugPrint('PresenceService: ERROR updating presence: $error');
       LoggerService.error('Error updating user presence', error: error);
     }
   }
@@ -49,7 +52,7 @@ class PresenceService {
       User user, bool isOnline, String? userRole) {
     return {
       'online': isOnline,
-      'lastSeen': ServerValue.timestamp,
+      'lastSeen': FieldValue.serverTimestamp(),
       'uid': user.uid,
       'displayName': _showFullName
           ? (user.displayName ?? 'Anonymous User')
@@ -60,7 +63,7 @@ class PresenceService {
       // Add privacy-safe metadata
       'isAnonymous': user.isAnonymous,
       'metadata': {
-        'platform': 'web', // Can be extended to detect platform
+        'platform': kIsWeb ? 'web' : 'mobile',
         'version': '1.0.0', // App version for compatibility
       },
     };
@@ -81,56 +84,113 @@ class PresenceService {
     // Check if user is authenticated before accessing database
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
+      debugPrint('PresenceService: No current user, returning empty stream');
       // Return an empty list if no user is logged in
       return Stream.value([]);
     }
 
-    return database.ref('presence').onValue.map((event) {
-      final List<OnlineUser> onlineUsers = [];
+    debugPrint('PresenceService: Setting up stream for online users, excludeSelf: $excludeSelf');
 
-      if (event.snapshot.exists && event.snapshot.value != null) {
-        // Safely handle the data conversion
-        final rawData = event.snapshot.value;
-        if (rawData is! Map) {
-          LoggerService.error(
-              'Unexpected presence data format: ${rawData.runtimeType}');
-          return onlineUsers;
-        }
-        final data = Map<dynamic, dynamic>.from(rawData);
+    // Platform-specific implementation due to Windows Firebase limitations
+    if (!kIsWeb && Platform.isWindows) {
+      debugPrint('PresenceService: Using polling fallback for Windows');
+      return _getOnlineUsersPolling(excludeSelf: excludeSelf);
+    } else {
+      debugPrint('PresenceService: Using real-time listeners for web/mobile');
+      return _getOnlineUsersRealtime(excludeSelf: excludeSelf);
+    }
+  }
 
-        data.forEach((key, value) {
-          // Filter out offline users and optionally self
-          if (value['online'] == true) {
-            final uid = value['uid'] ?? '';
-            if (!excludeSelf || uid != currentUser.uid) {
-              onlineUsers.add(OnlineUser(
-                uid: uid,
-                displayName: value['displayName'] ?? 'Anonymous User',
-                // Email is no longer exposed in presence data
-                photoURL: value['photoURL'],
-                role: value['role'],
-                lastSeen: value['lastSeen'] != null
-                    ? DateTime.fromMillisecondsSinceEpoch(value['lastSeen'])
-                    : DateTime.now(),
-                isAnonymous: value['isAnonymous'] ?? false,
-                metadata: value['metadata'] != null
-                    ? PresenceMetadata.fromMap(value['metadata'])
-                    : null,
-              ));
-            }
-          }
-        });
-      }
-
-      // Sort by last seen (most recent first)
-      onlineUsers.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
-
-      return onlineUsers;
+  // Real-time implementation for web/mobile
+  Stream<List<OnlineUser>> _getOnlineUsersRealtime({bool excludeSelf = false}) {
+    final currentUser = _auth.currentUser!;
+    
+    return _firestore
+        .collection('presence')
+        .where('online', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) {
+      debugPrint('PresenceService: Real-time update - received ${snapshot.docs.length} online users');
+      return _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
     }).handleError((error) {
       // Log the error but return empty list to keep UI functional
+      debugPrint('PresenceService: Real-time stream error: $error');
       LoggerService.error('Error fetching online users', error: error);
       return <OnlineUser>[];
     });
+  }
+
+  // Polling implementation for Windows
+  Stream<List<OnlineUser>> _getOnlineUsersPolling({bool excludeSelf = false}) async* {
+    final currentUser = _auth.currentUser!;
+    
+    while (true) {
+      try {
+        debugPrint('PresenceService: Polling for online users...');
+        
+        final snapshot = await _firestore
+            .collection('presence')
+            .where('online', isEqualTo: true)
+            .get();
+        
+        debugPrint('PresenceService: Polling update - received ${snapshot.docs.length} online users');
+        yield _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
+        
+        // Poll every 3 seconds for Windows
+        await Future.delayed(const Duration(seconds: 3));
+      } catch (error) {
+        debugPrint('PresenceService: Polling error: $error');
+        LoggerService.error('Error polling online users', error: error);
+        yield <OnlineUser>[];
+        // Continue polling even on error, but with longer delay
+        await Future.delayed(const Duration(seconds: 5));
+      }
+    }
+  }
+
+  // Common data processing logic
+  List<OnlineUser> _processOnlineUsersData(List<QueryDocumentSnapshot> docs, User currentUser, bool excludeSelf) {
+    final List<OnlineUser> onlineUsers = [];
+
+    for (var doc in docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      final uid = data['uid'] ?? '';
+      
+      debugPrint('PresenceService: Processing user ${data['displayName']} (${data['role']}) - UID: $uid');
+      
+      // Filter out self if requested
+      if (!excludeSelf || uid != currentUser.uid) {
+        // Handle Firestore Timestamp conversion
+        DateTime lastSeen;
+        if (data['lastSeen'] is Timestamp) {
+          lastSeen = (data['lastSeen'] as Timestamp).toDate();
+        } else {
+          lastSeen = DateTime.now();
+        }
+        
+        onlineUsers.add(OnlineUser(
+          uid: uid,
+          displayName: data['displayName'] ?? 'Anonymous User',
+          photoURL: data['photoURL'],
+          role: data['role'],
+          lastSeen: lastSeen,
+          isAnonymous: data['isAnonymous'] ?? false,
+          metadata: data['metadata'] != null
+              ? PresenceMetadata.fromMap(data['metadata'])
+              : null,
+        ));
+        
+        debugPrint('PresenceService: Added ${data['displayName']} to online users list');
+      } else {
+        debugPrint('PresenceService: Excluded self (${data['displayName']}) from list');
+      }
+    }
+
+    // Sort by last seen (most recent first)
+    onlineUsers.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
+
+    debugPrint('PresenceService: Returning ${onlineUsers.length} users after filtering and sorting');
+    return onlineUsers;
   }
 
   // Get specific user's online status
@@ -140,8 +200,15 @@ class PresenceService {
       return Stream.value(false);
     }
 
-    return database.ref('presence/$uid/online').onValue.map((event) {
-      return event.snapshot.value as bool? ?? false;
+    return _firestore
+        .collection('presence')
+        .doc(uid)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.exists) {
+        return snapshot.data()?['online'] as bool? ?? false;
+      }
+      return false;
     }).handleError((error) {
       LoggerService.error('Error fetching user online status', error: error);
       return false;
@@ -154,11 +221,18 @@ class PresenceService {
       return Stream.value(null);
     }
 
-    return database.ref('presence/$uid/lastSeen').onValue.map((event) {
-      final timestamp = event.snapshot.value as int?;
-      return timestamp != null
-          ? DateTime.fromMillisecondsSinceEpoch(timestamp)
-          : null;
+    return _firestore
+        .collection('presence')
+        .doc(uid)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.exists) {
+        final lastSeen = snapshot.data()?['lastSeen'];
+        if (lastSeen is Timestamp) {
+          return lastSeen.toDate();
+        }
+      }
+      return null;
     }).handleError((error) {
       LoggerService.error('Error fetching user last seen', error: error);
       return null;
@@ -179,15 +253,36 @@ class PresenceService {
     await updateUserPresence(false);
   }
 
+  // Force clear all presence data (for debugging/cleanup)
+  Future<void> clearAllPresenceData() async {
+    try {
+      debugPrint('PresenceService: Clearing all presence data...');
+      final snapshot = await _firestore.collection('presence').get();
+      
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+        debugPrint('PresenceService: Deleted presence for ${doc.id}');
+      }
+      
+      debugPrint('PresenceService: Cleared ${snapshot.docs.length} presence documents');
+    } catch (error) {
+      debugPrint('PresenceService: Error clearing presence data: $error');
+      LoggerService.error('Error clearing presence data', error: error);
+    }
+  }
+
   // Batch update presence for multiple users (admin function)
   Future<void> batchUpdatePresence(Map<String, bool> userStatuses) async {
     try {
-      final updates = <String, dynamic>{};
+      final batch = _firestore.batch();
       userStatuses.forEach((uid, isOnline) {
-        updates['presence/$uid/online'] = isOnline;
-        updates['presence/$uid/lastSeen'] = ServerValue.timestamp;
+        final docRef = _firestore.collection('presence').doc(uid);
+        batch.update(docRef, {
+          'online': isOnline,
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
       });
-      await database.ref().update(updates);
+      await batch.commit();
     } catch (error) {
       LoggerService.error('Error in batch presence update', error: error);
     }
@@ -199,25 +294,19 @@ class PresenceService {
       return Stream.value({});
     }
 
-    return database.ref('presence').onValue.map((event) {
+    return _firestore
+        .collection('presence')
+        .where('online', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) {
       final Map<String, int> roleCounts = {};
 
-      if (event.snapshot.exists && event.snapshot.value != null) {
-        // Safely handle the data conversion
-        final rawData = event.snapshot.value;
-        if (rawData is! Map) {
-          LoggerService.error(
-              'Unexpected presence data format: ${rawData.runtimeType}');
-          return roleCounts;
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['online'] == true) {
+          final role = data['role'] ?? 'unknown';
+          roleCounts[role] = (roleCounts[role] ?? 0) + 1;
         }
-        final data = Map<dynamic, dynamic>.from(rawData);
-
-        data.forEach((key, value) {
-          if (value['online'] == true) {
-            final role = value['role'] ?? 'unknown';
-            roleCounts[role] = (roleCounts[role] ?? 0) + 1;
-          }
-        });
       }
 
       return roleCounts;

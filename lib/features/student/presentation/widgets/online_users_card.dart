@@ -2,12 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/services/presence_service.dart';
 
-class OnlineUsersCard extends StatelessWidget {
-  final PresenceService _presenceService = PresenceService();
-
+class OnlineUsersCard extends StatefulWidget {
   final bool excludeSelf;
 
-  OnlineUsersCard({super.key, this.excludeSelf = true});
+  const OnlineUsersCard({super.key, this.excludeSelf = true});
+
+  @override
+  State<OnlineUsersCard> createState() => _OnlineUsersCardState();
+}
+
+class _OnlineUsersCardState extends State<OnlineUsersCard> {
+  late final PresenceService _presenceService;
+  Stream<List<OnlineUser>>? _onlineUsersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _presenceService = PresenceService();
+    // Create broadcast stream to allow multiple listeners
+    _onlineUsersStream = _presenceService.getOnlineUsers(excludeSelf: widget.excludeSelf).asBroadcastStream();
+  }
+  
+  @override
+  void dispose() {
+    // Clean up stream subscription
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,8 +61,11 @@ class OnlineUsersCard extends StatelessWidget {
           ),
           const Divider(height: 1),
           StreamBuilder<List<OnlineUser>>(
-            stream: _presenceService.getOnlineUsers(excludeSelf: excludeSelf),
+            stream: _onlineUsersStream,
             builder: (context, snapshot) {
+              // Debug output
+              debugPrint('OnlineUsersCard: StreamBuilder rebuild - connectionState: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data length: ${snapshot.data?.length ?? 0}');
+              
               if (snapshot.hasError) {
                 // Handle error state
                 return Padding(
@@ -153,12 +176,7 @@ class OnlineUsersCard extends StatelessWidget {
         user.displayName,
         style: theme.textTheme.titleSmall,
       ),
-      subtitle: Text(
-        _getStatusText(user),
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
+      subtitle: _buildUserSubtitle(context, user),
       onTap: () {
         // Navigate to messages to start a chat with this user
         context.go('/messages');
@@ -167,17 +185,69 @@ class OnlineUsersCard extends StatelessWidget {
     );
   }
 
-  String _getStatusText(OnlineUser user) {
-    // Show role and activity status
-    final role = user.role ?? 'user';
-    final roleText = role.substring(0, 1).toUpperCase() + role.substring(1);
-
-    // Use the relative time helper from the model
-    if (user.isActive) {
-      return '$roleText • Active now';
-    } else {
-      return '$roleText • ${user.relativeTime}';
+  Widget _buildUserSubtitle(BuildContext context, OnlineUser user) {
+    final theme = Theme.of(context);
+    final rawRole = user.role ?? 'user';
+    
+    // Clean the role text (remove "user role " prefix if present)
+    String cleanRole = rawRole;
+    if (rawRole.contains('user role ')) {
+      cleanRole = rawRole.replaceFirst('user role ', '');
     }
+    
+    final roleText = cleanRole.substring(0, 1).toUpperCase() + cleanRole.substring(1);
+    
+    // Get activity status
+    final activityText = user.isActive ? 'Active now' : user.relativeTime;
+    
+    return Row(
+      children: [
+        _buildRoleChip(context, roleText),
+        const SizedBox(width: 8),
+        Text(
+          '• $activityText',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleChip(BuildContext context, String role) {
+    final theme = Theme.of(context);
+    
+    // Define role colors
+    Color backgroundColor;
+    Color textColor = Colors.white;
+    
+    switch (role.toLowerCase()) {
+      case 'teacher':
+        backgroundColor = Colors.red.shade700;
+        break;
+      case 'student':
+        backgroundColor = Colors.blue.shade700;
+        break;
+      default:
+        backgroundColor = theme.colorScheme.primary;
+        textColor = theme.colorScheme.onPrimary;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        role,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: textColor,
+          fontWeight: FontWeight.w500,
+          fontSize: 11,
+        ),
+      ),
+    );
   }
 
   Widget _buildUserAvatar(ThemeData theme, OnlineUser user) {

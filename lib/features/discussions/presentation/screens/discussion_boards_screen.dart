@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import '../../domain/models/discussion_board.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../providers/discussion_provider.dart';
+import '../providers/discussion_provider_simple.dart';
 import '../widgets/create_board_dialog.dart';
 
 class DiscussionBoardsScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
     super.initState();
     // Initialize boards when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DiscussionProvider>().initializeBoards();
+      context.read<SimpleDiscussionProvider>().initializeBoards();
     });
   }
 
@@ -60,7 +60,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
   }
 
   Widget _buildBoardsList() {
-    return Consumer<DiscussionProvider>(
+    return Consumer<SimpleDiscussionProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.boards.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -112,6 +112,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         }
 
         return ListView.builder(
+          physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
           padding: const EdgeInsets.all(16),
           itemCount: provider.boards.length,
           itemBuilder: (context, index) {
@@ -126,17 +127,22 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
     );
   }
 
-  Widget _buildBoardCard({required DiscussionBoard board}) {
+  Widget _buildBoardCard({required SimpleDiscussionBoard board}) {
     final theme = Theme.of(context);
-    return Card(
+    final isTeacher = context.read<AuthProvider>().userModel?.role == UserRole.teacher;
+    
+    final cardContent = Card(
       child: InkWell(
         onTap: () {
           // Set current board in provider
-          context.read<DiscussionProvider>().setCurrentBoard(board);
+          context.read<SimpleDiscussionProvider>().selectBoard(board);
 
           context.go(
               '/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}');
         },
+        onLongPress: isTeacher ? () {
+          _showDeleteBoardDialog(board);
+        } : null,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -161,6 +167,42 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                       ),
                     ),
                   ),
+                  if (isTeacher)
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        Icons.more_vert,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      padding: EdgeInsets.zero,
+                      onSelected: (value) {
+                        if (value == 'delete') {
+                          _showDeleteBoardDialog(board);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete,
+                                color: theme.colorScheme.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Delete Board',
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -173,7 +215,10 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     child: Text(
                       '${board.threadCount} threads',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer,
+                        color: theme.brightness == Brightness.dark 
+                            ? Colors.white
+                            : theme.colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -213,16 +258,20 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    _formatLastActivity(board.updatedAt),
+                    _formatLastActivity(board.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.brightness == Brightness.dark 
+                          ? Colors.white
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const Spacer(),
                   Text(
-                    'by ${board.createdByName}',
+                    'by ${board.createdBy}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.brightness == Brightness.dark 
+                          ? Colors.white
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -232,6 +281,35 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         ),
       ),
     );
+    
+    // Wrap with Dismissible for teachers only
+    if (isTeacher) {
+      return Dismissible(
+        key: Key('board_${board.id}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.delete,
+            color: Colors.white,
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          return await _showDeleteBoardDialog(board);
+        },
+        onDismissed: (direction) {
+          // Deletion is handled in confirmDismiss
+        },
+        child: cardContent,
+      );
+    }
+    
+    return cardContent;
   }
 
   String _formatLastActivity(DateTime date) {
@@ -256,5 +334,59 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
       context: context,
       builder: (context) => const CreateBoardDialog(),
     );
+  }
+  
+  Future<bool> _showDeleteBoardDialog(SimpleDiscussionBoard board) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Delete Discussion Board?'),
+        content: Text(
+          'Are you sure you want to delete "${board.title}"? This will also delete all threads and comments within this board. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop(true);
+              try {
+                // Use direct Firestore call like working comments
+                await FirebaseFirestore.instance
+                    .collection('discussion_boards')
+                    .doc(board.id)
+                    .delete();
+                    
+                // Refresh the boards list
+                if (context.mounted) {
+                  context.read<SimpleDiscussionProvider>().initializeBoards();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Board "${board.title}" deleted'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete board: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 }

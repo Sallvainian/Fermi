@@ -3,8 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../providers/chat_provider.dart';
-import '../../domain/models/chat_room.dart';
+import '../providers/chat_provider_simple.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 
@@ -81,7 +80,7 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
 
   Future<void> _createOrJoinClassChat(Map<String, dynamic> classData) async {
     try {
-      final chatProvider = context.read<ChatProvider>();
+      final chatProvider = context.read<SimpleChatProvider>();
 
       if (classData['hasChatRoom'] && classData['chatRoomId'] != null) {
         // Chat room already exists, navigate to it
@@ -109,12 +108,12 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
 
         final participants = userDocs.where((doc) => doc.exists).map((doc) {
           final data = doc.data()!;
-          return ParticipantInfo(
-            id: doc.id,
-            name: data['name'] ?? 'Unknown',
-            role: data['role'] ?? 'student',
-            photoUrl: data['photoUrl'],
-          );
+          return {
+            'id': doc.id,
+            'name': data['name'] ?? 'Unknown',
+            'role': data['role'] ?? 'student',
+            'photoUrl': data['photoUrl'],
+          };
         }).toList();
 
         // Create the chat room
@@ -130,10 +129,10 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
         await FirebaseFirestore.instance
             .collection('classes')
             .doc(classData['id'])
-            .update({'chatRoomId': chatRoom.id});
+            .update({'chatRoomId': chatRoom['id']});
 
         if (mounted) {
-          context.go('/chat/${chatRoom.id}');
+          context.go('/chat/${chatRoom['id']}');
         }
       }
     } catch (e) {

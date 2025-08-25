@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../domain/models/assignment.dart';
-import '../../../domain/models/submission.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+// import '../../../domain/models/assignment.dart'; // Using Map<String, dynamic> instead
+// import '../../../domain/models/submission.dart'; // Using Map<String, dynamic> instead
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/student_assignment_provider.dart';
+import '../../providers/student_assignment_provider_simple.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 
@@ -27,7 +28,7 @@ class _AssignmentSubmissionScreenState
     extends State<AssignmentSubmissionScreen> {
   final _textController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  StudentAssignment? _studentAssignment;
+  Map<String, dynamic>? _studentAssignment;
   bool _isLoading = true;
   bool _isSubmitting = false;
   PlatformFile? _selectedFile;
@@ -46,7 +47,7 @@ class _AssignmentSubmissionScreenState
   }
 
   Future<void> _loadAssignment() async {
-    final studentProvider = context.read<StudentAssignmentProvider>();
+    final studentProvider = context.read<SimpleStudentAssignmentProvider>();
 
     try {
       await studentProvider.loadAssignmentDetails(widget.assignmentId);
@@ -58,8 +59,8 @@ class _AssignmentSubmissionScreenState
           _isLoading = false;
 
           // If there's an existing submission, load its content
-          if (assignment?.submission?.textContent != null) {
-            _textController.text = assignment!.submission!.textContent!;
+          if (assignment?['submission']?['textContent'] != null) {
+            _textController.text = assignment!['submission']!['textContent']!;
           }
         });
       }
@@ -119,7 +120,7 @@ class _AssignmentSubmissionScreenState
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final studentProvider = context.read<StudentAssignmentProvider>();
+      final studentProvider = context.read<SimpleStudentAssignmentProvider>();
 
       final success = await studentProvider.submitAssignment(
         assignmentId: widget.assignmentId,
@@ -192,10 +193,10 @@ class _AssignmentSubmissionScreenState
       );
     }
 
-    final assignment = _studentAssignment!.assignment;
-    final isSubmitted = _studentAssignment!.isSubmitted;
-    final isOverdue = _studentAssignment!.isOverdue;
-    final canSubmit = !isOverdue || assignment.allowLateSubmissions;
+    final assignment = _studentAssignment!['assignment'];
+    final isSubmitted = _studentAssignment!['isSubmitted'] ?? false;
+    final isOverdue = _studentAssignment!['isOverdue'] ?? false;
+    final canSubmit = !isOverdue || (assignment['allowLateSubmissions'] ?? false);
 
     return AdaptiveLayout(
       title: isSubmitted ? 'View Submission' : 'Submit Assignment',
@@ -212,18 +213,18 @@ class _AssignmentSubmissionScreenState
                 const SizedBox(height: 16),
 
                 // Submission Status Card (if already submitted)
-                if (isSubmitted && _studentAssignment!.submission != null)
+                if (isSubmitted && _studentAssignment!['submission'] != null)
                   _buildSubmissionStatusCard(theme),
                 const SizedBox(height: 16),
 
                 // Submission Form
                 if (!isSubmitted ||
-                    _studentAssignment!.submission?.status ==
-                        SubmissionStatus.submitted)
+                    _studentAssignment!['submission']?['status'] ==
+                        'submitted')
                   _buildSubmissionForm(theme, assignment, canSubmit),
 
                 // Grading Info (if graded)
-                if (_studentAssignment!.isGraded) _buildGradingCard(theme),
+                if (_studentAssignment!['isGraded'] ?? false) _buildGradingCard(theme),
               ],
             ),
           ),
@@ -232,7 +233,7 @@ class _AssignmentSubmissionScreenState
     );
   }
 
-  Widget _buildAssignmentInfoCard(ThemeData theme, Assignment assignment) {
+  Widget _buildAssignmentInfoCard(ThemeData theme, Map<String, dynamic> assignment) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -242,7 +243,7 @@ class _AssignmentSubmissionScreenState
             Row(
               children: [
                 Icon(
-                  _getAssignmentIcon(assignment.type),
+                  _getAssignmentIcon(assignment['type']),
                   color: theme.colorScheme.primary,
                   size: 28,
                 ),
@@ -252,13 +253,13 @@ class _AssignmentSubmissionScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        assignment.title,
+                        assignment['title'] ?? 'Untitled Assignment',
                         style: theme.textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        '${assignment.category} • ${assignment.teacherName}',
+                        '${assignment['category'] ?? ''} • ${assignment['teacherName'] ?? ''}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -272,20 +273,20 @@ class _AssignmentSubmissionScreenState
             _buildInfoRow(
               Icons.calendar_today,
               'Due Date',
-              _formatDateTime(assignment.dueDate),
-              _studentAssignment!.isOverdue ? Colors.red : null,
+              _formatDateTime(assignment['dueDate']),
+              (_studentAssignment!['isOverdue'] ?? false) ? Colors.red : null,
             ),
             _buildInfoRow(
               Icons.star,
               'Points',
-              '${assignment.totalPoints.toInt()} points',
+              '${assignment['totalPoints']?.toInt() ?? 0} points',
               Colors.blue,
             ),
-            if (assignment.allowLateSubmissions)
+            if (assignment['allowLateSubmissions'] ?? false)
               _buildInfoRow(
                 Icons.warning,
                 'Late Policy',
-                '${assignment.latePenaltyPercentage}% penalty per day',
+                '${assignment['latePenaltyPercentage'] ?? 0}% penalty per day',
                 Colors.orange,
               ),
           ],
@@ -295,7 +296,7 @@ class _AssignmentSubmissionScreenState
   }
 
   Widget _buildSubmissionStatusCard(ThemeData theme) {
-    final submission = _studentAssignment!.submission!;
+    final submission = _studentAssignment!['submission']!;
 
     return Card(
       color: theme.colorScheme.primaryContainer,
@@ -356,7 +357,7 @@ class _AssignmentSubmissionScreenState
   }
 
   Widget _buildSubmissionForm(
-      ThemeData theme, Assignment assignment, bool canSubmit) {
+      ThemeData theme, Map<String, dynamic> assignment, bool canSubmit) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -389,7 +390,7 @@ class _AssignmentSubmissionScreenState
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    assignment.instructions,
+                    assignment['instructions'] ?? 'No instructions provided',
                     style: theme.textTheme.bodyMedium,
                   ),
                 ],
@@ -513,7 +514,7 @@ class _AssignmentSubmissionScreenState
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: canSubmit && !_isSubmitting
-                    ? (_studentAssignment!.isSubmitted
+                    ? ((_studentAssignment!['isSubmitted'] ?? false)
                         ? _updateSubmission
                         : _submitAssignment)
                     : null,
@@ -523,13 +524,13 @@ class _AssignmentSubmissionScreenState
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Icon(_studentAssignment!.isSubmitted
+                    : Icon((_studentAssignment!['isSubmitted'] ?? false)
                         ? Icons.update
                         : Icons.upload),
                 label: Text(
                   _isSubmitting
                       ? 'Submitting...'
-                      : (_studentAssignment!.isSubmitted
+                      : ((_studentAssignment!['isSubmitted'] ?? false)
                           ? 'Update Submission'
                           : 'Submit Assignment'),
                 ),
@@ -539,7 +540,7 @@ class _AssignmentSubmissionScreenState
               ),
             ),
 
-            if (!canSubmit && _studentAssignment!.isOverdue) ...[
+            if (!canSubmit && (_studentAssignment!['isOverdue'] ?? false)) ...[
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -604,7 +605,7 @@ class _AssignmentSubmissionScreenState
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color:
-                        _getGradeColor(_studentAssignment!.letterGrade ?? 'N/A')
+                        _getGradeColor(_studentAssignment!['letterGrade'] ?? 'N/A')
                             .withValues(alpha: 0.2),
                   ),
                   child: Center(
@@ -612,20 +613,20 @@ class _AssignmentSubmissionScreenState
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          _studentAssignment!.letterGrade ?? 'N/A',
+                          _studentAssignment!['letterGrade'] ?? 'N/A',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: _getGradeColor(
-                                _studentAssignment!.letterGrade ?? 'N/A'),
+                                _studentAssignment!['letterGrade'] ?? 'N/A'),
                           ),
                         ),
                         Text(
-                          '${_studentAssignment!.percentage?.toStringAsFixed(1) ?? 0}%',
+                          '${_studentAssignment!['percentage']?.toStringAsFixed(1) ?? 0}%',
                           style: TextStyle(
                             fontSize: 12,
                             color: _getGradeColor(
-                                _studentAssignment!.letterGrade ?? 'N/A'),
+                                _studentAssignment!['letterGrade'] ?? 'N/A'),
                           ),
                         ),
                       ],
@@ -640,21 +641,21 @@ class _AssignmentSubmissionScreenState
                     children: [
                       _buildGradeRow(
                         'Points Earned',
-                        '${_studentAssignment!.earnedPoints?.toInt() ?? 0} / ${_studentAssignment!.assignment.totalPoints.toInt()}',
+                        '${_studentAssignment!['earnedPoints']?.toInt() ?? 0} / ${_studentAssignment!['assignment']?['totalPoints']?.toInt() ?? 0}',
                       ),
                       const SizedBox(height: 8),
-                      if (_studentAssignment!.submission?.gradedAt != null)
+                      if (_studentAssignment!['submission']?['gradedAt'] != null)
                         _buildGradeRow(
                           'Graded On',
                           _formatDate(
-                              _studentAssignment!.submission!.gradedAt!),
+                              _studentAssignment!['submission']!['gradedAt']!),
                         ),
                     ],
                   ),
                 ),
               ],
             ),
-            if (_studentAssignment!.feedback != null) ...[
+            if (_studentAssignment!['feedback'] != null) ...[
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 16),
@@ -672,7 +673,7 @@ class _AssignmentSubmissionScreenState
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  _studentAssignment!.feedback!,
+                  _studentAssignment!['feedback']!,
                   style: theme.textTheme.bodyMedium,
                 ),
               ),
@@ -728,24 +729,24 @@ class _AssignmentSubmissionScreenState
     );
   }
 
-  IconData _getAssignmentIcon(AssignmentType type) {
+  IconData _getAssignmentIcon(String? type) {
     switch (type) {
-      case AssignmentType.homework:
+      case 'homework':
         return Icons.home_work_outlined;
-      case AssignmentType.essay:
+      case 'essay':
         return Icons.article_outlined;
-      case AssignmentType.quiz:
+      case 'quiz':
         return Icons.quiz_outlined;
-      case AssignmentType.test:
-      case AssignmentType.exam:
+      case 'test':
+      case 'exam':
         return Icons.assignment_outlined;
-      case AssignmentType.lab:
+      case 'lab':
         return Icons.science_outlined;
-      case AssignmentType.project:
+      case 'project':
         return Icons.folder_special_outlined;
-      case AssignmentType.presentation:
+      case 'presentation':
         return Icons.present_to_all_outlined;
-      case AssignmentType.classwork:
+      case 'classwork':
         return Icons.work_outline;
       default:
         return Icons.assignment_outlined;
@@ -779,7 +780,17 @@ class _AssignmentSubmissionScreenState
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
-  String _formatDateTime(DateTime date) {
+  String _formatDateTime(dynamic dateValue) {
+    // Handle both Timestamp and DateTime
+    final DateTime date;
+    if (dateValue is Timestamp) {
+      date = dateValue.toDate();
+    } else if (dateValue is DateTime) {
+      date = dateValue;
+    } else {
+      return 'No date';
+    }
+    
     final time = TimeOfDay.fromDateTime(date);
     return '${_formatDate(date)} at ${time.format(context)}';
   }

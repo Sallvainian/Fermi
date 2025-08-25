@@ -1,5 +1,21 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+
+# Suppress warnings for Windows SDK components
+set(CMAKE_SUPPRESS_REGENERATION TRUE)
+
+# Suppress specific warnings:
+# /wd4099 - PDB 'type' was not found with 'library' 
+# /wd4251 - class needs dll-interface (common with STL)
+# /wd4275 - non dll-interface class used as base
+add_compile_options(/wd4099 /wd4251 /wd4275)
+
+# Suppress MSBuild warnings for WinRT components
+set(CMAKE_VS_GLOBALS
+  "NoWarn=MSB3277"
+  "TreatWarningsAsErrors=false"
+)
+
 project(teacher_dashboard_flutter LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
@@ -8,7 +24,7 @@ set(BINARY_NAME "teacher_dashboard_flutter")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
-cmake_policy(VERSION 3.14...3.25)
+cmake_policy(VERSION 3.14...3.28)
 
 # Define build configuration option.
 get_property(IS_MULTICONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)

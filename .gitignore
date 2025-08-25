@@ -132,3 +132,7 @@ web/nul!/build/
 *.mobileprovision
 Runner.xcarchive/
 temp.pem
+
+# Unwanted files
+*.exe
+firestore_rules_fix.txt

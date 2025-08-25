@@ -796,7 +796,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     if (user == null) return;
     
-    // Check if user signed in with Apple
+    // Check if user signed in with Apple or Google
+    // TODO: Add provider info to AuthUser interface for Windows support
     bool isAppleUser = user.providerData.any((info) => info.providerId == 'apple.com');
     bool isGoogleUser = user.providerData.any((info) => info.providerId == 'google.com');
     

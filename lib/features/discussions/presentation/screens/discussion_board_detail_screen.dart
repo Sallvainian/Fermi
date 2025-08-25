@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../providers/discussion_provider.dart';
+import '../providers/discussion_provider_simple.dart';
 import '../widgets/create_thread_dialog.dart';
-import 'thread_detail_screen.dart';
-import '../../domain/models/discussion_board.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../shared/models/user_model.dart';
 
 class DiscussionBoardDetailScreen extends StatefulWidget {
   final String boardId;
@@ -30,7 +32,7 @@ class _DiscussionBoardDetailScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<DiscussionProvider>().loadBoardThreads(widget.boardId);
+      context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
     });
   }
 
@@ -39,6 +41,10 @@ class _DiscussionBoardDetailScreenState
     return AdaptiveLayout(
       title: widget.boardTitle,
       showBackButton: true,
+      onBackPressed: () {
+        // Navigate back to the discussion boards list (first tier)
+        context.go('/discussions');
+      },
       actions: [
         PopupMenuButton<String>(
           onSelected: (value) {
@@ -89,17 +95,17 @@ class _DiscussionBoardDetailScreenState
   }
 
   Widget _buildThreadsList() {
-    return Consumer<DiscussionProvider>(
+    return Consumer<SimpleDiscussionProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        final threads = provider.getBoardThreads(widget.boardId);
+        final threads = provider.getThreadsForBoard(widget.boardId);
         if (threads.isEmpty) {
           return const Center(child: Text('No threads yet. Start one!'));
         }
 
-        List<DiscussionThread> sortedThreads = List.from(threads);
+        List<SimpleDiscussionThread> sortedThreads = List.from(threads);
         switch (_sortType) {
           case 'recent':
             sortedThreads.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -113,53 +119,34 @@ class _DiscussionBoardDetailScreenState
         }
 
         return ListView.builder(
+          physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: sortedThreads.length,
           itemBuilder: (context, index) {
             final thread = sortedThreads[index];
-            return _buildThreadCard(
-              title: thread.title,
-              author: thread.authorName,
-              authorRole: thread.authorRole,
-              content: thread.content,
-              createdAt: thread.createdAt,
-              replyCount: thread.replyCount,
-              likeCount: thread.likeCount,
-              isPinned: thread.isPinned,
-              tags: thread.tags,
-            );
+            return _buildThreadCard(thread: thread);
           },
         );
       },
     );
   }
 
-  Widget _buildThreadCard({
-    required String title,
-    required String author,
-    required String authorRole,
-    required String content,
-    required DateTime createdAt,
-    required int replyCount,
-    required int likeCount,
-    bool isPinned = false,
-    List<String> tags = const [],
-  }) {
+  Widget _buildThreadCard({required SimpleDiscussionThread thread}) {
     final theme = Theme.of(context);
-
-    return Card(
+    final authProvider = context.read<AuthProvider>();
+    final currentUserId = authProvider.firebaseUser?.uid ?? '';
+    final isTeacher = authProvider.userModel?.role == UserRole.teacher;
+    final canDelete = isTeacher || thread.authorId == currentUserId;
+    
+    final cardContent = Card(
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ThreadDetailScreen(
-                threadId: 'temp-id',
-                boardId: widget.boardId,
-              ),
-            ),
-          );
+          // Use GoRouter for consistent navigation
+          context.go('/discussions/${widget.boardId}/thread/${thread.id}');
         },
+        onLongPress: canDelete ? () {
+          _showDeleteThreadDialog(thread);
+        } : null,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -171,15 +158,11 @@ class _DiscussionBoardDetailScreenState
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: authorRole == 'teacher'
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.secondary,
+                    backgroundColor: theme.colorScheme.secondary,
                     child: Text(
-                      author[0].toUpperCase(),
+                      thread.authorName.isNotEmpty ? thread.authorName[0].toUpperCase() : '?',
                       style: TextStyle(
-                        color: authorRole == 'teacher'
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSecondary,
+                        color: theme.colorScheme.onSecondary,
                       ),
                     ),
                   ),
@@ -191,51 +174,71 @@ class _DiscussionBoardDetailScreenState
                         Row(
                           children: [
                             Text(
-                              author,
+                              thread.authorName,
                               style: theme.textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: authorRole == 'teacher'
-                                    ? theme.colorScheme.primaryContainer
-                                    : theme.colorScheme.secondaryContainer,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                authorRole,
-                                style: theme.textTheme.labelSmall,
                               ),
                             ),
                           ],
                         ),
                         Text(
-                          _formatTime(createdAt),
+                          _formatTime(thread.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: theme.brightness == Brightness.dark 
+                                ? Colors.white
+                                : theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (isPinned)
+                  if (thread.isPinned)
                     Icon(
                       Icons.push_pin,
                       size: 20,
                       color: theme.colorScheme.primary,
+                    ),
+                  if (isTeacher || thread.authorId == currentUserId)
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        Icons.more_vert,
+                        size: 20,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      padding: EdgeInsets.zero,
+                      onSelected: (value) {
+                        if (value == 'delete') {
+                          _showDeleteThreadDialog(thread);
+                        }
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete,
+                                color: theme.colorScheme.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Delete Thread',
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                 ],
               ),
               const SizedBox(height: 12),
               // Title
               Text(
-                title,
+                thread.title,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -243,25 +246,11 @@ class _DiscussionBoardDetailScreenState
               const SizedBox(height: 8),
               // Content preview
               Text(
-                content,
+                thread.content,
                 style: theme.textTheme.bodyMedium,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (tags.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  children: tags.map((tag) {
-                    return Chip(
-                      label: Text(tag),
-                      labelStyle: theme.textTheme.labelSmall,
-                      padding: EdgeInsets.zero,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    );
-                  }).toList(),
-                ),
-              ],
               const SizedBox(height: 12),
               // Stats
               Row(
@@ -269,23 +258,97 @@ class _DiscussionBoardDetailScreenState
                   Icon(
                     Icons.comment_outlined,
                     size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
+                    color: theme.brightness == Brightness.dark 
+                        ? Colors.white
+                        : theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '$replyCount replies',
-                    style: theme.textTheme.bodySmall,
+                    '${thread.replyCount} replies',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.brightness == Brightness.dark 
+                          ? Colors.white70
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(width: 16),
-                  Icon(
-                    Icons.thumb_up_outlined,
-                    size: 16,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$likeCount likes',
-                    style: theme.textTheme.bodySmall,
+                  InkWell(
+                    onTap: () async {
+                      // Toggle like for this user
+                      try {
+                        final currentUserId = context.read<AuthProvider>().firebaseUser?.uid ?? '';
+                        if (currentUserId.isEmpty) return;
+                        
+                        final threadRef = FirebaseFirestore.instance
+                            .collection('discussion_boards')
+                            .doc(widget.boardId)
+                            .collection('threads')
+                            .doc(thread.id);
+                            
+                        // Check if user has already liked
+                        final likeRef = threadRef.collection('likes').doc(currentUserId);
+                        final likeDoc = await likeRef.get();
+                        
+                        if (likeDoc.exists) {
+                          // User has liked, so remove the like
+                          await likeRef.delete();
+                          await threadRef.update({
+                            'likeCount': FieldValue.increment(-1),
+                          });
+                        } else {
+                          // User hasn't liked, so add the like
+                          await likeRef.set({
+                            'userId': currentUserId,
+                            'likedAt': FieldValue.serverTimestamp(),
+                          });
+                          await threadRef.update({
+                            'likeCount': FieldValue.increment(1),
+                          });
+                        }
+                        
+                        // Reload threads to show updated count
+                        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to update like: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            thread.isLikedByCurrentUser 
+                                ? Icons.thumb_up 
+                                : Icons.thumb_up_outlined,
+                            size: 16,
+                            color: thread.isLikedByCurrentUser
+                                ? theme.colorScheme.primary
+                                : (theme.brightness == Brightness.dark 
+                                    ? Colors.white
+                                    : theme.colorScheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${thread.likeCount} likes',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: thread.isLikedByCurrentUser
+                                  ? theme.colorScheme.primary
+                                  : (theme.brightness == Brightness.dark 
+                                      ? Colors.white70
+                                      : theme.colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -294,6 +357,35 @@ class _DiscussionBoardDetailScreenState
         ),
       ),
     );
+    
+    // Wrap with Dismissible if user can delete
+    if (canDelete) {
+      return Dismissible(
+        key: Key('thread_${thread.id}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.delete,
+            color: Colors.white,
+          ),
+        ),
+        confirmDismiss: (direction) async {
+          return await _showDeleteThreadDialog(thread);
+        },
+        onDismissed: (direction) {
+          // Deletion is handled in confirmDismiss
+        },
+        child: cardContent,
+      );
+    }
+    
+    return cardContent;
   }
 
   String _formatTime(DateTime dateTime) {
@@ -316,5 +408,69 @@ class _DiscussionBoardDetailScreenState
       context: context,
       builder: (context) => CreateThreadDialog(boardId: widget.boardId),
     );
+  }
+  
+  Future<bool> _showDeleteThreadDialog(SimpleDiscussionThread thread) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Delete Thread?'),
+        content: Text(
+          'Are you sure you want to delete "${thread.title}"? This will also delete all replies. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop(true);
+              try {
+                // Use direct Firestore call like working comments
+                await FirebaseFirestore.instance
+                    .collection('discussion_boards')
+                    .doc(widget.boardId)
+                    .collection('threads')
+                    .doc(thread.id)
+                    .delete();
+                
+                // Decrement the thread count
+                await FirebaseFirestore.instance
+                    .collection('discussion_boards')
+                    .doc(widget.boardId)
+                    .update({
+                  'threadCount': FieldValue.increment(-1),
+                });
+                    
+                // Refresh the threads list
+                if (context.mounted) {
+                  context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Thread "${thread.title}" deleted'),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete thread: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
   }
 }

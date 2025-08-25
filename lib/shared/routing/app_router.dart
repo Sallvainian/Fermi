@@ -13,7 +13,7 @@ import '../../features/student/presentation/screens/student_dashboard_screen.dar
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/simple_chat_screen.dart';
-import '../../features/chat/presentation/screens/user_selection_screen.dart';
+import '../../features/chat/presentation/screens/simple_user_list.dart';
 import '../../features/chat/presentation/screens/group_creation_screen.dart';
 import '../../features/chat/presentation/screens/class_selection_screen.dart';
 import '../../features/chat/presentation/screens/call_screen.dart';
@@ -37,8 +37,8 @@ import '../../features/grades/presentation/screens/student/grades_screen.dart';
 import '../../features/student/presentation/screens/teacher/students_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
-import '../../features/discussions/presentation/screens/discussion_boards_screen_simple.dart';
-import '../../features/discussions/presentation/screens/discussion_board_detail_screen_simple.dart';
+import '../../features/discussions/presentation/screens/discussion_boards_screen.dart';
+import '../../features/discussions/presentation/screens/discussion_board_detail_screen.dart';
 import '../../features/discussions/presentation/screens/thread_detail_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
@@ -305,6 +305,11 @@ class AppRouter {
           path: '/messages',
           builder: (context, state) => const ChatListScreen(),
         ),
+        // MUST BE BEFORE THE WILDCARD ROUTE!
+        GoRoute(
+          path: '/messages/select-user',
+          builder: (context, state) => const SimpleUserList(),
+        ),
         GoRoute(
           path: '/messages/:chatRoomId',
           builder: (context, state) {
@@ -324,9 +329,14 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             final title = state.uri.queryParameters['title'] ?? 'Chat';
+            final recipientId = state.uri.queryParameters['recipientId'];
+            final recipientName = state.uri.queryParameters['recipientName'];
+            
             return SimpleChatScreen(
               chatRoomId: chatRoomId,
               chatTitle: title,
+              recipientId: recipientId,
+              recipientName: recipientName,
             );
           },
         ),
@@ -342,10 +352,10 @@ class AppRouter {
           },
         ),
 
-        // Chat creation routes
+        // Chat creation routes (keeping old one for compatibility)
         GoRoute(
           path: '/chat/user-selection',
-          builder: (context, state) => const UserSelectionScreen(),
+          builder: (context, state) => const SimpleUserList(), // USING SIMPLE VERSION
         ),
         GoRoute(
           path: '/chat/group-creation',
@@ -483,7 +493,7 @@ class AppRouter {
         ),
         GoRoute(
           path: '/student/discussions',
-          builder: (context, state) => const SimpleDiscussionBoardsScreen(),
+          builder: (context, state) => const DiscussionBoardsScreen(),
         ),
 
         // Common routes
@@ -497,14 +507,16 @@ class AppRouter {
         ),
         GoRoute(
           path: '/discussions',
-          builder: (context, state) => const SimpleDiscussionBoardsScreen(),
+          builder: (context, state) => const DiscussionBoardsScreen(),
         ),
         GoRoute(
           path: '/discussions/:boardId',
           builder: (context, state) {
             final boardId = state.pathParameters['boardId']!;
-            return SimpleDiscussionBoardDetailScreen(
+            final boardTitle = state.uri.queryParameters['title'] ?? 'Discussion Board';
+            return DiscussionBoardDetailScreen(
               boardId: boardId,
+              boardTitle: boardTitle,
             );
           },
           routes: [

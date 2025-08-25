@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/jeopardy_game.dart';
-import '../providers/jeopardy_provider.dart';
+import '../providers/jeopardy_provider_simple.dart';
 
 class JeopardyPlayScreen extends StatefulWidget {
   final String gameId;
@@ -43,7 +43,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _loadGame() async {
-    final jeopardyProvider = context.read<JeopardyProvider>();
+    final jeopardyProvider = context.read<SimpleJeopardyProvider>();
     final loadedGame = await jeopardyProvider.loadGame(widget.gameId);
 
     if (loadedGame != null) {

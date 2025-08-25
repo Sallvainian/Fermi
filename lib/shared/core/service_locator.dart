@@ -20,26 +20,9 @@ import '../../features/assignments/data/services/assignment_service.dart';
 import '../../features/chat/data/services/chat_service.dart';
 import '../../features/assignments/data/services/submission_service.dart';
 import '../services/logger_service.dart';
-import '../../features/assignments/domain/repositories/assignment_repository.dart';
-import '../../features/assignments/data/repositories/assignment_repository_impl.dart';
-import '../../features/classes/domain/repositories/class_repository.dart';
-import '../../features/classes/data/repositories/class_repository_impl.dart';
-import '../../features/grades/domain/repositories/grade_repository.dart';
-import '../../features/grades/data/repositories/grade_repository_impl.dart';
-import '../../features/student/domain/repositories/student_repository.dart';
-import '../../features/student/data/repositories/student_repository_impl.dart';
-import '../../features/assignments/domain/repositories/submission_repository.dart';
-import '../../features/assignments/data/repositories/submission_repository_impl.dart';
-import '../../features/chat/domain/repositories/chat_repository.dart';
-import '../../features/chat/data/repositories/chat_repository_impl.dart';
-// Discussion repository removed - using direct Firestore in SimpleDiscussionProvider
-// import '../../features/discussions/domain/repositories/discussion_repository.dart';
-// import '../../features/discussions/data/repositories/discussion_repository_impl.dart';
-import '../../features/calendar/domain/repositories/calendar_repository.dart';
-import '../../features/calendar/data/repositories/calendar_repository_impl.dart';
-import '../../features/calendar/data/services/calendar_service.dart';
-import '../../features/games/domain/repositories/jeopardy_repository.dart';
-import '../../features/games/data/repositories/firebase_jeopardy_repository.dart';
+import 'app_initializer.dart';
+// All repository imports removed - using direct Firestore access
+// Repository pattern removed in favor of simpler direct Firebase SDK usage
 
 /// Global instance of the GetIt service locator.
 /// This provides access to registered dependencies throughout the app.
@@ -73,52 +56,40 @@ final GetIt getIt = GetIt.instance;
 Future<void> setupServiceLocator() async {
   // Setting up service locator...
 
+  // Check Firebase initialization status
+  if (!AppInitializer.isFirebaseInitialized) {
+    LoggerService.warning(
+      'Firebase not initialized - skipping Firebase service registration',
+      tag: 'ServiceLocator'
+    );
+    
+    // Register only essential non-Firebase services
+    getIt.registerLazySingleton<LoggerService>(() => LoggerService());
+    return;
+  }
+  
+  // Firebase is initialized (either regular Firebase or firebase_dart)
+  LoggerService.info(
+    'Firebase is initialized - registering all services',
+    tag: 'ServiceLocator'
+  );
+
   // Register Firebase instances
-  getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-  getIt.registerLazySingleton<FirebaseFirestore>(
-      () => FirebaseFirestore.instance);
-  getIt.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+  try {
+    getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
+    getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
+    getIt.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+    LoggerService.info('Registered Firebase instances', tag: 'ServiceLocator');
+  } catch (e) {
+    LoggerService.error('Failed to register Firebase instances', tag: 'ServiceLocator', error: e);
+  }
 
   // Register services
   getIt.registerLazySingleton<AuthService>(() => AuthService());
   getIt.registerLazySingleton<LoggerService>(() => LoggerService());
 
-  getIt.registerLazySingleton<AssignmentRepository>(
-    () => AssignmentRepositoryImpl(getIt<FirebaseFirestore>()),
-  );
-
-  getIt.registerLazySingleton<ClassRepository>(
-    () => ClassRepositoryImpl(getIt<FirebaseFirestore>()),
-  );
-
-  getIt.registerLazySingleton<GradeRepository>(
-    () => GradeRepositoryImpl(getIt<FirebaseFirestore>()),
-  );
-
-  getIt.registerLazySingleton<StudentRepository>(
-    () => StudentRepositoryImpl(getIt<FirebaseFirestore>()),
-  );
-
-  getIt.registerLazySingleton<SubmissionRepository>(
-    () => SubmissionRepositoryImpl(getIt<FirebaseFirestore>()),
-  );
-
-  getIt.registerLazySingleton<ChatRepository>(
-    () => ChatRepositoryImpl(getIt<FirebaseFirestore>(), getIt<FirebaseAuth>()),
-  );
-
-  // Discussion repository removed - using direct Firestore in SimpleDiscussionProvider
-  // getIt.registerLazySingleton<DiscussionRepository>(
-  //   () => DiscussionRepositoryImpl(getIt<FirebaseFirestore>(), getIt<FirebaseAuth>()),
-  // );
-
-  getIt.registerLazySingleton<CalendarRepository>(
-    () => CalendarRepositoryImpl(getIt<FirebaseFirestore>()),
-  );
-
-  getIt.registerLazySingleton<JeopardyRepository>(
-    () => FirebaseJeopardyRepository(firestore: getIt<FirebaseFirestore>()),
-  );
+  // Repositories removed - using direct Firestore access in providers
+  // This reduces code complexity by ~7,000 lines
 
   // Register services with dependencies
   getIt.registerFactory<AssignmentService>(
@@ -130,18 +101,9 @@ Future<void> setupServiceLocator() async {
     () => SubmissionService(firestore: getIt<FirebaseFirestore>()),
   );
 
-  getIt.registerFactory<CalendarService>(
-    () => CalendarService(
-      getIt<CalendarRepository>(),
-      getIt<ClassRepository>(),
-    ),
-  );
+  // Calendar service removed - using direct Firestore access
 
-  // CalendarService registered
-
-  // Note: Providers will be refactored to use these services via dependency injection
-  // rather than creating service instances directly
-  // Service locator setup complete
+  LoggerService.info('Service locator setup complete', tag: 'ServiceLocator');
 }
 
 /// Convenience extension for accessing registered services.
@@ -167,18 +129,9 @@ extension ServiceLocatorExtension on GetIt {
   FirebaseStorage get storage => get<FirebaseStorage>();
 
   AuthService get authService => get<AuthService>();
-  AssignmentRepository get assignmentRepository => get<AssignmentRepository>();
-  ClassRepository get classRepository => get<ClassRepository>();
-  GradeRepository get gradeRepository => get<GradeRepository>();
-  StudentRepository get studentRepository => get<StudentRepository>();
-  SubmissionRepository get submissionRepository => get<SubmissionRepository>();
-  ChatRepository get chatRepository => get<ChatRepository>();
-  // DiscussionRepository get discussionRepository => get<DiscussionRepository>();
-  CalendarRepository get calendarRepository => get<CalendarRepository>();
   AssignmentService get assignmentService => get<AssignmentService>();
   ChatService get chatService => get<ChatService>();
   SubmissionService get submissionService => get<SubmissionService>();
-  CalendarService get calendarService => get<CalendarService>();
   LoggerService get loggerService => get<LoggerService>();
-  JeopardyRepository get jeopardyRepository => get<JeopardyRepository>();
+  // Repository getters removed - using direct Firestore access
 }

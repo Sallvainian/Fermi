@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../domain/models/assignment.dart';
-import '../../providers/assignment_provider.dart';
+// Assignment model removed - using Map<String, dynamic> directly
+import '../../providers/assignment_provider_simple.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../../shared/widgets/custom_radio_list_tile.dart';
@@ -27,10 +27,10 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
   final _instructionsController = TextEditingController();
   final _maxPointsController = TextEditingController();
 
-  Assignment? _assignment;
+  Map<String, dynamic>? _assignment;
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay _dueTime = const TimeOfDay(hour: 23, minute: 59);
-  AssignmentType _selectedType = AssignmentType.essay;
+  String _selectedType = 'essay';
   bool _allowLateSubmissions = true;
   int _latePenaltyPercentage = 10;
   bool _isLoading = true;
@@ -58,7 +58,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
   }
 
   Future<void> _loadAssignment() async {
-    final assignmentProvider = context.read<AssignmentProvider>();
+    final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
     try {
       final assignment =
@@ -66,20 +66,20 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
       if (assignment != null && mounted) {
         setState(() {
           _assignment = assignment;
-          _titleController.text = assignment.title;
-          _descriptionController.text = assignment.description;
-          _instructionsController.text = assignment.instructions;
-          _maxPointsController.text = assignment.maxPoints.toInt().toString();
-          _selectedType = assignment.type;
-          _dueDate = assignment.dueDate;
-          _dueTime = TimeOfDay.fromDateTime(assignment.dueDate);
-          _allowLateSubmissions = assignment.allowLateSubmissions;
-          _latePenaltyPercentage = assignment.latePenaltyPercentage;
+          _titleController.text = assignment['title'] ?? '';
+          _descriptionController.text = assignment['description'] ?? '';
+          _instructionsController.text = assignment['instructions'] ?? '';
+          _maxPointsController.text = (assignment['maxPoints'] ?? 0).toInt().toString();
+          _selectedType = assignment['type'] ?? 'essay';
+          _dueDate = assignment['dueDate'] ?? DateTime.now().add(const Duration(days: 7));
+          _dueTime = TimeOfDay.fromDateTime(assignment['dueDate'] ?? DateTime.now());
+          _allowLateSubmissions = assignment['allowLateSubmissions'] ?? true;
+          _latePenaltyPercentage = assignment['latePenaltyPercentage'] ?? 10;
 
-          if (assignment.publishAt != null) {
-            _scheduledPublishDate = assignment.publishAt;
+          if (assignment['publishAt'] != null) {
+            _scheduledPublishDate = assignment['publishAt'];
             _scheduledPublishTime =
-                TimeOfDay.fromDateTime(assignment.publishAt!);
+                TimeOfDay.fromDateTime(assignment['publishAt']);
           }
 
           _isLoading = false;
@@ -152,11 +152,11 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final assignmentProvider = context.read<AssignmentProvider>();
+      final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
       // Determine new publish status and date
-      DateTime? newPublishAt = _assignment!.publishAt;
-      bool newIsPublished = _assignment!.isPublished;
+      DateTime? newPublishAt = _assignment!['publishAt'];
+      bool newIsPublished = _assignment!['isPublished'] ?? false;
 
       if (_updatePublishStatus) {
         if (_publishNow) {
@@ -170,30 +170,29 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
         }
       }
 
-      final updatedAssignment = _assignment!.copyWith(
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        instructions: _instructionsController.text.trim(),
-        type: _selectedType,
-        category: _selectedType.name.toUpperCase(),
-        maxPoints: double.parse(_maxPointsController.text),
-        totalPoints: double.parse(_maxPointsController.text),
-        dueDate: _combineDateAndTime(_dueDate, _dueTime),
-        allowLateSubmissions: _allowLateSubmissions,
-        latePenaltyPercentage: _latePenaltyPercentage,
-        updatedAt: DateTime.now(),
-        isPublished: newIsPublished,
-        publishAt: newPublishAt,
-      );
+      final updatedData = {
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'instructions': _instructionsController.text.trim(),
+        'type': _selectedType,
+        'category': _selectedType.toUpperCase(),
+        'maxPoints': double.parse(_maxPointsController.text),
+        'totalPoints': double.parse(_maxPointsController.text),
+        'dueDate': _combineDateAndTime(_dueDate, _dueTime),
+        'allowLateSubmissions': _allowLateSubmissions,
+        'latePenaltyPercentage': _latePenaltyPercentage,
+        'isPublished': newIsPublished,
+        'publishAt': newPublishAt,
+      };
 
       final success =
-          await assignmentProvider.updateAssignment(updatedAssignment);
+          await assignmentProvider.updateAssignment(widget.assignmentId, updatedData);
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                'Assignment "${updatedAssignment.title}" updated successfully'),
+                'Assignment "${_titleController.text.trim()}" updated successfully'),
             backgroundColor: Colors.green,
           ),
         );
@@ -294,16 +293,16 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<AssignmentType>(
+                      DropdownButtonFormField<String>(
                         initialValue: _selectedType,
                         decoration: const InputDecoration(
                           labelText: 'Assignment Type',
                           prefixIcon: Icon(Icons.category),
                         ),
-                        items: AssignmentType.values.map((type) {
+                        items: ['essay', 'quiz', 'project', 'lab', 'worksheet', 'other'].map((type) {
                           return DropdownMenuItem(
                             value: type,
-                            child: Text(type.name.toUpperCase()),
+                            child: Text(type.toUpperCase()),
                           );
                         }).toList(),
                         onChanged: (value) {
@@ -496,10 +495,10 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _assignment!.isPublished
+                        (_assignment!['isPublished'] ?? false)
                             ? 'Currently Published'
-                            : _assignment!.publishAt != null
-                                ? 'Scheduled for ${_formatDateTime(_assignment!.publishAt!)}'
+                            : _assignment!['publishAt'] != null
+                                ? 'Scheduled for ${_formatDateTime(_assignment!['publishAt'])}'
                                 : 'Currently Unpublished',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,

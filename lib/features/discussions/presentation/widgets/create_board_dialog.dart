@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/discussion_provider.dart';
+import '../providers/discussion_provider_simple.dart';
 
 class CreateBoardDialog extends StatefulWidget {
   const CreateBoardDialog({super.key});
@@ -131,7 +131,7 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
 
   void _createBoard() async {
     if (_formKey.currentState!.validate()) {
-      final provider = context.read<DiscussionProvider>();
+      final provider = context.read<SimpleDiscussionProvider>();
 
       showDialog(
         context: context,
@@ -141,31 +141,21 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
         ),
       );
 
-      final boardId = await provider.createBoard(
+      await provider.createBoard(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         tags: _selectedTags,
-        isPinned: _isPinned,
       );
 
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
         Navigator.pop(context); // Close create dialog
 
-        if (boardId != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Discussion board created successfully'),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to create board: ${provider.error}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Discussion board created successfully'),
+          ),
+        );
       }
     }
   }

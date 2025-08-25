@@ -13,8 +13,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-import '../providers/chat_provider.dart';
-import '../../domain/models/message.dart';
+import '../providers/chat_provider_simple.dart';
 import '../../data/services/scheduled_messages_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart' as app_auth;
 
@@ -116,12 +115,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _scheduledMessagesService = ScheduledMessagesService();
     // Load chat room and messages when screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final chatProvider = context.read<ChatProvider>();
+      final chatProvider = context.read<SimpleChatProvider>();
 
       try {
         // Find the chat room from the list
         final chatRoom = chatProvider.chatRooms.firstWhere(
-          (room) => room.id == widget.chatRoomId,
+          (room) => room['id'] == widget.chatRoomId,
         );
         chatProvider.setCurrentChatRoom(chatRoom);
       } catch (e) {
@@ -162,22 +161,33 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             }
           },
         ),
-        title: Consumer<ChatProvider>(
+        title: Consumer<SimpleChatProvider>(
           builder: (context, chatProvider, child) {
             final chatRoom = chatProvider.currentChatRoom;
             final authProvider = context.read<app_auth.AuthProvider>();
             final currentUserId = authProvider.userModel?.uid ?? '';
 
-            final displayName =
-                chatRoom?.getDisplayName(currentUserId) ?? 'Chat';
+            String displayName = 'Chat';
+            if (chatRoom != null) {
+              if (chatRoom['type'] == 'direct' && (chatRoom['participants'] as List?)?.length == 2) {
+                final participants = chatRoom['participants'] as List<dynamic>;
+                final otherParticipant = participants.firstWhere(
+                  (p) => p['id'] != currentUserId,
+                  orElse: () => participants.first,
+                );
+                displayName = otherParticipant['name'] ?? 'Chat';
+              } else {
+                displayName = chatRoom['name'] ?? 'Chat';
+              }
+            }
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(displayName),
-                if (chatRoom != null && chatRoom.type != 'direct')
+                if (chatRoom != null && chatRoom['type'] != 'direct')
                   Text(
-                    '${chatRoom.participantIds.length} participants',
+                    '${(chatRoom['participantIds'] as List?)?.length ?? 0} participants',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
               ],
@@ -203,7 +213,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             onSelected: (value) {
               switch (value) {
                 case 'search':
-                  final chatProvider = context.read<ChatProvider>();
+                  final chatProvider = context.read<SimpleChatProvider>();
                   showSearch(
                     context: context,
                     delegate: ChatSearchDelegate(
@@ -227,7 +237,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 value: 'mute',
                 child: Text('Mute notifications'),
               ),
-              if (context.read<ChatProvider>().currentChatRoom?.type !=
+              if (context.read<SimpleChatProvider>().currentChatRoom?['type'] !=
                   'direct')
                 const PopupMenuItem(
                   value: 'leave',
@@ -240,7 +250,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       body: Column(
         children: [
           Expanded(
-            child: Consumer<ChatProvider>(
+            child: Consumer<SimpleChatProvider>(
               builder: (context, chatProvider, child) {
                 final messages = chatProvider.currentMessages;
                 final error = chatProvider.error;
@@ -285,11 +295,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
                     final showDate = previousMessage == null ||
                         !_isSameDay(
-                            message.timestamp, previousMessage.timestamp);
+                            message['timestamp'], previousMessage['timestamp']);
 
                     return Column(
                       children: [
-                        if (showDate) _buildDateDivider(message.timestamp),
+                        if (showDate) _buildDateDivider(message['timestamp']),
                         _buildMessageBubble(context, message),
                       ],
                     );
@@ -343,9 +353,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, Message message) {
+  Widget _buildMessageBubble(BuildContext context, Map<String, dynamic> message) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    final isMe = message.senderId == currentUserId;
+    final isMe = message['senderId'] == currentUserId;
     final theme = Theme.of(context);
 
     return Align(
@@ -363,7 +373,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               Padding(
                 padding: const EdgeInsets.only(left: 12, bottom: 4),
                 child: Text(
-                  message.senderName,
+                  message['senderName'] ?? 'Unknown',
                   style: TextStyle(
                     fontSize: 12,
                     color: theme.colorScheme.onSurfaceVariant,
@@ -387,14 +397,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (message.attachmentUrl != null) _buildAttachment(message),
+                  if (message['attachmentUrl'] != null) _buildAttachment(message),
                   // Only show text if it's not a placeholder OR if there's no attachment
-                  if (message.attachmentUrl == null ||
-                      (message.content != 'Sent an image' &&
-                          message.content != 'Sent a video' &&
-                          message.content.isNotEmpty))
+                  if (message['attachmentUrl'] == null ||
+                      (message['content'] != 'Sent an image' &&
+                          message['content'] != 'Sent a video' &&
+                          (message['content'] ?? '').isNotEmpty))
                     Text(
-                      message.content,
+                      message['content'] ?? '',
                       style: TextStyle(
                         color: isMe
                             ? theme.colorScheme.onPrimary
@@ -407,7 +417,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 4, left: 12, right: 12),
               child: Text(
-                DateFormat('HH:mm').format(message.timestamp),
+                DateFormat('HH:mm').format(message['timestamp']),
                 style: TextStyle(
                   fontSize: 11,
                   color: theme.colorScheme.onSurfaceVariant,
@@ -420,12 +430,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
-  Widget _buildAttachment(Message message) {
-    if (message.attachmentType == 'image' && message.attachmentUrl != null) {
+  Widget _buildAttachment(Map<String, dynamic> message) {
+    if (message['attachmentType'] == 'image' && message['attachmentUrl'] != null) {
 
       // Simplified approach - just use Image.network without any containers
       return Image.network(
-        message.attachmentUrl!,
+        message['attachmentUrl']!,
         width: 200,
         height: 200,
         fit: BoxFit.cover,
@@ -442,9 +452,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
     }
 
-    if (message.attachmentType == 'video' && message.attachmentUrl != null) {
+    if (message['attachmentType'] == 'video' && message['attachmentUrl'] != null) {
       return GestureDetector(
-        onTap: () => _viewFullScreenVideo(message.attachmentUrl!),
+        onTap: () => _viewFullScreenVideo(message['attachmentUrl']!),
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
           constraints: const BoxConstraints(
@@ -502,7 +512,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            _getAttachmentIcon(message.attachmentType),
+            _getAttachmentIcon(message['attachmentType']),
             size: 20,
           ),
           const SizedBox(width: 8),
@@ -617,7 +627,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     _messageController.clear();
 
     try {
-      await context.read<ChatProvider>().sendMessage(content: message);
+      await context.read<SimpleChatProvider>().sendMessage(content: message);
     } catch (e) {
       if (mounted) {
         LoggerService.error('Failed to send message in ChatDetailScreen',
@@ -636,7 +646,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   void _showChatInfo(BuildContext context) {
-    final chatRoom = context.read<ChatProvider>().currentChatRoom;
+    final chatRoom = context.read<SimpleChatProvider>().currentChatRoom;
     if (chatRoom == null) return;
 
     showModalBottomSheet(
@@ -648,25 +658,25 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              chatRoom.name,
+              chatRoom['name'] ?? 'Chat',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
-            Text('Type: ${chatRoom.type}'),
-            Text('Participants: ${chatRoom.participantIds.length}'),
-            if (chatRoom.classId != null) Text('Class ID: ${chatRoom.classId}'),
+            Text('Type: ${chatRoom['type'] ?? 'unknown'}'),
+            Text('Participants: ${(chatRoom['participantIds'] as List?)?.length ?? 0}'),
+            if (chatRoom['classId'] != null) Text('Class ID: ${chatRoom['classId']}'),
             const SizedBox(height: 16),
             const Text(
               'Participants:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ...chatRoom.participants.map((participant) => ListTile(
+            ...(chatRoom['participants'] as List<dynamic>? ?? []).map((participant) => ListTile(
                   leading: CircleAvatar(
-                    child: Text(participant.name[0].toUpperCase()),
+                    child: Text((participant['name'] ?? 'U')[0].toUpperCase()),
                   ),
-                  title: Text(participant.name),
-                  subtitle: Text(participant.role),
+                  title: Text(participant['name'] ?? 'Unknown'),
+                  subtitle: Text(participant['role'] ?? ''),
                 )),
           ],
         ),
@@ -675,15 +685,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> _startCall(bool isVideoCall) async {
-    final chatProvider = context.read<ChatProvider>();
+    final chatProvider = context.read<SimpleChatProvider>();
     final chatRoom = chatProvider.currentChatRoom;
 
     if (chatRoom == null) return;
 
     // For direct chats, find the other participant
-    if (chatRoom.type == 'direct') {
-      final otherParticipant = chatRoom.participants.firstWhere(
-        (p) => p.id != FirebaseAuth.instance.currentUser?.uid,
+    if (chatRoom['type'] == 'direct') {
+      final participants = chatRoom['participants'] as List<dynamic>? ?? [];
+      final otherParticipant = participants.firstWhere(
+        (p) => p['id'] != FirebaseAuth.instance.currentUser?.uid,
+        orElse: () => participants.isNotEmpty ? participants.first : {'id': '', 'name': 'Unknown'},
       );
 
       // Fetch receiver's photo URL from Firestore
@@ -698,11 +710,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         context.push(
           '/call',
           extra: {
-            'receiverId': otherParticipant.id,
-            'receiverName': otherParticipant.name,
+            'receiverId': otherParticipant['id'],
+            'receiverName': otherParticipant['name'],
             'receiverPhotoUrl': receiverPhotoUrl,
             'isVideoCall': isVideoCall,
-            'chatRoomId': chatRoom.id,
+            'chatRoomId': chatRoom['id'],
           },
         );
       }
@@ -736,7 +748,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               // Navigate back to messages list
               context.go('/messages');
               await context
-                  .read<ChatProvider>()
+                  .read<SimpleChatProvider>()
                   .leaveChatRoom(widget.chatRoomId);
             },
             child: const Text('Leave'),
@@ -934,7 +946,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       // Send message with image attachment
       if (mounted) {
-        await context.read<ChatProvider>().sendMessage(
+        await context.read<SimpleChatProvider>().sendMessage(
               content: _messageController.text.trim().isEmpty
                   ? 'Sent an image'
                   : _messageController.text.trim(),
@@ -1117,7 +1129,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       // Send message with video attachment
       if (mounted) {
-        await context.read<ChatProvider>().sendMessage(
+        await context.read<SimpleChatProvider>().sendMessage(
               content: _messageController.text.trim().isEmpty
                   ? 'Sent a video'
                   : _messageController.text.trim(),
@@ -1341,7 +1353,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             const Divider(),
             Expanded(
-              child: StreamBuilder<List<ScheduledMessage>>(
+              child: StreamBuilder<List<Map<String, dynamic>>>(
                 stream: _scheduledMessagesService
                     .getScheduledMessages(widget.chatRoomId),
                 builder: (context, snapshot) {
@@ -1362,12 +1374,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     itemCount: scheduledMessages.length,
                     itemBuilder: (context, index) {
                       final scheduled = scheduledMessages[index];
-                      final message = scheduled.message;
 
                       return ListTile(
-                        title: Text(message.content),
+                        title: Text(scheduled['content'] ?? ''),
                         subtitle: Text(
-                          'Scheduled for: ${DateFormat('MMM d, h:mm a').format(message.scheduledFor!)}',
+                          'Scheduled for: ${DateFormat('MMM d, h:mm a').format(scheduled['scheduledFor'] ?? DateTime.now())}',
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline),
@@ -1375,7 +1386,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             final messenger = ScaffoldMessenger.of(context);
                             await _scheduledMessagesService
                                 .cancelScheduledMessage(
-                              scheduled.id,
+                              scheduled['id'] ?? '',
                             );
                             if (mounted) {
                               messenger.showSnackBar(
@@ -1540,8 +1551,8 @@ class _VideoControlsOverlay extends StatelessWidget {
   }
 }
 
-class ChatSearchDelegate extends SearchDelegate<Message?> {
-  final List<Message> messages;
+class ChatSearchDelegate extends SearchDelegate<Map<String, dynamic>?> {
+  final List<Map<String, dynamic>> messages;
 
   ChatSearchDelegate({required this.messages});
 
@@ -1580,7 +1591,7 @@ class ChatSearchDelegate extends SearchDelegate<Message?> {
   Widget _buildSearchResults() {
     final results = messages
         .where((message) =>
-            message.content.toLowerCase().contains(query.toLowerCase()))
+            (message['content'] ?? '').toLowerCase().contains(query.toLowerCase()))
         .toList();
 
     return ListView.builder(
@@ -1588,8 +1599,8 @@ class ChatSearchDelegate extends SearchDelegate<Message?> {
       itemBuilder: (context, index) {
         final message = results[index];
         return ListTile(
-          title: Text(message.content),
-          subtitle: Text(DateFormat('MMM d, h:mm a').format(message.timestamp)),
+          title: Text(message['content'] ?? ''),
+          subtitle: Text(DateFormat('MMM d, h:mm a').format(message['timestamp'])),
           onTap: () {
             close(context, message);
           },

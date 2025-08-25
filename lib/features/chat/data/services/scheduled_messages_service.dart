@@ -140,7 +140,7 @@ class ScheduledMessagesService {
   ///
   /// @param chatRoomId Chat room to get scheduled messages for
   /// @return Stream of scheduled messages list
-  Stream<List<ScheduledMessage>> getScheduledMessages(String chatRoomId) {
+  Stream<List<Map<String, dynamic>>> getScheduledMessages(String chatRoomId) {
     return _firestore
         .collection('scheduled_messages')
         .where('chatRoomId', isEqualTo: chatRoomId)
@@ -149,11 +149,24 @@ class ScheduledMessagesService {
         .map((snapshot) {
       final now = DateTime.now();
       return snapshot.docs
-          .map((doc) => ScheduledMessage.fromFirestore(doc))
-          .where((msg) => msg.message.scheduledFor?.isAfter(now) ?? false)
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            final scheduledFor = (data['scheduledFor'] as Timestamp?)?.toDate();
+            data['scheduledFor'] = scheduledFor;
+            return data;
+          })
+          .where((msg) {
+            final scheduledFor = msg['scheduledFor'] as DateTime?;
+            return scheduledFor?.isAfter(now) ?? false;
+          })
           .toList()
-        ..sort((a, b) =>
-            a.message.scheduledFor!.compareTo(b.message.scheduledFor!));
+        ..sort((a, b) {
+            final aDate = a['scheduledFor'] as DateTime?;
+            final bDate = b['scheduledFor'] as DateTime?;
+            if (aDate == null || bDate == null) return 0;
+            return aDate.compareTo(bDate);
+          });
     });
   }
 

@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <!-- Suppress assembly loading warnings for Windows Runtime components -->
+    <MSBuildWarningsAsMessages>MSB3277;MSB3270</MSBuildWarningsAsMessages>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
+    
+    <!-- Suppress NuGet assembly scanning warnings for WinRT DLLs -->
+    <NoWarn>$(NoWarn);NU1701;NU1702;MSB3277</NoWarn>
+    
+    <!-- Don't treat warnings as errors for Windows SDK components -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

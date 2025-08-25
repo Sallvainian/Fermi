@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../providers/jeopardy_provider.dart';
+import '../providers/jeopardy_provider_simple.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../classes/data/services/class_service.dart';
 import '../../../classes/domain/models/class_model.dart';
@@ -26,7 +26,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
 
     // Initialize the Jeopardy provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<JeopardyProvider>().initialize();
+      context.read<SimpleJeopardyProvider>().initialize();
     });
   }
 
@@ -82,7 +82,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   }
 
   Widget _buildMyGamesTab() {
-    return Consumer<JeopardyProvider>(
+    return Consumer<SimpleJeopardyProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -159,7 +159,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   }
 
   Widget _buildSavedGamesTab() {
-    return Consumer<JeopardyProvider>(
+    return Consumer<SimpleJeopardyProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) {
           return const Center(child: CircularProgressIndicator());
@@ -212,7 +212,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   }
 
   Widget _buildActiveGamesTab() {
-    return Consumer<JeopardyProvider>(
+    return Consumer<SimpleJeopardyProvider>(
       builder: (context, provider, child) {
         final activeSessions = provider.activeSessions;
 
@@ -261,7 +261,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
               child: ListTile(
                 leading: const Icon(Icons.play_arrow, size: 32),
                 title: Text('Game Session ${index + 1}'),
-                subtitle: Text('Started ${_formatDate(session.startedAt)}'),
+                subtitle: Text('Started ${_formatDate(session['startedAt'] ?? DateTime.now())}'),
                 trailing: FilledButton(
                   onPressed: () {
                     // Navigate to active game
@@ -544,7 +544,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
             onPressed: () async {
               // Capture context-dependent values before async operations
               final navigator = Navigator.of(context);
-              final provider = context.read<JeopardyProvider>();
+              final provider = context.read<SimpleJeopardyProvider>();
               final scaffoldMessenger = ScaffoldMessenger.of(context);
 
               navigator.pop();
@@ -568,8 +568,8 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   }
 
   void _togglePublicStatus(JeopardyGame game) async {
-    final provider = context.read<JeopardyProvider>();
-    final success = await provider.togglePublicStatus(game.id, !game.isPublic);
+    final provider = context.read<SimpleJeopardyProvider>();
+    final success = await provider.togglePublicStatus(game.id);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -591,12 +591,12 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   }
 
   void _toggleGameMode(JeopardyGame game) async {
-    final provider = context.read<JeopardyProvider>();
+    final provider = context.read<SimpleJeopardyProvider>();
     final newMode = game.gameMode == GameMode.realtime 
         ? GameMode.async 
         : GameMode.realtime;
     
-    final success = await provider.updateGameMode(game.id, newMode);
+    final success = await provider.updateGameMode(game.id, newMode.name);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -611,7 +611,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
   }
 
   void _duplicateGame(JeopardyGame game) async {
-    final provider = context.read<JeopardyProvider>();
+    final provider = context.read<SimpleJeopardyProvider>();
 
     // Create a copy with a new title including all data
     final duplicatedGame = JeopardyGame(
@@ -816,7 +816,7 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
       _isSaving = true;
     });
 
-    final provider = context.read<JeopardyProvider>();
+    final provider = context.read<SimpleJeopardyProvider>();
     final updatedGame = widget.game.copyWith(
       assignedClassIds: _selectedClassIds,
     );

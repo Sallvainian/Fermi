@@ -776,18 +776,19 @@ class _CalendarScreenState extends State<CalendarScreen>
         },
         onDelete: () async {
           Navigator.pop(context);
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
           try {
             await provider.deleteEvent(event.id);
             // Check if widget is still mounted before showing snackbar
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              scaffoldMessenger.showSnackBar(
                 const SnackBar(content: Text('Event deleted successfully')),
               );
             }
           } catch (e) {
             // Check if widget is still mounted before showing snackbar
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              scaffoldMessenger.showSnackBar(
                 SnackBar(content: Text('Error deleting event: $e')),
               );
             }
@@ -805,6 +806,7 @@ class _CalendarScreenState extends State<CalendarScreen>
       builder: (context) => CreateEventSheet(
         onEventCreated: (event) async {
           final provider = context.read<CalendarProvider>();
+          final scaffoldMessenger = ScaffoldMessenger.of(context);
           try {
             await provider.createEvent(
               title: event['title'],
@@ -820,14 +822,14 @@ class _CalendarScreenState extends State<CalendarScreen>
             );
             // Check if widget is still mounted before showing snackbar
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              scaffoldMessenger.showSnackBar(
                 const SnackBar(content: Text('Event created successfully')),
               );
             }
           } catch (e) {
             // Check if widget is still mounted before showing snackbar
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
+              scaffoldMessenger.showSnackBar(
                 SnackBar(content: Text('Error creating event: $e')),
               );
             }

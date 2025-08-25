@@ -7,9 +7,9 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/calendar_event.dart';
-import '../../data/services/calendar_service.dart';
-import '../../../../shared/core/service_locator.dart';
+import '../../data/services/calendar_service_simple.dart';
 // import 'package:ical/ical.dart'; // Temporarily disabled due to null safety issues
 
 /// Provider for managing calendar state.
@@ -39,19 +39,11 @@ class CalendarProvider with ChangeNotifier {
   // User context
   String? _currentUserId;
 
-  CalendarService? _calendarService;
+  SimpleCalendarService? _calendarService;
 
   /// Gets the calendar service lazily.
-  CalendarService get calendarService {
-    if (_calendarService == null) {
-      try {
-        _calendarService = getIt<CalendarService>();
-      } catch (e) {
-        // Error getting CalendarService
-        throw Exception(
-            'CalendarService not registered. Make sure setupServiceLocator() is called before using CalendarProvider. Error: $e');
-      }
-    }
+  SimpleCalendarService get calendarService {
+    _calendarService ??= SimpleCalendarService();
     return _calendarService!;
   }
 
@@ -102,11 +94,7 @@ class CalendarProvider with ChangeNotifier {
 
       // Subscribe to user events
       _eventsSubscription = calendarService
-          .getEventsGroupedByDate(
-        _currentUserId!,
-        DateTime.now().subtract(const Duration(days: 365)),
-        DateTime.now().add(const Duration(days: 365)),
-      )
+          .getEventsGroupedByDate()
           .listen((grouped) {
         _eventsByDate = grouped;
         _allEvents = grouped.values.expand((events) => events).toList();
@@ -170,9 +158,19 @@ class CalendarProvider with ChangeNotifier {
     if (_currentUserId == null) return;
 
     try {
+      // Get user display name for the event
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUserId)
+          .get();
+      final userName = userDoc.data()?['displayName'] ?? 
+                       userDoc.data()?['username'] ?? 
+                       'Unknown User';
+
       await calendarService.createEvent(
         title: title,
         createdBy: _currentUserId!,
+        createdByName: userName,
         type: type,
         startTime: startTime,
         endTime: endTime,
@@ -187,7 +185,6 @@ class CalendarProvider with ChangeNotifier {
         hasReminder: hasReminder,
         reminderMinutes: reminderMinutes,
         colorHex: colorHex ?? calendarService.getSuggestedColor(type),
-        syncToDeviceCalendar: syncToDeviceCalendar,
       );
 
       // Events will update via stream
@@ -203,7 +200,7 @@ class CalendarProvider with ChangeNotifier {
     if (_currentUserId == null) return;
 
     try {
-      await calendarService.updateEvent(_currentUserId!, event);
+      await calendarService.updateCalendarEvent(_currentUserId!, event);
       // Events will update via stream
     } catch (e) {
       _error = e.toString();
@@ -217,7 +214,7 @@ class CalendarProvider with ChangeNotifier {
     if (_currentUserId == null) return;
 
     try {
-      await calendarService.deleteEvent(_currentUserId!, eventId);
+      await calendarService.deleteCalendarEvent(_currentUserId!, eventId);
       // Events will update via stream
     } catch (e) {
       _error = e.toString();

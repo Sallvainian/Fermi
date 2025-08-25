@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -37,38 +38,45 @@ class AppInitializer {
   static Future<void> _initializeDeferredServices() async {
     if (!_firebaseInitialized) return;
 
-    // Initialize in parallel for faster startup
-    await Future.wait([
+    // Build list of services to initialize
+    final List<Future<void>> servicesToInitialize = [
       // Performance monitoring is not critical
       _initializePerformanceMonitoring(),
 
       // Notifications can be initialized later
       _initializeNotifications(),
+    ];
 
-      // Messaging services for push notifications
-      if (!kIsWeb) _initializeFirebaseMessaging(),
-    ]);
+    // Only initialize Firebase Messaging on supported platforms
+    // Firebase Messaging is NOT supported on Windows, Mac, or Linux desktop
+    if (!kIsWeb && _isFirebaseMessagingSupported()) {
+      servicesToInitialize.add(_initializeFirebaseMessaging());
+    }
+
+    // Initialize in parallel for faster startup
+    await Future.wait(servicesToInitialize);
 
     LoggerService.info('Deferred services initialized', tag: 'AppInitializer');
+  }
+  
+  /// Check if Firebase Messaging is supported on the current platform
+  static bool _isFirebaseMessagingSupported() {
+    if (kIsWeb) return true; // Web is supported but handled separately
+    if (!kIsWeb) {
+      try {
+        // Only Android and iOS support Firebase Messaging
+        return Platform.isAndroid || Platform.isIOS;
+      } catch (e) {
+        // If Platform is not available, assume not supported
+        return false;
+      }
+    }
+    return false;
   }
 
   /// Initialize Firebase services
   static Future<void> _initializeFirebase() async {
     try {
-      // On Linux desktop, Firebase is not supported natively
-      // For development, we can either:
-      // 1. Use Firebase emulators
-      // 2. Run as a web app
-      // 3. Skip Firebase for local testing
-      if (defaultTargetPlatform == TargetPlatform.linux && !kIsWeb) {
-        LoggerService.warning(
-            'Firebase is not supported on Linux desktop. '
-            'Consider running with: flutter run -d web-server',
-            tag: 'AppInitializer');
-        _firebaseInitialized = false;
-        return;
-      }
-
       LoggerService.info('Starting Firebase initialization...',
           tag: 'AppInitializer');
 
@@ -149,6 +157,7 @@ class AppInitializer {
     }
   }
 
+
   /// Initialize performance monitoring
   static Future<void> _initializePerformanceMonitoring() async {
     try {
@@ -181,10 +190,18 @@ class AppInitializer {
 
   /// Initialize Firebase Messaging for push notifications
   static Future<void> _initializeFirebaseMessaging() async {
+    // Double-check platform support
+    if (!_isFirebaseMessagingSupported()) {
+      LoggerService.info('Firebase Messaging not supported on this platform',
+          tag: 'AppInitializer');
+      return;
+    }
+    
     if (kIsWeb) {
       // Foreground-only on web → do not initialize FCM at all
       return;
     }
+    
     try {
       final messagingService = FirebaseMessagingService();
       await messagingService.initialize();

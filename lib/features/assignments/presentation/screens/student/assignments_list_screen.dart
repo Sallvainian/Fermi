@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../../shared/widgets/common/error_aware_stream_builder.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/student_assignment_provider.dart';
+import '../../providers/student_assignment_provider_simple.dart';
 import '../../../domain/models/assignment.dart';
 
 class StudentAssignmentsScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
       final authProvider = context.read<AuthProvider>();
       if (authProvider.userModel != null) {
         _initializationFuture = context
-            .read<StudentAssignmentProvider>()
+            .read<SimpleStudentAssignmentProvider>()
             .initializeForStudent(authProvider.userModel!.uid);
         setState(() {});
       }
@@ -51,7 +52,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final studentProvider = context.watch<StudentAssignmentProvider>();
+    final studentProvider = context.watch<SimpleStudentAssignmentProvider>();
 
     return AdaptiveLayout(
       title: 'Assignments',
@@ -78,7 +79,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
             );
           }
 
-          return ErrorAwareStreamBuilder<List<StudentAssignment>>(
+          return ErrorAwareStreamBuilder<List<Map<String, dynamic>>>(
             stream: studentProvider.assignmentsStream,
             onRetry: () => studentProvider.refresh(),
             // Don't check if data is empty - let tabs handle their own empty states
@@ -231,68 +232,78 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     );
   }
 
-  List<String> _getSubjectsList(List<StudentAssignment> assignments) {
+  List<String> _getSubjectsList(List<Map<String, dynamic>> assignments) {
     final subjects = <String>{'All Subjects'};
     for (final assignment in assignments) {
-      subjects.add(assignment.assignment.category);
+      subjects.add(assignment['category'] ?? 'General');
     }
     return subjects.toList()..sort();
   }
 
-  List<StudentAssignment> _getPendingAssignments(
-      List<StudentAssignment> assignments) {
-    return assignments.where((a) => !a.isSubmitted && !a.isOverdue).toList();
+  List<Map<String, dynamic>> _getPendingAssignments(
+      List<Map<String, dynamic>> assignments) {
+    return assignments.where((a) => !(a['isSubmitted'] ?? false) && !(a['isOverdue'] ?? false)).toList();
   }
 
-  List<StudentAssignment> _getSubmittedAssignments(
-      List<StudentAssignment> assignments) {
-    return assignments.where((a) => a.isSubmitted && !a.isGraded).toList();
+  List<Map<String, dynamic>> _getSubmittedAssignments(
+      List<Map<String, dynamic>> assignments) {
+    return assignments.where((a) => (a['isSubmitted'] ?? false) && !(a['isGraded'] ?? false)).toList();
   }
 
-  List<StudentAssignment> _getGradedAssignments(
-      List<StudentAssignment> assignments) {
-    return assignments.where((a) => a.isGraded).toList();
+  List<Map<String, dynamic>> _getGradedAssignments(
+      List<Map<String, dynamic>> assignments) {
+    return assignments.where((a) => a['isGraded'] ?? false).toList();
   }
 
-  List<StudentAssignment> _filterAssignments(
-      List<StudentAssignment> assignments) {
+  List<Map<String, dynamic>> _filterAssignments(
+      List<Map<String, dynamic>> assignments) {
     var filtered = assignments;
 
     // Apply search filter
     if (_searchController.text.isNotEmpty) {
       final query = _searchController.text.toLowerCase();
       filtered = filtered.where((a) {
-        return a.assignment.title.toLowerCase().contains(query) ||
-            a.assignment.description.toLowerCase().contains(query) ||
-            a.assignment.category.toLowerCase().contains(query);
+        return (a['title'] ?? '').toLowerCase().contains(query) ||
+            (a['description'] ?? '').toLowerCase().contains(query) ||
+            (a['category'] ?? '').toLowerCase().contains(query);
       }).toList();
     }
 
     // Apply subject filter
     if (_selectedSubject != 'All Subjects') {
       filtered = filtered
-          .where((a) => a.assignment.category == _selectedSubject)
+          .where((a) => (a['category'] ?? 'General') == _selectedSubject)
           .toList();
     }
 
     // Apply sorting
     switch (_sortBy) {
       case 'Due Date':
-        filtered.sort(
-            (a, b) => a.assignment.dueDate.compareTo(b.assignment.dueDate));
+        filtered.sort((a, b) {
+          final aDue = a['dueDate'] as Timestamp?;
+          final bDue = b['dueDate'] as Timestamp?;
+          if (aDue == null) return 1;
+          if (bDue == null) return -1;
+          return aDue.compareTo(bDue);
+        });
         break;
       case 'Subject':
-        filtered
-            .sort((a, b) => a.assignment.title.compareTo(b.assignment.title));
+        filtered.sort((a, b) => 
+            (a['title'] ?? '').compareTo(b['title'] ?? ''));
         break;
       case 'Priority':
         // Sort by due date as proxy for priority
-        filtered.sort(
-            (a, b) => a.assignment.dueDate.compareTo(b.assignment.dueDate));
+        filtered.sort((a, b) {
+          final aDue = a['dueDate'] as Timestamp?;
+          final bDue = b['dueDate'] as Timestamp?;
+          if (aDue == null) return 1;
+          if (bDue == null) return -1;
+          return aDue.compareTo(bDue);
+        });
         break;
       case 'Points':
         filtered.sort((a, b) =>
-            b.assignment.totalPoints.compareTo(a.assignment.totalPoints));
+            (b['totalPoints'] ?? 0).compareTo(a['totalPoints'] ?? 0));
         break;
     }
 
@@ -300,7 +311,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
   }
 
   Widget _buildAssignmentsList(
-    List<StudentAssignment> assignments, {
+    List<Map<String, dynamic>> assignments, {
     required String emptyMessage,
     IconData emptyIcon = Icons.assignment_outlined,
   }) {
@@ -329,7 +340,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
 
     return ResponsiveContainer(
       child: RefreshIndicator(
-        onRefresh: () => context.read<StudentAssignmentProvider>().refresh(),
+        onRefresh: () => context.read<SimpleStudentAssignmentProvider>().refresh(),
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: assignments.length,
@@ -342,16 +353,16 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     );
   }
 
-  Widget _buildAssignmentCard(StudentAssignment studentAssignment) {
+  Widget _buildAssignmentCard(Map<String, dynamic> studentAssignment) {
     final theme = Theme.of(context);
-    final assignment = studentAssignment.assignment;
-    final dueDate = assignment.dueDate;
-    final isOverdue = studentAssignment.isOverdue;
-    final isDueSoon = studentAssignment.isDueSoon;
+    final assignment = studentAssignment['assignment'] ?? studentAssignment; // Use assignment data or the whole object
+    final dueDate = assignment['dueDate'] as Timestamp?;
+    final isOverdue = studentAssignment['isOverdue'] ?? false;
+    final isDueSoon = studentAssignment['isDueSoon'] ?? false;
 
     Color priorityColor = _getPriorityColor(assignment);
-    Color statusColor = _getStatusColor(studentAssignment.status);
-    IconData statusIcon = _getStatusIcon(studentAssignment.status);
+    Color statusColor = _getStatusColor(studentAssignment['status'] ?? 'pending');
+    IconData statusIcon = _getStatusIcon(studentAssignment['status'] ?? 'pending');
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -374,7 +385,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      _getAssignmentIcon(assignment.type),
+                      _getAssignmentIcon(assignment['type']),
                       color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
@@ -385,13 +396,13 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          assignment.title,
+                          assignment['title'] ?? 'Untitled',
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          '${assignment.category} • ${assignment.teacherName}',
+                          '${assignment['category'] ?? 'General'} • ${assignment['teacherName'] ?? 'Unknown'}',
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -437,7 +448,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                         Icon(statusIcon, size: 16, color: statusColor),
                         const SizedBox(width: 4),
                         Text(
-                          studentAssignment.status,
+                          studentAssignment['status'] ?? 'Unknown',
                           style: TextStyle(
                             color: statusColor,
                             fontWeight: FontWeight.w600,
@@ -460,7 +471,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _formatDueDate(dueDate),
+                        _formatDueDate(dueDate?.toDate() ?? DateTime.now()),
                         style: TextStyle(
                           color: isOverdue
                               ? Colors.red
@@ -481,24 +492,24 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                   // Points
                   _buildInfoChip(
                     icon: Icons.star_outline,
-                    label: '${assignment.totalPoints.toInt()} pts',
+                    label: '${assignment['totalPoints']?.toInt() ?? 0} pts',
                     color: Colors.blue,
                   ),
-                  if (studentAssignment.isGraded &&
-                      studentAssignment.earnedPoints != null) ...[
+                  if ((studentAssignment['isGraded'] ?? false) &&
+                      studentAssignment['earnedPoints'] != null) ...[
                     const SizedBox(width: 8),
                     _buildInfoChip(
                       icon: Icons.grade,
                       label:
-                          '${studentAssignment.earnedPoints!.toInt()}/${assignment.totalPoints.toInt()}',
+                          '${studentAssignment['earnedPoints']!.toInt()}/${assignment['totalPoints']?.toInt() ?? 0}',
                       color: Colors.green,
                     ),
                     const SizedBox(width: 8),
                     _buildInfoChip(
                       icon: Icons.school,
-                      label: studentAssignment.letterGrade ?? 'N/A',
+                      label: studentAssignment['letterGrade'] ?? 'N/A',
                       color: _getGradeColor(
-                          studentAssignment.letterGrade ?? 'N/A'),
+                          studentAssignment['letterGrade'] ?? 'N/A'),
                     ),
                   ],
                 ],
@@ -509,27 +520,27 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  if (!studentAssignment.isSubmitted &&
-                      !studentAssignment.isOverdue)
+                  if (!(studentAssignment['isSubmitted'] ?? false) &&
+                      !(studentAssignment['isOverdue'] ?? false))
                     TextButton.icon(
                       onPressed: () {
                         context.push(
-                            '/student/assignments/${studentAssignment.assignment.id}/submit');
+                            '/student/assignments/${studentAssignment['assignment']?['id'] ?? studentAssignment['id']}/submit');
                       },
                       icon: const Icon(Icons.upload, size: 18),
                       label: const Text('Submit'),
                     ),
-                  if (studentAssignment.isSubmitted)
+                  if (studentAssignment['isSubmitted'] ?? false)
                     TextButton.icon(
                       onPressed: () {
                         context.push(
-                            '/student/assignments/${studentAssignment.assignment.id}/submit');
+                            '/student/assignments/${studentAssignment['assignment']?['id'] ?? studentAssignment['id']}/submit');
                       },
                       icon: const Icon(Icons.description, size: 18),
                       label: const Text('View Submission'),
                     ),
-                  if (studentAssignment.isGraded &&
-                      studentAssignment.feedback != null)
+                  if ((studentAssignment['isGraded'] ?? false) &&
+                      studentAssignment['feedback'] != null)
                     TextButton.icon(
                       onPressed: () {
                         _showFeedbackDialog(studentAssignment);
@@ -582,7 +593,32 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     );
   }
 
-  IconData _getAssignmentIcon(AssignmentType type) {
+  IconData _getAssignmentIcon(dynamic type) {
+    // Handle both string and AssignmentType
+    if (type is String) {
+      switch (type.toLowerCase()) {
+        case 'homework':
+          return Icons.home_work_outlined;
+        case 'essay':
+          return Icons.article_outlined;
+        case 'quiz':
+          return Icons.quiz_outlined;
+        case 'test':
+        case 'exam':
+          return Icons.assignment_outlined;
+        case 'lab':
+          return Icons.science_outlined;
+        case 'project':
+          return Icons.folder_special_outlined;
+        case 'presentation':
+          return Icons.present_to_all_outlined;
+        case 'classwork':
+          return Icons.work_outline;
+        default:
+          return Icons.assignment_outlined;
+      }
+    }
+    if (type is! AssignmentType) return Icons.assignment_outlined;
     switch (type) {
       case AssignmentType.homework:
         return Icons.home_work_outlined;
@@ -606,15 +642,23 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     }
   }
 
-  Color _getPriorityColor(Assignment assignment) {
-    final daysUntilDue = assignment.dueDate.difference(DateTime.now()).inDays;
+  Color _getPriorityColor(Map<String, dynamic> assignment) {
+    final dueDateTimestamp = assignment['dueDate'] as Timestamp?;
+    if (dueDateTimestamp == null) return Colors.grey;
+    
+    final dueDate = dueDateTimestamp.toDate();
+    final daysUntilDue = dueDate.difference(DateTime.now()).inDays;
     if (daysUntilDue <= 1) return Colors.red;
     if (daysUntilDue <= 3) return Colors.orange;
     return Colors.green;
   }
 
-  String _getPriorityText(Assignment assignment) {
-    final daysUntilDue = assignment.dueDate.difference(DateTime.now()).inDays;
+  String _getPriorityText(Map<String, dynamic> assignment) {
+    final dueDateTimestamp = assignment['dueDate'] as Timestamp?;
+    if (dueDateTimestamp == null) return 'Unknown';
+    
+    final dueDate = dueDateTimestamp.toDate();
+    final daysUntilDue = dueDate.difference(DateTime.now()).inDays;
     if (daysUntilDue <= 1) return 'High';
     if (daysUntilDue <= 3) return 'Medium';
     return 'Low';
@@ -684,7 +728,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     }
   }
 
-  void _showAssignmentDetails(StudentAssignment studentAssignment) {
+  void _showAssignmentDetails(Map<String, dynamic> studentAssignment) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -694,7 +738,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     );
   }
 
-  void _showFeedbackDialog(StudentAssignment studentAssignment) {
+  void _showFeedbackDialog(Map<String, dynamic> studentAssignment) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -704,7 +748,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Grade: ${studentAssignment.letterGrade ?? 'N/A'}',
+              'Grade: ${studentAssignment['letterGrade'] ?? 'N/A'}',
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -712,14 +756,14 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
             ),
             const SizedBox(height: 8),
             Text(
-                'Points: ${studentAssignment.earnedPoints?.toInt() ?? 0}/${studentAssignment.assignment.totalPoints.toInt()}'),
+                'Points: ${(studentAssignment['earnedPoints'] ?? 0).toInt()}/${(studentAssignment['assignment']?['totalPoints'] ?? 0).toInt()}'),
             const SizedBox(height: 16),
             const Text(
               'Feedback:',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            Text(studentAssignment.feedback ?? 'No feedback provided'),
+            Text(studentAssignment['feedback'] ?? 'No feedback provided'),
           ],
         ),
         actions: [
@@ -735,7 +779,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
 
 // Assignment Detail Sheet
 class AssignmentDetailSheet extends StatelessWidget {
-  final StudentAssignment studentAssignment;
+  final Map<String, dynamic> studentAssignment;
 
   const AssignmentDetailSheet({
     super.key,
@@ -745,7 +789,7 @@ class AssignmentDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final assignment = studentAssignment.assignment;
+    final assignment = studentAssignment['assignment'] ?? studentAssignment;
 
     return Container(
       decoration: BoxDecoration(
@@ -788,13 +832,13 @@ class AssignmentDetailSheet extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            assignment.title,
+                            assignment['title'] ?? 'Untitled',
                             style: theme.textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        _buildStatusBadge(studentAssignment.status),
+                        _buildStatusBadge(studentAssignment['status'] ?? 'pending'),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -808,7 +852,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${assignment.category} • ${assignment.teacherName}',
+                          '${assignment['category'] ?? 'General'} • ${assignment['teacherName'] ?? 'Unknown'}',
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -818,7 +862,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                     const SizedBox(height: 24),
 
                     // Description
-                    if (assignment.description.isNotEmpty) ...[
+                    if ((assignment['description'] ?? '').isNotEmpty) ...[
                       Text(
                         'Description',
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -827,7 +871,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        assignment.description,
+                        assignment['description'] ?? '',
                         style: theme.textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 24),
@@ -842,7 +886,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      assignment.instructions,
+                      assignment['instructions'] ?? 'No instructions provided',
                       style: theme.textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 24),
@@ -855,16 +899,16 @@ class AssignmentDetailSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildDetailRow('Type', assignment.type.name.toUpperCase()),
+                    _buildDetailRow('Type', (assignment['type'] ?? 'assignment').toString().toUpperCase()),
                     _buildDetailRow(
-                        'Points', '${assignment.totalPoints.toInt()}'),
+                        'Points', '${(assignment['totalPoints'] ?? 0).toInt()}'),
                     _buildDetailRow(
-                        'Due Date', _formatDetailDate(assignment.dueDate)),
-                    if (assignment.allowLateSubmissions)
+                        'Due Date', _formatDetailDate((assignment['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now())),
+                    if (assignment['allowLateSubmissions'] ?? false)
                       _buildDetailRow('Late Penalty',
-                          '${assignment.latePenaltyPercentage}% per day'),
+                          '${assignment['latePenaltyPercentage'] ?? 0}% per day'),
 
-                    if (studentAssignment.isSubmitted) ...[
+                    if (studentAssignment['isSubmitted'] ?? false) ...[
                       const SizedBox(height: 24),
                       Text(
                         'Submission Details',
@@ -873,17 +917,17 @@ class AssignmentDetailSheet extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      if (studentAssignment.submission != null)
+                      if (studentAssignment['submission'] != null)
                         _buildDetailRow(
                             'Submitted',
                             _formatDetailDate(
-                                studentAssignment.submission!.submittedAt)),
-                      if (studentAssignment.isGraded) ...[
+                                studentAssignment['submission']!['submittedAt'])),
+                      if (studentAssignment['isGraded'] ?? false) ...[
                         _buildDetailRow(
-                            'Grade', studentAssignment.letterGrade ?? 'N/A'),
+                            'Grade', studentAssignment['letterGrade'] ?? 'N/A'),
                         _buildDetailRow('Points Earned',
-                            '${studentAssignment.earnedPoints?.toInt() ?? 0}/${assignment.totalPoints.toInt()}'),
-                        if (studentAssignment.feedback != null) ...[
+                            '${(studentAssignment['earnedPoints'] ?? 0).toInt()}/${(assignment['totalPoints'] ?? 0).toInt()}'),
+                        if (studentAssignment['feedback'] != null) ...[
                           const SizedBox(height: 16),
                           Text(
                             'Teacher Feedback',
@@ -898,7 +942,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                               color: theme.colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Text(studentAssignment.feedback!),
+                            child: Text(studentAssignment['feedback']!),
                           ),
                         ],
                       ],

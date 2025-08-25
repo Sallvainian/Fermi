@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../providers/jeopardy_provider.dart';
+import '../providers/jeopardy_provider_simple.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class JeopardyCreateScreen extends StatefulWidget {
@@ -39,7 +39,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
 
   void _loadOrCreateGame() async {
     final authProvider = context.read<AuthProvider>();
-    final jeopardyProvider = context.read<JeopardyProvider>();
+    final jeopardyProvider = context.read<SimpleJeopardyProvider>();
     final currentUserId = authProvider.userModel?.uid ?? '';
 
     if (_isEditing) {
@@ -72,12 +72,13 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
             JeopardyCategory(
               name: 'Category 1',
               questions: List.generate(
-                  5,
-                  (index) => JeopardyQuestion(
-                        question: '',
-                        answer: '',
-                        points: (index + 1) * 100,
-                      )),
+                5,
+                (index) => JeopardyQuestion(
+                  question: '',
+                  answer: '',
+                  points: (index + 1) * 100,
+                ),
+              ),
             ),
           ],
           createdAt: DateTime.now(),
@@ -216,10 +217,12 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
                     ),
                     onChanged: (value) {
                       setState(() {
-                        _game!.categories[categoryIndex] = JeopardyCategory(
+                        final updatedCategories = List<JeopardyCategory>.from(_game!.categories);
+                        updatedCategories[categoryIndex] = JeopardyCategory(
                           name: value,
                           questions: category.questions,
                         );
+                        _game = _game!.copyWith(categories: updatedCategories);
                       });
                     },
                   ),
@@ -310,14 +313,15 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   void _updateQuestion(
       int categoryIndex, int questionIndex, JeopardyQuestion newQuestion) {
     setState(() {
-      final category = _game!.categories[categoryIndex];
+      final updatedCategories = List<JeopardyCategory>.from(_game!.categories);
+      final category = updatedCategories[categoryIndex];
       final updatedQuestions = List<JeopardyQuestion>.from(category.questions);
       updatedQuestions[questionIndex] = newQuestion;
 
-      _game!.categories[categoryIndex] = JeopardyCategory(
-        name: category.name,
+      updatedCategories[categoryIndex] = category.copyWith(
         questions: updatedQuestions,
       );
+      _game = _game!.copyWith(categories: updatedCategories);
     });
   }
 
@@ -330,24 +334,26 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
     }
 
     setState(() {
-      _game!.categories.add(
+      final updatedCategories = List<JeopardyCategory>.from(_game!.categories);
+      updatedCategories.add(
         JeopardyCategory(
-          name: 'Category ${_game!.categories.length + 1}',
+          name: 'Category ${updatedCategories.length + 1}',
           questions: List.generate(
-              5,
-              (index) => JeopardyQuestion(
-                    question: '',
-                    answer: '',
-                    points: (index + 1) * 100,
-                  )),
-        ),
-      );
+            5,
+            (index) => JeopardyQuestion(
+              question: '',
+              answer: '',
+              points: (index + 1) * 100,
+      ),
+      _game = _game!.copyWith(categories: updatedCategories);
     });
   }
 
   void _removeCategory(int index) {
     setState(() {
-      _game!.categories.removeAt(index);
+      final updatedCategories = List<JeopardyCategory>.from(_game!.categories);
+      updatedCategories.removeAt(index);
+      _game = _game!.copyWith(categories: updatedCategories);
     });
   }
 
@@ -382,29 +388,18 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         _isLoading = true;
       });
 
-      final jeopardyProvider = context.read<JeopardyProvider>();
+      final jeopardyProvider = context.read<SimpleJeopardyProvider>();
 
       // Prepare game data with Daily Doubles
       List<DailyDouble> dailyDoubles = [];
       if (_enableDailyDoubles && _game!.categories.isNotEmpty) {
         // Add 3 Daily Doubles in regular Jeopardy (not in first row)
-        // Standard Jeopardy has 1 in round 1 and 2 in round 2, but since we don't have
-        // Double Jeopardy UI yet, we'll put all 3 in the regular round
-        dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, 3));
-        
-        // Note: Currently all 3 Daily Doubles are in regular Jeopardy.
-        dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, 3));
+        dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, standardJeopardyDailyDoublesCount));
       }
       
-      _game = JeopardyGame(
-        id: _game!.id,
+      _game = _game!.copyWith(
         title: _titleController.text,
-        teacherId: _game!.teacherId,
-        categories: _game!.categories,
-        doubleJeopardyCategories: _game!.doubleJeopardyCategories,
-        createdAt: _game!.createdAt,
         updatedAt: DateTime.now(),
-        isPublic: _game!.isPublic,
         dailyDoubles: dailyDoubles,
         randomDailyDoubles: _enableDailyDoubles,
       );

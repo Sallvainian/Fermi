@@ -41,12 +41,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         return;
       }
       
-      // Use the generic OAuth completion method that works for both Google and Apple
-      await authProvider.completeOAuthSignUp(
-        role: _selectedRole,
-        parentEmail: null,
-        gradeLevel: null,
-      );
+      // Complete OAuth sign-in with selected role
+      await authProvider.completeOAuthSignIn(_selectedRole.toString().split('.').last);
 
       // CRITICAL: Wait a moment for provider to fully update
       await Future.delayed(const Duration(milliseconds: 500));

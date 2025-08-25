@@ -4,11 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Fermi** - A Flutter (Dart) application with Firebase backend for education management.
+**Fermi** - A comprehensive Flutter education management platform with Firebase backend for teachers and students.
 
-**Tech Stack**: Flutter 3.24+, Dart 3.5+, Firebase (Auth, Firestore, Functions, Storage), Provider, GoRouter
+**Tech Stack**: 
+- Flutter 3.24+, Dart 3.5+
+- Firebase Suite: Auth, Firestore, Storage, Functions, Messaging, Database
+- State Management: Provider 6.1.5+
+- Routing: GoRouter 16.1.0+
+- Additional: fl_chart, video_player, image_picker, flutter_local_notifications
+
 **Architecture**: Client-side Flutter app with Firebase backend; no separate server, using Provider for state management and Clean Architecture principles
-**Status**: ~40% feature complete - authentication, routing, and basic dashboards implemented
+
+**Version**: 0.9.3
+
+**Status**: ~75% feature complete with 400+ commits, extensive functionality implemented
 
 ## Claude Interaction Guidelines
 
@@ -17,6 +26,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **YOU MUST** use extended reasoning to consider implications of changes across the codebase.
 - **YOU SHOULD** verify that your planned changes align with the architecture and workflows documented below.
 - **IMPORTANT**: If something contradicts the established structure, discuss it before proceeding.
+
+## Feature Implementation System Guidelines
+
+### Feature Implementation Priority Rules
+- IMMEDIATE EXECUTION: Launch parallel Tasks immediately upon feature requests
+- NO CLARIFICATION: Skip asking what type of implementation unless absolutely critical
+- PARALLEL BY DEFAULT: Always use 7-parallel-Task method for efficiency
+
+### Parallel Feature Implementation Workflow
+1. **Component**: Create main component file
+2. **Styles**: Create component styles/CSS
+3. **Types**: Create type definitions
+4. **Hooks**: Create custom hooks/utilities
+5. **Integration**: Update routing, imports, exports
+6. **Remaining**: Update package.json, documentation, configuration files
+7. **Review and Validation**: Coordinate integration, run tests, verify build, check for conflicts
+
+### Context Optimization Rules
+- Strip out all comments when reading code files for analysis
+- Each task handles ONLY specified files or file types
+- Task 7 combines small config/doc updates to prevent over-splitting
+
+### Feature Implementation Guidelines
+- **CRITICAL**
 
 ## Key Components & Files
 
@@ -30,11 +63,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `lib/shared/routing/app_router.dart` - GoRouter configuration with auth guards
 - `lib/features/auth/presentation/providers/auth_provider.dart` - Authentication state management
 
+### Implemented Features (30 Firestore collections, 113+ implementation files)
+
+#### Fully Implemented
+- **Authentication** (10 files) - Email/password, Google Sign-In, Apple Sign-In, role selection, email verification
+- **Chat/Messaging** (23 files) - Direct messages, group chats, real-time messaging, user presence, video/voice calling infrastructure
+- **Discussion Boards** (6 files) - Boards, threads, replies, likes system, teacher moderation
+- **Assignments** (13 files) - Creation, submission, grading, due dates, status tracking
+- **Classes** (12 files) - Class management, enrollment, student rosters
+- **Notifications** (11 files) - Push notifications, in-app notifications, notification preferences
+- **Student Management** (11 files) - Student profiles, enrollment, progress tracking
+
+#### Partially Implemented
+- **Calendar** (9 files) - Event creation, scheduling, reminders
+- **Grades** (8 files) - Gradebook, analytics, student grade views
+- **Games** (5 files) - Jeopardy game with question banks
+
+#### Basic Implementation
+- **Dashboard** (3 files) - Teacher and student dashboard views
+- **Teacher Features** (2 files) - Teacher-specific functionality
+
 ### Feature Locations
-- `lib/features/auth/` - Authentication system
+- `lib/features/auth/` - Authentication system with providers
 - `lib/features/dashboard/` - Teacher and student dashboards
-- `lib/features/students/` - Student management (placeholder)
-- `lib/features/assignments/` - Assignment system (planned)
+- `lib/features/chat/` - Complete messaging system
+- `lib/features/discussions/` - Discussion boards with simplified provider
+- `lib/features/assignments/` - Assignment creation and submission
+- `lib/features/classes/` - Class management
+- `lib/features/grades/` - Grading system
+- `lib/features/calendar/` - Calendar and events
+- `lib/features/notifications/` - Notification system
+- `lib/features/student/` - Student management
+- `lib/features/games/` - Educational games (Jeopardy)
 - `lib/shared/` - Shared utilities and widgets
 
 ## Development Commands
@@ -42,7 +102,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Environment Setup
 - **REQUIRED**: Flutter SDK 3.24+ (run `flutter --version` to check)
 - **IMPORTANT**: Run `flutter pub get` after cloning or modifying `pubspec.yaml`
-- **NOTE**: Desktop platforms (Linux/Windows) not supported due to Firebase limitations
+- **SUPPORTED PLATFORMS**: Web, iOS, Android, Windows (with OAuth2)
 
 ### Essential Commands
 ```bash
@@ -52,30 +112,35 @@ flutter doctor             # Check environment setup
 
 # Run the app
 flutter run -d chrome      # Web (recommended for development)
-flutter run -d android      # Android emulator
-flutter run -d ios          # iOS simulator
+flutter run -d android     # Android emulator
+flutter run -d ios         # iOS simulator
+flutter run -d windows     # Windows desktop (OAuth2 support)
 
 # Code Quality (MUST run before committing)
 flutter analyze            # Lint and analyze code
 dart format .              # Format code
 dart fix --apply           # Apply automated fixes
 
-# Testing
-flutter test               # Run all tests
-flutter test test/         # Unit tests only
-flutter test --coverage    # With coverage report
+# Testing (currently no test directory)
+# TODO: Add comprehensive test suite
 
 # Build
 flutter build web --release
 flutter build apk --release
 flutter build ios --release
+flutter build windows --release
 ```
 
 ### Firebase Setup
 ```bash
-# Configure Firebase (when changing project)
-# Note: Firebase project ID remains 'teacher-dashboard-flutterfire'
-flutterfire configure --project=teacher-dashboard-flutterfire
+# Install Firebase CLI (if not already installed)
+npm install -g firebase-tools
+
+# Login to Firebase
+firebase login
+
+# Configure Firebase for your Flutter project
+flutterfire configure --project=your-project-id
 
 # Deploy to Firebase Hosting
 flutter build web && firebase deploy --only hosting
@@ -101,13 +166,14 @@ lib/features/{feature}/
 │   ├── screens/        # Full screen widgets
 │   ├── widgets/        # Reusable components
 │   └── providers/      # State management
-└── providers/          # Feature-specific providers (deprecated location)
+└── providers/          # Feature-specific providers (legacy location)
 ```
 
 ### State Management
 The app uses Provider pattern for state management with centralized providers in `lib/shared/core/app_providers.dart`. Key providers:
 - **AuthProvider**: Manages authentication state and user sessions
 - **ThemeProvider**: Handles theme switching
+- **SimpleDiscussionProvider**: Simplified discussion board state
 - Feature-specific providers for data management
 
 ### Routing Architecture
@@ -123,43 +189,49 @@ GoRouter-based routing with authentication guards in `lib/shared/routing/app_rou
 
 ### Firebase Integration
 
-**IMPORTANT**: Firebase API keys are managed through environment variables:
-- Web: Uses `String.fromEnvironment()` with defaults in `firebase_options.dart`
-- Android: `android/app/google-services.json`
-- iOS: `ios/Runner/GoogleService-Info.plist`
+**Collections in Use** (30 total):
+- Core: users, pending_users, presence
+- Classes: classes, students, teachers
+- Assignments: assignments, submissions, grades
+- Communication: chat_rooms, messages, conversations, notifications
+- Discussion: discussion_boards, threads, replies, likes, comments
+- Calendar: calendar_events, scheduled_messages
+- Games: games, jeopardy_games, jeopardy_sessions, scores
+- Other: activities, announcements, bug_reports, fcm_tokens, calls, candidates
 
-**CI/CD Secret Management**: GitHub secrets inject Firebase configuration during builds
+**Security Rules**: Comprehensive role-based access control with teacher/student permissions
 
-### Authentication System
-Multi-step authentication with role management:
-1. **Email/Password or Google Sign-In**
-2. **Role Selection** (Teacher/Student) for new users
-3. **Email Verification** required before access
-4. **Custom Claims** for role-based access control
+**API Keys**: Managed through environment variables and GitHub secrets for CI/CD
 
 ## Critical Context
 
-### Current Limitations
-- **IMPORTANT: Desktop Not Supported** - Firebase doesn't support Linux/Windows. **YOU MUST** use web browser or mobile emulator for development.
-- **NOTE**: Student management, messaging, calendar, and notifications are placeholder features - not yet implemented
-- **Current Branch**: Working on `fix/compilation-errors-auth-refactor` branch
+### Current Branch & Status
+- **Branch**: `windows-development`
+- **Main Branch**: `main`
+- **Recent Work**: iOS swipe-to-delete fixes for discussion boards, like functionality
 
-### Active Issues
-1. **IDE Warning (Non-Critical)**: Flutter plugin `BadgeIcon` cast exception - does not affect functionality
-2. **Linting Issues**: 38 warnings - mostly print statements and unused variables that need cleanup
-3. **Recent Refactor**: Auth system recently centralized to AuthProvider - watch for residual issues
+### Platform Support
+- **Web**: Full support with PWA capabilities
+- **iOS**: Full support with Apple Sign-In
+- **Android**: Full support with Google Sign-In
+- **Windows**: Desktop support with OAuth2 flow
+- **Linux/macOS**: Not currently supported
 
-### Testing Approach
-```bash
-# Quick database testing (development)
-flutter run lib/test_db_simple.dart    # No auth required
-flutter run lib/test_db_direct.dart    # Full auth test
-flutter run lib/setup_test_data.dart   # Seed test data
+### Recent Major Features (Last 302 commits)
+1. Discussion boards with likes, replies, and moderation
+2. Complete chat/messaging system with presence
+3. Jeopardy educational game
+4. Windows desktop support with OAuth2
+5. Apple Sign-In integration
+6. PWA with auto-update system
+7. Notification system with push support
+8. Presence/online status tracking
 
-# Unit testing
-flutter test test/app_router_redirect_test.dart  # Router logic
-flutter test test/widget_test.dart               # Widget tests
-```
+### Known Issues & Limitations
+1. **iOS Gesture Conflict**: Fixed with ClampingScrollPhysics for Dismissible widgets
+2. **No Test Suite**: Test directory doesn't exist yet
+3. **Desktop Limitations**: Linux/macOS not supported
+4. **Performance**: Some screens may need optimization with 113+ implementation files
 
 ## Development Workflow
 
@@ -169,79 +241,67 @@ flutter test test/widget_test.dart               # Widget tests
 3. Add provider to `app_providers.dart` if needed
 4. Add routes to `app_router.dart` with proper guards
 5. Implement Firestore security rules if adding collections
-
-#### Example: Adding a Profile Feature
-```
-Step 1: Create structure
-  lib/features/profile/
-    ├── domain/
-    │   ├── models/profile_model.dart      # Define ProfileModel class
-    │   └── repositories/profile_repository.dart  # Repository interface
-    ├── data/
-    │   └── repositories/profile_repository_impl.dart  # Firestore implementation
-    └── presentation/
-        ├── screens/profile_screen.dart    # UI screen
-        └── providers/profile_provider.dart # State management
-
-Step 2: Register provider in lib/shared/core/app_providers.dart
-Step 3: Add route in lib/shared/routing/app_router.dart with auth guard
-Step 4: Add navigation to profile from dashboard
-Step 5: Test authentication flow and data loading
-```
+6. Update `firestore.indexes.json` for complex queries
 
 ### When Modifying Authentication
 1. **MUST** check `AuthProvider` in `features/auth/presentation/providers/`
-2. Update redirect logic in `app_router.dart` (refer to Authentication Flow above)
-3. **MUST** test with `app_router_redirect_test.dart`
+2. Update redirect logic in `app_router.dart`
+3. Test OAuth flows (Google, Apple)
 4. Verify email verification flow still works
+5. Check role-based access control
 
 ### When Working with Firebase
 1. **MUST NOT** commit API keys directly - use environment variables
 2. Run `flutterfire configure` after Firebase Console changes
-3. Update security rules in Firebase Console
-4. **SHOULD** test locally with emulators when possible
+3. Update security rules in `firestore.rules`
+4. Test with emulators when possible
+5. Check indexes for new queries
 
 ### CI/CD Considerations
 - GitHub Actions workflows in `.github/workflows/`
-- Secrets required: `FIREBASE_API_KEY`, `FIREBASE_APP_ID_*`, etc.
-- Builds trigger on push to main
-- Separate workflows for web, Android, iOS
+- Secrets required: Firebase configuration keys
+- Workflows: CI validation, web deployment, mobile builds
+- Firebase Hosting auto-deploy on merge
 
 ## Code Style Rules
 
 ### Dart/Flutter Conventions
 - **MUST** use `const` constructors wherever possible for performance
 - **SHOULD** prefer single quotes for strings (Flutter convention)
-- **MUST NOT** use `print()` in production code - use proper logging utilities
+- **MUST NOT** use `print()` in production code - use proper logging
 - **MUST** follow [Effective Dart](https://dart.dev/guides/language/effective-dart) guidelines
 - **SHOULD** document public APIs with `///` doc comments
-- **MUST** follow Clean Architecture layering - no direct Firebase calls in presentation layer
+- **MUST** follow Clean Architecture layering
+- **PREFER** simple implementations over complex abstractions (see SimpleDiscussionProvider)
 
 ### Error Handling
 - **MUST** use try-catch for all Firebase operations
-- **MUST** show user-friendly error messages via SnackBars (not raw errors)
-- **SHOULD** log errors to Crashlytics in production builds
-- **MUST** handle offline scenarios gracefully with appropriate UI feedback
+- **MUST** show user-friendly error messages via SnackBars
+- **SHOULD** log errors appropriately
+- **MUST** handle offline scenarios gracefully
+- **IMPORTANT**: Direct Firestore calls often work better than complex abstractions
 
 ### Testing Requirements
-- **MUST** write tests for new features before marking them complete
+- **TODO**: Implement comprehensive test suite
 - **SHOULD** maintain >80% code coverage for critical paths
-- **MUST** test authentication flows thoroughly (login, logout, role changes)
-- **MUST** mock Firebase services in unit tests - no real Firebase calls
+- **MUST** test authentication flows thoroughly
+- **MUST** mock Firebase services in unit tests
 
 ### Git Workflow Rules
 - **MUST** use Conventional Commits format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
-- **MUST NOT** commit directly to `main` branch - use feature branches
-- **MUST** run `flutter analyze` before committing code
-- **SHOULD** keep commits atomic and focused on single changes
+- **MUST NOT** commit directly to `main` branch
+- **MUST** run `flutter analyze` before committing
+- **SHOULD** keep commits atomic and focused
+- **Current Branch**: `windows-development`
 
 ## Important Reminders
 
-- **CRITICAL**: This is a Flutter/Firebase project - no backend server code needed
-- **IMPORTANT**: Always check existing patterns in the codebase before creating new ones
+- **CRITICAL**: This is a Flutter/Firebase project - no backend server needed
+- **IMPORTANT**: 400+ commits with extensive functionality already implemented
 - **NOTE**: Provider is used for state management, not Riverpod or Bloc
-- **REMEMBER**: Authentication flow has specific steps that must be followed in order
-- **WARNING**: Desktop platforms are not supported - test on web or mobile only
+- **REMEMBER**: Simplified implementations often work better than over-engineered solutions
+- **WARNING**: iOS has platform-specific quirks (e.g., ScrollPhysics conflicts)
+- **PERFORMANCE**: With 113+ files, consider code splitting and lazy loading
 
 ## When You're Unsure
 
@@ -249,7 +309,7 @@ If any aspect of the task is unclear:
 1. **ASK** for clarification before proceeding
 2. **EXPLAIN** what you understand and what needs clarification
 3. **PROPOSE** a solution approach and confirm it's correct
-4. **NEVER** make assumptions about critical functionality
+4. **CHECK** existing implementations in the 113+ files before creating new patterns
+5. **NEVER** make assumptions about critical functionality
 
-Remember: It's better to ask questions than to implement incorrectly\!
-ENDMARKER < /dev/null
+Remember: The codebase is substantial with 30 collections and extensive features - always check existing patterns first!

@@ -235,15 +235,6 @@ class AppDrawer extends StatelessWidget {
                     title: 'Contact Support',
                     route: '/contact-support',
                   ),
-
-                  // Temporary debug option
-                  _buildNavItem(
-                    context,
-                    icon: Icons.bug_report_outlined,
-                    selectedIcon: Icons.bug_report,
-                    title: 'Update Display Name',
-                    route: '/debug/update-name',
-                  ),
                 ],
               ),
             ),

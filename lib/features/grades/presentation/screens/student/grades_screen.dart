@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/grade.dart';
-import '../../providers/grade_provider.dart';
+import '../../providers/grade_provider_simple.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
-import '../../../../assignments/presentation/providers/assignment_provider.dart';
+import '../../../../assignments/presentation/providers/assignment_provider_simple.dart';
 import '../../../../assignments/domain/models/assignment.dart';
 import '../../../../classes/presentation/providers/class_provider.dart';
 import '../../../../classes/domain/models/class_model.dart';
@@ -33,9 +33,9 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
 
   void _loadGrades() {
     final authProvider = context.read<AuthProvider>();
-    final gradeProvider = context.read<GradeProvider>();
+    final gradeProvider = context.read<SimpleGradeProvider>();
     final classProvider = context.read<ClassProvider>();
-    final assignmentProvider = context.read<AssignmentProvider>();
+    final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
     final studentId = authProvider.userModel?.uid;
     if (studentId != null) {
@@ -53,23 +53,23 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   }
 
   // Helper method to get all assignments for a student's classes
-  List<Assignment> _getAllStudentAssignments(
+  List<Map<String, dynamic>> _getAllStudentAssignments(
     List<ClassModel> classes,
-    AssignmentProvider provider,
+    SimpleAssignmentProvider provider,
   ) {
     // Filter assignments to only those belonging to student's classes
     final classIds = classes.map((c) => c.id).toSet();
     return provider.assignments
-        .where((assignment) => classIds.contains(assignment.classId))
+        .where((assignment) => classIds.contains(assignment['classId']))
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final gradeProvider = context.watch<GradeProvider>();
+    final gradeProvider = context.watch<SimpleGradeProvider>();
     final classProvider = context.watch<ClassProvider>();
-    final assignmentProvider = context.watch<AssignmentProvider>();
+    final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final grades = gradeProvider.studentGrades;
     final classes = classProvider.studentClasses;
 
@@ -378,8 +378,8 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   Widget _buildCourseSection(
     BuildContext context,
     ClassModel course,
-    List<Grade> grades,
-    List<Assignment> assignments,
+    List<Map<String, dynamic>> grades,
+    List<Map<String, dynamic>> assignments,
   ) {
     final theme = Theme.of(context);
     final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
@@ -388,11 +388,11 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
     // Calculate course average
     final gradedGrades = grades
         .where((g) =>
-            g.status == GradeStatus.graded || g.status == GradeStatus.returned)
+            g['status'] == 'graded' || g['status'] == 'returned')
         .toList();
     final courseAverage = gradedGrades.isEmpty
         ? 0.0
-        : gradedGrades.fold<double>(0, (sum, g) => sum + g.percentage) /
+        : gradedGrades.fold<double>(0, (sum, g) => sum + (g['percentage'] as double)) /
             gradedGrades.length;
 
     return Card(
@@ -466,27 +466,27 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
           // Grades List
           ...grades.map((grade) {
             final assignment = assignments.firstWhere(
-              (a) => a.id == grade.assignmentId,
-              orElse: () => Assignment(
-                id: grade.assignmentId,
-                title: 'Unknown Assignment',
-                description: '',
-                type: AssignmentType.homework,
-                classId: grade.classId,
-                teacherId: grade.teacherId,
-                totalPoints: grade.pointsPossible,
-                maxPoints: grade.pointsPossible,
-                dueDate: DateTime.now(),
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-                instructions: '',
-                category: 'Other',
-                teacherName: '',
-                isPublished: true,
-                allowLateSubmissions: false,
-                latePenaltyPercentage: 0,
-                status: AssignmentStatus.active,
-              ),
+              (a) => a['id'] == grade['assignmentId'],
+              orElse: () => {
+                'id': grade['assignmentId'],
+                'title': 'Unknown Assignment',
+                'description': '',
+                'type': 'homework',
+                'classId': grade['classId'],
+                'teacherId': grade['teacherId'],
+                'totalPoints': grade['pointsPossible'],
+                'maxPoints': grade['pointsPossible'],
+                'dueDate': DateTime.now(),
+                'createdAt': DateTime.now(),
+                'updatedAt': DateTime.now(),
+                'instructions': '',
+                'category': 'Other',
+                'teacherName': '',
+                'isPublished': true,
+                'allowLateSubmissions': false,
+                'latePenaltyPercentage': 0,
+                'status': 'active',
+              },
             );
 
             return _buildGradeItem(context, grade, assignment, courseColor);
@@ -498,13 +498,13 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
 
   Widget _buildGradeItem(
     BuildContext context,
-    Grade grade,
-    Assignment assignment,
+    Map<String, dynamic> grade,
+    Map<String, dynamic> assignment,
     Color courseColor,
   ) {
     final theme = Theme.of(context);
-    final isGraded = grade.status == GradeStatus.graded ||
-        grade.status == GradeStatus.returned;
+    final isGraded = grade['status'] == 'graded' ||
+        grade['status'] == 'returned';
 
     return InkWell(
       onTap: () => _showGradeDetails(context, grade, assignment),
@@ -524,13 +524,13 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _getAssignmentTypeColor(assignment.type)
+                color: _getAssignmentTypeColor(assignment['type'])
                     .withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
-                _getAssignmentTypeIcon(assignment.type),
-                color: _getAssignmentTypeColor(assignment.type),
+                _getAssignmentTypeIcon(assignment['type']),
+                color: _getAssignmentTypeColor(assignment['type']),
                 size: 20,
               ),
             ),
@@ -542,7 +542,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    assignment.title,
+                    assignment['title'],
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -551,14 +551,14 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                   Row(
                     children: [
                       Text(
-                        _getAssignmentTypeName(assignment.type),
+                        _getAssignmentTypeName(assignment['type']),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '• Due ${_formatDate(assignment.dueDate)}',
+                        '• Due ${_formatDate(assignment['dueDate'])}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -575,7 +575,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
               children: [
                 if (isGraded) ...[
                   Text(
-                    '${grade.pointsEarned.toStringAsFixed(1)}/${grade.pointsPossible.toStringAsFixed(0)}',
+                    '${(grade['pointsEarned'] as double).toStringAsFixed(1)}/${(grade['pointsPossible'] as double).toStringAsFixed(0)}',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -585,17 +585,17 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        '${grade.percentage.toStringAsFixed(1)}%',
+                        '${(grade['percentage'] as double).toStringAsFixed(1)}%',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: _getGradeColor(grade.percentage),
+                          color: _getGradeColor(grade['percentage'] as double),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        grade.letterGrade ?? _getLetterGrade(grade.percentage),
+                        grade['letterGrade'] ?? _getLetterGrade(grade['percentage'] as double),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: _getGradeColor(grade.percentage),
+                          color: _getGradeColor(grade['percentage'] as double),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -607,13 +607,13 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color:
-                          _getStatusColor(grade.status).withValues(alpha: 0.1),
+                          _getStatusColor(grade['status']).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      _getStatusText(grade.status),
+                      _getStatusText(grade['status']),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: _getStatusColor(grade.status),
+                        color: _getStatusColor(grade['status']),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -628,7 +628,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   }
 
   void _showGradeDetails(
-      BuildContext context, Grade grade, Assignment assignment) {
+      BuildContext context, Map<String, dynamic> grade, Map<String, dynamic> assignment) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -640,53 +640,53 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
     );
   }
 
-  List<Grade> _filterGrades(List<Grade> grades, List<ClassModel> classes,
-      List<Assignment> assignments) {
+  List<Map<String, dynamic>> _filterGrades(List<Map<String, dynamic>> grades, List<ClassModel> classes,
+      List<Map<String, dynamic>> assignments) {
     return grades.where((grade) {
       // Course filter
-      if (_selectedCourseId != 'all' && grade.classId != _selectedCourseId) {
+      if (_selectedCourseId != 'all' && grade['classId'] != _selectedCourseId) {
         return false;
       }
 
       // Status filter
       if (_selectedFilter == 'Graded' &&
-          grade.status != GradeStatus.graded &&
-          grade.status != GradeStatus.returned) {
+          grade['status'] != 'graded' &&
+          grade['status'] != 'returned') {
         return false;
       }
       if (_selectedFilter == 'Pending' &&
-          grade.status != GradeStatus.pending &&
-          grade.status != GradeStatus.draft) {
+          grade['status'] != 'pending' &&
+          grade['status'] != 'draft') {
         return false;
       }
 
       // Search filter
       if (_searchQuery.isNotEmpty) {
         final assignment = assignments.firstWhere(
-          (a) => a.id == grade.assignmentId,
-          orElse: () => Assignment(
-            id: '',
-            title: '',
-            description: '',
-            type: AssignmentType.homework,
-            classId: '',
-            teacherId: '',
-            totalPoints: 0,
-            maxPoints: 0,
-            dueDate: DateTime.now(),
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-            instructions: '',
-            category: 'Other',
-            teacherName: '',
-            isPublished: true,
-            allowLateSubmissions: false,
-            latePenaltyPercentage: 0,
-            status: AssignmentStatus.active,
-          ),
+          (a) => a['id'] == grade['assignmentId'],
+          orElse: () => {
+            'id': '',
+            'title': '',
+            'description': '',
+            'type': 'homework',
+            'classId': '',
+            'teacherId': '',
+            'totalPoints': 0,
+            'maxPoints': 0,
+            'dueDate': DateTime.now(),
+            'createdAt': DateTime.now(),
+            'updatedAt': DateTime.now(),
+            'instructions': '',
+            'category': 'Other',
+            'teacherName': '',
+            'isPublished': true,
+            'allowLateSubmissions': false,
+            'latePenaltyPercentage': 0,
+            'status': 'active',
+          },
         );
 
-        return assignment.title
+        return (assignment['title'] ?? '')
             .toLowerCase()
             .contains(_searchQuery.toLowerCase());
       }
@@ -695,39 +695,39 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
     }).toList();
   }
 
-  Map<String, List<Grade>> _groupGradesByCourse(
-      List<Grade> grades, List<ClassModel> classes) {
-    final Map<String, List<Grade>> groups = {};
+  Map<String, List<Map<String, dynamic>>> _groupGradesByCourse(
+      List<Map<String, dynamic>> grades, List<ClassModel> classes) {
+    final Map<String, List<Map<String, dynamic>>> groups = {};
 
     for (final grade in grades) {
-      if (!groups.containsKey(grade.classId)) {
-        groups[grade.classId] = [];
+      if (!groups.containsKey(grade['classId'])) {
+        groups[grade['classId']] = [];
       }
-      groups[grade.classId]!.add(grade);
+      groups[grade['classId']]!.add(grade);
     }
 
     // Sort grades within each group by date
     for (final grades in groups.values) {
-      grades.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      grades.sort((a, b) => (b['createdAt'] as DateTime).compareTo(a['createdAt'] as DateTime));
     }
 
     return groups;
   }
 
-  Map<String, dynamic> _calculateStatistics(List<Grade> grades) {
+  Map<String, dynamic> _calculateStatistics(List<Map<String, dynamic>> grades) {
     final gradedGrades = grades
         .where((g) =>
-            g.status == GradeStatus.graded || g.status == GradeStatus.returned)
+            g['status'] == 'graded' || g['status'] == 'returned')
         .toList();
 
     final pendingGrades = grades
         .where((g) =>
-            g.status == GradeStatus.pending || g.status == GradeStatus.draft)
+            g['status'] == 'pending' || g['status'] == 'draft')
         .toList();
 
     final average = gradedGrades.isEmpty
         ? 0.0
-        : gradedGrades.fold<double>(0, (sum, g) => sum + g.percentage) /
+        : gradedGrades.fold<double>(0, (sum, g) => sum + (g['percentage'] as double)) /
             gradedGrades.length;
 
     final gpa = _calculateGPA(average);
@@ -911,8 +911,8 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
 
 // Grade Details Bottom Sheet
 class _GradeDetailsSheet extends StatelessWidget {
-  final Grade grade;
-  final Assignment assignment;
+  final Map<String, dynamic> grade;
+  final Map<String, dynamic> assignment;
 
   const _GradeDetailsSheet({
     required this.grade,
@@ -922,8 +922,8 @@ class _GradeDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isGraded = grade.status == GradeStatus.graded ||
-        grade.status == GradeStatus.returned;
+    final isGraded = grade['status'] == 'graded' ||
+        grade['status'] == 'returned';
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -956,7 +956,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                 children: [
                   // Assignment Title
                   Text(
-                    assignment.title,
+                    assignment['title'],
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -967,11 +967,11 @@ class _GradeDetailsSheet extends StatelessWidget {
                   Row(
                     children: [
                       StatusBadge.assignmentType(
-                        type: assignment.type.name,
+                        type: assignment['type'],
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Due ${_formatDate(assignment.dueDate)}',
+                        'Due ${_formatDate(assignment['dueDate'])}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -1004,7 +1004,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${grade.pointsEarned.toStringAsFixed(1)} / ${grade.pointsPossible.toStringAsFixed(0)}',
+                                      '${(grade['pointsEarned'] as double).toStringAsFixed(1)} / ${(grade['pointsPossible'] as double).toStringAsFixed(0)}',
                                       style: theme.textTheme.headlineMedium
                                           ?.copyWith(
                                         fontWeight: FontWeight.bold,
@@ -1027,23 +1027,23 @@ class _GradeDetailsSheet extends StatelessWidget {
                                     Row(
                                       children: [
                                         Text(
-                                          '${grade.percentage.toStringAsFixed(1)}%',
+                                          '${(grade['percentage'] as double).toStringAsFixed(1)}%',
                                           style: theme.textTheme.headlineMedium
                                               ?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: _getGradeColor(
-                                                grade.percentage),
+                                                grade['percentage'] as double),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          grade.letterGrade ??
-                                              _getLetterGrade(grade.percentage),
+                                          grade['letterGrade'] ??
+                                              _getLetterGrade(grade['percentage'] as double),
                                           style: theme.textTheme.headlineMedium
                                               ?.copyWith(
                                             fontWeight: FontWeight.bold,
                                             color: _getGradeColor(
-                                                grade.percentage),
+                                                grade['percentage'] as double),
                                           ),
                                         ),
                                       ],
@@ -1052,7 +1052,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            if (grade.gradedAt != null) ...[
+                            if (grade['gradedAt'] != null) ...[
                               const SizedBox(height: 16),
                               Divider(
                                   color: theme.colorScheme.primary
@@ -1069,7 +1069,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    '${grade.gradedAt!.month}/${grade.gradedAt!.day}/${grade.gradedAt!.year}',
+                                    '${(grade['gradedAt'] as DateTime).month}/${(grade['gradedAt'] as DateTime).day}/${(grade['gradedAt'] as DateTime).year}',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -1084,8 +1084,8 @@ class _GradeDetailsSheet extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     // Teacher Feedback
-                    if (grade.feedback != null &&
-                        grade.feedback!.isNotEmpty) ...[
+                    if (grade['feedback'] != null &&
+                        grade['feedback']!.isNotEmpty) ...[
                       Text(
                         'Teacher Feedback',
                         style: theme.textTheme.titleMedium?.copyWith(
@@ -1097,7 +1097,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Text(
-                            grade.feedback!,
+                            grade['feedback']!,
                             style: theme.textTheme.bodyMedium,
                           ),
                         ),
@@ -1108,14 +1108,14 @@ class _GradeDetailsSheet extends StatelessWidget {
                     // Pending Status
                     Card(
                       color:
-                          _getStatusColor(grade.status).withValues(alpha: 0.1),
+                          _getStatusColor(grade['status']).withValues(alpha: 0.1),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
                           children: [
                             Icon(
-                              _getStatusIcon(grade.status),
-                              color: _getStatusColor(grade.status),
+                              _getStatusIcon(grade['status']),
+                              color: _getStatusColor(grade['status']),
                               size: 32,
                             ),
                             const SizedBox(width: 16),
@@ -1124,16 +1124,16 @@ class _GradeDetailsSheet extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _getStatusText(grade.status),
+                                    _getStatusText(grade['status']),
                                     style:
                                         theme.textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
-                                      color: _getStatusColor(grade.status),
+                                      color: _getStatusColor(grade['status']),
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    _getStatusDescription(grade.status),
+                                    _getStatusDescription(grade['status']),
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: theme.colorScheme.onSurfaceVariant,
                                     ),
@@ -1149,7 +1149,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                   ],
 
                   // Assignment Description
-                  if (assignment.description.isNotEmpty) ...[
+                  if (assignment['description'].isNotEmpty) ...[
                     Text(
                       'Assignment Description',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -1158,7 +1158,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      assignment.description,
+                      assignment['description'],
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -1167,8 +1167,8 @@ class _GradeDetailsSheet extends StatelessWidget {
                   ],
 
                   // Rubric Scores (if available)
-                  if (grade.rubricScores != null &&
-                      grade.rubricScores!.isNotEmpty) ...[
+                  if (grade['rubricScores'] != null &&
+                      grade['rubricScores']!.isNotEmpty) ...[
                     Text(
                       'Rubric Scores',
                       style: theme.textTheme.titleMedium?.copyWith(
@@ -1180,7 +1180,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
-                          children: grade.rubricScores!.entries.map((entry) {
+                          children: (grade['rubricScores']! as Map<String, dynamic>).entries.map((entry) {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Row(

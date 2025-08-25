@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/grade.dart';
-import '../../providers/grade_provider.dart';
-import '../../../../assignments/presentation/providers/assignment_provider.dart';
-import '../../../../assignments/domain/models/assignment.dart'
-    as assignment_model;
+import '../../providers/grade_provider_simple.dart';
+import '../../../../assignments/presentation/providers/assignment_provider_simple.dart';
 import '../../../../classes/presentation/providers/class_provider.dart';
 import '../../../../classes/domain/models/class_model.dart';
 import '../../../../student/domain/models/student.dart';
-import '../../../../student/presentation/providers/student_provider.dart';
+import '../../../../student/presentation/providers/student_provider_simple.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
 
 class GradebookScreen extends StatefulWidget {
@@ -36,7 +35,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
 
   void _loadData() {
     final classProvider = context.read<ClassProvider>();
-    final gradeProvider = context.read<GradeProvider>();
+    final gradeProvider = context.read<SimpleGradeProvider>();
 
     // Load classes and set default selection
     if (classProvider.teacherClasses.isNotEmpty) {
@@ -55,8 +54,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
   }
 
   void _loadStudentsForClass(ClassModel classModel) async {
-    // Load actual students from Firebase using StudentProvider
-    final studentProvider = context.read<StudentProvider>();
+    // Load actual students from Firebase using SimpleStudentProvider
+    final studentProvider = context.read<SimpleStudentProvider>();
 
     if (classModel.studentIds.isNotEmpty) {
       final students =
@@ -76,15 +75,14 @@ class _GradebookScreenState extends State<GradebookScreen> {
     return _students.where((student) {
       final fullName = '${student.firstName} ${student.lastName}';
       return fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
-              false);
+          (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final gradeProvider = context.watch<GradeProvider>();
-    final assignmentProvider = context.watch<AssignmentProvider>();
+    final gradeProvider = context.watch<SimpleGradeProvider>();
+    final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final classProvider = context.watch<ClassProvider>();
 
     return Scaffold(
@@ -114,8 +112,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildGradebookBody(BuildContext context, GradeProvider gradeProvider,
-      AssignmentProvider assignmentProvider, ClassProvider classProvider) {
+  Widget _buildGradebookBody(BuildContext context, SimpleGradeProvider gradeProvider,
+      SimpleAssignmentProvider assignmentProvider, ClassProvider classProvider) {
     if (classProvider.teacherClasses.isEmpty) {
       return const EmptyState(
         icon: Icons.class_outlined,
@@ -149,15 +147,15 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildStatsHeader(BuildContext context, GradeProvider gradeProvider) {
+  Widget _buildStatsHeader(BuildContext context, SimpleGradeProvider gradeProvider) {
     final stats = gradeProvider.classStatistics;
 
-    final classAverage = stats?.average ?? 0.0;
+    final classAverage = (stats['average'] as double?) ?? 0.0;
     // Calculate completion rate from grades
     final totalGrades = gradeProvider.classGrades.length;
     final completedGrades = gradeProvider.classGrades
         .where((g) =>
-            g.status == GradeStatus.graded || g.status == GradeStatus.returned)
+            g['status'] == 'graded' || g['status'] == 'returned')
         .length;
     final completionRate =
         totalGrades > 0 ? (completedGrades / totalGrades) * 100 : 0.0;
@@ -182,7 +180,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
               title: 'Completion',
               value: '${completionRate.toStringAsFixed(0)}%',
               subtitle:
-                  '${gradeProvider.classGrades.where((g) => g.status == GradeStatus.graded).length}/${gradeProvider.classGrades.length} done',
+                  '${gradeProvider.classGrades.where((g) => g['status'] == 'graded').length}/${gradeProvider.classGrades.length} done',
               icon: Icons.assignment_turned_in,
             ),
           ),
@@ -298,7 +296,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                   if (value != null) {
                     final selectedClass = classProvider.teacherClasses
                         .firstWhere((c) => c.id == value);
-                    context.read<GradeProvider>().loadClassGrades(value);
+                    context.read<SimpleGradeProvider>().loadClassGrades(value);
                     _loadStudentsForClass(selectedClass);
                   }
                 },
@@ -328,8 +326,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
   }
 
   void _showStudentGradeDetail(Student student) {
-    final gradeProvider = context.read<GradeProvider>();
-    final assignmentProvider = context.read<AssignmentProvider>();
+    final gradeProvider = context.read<SimpleGradeProvider>();
+    final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
     // Load grades for this specific student
     gradeProvider.loadStudentClassGrades(student.id, _selectedClassId!);
@@ -346,65 +344,25 @@ class _GradebookScreenState extends State<GradebookScreen> {
       builder: (context) => StudentGradeDetailSheet(
         student: student,
         assignments: assignmentProvider.teacherAssignments
-            .where((a) => a.classId == _selectedClassId)
+            .where((a) => a['classId'] == _selectedClassId)
             .toList(),
-        onGradeUpdate: (assignmentId, newPoints, newStatus) async {
-          // Find the grade and update it - handle case where grade doesn't exist
-          final existingGrade = gradeLookup['${assignmentId}_${student.id}'];
-          
-          if (existingGrade != null) {
-            // Update existing grade
-            await gradeProvider.submitGrade(existingGrade.id, newPoints ?? 0, null);
-            // Optionally update the gradeLookup if gradeProvider.studentGrades is not updated immediately
-            // gradeLookup['${assignmentId}_${student.id}'] = updatedGrade;
-          } else {
-            // Grade doesn't exist yet, create a new one
-            debugPrint('Creating new grade for assignment $assignmentId');
-            
-            // Get the assignment to get its details
-            final assignments = assignmentProvider.teacherAssignments
-                .where((a) => a.id == assignmentId)
-                .toList();
-            final assignment = assignments.isEmpty ? null : assignments.first;
-            
-            if (assignment != null) {
-              // Create new grade for this student and assignment
-              final points = newPoints ?? 0;
-              final percentage = Grade.calculatePercentage(points, assignment.totalPoints);
-              final letterGrade = Grade.calculateLetterGrade(percentage);
-              
-              final authProvider = Provider.of<AuthProvider>(context, listen: false);
-              final teacherId = authProvider.userModel?.uid ?? '';
-              
-              final newGrade = Grade(
-                id: '', // Will be generated by Firestore
-                assignmentId: assignmentId,
-                studentId: student.id,
-                studentName: student.displayName,
-                teacherId: teacherId,
-                classId: _selectedClassId!,
-                pointsEarned: points,
-                pointsPossible: assignment.totalPoints,
-                percentage: percentage,
-                letterGrade: letterGrade,
-                status: GradeStatus.graded,
-                gradedAt: DateTime.now(),
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              );
-              
-              await gradeProvider.createGrade(newGrade);
-            } else {
-              debugPrint('Warning: Assignment $assignmentId not found, cannot create grade');
-            }
-          }
+        onGradeUpdate: (assignmentId, newPoints, newStatus) {
+          // Find the grade and update it
+          final grade = gradeProvider.studentGrades
+              .firstWhere((g) => g['assignmentId'] == assignmentId);
+          gradeProvider.gradeSubmission(
+            submissionId: grade['id'],
+            points: newPoints ?? 0,
+            maxPoints: 100,
+            feedback: '',
+          );
         },
       ),
     );
   }
 
-  Widget _buildStudentsList(BuildContext context, GradeProvider gradeProvider,
-      AssignmentProvider assignmentProvider) {
+  Widget _buildStudentsList(BuildContext context, SimpleGradeProvider gradeProvider,
+      SimpleAssignmentProvider assignmentProvider) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _filteredStudents.length,
@@ -415,15 +373,15 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildStudentCard(Student student, GradeProvider gradeProvider) {
+  Widget _buildStudentCard(Student student, SimpleGradeProvider gradeProvider) {
     // Calculate student's overall grade
     final studentGrades = gradeProvider.classGrades
-        .where((g) => g.studentId == student.id)
+        .where((g) => g['studentId'] == student.id)
         .toList();
 
     final overallGrade = _calculateStudentOverallGrade(studentGrades);
     final completedAssignments =
-        studentGrades.where((g) => g.status == GradeStatus.graded).length;
+        studentGrades.where((g) => g['status'] == 'graded').length;
     final totalAssignments = studentGrades.length;
 
     return AppCard(
@@ -558,11 +516,11 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildQuickStatusChips(List<Grade> studentGrades) {
+  Widget _buildQuickStatusChips(List<Map<String, dynamic>> studentGrades) {
     final missingCount =
-        studentGrades.where((g) => g.status == GradeStatus.notSubmitted).length;
+        studentGrades.where((g) => g['status'] == 'notSubmitted').length;
     final lateCount =
-        studentGrades.where((g) => g.status == GradeStatus.revised).length;
+        studentGrades.where((g) => g['status'] == 'revised').length;
 
     return Row(
       children: [
@@ -603,16 +561,16 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  double _calculateStudentOverallGrade(List<Grade> grades) {
+  double _calculateStudentOverallGrade(List<Map<String, dynamic>> grades) {
     if (grades.isEmpty) return 0.0;
 
     double totalPoints = 0;
     double maxPoints = 0;
 
     for (final grade in grades) {
-      if (grade.status == GradeStatus.graded) {
-        totalPoints += grade.pointsEarned;
-        maxPoints += grade.pointsPossible;
+      if (grade['status'] == 'graded') {
+        totalPoints += (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
+        maxPoints += (grade['pointsPossible'] as num?)?.toDouble() ?? 0.0;
       }
     }
 
@@ -670,7 +628,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
 // Student Grade Detail Bottom Sheet
 class StudentGradeDetailSheet extends StatelessWidget {
   final Student student;
-  final List<assignment_model.Assignment> assignments;
+  final List<Map<String, dynamic>> assignments;
   final Function(String assignmentId, double?, GradeStatus) onGradeUpdate;
 
   const StudentGradeDetailSheet({
@@ -682,7 +640,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gradeProvider = context.watch<GradeProvider>();
+    final gradeProvider = context.watch<SimpleGradeProvider>();
     final studentGrades = gradeProvider.studentGrades;
     final overallGrade = _calculateStudentOverallGrade(studentGrades);
 
@@ -781,7 +739,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      '${studentGrades.where((g) => g.status == GradeStatus.graded).length}/${assignments.length}',
+                      '${studentGrades.where((g) => g['status'] == 'graded').length}/${assignments.length}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -809,22 +767,22 @@ class StudentGradeDetailSheet extends StatelessWidget {
               itemCount: assignments.length,
               itemBuilder: (context, index) {
                 final assignment = assignments[index];
-                final grade = studentGrades.firstWhere(
-                  (g) => g.assignmentId == assignment.id,
-                  orElse: () => Grade(
-                    id: 'temp_${student.id}_${assignment.id}',
-                    studentId: student.id,
-                    studentName: '${student.firstName} ${student.lastName}',
-                    assignmentId: assignment.id,
-                    classId: assignment.classId,
-                    teacherId: assignment.teacherId,
-                    pointsPossible: assignment.totalPoints.toDouble(),
-                    pointsEarned: 0,
-                    percentage: 0,
-                    status: GradeStatus.pending,
-                    createdAt: DateTime.now(),
-                    updatedAt: DateTime.now(),
-                  ),
+                final Map<String, dynamic> grade = studentGrades.firstWhere(
+                  (g) => g['assignmentId'] == assignment['id'],
+                  orElse: () => {
+                    'id': 'temp_${student.id}_${assignment['id']}',
+                    'studentId': student.id,
+                    'studentName': '${student.firstName} ${student.lastName}',
+                    'assignmentId': assignment['id'],
+                    'classId': assignment['classId'],
+                    'teacherId': assignment['teacherId'],
+                    'pointsPossible': (assignment['totalPoints'] as num?)?.toDouble() ?? 0.0,
+                    'pointsEarned': 0.0,
+                    'percentage': 0.0,
+                    'status': 'pending',
+                    'createdAt': DateTime.now(),
+                    'updatedAt': DateTime.now(),
+                  },
                 );
                 return _buildAssignmentGradeCard(context, assignment, grade);
               },
@@ -836,40 +794,49 @@ class StudentGradeDetailSheet extends StatelessWidget {
   }
 
   Widget _buildAssignmentGradeCard(BuildContext context,
-      assignment_model.Assignment assignment, Grade grade) {
-    final isOverdue = assignment.dueDate.isBefore(DateTime.now());
+      Map<String, dynamic> assignment, Map<String, dynamic> grade) {
+    final dueDate = assignment['dueDate'];
+    final isOverdue = dueDate != null && 
+        (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now());
 
     Color statusColor;
     String statusText;
     String scoreText;
 
-    switch (grade.status) {
-      case GradeStatus.graded:
-      case GradeStatus.returned:
-        final percentage = grade.percentage;
+    final gradeStatus = grade['status'] ?? 'pending';
+    switch (gradeStatus) {
+      case 'graded':
+      case 'returned':
+        final pointsEarned = (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
+        final pointsPossible = (grade['pointsPossible'] as num?)?.toDouble() ?? 1.0;
+        final percentage = (pointsEarned / pointsPossible) * 100;
         statusColor = AppTheme.getGradeColor(_getLetterGrade(percentage));
         statusText = _getLetterGrade(percentage);
         scoreText =
-            '${grade.pointsEarned.toInt()}/${grade.pointsPossible.toInt()} (${percentage.toStringAsFixed(1)}%)';
+            '${pointsEarned.toInt()}/${pointsPossible.toInt()} (${percentage.toStringAsFixed(1)}%)';
         break;
-      case GradeStatus.notSubmitted:
+      case 'notSubmitted':
         statusColor = Theme.of(context).colorScheme.error;
         statusText = 'Not Submitted';
-        scoreText = '0/${grade.pointsPossible.toInt()} (0%)';
+        final pointsPossible = (grade['pointsPossible'] as num?)?.toInt() ?? 0;
+        scoreText = '0/$pointsPossible (0%)';
         break;
-      case GradeStatus.revised:
+      case 'revised':
         statusColor = AppTheme.warningColor;
         statusText = 'Revised';
-        scoreText = grade.pointsEarned > 0
-            ? '${grade.pointsEarned.toInt()}/${grade.pointsPossible.toInt()}'
+        final pointsEarned = (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
+        final pointsPossible = (grade['pointsPossible'] as num?)?.toDouble() ?? 0.0;
+        scoreText = pointsEarned > 0
+            ? '${pointsEarned.toInt()}/${pointsPossible.toInt()}'
             : 'Not graded';
         break;
-      case GradeStatus.draft:
+      case 'draft':
         statusColor = Theme.of(context).colorScheme.onSurfaceVariant;
         statusText = 'Draft';
         scoreText = '-';
         break;
-      case GradeStatus.pending:
+      case 'pending':
+      default:
         statusColor = Theme.of(context).colorScheme.onSurfaceVariant;
         statusText = 'Not Submitted';
         scoreText = '-';
@@ -889,7 +856,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      assignment.title,
+                      assignment['title'] ?? '',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -897,10 +864,10 @@ class StudentGradeDetailSheet extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        StatusBadge.assignmentType(type: assignment.type.name),
+                        StatusBadge.assignmentType(type: assignment['type'] ?? 'assignment'),
                         const SizedBox(width: 8),
                         Text(
-                          'Due: ${assignment.dueDate.month}/${assignment.dueDate.day}/${assignment.dueDate.year}',
+                          'Due: ${(assignment['dueDate'] as DateTime?)?.month ?? ''}/${(assignment['dueDate'] as DateTime?)?.day ?? ''}/${(assignment['dueDate'] as DateTime?)?.year ?? ''}',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: isOverdue
@@ -936,10 +903,10 @@ class StudentGradeDetailSheet extends StatelessWidget {
           const SizedBox(height: 8),
 
           // Progress Bar for graded assignments
-          if (grade.status == GradeStatus.graded ||
-              grade.status == GradeStatus.returned) ...[
+          if (grade['status'] == 'graded' ||
+              grade['status'] == 'returned') ...[
             LinearProgressIndicator(
-              value: grade.pointsEarned / grade.pointsPossible,
+              value: ((grade['pointsEarned'] as num?)?.toDouble() ?? 0.0) / ((grade['pointsPossible'] as num?)?.toDouble() ?? 1.0),
               backgroundColor:
                   Theme.of(context).colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
@@ -971,7 +938,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
   }
 
   void _showGradeEntryDialog(BuildContext context,
-      assignment_model.Assignment assignment, Grade grade) {
+      Map<String, dynamic> assignment, Map<String, dynamic> grade) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -984,7 +951,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
           assignment: assignment,
           grade: grade,
           onSave: (newPoints, newStatus) {
-            onGradeUpdate(assignment.id, newPoints, newStatus);
+            onGradeUpdate(assignment['id'], newPoints, newStatus);
             Navigator.of(context).pop();
           },
         ),
@@ -992,17 +959,17 @@ class StudentGradeDetailSheet extends StatelessWidget {
     );
   }
 
-  double _calculateStudentOverallGrade(List<Grade> grades) {
+  double _calculateStudentOverallGrade(List<Map<String, dynamic>> grades) {
     if (grades.isEmpty) return 0.0;
 
     double totalPoints = 0;
     double maxPoints = 0;
 
     for (final grade in grades) {
-      if (grade.status == GradeStatus.graded ||
-          grade.status == GradeStatus.returned) {
-        totalPoints += grade.pointsEarned;
-        maxPoints += grade.pointsPossible;
+      if (grade['status'] == 'graded' ||
+          grade['status'] == 'returned') {
+        totalPoints += (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
+        maxPoints += (grade['pointsPossible'] as num?)?.toDouble() ?? 0.0;
       }
     }
 
@@ -1029,8 +996,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
 // Grade Entry Bottom Sheet
 class GradeEntrySheet extends StatefulWidget {
   final Student student;
-  final assignment_model.Assignment assignment;
-  final Grade grade;
+  final Map<String, dynamic> assignment;
+  final Map<String, dynamic> grade;
   final Function(double?, GradeStatus) onSave;
 
   const GradeEntrySheet({
@@ -1049,15 +1016,33 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
   late TextEditingController _pointsController;
   late GradeStatus _selectedStatus;
 
+  GradeStatus _getGradeStatusFromString(String status) {
+    switch (status) {
+      case 'draft':
+        return GradeStatus.draft;
+      case 'graded':
+        return GradeStatus.graded;
+      case 'returned':
+        return GradeStatus.returned;
+      case 'revised':
+        return GradeStatus.revised;
+      case 'notSubmitted':
+        return GradeStatus.notSubmitted;
+      case 'pending':
+      default:
+        return GradeStatus.pending;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _pointsController = TextEditingController(
-      text: widget.grade.pointsEarned > 0
-          ? widget.grade.pointsEarned.toString()
+      text: ((widget.grade['pointsEarned'] as num?)?.toDouble() ?? 0.0) > 0
+          ? ((widget.grade['pointsEarned'] as num?)?.toDouble() ?? 0.0).toString()
           : '',
     );
-    _selectedStatus = widget.grade.status;
+    _selectedStatus = _getGradeStatusFromString(widget.grade['status'] ?? 'pending');
   }
 
   @override
@@ -1070,7 +1055,7 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
   Widget build(BuildContext context) {
     final percentage = _pointsController.text.isNotEmpty
         ? (double.tryParse(_pointsController.text) ?? 0) /
-            widget.assignment.totalPoints *
+            ((widget.assignment['totalPoints'] as num?)?.toDouble() ?? 1.0) *
             100
         : 0.0;
 
@@ -1108,17 +1093,17 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.assignment.title,
+                  widget.assignment['title'] ?? '',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     StatusBadge.assignmentType(
-                        type: widget.assignment.type.name),
+                        type: widget.assignment['type'] ?? 'assignment'),
                     const SizedBox(width: 8),
                     Text(
-                      'Due: ${widget.assignment.dueDate.month}/${widget.assignment.dueDate.day}/${widget.assignment.dueDate.year}',
+                      'Due: ${(widget.assignment['dueDate'] as DateTime?)?.month ?? ''}/${(widget.assignment['dueDate'] as DateTime?)?.day ?? ''}/${(widget.assignment['dueDate'] as DateTime?)?.year ?? ''}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -1134,9 +1119,9 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: 'Points Earned',
-              hintText: 'Enter points (0-${widget.assignment.totalPoints})',
+              hintText: 'Enter points (0-${widget.assignment['totalPoints'] ?? 0})',
               border: const OutlineInputBorder(),
-              suffix: Text('/ ${widget.assignment.totalPoints}'),
+              suffix: Text('/ ${widget.assignment['totalPoints'] ?? 0}'),
             ),
             onChanged: (_) => setState(() {}),
           ),
@@ -1200,7 +1185,7 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
       final points = double.tryParse(_pointsController.text);
       return points != null &&
           points >= 0 &&
-          points <= widget.assignment.totalPoints;
+          points <= ((widget.assignment['totalPoints'] as num?)?.toDouble() ?? 0.0);
     }
     return true;
   }
