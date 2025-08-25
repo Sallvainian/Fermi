@@ -234,12 +234,13 @@ jobs:
             - ✅ Offline support
           draft: false
           prerelease: false
+      - name: Add Build Summary
         run: |
           echo "## 📦 macOS Release Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Version**: ${{ env.APP_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.get_version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Build Number**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **DMG File**: ${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg" >> $GITHUB_STEP_SUMMARY
+          echo "- **DMG File**: Fermi-${{ steps.get_version.outputs.version }}.dmg" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Checksums" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
