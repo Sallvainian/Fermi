@@ -12,7 +12,7 @@ on:
         type: string
 
 env:
-  FLUTTER_VERSION: '3.24.0'
+  FLUTTER_VERSION: '3.32.0'
   XCODE_VERSION: '15.4'
   MACOS_APP_NAME: 'Fermi'
   BUNDLE_ID: 'com.academic-tools.fermi'
