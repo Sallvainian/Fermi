@@ -58,13 +58,7 @@ jobs:
           # Update version in pubspec.yaml
           sed -i '' "s/^version: .*/version: $VERSION/" pubspec.yaml
           
-      - name: Build macOS app
-        run: |
-          flutter build macos --release \
-            --build-name=${{ env.APP_VERSION }} \
-            --build-number=${{ github.run_number }}
-            
-      - name: Code signing (if certificates are available)
+      - name: Import Code Signing Certificate
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
@@ -72,24 +66,41 @@ jobs:
         run: |
           # Check if secrets are available
           if [ -z "$MACOS_CERTIFICATE" ] || [ -z "$MACOS_CERTIFICATE_PASSWORD" ] || [ -z "$MACOS_IDENTITY" ]; then
-            echo "Skipping code signing - certificates not available"
-            exit 0
+            echo "Warning: Code signing certificates not available"
+            echo "Build will proceed without code signing"
+          else
+            echo "Setting up code signing certificates..."
+            # Import certificate
+            echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+            security create-keychain -p actions build.keychain
+            security default-keychain -s build.keychain
+            security unlock-keychain -p actions build.keychain
+            security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PASSWORD -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
+            echo "Certificate imported successfully"
           fi
-          # Import certificate
-          echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
-          security create-keychain -p actions build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p actions build.keychain
-          security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PASSWORD -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
           
-          # Sign the app
-          codesign --force --deep --sign "$MACOS_IDENTITY" \
-            "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
+      - name: Build macOS app
+        run: |
+          flutter build macos --release \
+            --build-name=${{ env.APP_VERSION }} \
+            --build-number=${{ github.run_number }}
             
-          # Verify signature
-          codesign --verify --verbose \
-            "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
+      - name: Sign the app
+        env:
+          MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
+        run: |
+          if [ -z "$MACOS_IDENTITY" ]; then
+            echo "Skipping app signing - identity not available"
+          else
+            echo "Signing the app..."
+            codesign --force --deep --sign "$MACOS_IDENTITY" \
+              "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
+            
+            # Verify signature
+            codesign --verify --verbose \
+              "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
+          fi
             
       - name: Notarize app (if credentials are available)
         env:
