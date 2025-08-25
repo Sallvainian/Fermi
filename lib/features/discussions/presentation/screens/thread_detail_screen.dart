@@ -279,10 +279,10 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Replys section
+                // Replies section
                 if (_replies.isNotEmpty) ...[
                   Text(
-                    'Replys (${_replies.length})',
+                    'Replies (${_replies.length})',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
