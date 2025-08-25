@@ -47,6 +47,9 @@ jobs:
           channel: stable
           flutter-version: '3.32.0'
 
+      - name: Create empty .env file
+        run: echo "" > .env
+        
       - name: Install dependencies
         run: flutter pub get
 
