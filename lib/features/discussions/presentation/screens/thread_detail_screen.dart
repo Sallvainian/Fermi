@@ -33,10 +33,10 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _loadThreadAndReplys();
+    _loadThreadAndReplies();
   }
 
-  Future<void> _loadThreadAndReplys() async {
+  Future<void> _loadThreadAndReplies() async {
     try {
       // Load thread details
       final threadDoc = await _firestore
@@ -293,7 +293,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                         dateFormat: dateFormat,
                         boardId: widget.boardId,
                         threadId: widget.threadId,
-                        onDeleted: _loadThreadAndReplys,
+                        onDeleted: _loadThreadAndReplies,
                       )),
                 ] else ...[
                   Center(

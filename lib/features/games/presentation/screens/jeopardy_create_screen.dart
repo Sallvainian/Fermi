@@ -83,9 +83,6 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
           ],
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
-          isPublic: false,
-          dailyDoubles: [],
-          randomDailyDoubles: false,
         );
         _isLoading = false;
       });
