@@ -25,10 +25,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
         return windows;
       case TargetPlatform.linux:
@@ -84,6 +81,18 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
     measurementId: 'G-ZE9KXELPFY',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyD52btw4TrLb1G6otPJTSr2FXRukwDhB-k',
+    appId: '1:218352465432:ios:89f7eb619c423e2e38b56d',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
+    androidClientId: '218352465432-2kmehjp1b5g8r4n5t2ul09t5gqiuajop.apps.googleusercontent.com',
+    iosClientId: '218352465432-nd2sktnic8b619l9jib99ssd52uh5eo9.apps.googleusercontent.com',
+    iosBundleId: 'com.academic-tools.teacherDashboardFlutter',
   );
 
 }

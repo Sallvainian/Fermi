@@ -675,7 +675,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       final user = _firebaseAuth.currentUser;
       if (user != null) {
-        await user.updateDisplayName(displayName);
+        await user.updateProfile(displayName: displayName);
         _userModel = _userModel!.copyWith(displayName: displayName);
         
         await _firestore
@@ -698,7 +698,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       final user = _firebaseAuth.currentUser;
       if (user != null) {
-        await user.updatePhotoURL(photoURL);
+        await user.updateProfile(photoURL: photoURL);
         _userModel = _userModel!.copyWith(photoURL: photoURL);
         
         await _firestore
@@ -853,7 +853,7 @@ class AuthProvider extends ChangeNotifier {
       
       // Update Firebase Auth displayName if provided
       if (displayName != null) {
-        await user.updateDisplayName(displayName);
+        await user.updateProfile(displayName: displayName);
       }
       
       // Prepare Firestore update

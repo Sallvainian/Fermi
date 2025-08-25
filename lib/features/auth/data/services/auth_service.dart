@@ -90,7 +90,7 @@ class AuthService {
     );
 
     if (cred.user != null) {
-      await cred.user!.updateDisplayName(displayName);
+      await cred.user!.updateProfile(displayName: displayName);
 
       // Parse name parts
       final nameParts = displayName?.split(' ') ?? [];

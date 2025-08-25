@@ -1,0 +1,7 @@
+Building macOS application...                                   
+ld: warning: ignoring duplicate libraries: '-lc++'
+ld: warning: ignoring duplicate libraries: '-lc++'
+ld: warning: ignoring duplicate libraries: '-lc++'
+ld: warning: ignoring duplicate libraries: '-lc++'
+ld: warning: ignoring duplicate libraries: '-lc++'
+ld: warning: ignoring duplicate libraries: '-lc++'
