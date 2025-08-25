@@ -699,16 +699,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                         children: [
                           Text((assignment['type'] ?? 'essay').toUpperCase()),
                           Text(
-                            'Due: ${_formatDate(assignment['dueDate'] != null 
-                                ? (assignment['dueDate'] is Timestamp 
-                                    ? (assignment['dueDate'] as Timestamp).toDate() 
-                                    : assignment['dueDate'] as DateTime)
-                                : DateTime.now())}',
+                            'Due: ${_formatDate(_getAssignmentDueDate(assignment))}',
                             style: TextStyle(
-                              color: assignment['dueDate'] != null && 
-                                  (assignment['dueDate'] is Timestamp 
-                                      ? (assignment['dueDate'] as Timestamp).toDate() 
-                                      : assignment['dueDate'] as DateTime).isBefore(DateTime.now())
+                              color: _getAssignmentDueDate(assignment).isBefore(DateTime.now())
                                   ? Colors.red
                                   : null,
                             ),
@@ -794,6 +787,22 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
       default:
         return Icons.assignment;
     }
+  }
+
+  DateTime _getAssignmentDueDate(Map<String, dynamic> assignment) {
+    final dueDate = assignment['dueDate'];
+    if (dueDate == null) {
+      return DateTime.now();
+    }
+    
+    if (dueDate is Timestamp) {
+      return dueDate.toDate();
+    } else if (dueDate is DateTime) {
+      return dueDate;
+    }
+    
+    // Fallback to current date if type is unexpected
+    return DateTime.now();
   }
 
   String _formatDate(DateTime date) {
