@@ -344,7 +344,10 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
               question: '',
               answer: '',
               points: (index + 1) * 100,
-      ),
+            ),
+          ),
+        ),
+      );
       _game = _game!.copyWith(categories: updatedCategories);
     });
   }
@@ -394,6 +397,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       List<DailyDouble> dailyDoubles = [];
       if (_enableDailyDoubles && _game!.categories.isNotEmpty) {
         // Add 3 Daily Doubles in regular Jeopardy (not in first row)
+        const int standardJeopardyDailyDoublesCount = 3;
         dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, standardJeopardyDailyDoublesCount));
       }
       
