@@ -65,12 +65,16 @@ jobs:
             --build-number=${{ github.run_number }}
             
       - name: Code signing (if certificates are available)
-        if: ${{ secrets.MACOS_CERTIFICATE != '' && secrets.MACOS_CERTIFICATE_PASSWORD != '' }}
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
         run: |
+          # Check if secrets are available
+          if [ -z "$MACOS_CERTIFICATE" ] || [ -z "$MACOS_CERTIFICATE_PASSWORD" ] || [ -z "$MACOS_IDENTITY" ]; then
+            echo "Skipping code signing - certificates not available"
+            exit 0
+          fi
           # Import certificate
           echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
           security create-keychain -p actions build.keychain
@@ -88,12 +92,16 @@ jobs:
             "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
             
       - name: Notarize app (if credentials are available)
-        if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_ID_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          # Check if notarization credentials are available
+          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_ID_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            echo "Skipping notarization - credentials not available"
+            exit 0
+          fi
           # Create a zip for notarization
           ditto -c -k --keepParent \
             "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app" \
@@ -127,20 +135,28 @@ jobs:
             "build/macos/Build/Products/Release/"
             
       - name: Sign DMG (if certificates are available)
-        if: ${{ secrets.MACOS_IDENTITY != '' }}
         env:
           MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
         run: |
+          # Check if signing identity is available
+          if [ -z "$MACOS_IDENTITY" ]; then
+            echo "Skipping DMG signing - identity not available"
+            exit 0
+          fi
           codesign --force --sign "$MACOS_IDENTITY" \
             "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg"
             
       - name: Notarize DMG (if credentials are available)
-        if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_ID_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          # Check if notarization credentials are available
+          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_ID_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
+            echo "Skipping DMG notarization - credentials not available"
+            exit 0
+          fi
           # Submit DMG for notarization
           xcrun notarytool submit \
             "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg" \
