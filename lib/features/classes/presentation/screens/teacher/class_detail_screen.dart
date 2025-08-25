@@ -790,21 +790,22 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   }
 
   DateTime _getAssignmentDueDate(Map<String, dynamic> assignment) {
-    final dueDate = _extractDueDate(assignment['dueDate']);
-    return dueDate ?? DateTime.now();
+    return _extractDueDate(assignment['dueDate']);
   }
 
-  DateTime? _extractDueDate(dynamic dueDate) {
+  /// Extracts a DateTime from the given [dueDate] value.
+  /// Falls back to [DateTime.now()] if the value is null or of an unexpected type.
+  DateTime _extractDueDate(dynamic dueDate) {
     if (dueDate == null) {
-      return null;
+      return DateTime.now();
     }
     if (dueDate is Timestamp) {
       return dueDate.toDate();
     } else if (dueDate is DateTime) {
       return dueDate;
     }
-    // Fallback to null if type is unexpected
-    return null;
+    // Fallback to DateTime.now() if type is unexpected
+    return DateTime.now();
   }
 
   String _formatDate(DateTime date) {
