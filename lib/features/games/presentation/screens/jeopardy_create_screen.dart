@@ -394,9 +394,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       List<DailyDouble> dailyDoubles = [];
       if (_enableDailyDoubles && _game!.categories.isNotEmpty) {
         // Add 3 Daily Doubles in regular Jeopardy (not in first row)
-        // Standard Jeopardy has 1 in round 1 and 2 in round 2, but since we don't have
-        // Double Jeopardy UI yet, we'll put all 3 in the regular round
-        dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, 3));
+        dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, standardJeopardyDailyDoublesCount));
       }
       
       _game = _game!.copyWith(
