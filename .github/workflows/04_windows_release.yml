@@ -57,15 +57,17 @@ jobs:
         shell: bash
         run: |
           cd build/windows/x64/runner/Release
-          7z a -tzip "../../../../../Fermi-Windows-v${{ steps.get_version.outputs.version }}-Portable.zip" .
+          # This folder contains fermi.exe and all required DLLs and data
+          7z a -tzip "../../../../../Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip" .
           cd ../../../../../
-          echo "Created portable ZIP"
+          ls -la *.zip
+          echo "Created portable ZIP with all required files"
 
       - name: Upload portable ZIP artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-portable
-          path: Fermi-Windows-v${{ steps.get_version.outputs.version }}-Portable.zip
+          path: Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
 
   create-release:
     name: Create GitHub Release
@@ -118,6 +120,6 @@ jobs:
             - Some antivirus software may flag the unsigned executable. This is a false positive.
             - For code signing in future releases, we'll need an EV certificate.
           files: |
-            Fermi-Windows-v${{ steps.get_version.outputs.version }}-Portable.zip
+            Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
           draft: false
           prerelease: false
