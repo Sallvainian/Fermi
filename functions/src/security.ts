@@ -119,9 +119,9 @@ export const oauthValidator: OAuthRequestValidation = {
         return false;
       }
 
-      // Port must be in valid range (1024-65535 for non-privileged)
+      // Port must be 80, 443, or in valid non-privileged range (1024-65535)
       const port = parseInt(url.port || "80");
-      if (port < 1024 || port > 65535) {
+      if (![80, 443].includes(port) && (port < 1024 || port > 65535)) {
         return false;
       }
 

@@ -9,20 +9,32 @@ import 'package:window_to_front/window_to_front.dart';
 /// Secure OAuth handler for desktop platforms using Firebase Functions backend
 /// This implementation keeps OAuth client secrets on the server side
 class SecureDesktopOAuthHandler {
+  // Get project ID and region from environment variables, with sensible defaults
+  static String get _projectId => const String.fromEnvironment(
+    'FIREBASE_PROJECT_ID',
+    defaultValue: 'teacher-dashboard-flutterfire',
+  );
+  
+  static String get _region => const String.fromEnvironment(
+    'FIREBASE_FUNCTIONS_REGION',
+    defaultValue: 'us-east4',
+  );
+  
   // Firebase Functions endpoints - configure via environment or use defaults
   static String get _baseUrl {
     if (kDebugMode) {
       // Local emulator for development
       return const String.fromEnvironment(
         'FIREBASE_FUNCTIONS_EMULATOR_URL',
-        defaultValue: 'http://localhost:5001/teacher-dashboard-flutterfire/us-east4',
-      );
+        defaultValue: 'http://localhost:5001',
+      ) + '/$_projectId/$_region';
     } else {
       // Production URL - can be overridden via build configuration
-      return const String.fromEnvironment(
-        'FIREBASE_FUNCTIONS_URL',
-        defaultValue: 'https://us-east4-teacher-dashboard-flutterfire.cloudfunctions.net',
-      );
+      final customUrl = const String.fromEnvironment('FIREBASE_FUNCTIONS_URL');
+      if (customUrl.isNotEmpty) {
+        return customUrl;
+      }
+      return 'https://$_region-$_projectId.cloudfunctions.net';
     }
   }
   
@@ -180,6 +192,11 @@ class SecureDesktopOAuthHandler {
   
   /// Opens the authorization URL in the default browser
   Future<void> _openBrowser(Uri authorizationUri) async {
+    // Validate URI to prevent command injection
+    if (!_isValidAuthorizationUri(authorizationUri)) {
+      throw Exception('Invalid authorization URI format');
+    }
+    
     try {
       // Try url_launcher first
       if (await canLaunchUrl(authorizationUri)) {
@@ -190,10 +207,12 @@ class SecureDesktopOAuthHandler {
       debugPrint('url_launcher failed: $e, trying fallback...');
     }
     
-    // Platform-specific fallbacks
+    // Platform-specific fallbacks with validated URI
+    final sanitizedUrl = authorizationUri.toString();
+    
     if (Platform.isWindows) {
       try {
-        await Process.run('cmd', ['/c', 'start', authorizationUri.toString()]);
+        await Process.run('cmd', ['/c', 'start', '', sanitizedUrl]);
         debugPrint('SecureOAuth: Opened browser using Windows fallback');
         return;
       } catch (e) {
@@ -203,7 +222,7 @@ class SecureDesktopOAuthHandler {
     
     if (Platform.isMacOS) {
       try {
-        await Process.run('open', [authorizationUri.toString()]);
+        await Process.run('open', [sanitizedUrl]);
         debugPrint('SecureOAuth: Opened browser using macOS fallback');
         return;
       } catch (e) {
@@ -213,7 +232,7 @@ class SecureDesktopOAuthHandler {
     
     if (Platform.isLinux) {
       try {
-        await Process.run('xdg-open', [authorizationUri.toString()]);
+        await Process.run('xdg-open', [sanitizedUrl]);
         debugPrint('SecureOAuth: Opened browser using Linux fallback');
         return;
       } catch (e) {
@@ -222,6 +241,32 @@ class SecureDesktopOAuthHandler {
     }
     
     throw Exception('Cannot launch authorization URL: $authorizationUri');
+  }
+  
+  /// Validates that the authorization URI is safe to pass to shell commands
+  bool _isValidAuthorizationUri(Uri uri) {
+    // Must be HTTPS (or HTTP for localhost during development)
+    if (uri.scheme != 'https' && !(uri.scheme == 'http' && uri.host == 'localhost')) {
+      debugPrint('SecureOAuth: Invalid URI scheme: ${uri.scheme}');
+      return false;
+    }
+    
+    // Must be a Google accounts domain
+    if (!uri.host.endsWith('google.com') && !uri.host.endsWith('googleapis.com') && 
+        uri.host != 'localhost' && uri.host != 'accounts.google.com') {
+      debugPrint('SecureOAuth: Invalid URI host: ${uri.host}');
+      return false;
+    }
+    
+    // Check for shell metacharacters that could cause command injection
+    final uriString = uri.toString();
+    final dangerousChars = RegExp(r'[;&|`$<>\\"' + "'" + r'\n\r]');
+    if (dangerousChars.hasMatch(uriString)) {
+      debugPrint('SecureOAuth: URI contains dangerous characters');
+      return false;
+    }
+    
+    return true;
   }
   
   /// Listens for the OAuth redirect and extracts the authorization code
