@@ -5,8 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:window_to_front/window_to_front.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:math';
 
 /// Secure OAuth handler for desktop platforms using Firebase Functions backend
 /// This implementation keeps OAuth client secrets on the server side
@@ -28,9 +26,9 @@ class SecureDesktopOAuthHandler {
     }
   }
   
-  static const String _getOAuthUrlEndpoint = '$_baseUrl/getOAuthUrl';
-  static const String _exchangeCodeEndpoint = '$_baseUrl/exchangeOAuthCode';
-  static const String _refreshTokenEndpoint = '$_baseUrl/refreshOAuthToken';
+  static String get _getOAuthUrlEndpoint => '$_baseUrl/getOAuthUrl';
+  static String get _exchangeCodeEndpoint => '$_baseUrl/exchangeOAuthCode';
+  static String get _refreshTokenEndpoint => '$_baseUrl/refreshOAuthToken';
   
   HttpServer? _redirectServer;
   String? _codeVerifier;
