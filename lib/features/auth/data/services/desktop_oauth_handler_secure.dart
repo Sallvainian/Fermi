@@ -26,9 +26,9 @@ class SecureDesktopOAuthHandler {
     }
   }
   
-  static String get _getOAuthUrlEndpoint => '$_baseUrl/getOAuthUrl';
-  static String get _exchangeCodeEndpoint => '$_baseUrl/exchangeOAuthCode';
-  static String get _refreshTokenEndpoint => '$_baseUrl/refreshOAuthToken';
+  static late final String _getOAuthUrlEndpoint = '$_baseUrl/getOAuthUrl';
+  static late final String _exchangeCodeEndpoint = '$_baseUrl/exchangeOAuthCode';
+  static late final String _refreshTokenEndpoint = '$_baseUrl/refreshOAuthToken';
   
   HttpServer? _redirectServer;
   String? _codeVerifier;
