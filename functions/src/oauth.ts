@@ -26,8 +26,10 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-// Timeout for fetch operations (10 seconds)
-const FETCH_TIMEOUT_MS = 10000;
+// Timeout for fetch operations (default: 30 seconds, configurable via OAUTH_FETCH_TIMEOUT_MS env variable)
+const FETCH_TIMEOUT_MS = process.env.OAUTH_FETCH_TIMEOUT_MS
+  ? parseInt(process.env.OAUTH_FETCH_TIMEOUT_MS, 10)
+  : 30000;
 
 /**
  * Utility function to perform fetch with timeout
