@@ -81,10 +81,14 @@ jobs:
           fi
           
       - name: Build macOS app
+        env:
+          DEVELOPMENT_TEAM: W778837A9L
         run: |
+          export DEVELOPMENT_TEAM=W778837A9L
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
-            --build-number=${{ github.run_number }}
+            --build-number=${{ github.run_number }} \
+            -- -allowProvisioningUpdates
             
       - name: Sign the app
         env:
