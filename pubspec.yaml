@@ -49,6 +49,7 @@ dependencies:
   # OAuth2 for Windows desktop authentication
   oauth2: ^2.0.0
   http: ^1.0.0
+  crypto: ^3.0.0
   window_to_front: ^0.0.3
   url_launcher: ^6.0.0
   

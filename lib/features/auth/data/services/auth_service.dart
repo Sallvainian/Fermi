@@ -6,6 +6,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'desktop_oauth_handler.dart';
+import 'desktop_oauth_handler_secure.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
@@ -14,7 +15,8 @@ class AuthService {
   // Use regular GoogleSignIn for mobile
   GoogleSignIn? _googleSignIn;
   // Desktop OAuth handler for Windows/Mac/Linux
-  final DesktopOAuthHandler _desktopOAuthHandler = DesktopOAuthHandler();
+  // Use secure handler that doesn't expose secrets in the client
+  final SecureDesktopOAuthHandler _secureOAuthHandler = SecureDesktopOAuthHandler();
 
   AuthService() {
     _auth = FirebaseAuth.instance;
@@ -30,8 +32,11 @@ class AuthService {
   }
   
   void _initializeGoogleSignIn() {
-    final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
-    final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
+    // Try both naming conventions for backwards compatibility
+    final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? 
+                     dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
+    final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? 
+                          dotenv.env['GOOGLE_CLIENT_SECRET'] ?? '';
     
     // Debug output to verify .env is loading
     debugPrint('=== OAuth Credentials Debug ===');
@@ -156,42 +161,19 @@ class AuthService {
       final cred = await _auth!.signInWithPopup(provider);
       user = cred.user;
     } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-      // Desktop: Use manual OAuth flow
-      debugPrint('Google Sign-In: Using OAuth flow for desktop');
-      
-      final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
-      final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
-      
-      if (clientId.isEmpty || clientSecret.isEmpty) {
-        throw Exception('Google OAuth credentials not configured. Please check .env file.');
-      }
+      // Desktop platforms: Use secure OAuth flow via Firebase Functions
+      debugPrint('Google Sign-In: Using secure OAuth flow via Firebase Functions for desktop');
       
       try {
-        // Perform OAuth flow
-        final credentials = await _desktopOAuthHandler.performOAuthFlow(
-          clientId: clientId,
-          clientSecret: clientSecret,
-        );
+        // Perform secure OAuth flow - no secrets exposed in client
+        final credential = await _secureOAuthHandler.performSecureOAuthFlow();
         
-        if (credentials == null) {
+        if (credential == null) {
           debugPrint('Google Sign-In: User cancelled or flow failed');
           return null;
         }
         
-        debugPrint('Google Sign-In: Got OAuth credentials');
-        debugPrint('ID Token present: ${credentials.idToken != null}');
-        debugPrint('Access Token present: ${credentials.accessToken.isNotEmpty}');
-        
-        // Create Firebase credential
-        final authCredential = GoogleAuthProvider.credential(
-          idToken: credentials.idToken,
-          accessToken: credentials.accessToken,
-        );
-        
-        // Sign in to Firebase
-        final cred = await _auth!.signInWithCredential(authCredential);
-        user = cred.user;
-        
+        user = credential.user;
         debugPrint('Google Sign-In: Successfully signed in user ${user?.email}');
       } catch (e) {
         debugPrint('Google Sign-In error: $e');
@@ -542,8 +524,10 @@ class AuthService {
         await user.reauthenticateWithPopup(provider);
       } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
         // Desktop: Use OAuth flow for re-authentication
-        final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? '';
-        final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? '';
+        final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? 
+                         dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
+        final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? 
+                              dotenv.env['GOOGLE_CLIENT_SECRET'] ?? '';
         
         final credentials = await _desktopOAuthHandler.performOAuthFlow(
           clientId: clientId,
