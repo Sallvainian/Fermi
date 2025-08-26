@@ -1,6 +1,7 @@
 import * as admin from "firebase-admin";
 import {HttpsError} from "firebase-functions/v2/https";
 import {FirebaseFunctionsRateLimiter} from "firebase-functions-rate-limiter";
+import {Request, Response} from "express";
 
 // Initialize rate limiter with Firestore backend
 // This uses Firestore to track rate limiting across all function instances
@@ -8,7 +9,7 @@ export const createRateLimiter = (
   name: string,
   maxCalls: number,
   periodSeconds: number
-): any => { // Type conflict with rate limiter package
+): FirebaseFunctionsRateLimiter => {
   const limiter = FirebaseFunctionsRateLimiter.withFirestoreBackend(
     {
       name,
@@ -35,11 +36,12 @@ export const oauthRateLimiters = {
 
 // Apply rate limiting to a request
 export const applyRateLimit = async (
-  limiter: any, // Type conflict with rate limiter package, using any
+  limiter: FirebaseFunctionsRateLimiter,
   identifier: string
 ) => {
   try {
-    await limiter.check(identifier);
+    // Use the correct method from FirebaseFunctionsRateLimiter
+    await limiter.rejectOnQuotaExceededOrRecordUsage(identifier);
   } catch (error) {
     throw new HttpsError(
       "resource-exhausted",
@@ -52,7 +54,7 @@ export const applyRateLimit = async (
 // Since App Check doesn't support desktop, we implement custom validation
 export interface OAuthRequestValidation {
   // Check if the request has valid headers and structure
-  validateRequest(req: any): boolean;
+  validateRequest(req: Request): boolean;
 
   // Check if the redirect URI is allowed
   validateRedirectUri(uri: string): boolean;
@@ -65,7 +67,7 @@ export interface OAuthRequestValidation {
 }
 
 export const oauthValidator: OAuthRequestValidation = {
-  validateRequest(req: any): boolean {
+  validateRequest(req: Request): boolean {
     // Check for basic request structure
     if (!req || typeof req !== "object") {
       return false;
@@ -172,21 +174,25 @@ export const securityHeaders = {
 };
 
 // Apply security headers to response
-export const applySecurityHeaders = (res: any) => {
+export const applySecurityHeaders = (res: Response) => {
   Object.entries(securityHeaders).forEach(([key, value]) => {
     res.set(key, value);
   });
 };
 
 // Get client identifier for rate limiting (IP address)
-export const getClientIdentifier = (req: any): string => {
+export const getClientIdentifier = (req: Request): string => {
   // Try various headers that might contain the real IP
+  const xForwardedFor = req.headers["x-forwarded-for"];
+  const xRealIp = req.headers["x-real-ip"];
+  
+  // Handle both string and string[] types for headers
   const ip =
-    req.headers["x-forwarded-for"]?.split(",")[0] ||
-    req.headers["x-real-ip"] ||
+    (typeof xForwardedFor === "string" ? xForwardedFor.split(",")[0] : xForwardedFor?.[0]) ||
+    (typeof xRealIp === "string" ? xRealIp : xRealIp?.[0]) ||
     req.connection?.remoteAddress ||
     req.ip ||
     "unknown";
 
-  return ip.toString();
+  return String(ip);
 };
