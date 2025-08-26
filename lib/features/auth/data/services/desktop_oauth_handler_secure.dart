@@ -138,14 +138,14 @@ class SecureDesktopOAuthHandler {
   /// Gets OAuth URL from Firebase Function
   Future<Map<String, dynamic>?> _getOAuthUrl(String redirectUri) async {
     try {
-      final response = await http
-          .get(
-            Uri.parse('$_getOAuthUrlEndpoint?redirect_uri=${Uri.encodeComponent(redirectUri)}'),
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          )
-          .timeout(const Duration(seconds: 10));
+      final response = await fetchWithTimeout(
+        () => http.get(
+          Uri.parse('$_getOAuthUrlEndpoint?redirect_uri=${Uri.encodeComponent(redirectUri)}'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       
       if (response.statusCode == 200) {
         return json.decode(response.body);
