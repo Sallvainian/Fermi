@@ -20,13 +20,42 @@ import {
 // For local development: create functions/.env file with GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
 // For production: GitHub Secrets are injected during deployment via GitHub Actions
 // The secrets become environment variables during the deployment process
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-  throw new Error('Missing required OAuth environment variables: GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET');
-}
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
+
+// Timeout for fetch operations (10 seconds)
+const FETCH_TIMEOUT_MS = 10000;
+
+/**
+ * Utility function to perform fetch with timeout
+ * Reduces code duplication across OAuth functions
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number = FETCH_TIMEOUT_MS
+): Promise<Response> {
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: abortController.signal,
+    });
+    return response;
+  } catch (err: any) {
+    if (err.name === "AbortError") {
+      throw new HttpsError("deadline-exceeded", `Request to ${url} timed out after ${timeoutMs}ms`);
+    }
+    throw new HttpsError("internal", `Request to ${url} failed: ${err.message}`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // Use Firestore for PKCE challenge storage (stateless function-safe)
 const getPKCECollection = () =>
@@ -197,14 +226,9 @@ export const exchangeOAuthCode = onRequest(
       await getPKCECollection().doc(state).delete();
 
       // Exchange code for tokens using the client secret server-side
-      // Add timeout to prevent hanging requests
-      const FETCH_TIMEOUT_MS = 10000; // 10 seconds
-      const abortController = new AbortController();
-      const timeoutId = setTimeout(() => abortController.abort(), FETCH_TIMEOUT_MS);
-      
-      let tokenResponse;
-      try {
-        tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
+      const tokenResponse = await fetchWithTimeout(
+        GOOGLE_TOKEN_URL,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -217,17 +241,9 @@ export const exchangeOAuthCode = onRequest(
             grant_type: "authorization_code",
             code_verifier: codeVerifier,
           }),
-          signal: abortController.signal,
-        });
-      } catch (err: any) {
-        clearTimeout(timeoutId);
-        if (err.name === "AbortError") {
-          throw new HttpsError("deadline-exceeded", "Token exchange request timed out");
-        }
-        throw new HttpsError("internal", "Token exchange request failed: " + err.message);
-      } finally {
-        clearTimeout(timeoutId);
-      }
+        },
+        FETCH_TIMEOUT_MS
+      );
 
       const tokenData: GoogleTokenResponse = await tokenResponse.json();
 
@@ -241,29 +257,15 @@ export const exchangeOAuthCode = onRequest(
       }
 
       // Get user info with timeout
-      const userInfoTimeoutMs = 10000; // 10 seconds
-      const userInfoAbortController = new AbortController();
-      const userInfoTimeout = setTimeout(() => {
-        userInfoAbortController.abort();
-      }, userInfoTimeoutMs);
-      
-      let userResponse;
-      try {
-        userResponse = await fetch(GOOGLE_USERINFO_URL, {
+      const userResponse = await fetchWithTimeout(
+        GOOGLE_USERINFO_URL,
+        {
           headers: {
             Authorization: `Bearer ${tokenData.access_token}`,
           },
-          signal: userInfoAbortController.signal,
-        });
-      } catch (err: any) {
-        clearTimeout(userInfoTimeout);
-        if (err.name === "AbortError") {
-          throw new HttpsError("deadline-exceeded", "User info request timed out");
-        }
-        throw new HttpsError("internal", "User info request failed: " + err.message);
-      } finally {
-        clearTimeout(userInfoTimeout);
-      }
+        },
+        FETCH_TIMEOUT_MS
+      );
 
       const userInfo = await userResponse.json() as GoogleUserInfo;
 
@@ -363,13 +365,9 @@ export const refreshOAuthToken = onRequest(
       }
 
       // Exchange refresh token for new access token with timeout
-      const REFRESH_TIMEOUT_MS = 10000; // 10 seconds
-      const refreshAbortController = new AbortController();
-      const refreshTimeoutId = setTimeout(() => refreshAbortController.abort(), REFRESH_TIMEOUT_MS);
-      
-      let tokenResponse;
-      try {
-        tokenResponse = await fetch(GOOGLE_TOKEN_URL, {
+      const tokenResponse = await fetchWithTimeout(
+        GOOGLE_TOKEN_URL,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -380,17 +378,9 @@ export const refreshOAuthToken = onRequest(
             client_secret: GOOGLE_CLIENT_SECRET, // Secret stays server-side
             grant_type: "refresh_token",
           }),
-          signal: refreshAbortController.signal,
-        });
-      } catch (err: any) {
-        clearTimeout(refreshTimeoutId);
-        if (err.name === "AbortError") {
-          throw new HttpsError("deadline-exceeded", "Token refresh request timed out");
-        }
-        throw new HttpsError("internal", "Token refresh request failed: " + err.message);
-      } finally {
-        clearTimeout(refreshTimeoutId);
-      }
+        },
+        FETCH_TIMEOUT_MS
+      );
 
       const tokenData: GoogleTokenResponse = await tokenResponse.json();
 
