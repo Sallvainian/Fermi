@@ -598,8 +598,8 @@ class AuthProvider extends ChangeNotifier {
         default:
           message = error.message ?? '$provider authentication failed';
       }
-    } else if (error.toString().contains('.env')) {
-      message = 'OAuth configuration missing. Please check .env file has GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET';
+    } else if (error.toString().contains('OAuth') || error.toString().contains('authentication server')) {
+      message = 'OAuth configuration error. Please ensure Firebase Functions are deployed and configured correctly';
     } else {
       message = error.toString();
     }

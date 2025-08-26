@@ -1,6 +1,5 @@
 import { onRequest } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import fetch from "node-fetch";
 import * as crypto from "crypto";
 
 // OAuth configuration - using environment variables
@@ -12,18 +11,8 @@ const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-// Store PKCE challenges temporarily (in production, use Firestore or Redis)
-const pkceStore = new Map<string, { challenge: string; expiresAt: number }>();
-
-// Clean up expired PKCE challenges
-setInterval(() => {
-  const now = Date.now();
-  for (const [state, data] of pkceStore.entries()) {
-    if (data.expiresAt < now) {
-      pkceStore.delete(state);
-    }
-  }
-}, 60000); // Clean up every minute
+// Use Firestore for PKCE challenge storage (stateless function-safe)
+const getPKCECollection = () => admin.firestore().collection("oauth_pkce_challenges");
 
 /**
  * Generate OAuth URL for desktop clients using PKCE
@@ -43,10 +32,11 @@ export const getOAuthUrl = onRequest(
         .update(codeVerifier)
         .digest("base64url");
       
-      // Store the verifier with the state (expires in 10 minutes)
-      pkceStore.set(state, {
-        challenge: codeVerifier,
+      // Store the verifier with the state in Firestore (expires in 10 minutes)
+      await getPKCECollection().doc(state).set({
+        codeVerifier: codeVerifier,
         expiresAt: Date.now() + 600000,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
       
       // Get redirect URI from request
@@ -93,26 +83,27 @@ export const exchangeOAuthCode = onRequest(
         res.status(400).json({ error: "Missing required parameters" });
         return;
       }
-      // Verify PKCE challenge
-      const storedData = pkceStore.get(state);
-      if (!storedData) {
+      // Verify PKCE challenge from Firestore
+      const stateDoc = await getPKCECollection().doc(state).get();
+      if (!stateDoc.exists) {
         res.status(400).json({ error: "Invalid state parameter" });
         return;
       }
       
+      const storedData = stateDoc.data()!;
       if (storedData.expiresAt < Date.now()) {
-        pkceStore.delete(state);
+        await getPKCECollection().doc(state).delete();
         res.status(400).json({ error: "State expired" });
         return;
       }
       
-      if (storedData.challenge !== codeVerifier) {
+      if (storedData.codeVerifier !== codeVerifier) {
         res.status(400).json({ error: "Invalid code verifier" });
         return;
       }
       
       // Clean up used challenge
-      pkceStore.delete(state);
+      await getPKCECollection().doc(state).delete();
       
       // Exchange code for tokens using the client secret server-side
       const tokenResponse = await fetch(GOOGLE_TOKEN_URL, {

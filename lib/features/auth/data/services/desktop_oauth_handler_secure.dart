@@ -11,10 +11,22 @@ import 'dart:math';
 /// Secure OAuth handler for desktop platforms using Firebase Functions backend
 /// This implementation keeps OAuth client secrets on the server side
 class SecureDesktopOAuthHandler {
-  // Firebase Functions endpoints
-  static const String _baseUrl = kDebugMode 
-    ? 'http://localhost:5001/teacher-dashboard-flutterfire/us-east4' // Local emulator
-    : 'https://us-east4-teacher-dashboard-flutterfire.cloudfunctions.net'; // Production
+  // Firebase Functions endpoints - configure via environment or use defaults
+  static String get _baseUrl {
+    if (kDebugMode) {
+      // Local emulator for development
+      return const String.fromEnvironment(
+        'FIREBASE_FUNCTIONS_EMULATOR_URL',
+        defaultValue: 'http://localhost:5001/teacher-dashboard-flutterfire/us-east4',
+      );
+    } else {
+      // Production URL - can be overridden via build configuration
+      return const String.fromEnvironment(
+        'FIREBASE_FUNCTIONS_URL',
+        defaultValue: 'https://us-east4-teacher-dashboard-flutterfire.cloudfunctions.net',
+      );
+    }
+  }
   
   static const String _getOAuthUrlEndpoint = '$_baseUrl/getOAuthUrl';
   static const String _exchangeCodeEndpoint = '$_baseUrl/exchangeOAuthCode';

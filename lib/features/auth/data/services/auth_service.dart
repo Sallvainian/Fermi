@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'desktop_oauth_handler.dart';
 import 'desktop_oauth_handler_secure.dart';
 
 /// Simple authentication service - does one thing well
@@ -329,13 +328,8 @@ class AuthService {
     // Platform-specific sign out
     if (!kIsWeb) {
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-        // Desktop: Revoke OAuth token
-        try {
-          await _desktopOAuthHandler.signOutFromGoogle();
-          debugPrint('Sign Out: Revoked desktop OAuth token');
-        } catch (e) {
-          debugPrint('Sign Out: Failed to revoke token: $e');
-        }
+        // Desktop: Using secure OAuth - Firebase handles token revocation
+        debugPrint('Sign Out: Desktop OAuth tokens handled by Firebase');
       } else if (_googleSignIn != null) {
         // Mobile: Sign out from Google Sign-In SDK
         try {
@@ -523,27 +517,17 @@ class AuthService {
         provider.addScope('profile');
         await user.reauthenticateWithPopup(provider);
       } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-        // Desktop: Use OAuth flow for re-authentication
-        final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? 
-                         dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
-        final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? 
-                              dotenv.env['GOOGLE_CLIENT_SECRET'] ?? '';
+        // Desktop: Use secure OAuth flow for re-authentication
+        debugPrint('Re-authentication: Using secure OAuth flow via Firebase Functions');
         
-        final credentials = await _desktopOAuthHandler.performOAuthFlow(
-          clientId: clientId,
-          clientSecret: clientSecret,
-        );
+        final credential = await _secureOAuthHandler.performSecureOAuthFlow();
         
-        if (credentials == null) {
+        if (credential == null) {
           throw Exception('Google re-authentication was cancelled');
         }
         
-        final authCredential = GoogleAuthProvider.credential(
-          idToken: credentials.idToken,
-          accessToken: credentials.accessToken,
-        );
-        
-        await user.reauthenticateWithCredential(authCredential);
+        // User is already re-authenticated through the secure flow
+        debugPrint('Re-authentication: Successfully re-authenticated user');
       } else if (_googleSignIn != null) {
         // Mobile: Use standard Google Sign-In SDK
         final googleUser = await _googleSignIn!.signIn();
