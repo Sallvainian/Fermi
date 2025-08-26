@@ -260,7 +260,7 @@ class SecureDesktopOAuthHandler {
     
     // Check for shell metacharacters that could cause command injection
     final uriString = uri.toString();
-    final dangerousChars = RegExp(r'[;&|`$<>\\"' + "'" + r'\n\r]');
+    final dangerousChars = RegExp(r'[;&|`$<>"\'\n\r]');
     if (dangerousChars.hasMatch(uriString)) {
       debugPrint('SecureOAuth: URI contains dangerous characters');
       return false;
