@@ -166,7 +166,7 @@ class SecureDesktopOAuthHandler {
       );
       
       debugPrint('SecureOAuth: Response status: ${response.statusCode}');
-      debugPrint('SecureOAuth: Response body: ${response.body}');
+      // SecureOAuth: Response body logging removed to avoid exposing sensitive data.
       
       if (response.statusCode == 200) {
         try {
