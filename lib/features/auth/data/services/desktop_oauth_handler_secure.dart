@@ -69,7 +69,18 @@ class SecureDesktopOAuthHandler {
         throw Exception('Failed to get OAuth URL from server');
       }
       
-      final authUrl = Uri.parse(oauthUrlResponse['authUrl']);
+      debugPrint('SecureOAuth: Received OAuth URL response: $oauthUrlResponse');
+      
+      if (!oauthUrlResponse.containsKey('authUrl')) {
+        throw Exception('OAuth response missing authUrl field');
+      }
+      
+      final authUrlString = oauthUrlResponse['authUrl'];
+      if (authUrlString == null || authUrlString.isEmpty) {
+        throw Exception('OAuth authUrl is empty');
+      }
+      
+      final authUrl = Uri.parse(authUrlString);
       _state = oauthUrlResponse['state'];
       _codeVerifier = oauthUrlResponse['codeVerifier'];
       
@@ -138,6 +149,9 @@ class SecureDesktopOAuthHandler {
   /// Gets OAuth URL from Firebase Function
   Future<Map<String, dynamic>?> _getOAuthUrl(String redirectUri) async {
     try {
+      debugPrint('SecureOAuth: Requesting OAuth URL from: $_getOAuthUrlEndpoint');
+      debugPrint('SecureOAuth: Redirect URI: $redirectUri');
+      
       final response = await http.get(
         Uri.parse('$_getOAuthUrlEndpoint?redirect_uri=${Uri.encodeComponent(redirectUri)}'),
         headers: {
@@ -146,18 +160,30 @@ class SecureDesktopOAuthHandler {
       ).timeout(
         const Duration(seconds: 10),
         onTimeout: () {
+          debugPrint('SecureOAuth: Request timed out after 10 seconds');
           throw Exception('Request to OAuth server timed out');
         },
       );
       
+      debugPrint('SecureOAuth: Response status: ${response.statusCode}');
+      debugPrint('SecureOAuth: Response body: ${response.body}');
+      
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        try {
+          final decoded = json.decode(response.body);
+          debugPrint('SecureOAuth: Successfully decoded response');
+          return decoded;
+        } catch (e) {
+          debugPrint('SecureOAuth: Failed to decode JSON response: $e');
+          return null;
+        }
       } else {
         debugPrint('SecureOAuth: Failed to get OAuth URL - ${response.statusCode}: ${response.body}');
         return null;
       }
     } catch (e) {
       debugPrint('SecureOAuth: Error getting OAuth URL: $e');
+      debugPrint('SecureOAuth: Error type: ${e.runtimeType}');
       return null;
     }
   }
@@ -250,6 +276,10 @@ class SecureDesktopOAuthHandler {
   
   /// Validates that the authorization URI is safe to pass to shell commands
   bool _isValidAuthorizationUri(Uri uri) {
+    debugPrint('SecureOAuth: Validating URI: $uri');
+    debugPrint('SecureOAuth: URI scheme: ${uri.scheme}');
+    debugPrint('SecureOAuth: URI host: ${uri.host}');
+    
     // Must be HTTPS (or HTTP for localhost during development)
     if (uri.scheme != 'https' && !(uri.scheme == 'http' && uri.host == 'localhost')) {
       debugPrint('SecureOAuth: Invalid URI scheme: ${uri.scheme}');
@@ -264,14 +294,18 @@ class SecureDesktopOAuthHandler {
     }
     
     // Check for shell metacharacters that could cause command injection
+    // Note: We exclude '&' and '=' as they are valid URL query parameter separators
+    // We also exclude '?' as it's the query string separator
     final uriString = uri.toString();
-    // Use regular string with escaped characters instead of raw string
-    final dangerousChars = RegExp('[;&|`\$<>"\'\\n\\r]');
+    // Only check for truly dangerous shell metacharacters
+    final dangerousChars = RegExp('[;|`\$<>"\'\\n\\r]');
     if (dangerousChars.hasMatch(uriString)) {
       debugPrint('SecureOAuth: URI contains dangerous characters');
+      debugPrint('SecureOAuth: Matched character in URI: $uriString');
       return false;
     }
     
+    debugPrint('SecureOAuth: URI validation passed');
     return true;
   }
   
