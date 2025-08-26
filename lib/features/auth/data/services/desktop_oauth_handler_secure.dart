@@ -69,7 +69,7 @@ class SecureDesktopOAuthHandler {
         throw Exception('Failed to get OAuth URL from server');
       }
       
-      debugPrint('SecureOAuth: Received OAuth URL response: $oauthUrlResponse');
+      debugPrint('SecureOAuth: Received OAuth URL: ${oauthUrlResponse['authUrl']}');
       
       if (!oauthUrlResponse.containsKey('authUrl')) {
         throw Exception('OAuth response missing authUrl field');
