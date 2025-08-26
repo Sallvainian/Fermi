@@ -138,13 +138,16 @@ class SecureDesktopOAuthHandler {
   /// Gets OAuth URL from Firebase Function
   Future<Map<String, dynamic>?> _getOAuthUrl(String redirectUri) async {
     try {
-      final response = await fetchWithTimeout(
-        () => http.get(
-          Uri.parse('$_getOAuthUrlEndpoint?redirect_uri=${Uri.encodeComponent(redirectUri)}'),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
+      final response = await http.get(
+        Uri.parse('$_getOAuthUrlEndpoint?redirect_uri=${Uri.encodeComponent(redirectUri)}'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      ).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw Exception('Request to OAuth server timed out');
+        },
       );
       
       if (response.statusCode == 200) {
@@ -262,7 +265,8 @@ class SecureDesktopOAuthHandler {
     
     // Check for shell metacharacters that could cause command injection
     final uriString = uri.toString();
-    final dangerousChars = RegExp(r'[;&|`$<>"\'\n\r]');
+    // Use regular string with escaped characters instead of raw string
+    final dangerousChars = RegExp('[;&|`\$<>"\'\\n\\r]');
     if (dangerousChars.hasMatch(uriString)) {
       debugPrint('SecureOAuth: URI contains dangerous characters');
       return false;
