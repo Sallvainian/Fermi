@@ -21,6 +21,14 @@ import {
 // For production: set these in Firebase Console > Functions > Environment Variables
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+
+// Validate OAuth environment variables at module load time
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+  throw new Error(
+    "Missing required OAuth environment variables: GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET. " +
+    "Set these in your environment (see functions/.env for local development or Firebase Console > Functions > Environment Variables for production)."
+  );
+}
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
@@ -81,7 +89,7 @@ export const getOAuthUrl = onRequest(
 
       // Build authorization URL
       const params = new URLSearchParams({
-        client_id: GOOGLE_CLIENT_ID!,
+        client_id: GOOGLE_CLIENT_ID,
         redirect_uri: redirectUri,
         response_type: "code",
         scope: "email profile openid",
@@ -183,8 +191,8 @@ export const exchangeOAuthCode = onRequest(
         },
         body: new URLSearchParams({
           code,
-          client_id: GOOGLE_CLIENT_ID!,
-          client_secret: GOOGLE_CLIENT_SECRET!, // Secret stays server-side
+          client_id: GOOGLE_CLIENT_ID,
+          client_secret: GOOGLE_CLIENT_SECRET, // Secret stays server-side
           redirect_uri: redirectUri || "http://localhost",
           grant_type: "authorization_code",
           code_verifier: codeVerifier,
@@ -305,8 +313,8 @@ export const refreshOAuthToken = onRequest(
         },
         body: new URLSearchParams({
           refresh_token: refreshToken,
-          client_id: GOOGLE_CLIENT_ID!,
-          client_secret: GOOGLE_CLIENT_SECRET!, // Secret stays server-side
+          client_id: GOOGLE_CLIENT_ID,
+          client_secret: GOOGLE_CLIENT_SECRET, // Secret stays server-side
           grant_type: "refresh_token",
         }),
       });
