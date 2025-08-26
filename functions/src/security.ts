@@ -114,14 +114,14 @@ export const oauthValidator: OAuthRequestValidation = {
         return false;
       }
 
-      // Must be http (not https) for localhost
-      if (url.protocol !== "http:") {
+      // Must be http or https for localhost
+      if (url.protocol !== "http:" && url.protocol !== "https:") {
         return false;
       }
 
-      // Port must be 80 or in valid non-privileged range (1024-65535)
-      const port = parseInt(url.port || "80");
-      if (!(port === 80 || (port >= 1024 && port <= 65535))) {
+      // Port must be 80, 443, or in valid non-privileged range (1024-65535)
+      const port = parseInt(url.port || (url.protocol === "https:" ? "443" : "80"));
+      if (!(port === 80 || port === 443 || (port >= 1024 && port <= 65535))) {
         return false;
       }
 
