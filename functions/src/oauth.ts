@@ -18,17 +18,10 @@ import {
 
 // OAuth configuration - using environment variables
 // For local development: create functions/.env file with GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
-// For production: set these in Firebase Console > Functions > Environment Variables
+// For production: GitHub Secrets are injected during deployment via GitHub Actions
+// The secrets become environment variables during the deployment process
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-
-// Validate OAuth environment variables at module load time
-if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-  throw new Error(
-    "Missing required OAuth environment variables: GOOGLE_CLIENT_ID and/or GOOGLE_CLIENT_SECRET. " +
-    "Set these in your environment (see functions/.env for local development or Firebase Console > Functions > Environment Variables for production)."
-  );
-}
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
@@ -45,6 +38,15 @@ export const getOAuthUrl = onRequest(
   {cors: true},
   async (req, res) => {
     try {
+      // Validate OAuth configuration at runtime
+      if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+        console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
+        throw new HttpsError(
+          "failed-precondition",
+          "OAuth service is not configured. Please contact support."
+        );
+      }
+
       // Apply security headers
       applySecurityHeaders(res);
 
@@ -130,6 +132,15 @@ export const exchangeOAuthCode = onRequest(
   {cors: true},
   async (req, res) => {
     try {
+      // Validate OAuth configuration at runtime
+      if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+        console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
+        throw new HttpsError(
+          "failed-precondition",
+          "OAuth service is not configured. Please contact support."
+        );
+      }
+
       // Apply security headers
       applySecurityHeaders(res);
 
@@ -287,6 +298,15 @@ export const refreshOAuthToken = onRequest(
   {cors: true},
   async (req, res) => {
     try {
+      // Validate OAuth configuration at runtime
+      if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
+        console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
+        throw new HttpsError(
+          "failed-precondition",
+          "OAuth service is not configured. Please contact support."
+        );
+      }
+
       // Apply security headers
       applySecurityHeaders(res);
 
