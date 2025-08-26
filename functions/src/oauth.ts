@@ -8,6 +8,13 @@ import {
   applySecurityHeaders,
   getClientIdentifier,
 } from "./security";
+import {
+  GoogleTokenResponse,
+  GoogleUserInfo,
+  PKCEChallenge,
+  OAuthCodeExchangeRequest,
+  OAuthTokenRefreshRequest,
+} from "./types/oauth.types";
 
 // OAuth configuration - using environment variables
 // For local development: create functions/.env file with GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
@@ -19,7 +26,8 @@ const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 // Use Firestore for PKCE challenge storage (stateless function-safe)
-const getPKCECollection = () => admin.firestore().collection("oauth_pkce_challenges");
+const getPKCECollection = () =>
+  admin.firestore().collection("oauth_pkce_challenges");
 
 /**
  * Generate OAuth URL for desktop clients using PKCE
@@ -63,12 +71,13 @@ export const getOAuthUrl = onRequest(
         .digest("base64url");
 
       // Store the verifier with the state in Firestore (expires in 10 minutes)
-      await getPKCECollection().doc(state).set({
+      const challengeData: PKCEChallenge = {
         codeVerifier: codeVerifier,
         expiresAt: Date.now() + 600000,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         clientId: clientId, // Store client ID for rate limiting tracking
-      });
+      };
+      await getPKCECollection().doc(state).set(challengeData);
 
       // Build authorization URL
       const params = new URLSearchParams({
@@ -125,7 +134,7 @@ export const exchangeOAuthCode = onRequest(
         throw new HttpsError("invalid-argument", "Invalid request format");
       }
 
-      const {code, state, codeVerifier, redirectUri} = req.body;
+      const {code, state, codeVerifier, redirectUri} = req.body as OAuthCodeExchangeRequest;
 
       if (!code || !state || !codeVerifier) {
         throw new HttpsError("invalid-argument", "Missing required parameters");
@@ -182,7 +191,7 @@ export const exchangeOAuthCode = onRequest(
         }),
       });
 
-      const tokenData = await tokenResponse.json();
+      const tokenData: GoogleTokenResponse = await tokenResponse.json();
 
       if (!tokenResponse.ok) {
         console.error("Token exchange failed:", tokenData);
@@ -200,7 +209,7 @@ export const exchangeOAuthCode = onRequest(
         },
       });
 
-      const userInfo = await userResponse.json();
+      const userInfo = await userResponse.json() as GoogleUserInfo;
 
       if (!userResponse.ok) {
         console.error("Failed to get user info:", userInfo);
@@ -222,7 +231,7 @@ export const exchangeOAuthCode = onRequest(
           email: userInfo.email,
           displayName: userInfo.name,
           photoURL: userInfo.picture,
-          emailVerified: userInfo.email_verified,
+          emailVerified: userInfo.verified_email,
         });
       }
 
@@ -282,7 +291,7 @@ export const refreshOAuthToken = onRequest(
         throw new HttpsError("invalid-argument", "Invalid request format");
       }
 
-      const {refreshToken} = req.body;
+      const {refreshToken} = req.body as OAuthTokenRefreshRequest;
 
       if (!refreshToken) {
         throw new HttpsError("invalid-argument", "Missing refresh token");
@@ -302,7 +311,7 @@ export const refreshOAuthToken = onRequest(
         }),
       });
 
-      const tokenData = await tokenResponse.json();
+      const tokenData: GoogleTokenResponse = await tokenResponse.json();
 
       if (!tokenResponse.ok) {
         console.error("Token refresh failed:", tokenData);

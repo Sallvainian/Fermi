@@ -38,7 +38,7 @@ export const oauthRateLimiters = {
 export const applyRateLimit = async (
   limiter: FirebaseFunctionsRateLimiter,
   identifier: string
-) => {
+): Promise<void> => {
   try {
     // Use the correct method from FirebaseFunctionsRateLimiter
     await limiter.rejectOnQuotaExceededOrRecordUsage(identifier);
@@ -174,7 +174,7 @@ export const securityHeaders = {
 };
 
 // Apply security headers to response
-export const applySecurityHeaders = (res: Response) => {
+export const applySecurityHeaders = (res: Response): void => {
   Object.entries(securityHeaders).forEach(([key, value]) => {
     res.set(key, value);
   });

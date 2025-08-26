@@ -115,15 +115,18 @@ export const cleanupExpiredPKCEChallenges = onSchedule(
   }
 );
 
+/** Cleanup result statistics */
+export interface CleanupResult {
+  expired: number;
+  old: number;
+  remaining: number;
+}
+
 /**
  * Manual cleanup function that can be triggered for immediate cleanup
  * Useful for testing or emergency cleanup scenarios
  */
-export const manualPKCECleanup = async (): Promise<{
-  expired: number;
-  old: number;
-  remaining: number;
-}> => {
+export const manualPKCECleanup = async (): Promise<CleanupResult> => {
   const db = admin.firestore();
   const collection = db.collection("oauth_pkce_challenges");
   const now = Date.now();
