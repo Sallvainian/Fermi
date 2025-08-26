@@ -373,9 +373,9 @@ class AuthProvider extends ChangeNotifier {
     _startLoading();
     
     try {
-      // Validate input
-      if (email.isEmpty || password.isEmpty || role.isEmpty) {
-        throw Exception('All fields are required');
+      // Validate input - role can be empty for initial signup
+      if (email.isEmpty || password.isEmpty) {
+        throw Exception('Email and password are required');
       }
       
       // Create user account
@@ -389,31 +389,48 @@ class AuthProvider extends ChangeNotifier {
         throw Exception('Account creation failed');
       }
       
-      // Save user role immediately
-      await _authService.saveUserRole(
-        uid: user.uid,
-        role: role,
-        email: email,
-        displayName: displayName,
-      );
-      
-      // Wait for Firestore consistency
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      // Load complete user model
-      final loadedUserModel = await _loadUserModelWithRetry(user.uid);
-      
-      if (loadedUserModel == null || loadedUserModel.role == null) {
-        // Critical: Account created but profile save failed
-        await _authService.signOut();
-        throw Exception('Failed to create user profile. Please try signing in.');
+      // If role is provided, save it immediately (legacy flow)
+      // Otherwise, defer role selection (new flow for email/password signup)
+      if (role.isNotEmpty) {
+        // Save user role immediately
+        await _authService.saveUserRole(
+          uid: user.uid,
+          role: role,
+          email: email,
+          displayName: displayName,
+        );
+        
+        // Wait for Firestore consistency
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // Load complete user model
+        final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+        
+        if (loadedUserModel == null || loadedUserModel.role == null) {
+          // Critical: Account created but profile save failed
+          await _authService.signOut();
+          throw Exception('Failed to create user profile. Please try signing in.');
+        }
+        
+        // SUCCESS: Update state atomically
+        _userModel = loadedUserModel;
+        _setAuthState(AuthStatus.authenticated);
+        _startNotificationsIfNeeded();
+        _updatePresenceOnline();
+      } else {
+        // New user needs role selection - save basic info first
+        // NOTE: The 'pending_users' collection has security rules restricting access
+        // to document owners only (see Firestore security rules for details)
+        await _firestore.collection('pending_users').doc(user.uid).set({
+          'uid': user.uid,
+          'email': email,
+          'displayName': displayName,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        
+        // Keep status as authenticating to trigger role selection flow
+        _setAuthState(AuthStatus.authenticating);
       }
-      
-      // SUCCESS: Update state atomically
-      _userModel = loadedUserModel;
-      _setAuthState(AuthStatus.authenticated);
-      _startNotificationsIfNeeded();
-      _updatePresenceOnline();
       
     } catch (e) {
       debugPrint('Sign-up error: $e');
@@ -560,6 +577,12 @@ class AuthProvider extends ChangeNotifier {
   void _handleOAuthError(dynamic error, String provider) {
     String message = '$provider sign-in failed';
     
+    // Add detailed logging for Windows debugging
+    debugPrint('=== OAuth Error Details ===');
+    debugPrint('Provider: $provider');
+    debugPrint('Error Type: ${error.runtimeType}');
+    debugPrint('Error: $error');
+    
     if (error is firebase_auth.FirebaseAuthException) {
       switch (error.code) {
         case 'account-exists-with-different-credential':
@@ -577,6 +600,8 @@ class AuthProvider extends ChangeNotifier {
         default:
           message = error.message ?? '$provider authentication failed';
       }
+    } else if (error.toString().contains('OAuth') || error.toString().contains('authentication server')) {
+      message = 'OAuth configuration error. Please ensure Firebase Functions are deployed and configured correctly';
     } else {
       message = error.toString();
     }

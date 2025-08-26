@@ -34,5 +34,11 @@ setGlobalOptions({
 // Export custom claims functions
 export * from "./customClaims";
 
+// Export OAuth functions for secure desktop authentication
+export * from "./oauth";
+
+// Export cleanup jobs for security and maintenance
+export * from "./cleanup";
+
 // Export migration function (remove after migration is complete)
 export * from "./migrate-user-roles-cloud";
