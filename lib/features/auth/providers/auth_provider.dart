@@ -419,6 +419,8 @@ class AuthProvider extends ChangeNotifier {
         _updatePresenceOnline();
       } else {
         // New user needs role selection - save basic info first
+        // NOTE: The 'pending_users' collection has security rules restricting access
+        // to document owners only (see firestore.rules line 49-50)
         await _firestore.collection('pending_users').doc(user.uid).set({
           'uid': user.uid,
           'email': email,
