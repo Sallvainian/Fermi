@@ -57,7 +57,10 @@ jobs:
         run: flutter config --enable-windows-desktop
 
       - name: Build Windows Desktop
-        run: flutter build windows --release --build-name=${{ steps.get_version.outputs.version }} --build-number=${{ github.run_number }}
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+        run: flutter build windows --release --build-name=${{ steps.get_version.outputs.version }} --build-number=${{ github.run_number }} --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }}
 
       - name: Create portable ZIP
         shell: bash

@@ -85,8 +85,10 @@ jobs:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+          EXTRA_XCODEBUILD_ARGS: "-allowProvisioningUpdates"
         run: |
           export DEVELOPMENT_TEAM=${{ secrets.DEVELOPMENT_TEAM_MAC }}
+          export EXTRA_XCODEBUILD_ARGS="-allowProvisioningUpdates"
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
             --build-number=${{ github.run_number }} \
