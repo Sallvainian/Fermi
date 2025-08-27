@@ -100,6 +100,11 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
         run: |
+          # Set the development team for automatic signing
+          if [ ! -z "$DEVELOPMENT_TEAM" ]; then
+            /usr/libexec/PlistBuddy -c "Set :objects:33CC111E2044C6BF0003C045:buildSettings:DEVELOPMENT_TEAM $DEVELOPMENT_TEAM" macos/Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          fi
+          
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
             --build-number=${{ github.run_number }} \
