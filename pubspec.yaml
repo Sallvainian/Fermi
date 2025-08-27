@@ -43,8 +43,7 @@ dependencies:
   cloud_functions: ^6.0.0
 
   # Authentication
-  google_sign_in: ^6.3.0  # Required by all_platforms
-  google_sign_in_all_platforms: ^1.2.1  # Windows desktop support
+  google_sign_in: ^7.0.0  # For mobile platforms (iOS/Android)
   
   # OAuth2 for Windows desktop authentication
   oauth2: ^2.0.0
@@ -96,8 +95,8 @@ dependencies:
   # permission_handler: ^12.0.1
 
   # Notifications - Re-enabled with desktop support
-  flutter_local_notifications: ^18.0.1
-  timezone: ^0.9.4
+  flutter_local_notifications: ^19.0.0
+  timezone: ^0.9.4  # Using ^0.10.0 via dependency_overrides
 
   # Call UI handled through standard notifications
 
@@ -148,6 +147,10 @@ flutter_launcher_icons:
   # Testing tools
   mockito: ^5.5.0
   faker: ^2.2.0
+
+# Dependency overrides to resolve version conflicts
+dependency_overrides:
+  timezone: ^0.10.0  # Override for device_calendar compatibility with flutter_local_notifications
 
 
   # CI/CD tools
