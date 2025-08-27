@@ -106,63 +106,21 @@ jobs:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
-          MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
         run: |
-          # Extract provisioning profile UUID and Team ID if available
-          if [ ! -z "$MACOS_PROVISION_PROFILE_BASE64" ]; then
-            echo $MACOS_PROVISION_PROFILE_BASE64 | base64 --decode > temp_profile.provisionprofile
-            
-            # Extract UUID
-            PROVISIONING_PROFILE_UUID=$(security cms -D -i temp_profile.provisionprofile | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
-            echo "Using provisioning profile UUID: $PROVISIONING_PROFILE_UUID"
-            
-            # Extract Team ID from the provisioning profile to ensure it matches
-            PROFILE_TEAM_ID=$(security cms -D -i temp_profile.provisionprofile | plutil -extract TeamIdentifier.0 xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
-            echo "Provisioning profile belongs to team: $PROFILE_TEAM_ID"
-            
-            # Use the team ID from the profile to ensure they match
-            export DEVELOPMENT_TEAM="$PROFILE_TEAM_ID"
-            echo "Using team ID from provisioning profile: $DEVELOPMENT_TEAM"
-            
-            rm temp_profile.provisionprofile
-            
-            # Export for Xcode to use
-            export PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID"
-          else
-            # Use the team from the secret or environment if no profile provided
-            export DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-${{ secrets.DEVELOPMENT_TEAM_MAC }}}"
-          fi
+          # CRITICAL: Use Flutter's automatic signing ONLY
+          # Do NOT use xcodebuild or provisioning profiles
+          # Flutter handles automatic signing correctly with just the team ID
           
-          # Build with explicit xcodebuild settings for provisioning
-          if [ ! -z "$PROVISIONING_PROFILE_UUID" ]; then
-            echo "Building with manual signing using profile UUID: $PROVISIONING_PROFILE_UUID"
-            echo "Using team ID: $DEVELOPMENT_TEAM"
-            
-            # First run flutter build to generate necessary Flutter artifacts
-            flutter build macos --config-only
-            
-            # Build with xcodebuild using automatic signing
-            # This allows Xcode to automatically select the correct provisioning profile
-            # for the Runner target while not forcing it on Pod dependencies
-            cd macos
-            xcodebuild -workspace Runner.xcworkspace \
-              -scheme Runner \
-              -configuration Release \
-              -derivedDataPath ../build/macos \
-              DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
-              CODE_SIGN_STYLE="Automatic" \
-              PRODUCT_BUNDLE_IDENTIFIER="com.academic-tools.fermi" \
-              FLUTTER_BUILD_NAME="${{ env.APP_VERSION }}" \
-              FLUTTER_BUILD_NUMBER="${{ github.run_number }}"
-            cd ..
-          else
-            flutter build macos --release \
-              --build-name=${{ env.APP_VERSION }} \
-              --build-number=${{ github.run_number }} \
-              --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-              --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
-              --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
-          fi
+          echo "Building with Flutter automatic signing"
+          echo "Team ID: $DEVELOPMENT_TEAM"
+          
+          # Build using Flutter with automatic signing
+          flutter build macos --release \
+            --build-name=${{ env.APP_VERSION }} \
+            --build-number=${{ github.run_number }} \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
+            --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
             
       - name: Sign the app
         env:
