@@ -11,8 +11,8 @@ import 'desktop_oauth_handler_secure.dart';
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
-  // Use regular GoogleSignIn for mobile
-  GoogleSignIn? _googleSignIn;
+  // Use GoogleSignIn.instance singleton for mobile (v7+)
+  GoogleSignIn get _googleSignIn => GoogleSignIn.instance;
   // Desktop OAuth handler for Windows/Mac/Linux
   // Use secure handler that doesn't expose secrets in the client
   final SecureDesktopOAuthHandler _secureOAuthHandler = SecureDesktopOAuthHandler();
@@ -30,7 +30,7 @@ class AuthService {
     }
   }
   
-  void _initializeGoogleSignIn() {
+  void _initializeGoogleSignIn() async {
     // Try both naming conventions for backwards compatibility
     final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? 
                      dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
@@ -50,30 +50,26 @@ class AuthService {
         debugPrint('ERROR: Google OAuth credentials not found in .env file');
         debugPrint('Windows Google Sign-In will not work without credentials');
       }
-      // Don't initialize _googleSignIn for desktop
-      _googleSignIn = null;
-    } else if (!kIsWeb && Platform.isIOS) {
-      // iOS uses standard Google Sign-In with GoogleService-Info.plist
-      debugPrint('Using standard Google Sign-In for iOS');
-      _googleSignIn = GoogleSignIn(
-        scopes: [
-          'email',
-          'profile',
-        ],
-      );
-    } else if (!kIsWeb && Platform.isAndroid) {
-      // Android uses standard Google Sign-In with google-services.json
-      debugPrint('Using standard Google Sign-In for Android');
-      _googleSignIn = GoogleSignIn(
-        scopes: [
-          'email',
-          'profile',
-        ],
-      );
+      // Desktop platforms don't use GoogleSignIn.instance
+      debugPrint('Desktop platforms use secure OAuth handler - GoogleSignIn.instance not configured');
+    } else if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      // Mobile platforms: Configure GoogleSignIn.instance
+      debugPrint('Configuring GoogleSignIn.instance for mobile platforms');
+      await _configureGoogleSignInForMobile();
     } else if (kIsWeb) {
-      // Web doesn't need client configuration (uses Firebase Auth popup)
-      debugPrint('Using Firebase Auth popup for web');
-      _googleSignIn = null;
+      // Web doesn't need GoogleSignIn.instance configuration (uses Firebase Auth popup)
+      debugPrint('Using Firebase Auth popup for web - GoogleSignIn.instance not used');
+    }
+  }
+
+  /// Configure GoogleSignIn.instance for mobile platforms (v7+)
+  Future<void> _configureGoogleSignInForMobile() async {
+    try {
+      // In v7+, GoogleSignIn.instance must be initialized before use
+      await _googleSignIn.initialize();
+      debugPrint('GoogleSignIn.instance initialized successfully for mobile platforms');
+    } catch (e) {
+      debugPrint('Failed to initialize GoogleSignIn.instance: $e');
     }
   }
 
@@ -179,27 +175,29 @@ class AuthService {
         rethrow;
       }
     } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      // Mobile: Use standard Google Sign-In SDK
-      debugPrint('Google Sign-In: Using standard SDK for mobile');
+      // Mobile: Use Firebase Auth with Google provider directly
+      debugPrint('Google Sign-In: Using Firebase Auth Google provider for mobile');
       
-      if (_googleSignIn == null) {
-        throw Exception('Google Sign-In not initialized for mobile platform');
+      try {
+        // For v7+ compatibility, use Firebase Auth directly with Google provider
+        // This avoids the complex google_sign_in package API changes
+        final provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        // Use signInWithProvider for mobile platforms (requires proper setup)
+        final cred = await _auth!.signInWithProvider(provider);
+        user = cred.user;
+        
+        debugPrint('Google Sign-In: Successfully authenticated via Firebase Auth provider');
+      } catch (e) {
+        debugPrint('Google Sign-In mobile authentication failed: $e');
+        
+        debugPrint('Firebase Google provider failed, no fallback available in v7+ environment');
+        
+        // If all methods fail, throw the original error
+        rethrow;
       }
-      
-      final googleUser = await _googleSignIn!.signIn();
-      if (googleUser == null) return null;
-
-      // Get authentication tokens
-      final googleAuth = await googleUser.authentication;
-      
-      // Create Firebase credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final cred = await _auth!.signInWithCredential(credential);
-      user = cred.user;
     } else {
       throw UnsupportedError('Google Sign-In not supported on this platform');
     }
@@ -330,13 +328,13 @@ class AuthService {
       if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
         // Desktop: Using secure OAuth - Firebase handles token revocation
         debugPrint('Sign Out: Desktop OAuth tokens handled by Firebase');
-      } else if (_googleSignIn != null) {
-        // Mobile: Sign out from Google Sign-In SDK
+      } else if (Platform.isIOS || Platform.isAndroid) {
+        // Mobile: Sign out from GoogleSignIn.instance
         try {
-          await _googleSignIn!.signOut();
-          debugPrint('Sign Out: Signed out from Google SDK');
+          await _googleSignIn.signOut();
+          debugPrint('Sign Out: Signed out from GoogleSignIn.instance');
         } catch (e) {
-          debugPrint('Sign Out: Failed to sign out from Google: $e');
+          debugPrint('Sign Out: Failed to sign out from GoogleSignIn.instance: $e');
         }
       }
     }
@@ -528,22 +526,23 @@ class AuthService {
         
         // User is already re-authenticated through the secure flow
         debugPrint('Re-authentication: Successfully re-authenticated user');
-      } else if (_googleSignIn != null) {
-        // Mobile: Use standard Google Sign-In SDK
-        final googleUser = await _googleSignIn!.signIn();
-        if (googleUser == null) {
-          throw Exception('Google sign-in was cancelled');
+      } else if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+        // Mobile: Use Firebase Auth Google provider for re-authentication
+        try {
+          final provider = GoogleAuthProvider();
+          provider.addScope('email');
+          provider.addScope('profile');
+          
+          // Use reauthenticateWithProvider for mobile platforms
+          await user.reauthenticateWithProvider(provider);
+          
+          debugPrint('Google re-authentication: Successfully re-authenticated via Firebase Auth provider');
+        } catch (providerError) {
+          debugPrint('Firebase provider re-authentication failed: $providerError');
+          
+          debugPrint('No fallback re-authentication available in v7+ environment');
+          throw Exception('Google re-authentication failed via Firebase provider');
         }
-
-        // Get authentication tokens
-        final googleAuth = await googleUser.authentication;
-        
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-
-        await user.reauthenticateWithCredential(credential);
       } else {
         throw Exception('Google re-authentication not available on this platform');
       }

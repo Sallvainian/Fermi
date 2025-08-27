@@ -22,7 +22,9 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
     super.initState();
     // Initialize boards when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SimpleDiscussionProvider>().initializeBoards();
+      if (mounted) {
+        context.read<SimpleDiscussionProvider>().initializeBoards();
+      }
     });
   }
 

@@ -620,7 +620,8 @@ class _ReplyCardState extends State<_ReplyCard> {
                 IconButton(
                   icon: const Icon(Icons.delete_outline, size: 18),
                   onPressed: () async {
-                    if (await _showDeleteDialog(context)) {
+                    final shouldDelete = await _showDeleteDialog(context);
+                    if (context.mounted && shouldDelete) {
                       await _deleteReply(context);
                     }
                   },
@@ -689,13 +690,16 @@ class _ReplyCardState extends State<_ReplyCard> {
           return await _showDeleteDialog(context);
         },
         onDismissed: (direction) async {
-          await _deleteReply(context);
+          if (context.mounted) {
+            await _deleteReply(context);
+          }
         },
         child: Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: InkWell(
             onLongPress: () async {
-              if (await _showDeleteDialog(context)) {
+              final shouldDelete = await _showDeleteDialog(context);
+              if (context.mounted && shouldDelete) {
                 await _deleteReply(context);
               }
             },

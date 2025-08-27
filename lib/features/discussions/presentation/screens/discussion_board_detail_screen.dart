@@ -32,7 +32,9 @@ class _DiscussionBoardDetailScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+      if (mounted) {
+        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+      }
     });
   }
 
@@ -307,7 +309,9 @@ class _DiscussionBoardDetailScreenState
                         }
                         
                         // Reload threads to show updated count
-                        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                        if (context.mounted) {
+                          context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                        }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

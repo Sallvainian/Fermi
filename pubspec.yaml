@@ -119,8 +119,8 @@ dev_dependencies:
   # Development tools
   test: ^1.26.2
   flutter_launcher_icons: ^0.14.4
-  build_runner: ^2.6.1
-  json_serializable: ^6.10.1
+  build_runner: ^2.7.0
+  json_serializable: ^6.11.0
 
 # Flutter launcher icons configuration
 flutter_launcher_icons:
