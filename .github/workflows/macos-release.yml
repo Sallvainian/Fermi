@@ -106,16 +106,50 @@ jobs:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+          MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
         run: |
           # Ensure Xcode uses the correct development team
           export DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-9DV9YP7QC6}"
           
-          flutter build macos --release \
-            --build-name=${{ env.APP_VERSION }} \
-            --build-number=${{ github.run_number }} \
-            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
-            --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
+          # Extract provisioning profile UUID if available
+          if [ ! -z "$MACOS_PROVISION_PROFILE_BASE64" ]; then
+            echo $MACOS_PROVISION_PROFILE_BASE64 | base64 --decode > temp_profile.provisionprofile
+            PROVISIONING_PROFILE_UUID=$(security cms -D -i temp_profile.provisionprofile | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
+            echo "Using provisioning profile UUID: $PROVISIONING_PROFILE_UUID"
+            rm temp_profile.provisionprofile
+            
+            # Export for Xcode to use
+            export PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID"
+          fi
+          
+          # Build with explicit xcodebuild settings for provisioning
+          if [ ! -z "$PROVISIONING_PROFILE_UUID" ]; then
+            echo "Building with manual signing using profile UUID: $PROVISIONING_PROFILE_UUID"
+            
+            # First run flutter build to generate necessary Flutter artifacts
+            flutter build macos --config-only
+            
+            # Now build with xcodebuild using manual signing
+            cd macos
+            xcodebuild -workspace Runner.xcworkspace \
+              -scheme Runner \
+              -configuration Release \
+              -derivedDataPath ../build/macos \
+              DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
+              PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
+              CODE_SIGN_STYLE="Manual" \
+              PRODUCT_BUNDLE_IDENTIFIER="com.academic-tools.fermi" \
+              FLUTTER_BUILD_NAME="${{ env.APP_VERSION }}" \
+              FLUTTER_BUILD_NUMBER="${{ github.run_number }}"
+            cd ..
+          else
+            flutter build macos --release \
+              --build-name=${{ env.APP_VERSION }} \
+              --build-number=${{ github.run_number }} \
+              --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+              --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
+              --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
+          fi
             
       - name: Sign the app
         env:
