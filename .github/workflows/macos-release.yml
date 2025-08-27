@@ -66,17 +66,21 @@ jobs:
           MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
         run: |
           # Check if secrets are available
-          if [ -z "$MACOS_CERTIFICATE" ] || [ -z "$MACOS_CERTIFICATE_PASSWORD" ] || [ -z "$MACOS_IDENTITY" ]; then
+          if [ -z "$MACOS_CERTIFICATE" ] || [ -z "$MACOS_CERTIFICATE_PASSWORD" ]; then
             echo "Warning: Code signing certificates not available"
             echo "Build will proceed without code signing"
           else
             echo "Setting up code signing certificates..."
-            # Import certificate
-            echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+            # Create keychain
             security create-keychain -p actions build.keychain
+            security list-keychains -d user -s build.keychain
             security default-keychain -s build.keychain
             security unlock-keychain -p actions build.keychain
-            security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PASSWORD -T /usr/bin/codesign
+            security set-keychain-settings -lut 21600 build.keychain
+            
+            # Import certificate
+            echo $MACOS_CERTIFICATE | base64 --decode > certificate.p12
+            security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
             security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
             echo "Certificate imported successfully"
             
@@ -85,10 +89,13 @@ jobs:
               echo "Installing provisioning profile..."
               PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
               mkdir -p "$PROFILE_PATH"
-              echo $MACOS_PROVISION_PROFILE_BASE64 | base64 --decode > profile.mobileprovision
-              UUID=$(security cms -D -i profile.mobileprovision | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
-              cp profile.mobileprovision "$PROFILE_PATH/$UUID.mobileprovision"
+              echo $MACOS_PROVISION_PROFILE_BASE64 | base64 --decode > profile.provisionprofile
+              UUID=$(security cms -D -i profile.provisionprofile | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
+              cp profile.provisionprofile "$PROFILE_PATH/$UUID.provisionprofile"
               echo "Provisioning profile installed: $UUID"
+              
+              # Also copy for Xcode to find
+              cp profile.provisionprofile "$PROFILE_PATH/Mac_App_Development_com_academic_tools_fermi.provisionprofile"
             else
               echo "Warning: Provisioning profile not available, relying on automatic signing"
             fi
@@ -100,16 +107,15 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
         run: |
-          # Set the development team for automatic signing
-          if [ ! -z "$DEVELOPMENT_TEAM" ]; then
-            /usr/libexec/PlistBuddy -c "Set :objects:33CC111E2044C6BF0003C045:buildSettings:DEVELOPMENT_TEAM $DEVELOPMENT_TEAM" macos/Runner.xcodeproj/project.pbxproj 2>/dev/null || true
-          fi
+          # Ensure Xcode uses the correct development team
+          export DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-9DV9YP7QC6}"
           
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
             --build-number=${{ github.run_number }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
+            --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
             
       - name: Sign the app
         env:
