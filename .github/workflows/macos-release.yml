@@ -84,20 +84,27 @@ jobs:
             security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
             echo "Certificate imported successfully"
             
-            # Import provisioning profile
+            # Import provisioning profile and extract info
             if [ ! -z "$MACOS_PROVISION_PROFILE_BASE64" ]; then
-              echo "Installing provisioning profile..."
+              echo "Installing provisioning profile for Manual signing..."
               PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
               mkdir -p "$PROFILE_PATH"
               echo $MACOS_PROVISION_PROFILE_BASE64 | base64 --decode > profile.provisionprofile
+              
+              # Extract UUID and Team ID from profile
               UUID=$(security cms -D -i profile.provisionprofile | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
+              TEAM_ID=$(security cms -D -i profile.provisionprofile | plutil -extract TeamIdentifier.0 xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
+              
+              # Install profile
               cp profile.provisionprofile "$PROFILE_PATH/$UUID.provisionprofile"
               echo "Provisioning profile installed: $UUID"
+              echo "Team ID extracted: $TEAM_ID"
               
-              # Also copy for Xcode to find
-              cp profile.provisionprofile "$PROFILE_PATH/Mac_App_Development_com_academic_tools_fermi.provisionprofile"
+              # Export for build step
+              echo "PROVISION_UUID=$UUID" >> $GITHUB_ENV
+              echo "PROVISION_TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
             else
-              echo "Warning: Provisioning profile not available, relying on automatic signing"
+              echo "Warning: Provisioning profile not available, will use automatic signing"
             fi
           fi
           
@@ -107,20 +114,54 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
         run: |
-          # CRITICAL: Use Flutter's automatic signing ONLY
-          # Do NOT use xcodebuild or provisioning profiles
-          # Flutter handles automatic signing correctly with just the team ID
-          
-          echo "Building with Flutter automatic signing"
-          echo "Team ID: $DEVELOPMENT_TEAM"
-          
-          # Build using Flutter with automatic signing
-          flutter build macos --release \
-            --build-name=${{ env.APP_VERSION }} \
-            --build-number=${{ github.run_number }} \
-            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
-            --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
+          # Determine if we have provisioning profile for Manual signing
+          if [ ! -z "$PROVISION_UUID" ] && [ ! -z "$PROVISION_TEAM_ID" ]; then
+            echo "Building with Manual signing for CI/CD"
+            echo "Provisioning Profile UUID: $PROVISION_UUID"
+            echo "Team ID: $PROVISION_TEAM_ID"
+            
+            # First, prepare Flutter project
+            flutter pub get
+            
+            # Build using xcodebuild with Manual signing
+            # Apply provisioning profile ONLY to Runner target, not Pods
+            cd macos
+            xcodebuild -workspace Runner.xcworkspace \
+              -scheme Runner \
+              -configuration Release \
+              -archivePath ../build/macos/Runner.xcarchive \
+              archive \
+              CODE_SIGN_STYLE="Manual" \
+              PROVISIONING_PROFILE_SPECIFIER="$PROVISION_UUID" \
+              DEVELOPMENT_TEAM="$PROVISION_TEAM_ID" \
+              PRODUCT_BUNDLE_IDENTIFIER="com.academic-tools.fermi" \
+              FLUTTER_BUILD_NAME="${{ env.APP_VERSION }}" \
+              FLUTTER_BUILD_NUMBER="${{ github.run_number }}" \
+              DART_DEFINES="RkxVVFRFUl9XRUIrPWF1dG8="
+            
+            # Export archive to app
+            xcodebuild -exportArchive \
+              -archivePath ../build/macos/Runner.xcarchive \
+              -exportPath ../build/macos/Build/Products/Release \
+              -exportOptionsPlist ../ios/ExportOptions.plist 2>/dev/null || \
+            xcodebuild -exportArchive \
+              -archivePath ../build/macos/Runner.xcarchive \
+              -exportPath ../build/macos/Build/Products/Release \
+              -allowProvisioningUpdates
+              
+            cd ..
+          else
+            echo "No provisioning profile found, falling back to Flutter automatic signing"
+            echo "Team ID: $DEVELOPMENT_TEAM"
+            
+            # Build using Flutter with automatic signing as fallback
+            flutter build macos --release \
+              --build-name=${{ env.APP_VERSION }} \
+              --build-number=${{ github.run_number }} \
+              --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+              --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
+              --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM
+          fi
             
       - name: Sign the app
         env:
