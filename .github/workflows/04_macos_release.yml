@@ -88,7 +88,17 @@ jobs:
           # Only attempt to configure signing if a certificate and password are supplied.
           if [ -n "$MACOS_CERTIFICATE_BASE64" ] && [ -n "$MACOS_CERTIFICATE_PASSWORD" ]; then
             echo "Setting up code signing certificate..."
+            
+            # Decode the certificate
             echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode > mac_certificate.p12
+            
+            # Verify the P12 file was created and is valid
+            if [ ! -f mac_certificate.p12 ]; then
+              echo "ERROR: Failed to create certificate file"
+              exit 1
+            fi
+            
+            echo "Certificate file size: $(ls -lh mac_certificate.p12 | awk '{print $5}')"
 
             # Create and configure a temporary keychain.  Use an empty
             # password so the keychain does not prompt during codesign.  The
@@ -99,12 +109,25 @@ jobs:
             security unlock-keychain -p "" build.keychain
 
             # Import the P12 into the keychain.  Grant codesign permission.
-            security import mac_certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+            # Capture the output to check for errors
+            if security import mac_certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign; then
+              echo "Certificate imported successfully"
+            else
+              echo "ERROR: Failed to import certificate - check password"
+              exit 1
+            fi
+            
             security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
 
             # List available identities for debugging
             echo "Available signing identities:"
             security find-identity -v -p codesigning build.keychain
+            
+            # Verify at least one identity was imported
+            IDENTITY_COUNT=$(security find-identity -v -p codesigning build.keychain 2>&1 | grep -c "valid identities" || echo "0")
+            if [ "$IDENTITY_COUNT" -eq "0" ]; then
+              echo "WARNING: No valid identities found after import"
+            fi
 
             # Discover a signing identity from the imported certificate if one
             # isn't provided explicitly.  The first identity found is used.
@@ -125,11 +148,32 @@ jobs:
           if [ -n "$MACOS_PROVISION_PROFILE_BASE64" ]; then
             echo "Installing provisioning profile..."
             echo "$MACOS_PROVISION_PROFILE_BASE64" | base64 --decode > profile.provisionprofile
+            
+            # Extract the UUID from the provisioning profile and install it with the correct name
+            PROFILE_UUID=$(security cms -D -i profile.provisionprofile | plutil -extract UUID raw -)
+            echo "Profile UUID: $PROFILE_UUID"
+            
+            # Install to the correct location with UUID as filename
             mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+            cp profile.provisionprofile "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.provisionprofile"
+            
+            # Also copy without UUID for compatibility
             cp profile.provisionprofile "$HOME/Library/MobileDevice/Provisioning Profiles/"
+            
+            # Verify the profile was installed and show its details
+            echo "Installed provisioning profiles:"
+            ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/"
+            
+            # Show profile details for debugging
+            echo "Profile details:"
+            security cms -D -i profile.provisionprofile | plutil -extract Name raw - || true
+            security cms -D -i profile.provisionprofile | plutil -extract TeamIdentifier.0 raw - || true
+            security cms -D -i profile.provisionprofile | plutil -extract Entitlements.application-identifier raw - || true
+            
             echo "Provisioning profile installed successfully"
           else
-            echo "No provisioning profile provided"
+            echo "WARNING: No provisioning profile provided - build may fail"
+            echo "MACOS_PROVISION_PROFILE_BASE64 secret is not set"
           fi
 
       # Perform the actual build using Flutter.  Flutter delegates to Xcode
@@ -149,13 +193,25 @@ jobs:
           echo "Identity: ${MACOS_IDENTITY:-'Not set'}"
           echo "App Version: ${{ env.APP_VERSION }}"
           echo "Build Number: ${{ github.run_number }}"
+          
+          # Verify provisioning profile installation
+          echo "Checking provisioning profiles..."
+          if [ -d "$HOME/Library/MobileDevice/Provisioning Profiles" ]; then
+            PROFILE_COUNT=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles" | wc -l)
+            echo "Found $PROFILE_COUNT provisioning profile(s)"
+          else
+            echo "WARNING: Provisioning Profiles directory does not exist"
+          fi
           echo "=========================="
+          
           # Clean any previous build artifacts and fetch dependencies.
           flutter clean
           flutter pub get
 
-          # Build a release macOS app.  Passing the team ID via dart-define
-          # instructs Flutter to configure the Xcode project appropriately.
+          # Build a release macOS app.  Pass the team ID both ways for compatibility
+          # Also ensure the team ID is set as an environment variable for xcodebuild
+          export DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}"
+          
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
             --build-number=${{ github.run_number }} \
