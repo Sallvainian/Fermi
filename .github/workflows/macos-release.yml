@@ -113,37 +113,47 @@ jobs:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+          MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
         run: |
+          # Clean and prepare Flutter project to generate ephemeral files
+          echo "Preparing Flutter project and generating ephemeral files..."
+          flutter clean
+          flutter pub get
+          
+          # Generate ephemeral files by doing a preliminary Flutter build
+          flutter build macos --config-only
+          
           # Determine if we have provisioning profile for Manual signing
           if [ ! -z "$PROVISION_UUID" ] && [ ! -z "$PROVISION_TEAM_ID" ]; then
             echo "Building with Manual signing for CI/CD"
             echo "Provisioning Profile UUID: $PROVISION_UUID"
             echo "Team ID: $PROVISION_TEAM_ID"
-            
-            # First, prepare Flutter project
-            flutter pub get
+            echo "Identity: $MACOS_IDENTITY"
             
             # Build using xcodebuild with Manual signing
-            # Apply provisioning profile ONLY to Runner target, not Pods
             cd macos
+            
+            # Use the identity from secrets if available
+            if [ ! -z "$MACOS_IDENTITY" ]; then
+              CODE_SIGN_IDENTITY="$MACOS_IDENTITY"
+            else
+              CODE_SIGN_IDENTITY="Mac Developer"
+            fi
+            
             xcodebuild -workspace Runner.xcworkspace \
               -scheme Runner \
               -configuration Release \
               -archivePath ../build/macos/Runner.xcarchive \
               archive \
               CODE_SIGN_STYLE="Manual" \
+              CODE_SIGN_IDENTITY="$CODE_SIGN_IDENTITY" \
               PROVISIONING_PROFILE_SPECIFIER="$PROVISION_UUID" \
               DEVELOPMENT_TEAM="$PROVISION_TEAM_ID" \
               PRODUCT_BUNDLE_IDENTIFIER="com.academic-tools.fermi" \
               FLUTTER_BUILD_NAME="${{ env.APP_VERSION }}" \
-              FLUTTER_BUILD_NUMBER="${{ github.run_number }}" \
-              DART_DEFINES="RkxVVFRFUl9XRUIrPWF1dG8="
+              FLUTTER_BUILD_NUMBER="${{ github.run_number }}"
             
             # Export archive to app
-            xcodebuild -exportArchive \
-              -archivePath ../build/macos/Runner.xcarchive \
-              -exportPath ../build/macos/Build/Products/Release \
-              -exportOptionsPlist ../ios/ExportOptions.plist 2>/dev/null || \
             xcodebuild -exportArchive \
               -archivePath ../build/macos/Runner.xcarchive \
               -exportPath ../build/macos/Build/Products/Release \
@@ -151,7 +161,7 @@ jobs:
               
             cd ..
           else
-            echo "No provisioning profile found, falling back to Flutter automatic signing"
+            echo "No provisioning profile found, using Flutter build"
             echo "Team ID: $DEVELOPMENT_TEAM"
             
             # Build using Flutter with automatic signing as fallback
