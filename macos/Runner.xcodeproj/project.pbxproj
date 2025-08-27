@@ -609,6 +609,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 0.9.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.academic-tools.fermi";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Profile;
@@ -748,6 +749,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 0.9.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.academic-tools.fermi";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -773,6 +775,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 0.9.4;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.academic-tools.fermi";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
