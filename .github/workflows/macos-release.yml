@@ -108,28 +108,40 @@ jobs:
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
           MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
         run: |
-          # Ensure Xcode uses the correct development team
-          export DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-9DV9YP7QC6}"
-          
-          # Extract provisioning profile UUID if available
+          # Extract provisioning profile UUID and Team ID if available
           if [ ! -z "$MACOS_PROVISION_PROFILE_BASE64" ]; then
             echo $MACOS_PROVISION_PROFILE_BASE64 | base64 --decode > temp_profile.provisionprofile
+            
+            # Extract UUID
             PROVISIONING_PROFILE_UUID=$(security cms -D -i temp_profile.provisionprofile | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
             echo "Using provisioning profile UUID: $PROVISIONING_PROFILE_UUID"
+            
+            # Extract Team ID from the provisioning profile to ensure it matches
+            PROFILE_TEAM_ID=$(security cms -D -i temp_profile.provisionprofile | plutil -extract TeamIdentifier.0 xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
+            echo "Provisioning profile belongs to team: $PROFILE_TEAM_ID"
+            
+            # Use the team ID from the profile to ensure they match
+            export DEVELOPMENT_TEAM="$PROFILE_TEAM_ID"
+            echo "Using team ID from provisioning profile: $DEVELOPMENT_TEAM"
+            
             rm temp_profile.provisionprofile
             
             # Export for Xcode to use
             export PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID"
+          else
+            # Use the team from the secret or environment if no profile provided
+            export DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM:-${{ secrets.DEVELOPMENT_TEAM_MAC }}}"
           fi
           
           # Build with explicit xcodebuild settings for provisioning
           if [ ! -z "$PROVISIONING_PROFILE_UUID" ]; then
             echo "Building with manual signing using profile UUID: $PROVISIONING_PROFILE_UUID"
+            echo "Using team ID: $DEVELOPMENT_TEAM"
             
             # First run flutter build to generate necessary Flutter artifacts
             flutter build macos --config-only
             
-            # Now build with xcodebuild using manual signing
+            # Now build with xcodebuild using manual signing with correct certificate type
             cd macos
             xcodebuild -workspace Runner.xcworkspace \
               -scheme Runner \
@@ -138,6 +150,7 @@ jobs:
               DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
               PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
               CODE_SIGN_STYLE="Manual" \
+              CODE_SIGN_IDENTITY="Apple Development" \
               PRODUCT_BUNDLE_IDENTIFIER="com.academic-tools.fermi" \
               FLUTTER_BUILD_NAME="${{ env.APP_VERSION }}" \
               FLUTTER_BUILD_NUMBER="${{ github.run_number }}"
