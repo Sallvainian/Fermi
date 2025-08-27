@@ -139,15 +139,13 @@ jobs:
 
           # Build a release macOS app.  Passing the team ID via dart-define
           # instructs Flutter to configure the Xcode project appropriately.
-          # Add -allowProvisioningUpdates to enable automatic provisioning
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
             --build-number=${{ github.run_number }} \
             --dart-define=FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID \
             --dart-define=FIREBASE_FUNCTIONS_REGION=$FIREBASE_FUNCTIONS_REGION \
             --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM \
-            --verbose \
-            -- -allowProvisioningUpdates
+            --verbose
 
       # After building, sign the resulting application bundle.  Codesign will
       # fail silently if no identity is available, so skip if none was set up.
