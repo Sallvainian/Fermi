@@ -63,7 +63,7 @@ jobs:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
-          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
         run: |
           # Check if secrets are available
           if [ -z "$MACOS_CERTIFICATE" ] || [ -z "$MACOS_CERTIFICATE_PASSWORD" ] || [ -z "$MACOS_IDENTITY" ]; then
@@ -81,11 +81,11 @@ jobs:
             echo "Certificate imported successfully"
             
             # Import provisioning profile
-            if [ ! -z "$BUILD_PROVISION_PROFILE_BASE64" ]; then
+            if [ ! -z "$MACOS_PROVISION_PROFILE_BASE64" ]; then
               echo "Installing provisioning profile..."
               PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
               mkdir -p "$PROFILE_PATH"
-              echo $BUILD_PROVISION_PROFILE_BASE64 | base64 --decode > profile.mobileprovision
+              echo $MACOS_PROVISION_PROFILE_BASE64 | base64 --decode > profile.mobileprovision
               UUID=$(security cms -D -i profile.mobileprovision | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p")
               cp profile.mobileprovision "$PROFILE_PATH/$UUID.mobileprovision"
               echo "Provisioning profile installed: $UUID"
@@ -99,15 +99,23 @@ jobs:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
-          EXTRA_XCODEBUILD_ARGS: "-allowProvisioningUpdates"
         run: |
-          export DEVELOPMENT_TEAM=${{ secrets.DEVELOPMENT_TEAM_MAC }}
-          export EXTRA_XCODEBUILD_ARGS="-allowProvisioningUpdates"
+          # Extract provisioning profile UUID for manual signing
+          PROFILE_UUID=$(security cms -D -i "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision | plutil -extract UUID xml1 -o - - | sed -n "s/.*<string>\(.*\)<\/string>.*/\1/p" | head -1)
+          
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
             --build-number=${{ github.run_number }} \
             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }} \
+            -- \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            DEVELOPMENT_TEAM=${{ secrets.DEVELOPMENT_TEAM_MAC }} \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="${{ secrets.MACOS_IDENTITY }}"
             
       - name: Sign the app
         env:
