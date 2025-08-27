@@ -141,16 +141,16 @@ jobs:
             # First run flutter build to generate necessary Flutter artifacts
             flutter build macos --config-only
             
-            # Now build with xcodebuild using manual signing with correct certificate type
+            # Build with xcodebuild using automatic signing
+            # This allows Xcode to automatically select the correct provisioning profile
+            # for the Runner target while not forcing it on Pod dependencies
             cd macos
             xcodebuild -workspace Runner.xcworkspace \
               -scheme Runner \
               -configuration Release \
               -derivedDataPath ../build/macos \
               DEVELOPMENT_TEAM="$DEVELOPMENT_TEAM" \
-              PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_UUID" \
-              CODE_SIGN_STYLE="Manual" \
-              CODE_SIGN_IDENTITY="Apple Development" \
+              CODE_SIGN_STYLE="Automatic" \
               PRODUCT_BUNDLE_IDENTIFIER="com.academic-tools.fermi" \
               FLUTTER_BUILD_NAME="${{ env.APP_VERSION }}" \
               FLUTTER_BUILD_NUMBER="${{ github.run_number }}"

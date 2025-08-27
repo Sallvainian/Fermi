@@ -40,14 +40,26 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
     
-    # Disable code signing for all Pod dependencies to fix CI/CD builds
-    # Pods should not have provisioning profiles or code signing
+    # CRITICAL: Completely disable ALL code signing for Pod dependencies
+    # Pods must NEVER have provisioning profiles or code signing
+    # This fixes the "doesn't support provisioning profiles" error
     target.build_configurations.each do |config|
+      # Completely disable code signing
       config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
       config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
       config.build_settings['CODE_SIGN_IDENTITY'] = ''
+      config.build_settings['CODE_SIGN_IDENTITY[sdk=macosx*]'] = ''
       config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''
+      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY[sdk=macosx*]'] = ''
+      
+      # Remove ALL provisioning profile settings
+      config.build_settings['PROVISIONING_PROFILE'] = ''
       config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = ''
+      config.build_settings['PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]'] = ''
+      
+      # Ensure automatic settings don't apply either
+      config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
+      config.build_settings['DEVELOPMENT_TEAM'] = ''
       
       # Fix deployment target warnings
       config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
