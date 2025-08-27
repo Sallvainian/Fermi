@@ -80,7 +80,7 @@ jobs:
       # imported certificate.
       - name: Install code signing certificate and provisioning profile
         env:
-          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
           MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
@@ -102,12 +102,18 @@ jobs:
             security import mac_certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
             security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
 
+            # List available identities for debugging
+            echo "Available signing identities:"
+            security find-identity -v -p codesigning build.keychain
+
             # Discover a signing identity from the imported certificate if one
             # isn't provided explicitly.  The first identity found is used.
             if [ -z "$MACOS_IDENTITY" ]; then
-              IDENTITY=$(security find-identity -v -p codesign build.keychain | head -n 1 | awk -F\" '{print $2}')
+              IDENTITY=$(security find-identity -v -p codesigning build.keychain | head -n 1 | awk -F\" '{print $2}')
+              echo "Discovered identity: $IDENTITY"
               echo "MACOS_IDENTITY=$IDENTITY" >> $GITHUB_ENV
             else
+              echo "Using provided identity: $MACOS_IDENTITY"
               echo "MACOS_IDENTITY=$MACOS_IDENTITY" >> $GITHUB_ENV
             fi
           else
@@ -117,9 +123,13 @@ jobs:
           # Install a provisioning profile if provided.  Xcode will pick this up
           # automatically when performing automatic code signing.
           if [ -n "$MACOS_PROVISION_PROFILE_BASE64" ]; then
+            echo "Installing provisioning profile..."
             echo "$MACOS_PROVISION_PROFILE_BASE64" | base64 --decode > profile.provisionprofile
             mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
             cp profile.provisionprofile "$HOME/Library/MobileDevice/Provisioning Profiles/"
+            echo "Provisioning profile installed successfully"
+          else
+            echo "No provisioning profile provided"
           fi
 
       # Perform the actual build using Flutter.  Flutter delegates to Xcode
@@ -133,6 +143,13 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
         run: |
+          # Print diagnostic information
+          echo "=== Build Configuration ==="
+          echo "Team ID: ${DEVELOPMENT_TEAM:-'Not set'}"
+          echo "Identity: ${MACOS_IDENTITY:-'Not set'}"
+          echo "App Version: ${{ env.APP_VERSION }}"
+          echo "Build Number: ${{ github.run_number }}"
+          echo "=========================="
           # Clean any previous build artifacts and fetch dependencies.
           flutter clean
           flutter pub get
