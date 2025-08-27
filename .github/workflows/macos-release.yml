@@ -82,13 +82,16 @@ jobs:
           
       - name: Build macOS app
         env:
-          DEVELOPMENT_TEAM: W778837A9L
+          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
         run: |
-          export DEVELOPMENT_TEAM=W778837A9L
+          export DEVELOPMENT_TEAM=${{ secrets.DEVELOPMENT_TEAM_MAC }}
           flutter build macos --release \
             --build-name=${{ env.APP_VERSION }} \
             --build-number=${{ github.run_number }} \
-            -- -allowProvisioningUpdates
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }}
             
       - name: Sign the app
         env:
