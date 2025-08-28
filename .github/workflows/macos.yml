@@ -66,10 +66,13 @@ jobs:
       env:
         TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       run: |
-        # Build the Flutter macOS app
-        flutter build macos --release
+        # Build the Flutter macOS app with manual code signing
+        flutter build macos --release \
+          --build-name=0.9.3 \
+          --build-number=${{ github.run_number }} \
+          --no-codesign
         
-        # Sign the app bundle
+        # Sign the app bundle with Developer ID certificate
         codesign --deep --force --verify --verbose \
           --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
           --options runtime \
