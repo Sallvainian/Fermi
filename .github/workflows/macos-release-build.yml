@@ -46,14 +46,26 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Using version: $VERSION"
 
+      - name: Disable automatic code signing
+        run: |
+          # Modify the Xcode project to disable code signing
+          cd macos
+          sed -i '' 's/CODE_SIGN_IDENTITY = .*/CODE_SIGN_IDENTITY = "";/' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = "";/' Runner.xcodeproj/project.pbxproj
+          
+          # Also disable in xcconfig if present
+          if [ -f "Runner/Configs/Release.xcconfig" ]; then
+            echo "CODE_SIGN_IDENTITY=" >> Runner/Configs/Release.xcconfig
+            echo "CODE_SIGNING_REQUIRED=NO" >> Runner/Configs/Release.xcconfig
+            echo "CODE_SIGNING_ALLOWED=NO" >> Runner/Configs/Release.xcconfig
+          fi
+          cd ..
+          
       - name: Build Flutter macOS app
         run: |
-          # Configure Xcode to skip code signing during build
-          export CODE_SIGN_IDENTITY=""
-          export CODE_SIGNING_REQUIRED=NO
-          export CODE_SIGNING_ALLOWED=NO
-          
-          # Build the app (unsigned, we'll sign manually later)
+          # Build the app without code signing
           flutter build macos --release \
             --dart-define=FLUTTER_BUILD_MODE=release \
             --dart-define=FLUTTER_BUILD_NAME=${{ steps.set_version.outputs.version }}
@@ -160,13 +172,19 @@ jobs:
           echo "dmg_name=$DMG_NAME" >> $GITHUB_OUTPUT
           echo "Created DMG: $DMG_NAME"
 
+      - name: List files before upload
+        run: |
+          echo "Files in current directory:"
+          ls -la *.pkg *.dmg || echo "No PKG/DMG files found"
+          
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-releases
           path: |
-            *.pkg
-            *.dmg
+            Fermi-*.pkg
+            Fermi-*.dmg
+          if-no-files-found: error
 
       - name: Cleanup keychain
         if: always()  # Run even on failure for security
@@ -190,7 +208,13 @@ jobs:
           path: ./
           
       - name: List downloaded files
-        run: ls -la
+        run: |
+          echo "Files downloaded from artifact:"
+          ls -la
+          echo "PKG files:"
+          ls -la *.pkg || echo "No PKG files found"
+          echo "DMG files:"
+          ls -la *.dmg || echo "No DMG files found"
         
       - name: Get version
         id: get_version
@@ -202,6 +226,7 @@ jobs:
             VERSION=${TAG#v}
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
           
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -226,7 +251,8 @@ jobs:
             - ✅ Real-time messaging
             - ✅ Offline support
           files: |
-            *.pkg
-            *.dmg
+            Fermi-*.pkg
+            Fermi-*.dmg
           draft: false
           prerelease: false
+          fail_on_unmatched_files: true
