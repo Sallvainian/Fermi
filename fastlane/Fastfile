@@ -3,18 +3,20 @@ default_platform(:mac)
 
 # Helper to ensure CocoaPods is working with correct Ruby
 def ensure_cocoapods
-  ENV['PATH'] = "/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:#{ENV['PATH']}"
-  ENV['GEM_HOME'] = '/opt/homebrew/lib/ruby/gems/3.4.0'
-  
-  # Verify CocoaPods is available
+  # Verify CocoaPods is available via bundle exec
   begin
-    sh("which pod")
-    sh("pod --version")
-    UI.success("CocoaPods is properly configured")
+    sh("bundle exec pod --version")
+    UI.success("CocoaPods is properly configured via bundle exec")
   rescue => e
     UI.error("CocoaPods check failed: #{e.message}")
-    UI.error("Attempting to use Homebrew's CocoaPods directly...")
-    ENV['PATH'] = "/opt/homebrew/bin:#{ENV['PATH']}"
+    # Fallback to direct pod command if bundle exec fails
+    begin
+      sh("pod --version")
+      UI.success("CocoaPods is available directly")
+    rescue => e
+      UI.error("CocoaPods is not available")
+      raise e
+    end
   end
 end
 
@@ -71,8 +73,14 @@ platform :mac do
       # Clean pods
       sh("rm -rf Pods Podfile.lock")
       
-      # Install pods with proper Ruby
-      sh("PATH='/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:#{ENV['PATH']}' GEM_HOME='/opt/homebrew/lib/ruby/gems/3.4.0' /opt/homebrew/lib/ruby/gems/3.4.0/bin/pod install --repo-update")
+      # Install pods with bundle exec
+      begin
+        sh("bundle exec pod install --repo-update")
+      rescue => e
+        UI.error("Bundle exec pod install failed: #{e.message}")
+        UI.message("Trying direct pod install...")
+        sh("pod install --repo-update")
+      end
     end
     
     # Build using Flutter (which will handle xcodebuild internally)

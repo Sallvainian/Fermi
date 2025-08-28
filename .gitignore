@@ -136,3 +136,4 @@ temp.pem
 # Unwanted files
 *.exe
 firestore_rules_fix.txt
+fastlane/*.pkg

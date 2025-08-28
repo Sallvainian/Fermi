@@ -56,9 +56,8 @@ jobs:
 
       - name: Ensure CocoaPods is installed
         run: |
-          gem install cocoapods
-          which pod
-          pod --version
+          bundle exec pod --version
+          bundle show cocoapods
 
       - name: Set version number
         run: |

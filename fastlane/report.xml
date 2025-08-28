@@ -5,67 +5,92 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="00: default_platform" time="0.000218">
+      <testcase classname="fastlane.lanes" name="00: default_platform" time="0.000251">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="01: Switch to mac setup_signing lane" time="0.000602">
+      <testcase classname="fastlane.lanes" name="01: Switch to mac setup_signing lane" time="0.000122">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="02: import_certificate" time="0.042843">
+      <testcase classname="fastlane.lanes" name="02: import_certificate" time="0.215892">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="03: import_certificate" time="0.036063">
+      <testcase classname="fastlane.lanes" name="03: import_certificate" time="0.159788">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="04: Switch to mac package lane" time="0.000126">
+      <testcase classname="fastlane.lanes" name="04: Switch to mac package lane" time="0.000296">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="05: Switch to mac build lane" time="9.4e-05">
+      <testcase classname="fastlane.lanes" name="05: Switch to mac build lane" time="0.000122">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="06: which pod" time="0.005568">
+      <testcase classname="fastlane.lanes" name="06: which pod" time="0.004991">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="07: pod --version" time="0.501871">
+      <testcase classname="fastlane.lanes" name="07: pod --version" time="0.495478">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="08: Switch to mac setup_signing lane" time="0.000134">
+      <testcase classname="fastlane.lanes" name="08: Switch to mac setup_signing lane" time="0.000137">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="09: flutter clean" time="21.58571">
+      <testcase classname="fastlane.lanes" name="09: flutter clean" time="8.659812">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="10: flutter pub get" time="5.32929">
+      <testcase classname="fastlane.lanes" name="10: flutter pub get" time="5.135018">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="11: rm -rf Pods Podfile.lock" time="0.687066">
+      <testcase classname="fastlane.lanes" name="11: rm -rf Pods Podfile.lock" time="0.672375">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="12: PATH=&apos;/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:/opt/homebrew/opt/ruby/bin:/opt/homebrew/Cellar/fastlane/2.228.0/libexec/bin:/Users/sallvain/.local/share/fastlane/3.4.0/bin:/Users/sallvain/Library/Python/3.9/bin:/opt/homebrew/bin:/Users/sallvain/.nvm/versions/node/v22.18.0/bin:/Users/sallvain/google-cloud-sdk/bin:/Users/sallvain/.local/bin:/Users/sallvain/bin:/Users/sallvain/flutter/bin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Applications/iTerm.app/Contents/Resources/utilities&apos; GEM_HOME=&apos;/opt/homebrew/lib/ruby/gems/3.4.0&apos; /opt/homebrew/lib/ruby/gems/3.4.0/bin/pod install --repo-update" time="23.446475">
+      <testcase classname="fastlane.lanes" name="12: PATH=&apos;/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:/opt/homebrew/opt/ruby/bin:/opt/homebrew/Cellar/fastlane/2.228.0/libexec/bin:/Users/sallvain/.local/share/fastlane/3.4.0/bin:/opt/homebrew/opt/ruby/bin:/Users/sallvain/Library/Python/3.9/bin:/opt/homebrew/bin:/Users/sallvain/.nvm/versions/node/v22.18.0/bin:/Users/sallvain/google-cloud-sdk/bin:/Users/sallvain/.local/bin:/Users/sallvain/bin:/Users/sallvain/flutter/bin:/Library/Frameworks/Python.framework/Versions/3.12/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Applications/iTerm.app/Contents/Resources/utilities&apos; GEM_HOME=&apos;/opt/homebrew/lib/ruby/gems/3.4.0&apos; /opt/homebrew/lib/ruby/gems/3.4.0/bin/pod install --repo-update" time="24.712043">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="13: flutter build macos --release --build-name=0.9.4 --build-number=1" time="791.481581">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="14: codesign --force --deep --sign &apos;Developer ID Application: Frank Cottone (W778837A9L)&apos; &apos;../build/macos/Build/Products/Release/teacher_dashboard_flutter.app&apos;" time="24.702584">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="15: codesign --verify --verbose &apos;../build/macos/Build/Products/Release/teacher_dashboard_flutter.app&apos;" time="0.074874">
+        
+      </testcase>
+    
+      
+      <testcase classname="fastlane.lanes" name="16: productbuild \
+      --component &apos;../build/macos/Build/Products/Release/teacher_dashboard_flutter.app&apos; \
+      /Applications \
+      --sign &apos;Developer ID Installer: Frank Cottone (W778837A9L)&apos; \
+      --product &apos;../build/macos/Build/Products/Release/teacher_dashboard_flutter.app/Contents/Info.plist&apos; \
+      &apos;Fermi-0.9.4.pkg&apos;" time="25.031479">
         
       </testcase>
     
