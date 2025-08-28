@@ -48,8 +48,16 @@ jobs:
 
       - name: Build Flutter macOS app
         run: |
-          # Disable automatic code signing for CI build
-          flutter build macos --release --no-codesign
+          # Configure Xcode to skip code signing during build
+          export FLUTTER_XCODE_CODE_SIGN_IDENTITY=""
+          export FLUTTER_XCODE_CODE_SIGNING_REQUIRED=NO
+          export FLUTTER_XCODE_CODE_SIGNING_ALLOWED=NO
+          
+          # Build without code signing (we'll sign manually later)
+          flutter build macos --release \
+            --dart-define=FLUTTER_BUILD_MODE=release \
+            --dart-define=FLUTTER_BUILD_NAME=${{ steps.set_version.outputs.version }} \
+            --no-codesign
 
       - name: Verify build output
         run: |
@@ -104,8 +112,12 @@ jobs:
           codesign --deep --force --verbose --timestamp --options runtime --entitlements $ENTITLEMENTS_PATH --sign "${{ secrets.MACOS_APP_IDENTITY }}" "$APP_PATH"
 
       - name: Create and sign PKG
+        id: create_pkg
         run: |
-          productbuild --component "$APP_PATH" /Applications --sign "${{ secrets.MACOS_PKG_IDENTITY }}" --version "${{ steps.set_version.outputs.version }}" "${APP_NAME}-${{ steps.set_version.outputs.version }}.pkg"
+          PKG_NAME="${APP_NAME}-${{ steps.set_version.outputs.version }}.pkg"
+          productbuild --component "$APP_PATH" /Applications --sign "${{ secrets.MACOS_PKG_IDENTITY }}" --version "${{ steps.set_version.outputs.version }}" "$PKG_NAME"
+          echo "pkg_name=$PKG_NAME" >> $GITHUB_OUTPUT
+          echo "Created PKG: $PKG_NAME"
           # For more control, add --distribution distribution.xml and resources
 
       - name: Notarize PKG
@@ -128,6 +140,7 @@ jobs:
         run: xcrun stapler staple "${APP_NAME}-${{ steps.set_version.outputs.version }}.pkg"
 
       - name: Create DMG
+        id: create_dmg
         run: |
           # Create a directory for DMG contents
           mkdir -p dmg_contents
@@ -139,28 +152,30 @@ jobs:
           ln -s /Applications dmg_contents/Applications
           
           # Create DMG
+          DMG_NAME="${APP_NAME}-${{ steps.set_version.outputs.version }}.dmg"
           hdiutil create -volname "${APP_NAME}" \
             -srcfolder dmg_contents \
             -ov -format UDZO \
-            "${APP_NAME}-${{ steps.set_version.outputs.version }}.dmg"
+            "$DMG_NAME"
           
-          echo "Created DMG: ${APP_NAME}-${{ steps.set_version.outputs.version }}.dmg"
+          echo "dmg_name=$DMG_NAME" >> $GITHUB_OUTPUT
+          echo "Created DMG: $DMG_NAME"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-releases
           path: |
-            Fermi-*.pkg
-            Fermi-*.dmg
+            ${{ steps.create_pkg.outputs.pkg_name }}
+            ${{ steps.create_dmg.outputs.dmg_name }}
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            Fermi-*.pkg
-            Fermi-*.dmg
+            ${{ steps.create_pkg.outputs.pkg_name }}
+            ${{ steps.create_dmg.outputs.dmg_name }}
           name: "Fermi v${{ steps.set_version.outputs.version }}"
           body: "Signed and notarized macOS release for ${{ steps.set_version.outputs.version }}"
           draft: false
@@ -174,8 +189,8 @@ jobs:
         with:
           tag_name: "v${{ steps.set_version.outputs.version }}"
           files: |
-            Fermi-*.pkg
-            Fermi-*.dmg
+            ${{ steps.create_pkg.outputs.pkg_name }}
+            ${{ steps.create_dmg.outputs.dmg_name }}
           name: "Fermi v${{ steps.set_version.outputs.version }}"
           body: "Signed and notarized macOS release for ${{ steps.set_version.outputs.version }}"
           draft: false
