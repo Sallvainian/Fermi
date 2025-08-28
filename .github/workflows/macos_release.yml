@@ -1,5 +1,5 @@
 name: macOS Release
-
+# Force GitHub to refresh workflow display
 on:
   push:
     tags:
