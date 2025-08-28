@@ -157,11 +157,32 @@ platform :mac do
   lane :ci_release do |options|
     # In CI, use base64 encoded credentials
     if is_ci
+      # Create a temporary keychain for CI
+      keychain_name = "ci-build.keychain"
+      keychain_password = ENV["KEYCHAIN_PASSWORD"] || "temporary"
+      
+      create_keychain(
+        name: keychain_name,
+        password: keychain_password,
+        default_keychain: true,
+        unlock: true,
+        timeout: 3600,
+        add_to_search_list: true
+      )
+      
       # Decode app certificate (Developer ID Application)
       if ENV["MACOS_CERTIFICATE_BASE64"]
         cert_path = "/tmp/cert.p12"
         sh("echo '#{ENV["MACOS_CERTIFICATE_BASE64"]}' | base64 --decode > #{cert_path}")
-        options[:cert_path] = cert_path
+        
+        # CRITICAL: Import the Developer ID Application certificate
+        import_certificate(
+          certificate_path: cert_path,
+          certificate_password: ENV["MACOS_CERTIFICATE_PASSWORD"],
+          keychain_name: keychain_name,
+          keychain_password: keychain_password
+        )
+        UI.success("Developer ID Application certificate imported")
       end
       
       # Decode PKG installer certificate (Developer ID Installer) - optional
@@ -173,9 +194,10 @@ platform :mac do
         import_certificate(
           certificate_path: pkg_cert_path,
           certificate_password: ENV["MACOS_CERTIFICATE_PASSWORD"],
-          keychain_name: "login.keychain",
-          keychain_password: ENV["KEYCHAIN_PASSWORD"]
+          keychain_name: keychain_name,
+          keychain_password: keychain_password
         )
+        UI.success("Developer ID Installer certificate imported")
       end
       
       # NO provisioning profile for Developer ID distribution
