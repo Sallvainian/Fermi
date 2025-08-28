@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        type: string
 
 jobs:
   build:
@@ -27,11 +32,19 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Extract version from pubspec.yaml
-        id: extract_version
+      - name: Set version
+        id: set_version
         run: |
-          VERSION=$(grep 'version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          else
+            VERSION=$(grep 'version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
 
       - name: Build Flutter macOS app
         run: flutter build macos --release
@@ -80,13 +93,13 @@ jobs:
 
       - name: Create and sign PKG
         run: |
-          productbuild --component "$APP_PATH" /Applications --sign "${{ secrets.MACOS_PKG_IDENTITY }}" --version "${{ steps.extract_version.outputs.version }}" "${APP_NAME}-${{ steps.extract_version.outputs.version }}.pkg"
+          productbuild --component "$APP_PATH" /Applications --sign "${{ secrets.MACOS_PKG_IDENTITY }}" --version "${{ steps.set_version.outputs.version }}" "${APP_NAME}-${{ steps.set_version.outputs.version }}.pkg"
           # For more control, add --distribution distribution.xml and resources
 
       - name: Notarize PKG
         id: notarize_pkg
         run: |
-          SUBMISSION_ID=$(xcrun notarytool submit "${APP_NAME}-${{ steps.extract_version.outputs.version }}.pkg" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --output-format json | jq -r '.id')
+          SUBMISSION_ID=$(xcrun notarytool submit "${APP_NAME}-${{ steps.set_version.outputs.version }}.pkg" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --output-format json | jq -r '.id')
           if [ -z "$SUBMISSION_ID" ]; then exit 1; fi
           echo "submission_id=$SUBMISSION_ID" >> $GITHUB_OUTPUT
           # Wait with --wait; fallback to polling if needed
@@ -100,7 +113,7 @@ jobs:
           }
 
       - name: Staple PKG
-        run: xcrun stapler staple "${APP_NAME}-${{ steps.extract_version.outputs.version }}.pkg"
+        run: xcrun stapler staple "${APP_NAME}-${{ steps.set_version.outputs.version }}.pkg"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -110,12 +123,27 @@ jobs:
             ${APP_NAME}-*.pkg
 
       - name: Create GitHub Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ${APP_NAME}-*.pkg
-          name: "${APP_NAME} v${{ steps.extract_version.outputs.version }}"
-          body: "Signed and notarized macOS PKG release for ${{ steps.extract_version.outputs.version }}"
+          name: "${APP_NAME} v${{ steps.set_version.outputs.version }}"
+          body: "Signed and notarized macOS PKG release for ${{ steps.set_version.outputs.version }}"
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Manual Release
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.set_version.outputs.version }}"
+          files: |
+            ${APP_NAME}-*.pkg
+          name: "${APP_NAME} v${{ steps.set_version.outputs.version }}"
+          body: "Signed and notarized macOS PKG release for ${{ steps.set_version.outputs.version }}"
           draft: false
           prerelease: false
         env:
