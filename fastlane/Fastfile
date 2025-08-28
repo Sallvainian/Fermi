@@ -1,0 +1,272 @@
+# Fastlane configuration for Fermi macOS app
+default_platform(:mac)
+
+# Helper to ensure CocoaPods is working with correct Ruby
+def ensure_cocoapods
+  ENV['PATH'] = "/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:#{ENV['PATH']}"
+  ENV['GEM_HOME'] = '/opt/homebrew/lib/ruby/gems/3.4.0'
+  
+  # Verify CocoaPods is available
+  begin
+    sh("which pod")
+    sh("pod --version")
+    UI.success("CocoaPods is properly configured")
+  rescue => e
+    UI.error("CocoaPods check failed: #{e.message}")
+    UI.error("Attempting to use Homebrew's CocoaPods directly...")
+    ENV['PATH'] = "/opt/homebrew/bin:#{ENV['PATH']}"
+  end
+end
+
+platform :mac do
+  desc "Setup certificates and provisioning profiles"
+  lane :setup_signing do |options|
+    # Import the certificate if provided
+    if options[:cert_path] && File.exist?(options[:cert_path])
+      import_certificate(
+        certificate_path: options[:cert_path],
+        certificate_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
+        keychain_name: "login.keychain",
+        keychain_password: ""
+      )
+      UI.success("Certificate imported successfully")
+    end
+
+    # Install provisioning profile if provided
+    if options[:profile_path] && File.exist?(options[:profile_path])
+      install_provisioning_profile(
+        path: options[:profile_path]
+      )
+      UI.success("Provisioning profile installed successfully")
+    end
+
+    # Or use match if configured
+    if options[:use_match]
+      match(
+        type: "developer_id",
+        app_identifier: "com.academic-tools.fermi",
+        readonly: is_ci
+      )
+    end
+  end
+
+  desc "Build macOS app"
+  lane :build do |options|
+    # Ensure CocoaPods is properly configured
+    ensure_cocoapods
+    
+    # Setup signing
+    setup_signing(
+      cert_path: options[:cert_path] || ENV["MACOS_CERTIFICATE_PATH"],
+      cert_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
+      profile_path: options[:profile_path] || ENV["MACOS_PROVISION_PROFILE_PATH"],
+      use_match: options[:use_match] || false
+    )
+    
+    # Clean and prepare Flutter project
+    sh("flutter clean")
+    sh("flutter pub get")
+    
+    version = options[:version] || "1.0.0"
+    build_number = options[:build_number] || "1"
+    
+    # Navigate to macos directory and ensure pods are installed
+    Dir.chdir("../macos") do
+      # Clean pods
+      sh("rm -rf Pods Podfile.lock")
+      
+      # Install pods with proper Ruby
+      sh("PATH='/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:#{ENV['PATH']}' GEM_HOME='/opt/homebrew/lib/ruby/gems/3.4.0' /opt/homebrew/lib/ruby/gems/3.4.0/bin/pod install --repo-update")
+      
+      # Build using xcodebuild directly - override automatic signing with manual values
+      sh("xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -destination 'generic/platform=macOS' -archivePath ../build/macos/Runner.xcarchive archive MARKETING_VERSION=#{version} CURRENT_PROJECT_VERSION=#{build_number} CODE_SIGNING_REQUIRED=YES CODE_SIGN_IDENTITY='Developer ID Application: Frank Cottone (W778837A9L)' DEVELOPMENT_TEAM=W778837A9L PROVISIONING_PROFILE='00f18e5d-860f-4926-991d-3590c8eed212'")
+      
+      # Export the app
+      sh("xcodebuild -exportArchive -archivePath ../build/macos/Runner.xcarchive -exportPath ../build/macos/Build/Products/Release -exportOptionsPlist exportOptions.plist")
+    end
+    
+    UI.success("macOS build completed")
+  end
+
+  desc "Create macOS package installer"
+  lane :package do |options|
+    # Build the app first
+    build(options)
+    
+    app_name = "Fermi"
+    version = options[:version] || "1.0.0"
+    build_number = options[:build_number] || "1"
+    
+    # Sign the app with Developer ID Application certificate
+    if options[:sign]
+      app_signing_identity = options[:app_identity] || ENV["MACOS_APP_IDENTITY"] || "Developer ID Application"
+      
+      sh("codesign --force --deep --sign '#{app_signing_identity}' 'build/macos/Build/Products/Release/#{app_name}.app'")
+      sh("codesign --verify --verbose 'build/macos/Build/Products/Release/#{app_name}.app'")
+      
+      UI.success("App signed successfully")
+    end
+    
+    # Create both DMG and PKG installers
+    installer_type = options[:installer_type] || "both"
+    
+    if installer_type == "dmg" || installer_type == "both"
+      # Create DMG installer
+      create_dmg(
+        app_path: "build/macos/Build/Products/Release/#{app_name}.app",
+        output_path: "#{app_name}-#{version}.dmg",
+        volume_name: app_name,
+        app_drop_link: true
+      )
+      
+      # Sign the DMG
+      if options[:sign] && options[:app_identity]
+        sh("codesign --force --sign '#{app_signing_identity}' '#{app_name}-#{version}.dmg'")
+        UI.success("DMG signed successfully")
+      end
+    end
+    
+    if installer_type == "pkg" || installer_type == "both"
+      # Create PKG installer
+      pkg_signing_identity = options[:pkg_identity] || ENV["MACOS_PKG_IDENTITY"] || "Developer ID Installer"
+      
+      sh("productbuild \\
+        --component 'build/macos/Build/Products/Release/#{app_name}.app' \\
+        /Applications \\
+        --sign '#{pkg_signing_identity}' \\
+        --product 'build/macos/Build/Products/Release/#{app_name}.app/Contents/Info.plist' \\
+        '#{app_name}-#{version}.pkg'")
+      
+      UI.success("PKG installer created and signed")
+    end
+    
+    # Notarize if credentials are available
+    if options[:notarize] && ENV["APPLE_ID"] && ENV["APPLE_ID_PASSWORD"]
+      if installer_type == "dmg" || installer_type == "both"
+        notarize(
+          package: "#{app_name}-#{version}.dmg",
+          bundle_id: "com.academic-tools.fermi",
+          username: ENV["APPLE_ID"],
+          password: ENV["APPLE_ID_PASSWORD"],
+          asc_provider: ENV["APPLE_TEAM_ID"]
+        )
+        UI.success("DMG notarized successfully")
+      end
+      
+      if installer_type == "pkg" || installer_type == "both"
+        notarize(
+          package: "#{app_name}-#{version}.pkg",
+          bundle_id: "com.academic-tools.fermi",
+          username: ENV["APPLE_ID"],
+          password: ENV["APPLE_ID_PASSWORD"],
+          asc_provider: ENV["APPLE_TEAM_ID"]
+        )
+        UI.success("PKG notarized successfully")
+      end
+    end
+    
+    UI.success("Package(s) created successfully")
+  end
+
+  desc "CI/CD build and release"
+  lane :ci_release do |options|
+    # In CI, use base64 encoded credentials
+    if is_ci
+      # Decode app certificate
+      if ENV["MACOS_CERTIFICATE_BASE64"]
+        cert_path = "/tmp/cert.p12"
+        sh("echo '#{ENV["MACOS_CERTIFICATE_BASE64"]}' | base64 --decode > #{cert_path}")
+        options[:cert_path] = cert_path
+      end
+      
+      # Decode PKG installer certificate
+      if ENV["MACOS_PKG_CERTIFICATE_BASE64"]
+        pkg_cert_path = "/tmp/pkg_cert.p12"
+        sh("echo '#{ENV["MACOS_PKG_CERTIFICATE_BASE64"]}' | base64 --decode > #{pkg_cert_path}")
+        
+        # Import the PKG certificate
+        import_certificate(
+          certificate_path: pkg_cert_path,
+          certificate_password: ENV["MACOS_CERTIFICATE_PASSWORD"],
+          keychain_name: "login.keychain",
+          keychain_password: ""
+        )
+      end
+      
+      # Decode provisioning profile
+      if ENV["MACOS_PROVISION_PROFILE_BASE64"]
+        profile_path = "/tmp/profile.provisionprofile"
+        sh("echo '#{ENV["MACOS_PROVISION_PROFILE_BASE64"]}' | base64 --decode > #{profile_path}")
+        options[:profile_path] = profile_path
+      end
+    end
+    
+    # Build and package (creates both DMG and PKG)
+    package(
+      version: options[:version] || ENV["APP_VERSION"],
+      build_number: options[:build_number] || ENV["GITHUB_RUN_NUMBER"],
+      sign: true,
+      app_identity: ENV["MACOS_APP_IDENTITY"],
+      pkg_identity: ENV["MACOS_PKG_IDENTITY"],
+      installer_type: "both",
+      notarize: ENV["APPLE_ID"] && ENV["APPLE_ID_PASSWORD"]
+    )
+    
+    # Upload artifacts
+    if ENV["GITHUB_ACTIONS"]
+      sh("echo '::set-output name=dmg_path::#{Dir.pwd}/Fermi-#{options[:version]}.dmg'")
+      sh("echo '::set-output name=pkg_path::#{Dir.pwd}/Fermi-#{options[:version]}.pkg'")
+    end
+  end
+
+  # Helper lane for local testing
+  desc "Local build with existing certificates"
+  lane :local_build do
+    # Setup both certificates
+    setup_signing(
+      cert_path: "/Users/sallvain/Certificates:Keys/fermi-mac-distribution.p12",
+      cert_password: "newyorkmets1997",
+      profile_path: "/Users/sallvain/Certificates:Keys/Fermi_MacOS.provisionprofile"
+    )
+    
+    # Also import the PKG installer certificate
+    import_certificate(
+      certificate_path: "/Users/sallvain/Certificates:Keys/fermi-pkg-mac.p12",
+      certificate_password: "newyorkmets1997",
+      keychain_name: "login.keychain",
+      keychain_password: ""
+    )
+    
+    package(
+      version: "0.9.3",
+      sign: true,
+      app_identity: "Frank Cottone", # or "Developer ID Application: Frank Cottone (W778837A9L)"
+      pkg_identity: "Developer ID Installer: Frank Cottone (W778837A9L)",
+      installer_type: "both" # Creates both DMG and PKG
+    )
+  end
+
+  # Error handling
+  error do |lane, exception|
+    UI.error("Error in lane #{lane}: #{exception.message}")
+  end
+end
+
+# Helper actions
+def create_dmg(params)
+  app_path = params[:app_path]
+  output_path = params[:output_path]
+  volume_name = params[:volume_name]
+  
+  sh("create-dmg \\
+    --volname '#{volume_name}' \\
+    --window-pos 200 120 \\
+    --window-size 800 450 \\
+    --icon-size 100 \\
+    --icon '#{File.basename(app_path)}' 200 190 \\
+    --hide-extension '#{File.basename(app_path)}' \\
+    --app-drop-link 600 190 \\
+    --no-internet-enable \\
+    '#{output_path}' \\
+    '#{File.dirname(app_path)}/'")
+end

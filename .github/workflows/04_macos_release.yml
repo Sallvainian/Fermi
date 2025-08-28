@@ -1,7 +1,5 @@
 name: macOS Release
 
-# Trigger the workflow on tags like `v1.2.3` or via manual dispatch.  A version
-# input is required when running manually.
 on:
   push:
     tags:
@@ -13,8 +11,6 @@ on:
         required: true
         type: string
 
-# Global environment variables used throughout the workflow.  Adjust these
-# versions and identifiers as needed to match your project.
 env:
   FLUTTER_VERSION: '3.32.0'
   XCODE_VERSION: '15.4'
@@ -27,19 +23,14 @@ jobs:
     runs-on: macos-14
 
     steps:
-      # Check out the repository so the workflow can access your code.
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Install the requested Xcode version.  Without this step the runner
-      # defaults to the preinstalled Xcode, which may not match your settings.
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: ${{ env.XCODE_VERSION }}
 
-      # Install Flutter of the desired version and enable caching.  This
-      # dramatically speeds up subsequent runs by caching SDK downloads.
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -47,25 +38,26 @@ jobs:
           channel: 'stable'
           cache: true
 
-      # Install the `create-dmg` tool used later to package the application.
+      - name: Install Ruby dependencies
+        run: |
+          gem install bundler
+          bundle config set --local path 'vendor/bundle'
+
+      - name: Create Gemfile for Fastlane
+        run: |
+          cat > Gemfile << 'EOF'
+          source "https://rubygems.org"
+          
+          gem "fastlane"
+          gem "cocoapods"
+          EOF
+          
+          bundle install
+
       - name: Install create-dmg
         run: |
           brew install create-dmg
 
-      # Fetch Dart and CocoaPods dependencies.  CocoaPods must be run in the
-      # macOS folder so that Podfile.lock is generated correctly.
-      - name: Install dependencies
-        run: |
-          flutter pub get
-          cd macos
-          pod install
-          cd ..
-
-      # Determine the version to use for the build.  When the workflow is
-      # dispatched manually, use the provided version input.  On tag pushes
-      # extract the version from the tag name.  Record the result in the
-      # environment so subsequent steps can reference it easily, and update
-      # pubspec.yaml to reflect the new version.
       - name: Set version number
         run: |
           VERSION="${{ github.event.inputs.version || github.ref_name }}"
@@ -74,258 +66,35 @@ jobs:
           # Update version in pubspec.yaml
           sed -i '' "s/^version: .*/version: $VERSION/" pubspec.yaml
 
-      # Configure code signing by importing the certificate from secrets and
-      # installing any provisioning profile.  If a signing identity is not
-      # explicitly provided via secrets, automatically discover it from the
-      # imported certificate.
-      - name: Install code signing certificate and provisioning profile
+      - name: Run Fastlane CI Release
         env:
           MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
           MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
-        run: |
-          # Only attempt to configure signing if a certificate and password are supplied.
-          if [ -n "$MACOS_CERTIFICATE_BASE64" ] && [ -n "$MACOS_CERTIFICATE_PASSWORD" ]; then
-            echo "Setting up code signing certificate..."
-            
-            # Decode the certificate
-            echo "$MACOS_CERTIFICATE_BASE64" | base64 --decode > mac_certificate.p12
-            
-            # Verify the P12 file was created and is valid
-            if [ ! -f mac_certificate.p12 ]; then
-              echo "ERROR: Failed to create certificate file"
-              exit 1
-            fi
-            
-            echo "Certificate file size: $(ls -lh mac_certificate.p12 | awk '{print $5}')"
-
-            # Create and configure a temporary keychain.  Use an empty
-            # password so the keychain does not prompt during codesign.  The
-            # new keychain is added to the search list and set as the default.
-            security create-keychain -p "" build.keychain
-            security list-keychains -s build.keychain
-            security default-keychain -s build.keychain
-            security unlock-keychain -p "" build.keychain
-
-            # Import the P12 into the keychain.  Grant codesign permission.
-            # Capture the output to check for errors
-            if security import mac_certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign; then
-              echo "Certificate imported successfully"
-            else
-              echo "ERROR: Failed to import certificate - check password"
-              exit 1
-            fi
-            
-            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-
-            # List available identities for debugging
-            echo "Available signing identities:"
-            security find-identity -v -p codesigning build.keychain
-            
-            # Verify at least one identity was imported
-            IDENTITY_COUNT=$(security find-identity -v -p codesigning build.keychain 2>&1 | grep -c "valid identities" || echo "0")
-            if [ "$IDENTITY_COUNT" -eq "0" ]; then
-              echo "WARNING: No valid identities found after import"
-            fi
-
-            # Discover a signing identity from the imported certificate if one
-            # isn't provided explicitly.  The first identity found is used.
-            if [ -z "$MACOS_IDENTITY" ]; then
-              IDENTITY=$(security find-identity -v -p codesigning build.keychain | head -n 1 | awk -F\" '{print $2}')
-              echo "Discovered identity: $IDENTITY"
-              echo "MACOS_IDENTITY=$IDENTITY" >> $GITHUB_ENV
-            else
-              echo "Using provided identity: $MACOS_IDENTITY"
-              echo "MACOS_IDENTITY=$MACOS_IDENTITY" >> $GITHUB_ENV
-            fi
-          else
-            echo "No certificate provided; proceeding without installing certificate."
-          fi
-
-          # Install a provisioning profile if provided.  Xcode will pick this up
-          # automatically when performing automatic code signing.
-          if [ -n "$MACOS_PROVISION_PROFILE_BASE64" ]; then
-            echo "Installing provisioning profile..."
-            echo "$MACOS_PROVISION_PROFILE_BASE64" | base64 --decode > profile.provisionprofile
-            
-            # Extract the UUID from the provisioning profile and install it with the correct name
-            PROFILE_UUID=$(security cms -D -i profile.provisionprofile | plutil -extract UUID raw -)
-            echo "Profile UUID: $PROFILE_UUID"
-            
-            # Install to the correct location with UUID as filename
-            mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-            cp profile.provisionprofile "$HOME/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.provisionprofile"
-            
-            # Also copy without UUID for compatibility
-            cp profile.provisionprofile "$HOME/Library/MobileDevice/Provisioning Profiles/"
-            
-            # Verify the profile was installed and show its details
-            echo "Installed provisioning profiles:"
-            ls -la "$HOME/Library/MobileDevice/Provisioning Profiles/"
-            
-            # Show profile details for debugging
-            echo "Profile details:"
-            security cms -D -i profile.provisionprofile | plutil -extract Name raw - || true
-            security cms -D -i profile.provisionprofile | plutil -extract TeamIdentifier.0 raw - || true
-            security cms -D -i profile.provisionprofile | plutil -extract Entitlements.application-identifier raw - || true
-            
-            echo "Provisioning profile installed successfully"
-          else
-            echo "WARNING: No provisioning profile provided - build may fail"
-            echo "MACOS_PROVISION_PROFILE_BASE64 secret is not set"
-          fi
-
-      # Perform the actual build using Flutter.  Flutter delegates to Xcode
-      # under the hood and honors automatic signing settings in your Xcode
-      # project.  The DEVELOPMENT_TEAM environment variable is passed via
-      # dart-define so the app knows which team ID to use when invoking
-      # `xcodebuild`.
-      - name: Build macOS app
-        env:
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+          APP_VERSION: ${{ env.APP_VERSION }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          # Print diagnostic information
-          echo "=== Build Configuration ==="
-          echo "Team ID: ${DEVELOPMENT_TEAM:-'Not set'}"
-          echo "Identity: ${MACOS_IDENTITY:-'Not set'}"
-          echo "App Version: ${{ env.APP_VERSION }}"
-          echo "Build Number: ${{ github.run_number }}"
-          
-          # Verify provisioning profile installation
-          echo "Checking provisioning profiles..."
-          if [ -d "$HOME/Library/MobileDevice/Provisioning Profiles" ]; then
-            PROFILE_COUNT=$(ls "$HOME/Library/MobileDevice/Provisioning Profiles" | wc -l)
-            echo "Found $PROFILE_COUNT provisioning profile(s)"
-          else
-            echo "WARNING: Provisioning Profiles directory does not exist"
-          fi
-          echo "=========================="
-          
-          # Clean any previous build artifacts and fetch dependencies.
-          flutter clean
-          flutter pub get
+          bundle exec fastlane mac ci_release \
+            version:${{ env.APP_VERSION }} \
+            build_number:${{ github.run_number }}
 
-          # Build a release macOS app.  Pass the team ID both ways for compatibility
-          # Also ensure the team ID is set as an environment variable for xcodebuild
-          export DEVELOPMENT_TEAM="${DEVELOPMENT_TEAM}"
-          
-          flutter build macos --release \
-            --build-name=${{ env.APP_VERSION }} \
-            --build-number=${{ github.run_number }} \
-            --dart-define=FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID \
-            --dart-define=FIREBASE_FUNCTIONS_REGION=$FIREBASE_FUNCTIONS_REGION \
-            --dart-define=DEVELOPMENT_TEAM=$DEVELOPMENT_TEAM \
-            --verbose
-
-      # After building, sign the resulting application bundle.  Codesign will
-      # fail silently if no identity is available, so skip if none was set up.
-      - name: Sign the app
-        env:
-          MACOS_IDENTITY: ${{ env.MACOS_IDENTITY }}
-        run: |
-          if [ -z "$MACOS_IDENTITY" ]; then
-            echo "Skipping app signing - identity not available"
-          else
-            echo "Signing the app..."
-            codesign --force --deep --sign "$MACOS_IDENTITY" \
-              "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
-            # Verify the signature for troubleshooting
-            codesign --verify --verbose \
-              "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
-          fi
-
-      # Notarize the signed app with Apple if credentials are provided.  Without
-      # credentials this step short-circuits gracefully.
-      - name: Notarize app (if credentials are available)
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_ID_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
-            echo "Skipping notarization - credentials not available"
-            exit 0
-          fi
-          ditto -c -k --keepParent \
-            "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app" \
-            "${{ env.MACOS_APP_NAME }}.zip"
-          xcrun notarytool submit "${{ env.MACOS_APP_NAME }}.zip" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_ID_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait
-          xcrun stapler staple \
-            "build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app"
-
-      # Create a disk image for distribution.  The create-dmg utility is
-      # configured here with window positioning, icon placement and other
-      # cosmetic options.  The resulting DMG includes the signed app.
-      - name: Create DMG
-        run: |
-          create-dmg \
-            --volname "${{ env.MACOS_APP_NAME }}" \
-            --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/1024.png" \
-            --window-pos 200 120 \
-            --window-size 800 450 \
-            --icon-size 100 \
-            --icon "${{ env.MACOS_APP_NAME }}.app" 200 190 \
-            --hide-extension "${{ env.MACOS_APP_NAME }}.app" \
-            --app-drop-link 600 190 \
-            --no-internet-enable \
-            "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg" \
-            "build/macos/Build/Products/Release/"
-
-      # Sign the DMG using the same identity as the app.  If no identity was
-      # configured earlier this step is skipped.
-      - name: Sign DMG (if certificates are available)
-        env:
-          MACOS_IDENTITY: ${{ env.MACOS_IDENTITY }}
-        run: |
-          if [ -z "$MACOS_IDENTITY" ]; then
-            echo "Skipping DMG signing - identity not available"
-            exit 0
-          fi
-          codesign --force --sign "$MACOS_IDENTITY" \
-            "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg"
-
-      # Notarize the DMG with Apple when credentials are present.  This step
-      # behaves like the app notarization but operates on the disk image.
-      - name: Notarize DMG (if credentials are available)
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          if [ -z "$APPLE_ID" ] || [ -z "$APPLE_ID_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
-            echo "Skipping DMG notarization - credentials not available"
-            exit 0
-          fi
-          xcrun notarytool submit \
-            "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_ID_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait
-          xcrun stapler staple \
-            "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg"
-
-      # Generate a checksum file for the DMG.  This allows end users to
-      # verify the integrity of their download.
       - name: Generate checksums
         run: |
-          shasum -a 256 "${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg" > checksums.txt
+          shasum -a 256 "Fermi-${{ env.APP_VERSION }}.dmg" > checksums.txt
 
-      # Upload the DMG and checksum as an artifact so it can be retrieved by
-      # the subsequent release job.
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-dmg
           path: |
-            ${{ env.MACOS_APP_NAME }}-${{ env.APP_VERSION }}.dmg
+            Fermi-${{ env.APP_VERSION }}.dmg
             checksums.txt
 
   release:
@@ -342,9 +111,6 @@ jobs:
         with:
           name: macos-dmg
 
-      # Extract the version from either the dispatch input or the tag name.  The
-      # macOS release tags are prefixed with `macos-v` when dispatched, so strip
-      # both prefixes for consistency.
       - name: Get version
         id: get_version
         run: |
@@ -357,9 +123,6 @@ jobs:
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      # Create a GitHub release and upload the DMG and checksum.  The release
-      # name and tag depend on whether the workflow was triggered manually or
-      # via a tag push.
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
