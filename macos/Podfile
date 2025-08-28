@@ -123,4 +123,17 @@ post_install do |installer|
       end
     end
   end
+  
+  # Fix FirebaseSharedSwift 'sending' keyword syntax error
+  # This patches the invalid Swift syntax that causes build failures
+  firebase_encoder_path = File.join(installer.sandbox.root, 'FirebaseSharedSwift/FirebaseSharedSwift/Sources/third_party/FirebaseDataEncoder/FirebaseDataEncoder.swift')
+  if File.exist?(firebase_encoder_path)
+    content = File.read(firebase_encoder_path)
+    if content.include?('throws -> sending Any')
+      puts "Patching FirebaseDataEncoder.swift to fix 'sending' keyword syntax error..."
+      patched_content = content.gsub('throws -> sending Any', 'throws -> Any')
+      File.write(firebase_encoder_path, patched_content)
+      puts "✅ FirebaseDataEncoder.swift patched successfully"
+    end
+  end
 end
