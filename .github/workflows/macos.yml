@@ -1,13 +1,13 @@
-name: Build and Sign macOS App
+name: Build and Release macOS App
 
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
   workflow_dispatch:
-  release:
-    types: [created]
 
 jobs:
   build-and-sign:
@@ -190,14 +190,30 @@ jobs:
         path: Fermi.pkg
         retention-days: 7
     
-    - name: Upload to GitHub Release
-      if: github.event_name == 'release'
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/v')
       uses: softprops/action-gh-release@v2
       with:
         files: |
           Fermi.dmg
           Fermi.pkg
-        tag_name: ${{ github.ref_name }}
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+        name: Release ${{ github.ref_name }}
+        body: |
+          ## 🎉 Fermi ${{ github.ref_name }}
+          
+          ### Installation
+          
+          Download one of the installers below:
+          - **Fermi.dmg** - Drag and drop installer (recommended)
+          - **Fermi.pkg** - Standard macOS package installer
+          
+          Both installers are signed and notarized by Apple.
+          
+          ### What's Changed
+          See the auto-generated release notes below for details.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
