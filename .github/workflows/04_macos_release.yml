@@ -67,6 +67,21 @@ jobs:
           # Update version in pubspec.yaml
           sed -i '' "s/^version: .*/version: $VERSION/" pubspec.yaml
 
+      - name: Debug Environment Variables
+        run: |
+          echo "🔍 Debugging CI environment..."
+          echo "APP_VERSION: ${{ env.APP_VERSION }}"
+          echo "GITHUB_RUN_NUMBER: ${{ github.run_number }}"
+          echo "MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY != '' && '[SET]' || '[EMPTY]' }}"
+          echo "MACOS_PKG_IDENTITY: ${{ secrets.MACOS_PKG_IDENTITY != '' && '[SET]' || '[EMPTY]' }}"
+          echo "DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC != '' && '[SET]' || '[EMPTY]' }}"
+          echo "MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 != '' && format('[SET - {0} chars]', length(secrets.MACOS_CERTIFICATE_BASE64)) || '[EMPTY]' }}"
+          echo "MACOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 != '' && format('[SET - {0} chars]', length(secrets.MACOS_PROVISIONING_PROFILE_BASE64)) || '[EMPTY]' }}"
+          echo "🏠 Home directory: $HOME"
+          echo "📁 Creating provisioning profiles directory..."
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "📂 Provisioning profiles directory created at: $HOME/Library/MobileDevice/Provisioning Profiles"
+
       - name: Run Fastlane CI Release
         env:
           MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}

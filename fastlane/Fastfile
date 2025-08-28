@@ -64,25 +64,72 @@ platform :mac do
       
       # Install provisioning profile if provided (for Mac App Store distribution)
       if ENV["MACOS_PROVISIONING_PROFILE_BASE64"]
-        profiles_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
-        sh("mkdir -p '#{profiles_path}'")
-        
-        profile_path = "#{profiles_path}/macos_app.provisionprofile"
-        sh("echo '#{ENV["MACOS_PROVISIONING_PROFILE_BASE64"]}' | base64 --decode > '#{profile_path}'")
-        
-        # Extract UUID from the profile
-        profile_uuid = sh("security cms -D -i '#{profile_path}' | grep -A1 'UUID' | grep -o '[0-9A-F-]\\{36\\}'").strip
-        
-        # Copy to the UUID-named file that Xcode expects
-        sh("cp '#{profile_path}' '#{profiles_path}/#{profile_uuid}.provisionprofile'")
-        
-        UI.success("Provisioning profile installed: #{profile_uuid}")
-        
-        # Set environment variables for manual signing
-        ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Manual'
-        ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
-        ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = ENV["MACOS_IDENTITY"] || 'Apple Development'
-        ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = profile_uuid
+        begin
+          profiles_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
+          sh("mkdir -p '#{profiles_path}'")
+          
+          profile_path = "#{profiles_path}/macos_app.provisionprofile"
+          
+          # Decode base64 with proper error handling
+          UI.message("Decoding provisioning profile from base64...")
+          
+          # Use printf instead of echo to avoid issues with newlines and special characters
+          sh("printf '%s' '#{ENV["MACOS_PROVISIONING_PROFILE_BASE64"]}' | base64 --decode > '#{profile_path}'")
+          
+          # Verify the file was created and is not empty
+          unless File.exist?(profile_path) && File.size(profile_path) > 0
+            UI.user_error!("Failed to decode provisioning profile - file is empty or missing")
+          end
+          
+          UI.message("Provisioning profile decoded successfully, size: #{File.size(profile_path)} bytes")
+          
+          # Extract UUID from the profile with better error handling
+          UI.message("Extracting UUID from provisioning profile...")
+          
+          begin
+            profile_uuid = sh("security cms -D -i '#{profile_path}' | grep -A1 'UUID' | grep -o '[0-9A-F-]\\{36\\}'").strip
+            
+            if profile_uuid.empty?
+              UI.user_error!("Could not extract UUID from provisioning profile - profile may be corrupted")
+            end
+            
+            UI.message("Extracted profile UUID: #{profile_uuid}")
+            
+            # Copy to the UUID-named file that Xcode expects
+            uuid_profile_path = "#{profiles_path}/#{profile_uuid}.provisionprofile"
+            sh("cp '#{profile_path}' '#{uuid_profile_path}'")
+            
+            # Verify the UUID-named profile exists
+            unless File.exist?(uuid_profile_path)
+              UI.user_error!("Failed to copy profile to UUID-named location")
+            end
+            
+            UI.success("Provisioning profile installed successfully: #{profile_uuid}")
+            
+            # Set environment variables for manual signing
+            ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Manual'
+            ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
+            ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = ENV["MACOS_IDENTITY"] || 'Apple Development'
+            ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = profile_uuid
+            
+            UI.message("Configured Flutter for manual signing with profile: #{profile_uuid}")
+            
+          rescue => e
+            UI.error("Failed to extract UUID from provisioning profile: #{e.message}")
+            UI.error("This usually means the profile is corrupted or invalid")
+            UI.user_error!("Please verify your MACOS_PROVISIONING_PROFILE_BASE64 secret contains a valid, base64-encoded .provisionprofile file")
+          end
+          
+        rescue => e
+          UI.error("Provisioning profile installation failed: #{e.message}")
+          UI.message("Falling back to automatic signing...")
+          
+          # Fallback to automatic signing if profile installation fails
+          ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
+          ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
+          ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
+          ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
+        end
       else
         # Fallback to automatic signing if no profile provided
         ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
