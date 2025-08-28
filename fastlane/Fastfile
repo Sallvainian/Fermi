@@ -83,7 +83,13 @@ platform :mac do
       end
     end
     
-    # Build using Flutter (which will handle xcodebuild internally)
+    # Build using Flutter with FORCED automatic signing
+    # Flutter ignores Xcode project settings, must use env vars
+    ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
+    ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = 'W778837A9L'
+    ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
+    ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
+    
     sh("flutter build macos --release --build-name=#{version} --build-number=#{build_number}")
     
     UI.success("macOS build completed")
