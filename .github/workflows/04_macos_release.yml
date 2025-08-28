@@ -83,11 +83,10 @@ jobs:
           FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
           APP_VERSION: ${{ env.APP_VERSION }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
-          # Force Flutter to use automatic signing
-          FLUTTER_XCODE_CODE_SIGN_STYLE: "Automatic"
-          FLUTTER_XCODE_DEVELOPMENT_TEAM: "W778837A9L"
-          FLUTTER_XCODE_CODE_SIGN_IDENTITY: "Apple Development"
-          FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER: ""
+          # Add provisioning profile support
+          MACOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
+          # These env vars are now handled by Fastfile based on whether profile exists
+          # If profile exists, manual signing is used; otherwise automatic signing
         run: |
           bundle exec fastlane mac ci_release \
             version:${{ env.APP_VERSION }} \

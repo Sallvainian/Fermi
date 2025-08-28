@@ -53,13 +53,56 @@ platform :mac do
     # Ensure CocoaPods is properly configured
     ensure_cocoapods
     
-    # Setup signing (NO provisioning profile for Developer ID)
-    setup_signing(
-      cert_path: options[:cert_path] || ENV["MACOS_CERTIFICATE_PATH"],
-      cert_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
-      # NO provisioning profile for Developer ID distribution
-      use_match: options[:use_match] || false
-    )
+    # Setup signing based on environment
+    if is_ci
+      # In CI, use manual signing with provisioning profiles
+      setup_signing(
+        cert_path: options[:cert_path] || ENV["MACOS_CERTIFICATE_PATH"],
+        cert_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
+        use_match: options[:use_match] || false
+      )
+      
+      # Install provisioning profile if provided (for Mac App Store distribution)
+      if ENV["MACOS_PROVISIONING_PROFILE_BASE64"]
+        profiles_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
+        sh("mkdir -p '#{profiles_path}'")
+        
+        profile_path = "#{profiles_path}/macos_app.provisionprofile"
+        sh("echo '#{ENV["MACOS_PROVISIONING_PROFILE_BASE64"]}' | base64 --decode > '#{profile_path}'")
+        
+        # Extract UUID from the profile
+        profile_uuid = sh("security cms -D -i '#{profile_path}' | grep -A1 'UUID' | grep -o '[0-9A-F-]\\{36\\}'").strip
+        
+        # Copy to the UUID-named file that Xcode expects
+        sh("cp '#{profile_path}' '#{profiles_path}/#{profile_uuid}.provisionprofile'")
+        
+        UI.success("Provisioning profile installed: #{profile_uuid}")
+        
+        # Set environment variables for manual signing
+        ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Manual'
+        ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
+        ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = ENV["MACOS_IDENTITY"] || 'Apple Development'
+        ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = profile_uuid
+      else
+        # Fallback to automatic signing if no profile provided
+        ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
+        ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
+        ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
+        ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
+      end
+    else
+      # Local build - use automatic signing
+      setup_signing(
+        cert_path: options[:cert_path] || ENV["MACOS_CERTIFICATE_PATH"],
+        cert_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
+        use_match: options[:use_match] || false
+      )
+      
+      ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
+      ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = 'W778837A9L'
+      ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
+      ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
+    end
     
     # Clean and prepare Flutter project
     sh("flutter clean")
@@ -83,13 +126,7 @@ platform :mac do
       end
     end
     
-    # Build using Flutter with FORCED automatic signing
-    # Flutter ignores Xcode project settings, must use env vars
-    ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
-    ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = 'W778837A9L'
-    ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
-    ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
-    
+    # Build using Flutter with the configured signing settings
     sh("flutter build macos --release --build-name=#{version} --build-number=#{build_number}")
     
     UI.success("macOS build completed")
