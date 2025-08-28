@@ -47,11 +47,11 @@ jobs:
         run: |
           cat > Gemfile << 'EOF'
           source "https://rubygems.org"
-          
+
           gem "fastlane"
           gem "cocoapods"
           EOF
-          
+
           bundle install
 
       - name: Ensure CocoaPods is installed
