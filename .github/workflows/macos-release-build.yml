@@ -17,7 +17,7 @@ jobs:
     env:
       APP_NAME: Fermi
       BUNDLE_ID: com.academic-tools.fermi
-      APP_PATH: build/macos/Build/Products/Release/Fermi.app
+      APP_PATH: build/macos/Build/Products/Release/teacher_dashboard_flutter.app  # Flutter app name from pubspec
       ENTITLEMENTS_PATH: macos/Runner/Release.entitlements  # Adjust if your project has a custom path
 
     steps:
@@ -47,7 +47,19 @@ jobs:
           echo "Using version: $VERSION"
 
       - name: Build Flutter macOS app
-        run: flutter build macos --release
+        run: |
+          # Disable automatic code signing for CI build
+          flutter build macos --release --no-codesign
+
+      - name: Verify build output
+        run: |
+          echo "Checking for built app..."
+          ls -la build/macos/Build/Products/Release/
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Error: App bundle not found at $APP_PATH"
+            exit 1
+          fi
+          echo "App bundle found at $APP_PATH"
 
       - name: Create temporary keychain
         run: |
@@ -115,12 +127,32 @@ jobs:
       - name: Staple PKG
         run: xcrun stapler staple "${APP_NAME}-${{ steps.set_version.outputs.version }}.pkg"
 
+      - name: Create DMG
+        run: |
+          # Create a directory for DMG contents
+          mkdir -p dmg_contents
+          
+          # Copy the signed app bundle to DMG contents
+          cp -R "$APP_PATH" dmg_contents/
+          
+          # Create Applications symlink
+          ln -s /Applications dmg_contents/Applications
+          
+          # Create DMG
+          hdiutil create -volname "${APP_NAME}" \
+            -srcfolder dmg_contents \
+            -ov -format UDZO \
+            "${APP_NAME}-${{ steps.set_version.outputs.version }}.dmg"
+          
+          echo "Created DMG: ${APP_NAME}-${{ steps.set_version.outputs.version }}.dmg"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-releases
           path: |
             ${APP_NAME}-*.pkg
+            ${APP_NAME}-*.dmg
 
       - name: Create GitHub Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
