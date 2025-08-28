@@ -34,131 +34,52 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
-          channel: 'stable'
-          cache: true
 
-      - name: Install Ruby dependencies
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Clean Flutter build
+        run: flutter clean
+
+      - name: Enable macOS build
+        run: flutter config --enable-macos-desktop
+
+      - name: Build macOS app
+        run: flutter build macos --release
+
+      - name: Create DMG
         run: |
-          gem install bundler
-          bundle config set --local path 'vendor/bundle'
+          # Create a directory for DMG contents
+          mkdir -p dmg_contents
+          
+          # Copy the app bundle to DMG contents
+          cp -R build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app dmg_contents/
+          
+          # Create Applications symlink
+          ln -s /Applications dmg_contents/Applications
+          
+          # Create DMG
+          hdiutil create -volname "${{ env.MACOS_APP_NAME }}" \
+            -srcfolder dmg_contents \
+            -ov -format UDZO \
+            "${{ env.MACOS_APP_NAME }}-${{ github.event.inputs.version || github.ref_name }}.dmg"
 
-      - name: Create Gemfile for Fastlane
-        run: |
-          cat > Gemfile << 'EOF'
-          source "https://rubygems.org"
-
-          gem "fastlane"
-          gem "cocoapods"
-          EOF
-
-          bundle install
-
-      - name: Ensure CocoaPods is installed
-        run: |
-          bundle exec pod --version
-          bundle show cocoapods
-
-      - name: Set version number
-        run: |
-          VERSION="${{ github.event.inputs.version || github.ref_name }}"
-          VERSION="${VERSION#v}"
-          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
-          # Update version in pubspec.yaml
-          sed -i '' "s/^version: .*/version: $VERSION/" pubspec.yaml
-
-      - name: Debug Environment Variables
-        run: |
-          echo "🔍 Debugging CI environment..."
-          echo "APP_VERSION: ${{ env.APP_VERSION }}"
-          echo "GITHUB_RUN_NUMBER: ${{ github.run_number }}"
-          echo "MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY != '' && '[SET]' || '[EMPTY]' }}"
-          echo "MACOS_PKG_IDENTITY: ${{ secrets.MACOS_PKG_IDENTITY != '' && '[SET]' || '[EMPTY]' }}"
-          echo "DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC != '' && '[SET]' || '[EMPTY]' }}"
-          echo "MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 != '' && format('[SET - {0} chars]', length(secrets.MACOS_CERTIFICATE_BASE64)) || '[EMPTY]' }}"
-          echo "MACOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 != '' && format('[SET - {0} chars]', length(secrets.MACOS_PROVISIONING_PROFILE_BASE64)) || '[EMPTY]' }}"
-          echo "🏠 Home directory: $HOME"
-          echo "📁 Creating provisioning profiles directory..."
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          echo "📂 Provisioning profiles directory created at: $HOME/Library/MobileDevice/Provisioning Profiles"
-
-      - name: Run Fastlane CI Release
-        env:
-          MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
-          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-          MACOS_PKG_CERTIFICATE_BASE64: ${{ secrets.MACOS_PKG_CERTIFICATE_BASE64 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-          MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
-          MACOS_PKG_IDENTITY: ${{ secrets.MACOS_PKG_IDENTITY }}
-          DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
-          APP_VERSION: ${{ env.APP_VERSION }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
-          # Add provisioning profile support
-          MACOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}
-          # These env vars are now handled by Fastfile based on whether profile exists
-          # If profile exists, manual signing is used; otherwise automatic signing
-        run: |
-          bundle exec fastlane mac ci_release \
-            version:${{ env.APP_VERSION }} \
-            build_number:${{ github.run_number }}
-
-      - name: Generate checksums
-        run: |
-          shasum -a 256 "Fermi-${{ env.APP_VERSION }}.pkg" > checksums.txt
-
-      - name: Upload PKG artifact
+      - name: Upload DMG as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-pkg
-          path: |
-            Fermi-${{ env.APP_VERSION }}.pkg
-            checksums.txt
+          name: macos-dmg
+          path: "*.dmg"
 
-  release:
-    name: Create Release
-    needs: build
-    runs-on: ubuntu-latest
-    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-pkg
-
-      - name: Get version
-        id: get_version
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            TAG="${{ github.ref_name }}"
-            VERSION=${TAG#v}
-            VERSION=${VERSION#macos-v}
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('macos-v{0}', steps.get_version.outputs.version) || github.ref_name }}
-          name: Fermi macOS v${{ steps.get_version.outputs.version }}
-          files: |
-            Fermi-${{ steps.get_version.outputs.version }}.pkg
-            checksums.txt
-          body: |
-            ## Fermi Education Platform - macOS Release v${{ steps.get_version.outputs.version }}
-
-            ### 📦 Installation
-            1. Download the PKG installer
-            2. Double-click the PKG file
-            3. Follow the installation wizard
-
-            ### System Requirements
-            - macOS 11.0 Big Sur or later
+          files: "*.dmg"
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
