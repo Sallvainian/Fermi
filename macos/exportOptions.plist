@@ -7,13 +7,8 @@
     <key>teamID</key>
     <string>W778837A9L</string>
     <key>signingStyle</key>
-    <string>manual</string>
+    <string>automatic</string>
     <key>signingCertificate</key>
     <string>Developer ID Application</string>
-    <key>provisioningProfiles</key>
-    <dict>
-        <key>com.academic-tools.fermi</key>
-        <string>Fermi MacOS</string>
-    </dict>
 </dict>
 </plist>

@@ -54,10 +54,6 @@ jobs:
           
           bundle install
 
-      - name: Install create-dmg
-        run: |
-          brew install create-dmg
-
       - name: Set version number
         run: |
           VERSION="${{ github.event.inputs.version || github.ref_name }}"
@@ -70,8 +66,10 @@ jobs:
         env:
           MACOS_CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-          MACOS_PROVISION_PROFILE_BASE64: ${{ secrets.MACOS_PROVISION_PROFILE_BASE64 }}
+          MACOS_PKG_CERTIFICATE_BASE64: ${{ secrets.MACOS_PKG_CERTIFICATE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
           MACOS_IDENTITY: ${{ secrets.MACOS_IDENTITY }}
+          MACOS_PKG_IDENTITY: ${{ secrets.MACOS_PKG_IDENTITY }}
           DEVELOPMENT_TEAM: ${{ secrets.DEVELOPMENT_TEAM_MAC }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
@@ -87,14 +85,14 @@ jobs:
 
       - name: Generate checksums
         run: |
-          shasum -a 256 "Fermi-${{ env.APP_VERSION }}.dmg" > checksums.txt
+          shasum -a 256 "Fermi-${{ env.APP_VERSION }}.pkg" > checksums.txt
 
-      - name: Upload DMG artifact
+      - name: Upload PKG artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-dmg
+          name: macos-pkg
           path: |
-            Fermi-${{ env.APP_VERSION }}.dmg
+            Fermi-${{ env.APP_VERSION }}.pkg
             checksums.txt
 
   release:
@@ -109,7 +107,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: macos-dmg
+          name: macos-pkg
 
       - name: Get version
         id: get_version
@@ -129,15 +127,15 @@ jobs:
           tag_name: ${{ github.event_name == 'workflow_dispatch' && format('macos-v{0}', steps.get_version.outputs.version) || github.ref_name }}
           name: Fermi macOS v${{ steps.get_version.outputs.version }}
           files: |
-            Fermi-${{ steps.get_version.outputs.version }}.dmg
+            Fermi-${{ steps.get_version.outputs.version }}.pkg
             checksums.txt
           body: |
             ## Fermi Education Platform - macOS Release v${{ steps.get_version.outputs.version }}
 
             ### 📦 Installation
-            1. Download the DMG file
-            2. Open the DMG
-            3. Drag Fermi to your Applications folder
+            1. Download the PKG installer
+            2. Double-click the PKG file
+            3. Follow the installation wizard
 
             ### System Requirements
             - macOS 11.0 Big Sur or later

@@ -21,7 +21,7 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 [bundle exec] fastlane mac setup_signing
 ```
 
-Setup certificates and provisioning profiles
+Setup certificates for Developer ID signing
 
 ### mac build
 
