@@ -301,8 +301,10 @@ post_install do |installer|
     config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
   end
   
-  # Fix FirebaseSharedSwift 'sending' keyword syntax error
-  # This patches the invalid Swift syntax that causes build failures
+  # Fix Firebase Swift 6 syntax errors for older Xcode versions
+  # This patches the invalid Swift 6 syntax that causes build failures
+  
+  # Fix FirebaseDataEncoder.swift
   firebase_encoder_path = File.join(installer.sandbox.root, 'FirebaseSharedSwift/FirebaseSharedSwift/Sources/third_party/FirebaseDataEncoder/FirebaseDataEncoder.swift')
   if File.exist?(firebase_encoder_path)
     content = File.read(firebase_encoder_path)
@@ -311,6 +313,27 @@ post_install do |installer|
       patched_content = content.gsub('throws -> sending Any', 'throws -> Any')
       File.write(firebase_encoder_path, patched_content)
       puts "✅ FirebaseDataEncoder.swift patched successfully"
+    end
+  end
+  
+  # Fix UnfairLock.swift Swift 6 keywords (sending, borrowing, consuming)
+  unfair_lock_path = File.join(installer.sandbox.root, 'FirebaseCoreInternal/FirebaseCore/Internal/Sources/Utilities/UnfairLock.swift')
+  if File.exist?(unfair_lock_path) && File.writable?(unfair_lock_path)
+    content = File.read(unfair_lock_path)
+    if content.include?('consuming sending') || content.include?('borrowing func')
+      puts "Patching UnfairLock.swift to fix Swift 6 keywords..."
+      begin
+        patched_content = content
+          .gsub('consuming sending', '')
+          .gsub('inout sending', 'inout')
+          .gsub('-> sending', '->')
+          .gsub('borrowing func', 'func')
+          .gsub('private import', 'import')
+        File.write(unfair_lock_path, patched_content)
+        puts "✅ UnfairLock.swift patched successfully"
+      rescue => e
+        puts "⚠️  Could not patch UnfairLock.swift: #{e.message}"
+      end
     end
   end
 end
