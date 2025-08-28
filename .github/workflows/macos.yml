@@ -1,0 +1,209 @@
+name: Build and Sign macOS App
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  build-and-sign:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+    
+    - name: Install dependencies
+      run: flutter pub get
+    
+    - name: Setup certificates for code signing
+      env:
+        BUILD_CERTIFICATE_BASE64: ${{ secrets.CSC_LINK }}
+        P12_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        KEYCHAIN_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+      run: |
+        # Create variables
+        CERTIFICATE_PATH="$RUNNER_TEMP/build_certificate.p12"
+        KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+        
+        # Import certificate from secrets
+        echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+        
+        # Create temporary keychain
+        security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        
+        # Import certificate to keychain
+        security import "$CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+        security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+        security list-keychain -d user -s "$KEYCHAIN_PATH"
+        
+        # Find the signing identity
+        security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+    
+    - name: Build macOS app with code signing
+      env:
+        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        # Build the Flutter macOS app
+        flutter build macos --release
+        
+        # Sign the app bundle
+        codesign --deep --force --verify --verbose \
+          --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
+          --options runtime \
+          --entitlements macos/Runner/Release.entitlements \
+          "build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+        
+        # Verify the signature
+        codesign --verify --verbose "build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+    
+    - name: Create signed DMG
+      run: |
+        # Install create-dmg
+        brew install create-dmg
+        
+        # Create a DMG with proper volume settings
+        create-dmg \
+          --volname "Fermi" \
+          --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png" \
+          --window-pos 200 120 \
+          --window-size 800 529 \
+          --icon-size 130 \
+          --icon "teacher_dashboard_flutter.app" 260 250 \
+          --hide-extension "teacher_dashboard_flutter.app" \
+          --app-drop-link 540 250 \
+          --codesign "Developer ID Application: Frank Cottone (${{ secrets.APPLE_TEAM_ID }})" \
+          --notarize "${{ secrets.APPLE_ID }}" \
+          --notarize-password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+          "Fermi.dmg" \
+          "build/macos/Build/Products/Release/"
+    
+    - name: Create signed PKG installer
+      env:
+        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        # Create component package
+        pkgbuild --identifier "com.fermi.teacherdashboard" \
+          --version "0.9.3" \
+          --component "build/macos/Build/Products/Release/teacher_dashboard_flutter.app" \
+          --install-location "/Applications" \
+          --sign "Developer ID Installer: Frank Cottone ($TEAM_ID)" \
+          "Fermi-component.pkg"
+        
+        # Create distribution XML
+        cat > distribution.xml <<EOF
+        <?xml version="1.0" encoding="utf-8"?>
+        <installer-gui-script minSpecVersion="2.0">
+            <title>Fermi</title>
+            <organization>com.fermi</organization>
+            <domains enable_localSystem="true"/>
+            <options customize="never" require-scripts="true" rootVolumeOnly="true"/>
+            <choices-outline>
+                <line choice="default">
+                    <line choice="com.fermi.teacherdashboard"/>
+                </line>
+            </choices-outline>
+            <choice id="default"/>
+            <choice id="com.fermi.teacherdashboard" visible="false">
+                <pkg-ref id="com.fermi.teacherdashboard"/>
+            </choice>
+            <pkg-ref id="com.fermi.teacherdashboard" version="0.9.3" onConclusion="none">Fermi-component.pkg</pkg-ref>
+        </installer-gui-script>
+        EOF
+        
+        # Build final installer package
+        productbuild --distribution distribution.xml \
+          --sign "Developer ID Installer: Frank Cottone ($TEAM_ID)" \
+          --timestamp \
+          "Fermi.pkg"
+    
+    - name: Notarize DMG
+      env:
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        # Submit DMG for notarization
+        echo "Submitting DMG for notarization..."
+        xcrun notarytool submit \
+          --team-id "$TEAM_ID" \
+          --apple-id "$APPLE_ID" \
+          --password "$NOTARY_PASSWORD" \
+          --wait \
+          Fermi.dmg
+        
+        # Staple the notarization ticket
+        echo "Stapling notarization ticket to DMG..."
+        xcrun stapler staple Fermi.dmg
+        
+        # Verify notarization
+        echo "Verifying notarization..."
+        spctl -a -t open --context context:primary-signature -v Fermi.dmg
+    
+    - name: Notarize PKG
+      env:
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      run: |
+        # Submit PKG for notarization
+        echo "Submitting PKG for notarization..."
+        xcrun notarytool submit \
+          --team-id "$TEAM_ID" \
+          --apple-id "$APPLE_ID" \
+          --password "$NOTARY_PASSWORD" \
+          --wait \
+          Fermi.pkg
+        
+        # Staple the notarization ticket
+        echo "Stapling notarization ticket to PKG..."
+        xcrun stapler staple Fermi.pkg
+        
+        # Verify notarization
+        echo "Verifying notarization..."
+        spctl -a -t install -v Fermi.pkg
+    
+    - name: Upload DMG artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Fermi-macOS-DMG
+        path: Fermi.dmg
+        retention-days: 7
+    
+    - name: Upload PKG artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Fermi-macOS-PKG
+        path: Fermi.pkg
+        retention-days: 7
+    
+    - name: Upload to GitHub Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          Fermi.dmg
+          Fermi.pkg
+        tag_name: ${{ github.ref_name }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Clean up keychain
+      if: always()
+      run: |
+        if [[ -f "$RUNNER_TEMP/app-signing.keychain-db" ]]; then
+          security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db"
+        fi
