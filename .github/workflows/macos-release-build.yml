@@ -166,40 +166,68 @@ jobs:
         with:
           name: macos-releases
           path: |
-            ${{ steps.create_pkg.outputs.pkg_name }}
-            ${{ steps.create_dmg.outputs.dmg_name }}
-
-      - name: Create GitHub Release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            ${{ steps.create_pkg.outputs.pkg_name }}
-            ${{ steps.create_dmg.outputs.dmg_name }}
-          name: "Fermi v${{ steps.set_version.outputs.version }}"
-          body: "Signed and notarized macOS release for ${{ steps.set_version.outputs.version }}"
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Create Manual Release
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${{ steps.set_version.outputs.version }}"
-          files: |
-            ${{ steps.create_pkg.outputs.pkg_name }}
-            ${{ steps.create_dmg.outputs.dmg_name }}
-          name: "Fermi v${{ steps.set_version.outputs.version }}"
-          body: "Signed and notarized macOS release for ${{ steps.set_version.outputs.version }}"
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            *.pkg
+            *.dmg
 
       - name: Cleanup keychain
         if: always()  # Run even on failure for security
         run: |
           security delete-keychain build.keychain
           rm -f app_cert.p12 pkg_cert.p12 profile.provisionprofile
+
+  create-release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-releases
+          path: ./
+          
+      - name: List downloaded files
+        run: ls -la
+        
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            TAG="${{ github.ref_name }}"
+            VERSION=${TAG#v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.get_version.outputs.version) || github.ref_name }}
+          name: Fermi macOS v${{ steps.get_version.outputs.version }}
+          body: |
+            ## Fermi Education Platform - macOS Release v${{ steps.get_version.outputs.version }}
+            
+            ### 📦 Installation
+            - **PKG**: Download and double-click to install
+            - **DMG**: Download, mount, and drag to Applications folder
+            
+            ### System Requirements
+            - macOS 11.0 (Big Sur) or later
+            - Apple Silicon (M1/M2/M3) or Intel processor
+            
+            ### Features
+            - ✅ Native macOS app
+            - ✅ Signed and notarized by Apple
+            - ✅ Full Firebase integration
+            - ✅ Real-time messaging
+            - ✅ Offline support
+          files: |
+            *.pkg
+            *.dmg
+          draft: false
+          prerelease: false
