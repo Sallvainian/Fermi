@@ -1,85 +1,128 @@
-name: macOS Release
+name: macOS Release Build
+
 on:
   push:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version number (e.g., 1.0.0)'
-        required: true
-        type: string
-
-env:
-  FLUTTER_VERSION: '3.32.0'
-  XCODE_VERSION: '15.4'
-  MACOS_APP_NAME: 'Fermi'
-  BUNDLE_ID: 'com.academic-tools.fermi'
 
 jobs:
   build:
-    name: Build macOS App
     runs-on: macos-14
+    env:
+      APP_NAME: Fermi
+      BUNDLE_ID: com.academic-tools.fermi
+      APP_PATH: build/macos/Build/Products/Release/Fermi.app
+      ENTITLEMENTS_PATH: macos/Runner/Release.entitlements  # Adjust if your project has a custom path
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: Setup Flutter
+      - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable  # Uses latest stable; change to '3.22.0' if needed
 
-      - name: Get Flutter dependencies
+      - name: Install dependencies
         run: flutter pub get
 
-      - name: Flutter doctor
-        run: flutter doctor -v
+      - name: Extract version from pubspec.yaml
+        id: extract_version
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-      - name: Clean Flutter build
-        run: flutter clean
-
-      - name: Enable macOS build
-        run: flutter config --enable-macos-desktop
-
-      - name: Build macOS app
+      - name: Build Flutter macOS app
         run: flutter build macos --release
 
-      - name: Create DMG
+      - name: Create temporary keychain
         run: |
-          # Create a directory for DMG contents
-          mkdir -p dmg_contents
-          
-          # Copy the app bundle to DMG contents
-          cp -R build/macos/Build/Products/Release/${{ env.MACOS_APP_NAME }}.app dmg_contents/
-          
-          # Create Applications symlink
-          ln -s /Applications dmg_contents/Applications
-          
-          # Create DMG
-          hdiutil create -volname "${{ env.MACOS_APP_NAME }}" \
-            -srcfolder dmg_contents \
-            -ov -format UDZO \
-            "${{ env.MACOS_APP_NAME }}-${{ github.event.inputs.version || github.ref_name }}.dmg"
+          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+          echo "${{ secrets.MACOS_CERTIFICATE_BASE64 }}" | base64 --decode > app_cert.p12
+          security import app_cert.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          echo "${{ secrets.MACOS_PKG_CERTIFICATE_BASE64 }}" | base64 --decode > pkg_cert.p12
+          security import pkg_cert.p12 -k build.keychain -P "${{ secrets.MACOS_CERTIFICATE_PASSWORD }}" -T /usr/bin/productsign
+          # Import provisioning profile if needed (optional for Developer ID)
+          if [ ! -z "${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}" ]; then
+            echo "${{ secrets.MACOS_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > profile.provisionprofile
+            mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+            cp profile.provisionprofile ~/Library/MobileDevice/Provisioning\ Profiles/
+          fi
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.KEYCHAIN_PASSWORD }}" build.keychain
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
 
-      - name: Upload DMG as artifact
+      - name: Create entitlements.plist (Flutter Developer ID defaults)
+        run: |
+          cat << EOF > $ENTITLEMENTS_PATH
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>com.apple.security.cs.allow-jit</key>
+              <true/>
+              <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+              <true/>
+              <key>com.apple.security.cs.disable-library-validation</key>
+              <true/>
+              <!-- Add app-specific entitlements here, e.g., network access -->
+          </dict>
+          </plist>
+          EOF
+
+      - name: Sign app bundle
+        run: |
+          codesign --deep --force --verbose --timestamp --options runtime --entitlements $ENTITLEMENTS_PATH --sign "${{ secrets.MACOS_APP_IDENTITY }}" "$APP_PATH"
+
+      - name: Create and sign PKG
+        run: |
+          productbuild --component "$APP_PATH" /Applications --sign "${{ secrets.MACOS_PKG_IDENTITY }}" --version "${{ steps.extract_version.outputs.version }}" "${APP_NAME}-${{ steps.extract_version.outputs.version }}.pkg"
+          # For more control, add --distribution distribution.xml and resources
+
+      - name: Notarize PKG
+        id: notarize_pkg
+        run: |
+          SUBMISSION_ID=$(xcrun notarytool submit "${APP_NAME}-${{ steps.extract_version.outputs.version }}.pkg" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --output-format json | jq -r '.id')
+          if [ -z "$SUBMISSION_ID" ]; then exit 1; fi
+          echo "submission_id=$SUBMISSION_ID" >> $GITHUB_OUTPUT
+          # Wait with --wait; fallback to polling if needed
+          xcrun notarytool wait "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" || {
+            for i in {1..15}; do
+              STATUS=$(xcrun notarytool info "$SUBMISSION_ID" --apple-id "${{ secrets.APPLE_ID }}" --password "${{ secrets.APPLE_ID_PASSWORD }}" --team-id "${{ secrets.APPLE_TEAM_ID }}" --output-format json | jq -r '.status')
+              if [ "$STATUS" = "Accepted" ]; then break; fi
+              if [ "$STATUS" = "Invalid" ] || [ "$STATUS" = "Rejected" ]; then exit 1; fi
+              sleep 120
+            done
+          }
+
+      - name: Staple PKG
+        run: xcrun stapler staple "${APP_NAME}-${{ steps.extract_version.outputs.version }}.pkg"
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-dmg
-          path: "*.dmg"
+          name: macos-releases
+          path: |
+            ${APP_NAME}-*.pkg
 
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: "*.dmg"
+          files: |
+            ${APP_NAME}-*.pkg
+          name: "${APP_NAME} v${{ steps.extract_version.outputs.version }}"
+          body: "Signed and notarized macOS PKG release for ${{ steps.extract_version.outputs.version }}"
           draft: false
           prerelease: false
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup keychain
+        if: always()  # Run even on failure for security
+        run: |
+          security delete-keychain build.keychain
+          rm -f app_cert.p12 pkg_cert.p12 profile.provisionprofile
