@@ -54,6 +54,12 @@ jobs:
           
           bundle install
 
+      - name: Ensure CocoaPods is installed
+        run: |
+          gem install cocoapods
+          which pod
+          pod --version
+
       - name: Set version number
         run: |
           VERSION="${{ github.event.inputs.version || github.ref_name }}"
