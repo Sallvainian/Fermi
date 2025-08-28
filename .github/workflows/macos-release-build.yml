@@ -49,15 +49,14 @@ jobs:
       - name: Build Flutter macOS app
         run: |
           # Configure Xcode to skip code signing during build
-          export FLUTTER_XCODE_CODE_SIGN_IDENTITY=""
-          export FLUTTER_XCODE_CODE_SIGNING_REQUIRED=NO
-          export FLUTTER_XCODE_CODE_SIGNING_ALLOWED=NO
+          export CODE_SIGN_IDENTITY=""
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGNING_ALLOWED=NO
           
-          # Build without code signing (we'll sign manually later)
+          # Build the app (unsigned, we'll sign manually later)
           flutter build macos --release \
             --dart-define=FLUTTER_BUILD_MODE=release \
-            --dart-define=FLUTTER_BUILD_NAME=${{ steps.set_version.outputs.version }} \
-            --no-codesign
+            --dart-define=FLUTTER_BUILD_NAME=${{ steps.set_version.outputs.version }}
 
       - name: Verify build output
         run: |
@@ -172,8 +171,8 @@ jobs:
       - name: Cleanup keychain
         if: always()  # Run even on failure for security
         run: |
-          security delete-keychain build.keychain
-          rm -f app_cert.p12 pkg_cert.p12 profile.provisionprofile
+          security delete-keychain build.keychain || true
+          rm -f app_cert.p12 pkg_cert.p12 profile.provisionprofile || true
 
   create-release:
     name: Create GitHub Release
