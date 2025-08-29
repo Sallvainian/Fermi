@@ -151,126 +151,59 @@ jobs:
           
           # Set paths
           APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
-          RELEASE_PATH="build/macos/Build/Products/Release"
           SIGN_IDENTITY="Developer ID Application: Frank Cottone ($TEAM_ID)"
           
           echo "========================================="
-          echo "Starting comprehensive code signing..."
+          echo "Starting code signing..."
           echo "========================================="
           
-          # CRITICAL: Sign all CocoaPods frameworks in Release directory FIRST
-          echo "Step 0: Signing CocoaPods frameworks in Release directory..."
-          find "$RELEASE_PATH" -name "*.framework" -maxdepth 1 -type d | while read -r framework; do
-            if [[ "$(basename "$framework")" != "teacher_dashboard_flutter.app" ]]; then
-              echo "Signing Release framework: $(basename "$framework")"
-              codesign --force --deep --timestamp --options runtime \
-                --sign "$SIGN_IDENTITY" \
-                "$framework"
-            fi
-          done
-          
-          # Step 1: Find and sign all executables and dylibs (deepest level first)
-          echo "Step 1: Signing all executables and dynamic libraries..."
-          find "$APP_PATH" -type f \( -name "*.dylib" -o -name "*.so" -o -perm +111 \) | while read -r item; do
-            # Skip if it's inside a .framework (will be signed with the framework)
-            if [[ "$item" != *".framework/"* ]]; then
-              echo "Signing: $item"
-              codesign --force --timestamp --options runtime \
-                --sign "$SIGN_IDENTITY" \
-                "$item" || echo "Warning: Failed to sign $item"
-            fi
-          done
-          
-          # Step 2: Sign all bundles in Plugins directory (Firebase, gRPC, etc.)
-          echo "Step 2: Signing all plugin bundles..."
-          if [ -d "$APP_PATH/Contents/PlugIns" ]; then
-            find "$APP_PATH/Contents/PlugIns" -name "*.bundle" -o -name "*.framework" | while read -r bundle; do
-              echo "Signing plugin: $bundle"
-              codesign --force --deep --timestamp --options runtime \
-                --sign "$SIGN_IDENTITY" \
-                "$bundle"
-            done
-          fi
-          
-          # Step 3: Sign all frameworks in Frameworks directory
-          echo "Step 3: Signing all frameworks..."
-          if [ -d "$APP_PATH/Contents/Frameworks" ]; then
-            # Sign FlutterMacOS.framework first if it exists
-            if [ -d "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework" ]; then
-              echo "Signing FlutterMacOS.framework..."
-              codesign --force --deep --timestamp --options runtime \
-                --sign "$SIGN_IDENTITY" \
-                "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework"
-            fi
-            
-            # Sign all other frameworks
-            find "$APP_PATH/Contents/Frameworks" -name "*.framework" -maxdepth 1 | while read -r framework; do
-              if [[ "$(basename "$framework")" != "FlutterMacOS.framework" ]]; then
-                echo "Signing framework: $(basename "$framework")"
-                codesign --force --deep --timestamp --options runtime \
-                  --sign "$SIGN_IDENTITY" \
-                  "$framework"
-              fi
-            done
-          fi
-          
-          # Step 4: Sign any remaining dylibs in Frameworks
-          echo "Step 4: Signing remaining dylibs in Frameworks..."
-          find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -maxdepth 1 -type f | while read -r dylib; do
-            echo "Signing dylib: $(basename "$dylib")"
-            codesign --force --timestamp --options runtime \
-              --sign "$SIGN_IDENTITY" \
-              "$dylib"
-          done
-          
-          # Step 5: Sign the main app bundle with entitlements
-          echo "Step 5: Signing the main app bundle..."
-          codesign --force --deep --timestamp --options runtime \
-            --sign "$SIGN_IDENTITY" \
+          # Simple, working approach - just sign the app bundle with --deep
+          echo "Signing the complete app bundle..."
+          codesign --force --deep --timestamp \
+            --options runtime \
             --entitlements macos/Runner/Release.entitlements \
+            --sign "$SIGN_IDENTITY" \
             "$APP_PATH"
           
-          # Step 5b: Ensure executable has correct permissions after signing
-          echo "Ensuring executable permissions..."
+          # Ensure executable has correct permissions
+          echo "Setting executable permissions..."
           chmod +x "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
           
-          # Step 6: Verify the signature
-          echo "========================================="
-          echo "Verifying code signatures..."
-          echo "========================================="
+          # Verify
+          echo "Verifying executable permissions..."
+          ls -la "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
           
-          # Verify with strict checking
-          codesign --verify --deep --strict --verbose=4 "$APP_PATH"
-          
-          # Additional verification for Gatekeeper
-          echo "Verifying for Gatekeeper..."
-          spctl -a -t execute -vvv "$APP_PATH" || echo "Note: Gatekeeper check may fail until notarized"
-          
-          # List all signed items for debugging
+          # Verify the signature
           echo "========================================="
-          echo "Listing all signed components:"
+          echo "Verifying signature..."
           echo "========================================="
-          find "$APP_PATH" -type f \( -name "*.dylib" -o -name "*.framework" -o -name "*.bundle" -o -perm +111 \) -exec codesign -dv {} \; 2>&1 | grep "Identifier=" | sort -u
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          
+          echo "========================================="
+          echo "Code signing complete!"
+          echo "========================================="
       
       - name: Create signed DMG
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Install create-dmg
-          brew install create-dmg
+          # Simple DMG creation that preserves permissions
+          echo "Creating DMG..."
           
-          # Create a DMG with proper volume settings
-          # CRITICAL: Only include the .app bundle, not the entire Release directory
-          create-dmg \
-            --volname "Fermi" \
-            --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/512.png" \
-            --window-pos 200 120 \
-            --window-size 800 529 \
-            --icon-size 130 \
-            --icon "teacher_dashboard_flutter.app" 260 250 \
-            --hide-extension "teacher_dashboard_flutter.app" \
-            --app-drop-link 540 250 \
-            --codesign "Developer ID Application: Frank Cottone (${{ secrets.APPLE_TEAM_ID }})" \
-            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg" \
-            "build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+          # Create DMG directly from the Release folder
+          hdiutil create -volname "Fermi" \
+            -srcfolder "build/macos/Build/Products/Release/" \
+            -ov -format UDZO \
+            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
+          
+          # Sign the DMG
+          echo "Signing DMG..."
+          codesign --force --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
+            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
+          
+          # Verify
+          echo "DMG created:"
+          ls -la "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
       
       - name: Notarize DMG
         env:
