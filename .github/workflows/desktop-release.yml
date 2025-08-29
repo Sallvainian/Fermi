@@ -230,6 +230,10 @@ jobs:
             --entitlements macos/Runner/Release.entitlements \
             "$APP_PATH"
           
+          # Step 5b: Ensure executable has correct permissions after signing
+          echo "Ensuring executable permissions..."
+          chmod +x "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
+          
           # Step 6: Verify the signature
           echo "========================================="
           echo "Verifying code signatures..."
