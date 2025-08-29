@@ -94,13 +94,25 @@ jobs:
           --no-tree-shake-icons \
           --dart-define=FLUTTER_BUILD_MODE=release
         
-        # Set app path
+        # Set paths
         APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+        RELEASE_PATH="build/macos/Build/Products/Release"
         SIGN_IDENTITY="Developer ID Application: Frank Cottone ($TEAM_ID)"
         
         echo "========================================="
         echo "Starting comprehensive code signing..."
         echo "========================================="
+        
+        # CRITICAL: Sign all CocoaPods frameworks in Release directory FIRST
+        echo "Step 0: Signing CocoaPods frameworks in Release directory..."
+        find "$RELEASE_PATH" -name "*.framework" -maxdepth 1 -type d | while read -r framework; do
+          if [[ "$(basename "$framework")" != "teacher_dashboard_flutter.app" ]]; then
+            echo "Signing Release framework: $(basename "$framework")"
+            codesign --force --deep --timestamp --options runtime \
+              --sign "$SIGN_IDENTITY" \
+              "$framework"
+          fi
+        done
         
         # Step 1: Find and sign all executables and dylibs (deepest level first)
         echo "Step 1: Signing all executables and dynamic libraries..."
@@ -187,6 +199,7 @@ jobs:
         brew install create-dmg
         
         # Create a DMG with proper volume settings
+        # CRITICAL: Only include the .app bundle, not the entire Release directory
         create-dmg \
           --volname "Fermi" \
           --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/512.png" \
@@ -198,7 +211,7 @@ jobs:
           --app-drop-link 540 250 \
           --codesign "Developer ID Application: Frank Cottone (${{ secrets.APPLE_TEAM_ID }})" \
           "Fermi.dmg" \
-          "build/macos/Build/Products/Release/"
+          "build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
     
     
     - name: Notarize DMG
