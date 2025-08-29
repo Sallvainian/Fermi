@@ -160,13 +160,12 @@ jobs:
           
           cd ..
           
-          # Build the Flutter macOS app with signing disabled (we'll sign manually after)
+          # Build the Flutter macOS app
           flutter build macos --release \
             --build-name=${{ steps.get_version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --no-tree-shake-icons \
-            --dart-define=FLUTTER_BUILD_MODE=release \
-            --no-codesign
+            --dart-define=FLUTTER_BUILD_MODE=release
           
           # Set paths
           APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
@@ -176,8 +175,8 @@ jobs:
           echo "Starting code signing..."
           echo "========================================="
           
-          # Sign the app bundle
-          echo "Signing the complete app bundle..."
+          # Re-sign the app bundle with Developer ID certificate (overriding Flutter's signing)
+          echo "Re-signing the app bundle with Developer ID certificate..."
           codesign --force --deep --timestamp \
             --options runtime \
             --entitlements macos/Runner/Release.entitlements \
