@@ -230,16 +230,26 @@ jobs:
           # Clean up zip
           rm "app-for-notarization.zip"
       
-      - name: Create DMG (without codesign flag)
+      - name: Install create-dmg
         run: |
-          # Create DMG without --codesign flag to preserve permissions
-          echo "Creating DMG..."
+          brew install create-dmg
+      
+      - name: Create DMG with proper permissions
+        run: |
+          # Create DMG using create-dmg which preserves executable permissions
+          echo "Creating DMG with create-dmg..."
           
-          # Create DMG from the notarized app bundle
-          hdiutil create -volname "Fermi" \
-            -srcfolder "build/macos/Build/Products/Release/" \
-            -ov -format UDZO \
-            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
+          create-dmg \
+            --volname "Fermi" \
+            --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "teacher_dashboard_flutter.app" 200 190 \
+            --hide-extension "teacher_dashboard_flutter.app" \
+            --app-drop-link 600 185 \
+            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg" \
+            "build/macos/Build/Products/Release/"
           
           # Verify DMG was created
           echo "DMG created:"
