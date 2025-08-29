@@ -94,15 +94,51 @@ jobs:
           --no-tree-shake-icons \
           --dart-define=FLUTTER_BUILD_MODE=release
         
-        # Re-sign the app bundle with Developer ID certificate
-        codesign --deep --force --verify --verbose \
+        # First, sign all embedded frameworks individually
+        echo "Signing embedded frameworks..."
+        APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+        
+        # Sign FlutterMacOS.framework first (if it exists)
+        if [ -d "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework" ]; then
+          codesign --force --deep --verbose --timestamp \
+            --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
+            --options runtime \
+            "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework"
+        fi
+        
+        # Sign all other frameworks
+        for framework in "$APP_PATH/Contents/Frameworks/"*.framework; do
+          if [ -d "$framework" ] && [ "$(basename "$framework")" != "FlutterMacOS.framework" ]; then
+            echo "Signing framework: $(basename "$framework")"
+            codesign --force --deep --verbose --timestamp \
+              --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
+              --options runtime \
+              "$framework"
+          fi
+        done
+        
+        # Sign any dylibs in Frameworks
+        for dylib in "$APP_PATH/Contents/Frameworks/"*.dylib; do
+          if [ -f "$dylib" ]; then
+            echo "Signing dylib: $(basename "$dylib")"
+            codesign --force --verbose --timestamp \
+              --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
+              --options runtime \
+              "$dylib"
+          fi
+        done
+        
+        # Now sign the entire app bundle
+        echo "Signing the complete app bundle..."
+        codesign --force --deep --verbose --timestamp \
           --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
           --options runtime \
           --entitlements macos/Runner/Release.entitlements \
-          "build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+          "$APP_PATH"
         
-        # Verify the signature
-        codesign --verify --verbose "build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+        # Verify the signature with strict checking
+        echo "Verifying code signature..."
+        codesign --verify --deep --strict --verbose=4 "$APP_PATH"
     
     - name: Create signed DMG
       run: |
@@ -226,6 +262,10 @@ jobs:
         # Verify notarization
         echo "Verifying notarization..."
         spctl -a -t open --context context:primary-signature -v Fermi.dmg
+        
+        # Additional Gatekeeper verification
+        echo "Verifying Gatekeeper acceptance..."
+        spctl --assess --type install -vvv Fermi.dmg
     
     
     - name: Upload DMG artifact
