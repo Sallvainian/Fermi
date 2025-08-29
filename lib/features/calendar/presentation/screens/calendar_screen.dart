@@ -129,7 +129,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: PopupMenuButton<EventType?>(
-                        initialValue: _selectedFilter,
+                        value: _selectedFilter,
                         onSelected: (value) {
                           setState(() {
                             _selectedFilter = value;
@@ -1512,7 +1512,7 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
 
                   // Type Dropdown
                   DropdownButtonFormField<EventType>(
-                    initialValue: _selectedType,
+                    value: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Event Type',
                       border: OutlineInputBorder(),
@@ -1654,7 +1654,7 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
 
                   if (_hasReminder) ...[
                     DropdownButtonFormField<int>(
-                      initialValue: _reminderMinutes,
+                      value: _reminderMinutes,
                       decoration: const InputDecoration(
                         labelText: 'Reminder Time',
                         border: OutlineInputBorder(),
