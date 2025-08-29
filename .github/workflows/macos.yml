@@ -120,8 +120,6 @@ jobs:
           --hide-extension "teacher_dashboard_flutter.app" \
           --app-drop-link 540 250 \
           --codesign "Developer ID Application: Frank Cottone (${{ secrets.APPLE_TEAM_ID }})" \
-          --notarize "${{ secrets.APPLE_ID }}" \
-          --notarize-password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
           "Fermi.dmg" \
           "build/macos/Build/Products/Release/"
     
