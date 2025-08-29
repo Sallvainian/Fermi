@@ -148,15 +148,15 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE_SPECIFIER ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           
-          # Use plutil to modify the project file more reliably
-          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.CODE_SIGN_STYLE' -string "Manual" Runner.xcodeproj/project.pbxproj
-          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.CODE_SIGN_IDENTITY' -string "Developer ID Application" Runner.xcodeproj/project.pbxproj
-          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.DEVELOPMENT_TEAM' -string "$TEAM_ID" Runner.xcodeproj/project.pbxproj
-          plutil -remove 'objects.33CC10E92044A3C60003C045.buildSettings.PROVISIONING_PROFILE_SPECIFIER' Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          # Use PlistBuddy to modify the project file (plutil doesn't work for .pbxproj files)
+          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:CODE_SIGN_STYLE Manual" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:CODE_SIGN_IDENTITY 'Developer ID Application'" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:DEVELOPMENT_TEAM $TEAM_ID" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Delete :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           
           # Also update for Release configuration
-          plutil -replace 'objects.33CC111C2044C6BA0003C045.buildSettings.CODE_SIGN_IDENTITY' -string "Developer ID Application" Runner.xcodeproj/project.pbxproj
-          plutil -replace 'objects.33CC111C2044C6BA0003C045.buildSettings.PROVISIONING_PROFILE_SPECIFIER' -string "" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Set :objects:33CC111C2044C6BA0003C045:buildSettings:CODE_SIGN_IDENTITY 'Developer ID Application'" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Set :objects:33CC111C2044C6BA0003C045:buildSettings:PROVISIONING_PROFILE_SPECIFIER ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           
           cd ..
           
