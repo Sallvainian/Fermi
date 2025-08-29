@@ -123,44 +123,6 @@ jobs:
           "Fermi.dmg" \
           "build/macos/Build/Products/Release/"
     
-    - name: Create signed PKG installer
-      env:
-        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      run: |
-        # Create component package
-        pkgbuild --identifier "com.fermi.teacherdashboard" \
-          --version "0.9.3" \
-          --component "build/macos/Build/Products/Release/teacher_dashboard_flutter.app" \
-          --install-location "/Applications" \
-          --sign "Developer ID Installer: Frank Cottone ($TEAM_ID)" \
-          "Fermi-component.pkg"
-        
-        # Create distribution XML
-        cat > distribution.xml <<EOF
-        <?xml version="1.0" encoding="utf-8"?>
-        <installer-gui-script minSpecVersion="2.0">
-            <title>Fermi</title>
-            <organization>com.fermi</organization>
-            <domains enable_localSystem="true"/>
-            <options customize="never" require-scripts="true" rootVolumeOnly="true"/>
-            <choices-outline>
-                <line choice="default">
-                    <line choice="com.fermi.teacherdashboard"/>
-                </line>
-            </choices-outline>
-            <choice id="default"/>
-            <choice id="com.fermi.teacherdashboard" visible="false">
-                <pkg-ref id="com.fermi.teacherdashboard"/>
-            </choice>
-            <pkg-ref id="com.fermi.teacherdashboard" version="0.9.3" onConclusion="none">Fermi-component.pkg</pkg-ref>
-        </installer-gui-script>
-        EOF
-        
-        # Build final installer package
-        productbuild --distribution distribution.xml \
-          --sign "Developer ID Installer: Frank Cottone ($TEAM_ID)" \
-          --timestamp \
-          "Fermi.pkg"
     
     - name: Notarize DMG
       env:
@@ -185,28 +147,6 @@ jobs:
         echo "Verifying notarization..."
         spctl -a -t open --context context:primary-signature -v Fermi.dmg
     
-    - name: Notarize PKG
-      env:
-        APPLE_ID: ${{ secrets.APPLE_ID }}
-        NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-        TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      run: |
-        # Submit PKG for notarization
-        echo "Submitting PKG for notarization..."
-        xcrun notarytool submit \
-          --team-id "$TEAM_ID" \
-          --apple-id "$APPLE_ID" \
-          --password "$NOTARY_PASSWORD" \
-          --wait \
-          Fermi.pkg
-        
-        # Staple the notarization ticket
-        echo "Stapling notarization ticket to PKG..."
-        xcrun stapler staple Fermi.pkg
-        
-        # Verify notarization
-        echo "Verifying notarization..."
-        spctl -a -t install -v Fermi.pkg
     
     - name: Upload DMG artifact
       uses: actions/upload-artifact@v4
@@ -215,12 +155,6 @@ jobs:
         path: Fermi.dmg
         retention-days: 7
     
-    - name: Upload PKG artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Fermi-macOS-PKG
-        path: Fermi.pkg
-        retention-days: 7
     
     - name: Clean up keychain
       if: always()
@@ -247,11 +181,6 @@ jobs:
           name: Fermi-macOS-DMG
           path: ./
       
-      - name: Download PKG artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: Fermi-macOS-PKG
-          path: ./
       
       - name: Get version
         id: get_version
@@ -276,11 +205,10 @@ jobs:
             
             ### 📦 Installation
             
-            Download one of the installers below:
-            - **Fermi.dmg** - Drag and drop installer (recommended)
-            - **Fermi.pkg** - Standard macOS package installer
+            Download the installer below:
+            - **Fermi.dmg** - Drag and drop installer
             
-            Both installers are signed and notarized by Apple.
+            The installer is signed and notarized by Apple.
             
             ### System Requirements
             - macOS 10.15 (Catalina) or later
@@ -300,7 +228,6 @@ jobs:
             See the auto-generated release notes below for details.
           files: |
             Fermi.dmg
-            Fermi.pkg
           generate_release_notes: true
           draft: false
           prerelease: false
