@@ -94,51 +94,92 @@ jobs:
           --no-tree-shake-icons \
           --dart-define=FLUTTER_BUILD_MODE=release
         
-        # First, sign all embedded frameworks individually
-        echo "Signing embedded frameworks..."
+        # Set app path
         APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+        SIGN_IDENTITY="Developer ID Application: Frank Cottone ($TEAM_ID)"
         
-        # Sign FlutterMacOS.framework first (if it exists)
-        if [ -d "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework" ]; then
-          codesign --force --deep --verbose --timestamp \
-            --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
-            --options runtime \
-            "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework"
+        echo "========================================="
+        echo "Starting comprehensive code signing..."
+        echo "========================================="
+        
+        # Step 1: Find and sign all executables and dylibs (deepest level first)
+        echo "Step 1: Signing all executables and dynamic libraries..."
+        find "$APP_PATH" -type f \( -name "*.dylib" -o -name "*.so" -o -perm +111 \) | while read -r item; do
+          # Skip if it's inside a .framework (will be signed with the framework)
+          if [[ "$item" != *".framework/"* ]]; then
+            echo "Signing: $item"
+            codesign --force --timestamp --options runtime \
+              --sign "$SIGN_IDENTITY" \
+              "$item" || echo "Warning: Failed to sign $item"
+          fi
+        done
+        
+        # Step 2: Sign all bundles in Plugins directory (Firebase, gRPC, etc.)
+        echo "Step 2: Signing all plugin bundles..."
+        if [ -d "$APP_PATH/Contents/PlugIns" ]; then
+          find "$APP_PATH/Contents/PlugIns" -name "*.bundle" -o -name "*.framework" | while read -r bundle; do
+            echo "Signing plugin: $bundle"
+            codesign --force --deep --timestamp --options runtime \
+              --sign "$SIGN_IDENTITY" \
+              "$bundle"
+          done
         fi
         
-        # Sign all other frameworks
-        for framework in "$APP_PATH/Contents/Frameworks/"*.framework; do
-          if [ -d "$framework" ] && [ "$(basename "$framework")" != "FlutterMacOS.framework" ]; then
-            echo "Signing framework: $(basename "$framework")"
-            codesign --force --deep --verbose --timestamp \
-              --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
-              --options runtime \
-              "$framework"
+        # Step 3: Sign all frameworks in Frameworks directory
+        echo "Step 3: Signing all frameworks..."
+        if [ -d "$APP_PATH/Contents/Frameworks" ]; then
+          # Sign FlutterMacOS.framework first if it exists
+          if [ -d "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework" ]; then
+            echo "Signing FlutterMacOS.framework..."
+            codesign --force --deep --timestamp --options runtime \
+              --sign "$SIGN_IDENTITY" \
+              "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework"
           fi
+          
+          # Sign all other frameworks
+          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -maxdepth 1 | while read -r framework; do
+            if [[ "$(basename "$framework")" != "FlutterMacOS.framework" ]]; then
+              echo "Signing framework: $(basename "$framework")"
+              codesign --force --deep --timestamp --options runtime \
+                --sign "$SIGN_IDENTITY" \
+                "$framework"
+            fi
+          done
+        fi
+        
+        # Step 4: Sign any remaining dylibs in Frameworks
+        echo "Step 4: Signing remaining dylibs in Frameworks..."
+        find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -maxdepth 1 -type f | while read -r dylib; do
+          echo "Signing dylib: $(basename "$dylib")"
+          codesign --force --timestamp --options runtime \
+            --sign "$SIGN_IDENTITY" \
+            "$dylib"
         done
         
-        # Sign any dylibs in Frameworks
-        for dylib in "$APP_PATH/Contents/Frameworks/"*.dylib; do
-          if [ -f "$dylib" ]; then
-            echo "Signing dylib: $(basename "$dylib")"
-            codesign --force --verbose --timestamp \
-              --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
-              --options runtime \
-              "$dylib"
-          fi
-        done
-        
-        # Now sign the entire app bundle
-        echo "Signing the complete app bundle..."
-        codesign --force --deep --verbose --timestamp \
-          --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
-          --options runtime \
+        # Step 5: Sign the main app bundle with entitlements
+        echo "Step 5: Signing the main app bundle..."
+        codesign --force --deep --timestamp --options runtime \
+          --sign "$SIGN_IDENTITY" \
           --entitlements macos/Runner/Release.entitlements \
           "$APP_PATH"
         
-        # Verify the signature with strict checking
-        echo "Verifying code signature..."
+        # Step 6: Verify the signature
+        echo "========================================="
+        echo "Verifying code signatures..."
+        echo "========================================="
+        
+        # Verify with strict checking
         codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+        
+        # Additional verification for Gatekeeper
+        echo "Verifying for Gatekeeper..."
+        spctl -a -t execute -vvv "$APP_PATH" || echo "Note: Gatekeeper check may fail until notarized"
+        
+        # List all signed items for debugging
+        echo "========================================="
+        echo "Listing all signed components:"
+        echo "========================================="
+        find "$APP_PATH" -type f \( -name "*.dylib" -o -name "*.framework" -o -name "*.bundle" -o -perm +111 \) -exec codesign -dv {} \; 2>&1 | grep "Identifier=" | sort -u
     
     - name: Create signed DMG
       run: |
