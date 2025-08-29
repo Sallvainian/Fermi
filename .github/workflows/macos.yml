@@ -32,6 +32,27 @@ jobs:
       with:
         flutter-version: '3.32.0'
         channel: 'stable'
+        cache: true
+    
+    - name: Cache CocoaPods
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cocoapods
+          macos/Pods
+        key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pods-
+    
+    - name: Cache Flutter dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.pub-cache
+          .dart_tool
+        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pub-
     
     - name: Install dependencies
       run: flutter pub get
@@ -66,10 +87,12 @@ jobs:
       env:
         TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       run: |
-        # Build the Flutter macOS app
+        # Build the Flutter macOS app with optimizations
         flutter build macos --release \
           --build-name=0.9.3 \
-          --build-number=${{ github.run_number }}
+          --build-number=${{ github.run_number }} \
+          --no-tree-shake-icons \
+          --dart-define=FLUTTER_BUILD_MODE=release
         
         # Re-sign the app bundle with Developer ID certificate
         codesign --deep --force --verify --verbose \
