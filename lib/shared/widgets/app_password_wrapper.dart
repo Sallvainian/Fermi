@@ -103,7 +103,7 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     if (!_isUnlocked) {
       // Show password screen
       return MaterialApp(
-        title: 'Fermi Education Platform',
+        title: 'Fermi+',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,

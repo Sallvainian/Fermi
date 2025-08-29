@@ -150,7 +150,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                     
                     // Title
                     Text(
-                      'Fermi Education Platform',
+                      'Fermi+',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
