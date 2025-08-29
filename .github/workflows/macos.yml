@@ -156,21 +156,62 @@ jobs:
           --team-id "$TEAM_ID" \
           --password "$NOTARY_PASSWORD"
         
-        # Submit DMG for notarization using stored profile
+        # Submit DMG for notarization using stored profile and capture submission ID
         echo "Submitting DMG for notarization..."
-        if ! xcrun notarytool submit Fermi.dmg \
+        SUBMISSION_OUTPUT=$(xcrun notarytool submit Fermi.dmg \
           --keychain-profile "notarytool-profile" \
-          --wait \
-          --verbose; then
-          echo "Error: Notarization submission failed"
+          --verbose 2>&1)
+        
+        echo "$SUBMISSION_OUTPUT"
+        
+        # Extract submission ID from output
+        SUBMISSION_ID=$(echo "$SUBMISSION_OUTPUT" | grep -oE 'id: [a-f0-9\-]+' | head -1 | cut -d' ' -f2)
+        
+        if [ -z "$SUBMISSION_ID" ]; then
+          echo "Error: Failed to get submission ID from notarytool"
           echo "Attempting to get notarization history..."
           xcrun notarytool history --keychain-profile "notarytool-profile" || true
           exit 1
         fi
         
-        # Wait a moment for the ticket to be available
-        echo "Waiting for notarization ticket to be available..."
-        sleep 10
+        echo "Submission ID: $SUBMISSION_ID"
+        
+        # Poll for notarization completion (up to 10 minutes)
+        echo "Waiting for notarization to complete..."
+        for i in {1..60}; do
+          echo "Checking notarization status (attempt $i/60)..."
+          STATUS_OUTPUT=$(xcrun notarytool info "$SUBMISSION_ID" \
+            --keychain-profile "notarytool-profile" 2>&1)
+          
+          if echo "$STATUS_OUTPUT" | grep -q "status: Accepted"; then
+            echo "Notarization accepted!"
+            break
+          elif echo "$STATUS_OUTPUT" | grep -q "status: Invalid"; then
+            echo "Error: Notarization was rejected"
+            echo "$STATUS_OUTPUT"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --keychain-profile "notarytool-profile" || true
+            exit 1
+          elif echo "$STATUS_OUTPUT" | grep -q "status: In Progress"; then
+            echo "Still in progress..."
+            sleep 10
+          else
+            echo "Unknown status:"
+            echo "$STATUS_OUTPUT"
+            sleep 10
+          fi
+          
+          if [ $i -eq 60 ]; then
+            echo "Error: Notarization timed out after 10 minutes"
+            xcrun notarytool log "$SUBMISSION_ID" \
+              --keychain-profile "notarytool-profile" || true
+            exit 1
+          fi
+        done
+        
+        # Extra wait to ensure ticket is propagated
+        echo "Waiting for notarization ticket to propagate..."
+        sleep 15
         
         # Staple the notarization ticket
         echo "Stapling notarization ticket to DMG..."
