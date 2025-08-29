@@ -20,6 +20,7 @@ import 'shared/theme/app_typography.dart';
 import 'shared/widgets/splash_screen.dart';
 import 'shared/widgets/pwa_update_notifier.dart';
 import 'shared/widgets/web_notification_handler.dart';
+import 'shared/widgets/app_password_wrapper.dart';
 
 /// Public getter for Firebase initialization status.
 bool get isFirebaseInitialized => AppInitializer.isFirebaseInitialized;
@@ -66,7 +67,9 @@ Future<void> main() async {
             'Note: .env file not found or could not be loaded. Using defaults.');
       }
 
-      runApp(const InitializationWrapper());
+      runApp(const AppPasswordWrapper(
+        child: InitializationWrapper(),
+      ));
     },
     (error, stack) {
       // Zone error handler - catches errors not caught elsewhere
