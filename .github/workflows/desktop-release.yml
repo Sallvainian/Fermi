@@ -148,62 +148,49 @@ jobs:
           /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE_SPECIFIER ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           
-          # Use PlistBuddy to modify the project file (plutil doesn't work for .pbxproj files)
-          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:CODE_SIGN_STYLE Manual" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:CODE_SIGN_IDENTITY 'Developer ID Application'" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:DEVELOPMENT_TEAM $TEAM_ID" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Delete :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE_SPECIFIER" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          # Use plutil to modify the project file more reliably
+          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.CODE_SIGN_STYLE' -string "Manual" Runner.xcodeproj/project.pbxproj
+          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.CODE_SIGN_IDENTITY' -string "Developer ID Application" Runner.xcodeproj/project.pbxproj
+          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.DEVELOPMENT_TEAM' -string "$TEAM_ID" Runner.xcodeproj/project.pbxproj
+          plutil -remove 'objects.33CC10E92044A3C60003C045.buildSettings.PROVISIONING_PROFILE_SPECIFIER' Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           
           # Also update for Release configuration
-          /usr/libexec/PlistBuddy -c "Set :objects:33CC111C2044C6BA0003C045:buildSettings:CODE_SIGN_IDENTITY 'Developer ID Application'" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
-          /usr/libexec/PlistBuddy -c "Set :objects:33CC111C2044C6BA0003C045:buildSettings:PROVISIONING_PROFILE_SPECIFIER ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          plutil -replace 'objects.33CC111C2044C6BA0003C045.buildSettings.CODE_SIGN_IDENTITY' -string "Developer ID Application" Runner.xcodeproj/project.pbxproj
+          plutil -replace 'objects.33CC111C2044C6BA0003C045.buildSettings.PROVISIONING_PROFILE_SPECIFIER' -string "" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
           
           cd ..
           
-          # Build the Flutter macOS app
+          # Build the Flutter macOS app with signing disabled (we'll sign manually after)
           flutter build macos --release \
             --build-name=${{ steps.get_version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --no-tree-shake-icons \
-            --dart-define=FLUTTER_BUILD_MODE=release
+            --dart-define=FLUTTER_BUILD_MODE=release \
+            --no-codesign
           
           # Set paths
           APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
           SIGN_IDENTITY="Developer ID Application: Frank Cottone ($TEAM_ID)"
           
           echo "========================================="
-          echo "Preparing for code signing..."
+          echo "Starting code signing..."
           echo "========================================="
           
-          # CRITICAL: Set executable permissions BEFORE signing (modifying after breaks signature)
-          echo "Setting executable permissions BEFORE signing..."
-          chmod +x "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
-          
-          # Verify permissions are set
-          echo "Verifying executable permissions..."
-          ls -la "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
-          
-          # Sign frameworks first (inside out)
-          echo "Signing frameworks..."
-          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -o -name "*.dylib" | while read -r framework; do
-            codesign --force --timestamp --options runtime --sign "$SIGN_IDENTITY" "$framework"
-          done
-          
-          # Now sign the main executable
-          echo "Signing main executable..."
-          codesign --force --timestamp \
-            --options runtime \
-            --entitlements macos/Runner/Release.entitlements \
-            --sign "$SIGN_IDENTITY" \
-            "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
-          
-          # Finally sign the app bundle
-          echo "Signing the app bundle..."
-          codesign --force --timestamp \
+          # Sign the app bundle
+          echo "Signing the complete app bundle..."
+          codesign --force --deep --timestamp \
             --options runtime \
             --entitlements macos/Runner/Release.entitlements \
             --sign "$SIGN_IDENTITY" \
             "$APP_PATH"
+          
+          # CRITICAL: Ensure executable has correct permissions AFTER signing
+          echo "Setting executable permissions..."
+          chmod +x "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
+          
+          # Verify
+          echo "Verifying executable permissions..."
+          ls -la "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
           
           # Verify the signature
           echo "========================================="
@@ -244,26 +231,16 @@ jobs:
           # Clean up zip
           rm "app-for-notarization.zip"
       
-      - name: Install create-dmg
+      - name: Create DMG (without codesign flag)
         run: |
-          brew install create-dmg
-      
-      - name: Create DMG with proper permissions
-        run: |
-          # Create DMG using create-dmg which preserves executable permissions
-          echo "Creating DMG with create-dmg..."
+          # Create DMG without --codesign flag to preserve permissions
+          echo "Creating DMG..."
           
-          create-dmg \
-            --volname "Fermi" \
-            --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png" \
-            --window-pos 200 120 \
-            --window-size 800 400 \
-            --icon-size 100 \
-            --icon "teacher_dashboard_flutter.app" 200 190 \
-            --hide-extension "teacher_dashboard_flutter.app" \
-            --app-drop-link 600 185 \
-            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg" \
-            "build/macos/Build/Products/Release/"
+          # Create DMG from the notarized app bundle
+          hdiutil create -volname "Fermi" \
+            -srcfolder "build/macos/Build/Products/Release/" \
+            -ov -format UDZO \
+            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
           
           # Verify DMG was created
           echo "DMG created:"
