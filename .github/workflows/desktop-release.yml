@@ -1,0 +1,490 @@
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 0.9.4)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Get version
+        id: get_version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version || '0.9.4' }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build Windows app
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_FUNCTIONS_REGION: ${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+        run: flutter build windows --release --build-name=${{ steps.get_version.outputs.version }} --build-number=${{ github.run_number }} --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} --dart-define=FIREBASE_FUNCTIONS_REGION=${{ secrets.FIREBASE_FUNCTIONS_REGION }}
+
+      - name: Create portable ZIP
+        shell: powershell
+        run: |
+          $version = "${{ steps.get_version.outputs.version }}"
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath "Fermi-Windows-v${version}.zip"
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
+          retention-days: 7
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: 'stable'
+          cache: true
+      
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cocoapods
+            macos/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+      
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+      
+      - name: Install dependencies
+        run: flutter pub get
+      
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version || '0.9.4' }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Setup certificates for code signing
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.CSC_LINK }}
+          P12_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        run: |
+          # Create variables
+          CERTIFICATE_PATH="$RUNNER_TEMP/build_certificate.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          
+          # Import certificate from secrets
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          
+          # Import certificate to keychain
+          security import "$CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          
+          # Find the signing identity
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+      
+      - name: Build macOS app with code signing
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Build the Flutter macOS app with optimizations
+          flutter build macos --release \
+            --build-name=${{ steps.get_version.outputs.version }} \
+            --build-number=${{ github.run_number }} \
+            --no-tree-shake-icons \
+            --dart-define=FLUTTER_BUILD_MODE=release
+          
+          # Set paths
+          APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+          RELEASE_PATH="build/macos/Build/Products/Release"
+          SIGN_IDENTITY="Developer ID Application: Frank Cottone ($TEAM_ID)"
+          
+          echo "========================================="
+          echo "Starting comprehensive code signing..."
+          echo "========================================="
+          
+          # CRITICAL: Sign all CocoaPods frameworks in Release directory FIRST
+          echo "Step 0: Signing CocoaPods frameworks in Release directory..."
+          find "$RELEASE_PATH" -name "*.framework" -maxdepth 1 -type d | while read -r framework; do
+            if [[ "$(basename "$framework")" != "teacher_dashboard_flutter.app" ]]; then
+              echo "Signing Release framework: $(basename "$framework")"
+              codesign --force --deep --timestamp --options runtime \
+                --sign "$SIGN_IDENTITY" \
+                "$framework"
+            fi
+          done
+          
+          # Step 1: Find and sign all executables and dylibs (deepest level first)
+          echo "Step 1: Signing all executables and dynamic libraries..."
+          find "$APP_PATH" -type f \( -name "*.dylib" -o -name "*.so" -o -perm +111 \) | while read -r item; do
+            # Skip if it's inside a .framework (will be signed with the framework)
+            if [[ "$item" != *".framework/"* ]]; then
+              echo "Signing: $item"
+              codesign --force --timestamp --options runtime \
+                --sign "$SIGN_IDENTITY" \
+                "$item" || echo "Warning: Failed to sign $item"
+            fi
+          done
+          
+          # Step 2: Sign all bundles in Plugins directory (Firebase, gRPC, etc.)
+          echo "Step 2: Signing all plugin bundles..."
+          if [ -d "$APP_PATH/Contents/PlugIns" ]; then
+            find "$APP_PATH/Contents/PlugIns" -name "*.bundle" -o -name "*.framework" | while read -r bundle; do
+              echo "Signing plugin: $bundle"
+              codesign --force --deep --timestamp --options runtime \
+                --sign "$SIGN_IDENTITY" \
+                "$bundle"
+            done
+          fi
+          
+          # Step 3: Sign all frameworks in Frameworks directory
+          echo "Step 3: Signing all frameworks..."
+          if [ -d "$APP_PATH/Contents/Frameworks" ]; then
+            # Sign FlutterMacOS.framework first if it exists
+            if [ -d "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework" ]; then
+              echo "Signing FlutterMacOS.framework..."
+              codesign --force --deep --timestamp --options runtime \
+                --sign "$SIGN_IDENTITY" \
+                "$APP_PATH/Contents/Frameworks/FlutterMacOS.framework"
+            fi
+            
+            # Sign all other frameworks
+            find "$APP_PATH/Contents/Frameworks" -name "*.framework" -maxdepth 1 | while read -r framework; do
+              if [[ "$(basename "$framework")" != "FlutterMacOS.framework" ]]; then
+                echo "Signing framework: $(basename "$framework")"
+                codesign --force --deep --timestamp --options runtime \
+                  --sign "$SIGN_IDENTITY" \
+                  "$framework"
+              fi
+            done
+          fi
+          
+          # Step 4: Sign any remaining dylibs in Frameworks
+          echo "Step 4: Signing remaining dylibs in Frameworks..."
+          find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -maxdepth 1 -type f | while read -r dylib; do
+            echo "Signing dylib: $(basename "$dylib")"
+            codesign --force --timestamp --options runtime \
+              --sign "$SIGN_IDENTITY" \
+              "$dylib"
+          done
+          
+          # Step 5: Sign the main app bundle with entitlements
+          echo "Step 5: Signing the main app bundle..."
+          codesign --force --deep --timestamp --options runtime \
+            --sign "$SIGN_IDENTITY" \
+            --entitlements macos/Runner/Release.entitlements \
+            "$APP_PATH"
+          
+          # Step 6: Verify the signature
+          echo "========================================="
+          echo "Verifying code signatures..."
+          echo "========================================="
+          
+          # Verify with strict checking
+          codesign --verify --deep --strict --verbose=4 "$APP_PATH"
+          
+          # Additional verification for Gatekeeper
+          echo "Verifying for Gatekeeper..."
+          spctl -a -t execute -vvv "$APP_PATH" || echo "Note: Gatekeeper check may fail until notarized"
+          
+          # List all signed items for debugging
+          echo "========================================="
+          echo "Listing all signed components:"
+          echo "========================================="
+          find "$APP_PATH" -type f \( -name "*.dylib" -o -name "*.framework" -o -name "*.bundle" -o -perm +111 \) -exec codesign -dv {} \; 2>&1 | grep "Identifier=" | sort -u
+      
+      - name: Create signed DMG
+        run: |
+          # Install create-dmg
+          brew install create-dmg
+          
+          # Create a DMG with proper volume settings
+          # CRITICAL: Only include the .app bundle, not the entire Release directory
+          create-dmg \
+            --volname "Fermi" \
+            --volicon "macos/Runner/Assets.xcassets/AppIcon.appiconset/512.png" \
+            --window-pos 200 120 \
+            --window-size 800 529 \
+            --icon-size 130 \
+            --icon "teacher_dashboard_flutter.app" 260 250 \
+            --hide-extension "teacher_dashboard_flutter.app" \
+            --app-drop-link 540 250 \
+            --codesign "Developer ID Application: Frank Cottone (${{ secrets.APPLE_TEAM_ID }})" \
+            "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg" \
+            "build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+      
+      - name: Notarize DMG
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Debug: Check if environment variables are set
+          echo "Checking credentials..."
+          if [ -z "$APPLE_ID" ]; then
+            echo "Error: APPLE_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "$NOTARY_PASSWORD" ]; then
+            echo "Error: APPLE_APP_SPECIFIC_PASSWORD secret is not set"
+            exit 1
+          fi
+          if [ -z "$TEAM_ID" ]; then
+            echo "Error: APPLE_TEAM_ID secret is not set"
+            exit 1
+          fi
+          echo "All credentials are present"
+          echo "Apple ID: ${APPLE_ID}"
+          echo "Team ID: ${TEAM_ID}"
+          echo "Password length: ${#NOTARY_PASSWORD} characters"
+          
+          # Store credentials in keychain for notarytool
+          echo "Storing notarization credentials..."
+          xcrun notarytool store-credentials "notarytool-profile" \
+            --apple-id "$APPLE_ID" \
+            --team-id "$TEAM_ID" \
+            --password "$NOTARY_PASSWORD"
+          
+          # Submit DMG for notarization using stored profile and capture submission ID
+          echo "Submitting DMG for notarization..."
+          SUBMISSION_OUTPUT=$(xcrun notarytool submit "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg" \
+            --keychain-profile "notarytool-profile" \
+            --verbose 2>&1)
+          
+          echo "$SUBMISSION_OUTPUT"
+          
+          # Extract submission ID from output
+          SUBMISSION_ID=$(echo "$SUBMISSION_OUTPUT" | grep -oE 'id: [a-f0-9\-]+' | head -1 | cut -d' ' -f2)
+          
+          if [ -z "$SUBMISSION_ID" ]; then
+            echo "Error: Failed to get submission ID from notarytool"
+            echo "Attempting to get notarization history..."
+            xcrun notarytool history --keychain-profile "notarytool-profile" || true
+            exit 1
+          fi
+          
+          echo "Submission ID: $SUBMISSION_ID"
+          
+          # Poll for notarization completion (up to 10 minutes)
+          echo "Waiting for notarization to complete..."
+          for i in {1..60}; do
+            echo "Checking notarization status (attempt $i/60)..."
+            STATUS_OUTPUT=$(xcrun notarytool info "$SUBMISSION_ID" \
+              --keychain-profile "notarytool-profile" 2>&1)
+            
+            if echo "$STATUS_OUTPUT" | grep -q "status: Accepted"; then
+              echo "Notarization accepted!"
+              break
+            elif echo "$STATUS_OUTPUT" | grep -q "status: Invalid"; then
+              echo "Error: Notarization was rejected"
+              echo "$STATUS_OUTPUT"
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --keychain-profile "notarytool-profile" || true
+              exit 1
+            elif echo "$STATUS_OUTPUT" | grep -q "status: In Progress"; then
+              echo "Still in progress..."
+              sleep 10
+            else
+              echo "Unknown status:"
+              echo "$STATUS_OUTPUT"
+              sleep 10
+            fi
+            
+            if [ $i -eq 60 ]; then
+              echo "Error: Notarization timed out after 10 minutes"
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --keychain-profile "notarytool-profile" || true
+              exit 1
+            fi
+          done
+          
+          # Extra wait to ensure ticket is propagated
+          echo "Waiting for notarization ticket to propagate..."
+          sleep 15
+          
+          # Staple the notarization ticket
+          echo "Stapling notarization ticket to DMG..."
+          if ! xcrun stapler staple "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"; then
+            echo "Error: Stapling failed - notarization may not have completed successfully"
+            echo "Attempting to check notarization log..."
+            xcrun notarytool log previous \
+              --keychain-profile "notarytool-profile" || true
+            exit 1
+          fi
+          
+          # Verify notarization
+          echo "Verifying notarization..."
+          spctl -a -t open --context context:primary-signature -v "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
+          
+          # Additional Gatekeeper verification
+          echo "Verifying Gatekeeper acceptance..."
+          spctl --assess --type install -vvv "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
+      
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg
+          retention-days: 7
+      
+      - name: Clean up keychain
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/app-signing.keychain-db" ]]; then
+            security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db"
+          fi
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version || '0.9.4' }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+      
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build
+          path: ./
+      
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-build
+          path: ./
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', steps.get_version.outputs.version) || github.ref_name }}
+          name: Fermi v${{ steps.get_version.outputs.version }}
+          body: |
+            ## 🎉 Fermi Education Platform - Desktop Release v${{ steps.get_version.outputs.version }}
+            
+            ### 📦 Downloads
+            
+            Choose your platform:
+            - **🪟 Windows**: `Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip` - Portable app (no installer needed)
+            - **🍎 macOS**: `Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg` - Signed and notarized installer
+            
+            ### Installation Instructions
+            
+            #### Windows
+            1. Download and extract the ZIP file
+            2. Run `teacher_dashboard_flutter.exe`
+            3. Allow through Windows Defender if prompted
+            
+            #### macOS
+            1. Download the DMG file
+            2. Open the DMG and drag Fermi to Applications
+            3. On first launch, right-click and select "Open" if prompted
+            
+            ### System Requirements
+            
+            **Windows:**
+            - Windows 10 version 1809 or later
+            - 64-bit processor
+            - 4 GB RAM minimum
+            - 500 MB free disk space
+            
+            **macOS:**
+            - macOS 10.15 (Catalina) or later
+            - Apple Silicon (M1/M2/M3) or Intel processor
+            - 4 GB RAM minimum
+            - 500 MB free disk space
+            
+            ### Features
+            - ✅ Google Sign-In support
+            - ✅ Apple Sign-In support (macOS)
+            - ✅ Real-time messaging and collaboration
+            - ✅ Video/voice calling
+            - ✅ File upload/download
+            - ✅ Push notifications
+            - ✅ Offline support
+            - ✅ Discussion boards with moderation
+            - ✅ Assignment management
+            - ✅ Grade tracking
+            
+            ### What's Changed
+            See the auto-generated release notes below for details.
+            
+            ### Known Issues
+            - Windows: Some antivirus software may flag the unsigned executable. This is a false positive.
+            - macOS: On first launch, you may need to right-click and select "Open" to bypass Gatekeeper.
+          files: |
+            Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
+            Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg
+          generate_release_notes: true
+          draft: false
+          prerelease: false
