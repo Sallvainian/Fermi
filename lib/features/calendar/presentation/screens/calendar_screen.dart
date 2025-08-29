@@ -129,7 +129,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: PopupMenuButton<EventType?>(
-                        value: _selectedFilter,
+                        initialValue: _selectedFilter,
                         onSelected: (value) {
                           setState(() {
                             _selectedFilter = value;
