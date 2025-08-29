@@ -157,7 +157,7 @@ jobs:
           echo "Starting code signing..."
           echo "========================================="
           
-          # Simple, working approach - just sign the app bundle with --deep
+          # Sign the app bundle
           echo "Signing the complete app bundle..."
           codesign --force --deep --timestamp \
             --options runtime \
@@ -165,7 +165,7 @@ jobs:
             --sign "$SIGN_IDENTITY" \
             "$APP_PATH"
           
-          # Ensure executable has correct permissions
+          # CRITICAL: Ensure executable has correct permissions AFTER signing
           echo "Setting executable permissions..."
           chmod +x "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
           
@@ -183,27 +183,62 @@ jobs:
           echo "Code signing complete!"
           echo "========================================="
       
-      - name: Create signed DMG
+      - name: Notarize app bundle before DMG
         env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Simple DMG creation that preserves permissions
+          APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
+          
+          echo "Creating zip for notarization..."
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "app-for-notarization.zip"
+          
+          echo "Submitting app for notarization with direct authentication..."
+          # Use direct authentication to bypass store-credentials HTTP 500 error
+          xcrun notarytool submit "app-for-notarization.zip" \
+            --apple-id "$APPLE_ID" \
+            --password "$NOTARY_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait \
+            --verbose
+          
+          echo "Stapling notarization ticket to app..."
+          xcrun stapler staple "$APP_PATH"
+          
+          echo "Verifying stapled app..."
+          xcrun stapler validate "$APP_PATH"
+          
+          # Clean up zip
+          rm "app-for-notarization.zip"
+      
+      - name: Create DMG (without codesign flag)
+        run: |
+          # Create DMG without --codesign flag to preserve permissions
           echo "Creating DMG..."
           
-          # Create DMG directly from the Release folder
+          # Create DMG from the notarized app bundle
           hdiutil create -volname "Fermi" \
             -srcfolder "build/macos/Build/Products/Release/" \
             -ov -format UDZO \
             "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
           
-          # Sign the DMG
+          # Verify DMG was created
+          echo "DMG created:"
+          ls -la "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
+      
+      - name: Sign DMG separately
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          # Sign the DMG after creation
           echo "Signing DMG..."
           codesign --force --sign "Developer ID Application: Frank Cottone ($TEAM_ID)" \
             "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
           
-          # Verify
-          echo "DMG created:"
-          ls -la "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
+          # Verify signature
+          echo "Verifying DMG signature..."
+          codesign --verify --verbose=2 "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"
       
       - name: Notarize DMG
         env:
@@ -230,65 +265,32 @@ jobs:
           echo "Team ID: ${TEAM_ID}"
           echo "Password length: ${#NOTARY_PASSWORD} characters"
           
-          # Store credentials in keychain for notarytool
-          echo "Storing notarization credentials..."
-          xcrun notarytool store-credentials "notarytool-profile" \
-            --apple-id "$APPLE_ID" \
-            --team-id "$TEAM_ID" \
-            --password "$NOTARY_PASSWORD"
-          
-          # Submit DMG for notarization using stored profile and capture submission ID
-          echo "Submitting DMG for notarization..."
+          # Submit DMG for notarization using direct authentication (bypasses store-credentials HTTP 500 error)
+          echo "Submitting DMG for notarization with direct authentication..."
           SUBMISSION_OUTPUT=$(xcrun notarytool submit "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg" \
-            --keychain-profile "notarytool-profile" \
+            --apple-id "$APPLE_ID" \
+            --password "$NOTARY_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait \
             --verbose 2>&1)
           
           echo "$SUBMISSION_OUTPUT"
           
-          # Extract submission ID from output
-          SUBMISSION_ID=$(echo "$SUBMISSION_OUTPUT" | grep -oE 'id: [a-f0-9\-]+' | head -1 | cut -d' ' -f2)
-          
-          if [ -z "$SUBMISSION_ID" ]; then
-            echo "Error: Failed to get submission ID from notarytool"
-            echo "Attempting to get notarization history..."
-            xcrun notarytool history --keychain-profile "notarytool-profile" || true
-            exit 1
+          # Check if notarization was successful
+          if echo "$SUBMISSION_OUTPUT" | grep -q "Successfully uploaded"; then
+            echo "DMG successfully uploaded for notarization"
           fi
           
-          echo "Submission ID: $SUBMISSION_ID"
-          
-          # Poll for notarization completion (up to 10 minutes)
-          echo "Waiting for notarization to complete..."
-          for i in {1..60}; do
-            echo "Checking notarization status (attempt $i/60)..."
-            STATUS_OUTPUT=$(xcrun notarytool info "$SUBMISSION_ID" \
-              --keychain-profile "notarytool-profile" 2>&1)
-            
-            if echo "$STATUS_OUTPUT" | grep -q "status: Accepted"; then
-              echo "Notarization accepted!"
-              break
-            elif echo "$STATUS_OUTPUT" | grep -q "status: Invalid"; then
-              echo "Error: Notarization was rejected"
-              echo "$STATUS_OUTPUT"
-              xcrun notarytool log "$SUBMISSION_ID" \
-                --keychain-profile "notarytool-profile" || true
-              exit 1
-            elif echo "$STATUS_OUTPUT" | grep -q "status: In Progress"; then
-              echo "Still in progress..."
-              sleep 10
-            else
-              echo "Unknown status:"
-              echo "$STATUS_OUTPUT"
-              sleep 10
-            fi
-            
-            if [ $i -eq 60 ]; then
-              echo "Error: Notarization timed out after 10 minutes"
-              xcrun notarytool log "$SUBMISSION_ID" \
-                --keychain-profile "notarytool-profile" || true
-              exit 1
-            fi
-          done
+          if echo "$SUBMISSION_OUTPUT" | grep -q "status: Accepted"; then
+            echo "Notarization accepted!"
+          elif echo "$SUBMISSION_OUTPUT" | grep -q "status: Invalid"; then
+            echo "Error: Notarization was rejected"
+            echo "$SUBMISSION_OUTPUT"
+            exit 1
+          elif echo "$SUBMISSION_OUTPUT" | grep -q "status: In Progress"; then
+            # If still in progress after --wait, something is wrong
+            echo "Warning: Notarization still in progress after wait"
+          fi
           
           # Extra wait to ensure ticket is propagated
           echo "Waiting for notarization ticket to propagate..."
@@ -298,9 +300,6 @@ jobs:
           echo "Stapling notarization ticket to DMG..."
           if ! xcrun stapler staple "Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg"; then
             echo "Error: Stapling failed - notarization may not have completed successfully"
-            echo "Attempting to check notarization log..."
-            xcrun notarytool log previous \
-              --keychain-profile "notarytool-profile" || true
             exit 1
           fi
           
