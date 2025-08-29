@@ -149,16 +149,22 @@ jobs:
         echo "Team ID: ${TEAM_ID}"
         echo "Password length: ${#NOTARY_PASSWORD} characters"
         
-        # Submit DMG for notarization
-        echo "Submitting DMG for notarization..."
-        if ! xcrun notarytool submit \
-          --team-id "$TEAM_ID" \
+        # Store credentials in keychain for notarytool
+        echo "Storing notarization credentials..."
+        xcrun notarytool store-credentials "notarytool-profile" \
           --apple-id "$APPLE_ID" \
-          --password "$NOTARY_PASSWORD" \
+          --team-id "$TEAM_ID" \
+          --password "$NOTARY_PASSWORD"
+        
+        # Submit DMG for notarization using stored profile
+        echo "Submitting DMG for notarization..."
+        if ! xcrun notarytool submit Fermi.dmg \
+          --keychain-profile "notarytool-profile" \
           --wait \
-          --verbose \
-          Fermi.dmg; then
+          --verbose; then
           echo "Error: Notarization submission failed"
+          echo "Attempting to get notarization history..."
+          xcrun notarytool history --keychain-profile "notarytool-profile" || true
           exit 1
         fi
         
@@ -170,12 +176,9 @@ jobs:
         echo "Stapling notarization ticket to DMG..."
         if ! xcrun stapler staple Fermi.dmg; then
           echo "Error: Stapling failed - notarization may not have completed successfully"
-          echo "Attempting to check notarization status..."
-          xcrun notarytool log \
-            --team-id "$TEAM_ID" \
-            --apple-id "$APPLE_ID" \
-            --password "$NOTARY_PASSWORD" \
-            previous
+          echo "Attempting to check notarization log..."
+          xcrun notarytool log previous \
+            --keychain-profile "notarytool-profile" || true
           exit 1
         fi
         
