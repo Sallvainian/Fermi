@@ -130,6 +130,25 @@ jobs:
         NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       run: |
+        # Debug: Check if environment variables are set
+        echo "Checking credentials..."
+        if [ -z "$APPLE_ID" ]; then
+          echo "Error: APPLE_ID secret is not set"
+          exit 1
+        fi
+        if [ -z "$NOTARY_PASSWORD" ]; then
+          echo "Error: APPLE_APP_SPECIFIC_PASSWORD secret is not set"
+          exit 1
+        fi
+        if [ -z "$TEAM_ID" ]; then
+          echo "Error: APPLE_TEAM_ID secret is not set"
+          exit 1
+        fi
+        echo "All credentials are present"
+        echo "Apple ID: ${APPLE_ID}"
+        echo "Team ID: ${TEAM_ID}"
+        echo "Password length: ${#NOTARY_PASSWORD} characters"
+        
         # Submit DMG for notarization
         echo "Submitting DMG for notarization..."
         if ! xcrun notarytool submit \
