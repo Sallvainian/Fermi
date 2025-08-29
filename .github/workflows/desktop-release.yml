@@ -172,24 +172,38 @@ jobs:
           SIGN_IDENTITY="Developer ID Application: Frank Cottone ($TEAM_ID)"
           
           echo "========================================="
-          echo "Starting code signing..."
+          echo "Preparing for code signing..."
           echo "========================================="
           
-          # Re-sign the app bundle with Developer ID certificate (overriding Flutter's signing)
-          echo "Re-signing the app bundle with Developer ID certificate..."
-          codesign --force --deep --timestamp \
+          # CRITICAL: Set executable permissions BEFORE signing (modifying after breaks signature)
+          echo "Setting executable permissions BEFORE signing..."
+          chmod +x "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
+          
+          # Verify permissions are set
+          echo "Verifying executable permissions..."
+          ls -la "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
+          
+          # Sign frameworks first (inside out)
+          echo "Signing frameworks..."
+          find "$APP_PATH/Contents/Frameworks" -name "*.framework" -o -name "*.dylib" | while read -r framework; do
+            codesign --force --timestamp --options runtime --sign "$SIGN_IDENTITY" "$framework"
+          done
+          
+          # Now sign the main executable
+          echo "Signing main executable..."
+          codesign --force --timestamp \
+            --options runtime \
+            --entitlements macos/Runner/Release.entitlements \
+            --sign "$SIGN_IDENTITY" \
+            "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
+          
+          # Finally sign the app bundle
+          echo "Signing the app bundle..."
+          codesign --force --timestamp \
             --options runtime \
             --entitlements macos/Runner/Release.entitlements \
             --sign "$SIGN_IDENTITY" \
             "$APP_PATH"
-          
-          # CRITICAL: Ensure executable has correct permissions AFTER signing
-          echo "Setting executable permissions..."
-          chmod +x "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
-          
-          # Verify
-          echo "Verifying executable permissions..."
-          ls -la "$APP_PATH/Contents/MacOS/teacher_dashboard_flutter"
           
           # Verify the signature
           echo "========================================="
