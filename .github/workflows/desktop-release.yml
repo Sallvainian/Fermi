@@ -142,20 +142,31 @@ jobs:
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Configure Xcode project for Developer ID signing (no provisioning profile needed)
+          # Configure Xcode project to not require provisioning profiles for Developer ID
           cd macos
-          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development"/CODE_SIGN_IDENTITY = "Developer ID Application"/' Runner.xcodeproj/project.pbxproj
-          sed -i '' "s/DEVELOPMENT_TEAM = \".*\"/DEVELOPMENT_TEAM = \"$TEAM_ID\"/" Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' Runner.xcodeproj/project.pbxproj
-          sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' Runner.xcodeproj/project.pbxproj
+          # Disable provisioning profile requirements entirely
+          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE_SPECIFIER ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Set :objects:33CC10E92044A3C60003C045:buildSettings:PROVISIONING_PROFILE ''" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          
+          # Use plutil to modify the project file more reliably
+          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.CODE_SIGN_STYLE' -string "Manual" Runner.xcodeproj/project.pbxproj
+          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.CODE_SIGN_IDENTITY' -string "Developer ID Application" Runner.xcodeproj/project.pbxproj
+          plutil -replace 'objects.33CC10E92044A3C60003C045.buildSettings.DEVELOPMENT_TEAM' -string "$TEAM_ID" Runner.xcodeproj/project.pbxproj
+          plutil -remove 'objects.33CC10E92044A3C60003C045.buildSettings.PROVISIONING_PROFILE_SPECIFIER' Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          
+          # Also update for Release configuration
+          plutil -replace 'objects.33CC111C2044C6BA0003C045.buildSettings.CODE_SIGN_IDENTITY' -string "Developer ID Application" Runner.xcodeproj/project.pbxproj
+          plutil -replace 'objects.33CC111C2044C6BA0003C045.buildSettings.PROVISIONING_PROFILE_SPECIFIER' -string "" Runner.xcodeproj/project.pbxproj 2>/dev/null || true
+          
           cd ..
           
-          # Build the Flutter macOS app with manual signing configuration
+          # Build the Flutter macOS app with signing disabled (we'll sign manually after)
           flutter build macos --release \
             --build-name=${{ steps.get_version.outputs.version }} \
             --build-number=${{ github.run_number }} \
             --no-tree-shake-icons \
-            --dart-define=FLUTTER_BUILD_MODE=release
+            --dart-define=FLUTTER_BUILD_MODE=release \
+            --no-codesign
           
           # Set paths
           APP_PATH="build/macos/Build/Products/Release/teacher_dashboard_flutter.app"
