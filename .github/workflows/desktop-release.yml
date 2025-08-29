@@ -142,7 +142,15 @@ jobs:
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Build the Flutter macOS app with optimizations
+          # Configure Xcode project for Developer ID signing (no provisioning profile needed)
+          cd macos
+          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development"/CODE_SIGN_IDENTITY = "Developer ID Application"/' Runner.xcodeproj/project.pbxproj
+          sed -i '' "s/DEVELOPMENT_TEAM = \".*\"/DEVELOPMENT_TEAM = \"$TEAM_ID\"/" Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic/CODE_SIGN_STYLE = Manual/' Runner.xcodeproj/project.pbxproj
+          sed -i '' '/PROVISIONING_PROFILE_SPECIFIER/d' Runner.xcodeproj/project.pbxproj
+          cd ..
+          
+          # Build the Flutter macOS app with manual signing configuration
           flutter build macos --release \
             --build-name=${{ steps.get_version.outputs.version }} \
             --build-number=${{ github.run_number }} \
