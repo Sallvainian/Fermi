@@ -1002,7 +1002,7 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
 
                   // Type Dropdown
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedType,
+                    value: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Assignment Type',
                       border: OutlineInputBorder(),
@@ -1031,7 +1031,7 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
 
                   // Class Dropdown
                   DropdownButtonFormField<String>(
-                    initialValue: _selectedClass,
+                    value: _selectedClass,
                     decoration: const InputDecoration(
                       labelText: 'Class',
                       border: OutlineInputBorder(),
