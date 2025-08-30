@@ -152,13 +152,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Use GoRouter to ensure proper navigation
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              // Navigate to messages list if can't pop
-              context.go('/messages');
-            }
+            // Always navigate back to messages list for consistent behavior
+            context.go('/messages');
           },
         ),
         title: Consumer<SimpleChatProvider>(

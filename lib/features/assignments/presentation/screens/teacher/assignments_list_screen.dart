@@ -253,11 +253,19 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     );
   }
 
+  // Helper function to safely convert Timestamp or DateTime
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
+  }
+
   Widget _buildAssignmentCard(Map<String, dynamic> assignment) {
     final theme = Theme.of(context);
-    final dueDate = assignment['dueDate'];
+    final dueDate = _parseDateTime(assignment['dueDate']);
     final isOverdue = dueDate != null && 
-        (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now()) &&
+        dueDate.isBefore(DateTime.now()) &&
         assignment['status'] == 'active';
 
     Color statusColor;
@@ -381,7 +389,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                     child: _buildInfoItem(
                       icon: Icons.calendar_today,
                       label: 'Due Date',
-                      value: _formatDate(dueDate),
+                      value: dueDate != null ? _formatDate(dueDate) : 'No due date',
                       color: isOverdue ? Colors.red : null,
                     ),
                   ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 // Assignment model removed - using Map<String, dynamic> directly
@@ -170,7 +171,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         statusColor = Colors.blue;
         statusIcon = Icons.schedule;
         statusText =
-            'Scheduled to publish on ${_formatDate(_assignment!['publishAt'] ?? DateTime.now())}';
+            'Scheduled to publish on ${_formatDate(_parseDateTime(_assignment!['publishAt']) ?? DateTime.now())}';
       } else {
         statusColor = Colors.orange;
         statusIcon = Icons.visibility_off;
@@ -227,7 +228,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
                   ),
                   if (_assignment!['isPublished'] == true)
                     Text(
-                      'Published on ${_formatDate(_assignment!['createdAt'])}',
+                      'Published on ${_formatDate(_parseDateTime(_assignment!['createdAt']) ?? DateTime.now())}',
                       style: theme.textTheme.bodySmall,
                     ),
                 ],
@@ -261,12 +262,12 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
             const SizedBox(height: 16),
             _buildDetailRow('Type', (_assignment!['type'] ?? 'homework').toString().toUpperCase()),
             _buildDetailRow('Category', _assignment!['category'] ?? 'N/A'),
-            _buildDetailRow('Due Date', _formatDateTime(_assignment!['dueDate'])),
+            _buildDetailRow('Due Date', _formatDateTime(_parseDateTime(_assignment!['dueDate']) ?? DateTime.now())),
             _buildDetailRow('Points', '${(_assignment!['maxPoints'] ?? 0).toInt()}'),
-            _buildDetailRow('Created', _formatDate(_assignment!['createdAt'])),
+            _buildDetailRow('Created', _formatDate(_parseDateTime(_assignment!['createdAt']) ?? DateTime.now())),
             if (_assignment!['updatedAt'] != null)
               _buildDetailRow(
-                  'Last Updated', _formatDate(_assignment!['updatedAt'])),
+                  'Last Updated', _formatDate(_parseDateTime(_assignment!['updatedAt']) ?? DateTime.now())),
           ],
         ),
       ),
@@ -507,6 +508,14 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         ],
       ),
     );
+  }
+
+  // Helper function to safely convert Timestamp or DateTime
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
   }
 
   String _formatDate(DateTime date) {

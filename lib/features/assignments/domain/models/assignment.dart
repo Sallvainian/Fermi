@@ -221,6 +221,15 @@ class Assignment {
   /// @return Parsed Assignment instance
   factory Assignment.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    
+    // Helper function to convert either Timestamp or DateTime to DateTime
+    DateTime? parseDateTime(dynamic value) {
+      if (value == null) return null;
+      if (value is Timestamp) return value.toDate();
+      if (value is DateTime) return value;
+      return null;
+    }
+    
     return Assignment(
       id: doc.id,
       teacherId: data['teacherId'] ?? '',
@@ -228,14 +237,12 @@ class Assignment {
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       instructions: data['instructions'] ?? '',
-      dueDate: (data['dueDate'] as Timestamp).toDate(),
+      dueDate: parseDateTime(data['dueDate']) ?? DateTime.now(),
       totalPoints: (data['totalPoints'] ?? 0).toDouble(),
       maxPoints: (data['maxPoints'] ?? data['totalPoints'] ?? 0).toDouble(),
       attachmentUrl: data['attachmentUrl'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: data['updatedAt'] != null
-          ? (data['updatedAt'] as Timestamp).toDate()
-          : null,
+      createdAt: parseDateTime(data['createdAt']) ?? DateTime.now(),
+      updatedAt: parseDateTime(data['updatedAt']),
       type: AssignmentType.values.firstWhere(
         (e) {
           final typeValue = data['type']?.toString() ?? '';
@@ -261,9 +268,7 @@ class Assignment {
       isPublished: data['isPublished'] ?? false,
       allowLateSubmissions: data['allowLateSubmissions'] ?? true,
       latePenaltyPercentage: data['latePenaltyPercentage'] ?? 10,
-      publishAt: data['publishAt'] != null
-          ? (data['publishAt'] as Timestamp).toDate()
-          : null,
+      publishAt: parseDateTime(data['publishAt']),
     );
   }
 

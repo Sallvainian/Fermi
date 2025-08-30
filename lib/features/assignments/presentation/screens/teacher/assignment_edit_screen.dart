@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 // Assignment model removed - using Map<String, dynamic> directly
@@ -71,15 +72,15 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
           _instructionsController.text = assignment['instructions'] ?? '';
           _maxPointsController.text = (assignment['maxPoints'] ?? 0).toInt().toString();
           _selectedType = assignment['type'] ?? 'essay';
-          _dueDate = assignment['dueDate'] ?? DateTime.now().add(const Duration(days: 7));
-          _dueTime = TimeOfDay.fromDateTime(assignment['dueDate'] ?? DateTime.now());
+          _dueDate = _parseDateTime(assignment['dueDate']) ?? DateTime.now().add(const Duration(days: 7));
+          _dueTime = TimeOfDay.fromDateTime(_parseDateTime(assignment['dueDate']) ?? DateTime.now());
           _allowLateSubmissions = assignment['allowLateSubmissions'] ?? true;
           _latePenaltyPercentage = assignment['latePenaltyPercentage'] ?? 10;
 
           if (assignment['publishAt'] != null) {
-            _scheduledPublishDate = assignment['publishAt'];
+            _scheduledPublishDate = _parseDateTime(assignment['publishAt']);
             _scheduledPublishTime =
-                TimeOfDay.fromDateTime(assignment['publishAt']);
+                TimeOfDay.fromDateTime(_parseDateTime(assignment['publishAt']) ?? DateTime.now());
           }
 
           _isLoading = false;
@@ -155,7 +156,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
       final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
       // Determine new publish status and date
-      DateTime? newPublishAt = _assignment!['publishAt'];
+      DateTime? newPublishAt = _parseDateTime(_assignment!['publishAt']);
       bool newIsPublished = _assignment!['isPublished'] ?? false;
 
       if (_updatePublishStatus) {
@@ -498,7 +499,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                         (_assignment!['isPublished'] ?? false)
                             ? 'Currently Published'
                             : _assignment!['publishAt'] != null
-                                ? 'Scheduled for ${_formatDateTime(_assignment!['publishAt'])}'
+                                ? 'Scheduled for ${_formatDateTime(_parseDateTime(_assignment!['publishAt']) ?? DateTime.now())}'
                                 : 'Currently Unpublished',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
@@ -647,6 +648,14 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
       ),
       ),
     );
+  }
+
+  // Helper function to safely convert Timestamp or DateTime
+  DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
   }
 
   String _formatDateTime(DateTime date) {
