@@ -16,6 +16,105 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// - [archived]: Assignment is no longer active but kept for records
 enum AssignmentStatus { draft, active, completed, archived }
 
+/// Extension methods for AssignmentStatus to handle state transitions.
+///
+/// Provides validation and execution of status transitions following
+/// the assignment lifecycle rules. Valid transitions are:
+/// - draft → active, archived
+/// - active → completed, archived
+/// - completed → archived
+/// - archived → (no transitions allowed)
+extension AssignmentStatusTransition on AssignmentStatus {
+  /// Checks if this status can transition to the target status.
+  ///
+  /// Validates transitions based on the assignment lifecycle rules.
+  /// 
+  /// @param target The desired status to transition to
+  /// @return true if the transition is valid, false otherwise
+  bool canTransitionTo(AssignmentStatus target) {
+    switch (this) {
+      case AssignmentStatus.draft:
+        // Draft can go to active (publish) or archived (cancel)
+        return target == AssignmentStatus.active || 
+               target == AssignmentStatus.archived;
+      
+      case AssignmentStatus.active:
+        // Active can go to completed (due date passed) or archived
+        return target == AssignmentStatus.completed || 
+               target == AssignmentStatus.archived;
+      
+      case AssignmentStatus.completed:
+        // Completed can only be archived
+        return target == AssignmentStatus.archived;
+      
+      case AssignmentStatus.archived:
+        // Archived is final, no transitions allowed
+        return false;
+    }
+  }
+
+  /// Attempts to transition to the target status.
+  ///
+  /// Returns the target status if the transition is valid,
+  /// otherwise returns the current status unchanged.
+  /// 
+  /// @param target The desired status to transition to
+  /// @return The resulting status after transition attempt
+  AssignmentStatus transitionTo(AssignmentStatus target) {
+    if (canTransitionTo(target)) {
+      return target;
+    }
+    return this;
+  }
+
+  /// Gets a list of valid target statuses from the current status.
+  ///
+  /// Useful for UI elements that need to show available actions.
+  /// 
+  /// @return List of statuses this status can transition to
+  List<AssignmentStatus> get validTransitions {
+    switch (this) {
+      case AssignmentStatus.draft:
+        return [AssignmentStatus.active, AssignmentStatus.archived];
+      
+      case AssignmentStatus.active:
+        return [AssignmentStatus.completed, AssignmentStatus.archived];
+      
+      case AssignmentStatus.completed:
+        return [AssignmentStatus.archived];
+      
+      case AssignmentStatus.archived:
+        return [];
+    }
+  }
+
+  /// Gets a human-readable description of invalid transition attempts.
+  ///
+  /// Useful for providing feedback when a transition is not allowed.
+  /// 
+  /// @param target The attempted target status
+  /// @return Error message explaining why the transition is invalid
+  String getTransitionError(AssignmentStatus target) {
+    if (canTransitionTo(target)) {
+      return '';
+    }
+    
+    switch (this) {
+      case AssignmentStatus.draft:
+        return 'Draft assignments can only be published (active) or cancelled (archived)';
+      
+      case AssignmentStatus.active:
+        return 'Active assignments can only be completed or archived';
+      
+      case AssignmentStatus.completed:
+        return 'Completed assignments can only be archived';
+      
+      case AssignmentStatus.archived:
+        return 'Archived assignments cannot be modified';
+    }
+  }
+}
+
 /// Core assignment model representing educational tasks and assessments.
 ///
 /// This model encapsulates all data related to an assignment, including:
@@ -138,11 +237,23 @@ class Assignment {
           ? (data['updatedAt'] as Timestamp).toDate()
           : null,
       type: AssignmentType.values.firstWhere(
-        (e) => e.toString() == 'AssignmentType.${data['type']}',
+        (e) {
+          final typeValue = data['type']?.toString() ?? '';
+          // Handle both 'homework' and 'AssignmentType.homework' formats
+          return e.name == typeValue || 
+                 e.toString() == typeValue ||
+                 typeValue.endsWith('.${e.name}');
+        },
         orElse: () => AssignmentType.homework,
       ),
       status: AssignmentStatus.values.firstWhere(
-        (e) => e.toString() == 'AssignmentStatus.${data['status']}',
+        (e) {
+          final statusValue = data['status']?.toString() ?? '';
+          // Handle both 'draft' and 'AssignmentStatus.draft' formats
+          return e.name == statusValue || 
+                 e.toString() == statusValue ||
+                 statusValue.endsWith('.${e.name}');
+        },
         orElse: () => AssignmentStatus.draft,
       ),
       category: data['category'] ?? 'Other',
@@ -177,8 +288,8 @@ class Assignment {
       'attachmentUrl': attachmentUrl,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
-      'type': type.toString().split('.').last,
-      'status': status.toString().split('.').last,
+      'type': type.name,
+      'status': status.name,
       'category': category,
       'teacherName': teacherName,
       'isPublished': isPublished,

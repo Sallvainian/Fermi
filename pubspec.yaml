@@ -115,6 +115,7 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  fake_cloud_firestore: ^4.0.0
 
   # Development tools
   test: ^1.25.15  # Downgraded to resolve integration_test conflict

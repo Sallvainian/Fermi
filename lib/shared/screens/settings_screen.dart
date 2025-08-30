@@ -329,7 +329,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: 'Access teacher management tools',
                     icon: Icons.dashboard,
                     onTap: () {
-                      context.go('/teacher/dashboard');
+                      context.go('/');
                     },
                   ),
                 _buildActionTile(

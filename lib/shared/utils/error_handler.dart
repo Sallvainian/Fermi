@@ -1,5 +1,13 @@
 import 'package:flutter/foundation.dart';
+import '../services/logger_service.dart';
 
+/// Centralized error handling utilities.
+///
+/// This refactored implementation uses the application's
+/// [LoggerService] for all error reporting and logging instead of
+/// directly printing to the console. By delegating to the logger,
+/// we ensure consistent formatting, severity levels and respect
+/// configuration such as minimum log level or colorized output.
 class ErrorHandler {
   static Future<void> recordError(
     dynamic exception,
@@ -8,37 +16,39 @@ class ErrorHandler {
     bool fatal = false,
     Map<String, dynamic>? customKeys,
   }) async {
-    // Log to console only - no Crashlytics
-    debugPrint('Error: $exception');
-    if (stackTrace != null) {
-      debugPrint('Stack trace: $stackTrace');
-    }
-    if (reason != null) {
-      debugPrint('Reason: $reason');
-    }
+    LoggerService.error(
+      reason ?? 'Unhandled exception',
+      error: exception,
+      stackTrace: stackTrace,
+    );
     if (customKeys != null) {
-      debugPrint('Custom keys: $customKeys');
+      for (var entry in customKeys.entries) {
+        LoggerService.debug('Context: ${entry.key} = ${entry.value}');
+      }
     }
   }
 
   static Future<void> recordFlutterError(FlutterErrorDetails details) async {
-    debugPrint('Flutter Error: ${details.exception}');
-    debugPrint('Stack trace: ${details.stack}');
+    LoggerService.error(
+      'Flutter Error: ${details.exception}',
+      error: details.exception,
+      stackTrace: details.stack,
+    );
   }
 
   static Future<void> setUserIdentifier(String identifier) async {
-    debugPrint('User identifier: $identifier');
+    LoggerService.info('User identifier: $identifier');
   }
 
   static Future<void> log(String message) async {
-    debugPrint('Log: $message');
+    LoggerService.info(message);
   }
 
   static Future<void> setCustomKey(String key, dynamic value) async {
-    debugPrint('Custom key: $key = $value');
+    LoggerService.debug('Custom key: $key = $value');
   }
 
   static Future<void> testCrash() async {
-    debugPrint('Test crash not executed (Crashlytics removed)');
+    LoggerService.warning('Test crash not executed (Crashlytics removed)');
   }
 }
