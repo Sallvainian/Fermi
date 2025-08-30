@@ -32,40 +32,41 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
   }
   
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    final prefs = await SharedPreferences.getInstance();
+    
     if (state == AppLifecycleState.resumed) {
-      // Re-check when app comes to foreground
-      _checkUnlockStatus();
+      // App coming to foreground - check if we need to lock
+      final backgroundTime = prefs.getInt('background_time');
+      
+      if (backgroundTime != null) {
+        final backgroundDateTime = DateTime.fromMillisecondsSinceEpoch(backgroundTime);
+        final now = DateTime.now();
+        final difference = now.difference(backgroundDateTime);
+        
+        if (difference.inMinutes >= 15) {
+          // Been away for 15+ minutes, require password
+          await prefs.setBool('app_unlocked', false);
+          setState(() {
+            _isUnlocked = false;
+          });
+        }
+        // Clear the background time since we're now active
+        await prefs.remove('background_time');
+      }
     } else if (state == AppLifecycleState.paused || 
                state == AppLifecycleState.inactive) {
-      // Lock app when it goes to background
-      _lockApp();
+      // App going to background - just save the timestamp, don't lock yet
+      await prefs.setInt('background_time', DateTime.now().millisecondsSinceEpoch);
     }
   }
   
   Future<void> _checkUnlockStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final isUnlocked = prefs.getBool('app_unlocked') ?? false;
-    final unlockTime = prefs.getInt('unlock_time');
-    
-    bool shouldRemainUnlocked = false;
-    
-    if (isUnlocked && unlockTime != null) {
-      // Check if unlock is still valid (expires after 4 hours)
-      final unlockDateTime = DateTime.fromMillisecondsSinceEpoch(unlockTime);
-      final now = DateTime.now();
-      final difference = now.difference(unlockDateTime);
-      
-      if (difference.inHours < 4) {
-        shouldRemainUnlocked = true;
-      } else {
-        // Session expired, need to re-authenticate
-        await prefs.setBool('app_unlocked', false);
-      }
-    }
     
     setState(() {
-      _isUnlocked = shouldRemainUnlocked;
+      _isUnlocked = isUnlocked;
       _isChecking = false;
     });
   }

@@ -68,35 +68,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // DEBUG: Role Information
-            Container(
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'DEBUG INFO',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('User Model: ${authProvider.userModel}'),
-                  Text('Role: ${authProvider.userModel?.role}'),
-                  Text('Role String: ${authProvider.userModel?.role?.toString()}'),
-                  Text('Is Teacher: ${authProvider.userModel?.role == UserRole.teacher}'),
-                  Text('UserRole.teacher: ${UserRole.teacher}'),
-                ],
-              ),
-            ),
-
             // User Profile Section
             _buildProfileSection(),
 
