@@ -34,7 +34,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       if (user != null && user.role == UserRole.teacher) {
         // Clear any previous error before loading
         assignmentProvider.clearError();
-        
+
         // Load teacher assignments
         await assignmentProvider.loadAssignmentsForTeacher();
       }
@@ -124,9 +124,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
             const SizedBox(height: 16),
 
             // Assignments List
-            Expanded(
-              child: _buildAssignmentsList(),
-            ),
+            Expanded(child: _buildAssignmentsList()),
           ],
         ),
       ),
@@ -154,9 +152,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     final user = authProvider.userModel;
 
     if (user == null) {
-      return const Center(
-        child: Text('Please log in to view assignments'),
-      );
+      return const Center(child: Text('Please log in to view assignments'));
     }
 
     if (assignmentProvider.isLoading) {
@@ -190,8 +186,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     final filteredAssignments = assignments.where((assignment) {
       // Status filter
       if (_selectedStatus != 'All') {
-        if (_selectedStatus == 'Active' &&
-            assignment['status'] != 'active') {
+        if (_selectedStatus == 'Active' && assignment['status'] != 'active') {
           return false;
         }
         if (_selectedStatus == 'Draft' &&
@@ -208,8 +203,12 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       // Search filter
       if (_searchController.text.isNotEmpty) {
         final searchLower = _searchController.text.toLowerCase();
-        return (assignment['title'] ?? '').toLowerCase().contains(searchLower) ||
-            (assignment['description'] ?? '').toLowerCase().contains(searchLower);
+        return (assignment['title'] ?? '').toLowerCase().contains(
+              searchLower,
+            ) ||
+            (assignment['description'] ?? '').toLowerCase().contains(
+              searchLower,
+            );
       }
 
       return true;
@@ -246,6 +245,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
     }
 
     return ListView.builder(
+      physics:
+          const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
       itemCount: filteredAssignments.length,
       itemBuilder: (context, index) {
         return _buildAssignmentCard(filteredAssignments[index]);
@@ -263,8 +264,11 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
 
   Widget _buildAssignmentCard(Map<String, dynamic> assignment) {
     final theme = Theme.of(context);
+    final authProvider = context.read<AuthProvider>();
+    final isTeacher = authProvider.userModel?.role == UserRole.teacher;
     final dueDate = _parseDateTime(assignment['dueDate']);
-    final isOverdue = dueDate != null && 
+    final isOverdue =
+        dueDate != null &&
         dueDate.isBefore(DateTime.now()) &&
         assignment['status'] == 'active';
 
@@ -303,7 +307,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       }
     }
 
-    return Card(
+    final cardContent = Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () => context.push('/teacher/assignments/${assignment['id']}'),
@@ -351,8 +355,10 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   ),
                   // Status Badge
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -366,8 +372,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                           (assignment['isPublished'] ?? false)
                               ? (assignment['status'] ?? 'draft').toUpperCase()
                               : assignment['publishAt'] != null
-                                  ? 'SCHEDULED'
-                                  : 'UNPUBLISHED',
+                              ? 'SCHEDULED'
+                              : 'UNPUBLISHED',
                           style: TextStyle(
                             color: statusColor,
                             fontWeight: FontWeight.w600,
@@ -389,7 +395,9 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                     child: _buildInfoItem(
                       icon: Icons.calendar_today,
                       label: 'Due Date',
-                      value: dueDate != null ? _formatDate(dueDate) : 'No due date',
+                      value: dueDate != null
+                          ? _formatDate(dueDate)
+                          : 'No due date',
                       color: isOverdue ? Colors.red : null,
                     ),
                   ),
@@ -404,18 +412,20 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   // Type or Publish Date
                   Expanded(
                     child:
-                        assignment['publishAt'] != null && !(assignment['isPublished'] ?? false)
-                            ? _buildInfoItem(
-                                icon: Icons.schedule,
-                                label: 'Publishes',
-                                value: _formatDate(assignment['publishAt']),
-                                color: Colors.blue,
-                              )
-                            : _buildInfoItem(
-                                icon: Icons.assignment_outlined,
-                                label: 'Type',
-                                value: (assignment['type'] ?? 'essay').toUpperCase(),
-                              ),
+                        assignment['publishAt'] != null &&
+                            !(assignment['isPublished'] ?? false)
+                        ? _buildInfoItem(
+                            icon: Icons.schedule,
+                            label: 'Publishes',
+                            value: _formatDate(assignment['publishAt']),
+                            color: Colors.blue,
+                          )
+                        : _buildInfoItem(
+                            icon: Icons.assignment_outlined,
+                            label: 'Type',
+                            value: (assignment['type'] ?? 'essay')
+                                .toUpperCase(),
+                          ),
                   ),
                 ],
               ),
@@ -429,7 +439,8 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                     TextButton.icon(
                       onPressed: () {
                         context.push(
-                            '/teacher/gradebook?assignmentId=${assignment['id']}');
+                          '/teacher/gradebook?assignmentId=${assignment['id']}',
+                        );
                       },
                       icon: const Icon(Icons.grading, size: 18),
                       label: const Text('Grade'),
@@ -437,10 +448,11 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                   if (!(assignment['isPublished'] ?? false))
                     TextButton.icon(
                       onPressed: () async {
-                        final assignmentProvider =
-                            context.read<SimpleAssignmentProvider>();
+                        final assignmentProvider = context
+                            .read<SimpleAssignmentProvider>();
                         await assignmentProvider.togglePublishStatus(
-                            assignment['id']);
+                          assignment['id'],
+                        );
                       },
                       icon: const Icon(Icons.publish, size: 18),
                       label: const Text('Publish'),
@@ -459,6 +471,33 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
         ),
       ),
     );
+
+    // Wrap with Dismissible for teachers only
+    if (isTeacher) {
+      return Dismissible(
+        key: Key('assignment_${assignment['id']}'),
+        direction: DismissDirection.endToStart,
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(Icons.delete, color: Colors.white),
+        ),
+        confirmDismiss: (direction) async {
+          return await _showDeleteAssignmentDialog(assignment);
+        },
+        onDismissed: (direction) {
+          // Deletion is handled in confirmDismiss
+        },
+        child: cardContent,
+      );
+    }
+
+    return cardContent;
   }
 
   Widget _buildInfoItem({
@@ -473,8 +512,11 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
       children: [
         Row(
           children: [
-            Icon(icon,
-                size: 16, color: color ?? theme.colorScheme.onSurfaceVariant),
+            Icon(
+              icon,
+              size: 16,
+              color: color ?? theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(width: 4),
             Text(
               label,
@@ -604,16 +646,79 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
   void _showCreateAssignmentSheet(BuildContext context) {
     context.push('/teacher/assignments/create');
   }
+
+  Future<bool> _showDeleteAssignmentDialog(
+    Map<String, dynamic> assignment,
+  ) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Delete Assignment?'),
+        content: Text(
+          'Are you sure you want to delete "${assignment['title']}"? This will also delete all submissions and grades for this assignment. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop(true);
+              try {
+                // Use direct Firestore call like discussion boards
+                await FirebaseFirestore.instance
+                    .collection('assignments')
+                    .doc(assignment['id'])
+                    .delete();
+
+                // Also delete related submissions
+                final submissionsSnapshot = await FirebaseFirestore.instance
+                    .collection('submissions')
+                    .where('assignmentId', isEqualTo: assignment['id'])
+                    .get();
+
+                for (final doc in submissionsSnapshot.docs) {
+                  await doc.reference.delete();
+                }
+
+                // Refresh the assignments list
+                if (!mounted) return;
+                context
+                    .read<SimpleAssignmentProvider>()
+                    .loadAssignmentsForTeacher();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Assignment "${assignment['title']}" deleted',
+                    ),
+                  ),
+                );
+              } catch (e) {
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete assignment: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
 }
 
 // Assignment Detail Sheet
 class AssignmentDetailSheet extends StatelessWidget {
   final Map<String, dynamic> assignment;
 
-  const AssignmentDetailSheet({
-    super.key,
-    required this.assignment,
-  });
+  const AssignmentDetailSheet({super.key, required this.assignment});
 
   @override
   Widget build(BuildContext context) {
@@ -641,8 +746,9 @@ class AssignmentDetailSheet extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.onSurfaceVariant
-                          .withValues(alpha: 0.3),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.3,
+                      ),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -705,7 +811,9 @@ class AssignmentDetailSheet extends StatelessWidget {
                     _buildDetailRow('Type', assignment['type']),
                     _buildDetailRow('Points', '${assignment['points']}'),
                     _buildDetailRow(
-                        'Due Date', _formatDetailDate(assignment['dueDate'])),
+                      'Due Date',
+                      _formatDetailDate(assignment['dueDate']),
+                    ),
                     _buildDetailRow('Status', assignment['status']),
                     const SizedBox(height: 24),
 
@@ -753,21 +861,19 @@ class AssignmentDetailSheet extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.grey),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
   Widget _buildStatCard(
-      String label, String value, Color color, IconData icon) {
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -801,7 +907,7 @@ class AssignmentDetailSheet extends StatelessWidget {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -850,8 +956,9 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -900,19 +1007,20 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
                       labelText: 'Assignment Type',
                       border: OutlineInputBorder(),
                     ),
-                    items: [
-                      'Homework',
-                      'Essay',
-                      'Exam',
-                      'Lab Report',
-                      'Project',
-                      'Quiz'
-                    ].map((type) {
-                      return DropdownMenuItem(
-                        value: type,
-                        child: Text(type),
-                      );
-                    }).toList(),
+                    items:
+                        [
+                          'Homework',
+                          'Essay',
+                          'Exam',
+                          'Lab Report',
+                          'Project',
+                          'Quiz',
+                        ].map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _selectedType = value!;
@@ -928,17 +1036,18 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
                       labelText: 'Class',
                       border: OutlineInputBorder(),
                     ),
-                    items: [
-                      'Math 101 - Section A',
-                      'Environmental Science',
-                      'Physics Honors',
-                      'Chemistry 101',
-                    ].map((className) {
-                      return DropdownMenuItem(
-                        value: className,
-                        child: Text(className),
-                      );
-                    }).toList(),
+                    items:
+                        [
+                          'Math 101 - Section A',
+                          'Environmental Science',
+                          'Physics Honors',
+                          'Chemistry 101',
+                        ].map((className) {
+                          return DropdownMenuItem(
+                            value: className,
+                            child: Text(className),
+                          );
+                        }).toList(),
                     onChanged: (value) {
                       setState(() {
                         _selectedClass = value!;
