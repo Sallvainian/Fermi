@@ -309,18 +309,16 @@ class _DiscussionBoardDetailScreenState
                         }
                         
                         // Reload threads to show updated count
-                        if (context.mounted) {
-                          context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
-                        }
+                        if (!mounted) return;
+                        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
                       } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Failed to update like: $e'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to update like: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                       }
                     },
                     borderRadius: BorderRadius.circular(12),
@@ -448,23 +446,21 @@ class _DiscussionBoardDetailScreenState
                 });
                     
                 // Refresh the threads list
-                if (context.mounted) {
-                  context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Thread "${thread.title}" deleted'),
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Thread "${thread.title}" deleted'),
+                  ),
+                );
               } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to delete thread: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete thread: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: TextButton.styleFrom(

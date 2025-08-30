@@ -40,6 +40,15 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
     
+    # Fix abseil framework headers for Firebase dependencies
+    if target.name == 'abseil'
+      target.build_configurations.each do |config|
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+        config.build_settings['HEADER_SEARCH_PATHS'] << ' "${PODS_ROOT}/abseil"'
+        config.build_settings['HEADER_SEARCH_PATHS'] << ' "${PODS_ROOT}/abseil/absl"'
+      end
+    end
+    
     # CRITICAL: Completely disable ALL code signing for Pod dependencies
     # Pods must NEVER have provisioning profiles or code signing
     # This fixes the "doesn't support provisioning profiles" error
@@ -87,11 +96,15 @@ post_install do |installer|
         end
       end
       
-      # Suppress gRPC-Core zlib warnings
-      if target.name == 'gRPC-Core'
+      # Suppress gRPC-Core and gRPC-C++ zlib warnings
+      if ['gRPC-Core', 'gRPC-C++'].include?(target.name)
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'OS_CODE=10'
         config.build_settings['GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS'] = 'NO'
+        # Add flag to suppress macro redefinition warnings
+        config.build_settings['OTHER_CFLAGS'] ||= []
+        config.build_settings['OTHER_CFLAGS'] = Array(config.build_settings['OTHER_CFLAGS']) + ['$(inherited)', '-Wno-macro-redefined']
+        config.build_settings['OTHER_CFLAGS'] = config.build_settings['OTHER_CFLAGS'].uniq
       end
       
       # Suppress Firebase SDK warnings

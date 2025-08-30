@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -320,6 +321,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'Support & About',
               icon: Icons.help,
               children: [
+                // Teacher Dashboard button (only for teachers)
+                if (authProvider.userModel?.role == UserRole.teacher)
+                  _buildActionTile(
+                    title: 'Teacher Dashboard',
+                    subtitle: 'Access teacher management tools',
+                    icon: Icons.dashboard,
+                    onTap: () {
+                      context.go('/teacher/dashboard');
+                    },
+                  ),
                 _buildActionTile(
                   title: 'Send Feedback',
                   subtitle: 'Share your thoughts and suggestions',

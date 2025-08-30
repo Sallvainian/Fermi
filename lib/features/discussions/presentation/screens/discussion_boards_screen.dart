@@ -256,7 +256,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   Icon(
                     Icons.access_time,
                     size: 14,
-                    color: theme.colorScheme.onSurface.withOpacity(0.7),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -362,23 +362,21 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     .delete();
                     
                 // Refresh the boards list
-                if (context.mounted) {
-                  context.read<SimpleDiscussionProvider>().initializeBoards();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Board "${board.title}" deleted'),
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                context.read<SimpleDiscussionProvider>().initializeBoards();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Board "${board.title}" deleted'),
+                  ),
+                );
               } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to delete board: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete board: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             },
             style: TextButton.styleFrom(

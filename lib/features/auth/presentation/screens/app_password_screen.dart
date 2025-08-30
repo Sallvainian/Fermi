@@ -22,7 +22,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
   bool _obscurePassword = true;
   
   // Hash of "kineticenergy" - storing hash instead of plaintext
-  static const String _passwordHash = '8d7e8f3b2c9a5f4e1d7b3a6c9e2f8d4a7b1c5e9f3d6a8b2c4e7f1a3d5b7c9e1f';
+  static const String _passwordHash = '6fbb3c863f859bc84312360da2a98d13d4d0d891be0bde892223000cbb70d04c';
   
   
   String _hashPassword(String password) {
@@ -40,7 +40,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
     final enteredHash = _hashPassword(enteredPassword);
     
     // Simple hash comparison for now - in production, use Firebase Remote Config
-    final correctHash = _hashPassword('kineticenergy');
+    final correctHash = _passwordHash;
     
     if (enteredHash == correctHash) {
       // Success - save session
@@ -111,7 +111,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                     Text(
                       'Enter password to access',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       textAlign: TextAlign.center,
                     ),

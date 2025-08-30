@@ -6,9 +6,9 @@
 library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:teacher_dashboard_flutter/features/assignments/domain/models/assignment.dart';
-import 'package:teacher_dashboard_flutter/features/grades/domain/models/grade.dart';
-import 'package:teacher_dashboard_flutter/features/notifications/data/services/notification_service.dart';
+import 'package:fermi_plus/features/assignments/domain/models/assignment.dart';
+import 'package:fermi_plus/features/grades/domain/models/grade.dart';
+import 'package:fermi_plus/features/notifications/data/services/notification_service.dart';
 
 /// Core service for managing assignments and grades in Firestore.
 ///

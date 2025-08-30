@@ -71,7 +71,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(
@@ -118,7 +118,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   DropdownButtonFormField<String>(
-                    value: _selectedPriority,
+                    initialValue: _selectedPriority,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(
