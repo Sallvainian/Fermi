@@ -115,9 +115,11 @@ class FirestoreRepository<T> extends FirestoreService<T> {
     var query = typedCollection.where(field, whereIn: values);
     
     // Apply additional filters if provided
-    additionalFilters?.forEach((key, value) {
-      query = query.where(key, isEqualTo: value);
-    });
+    if (additionalFilters != null) {
+      for (final entry in additionalFilters.entries) {
+        query = query.where(entry.key, isEqualTo: entry.value);
+      }
+    }
     
     final snapshot = await query.get();
     return snapshot.docs
