@@ -66,9 +66,9 @@ class FirestoreRepository<T> extends FirestoreService<T> {
     if (updates.isEmpty) return;
     
     final batch = _firestore.batch();
-    updates.forEach((docId, data) {
-      batch.update(collection.doc(docId), data);
-    });
+    for (final entry in updates.entries) {
+      batch.update(collection.doc(entry.key), entry.value);
+    }
     
     await batch.commit();
   }

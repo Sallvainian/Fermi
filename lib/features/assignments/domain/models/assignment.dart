@@ -237,11 +237,23 @@ class Assignment {
           ? (data['updatedAt'] as Timestamp).toDate()
           : null,
       type: AssignmentType.values.firstWhere(
-        (e) => e.name == data['type'],
+        (e) {
+          final typeValue = data['type']?.toString() ?? '';
+          // Handle both 'homework' and 'AssignmentType.homework' formats
+          return e.name == typeValue || 
+                 e.toString() == typeValue ||
+                 typeValue.endsWith('.${e.name}');
+        },
         orElse: () => AssignmentType.homework,
       ),
       status: AssignmentStatus.values.firstWhere(
-        (e) => e.name == data['status'],
+        (e) {
+          final statusValue = data['status']?.toString() ?? '';
+          // Handle both 'draft' and 'AssignmentStatus.draft' formats
+          return e.name == statusValue || 
+                 e.toString() == statusValue ||
+                 statusValue.endsWith('.${e.name}');
+        },
         orElse: () => AssignmentStatus.draft,
       ),
       category: data['category'] ?? 'Other',

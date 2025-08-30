@@ -275,10 +275,11 @@ class ClassService {
       // Generate a batch of candidate codes
       final candidateCodes = <String>[];
       for (var i = 0; i < _codeGenerationBatchSize; i++) {
-        final code = String.fromCharCodes(Iterable.generate(
-            _enrollmentCodeLength,
-            (_) => _enrollmentCodeChars.codeUnitAt(random.nextInt(_enrollmentCodeChars.length))));
-        candidateCodes.add(code);
+        final buffer = StringBuffer();
+        for (var j = 0; j < _enrollmentCodeLength; j++) {
+          buffer.write(_enrollmentCodeChars[random.nextInt(_enrollmentCodeChars.length)]);
+        }
+        candidateCodes.add(buffer.toString());
       }
       
       // Batch check all codes in a single query

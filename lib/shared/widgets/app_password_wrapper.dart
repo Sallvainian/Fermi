@@ -32,7 +32,11 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
   }
   
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _handleLifecycleChange(state);
+  }
+  
+  Future<void> _handleLifecycleChange(AppLifecycleState state) async {
     final prefs = await SharedPreferences.getInstance();
     
     if (state == AppLifecycleState.resumed) {
