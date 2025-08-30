@@ -107,14 +107,12 @@ class GradeService {
     
     await RetryService.withRetry(
       () async {
-        final batch = _repository.firestore.batch();
-        
-        for (final grade in grades) {
-          final docRef = _repository.collection.doc();
-          batch.set(docRef, grade.copyWith(id: docRef.id).toFirestore());
-        }
-        
-        await batch.commit();
+        await _repository.executeBatch((batch, collection) {
+          for (final grade in grades) {
+            final docRef = collection.doc();
+            batch.set(docRef, grade.copyWith(id: docRef.id).toFirestore());
+          }
+        });
         LoggerService.info('Bulk created ${grades.length} grades');
       },
       config: RetryConfigs.aggressive,  // More retries for bulk operations
@@ -131,15 +129,13 @@ class GradeService {
     
     await RetryService.withRetry(
       () async {
-        final batch = _repository.firestore.batch();
-        
-        for (final grade in grades) {
-          final data = grade.toFirestore();
-          data['updatedAt'] = FieldValue.serverTimestamp();
-          batch.update(_repository.collection.doc(grade.id), data);
-        }
-        
-        await batch.commit();
+        await _repository.executeBatch((batch, collection) {
+          for (final grade in grades) {
+            final data = grade.toFirestore();
+            data['updatedAt'] = FieldValue.serverTimestamp();
+            batch.update(collection.doc(grade.id), data);
+          }
+        });
         LoggerService.info('Bulk updated ${grades.length} grades');
       },
       config: RetryConfigs.aggressive,  // More retries for bulk operations
@@ -156,17 +152,16 @@ class GradeService {
     
     await RetryService.withRetry(
       () async {
-        final batch = _repository.firestore.batch();
-        
+        final updates = <String, Map<String, dynamic>>{};
         for (final gradeId in gradeIds) {
-          batch.update(_repository.collection.doc(gradeId), {
+          updates[gradeId] = {
             'status': GradeStatus.returned.name,
             'returnedAt': FieldValue.serverTimestamp(),
             'updatedAt': FieldValue.serverTimestamp(),
-          });
+          };
         }
         
-        await batch.commit();
+        await _repository.batchUpdate(updates);
         LoggerService.info('Returned ${gradeIds.length} grades to students');
       },
       config: RetryConfigs.standard,
@@ -250,16 +245,16 @@ class GradeService {
         
         if (grades.isEmpty) return;
         
-        final batch = _repository.firestore.batch();
-        
-        for (final grade in grades) {
-          // Move to archived collection
-          batch.set(_repository.firestore.collection('archived_grades').doc(grade.id), 
-              grade.toFirestore());
-          batch.delete(_repository.collection.doc(grade.id));
-        }
-        
-        await batch.commit();
+        await _repository.executeBatch((batch, collection) {
+          final archivedGradesCollection = _repository.getCollectionReference('archived_grades');
+          
+          for (final grade in grades) {
+            // Move to archived collection
+            batch.set(archivedGradesCollection.doc(grade.id), 
+                grade.toFirestore());
+            batch.delete(collection.doc(grade.id));
+          }
+        });
         LoggerService.info('Archived ${grades.length} old grades');
       },
       config: RetryConfigs.standard,

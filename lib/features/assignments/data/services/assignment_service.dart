@@ -69,10 +69,10 @@ class AssignmentService {
 
   /// Deletes an assignment and cascades to related grades with transaction safety
   Future<void> deleteAssignment(String assignmentId) async {
-    await _repository.firestore.runTransaction<void>((transaction) async {
+    await _repository.runTransaction<void>((transaction, collection) async {
       // First, verify the assignment exists
       final assignmentDoc = await transaction.get(
-        _repository.collection.doc(assignmentId),
+        collection.doc(assignmentId),
       );
       
       if (!assignmentDoc.exists) {
@@ -80,8 +80,7 @@ class AssignmentService {
       }
       
       // Fetch all grades for this assignment
-      final gradesQuery = await _repository.firestore
-          .collection('grades')
+      final gradesQuery = await _repository.getCollectionReference('grades')
           .where('assignmentId', isEqualTo: assignmentId)
           .get();
       
@@ -155,17 +154,16 @@ class AssignmentService {
         
         if (assignments.isEmpty) return;
         
-        final batch = _repository.firestore.batch();
-        
+        final updates = <String, Map<String, dynamic>>{};
         for (final assignment in assignments) {
-          batch.update(_repository.collection.doc(assignment.id), {
+          updates[assignment.id] = {
             'isPublished': true,
             'status': AssignmentStatus.active.name,
             'updatedAt': FieldValue.serverTimestamp(),
-          });
+          };
         }
         
-        await batch.commit();
+        await _repository.batchUpdate(updates);
         LoggerService.info('Published ${assignments.length} scheduled assignments');
       },
       config: RetryConfigs.aggressive,  // More retries for scheduled jobs
@@ -210,16 +208,15 @@ class AssignmentService {
         
         if (assignments.isEmpty) return;
         
-        final batch = _repository.firestore.batch();
-        
+        final updates = <String, Map<String, dynamic>>{};
         for (final assignment in assignments) {
-          batch.update(_repository.collection.doc(assignment.id), {
+          updates[assignment.id] = {
             'status': AssignmentStatus.archived.name,
             'updatedAt': FieldValue.serverTimestamp(),
-          });
+          };
         }
         
-        await batch.commit();
+        await _repository.batchUpdate(updates);
         LoggerService.info('Archived ${assignments.length} old assignments');
       },
       config: RetryConfigs.standard,

@@ -147,10 +147,10 @@ class ClassService {
     }
 
     // Use a transaction to ensure atomic enrollment
-    return await _repository.firestore.runTransaction<ClassModel>((transaction) async {
+    return await _repository.runTransaction<ClassModel>((transaction, collection) async {
       // Re-fetch the class within the transaction to ensure consistency
       final classDoc = await transaction.get(
-        _repository.collection.doc(initialCheck.id),
+        collection.doc(initialCheck.id),
       );
       
       if (!classDoc.exists) {
@@ -190,10 +190,10 @@ class ClassService {
 
   /// Unenroll a student from a class with transaction safety
   Future<void> unenrollStudent(String classId, String studentId) async {
-    await _repository.firestore.runTransaction<void>((transaction) async {
+    await _repository.runTransaction<void>((transaction, collection) async {
       // Fetch the class within the transaction
       final classDoc = await transaction.get(
-        _repository.collection.doc(classId),
+        collection.doc(classId),
       );
       
       if (!classDoc.exists) {
@@ -260,38 +260,33 @@ class ClassService {
     };
   }
 
+  /// Constants for enrollment code generation
+  static const String _enrollmentCodeChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  static const int _enrollmentCodeLength = 6;
+  static const int _maxCodeGenerationAttempts = 10;
+  static const int _codeGenerationBatchSize = 5;
+
   /// Generate a unique enrollment code with improved algorithm
   Future<String> _generateUniqueEnrollmentCode() async {
     // Use a larger character set to reduce collision probability
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const codeLength = 6;
-    const maxAttempts = 10; // Reduced attempts since we batch check
     final random = Random.secure(); // Use cryptographically secure random
     
-    // Generate multiple codes at once to batch check
-    const batchSize = 5;
-    
-    for (var attempt = 0; attempt < maxAttempts; attempt += batchSize) {
+    for (var attempt = 0; attempt < _maxCodeGenerationAttempts; attempt += _codeGenerationBatchSize) {
       // Generate a batch of candidate codes
       final candidateCodes = <String>[];
-      for (var i = 0; i < batchSize; i++) {
+      for (var i = 0; i < _codeGenerationBatchSize; i++) {
         final code = String.fromCharCodes(Iterable.generate(
-            codeLength,
-            (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+            _enrollmentCodeLength,
+            (_) => _enrollmentCodeChars.codeUnitAt(random.nextInt(_enrollmentCodeChars.length))));
         candidateCodes.add(code);
       }
       
       // Batch check all codes in a single query
-      final existingCodes = await _repository.firestore
-          .collection('classes')
-          .where('enrollmentCode', whereIn: candidateCodes)
-          .where('isActive', isEqualTo: true)
-          .get();
-      
-      // Find the first code that doesn't exist
-      final existingCodeSet = existingCodes.docs
-          .map((doc) => doc.data()['enrollmentCode'] as String)
-          .toSet();
+      final existingCodeSet = await _repository.checkExistingValues(
+        field: 'enrollmentCode',
+        values: candidateCodes,
+        additionalFilters: {'isActive': true},
+      );
       
       for (final code in candidateCodes) {
         if (!existingCodeSet.contains(code)) {
@@ -304,7 +299,7 @@ class ClassService {
     // Fallback: Use timestamp-based code for guaranteed uniqueness
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final uniquePart = timestamp.toRadixString(36).toUpperCase();
-    final code = uniquePart.padLeft(codeLength, '0').substring(0, codeLength);
+    final code = uniquePart.padLeft(_enrollmentCodeLength, '0').substring(0, _enrollmentCodeLength);
     
     LoggerService.warning('Using timestamp-based enrollment code: $code');
     return code;
