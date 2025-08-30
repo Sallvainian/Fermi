@@ -22,9 +22,9 @@ class ErrorHandler {
       stackTrace: stackTrace,
     );
     if (customKeys != null) {
-      customKeys.forEach((key, value) {
-        LoggerService.debug('Context: $key = $value');
-      });
+      for (var entry in customKeys.entries) {
+        LoggerService.debug('Context: ${entry.key} = ${entry.value}');
+      }
     }
   }
 
