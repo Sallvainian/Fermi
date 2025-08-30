@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/assignment.dart';
 import '../../../../shared/services/firestore_repository.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/services/retry_service.dart';
 import '../../../notifications/data/services/notification_service.dart';
 
 /// Refactored service for managing educational assignments.
@@ -28,17 +29,26 @@ class AssignmentService {
 
   /// Creates a new assignment with notification scheduling
   Future<Assignment> createAssignment(Assignment assignment) async {
-    final id = await _repository.create(assignment.toFirestore());
-    final createdAssignment = assignment.copyWith(id: id);
-    
-    // Schedule notification reminder for due date if service is available
-    if (_notificationService != null) {
-      await _notificationService.scheduleAssignmentReminder(createdAssignment);
-    }
-    
-    LoggerService.info(
-        'Created assignment: ${createdAssignment.title} for class ${createdAssignment.classId}');
-    return createdAssignment;
+    return await RetryService.withRetry(
+      () async {
+        final id = await _repository.create(assignment.toFirestore());
+        final createdAssignment = assignment.copyWith(id: id);
+        
+        // Schedule notification reminder for due date if service is available
+        if (_notificationService != null) {
+          await _notificationService.scheduleAssignmentReminder(createdAssignment);
+        }
+        
+        LoggerService.info(
+            'Created assignment: ${createdAssignment.title} for class ${createdAssignment.classId}');
+        return createdAssignment;
+      },
+      config: RetryConfigs.standard,
+      onRetry: (attempt, delay, error) {
+        LoggerService.warning(
+            'Retrying assignment creation (attempt $attempt): ${error.toString()}');
+      },
+    );
   }
 
   /// Retrieves a single assignment by ID
@@ -48,26 +58,44 @@ class AssignmentService {
 
   /// Updates an existing assignment
   Future<void> updateAssignment(Assignment assignment) async {
-    await _repository.update(assignment.id, assignment.toFirestore());
-    LoggerService.info('Updated assignment: ${assignment.title}');
+    await RetryService.withRetry(
+      () async {
+        await _repository.update(assignment.id, assignment.toFirestore());
+        LoggerService.info('Updated assignment: ${assignment.title}');
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
-  /// Deletes an assignment and cascades to related grades
+  /// Deletes an assignment and cascades to related grades with transaction safety
   Future<void> deleteAssignment(String assignmentId) async {
-    // Delete all grades for this assignment first
-    final grades = await _repository.firestore
-        .collection('grades')
-        .where('assignmentId', isEqualTo: assignmentId)
-        .get();
-    
-    final batch = _repository.firestore.batch();
-    for (final doc in grades.docs) {
-      batch.delete(doc.reference);
-    }
-    batch.delete(_repository.collection.doc(assignmentId));
-    
-    await batch.commit();
-    LoggerService.info('Deleted assignment $assignmentId and ${grades.docs.length} related grades');
+    await _repository.firestore.runTransaction<void>((transaction) async {
+      // First, verify the assignment exists
+      final assignmentDoc = await transaction.get(
+        _repository.collection.doc(assignmentId),
+      );
+      
+      if (!assignmentDoc.exists) {
+        throw Exception('Assignment not found: $assignmentId');
+      }
+      
+      // Fetch all grades for this assignment
+      final gradesQuery = await _repository.firestore
+          .collection('grades')
+          .where('assignmentId', isEqualTo: assignmentId)
+          .get();
+      
+      // Delete all related grades within the transaction
+      for (final gradeDoc in gradesQuery.docs) {
+        transaction.delete(gradeDoc.reference);
+      }
+      
+      // Finally, delete the assignment itself
+      transaction.delete(assignmentDoc.reference);
+      
+      LoggerService.info(
+          'Deleted assignment $assignmentId and ${gradesQuery.docs.length} related grades');
+    });
   }
 
   /// Streams published assignments for a specific class
@@ -100,7 +128,7 @@ class AssignmentService {
   Future<void> publishAssignment(String assignmentId) async {
     await _repository.collection.doc(assignmentId).update({
       'isPublished': true,
-      'status': AssignmentStatus.active.toString().split('.').last,
+      'status': AssignmentStatus.active.name,
       'updatedAt': FieldValue.serverTimestamp(),
     });
     LoggerService.info('Published assignment: $assignmentId');
@@ -117,26 +145,35 @@ class AssignmentService {
 
   /// Publishes assignments scheduled for automatic release
   Future<void> publishScheduledAssignments() async {
-    final now = DateTime.now();
-    
-    final assignments = await _repository.getList((col) => col
-        .where('isPublished', isEqualTo: false)
-        .where('publishAt', isLessThanOrEqualTo: Timestamp.fromDate(now)));
-    
-    if (assignments.isEmpty) return;
-    
-    final batch = _repository.firestore.batch();
-    
-    for (final assignment in assignments) {
-      batch.update(_repository.collection.doc(assignment.id), {
-        'isPublished': true,
-        'status': AssignmentStatus.active.toString().split('.').last,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    
-    await batch.commit();
-    LoggerService.info('Published ${assignments.length} scheduled assignments');
+    await RetryService.withRetry(
+      () async {
+        final now = DateTime.now();
+        
+        final assignments = await _repository.getList((col) => col
+            .where('isPublished', isEqualTo: false)
+            .where('publishAt', isLessThanOrEqualTo: Timestamp.fromDate(now)));
+        
+        if (assignments.isEmpty) return;
+        
+        final batch = _repository.firestore.batch();
+        
+        for (final assignment in assignments) {
+          batch.update(_repository.collection.doc(assignment.id), {
+            'isPublished': true,
+            'status': AssignmentStatus.active.name,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        
+        await batch.commit();
+        LoggerService.info('Published ${assignments.length} scheduled assignments');
+      },
+      config: RetryConfigs.aggressive,  // More retries for scheduled jobs
+      onRetry: (attempt, delay, error) {
+        LoggerService.warning(
+            'Retrying scheduled assignment publishing (attempt $attempt): ${error.toString()}');
+      },
+    );
   }
 
   /// Gets upcoming assignments for a class
@@ -157,31 +194,36 @@ class AssignmentService {
         .where('classId', isEqualTo: classId)
         .where('isPublished', isEqualTo: true)
         .where('dueDate', isLessThan: Timestamp.fromDate(DateTime.now()))
-        .where('status', isEqualTo: AssignmentStatus.active.toString().split('.').last)
+        .where('status', isEqualTo: AssignmentStatus.active.name)
         .orderBy('dueDate', descending: true));
   }
 
   /// Archives completed assignments older than specified days
   Future<void> archiveOldAssignments({int daysOld = 30}) async {
-    final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
-    
-    final assignments = await _repository.getList((col) => col
-        .where('status', isEqualTo: AssignmentStatus.completed.toString().split('.').last)
-        .where('dueDate', isLessThan: Timestamp.fromDate(cutoffDate)));
-    
-    if (assignments.isEmpty) return;
-    
-    final batch = _repository.firestore.batch();
-    
-    for (final assignment in assignments) {
-      batch.update(_repository.collection.doc(assignment.id), {
-        'status': AssignmentStatus.archived.toString().split('.').last,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    }
-    
-    await batch.commit();
-    LoggerService.info('Archived ${assignments.length} old assignments');
+    await RetryService.withRetry(
+      () async {
+        final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
+        
+        final assignments = await _repository.getList((col) => col
+            .where('status', isEqualTo: AssignmentStatus.completed.name)
+            .where('dueDate', isLessThan: Timestamp.fromDate(cutoffDate)));
+        
+        if (assignments.isEmpty) return;
+        
+        final batch = _repository.firestore.batch();
+        
+        for (final assignment in assignments) {
+          batch.update(_repository.collection.doc(assignment.id), {
+            'status': AssignmentStatus.archived.name,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        
+        await batch.commit();
+        LoggerService.info('Archived ${assignments.length} old assignments');
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
   /// Gets assignment statistics for a teacher

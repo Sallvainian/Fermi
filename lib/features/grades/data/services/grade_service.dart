@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/grade.dart';
 import '../../../../shared/services/firestore_repository.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/services/retry_service.dart';
 
 /// Refactored service for managing student grades.
 ///
@@ -24,12 +25,17 @@ class GradeService {
 
   /// Creates a new grade record
   Future<Grade> createGrade(Grade grade) async {
-    final id = await _repository.create(grade.toFirestore());
-    final createdGrade = grade.copyWith(id: id);
-    
-    LoggerService.info(
-        'Created grade for student ${grade.studentId} on assignment ${grade.assignmentId}');
-    return createdGrade;
+    return await RetryService.withRetry(
+      () async {
+        final id = await _repository.create(grade.toFirestore());
+        final createdGrade = grade.copyWith(id: id);
+        
+        LoggerService.info(
+            'Created grade for student ${grade.studentId} on assignment ${grade.assignmentId}');
+        return createdGrade;
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
   /// Retrieves a single grade by ID
@@ -39,9 +45,15 @@ class GradeService {
 
   /// Updates an existing grade
   Future<void> updateGrade(Grade grade) async {
-    final updated = grade.copyWith(updatedAt: DateTime.now());
-    await _repository.update(grade.id, updated.toFirestore());
-    LoggerService.info('Updated grade: ${grade.id}');
+    await RetryService.withRetry(
+      () async {
+        final data = grade.toFirestore();
+        data['updatedAt'] = FieldValue.serverTimestamp();
+        await _repository.update(grade.id, data);
+        LoggerService.info('Updated grade: ${grade.id}');
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
   /// Deletes a grade record
@@ -93,50 +105,72 @@ class GradeService {
   Future<void> bulkCreateGrades(List<Grade> grades) async {
     if (grades.isEmpty) return;
     
-    final batch = _repository.firestore.batch();
-    
-    for (final grade in grades) {
-      final docRef = _repository.collection.doc();
-      batch.set(docRef, grade.copyWith(id: docRef.id).toFirestore());
-    }
-    
-    await batch.commit();
-    LoggerService.info('Bulk created ${grades.length} grades');
+    await RetryService.withRetry(
+      () async {
+        final batch = _repository.firestore.batch();
+        
+        for (final grade in grades) {
+          final docRef = _repository.collection.doc();
+          batch.set(docRef, grade.copyWith(id: docRef.id).toFirestore());
+        }
+        
+        await batch.commit();
+        LoggerService.info('Bulk created ${grades.length} grades');
+      },
+      config: RetryConfigs.aggressive,  // More retries for bulk operations
+      onRetry: (attempt, delay, error) {
+        LoggerService.warning(
+            'Retrying bulk grade creation (attempt $attempt): ${error.toString()}');
+      },
+    );
   }
 
   /// Bulk updates grades
   Future<void> bulkUpdateGrades(List<Grade> grades) async {
     if (grades.isEmpty) return;
     
-    final batch = _repository.firestore.batch();
-    final now = DateTime.now();
-    
-    for (final grade in grades) {
-      final updated = grade.copyWith(updatedAt: now);
-      batch.update(_repository.collection.doc(grade.id), updated.toFirestore());
-    }
-    
-    await batch.commit();
-    LoggerService.info('Bulk updated ${grades.length} grades');
+    await RetryService.withRetry(
+      () async {
+        final batch = _repository.firestore.batch();
+        
+        for (final grade in grades) {
+          final data = grade.toFirestore();
+          data['updatedAt'] = FieldValue.serverTimestamp();
+          batch.update(_repository.collection.doc(grade.id), data);
+        }
+        
+        await batch.commit();
+        LoggerService.info('Bulk updated ${grades.length} grades');
+      },
+      config: RetryConfigs.aggressive,  // More retries for bulk operations
+      onRetry: (attempt, delay, error) {
+        LoggerService.warning(
+            'Retrying bulk grade update (attempt $attempt): ${error.toString()}');
+      },
+    );
   }
 
   /// Marks grades as returned to students
   Future<void> returnGrades(List<String> gradeIds) async {
     if (gradeIds.isEmpty) return;
     
-    final batch = _repository.firestore.batch();
-    final now = DateTime.now();
-    
-    for (final gradeId in gradeIds) {
-      batch.update(_repository.collection.doc(gradeId), {
-        'status': GradeStatus.returned.name,
-        'returnedAt': Timestamp.fromDate(now),
-        'updatedAt': Timestamp.fromDate(now),
-      });
-    }
-    
-    await batch.commit();
-    LoggerService.info('Returned ${gradeIds.length} grades to students');
+    await RetryService.withRetry(
+      () async {
+        final batch = _repository.firestore.batch();
+        
+        for (final gradeId in gradeIds) {
+          batch.update(_repository.collection.doc(gradeId), {
+            'status': GradeStatus.returned.name,
+            'returnedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        
+        await batch.commit();
+        LoggerService.info('Returned ${gradeIds.length} grades to students');
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
   /// Gets grade statistics for an assignment
@@ -206,25 +240,30 @@ class GradeService {
 
   /// Archives old grades
   Future<void> archiveOldGrades({int daysOld = 180}) async {
-    final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
-    
-    final grades = await _repository.getList((col) => col
-        .where('status', isEqualTo: GradeStatus.returned.name)
-        .where('returnedAt', isLessThan: Timestamp.fromDate(cutoffDate)));
-    
-    if (grades.isEmpty) return;
-    
-    final batch = _repository.firestore.batch();
-    
-    for (final grade in grades) {
-      // Move to archived collection
-      batch.set(_repository.firestore.collection('archived_grades').doc(grade.id), 
-          grade.toFirestore());
-      batch.delete(_repository.collection.doc(grade.id));
-    }
-    
-    await batch.commit();
-    LoggerService.info('Archived ${grades.length} old grades');
+    await RetryService.withRetry(
+      () async {
+        final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
+        
+        final grades = await _repository.getList((col) => col
+            .where('status', isEqualTo: GradeStatus.returned.name)
+            .where('returnedAt', isLessThan: Timestamp.fromDate(cutoffDate)));
+        
+        if (grades.isEmpty) return;
+        
+        final batch = _repository.firestore.batch();
+        
+        for (final grade in grades) {
+          // Move to archived collection
+          batch.set(_repository.firestore.collection('archived_grades').doc(grade.id), 
+              grade.toFirestore());
+          batch.delete(_repository.collection.doc(grade.id));
+        }
+        
+        await batch.commit();
+        LoggerService.info('Archived ${grades.length} old grades');
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
   /// Calculates grade summary for a teacher's dashboard

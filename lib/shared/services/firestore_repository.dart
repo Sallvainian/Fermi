@@ -21,24 +21,14 @@ class FirestoreRepository<T> extends FirestoreService<T> {
           firestore: firestore,
         );
 
-  /// Create a new document and return it with the generated ID
-  Future<T> createEntity(T entity) async {
-    final id = await create(toFirestore(entity));
-    return await get(id) ?? entity;
-  }
-
-  /// Fetch a document by its document ID using inherited method
-  Future<T?> getById(String id) async => await get(id);
-
-  /// Update an existing document using inherited method
-  Future<void> updateEntity(String id, T entity) async {
-    await update(id, toFirestore(entity));
-  }
-
-  /// Delete a document by its document ID using inherited method
-  Future<void> deleteEntity(String id) async {
-    await delete(id);
-  }
+  // Note: This repository inherits the following methods from FirestoreService:
+  // - create(Map<String, dynamic> data) → Future<String>
+  // - get(String id) → Future<T?>
+  // - update(String id, Map<String, dynamic> data) → Future<void>
+  // - delete(String id) → Future<void>
+  // - getAll() → Future<List<T>>
+  // - streamCollection() → Stream<List<T>>
+  // - streamDocument(String id) → Stream<T?>
 
   /// Fetch all documents matching the supplied `queryBuilder`.
   Future<List<T>> getList(

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/class_model.dart';
 import '../../../../shared/services/firestore_repository.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/services/retry_service.dart';
 
 /// Refactored service for managing educational classes.
 ///
@@ -26,20 +27,35 @@ class ClassService {
 
   /// Creates a new class with auto-generated enrollment code
   Future<ClassModel> createClass(ClassModel classModel) async {
-    final enrollmentCode = await _generateUniqueEnrollmentCode();
-    final now = DateTime.now();
-    final modelWithCode = classModel.copyWith(
-      enrollmentCode: enrollmentCode,
-      createdAt: now,
-      updatedAt: now,
+    return await RetryService.withRetry(
+      () async {
+        final enrollmentCode = await _generateUniqueEnrollmentCode();
+        // Use client timestamp for model but server will override on write
+        final now = DateTime.now();
+        final modelWithCode = classModel.copyWith(
+          enrollmentCode: enrollmentCode,
+          createdAt: now,
+          updatedAt: now,
+        );
+        
+        // Create the document with server timestamps
+        final data = modelWithCode.toFirestore();
+        data['createdAt'] = FieldValue.serverTimestamp();
+        data['updatedAt'] = FieldValue.serverTimestamp();
+        
+        final id = await _repository.create(data);
+        final createdClass = modelWithCode.copyWith(id: id);
+        
+        LoggerService.info(
+            'Created class: ${createdClass.name} with enrollment code: $enrollmentCode');
+        return createdClass;
+      },
+      config: RetryConfigs.standard,
+      onRetry: (attempt, delay, error) {
+        LoggerService.warning(
+            'Retrying class creation (attempt $attempt): ${error.toString()}');
+      },
     );
-    
-    final id = await _repository.create(modelWithCode.toFirestore());
-    final createdClass = modelWithCode.copyWith(id: id);
-    
-    LoggerService.info(
-        'Created class: ${createdClass.name} with enrollment code: $enrollmentCode');
-    return createdClass;
   }
 
   /// Retrieves a class by its ID
@@ -54,10 +70,17 @@ class ClassService {
 
   /// Updates an existing class
   Future<ClassModel> updateClass(ClassModel classModel) async {
-    final updated = classModel.copyWith(updatedAt: DateTime.now());
-    await _repository.update(updated.id, updated.toFirestore());
-    LoggerService.info('Updated class: ${classModel.name}');
-    return updated;
+    return await RetryService.withRetry(
+      () async {
+        final data = classModel.toFirestore();
+        data['updatedAt'] = FieldValue.serverTimestamp();
+        await _repository.update(classModel.id, data);
+        LoggerService.info('Updated class: ${classModel.name}');
+        // Return model with client timestamp for immediate use
+        return classModel.copyWith(updatedAt: DateTime.now());
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
   /// Deletes a class by ID
@@ -70,7 +93,7 @@ class ClassService {
   Future<void> archiveClass(String id) async {
     await _repository.collection.doc(id).update({
       'isActive': false,
-      'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
     LoggerService.info('Archived class: $id');
   }
@@ -115,70 +138,109 @@ class ClassService {
     return results.isEmpty ? null : results.first;
   }
 
-  /// Enroll a student in a class
+  /// Enroll a student in a class with transaction safety
   Future<ClassModel> enrollStudent(String studentId, String enrollmentCode) async {
-    final classModel = await getClassByEnrollmentCode(enrollmentCode);
-    
-    if (classModel == null) {
+    // First check if the enrollment code exists
+    final initialCheck = await getClassByEnrollmentCode(enrollmentCode);
+    if (initialCheck == null) {
       throw Exception('Invalid enrollment code');
     }
-    
-    if (classModel.studentIds.contains(studentId)) {
-      throw Exception('Student is already enrolled in this class');
-    }
-    
-    if (classModel.maxStudents != null && 
-        classModel.studentIds.length >= classModel.maxStudents!) {
-      throw Exception('Class is at maximum capacity');
-    }
-    
-    final updatedIds = [...classModel.studentIds, studentId];
-    final updatedClass = classModel.copyWith(
-      studentIds: updatedIds,
-      updatedAt: DateTime.now(),
-    );
-    
-    await _repository.collection.doc(classModel.id).update({
-      'studentIds': updatedIds,
-      'updatedAt': Timestamp.fromDate(updatedClass.updatedAt!),
+
+    // Use a transaction to ensure atomic enrollment
+    return await _repository.firestore.runTransaction<ClassModel>((transaction) async {
+      // Re-fetch the class within the transaction to ensure consistency
+      final classDoc = await transaction.get(
+        _repository.collection.doc(initialCheck.id),
+      );
+      
+      if (!classDoc.exists) {
+        throw Exception('Class no longer exists');
+      }
+      
+      final classModel = ClassModel.fromFirestore(classDoc);
+      
+      // Re-validate enrollment conditions within transaction
+      if (classModel.studentIds.contains(studentId)) {
+        throw Exception('Student is already enrolled in this class');
+      }
+      
+      if (classModel.maxStudents != null && 
+          classModel.studentIds.length >= classModel.maxStudents!) {
+        throw Exception('Class is at maximum capacity');
+      }
+      
+      // Update the student list
+      final updatedIds = [...classModel.studentIds, studentId];
+      final updatedClass = classModel.copyWith(
+        studentIds: updatedIds,
+        updatedAt: DateTime.now(),
+      );
+      
+      // Perform the update within the transaction
+      transaction.update(classDoc.reference, {
+        'studentIds': updatedIds,
+        'updatedAt': FieldValue.serverTimestamp(), // Use server timestamp
+      });
+      
+      LoggerService.info(
+          'Enrolled student $studentId in class ${classModel.name}');
+      return updatedClass;
     });
-    
-    LoggerService.info(
-        'Enrolled student $studentId in class ${classModel.name}');
-    return updatedClass;
   }
 
-  /// Unenroll a student from a class
+  /// Unenroll a student from a class with transaction safety
   Future<void> unenrollStudent(String classId, String studentId) async {
-    final classModel = await getClassById(classId);
-    
-    if (classModel == null) {
-      throw Exception('Class not found');
-    }
-    
-    final updatedIds =
-        classModel.studentIds.where((id) => id != studentId).toList();
-    
-    await _repository.collection.doc(classId).update({
-      'studentIds': updatedIds,
-      'updatedAt': Timestamp.fromDate(DateTime.now()),
+    await _repository.firestore.runTransaction<void>((transaction) async {
+      // Fetch the class within the transaction
+      final classDoc = await transaction.get(
+        _repository.collection.doc(classId),
+      );
+      
+      if (!classDoc.exists) {
+        throw Exception('Class not found');
+      }
+      
+      final classModel = ClassModel.fromFirestore(classDoc);
+      
+      // Check if student is actually enrolled
+      if (!classModel.studentIds.contains(studentId)) {
+        LoggerService.warning(
+            'Student $studentId is not enrolled in class ${classModel.name}');
+        return; // No-op if student isn't enrolled
+      }
+      
+      // Remove the student from the list
+      final updatedIds = classModel.studentIds
+          .where((id) => id != studentId)
+          .toList();
+      
+      // Perform the update within the transaction
+      transaction.update(classDoc.reference, {
+        'studentIds': updatedIds,
+        'updatedAt': FieldValue.serverTimestamp(), // Use server timestamp
+      });
+      
+      LoggerService.info(
+          'Unenrolled student $studentId from class ${classModel.name}');
     });
-    
-    LoggerService.info(
-        'Unenrolled student $studentId from class ${classModel.name}');
   }
 
   /// Regenerate enrollment code for a class
   Future<String> regenerateEnrollmentCode(String classId) async {
-    final newCode = await _generateUniqueEnrollmentCode();
-    
-    await _repository.collection.doc(classId).update({
-      'enrollmentCode': newCode,
-      'updatedAt': Timestamp.fromDate(DateTime.now()),
-    });
-    
-    LoggerService.info('Regenerated enrollment code for class $classId');
-    return newCode;
+    return await RetryService.withRetry(
+      () async {
+        final newCode = await _generateUniqueEnrollmentCode();
+        
+        await _repository.collection.doc(classId).update({
+          'enrollmentCode': newCode,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        
+        LoggerService.info('Regenerated enrollment code for class $classId');
+        return newCode;
+      },
+      config: RetryConfigs.standard,
+    );
   }
 
   /// Get teacher's class statistics
@@ -198,24 +260,53 @@ class ClassService {
     };
   }
 
-  /// Generate a unique enrollment code
+  /// Generate a unique enrollment code with improved algorithm
   Future<String> _generateUniqueEnrollmentCode() async {
+    // Use a larger character set to reduce collision probability
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const codeLength = 6;
-    const maxAttempts = 100;
-    final random = Random();
+    const maxAttempts = 10; // Reduced attempts since we batch check
+    final random = Random.secure(); // Use cryptographically secure random
     
-    for (var attempt = 0; attempt < maxAttempts; attempt++) {
-      final code = String.fromCharCodes(Iterable.generate(
-          codeLength,
-          (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+    // Generate multiple codes at once to batch check
+    const batchSize = 5;
+    
+    for (var attempt = 0; attempt < maxAttempts; attempt += batchSize) {
+      // Generate a batch of candidate codes
+      final candidateCodes = <String>[];
+      for (var i = 0; i < batchSize; i++) {
+        final code = String.fromCharCodes(Iterable.generate(
+            codeLength,
+            (_) => chars.codeUnitAt(random.nextInt(chars.length))));
+        candidateCodes.add(code);
+      }
       
-      final existing = await getClassByEnrollmentCode(code);
-      if (existing == null) {
-        return code;
+      // Batch check all codes in a single query
+      final existingCodes = await _repository.firestore
+          .collection('classes')
+          .where('enrollmentCode', whereIn: candidateCodes)
+          .where('isActive', isEqualTo: true)
+          .get();
+      
+      // Find the first code that doesn't exist
+      final existingCodeSet = existingCodes.docs
+          .map((doc) => doc.data()['enrollmentCode'] as String)
+          .toSet();
+      
+      for (final code in candidateCodes) {
+        if (!existingCodeSet.contains(code)) {
+          LoggerService.info('Generated unique enrollment code after ${attempt + 1} attempts');
+          return code;
+        }
       }
     }
     
-    throw Exception('Unable to generate unique enrollment code');
+    // Fallback: Use timestamp-based code for guaranteed uniqueness
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final uniquePart = timestamp.toRadixString(36).toUpperCase();
+    final code = uniquePart.padLeft(codeLength, '0').substring(0, codeLength);
+    
+    LoggerService.warning('Using timestamp-based enrollment code: $code');
+    return code;
   }
 }

@@ -12,8 +12,4 @@ flutter pub get
 echo "🍎 Installing iOS CocoaPods..."
 cd ios && pod install
 
-echo "🚀 Running app on iOS..."
-cd ..
-flutter run -d ios
-
 echo "✅ Done!"
