@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'desktop_oauth_handler_secure.dart';
+import 'desktop_oauth_handler_direct.dart';
 
 /// Simple authentication service - does one thing well
 class AuthService {
@@ -14,8 +14,8 @@ class AuthService {
   // Use GoogleSignIn.instance singleton for mobile (v7+)
   GoogleSignIn get _googleSignIn => GoogleSignIn.instance;
   // Desktop OAuth handler for Windows/Mac/Linux
-  // Use secure handler that doesn't expose secrets in the client
-  final SecureDesktopOAuthHandler _secureOAuthHandler = SecureDesktopOAuthHandler();
+  // Direct OAuth handler that works without Firebase Functions
+  final DirectDesktopOAuthHandler _directOAuthHandler = DirectDesktopOAuthHandler();
 
   AuthService() {
     _auth = FirebaseAuth.instance;
@@ -161,7 +161,7 @@ class AuthService {
       
       try {
         // Perform secure OAuth flow - no secrets exposed in client
-        final credential = await _secureOAuthHandler.performSecureOAuthFlow();
+        final credential = await _directOAuthHandler.performDirectOAuthFlow();
         
         if (credential == null) {
           debugPrint('Google Sign-In: User cancelled or flow failed');
@@ -518,7 +518,7 @@ class AuthService {
         // Desktop: Use secure OAuth flow for re-authentication
         debugPrint('Re-authentication: Using secure OAuth flow via Firebase Functions');
         
-        final credential = await _secureOAuthHandler.performSecureOAuthFlow();
+        final credential = await _directOAuthHandler.performDirectOAuthFlow();
         
         if (credential == null) {
           throw Exception('Google re-authentication was cancelled');

@@ -601,9 +601,14 @@ class AuthProvider extends ChangeNotifier {
           message = error.message ?? '$provider authentication failed';
       }
     } else if (error.toString().contains('OAuth') || error.toString().contains('authentication server')) {
-      message = 'OAuth configuration error. Please ensure Firebase Functions are deployed and configured correctly';
+      // Better error message that actually helps users
+      message = 'Sign-in service temporarily unavailable. Please try again or use email/password sign-in';
+    } else if (error.toString().contains('network') || error.toString().contains('connection')) {
+      message = 'Network error. Please check your connection';
     } else {
-      message = error.toString();
+      // Generic error - log for debugging but show user-friendly message
+      debugPrint('OAuth error details: $error');
+      message = 'Sign-in failed. Please try again';
     }
     
     _handleAuthError(message);

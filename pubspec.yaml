@@ -122,6 +122,7 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   build_runner: ^2.7.0
   json_serializable: ^6.11.0
+  msix: ^3.16.12
 
 # Flutter launcher icons configuration
 flutter_launcher_icons:
@@ -247,3 +248,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# MSIX Configuration for Windows Installer
+msix_config:
+  display_name: Fermi Plus
+  publisher_display_name: Fermi Plus Team
+  identity_name: com.fermiplus.app
+  msix_version: 0.9.3.0
+  logo_path: windows/runner/resources/app_icon.ico
+  capabilities: internetClient, privateNetworkClientServer
+  # Certificate will be configured after receiving Certum card
+  # certificate_subject: 'CN=Open Source Developer: Your Name'
+  # sign_msix: true
+  store: false  # We'll sign with Certum certificate
