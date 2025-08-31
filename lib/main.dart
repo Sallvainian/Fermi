@@ -117,7 +117,8 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
 
           // Show loading screen while auth is initializing
           // This prevents login screen flash and route errors
-          if (authProvider.status == AuthStatus.uninitialized) {
+          if (authProvider.status == AuthStatus.uninitialized || 
+              authProvider.status == AuthStatus.authenticating) {
             return MaterialApp(
               title: 'Teacher Dashboard',
               theme: AppTheme.lightTheme(),
@@ -133,7 +134,9 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
                       const CircularProgressIndicator(),
                       const SizedBox(height: 16),
                       Text(
-                        'Verifying authentication...',
+                        authProvider.status == AuthStatus.authenticating 
+                            ? 'Loading your profile...' 
+                            : 'Initializing...',
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ],

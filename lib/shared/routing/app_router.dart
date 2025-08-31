@@ -115,7 +115,23 @@ class AppRouter {
           path: '/',
           redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
+            
+            // Don't redirect during initialization
+            if (auth.status == AuthStatus.uninitialized || 
+                auth.status == AuthStatus.authenticating) {
+              // Show loading state - handled by the builder
+              return null;
+            }
+            
             return auth.isAuthenticated ? '/dashboard' : '/auth/login';
+          },
+          builder: (context, state) {
+            // This builder is only used during initialization
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
           },
         ),
 
