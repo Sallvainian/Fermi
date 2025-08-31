@@ -20,6 +20,7 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
   bool _isUnlocked = false;
   bool _isChecking = true;
   bool _hasAuthenticatedUser = false;
+  ThemeMode _themeMode = ThemeMode.light; // Default to light
   
   @override
   void initState() {
@@ -73,6 +74,16 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     // ALWAYS require password on app start
     await prefs.setBool('app_unlocked', false);
     
+    // Load theme preference if available
+    final themeString = prefs.getString('theme_mode');
+    if (themeString != null) {
+      _themeMode = ThemeMode.values.firstWhere(
+        (mode) => mode.toString() == themeString,
+        orElse: () => ThemeMode.light,
+      );
+      debugPrint('AppPasswordWrapper: Loaded theme preference: $_themeMode');
+    }
+    
     // Check if there's an authenticated Firebase user (only if Firebase is initialized)
     try {
       // First check if Firebase is initialized
@@ -111,8 +122,20 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
   Widget build(BuildContext context) {
     if (_isChecking) {
       // Show loading indicator while checking unlock status
-      return const MaterialApp(
-        home: Scaffold(
+      return MaterialApp(
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
+        ),
+        themeMode: ThemeMode.system, // Use system theme while loading
+        home: const Scaffold(
           body: Center(
             child: CircularProgressIndicator(),
           ),
@@ -121,13 +144,21 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     }
     
     if (!_isUnlocked) {
-      // Show password screen
+      // Show password screen with user's theme preference if authenticated
       return MaterialApp(
         title: 'Fermi+',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
+        ),
+        themeMode: _hasAuthenticatedUser ? _themeMode : ThemeMode.light,
         home: AppPasswordScreen(
           onSuccess: _onPasswordSuccess,
         ),
