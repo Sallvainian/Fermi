@@ -10,7 +10,9 @@ import '../providers/theme_provider.dart';
 import '../widgets/common/adaptive_layout.dart';
 import '../widgets/common/responsive_layout.dart';
 import '../widgets/custom_radio_list_tile.dart';
+import '../widgets/color_picker_dialog.dart';
 import '../models/user_model.dart';
+import '../theme/app_colors.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -87,6 +89,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _darkMode = value;
                     });
                     themeProvider.toggleTheme();
+                  },
+                ),
+                ListTile(
+                  title: const Text('Theme Color'),
+                  subtitle: Text('Current: ${AppColors.getTheme(themeProvider.colorThemeId).name}'),
+                  leading: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.getTheme(themeProvider.colorThemeId).primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => const ColorPickerDialog(),
+                    );
                   },
                 ),
                 _buildDropdownTile(

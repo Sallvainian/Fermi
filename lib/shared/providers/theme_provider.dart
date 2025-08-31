@@ -17,18 +17,28 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// - Real-time theme switching with UI updates
 /// - System brightness detection and adaptation
 /// - Toggle functionality for quick theme switching
+/// - Custom color theme selection
 ///
 /// Theme preferences are automatically saved to SharedPreferences
 /// and restored on application startup.
 class ThemeProvider with ChangeNotifier {
   /// SharedPreferences key for storing theme preference.
   static const String _themeKey = 'theme_mode';
+  
+  /// SharedPreferences key for storing color theme.
+  static const String _colorThemeKey = 'color_theme';
 
   /// Current theme mode (light, dark, or system).
   ThemeMode _themeMode = ThemeMode.system;
+  
+  /// Current color theme ID.
+  String _colorThemeId = 'indigo';
 
   /// Current theme mode setting.
   ThemeMode get themeMode => _themeMode;
+  
+  /// Current color theme ID.
+  String get colorThemeId => _colorThemeId;
 
   /// Whether the current effective theme is dark mode.
   ///
@@ -52,19 +62,25 @@ class ThemeProvider with ChangeNotifier {
 
   /// Loads theme preference from SharedPreferences.
   ///
-  /// Restores previously saved theme mode or defaults to system.
+  /// Restores previously saved theme mode and color theme or defaults to system.
   /// Called during provider initialization.
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
     final themeString = prefs.getString(_themeKey);
+    final colorTheme = prefs.getString(_colorThemeKey);
 
     if (themeString != null) {
       _themeMode = ThemeMode.values.firstWhere(
         (mode) => mode.toString() == themeString,
         orElse: () => ThemeMode.system,
       );
-      notifyListeners();
     }
+    
+    if (colorTheme != null) {
+      _colorThemeId = colorTheme;
+    }
+    
+    notifyListeners();
   }
 
   /// Toggles between light and dark theme modes.
@@ -100,6 +116,19 @@ class ThemeProvider with ChangeNotifier {
     _themeMode = mode;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_themeKey, mode.toString());
+    notifyListeners();
+  }
+  
+  /// Sets the color theme for the application.
+  ///
+  /// Changes the accent color used throughout the app.
+  /// Automatically saves preference and updates UI.
+  ///
+  /// @param colorThemeId The ID of the color theme to apply
+  Future<void> setColorTheme(String colorThemeId) async {
+    _colorThemeId = colorThemeId;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_colorThemeKey, colorThemeId);
     notifyListeners();
   }
 }

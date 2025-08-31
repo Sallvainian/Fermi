@@ -6,6 +6,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 /// Central theme configuration for the application.
 ///
@@ -41,10 +42,11 @@ class AppTheme {
   /// design principles using the primary color as seed.
   ///
   /// @param brightness Light or dark theme brightness
+  /// @param seedColor Optional custom seed color
   /// @return Generated color scheme
-  static ColorScheme _createColorScheme(Brightness brightness) {
+  static ColorScheme _createColorScheme(Brightness brightness, {Color? seedColor}) {
     return ColorScheme.fromSeed(
-      seedColor: primaryColor,
+      seedColor: seedColor ?? primaryColor,
       brightness: brightness,
     );
   }
@@ -55,9 +57,11 @@ class AppTheme {
   /// educational environments with high readability and
   /// accessibility considerations.
   ///
+  /// @param colorThemeId Optional color theme ID for custom colors
   /// @return Configured light theme data
-  static ThemeData lightTheme() {
-    final colorScheme = _createColorScheme(Brightness.light);
+  static ThemeData lightTheme({String? colorThemeId}) {
+    final colorTheme = AppColors.getTheme(colorThemeId);
+    final colorScheme = _createColorScheme(Brightness.light, seedColor: colorTheme.primary);
 
     return ThemeData(
       useMaterial3: true,
@@ -252,16 +256,18 @@ class AppTheme {
   /// design principles. Features true black surfaces for
   /// OLED displays and reduced eye strain.
   ///
+  /// @param colorThemeId Optional color theme ID for custom colors
   /// @return Configured dark theme data
-  static ThemeData darkTheme() {
+  static ThemeData darkTheme({String? colorThemeId}) {
     // Create a sleek black dark theme
     const surfaceBlack = Color(0xFF000000);
     const cardBlack = Color(0xFF0F0F0F);
     const containerBlack = Color(0xFF1C1C1C);
     const borderGrey = Color(0xFF2A2A2A);
 
+    final colorTheme = AppColors.getTheme(colorThemeId);
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: primaryColor,
+      seedColor: colorTheme.primary,
       brightness: Brightness.dark,
     ).copyWith(
       surface: surfaceBlack,

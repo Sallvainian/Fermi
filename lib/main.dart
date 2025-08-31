@@ -121,8 +121,8 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
               authProvider.status == AuthStatus.authenticating) {
             return MaterialApp(
               title: 'Teacher Dashboard',
-              theme: AppTheme.lightTheme(),
-              darkTheme: AppTheme.darkTheme(),
+              theme: AppTheme.lightTheme(colorThemeId: themeProvider.colorThemeId),
+              darkTheme: AppTheme.darkTheme(colorThemeId: themeProvider.colorThemeId),
               themeMode: themeProvider.themeMode,
               debugShowCheckedModeBanner: false,
               home: Builder(
@@ -131,7 +131,9 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const CircularProgressIndicator(),
+                        CircularProgressIndicator(
+                          color: Theme.of(innerContext).colorScheme.primary,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           authProvider.status == AuthStatus.authenticating 
@@ -157,14 +159,14 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
               child: MaterialApp.router(
                 title: 'Teacher Dashboard',
                 scaffoldMessengerKey: scaffoldMessengerKey,
-                theme: AppTheme.lightTheme().copyWith(
+                theme: AppTheme.lightTheme(colorThemeId: themeProvider.colorThemeId).copyWith(
                   textTheme: AppTypography.createTextTheme(
-                    AppTheme.lightTheme().colorScheme,
+                    AppTheme.lightTheme(colorThemeId: themeProvider.colorThemeId).colorScheme,
                   ),
                 ),
-                darkTheme: AppTheme.darkTheme().copyWith(
+                darkTheme: AppTheme.darkTheme(colorThemeId: themeProvider.colorThemeId).copyWith(
                   textTheme: AppTypography.createTextTheme(
-                    AppTheme.darkTheme().colorScheme,
+                    AppTheme.darkTheme(colorThemeId: themeProvider.colorThemeId).colorScheme,
                   ),
                 ),
                 themeMode: themeProvider.themeMode,
