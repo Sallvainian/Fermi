@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/auth/presentation/screens/app_password_screen.dart';
+import '../theme/app_theme.dart';
 
 class AppPasswordWrapper extends StatefulWidget {
   final Widget child;
@@ -127,19 +128,8 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     if (_isChecking) {
       // Show loading indicator while checking unlock status
       return MaterialApp(
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
-          ),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.lightTheme(),
+        darkTheme: AppTheme.darkTheme(),
         themeMode: ThemeMode.system, // Use system theme while loading
         home: const Scaffold(
           body: Center(
@@ -153,19 +143,8 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
       // Show password screen with user's theme preference if authenticated
       return MaterialApp(
         title: 'Fermi+',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
-          ),
-          useMaterial3: true,
-        ),
-        darkTheme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        ),
+        theme: AppTheme.lightTheme(),
+        darkTheme: AppTheme.darkTheme(),
         themeMode: _hasLoadedTheme ? _themeMode : ThemeMode.light,
         home: AppPasswordScreen(
           onSuccess: _onPasswordSuccess,
