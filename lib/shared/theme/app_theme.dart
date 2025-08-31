@@ -44,10 +44,22 @@ class AppTheme {
   /// @param brightness Light or dark theme brightness
   /// @param seedColor Optional custom seed color
   /// @return Generated color scheme
-  static ColorScheme _createColorScheme(Brightness brightness, {Color? seedColor}) {
-    return ColorScheme.fromSeed(
+  static ColorScheme _createColorScheme(Brightness brightness, {Color? seedColor, Color? secondaryColor}) {
+    final baseScheme = ColorScheme.fromSeed(
       seedColor: seedColor ?? primaryColor,
       brightness: brightness,
+    );
+    
+    // Explicitly override primary and secondary to ensure our custom colors are used
+    return baseScheme.copyWith(
+      primary: seedColor ?? primaryColor,
+      secondary: secondaryColor ?? AppTheme.secondaryColor,
+      primaryContainer: brightness == Brightness.light
+          ? Color.alphaBlend((seedColor ?? primaryColor).withValues(alpha: 0.3), Colors.white)
+          : Color.alphaBlend((seedColor ?? primaryColor).withValues(alpha: 0.4), Colors.black),
+      secondaryContainer: brightness == Brightness.light
+          ? Color.alphaBlend((secondaryColor ?? AppTheme.secondaryColor).withValues(alpha: 0.3), Colors.white)
+          : Color.alphaBlend((secondaryColor ?? AppTheme.secondaryColor).withValues(alpha: 0.4), Colors.black),
     );
   }
 
@@ -61,7 +73,11 @@ class AppTheme {
   /// @return Configured light theme data
   static ThemeData lightTheme({String? colorThemeId}) {
     final colorTheme = AppColors.getTheme(colorThemeId);
-    final colorScheme = _createColorScheme(Brightness.light, seedColor: colorTheme.primary);
+    final colorScheme = _createColorScheme(
+      Brightness.light, 
+      seedColor: colorTheme.primary,
+      secondaryColor: colorTheme.secondary,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -266,10 +282,14 @@ class AppTheme {
     const borderGrey = Color(0xFF2A2A2A);
 
     final colorTheme = AppColors.getTheme(colorThemeId);
-    final colorScheme = ColorScheme.fromSeed(
+    final baseColorScheme = _createColorScheme(
+      Brightness.dark, 
       seedColor: colorTheme.primary,
-      brightness: Brightness.dark,
-    ).copyWith(
+      secondaryColor: colorTheme.secondary,
+    );
+    
+    // Keep the dark surfaces but use dynamic accent colors
+    final colorScheme = baseColorScheme.copyWith(
       surface: surfaceBlack,
       onSurface: const Color(0xFFE5E5E5),
       surfaceContainerLowest: surfaceBlack,
@@ -280,11 +300,10 @@ class AppTheme {
       onSurfaceVariant: const Color(0xFFB3B3B3),
       outline: borderGrey,
       outlineVariant: const Color(0xFF1A1A1A),
-      primary: const Color(0xFF6366F1), // Modern indigo
+      // Don't override primary/secondary - use the dynamic colors from colorTheme
       onPrimary: Colors.white,
-      secondary: const Color(0xFF10B981), // Modern emerald
       onSecondary: Colors.white,
-      tertiary: const Color(0xFFF59E0B), // Modern amber
+      tertiary: const Color(0xFFF59E0B), // Keep amber for tertiary
       onTertiary: Colors.black,
     );
 

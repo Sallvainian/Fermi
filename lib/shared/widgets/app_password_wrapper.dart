@@ -23,6 +23,7 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
   bool _hasAuthenticatedUser = false;
   ThemeMode _themeMode = ThemeMode.light; // Default to light
   bool _hasLoadedTheme = false; // Track if we loaded a theme preference
+  String? _colorThemeId; // Track color theme preference
   
   @override
   void initState() {
@@ -89,6 +90,10 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
       debugPrint('AppPasswordWrapper: No theme preference found, using default');
     }
     
+    // Load color theme preference
+    _colorThemeId = prefs.getString('color_theme');
+    debugPrint('AppPasswordWrapper: Loaded color theme: $_colorThemeId');
+    
     // Check if there's an authenticated Firebase user (only if Firebase is initialized)
     try {
       // First check if Firebase is initialized
@@ -128,8 +133,8 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     if (_isChecking) {
       // Show loading indicator while checking unlock status
       return MaterialApp(
-        theme: AppTheme.lightTheme(),
-        darkTheme: AppTheme.darkTheme(),
+        theme: AppTheme.lightTheme(colorThemeId: _colorThemeId),
+        darkTheme: AppTheme.darkTheme(colorThemeId: _colorThemeId),
         themeMode: ThemeMode.system, // Use system theme while loading
         home: const Scaffold(
           body: Center(
@@ -143,8 +148,8 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
       // Show password screen with user's theme preference if authenticated
       return MaterialApp(
         title: 'Fermi+',
-        theme: AppTheme.lightTheme(),
-        darkTheme: AppTheme.darkTheme(),
+        theme: AppTheme.lightTheme(colorThemeId: _colorThemeId),
+        darkTheme: AppTheme.darkTheme(colorThemeId: _colorThemeId),
         themeMode: _hasLoadedTheme ? _themeMode : ThemeMode.light,
         home: AppPasswordScreen(
           onSuccess: _onPasswordSuccess,
