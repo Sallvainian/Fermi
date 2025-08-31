@@ -24,13 +24,10 @@ class DirectDesktopOAuthHandler {
     // Fall back to .env file (for local development)
     try {
       final envValue = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'];
-      if (envValue == null || envValue.isEmpty) {
-        throw Exception('GOOGLE_OAUTH_CLIENT_ID not configured. Please set in .env file or build with --dart-define');
-      }
-      return envValue;
+      return envValue ?? '';  // Return empty string if not configured
     } catch (e) {
-      // If dotenv isn't loaded or value missing
-      throw Exception('OAuth client ID not configured. Please check .env file.');
+      // If dotenv isn't loaded
+      return '';  // Return empty string instead of throwing
     }
   }
   
@@ -44,13 +41,10 @@ class DirectDesktopOAuthHandler {
     // Fall back to .env file (for local development)
     try {
       final envValue = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'];
-      if (envValue == null || envValue.isEmpty) {
-        throw Exception('GOOGLE_OAUTH_CLIENT_SECRET not configured. Please set in .env file or build with --dart-define');
-      }
-      return envValue;
+      return envValue ?? '';  // Return empty string if not configured
     } catch (e) {
-      // If dotenv isn't loaded or value missing
-      throw Exception('OAuth client secret not configured. Please check .env file.');
+      // If dotenv isn't loaded
+      return '';  // Return empty string instead of throwing
     }
   }
 
@@ -61,6 +55,21 @@ class DirectDesktopOAuthHandler {
   Future<UserCredential?> performDirectOAuthFlow() async {
     try {
       debugPrint('DirectOAuth: Starting direct OAuth flow');
+      
+      // Check if credentials are configured
+      if (_clientId.isEmpty || _clientSecret.isEmpty) {
+        debugPrint('DirectOAuth ERROR: Missing credentials');
+        debugPrint('DirectOAuth: Client ID empty: ${_clientId.isEmpty}');
+        debugPrint('DirectOAuth: Client Secret empty: ${_clientSecret.isEmpty}');
+        debugPrint('DirectOAuth: dotenv keys: ${dotenv.env.keys.toList()}');
+        throw Exception(
+          'OAuth credentials not configured. Please ensure:\n'
+          '1. You have a .env file with GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET\n'
+          '2. The .env file is in your project root directory\n'
+          '3. You have restarted the app after adding the .env file'
+        );
+      }
+      
       debugPrint('DirectOAuth: Client ID: ${_clientId.substring(0, 20)}...');
       debugPrint('DirectOAuth: Client Secret present: ${_clientSecret.isNotEmpty}');
 
