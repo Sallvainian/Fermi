@@ -16,12 +16,14 @@ import {
   OAuthTokenRefreshRequest,
 } from "./types/oauth.types";
 
-// OAuth configuration - using environment variables
+// OAuth configuration - using Firebase config or environment variables
 // For local development: create functions/.env file with GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
-// For production: GitHub Secrets are injected during deployment via GitHub Actions
-// The secrets become environment variables during the deployment process
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+// For production: GitHub Secrets are set via firebase functions:config during deployment
+// The secrets are accessed via functions.config() in production
+import * as functions from "firebase-functions";
+const config = functions.config();
+const GOOGLE_CLIENT_ID = config.oauth?.client_id || process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = config.oauth?.client_secret || process.env.GOOGLE_CLIENT_SECRET;
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";

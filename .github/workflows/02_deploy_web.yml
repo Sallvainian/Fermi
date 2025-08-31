@@ -33,6 +33,10 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      - name: Set Firebase Functions config
+        run: |
+          firebase functions:config:set oauth.client_id="${{ secrets.GOOGLE_CLIENT_ID }}" oauth.client_secret="${{ secrets.GOOGLE_CLIENT_SECRET }}" --project ${{ secrets.FIREBASE_PROJECT_ID }} --token ${{ secrets.FIREBASE_TOKEN }}
+      
       - name: Deploy to Firebase Hosting, Functions, and Firestore Rules
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
