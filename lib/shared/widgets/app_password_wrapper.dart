@@ -72,12 +72,18 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     // ALWAYS require password on app start
     await prefs.setBool('app_unlocked', false);
     
-    // Check if there's an authenticated Firebase user
-    final currentUser = FirebaseAuth.instance.currentUser;
-    _hasAuthenticatedUser = currentUser != null;
-    
-    if (_hasAuthenticatedUser) {
-      debugPrint('AppPasswordWrapper: Found authenticated user: ${currentUser?.email}');
+    // Check if there's an authenticated Firebase user (only if Firebase is initialized)
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      _hasAuthenticatedUser = currentUser != null;
+      
+      if (_hasAuthenticatedUser) {
+        debugPrint('AppPasswordWrapper: Found authenticated user: ${currentUser?.email}');
+      }
+    } catch (e) {
+      // Firebase not initialized yet - that's OK, it will be initialized later
+      debugPrint('AppPasswordWrapper: Firebase not initialized yet, skipping auth check');
+      _hasAuthenticatedUser = false;
     }
     
     setState(() {
