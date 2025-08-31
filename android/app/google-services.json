@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "218352465432-8rnhpu1lrunubf9mglt77h1rn1nuktov.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.teacherdashboard.teacher_dashboard_flutter_firebase",
+            "certificate_hash": "b0e582d6a28ab6cbfb23fd5ea65299d6e3aef34b"
+          }
+        },
+        {
           "client_id": "218352465432-pafb2c0j9mk5ici68kulq1rpmjubo27e.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
