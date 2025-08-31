@@ -125,21 +125,22 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
               darkTheme: AppTheme.darkTheme(),
               themeMode: themeProvider.themeMode,
               debugShowCheckedModeBanner: false,
-              home: Scaffold(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(),
-                      const SizedBox(height: 16),
-                      Text(
-                        authProvider.status == AuthStatus.authenticating 
-                            ? 'Loading your profile...' 
-                            : 'Initializing...',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
+              home: Builder(
+                builder: (innerContext) => Scaffold(
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          authProvider.status == AuthStatus.authenticating 
+                              ? 'Loading your profile...' 
+                              : 'Initializing...',
+                          style: Theme.of(innerContext).textTheme.bodyLarge,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

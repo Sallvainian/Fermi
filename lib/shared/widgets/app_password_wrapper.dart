@@ -128,12 +128,14 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
       // Show loading indicator while checking unlock status
       return MaterialApp(
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
+          ),
           useMaterial3: true,
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
+            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
             brightness: Brightness.dark,
           ),
           useMaterial3: true,
@@ -152,12 +154,14 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
       return MaterialApp(
         title: 'Fermi+',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
+          ),
           useMaterial3: true,
         ),
         darkTheme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
+            seedColor: const Color(0xFF3F51B5), // Indigo - matches app theme
             brightness: Brightness.dark,
           ),
           useMaterial3: true,
