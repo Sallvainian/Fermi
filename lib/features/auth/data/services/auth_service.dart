@@ -150,11 +150,68 @@ class AuthService {
     if (kIsWeb) {
       // Web: Use Firebase Auth popup
       debugPrint('Google Sign-In: Using Firebase popup for web');
-      final provider = GoogleAuthProvider();
-      provider.addScope('email');
-      provider.addScope('profile');
-      final cred = await _auth!.signInWithPopup(provider);
-      user = cred.user;
+      try {
+        final provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        
+        // Set custom parameters for better UX
+        provider.setCustomParameters({
+          'prompt': 'select_account', // Force account selection
+        });
+        
+        debugPrint('Google Sign-In: Attempting signInWithPopup...');
+        
+        try {
+          // Try popup first
+          final cred = await _auth!.signInWithPopup(provider);
+          user = cred.user;
+          debugPrint('Google Sign-In: Successfully signed in user: ${user?.email}');
+        } catch (popupError) {
+          debugPrint('Popup failed: $popupError');
+          
+          // If popup fails, try redirect method
+          if (popupError.toString().contains('popup-blocked') || 
+              popupError.toString().contains('popup-closed-by-user')) {
+            debugPrint('Popup blocked/closed, trying redirect method...');
+            
+            // Use redirect method as fallback
+            await _auth!.signInWithRedirect(provider);
+            
+            // After redirect, this will be handled by getRedirectResult
+            final result = await _auth!.getRedirectResult();
+            if (result.user != null) {
+              user = result.user;
+              debugPrint('Google Sign-In via redirect: Successfully signed in user: ${user?.email}');
+            } else {
+              debugPrint('Redirect sign-in completed but no user returned');
+              return null;
+            }
+          } else {
+            // Re-throw if it's not a popup issue
+            rethrow;
+          }
+        }
+      } catch (e) {
+        debugPrint('Google Sign-In Web Error: $e');
+        
+        final errorString = e.toString();
+        if (errorString.contains('popup-closed-by-user')) {
+          debugPrint('User closed the popup window');
+          return null;
+        } else if (errorString.contains('unauthorized-domain')) {
+          debugPrint('ERROR: Unauthorized domain - check Firebase Console OAuth redirect URIs');
+          debugPrint('Current domain: ${Uri.base.host}');
+          throw Exception('This domain is not authorized for Google Sign-In. Please contact support.');
+        } else if (errorString.contains('invalid-credential')) {
+          debugPrint('ERROR: Invalid OAuth credentials - check Firebase project configuration');
+          throw Exception('Authentication configuration error. Please contact support.');
+        } else if (errorString.contains('auth/popup-blocked')) {
+          debugPrint('ERROR: Popup was blocked by browser');
+          throw Exception('Sign-in popup was blocked. Please allow popups for this site and try again.');
+        }
+        rethrow;
+      }
     } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
       // Desktop platforms: Use secure OAuth flow via Firebase Functions
       debugPrint('Google Sign-In: Using secure OAuth flow via Firebase Functions for desktop');

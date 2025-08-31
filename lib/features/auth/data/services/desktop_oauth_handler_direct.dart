@@ -13,12 +13,21 @@ import 'package:crypto/crypto.dart';
 class DirectDesktopOAuthHandler {
   // OAuth 2.0 Client ID and Secret from Google Cloud Console
   // These are injected at compile time via --dart-define flags
-  // For local development, falls back to .env file
+  // CRITICAL: Must be const for String.fromEnvironment to work in release builds!
+  static const String _compiledClientId = String.fromEnvironment(
+    'GOOGLE_OAUTH_CLIENT_ID',
+    defaultValue: '',
+  );
+  
+  static const String _compiledClientSecret = String.fromEnvironment(
+    'GOOGLE_OAUTH_CLIENT_SECRET', 
+    defaultValue: '',
+  );
+  
   static String get _clientId {
     // First try compile-time constant (for production builds)
-    const compiledClientId = String.fromEnvironment('GOOGLE_OAUTH_CLIENT_ID');
-    if (compiledClientId.isNotEmpty) {
-      return compiledClientId;
+    if (_compiledClientId.isNotEmpty) {
+      return _compiledClientId;
     }
     
     // Fall back to .env file (for local development)
@@ -33,9 +42,8 @@ class DirectDesktopOAuthHandler {
   
   static String get _clientSecret {
     // First try compile-time constant (for production builds)
-    const compiledSecret = String.fromEnvironment('GOOGLE_OAUTH_CLIENT_SECRET');
-    if (compiledSecret.isNotEmpty) {
-      return compiledSecret;
+    if (_compiledClientSecret.isNotEmpty) {
+      return _compiledClientSecret;
     }
     
     // Fall back to .env file (for local development)
@@ -55,18 +63,25 @@ class DirectDesktopOAuthHandler {
   Future<UserCredential?> performDirectOAuthFlow() async {
     try {
       debugPrint('DirectOAuth: Starting direct OAuth flow');
+      debugPrint('DirectOAuth: Platform: ${Platform.operatingSystem}');
+      
+      // Debug: Check how credentials are loaded
+      debugPrint('DirectOAuth: Compiled Client ID present: ${_compiledClientId.isNotEmpty}');
+      debugPrint('DirectOAuth: Compiled Secret present: ${_compiledClientSecret.isNotEmpty}');
       
       // Check if credentials are configured
       if (_clientId.isEmpty || _clientSecret.isEmpty) {
         debugPrint('DirectOAuth ERROR: Missing credentials');
         debugPrint('DirectOAuth: Client ID empty: ${_clientId.isEmpty}');
         debugPrint('DirectOAuth: Client Secret empty: ${_clientSecret.isEmpty}');
-        debugPrint('DirectOAuth: dotenv keys: ${dotenv.env.keys.toList()}');
+        debugPrint('DirectOAuth: Checking compile-time: ClientID=${_compiledClientId.isNotEmpty}, Secret=${_compiledClientSecret.isNotEmpty}');
+        debugPrint('DirectOAuth: Checking .env: ${dotenv.env.containsKey('GOOGLE_OAUTH_CLIENT_ID')}');
+        
+        // More helpful error message
         throw Exception(
-          'OAuth credentials not configured. Please ensure:\n'
-          '1. You have a .env file with GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET\n'
-          '2. The .env file is in your project root directory\n'
-          '3. You have restarted the app after adding the .env file'
+          'Google Sign-In is not available. The application was not built with OAuth credentials.\n\n'
+          'For developers: Build with --dart-define flags or add .env file.\n'
+          'For users: Please use email/password sign-in or contact support for an updated version.'
         );
       }
       

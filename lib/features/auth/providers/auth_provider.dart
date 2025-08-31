@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../shared/models/user_model.dart';
 import '../data/services/auth_service.dart';
@@ -84,6 +85,22 @@ class AuthProvider extends ChangeNotifier {
   /// Initialize authentication state on app startup
   Future<void> _initializeAuthState() async {
     try {
+      // Check for redirect result first (for web OAuth redirects)
+      if (kIsWeb) {
+        try {
+          debugPrint('Checking for OAuth redirect result...');
+          final redirectResult = await _firebaseAuth.getRedirectResult();
+          if (redirectResult.user != null) {
+            debugPrint('Found redirect result for user: ${redirectResult.user!.email}');
+            // Process the redirect sign-in
+            await _processOAuthUser(redirectResult.user!);
+            return;
+          }
+        } catch (e) {
+          debugPrint('No redirect result or error checking: $e');
+        }
+      }
+      
       final user = _firebaseAuth.currentUser;
       
       if (user == null) {
@@ -129,6 +146,35 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Auth initialization error: $e');
       _handleAuthError(e.toString());
+    }
+  }
+  
+  // ============= OAuth Helper Methods =============
+  
+  /// Process OAuth user after successful authentication
+  Future<void> _processOAuthUser(firebase_auth.User user) async {
+    try {
+      debugPrint('Processing OAuth user: ${user.email}');
+      
+      // Check if user has complete profile
+      final userData = await _getUserDataWithRetry(user.uid);
+      
+      if (userData != null && userData['role'] != null) {
+        // Existing user with role - complete sign in
+        debugPrint('OAuth: Existing user with role, completing sign-in');
+        final loadedUserModel = UserModel.fromFirestore(userData);
+        _userModel = loadedUserModel;
+        _setAuthState(AuthStatus.authenticated);
+        _startNotificationsIfNeeded();
+        _updatePresenceOnline();
+      } else {
+        // New user - needs role selection
+        debugPrint('OAuth: New user, needs role selection');
+        _setAuthState(AuthStatus.authenticating);
+      }
+    } catch (e) {
+      debugPrint('Error processing OAuth user: $e');
+      _handleAuthError('Failed to complete sign-in. Please try again.');
     }
   }
   
@@ -194,21 +240,28 @@ class AuthProvider extends ChangeNotifier {
     
     _authOperationInProgress = true;
     _startLoading();
+    clearError(); // Clear any previous errors
     
     try {
+      debugPrint('Starting Google Sign-In process...');
       final user = await _authService.signInWithGoogle();
       
       if (user == null) {
         // User cancelled sign-in
+        debugPrint('Google Sign-In: User cancelled');
         _setAuthState(AuthStatus.unauthenticated);
+        clearError(); // Clear error state if user cancelled
         return;
       }
+      
+      debugPrint('Google Sign-In: Firebase Auth successful, checking user profile...');
       
       // Check if user has complete profile
       final userData = await _getUserDataWithRetry(user.uid);
       
       if (userData != null && userData['role'] != null) {
         // Existing user with role - complete sign in
+        debugPrint('Google Sign-In: Existing user with role, completing sign-in');
         final loadedUserModel = UserModel.fromFirestore(userData);
         _userModel = loadedUserModel;
         _setAuthState(AuthStatus.authenticated);
@@ -217,11 +270,12 @@ class AuthProvider extends ChangeNotifier {
       } else {
         // New user - needs role selection
         // Keep status as authenticating to trigger role selection flow
+        debugPrint('Google Sign-In: New user, needs role selection');
         _setAuthState(AuthStatus.authenticating);
       }
       
     } catch (e) {
-      debugPrint('Google sign-in error: $e');
+      debugPrint('Google sign-in error details: $e');
       _handleOAuthError(e, 'Google');
     } finally {
       _authOperationInProgress = false;
@@ -582,6 +636,9 @@ class AuthProvider extends ChangeNotifier {
     debugPrint('Provider: $provider');
     debugPrint('Error Type: ${error.runtimeType}');
     debugPrint('Error: $error');
+    debugPrint('Platform: ${kIsWeb ? "Web" : "Desktop"}');
+    
+    final errorString = error.toString();
     
     if (error is firebase_auth.FirebaseAuthException) {
       switch (error.code) {
@@ -600,15 +657,22 @@ class AuthProvider extends ChangeNotifier {
         default:
           message = error.message ?? '$provider authentication failed';
       }
-    } else if (error.toString().contains('OAuth') || error.toString().contains('authentication server')) {
+    } else if (errorString.contains('not available') || errorString.contains('not built with OAuth')) {
+      // OAuth credentials missing - common in dev builds
+      message = 'Google Sign-In is not available in this version. Please use email/password sign-in.';
+    } else if (errorString.contains('OAuth') || errorString.contains('authentication server')) {
       // Better error message that actually helps users
       message = 'Sign-in service temporarily unavailable. Please try again or use email/password sign-in';
-    } else if (error.toString().contains('network') || error.toString().contains('connection')) {
+    } else if (errorString.contains('network') || errorString.contains('connection')) {
       message = 'Network error. Please check your connection';
+    } else if (errorString.contains('Failed to open browser')) {
+      message = 'Could not open browser for sign-in. Please check your default browser settings.';
+    } else if (errorString.contains('Authorization was cancelled')) {
+      message = 'Sign-in was cancelled';
     } else {
       // Generic error - log for debugging but show user-friendly message
       debugPrint('OAuth error details: $error');
-      message = 'Sign-in failed. Please try again';
+      message = 'Sign-in failed. Please use email/password sign-in instead.';
     }
     
     _handleAuthError(message);
@@ -804,6 +868,13 @@ class AuthProvider extends ChangeNotifier {
       _stopNotificationsIfNeeded();
       _updatePresenceOffline();  // Update presence before signing out
       await _authService.signOut();
+      
+      // Clear app password unlock status to force re-authentication
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('app_unlocked', false);
+      await prefs.remove('background_time');
+      debugPrint('Sign-out: Cleared app password unlock status');
+      
       _userModel = null;
       _errorMessage = null;
       _setAuthState(AuthStatus.unauthenticated);
@@ -812,6 +883,13 @@ class AuthProvider extends ChangeNotifier {
       // Force unauthenticated state even on error
       _userModel = null;
       _setAuthState(AuthStatus.unauthenticated);
+      
+      // Still try to clear app password even on error
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('app_unlocked', false);
+        await prefs.remove('background_time');
+      } catch (_) {}
     }
   }
   
