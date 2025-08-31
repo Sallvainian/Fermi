@@ -21,6 +21,7 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
   bool _isChecking = true;
   bool _hasAuthenticatedUser = false;
   ThemeMode _themeMode = ThemeMode.light; // Default to light
+  bool _hasLoadedTheme = false; // Track if we loaded a theme preference
   
   @override
   void initState() {
@@ -81,7 +82,10 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
         (mode) => mode.toString() == themeString,
         orElse: () => ThemeMode.light,
       );
+      _hasLoadedTheme = true;
       debugPrint('AppPasswordWrapper: Loaded theme preference: $_themeMode');
+    } else {
+      debugPrint('AppPasswordWrapper: No theme preference found, using default');
     }
     
     // Check if there's an authenticated Firebase user (only if Firebase is initialized)
@@ -158,7 +162,7 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
           ),
           useMaterial3: true,
         ),
-        themeMode: _hasAuthenticatedUser ? _themeMode : ThemeMode.light,
+        themeMode: _hasLoadedTheme ? _themeMode : ThemeMode.light,
         home: AppPasswordScreen(
           onSuccess: _onPasswordSuccess,
         ),
