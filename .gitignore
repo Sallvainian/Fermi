@@ -137,3 +137,7 @@ temp.pem
 *.exe
 firestore_rules_fix.txt
 fastlane/*.pkg
+
+# Task management
+.taskmaster/
+.trae/rules/
