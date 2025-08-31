@@ -55,6 +55,12 @@ final GetIt getIt = GetIt.instance;
 /// @throws Exception if Firebase is not initialized before calling this
 Future<void> setupServiceLocator() async {
   // Setting up service locator...
+  
+  // Prevent double registration
+  if (getIt.isRegistered<FirebaseAuth>()) {
+    LoggerService.info('Service locator already initialized - skipping', tag: 'ServiceLocator');
+    return;
+  }
 
   // Check Firebase initialization status
   if (!AppInitializer.isFirebaseInitialized) {
@@ -62,9 +68,6 @@ Future<void> setupServiceLocator() async {
       'Firebase not initialized - skipping Firebase service registration',
       tag: 'ServiceLocator'
     );
-    
-    // Register only essential non-Firebase services
-    getIt.registerLazySingleton<LoggerService>(() => LoggerService());
     return;
   }
   
@@ -86,7 +89,7 @@ Future<void> setupServiceLocator() async {
 
   // Register services
   getIt.registerLazySingleton<AuthService>(() => AuthService());
-  getIt.registerLazySingleton<LoggerService>(() => LoggerService());
+  // LoggerService is a singleton that doesn't need GetIt
 
   // Repositories removed - using direct Firestore access in providers
   // This reduces code complexity by ~7,000 lines
@@ -132,6 +135,6 @@ extension ServiceLocatorExtension on GetIt {
   AssignmentService get assignmentService => get<AssignmentService>();
   ChatService get chatService => get<ChatService>();
   SubmissionService get submissionService => get<SubmissionService>();
-  LoggerService get loggerService => get<LoggerService>();
+  // LoggerService is a singleton - use LoggerService.method() directly
   // Repository getters removed - using direct Firestore access
 }

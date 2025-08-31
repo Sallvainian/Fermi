@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/auth/presentation/screens/app_password_screen.dart';
 
@@ -74,15 +75,23 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     
     // Check if there's an authenticated Firebase user (only if Firebase is initialized)
     try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      _hasAuthenticatedUser = currentUser != null;
-      
-      if (_hasAuthenticatedUser) {
-        debugPrint('AppPasswordWrapper: Found authenticated user: ${currentUser?.email}');
+      // First check if Firebase is initialized
+      if (Firebase.apps.isNotEmpty) {
+        final currentUser = FirebaseAuth.instance.currentUser;
+        _hasAuthenticatedUser = currentUser != null;
+        
+        if (_hasAuthenticatedUser) {
+          debugPrint('AppPasswordWrapper: Found authenticated user: ${currentUser?.email}');
+        } else {
+          debugPrint('AppPasswordWrapper: No authenticated user found');
+        }
+      } else {
+        debugPrint('AppPasswordWrapper: Firebase not initialized yet');
+        _hasAuthenticatedUser = false;
       }
     } catch (e) {
       // Firebase not initialized yet - that's OK, it will be initialized later
-      debugPrint('AppPasswordWrapper: Firebase not initialized yet, skipping auth check');
+      debugPrint('AppPasswordWrapper: Error checking auth: $e');
       _hasAuthenticatedUser = false;
     }
     
@@ -126,6 +135,22 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
     }
     
     // App is unlocked, show the main content
+    // Pass the auth state through a special widget if authenticated
+    if (_hasAuthenticatedUser) {
+      return AuthenticatedWrapper._(child: widget.child);
+    }
     return widget.child;
   }
+}
+
+// Widget to indicate that user was already authenticated
+class AuthenticatedWrapper extends InheritedWidget {
+  const AuthenticatedWrapper._({required super.child});
+  
+  static bool of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<AuthenticatedWrapper>() != null;
+  }
+  
+  @override
+  bool updateShouldNotify(AuthenticatedWrapper oldWidget) => false;
 }

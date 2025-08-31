@@ -16,22 +16,36 @@ import 'service_locator.dart';
 class AppInitializer {
   static bool _firebaseInitialized = false;
 
-  static bool get isFirebaseInitialized => _firebaseInitialized;
+  static bool get isFirebaseInitialized {
+    // Check actual Firebase state, not just our flag
+    // This handles hot restart where static variables reset but Firebase persists
+    try {
+      return Firebase.apps.isNotEmpty || _firebaseInitialized;
+    } catch (e) {
+      return _firebaseInitialized;
+    }
+  }
 
   /// Initialize all app dependencies
   static Future<void> initialize() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // CRITICAL: Initialize Firebase first (required for everything)
-    await _initializeFirebase();
+    try {
+      // CRITICAL: Initialize Firebase first (required for everything)
+      await _initializeFirebase();
 
-    // CRITICAL: Setup service locator (required for dependency injection)
-    await _setupServiceLocator();
+      // CRITICAL: Setup service locator (required for dependency injection)
+      await _setupServiceLocator();
 
-    // DEFER: Everything else happens after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeDeferredServices();
-    });
+      // DEFER: Everything else happens after first frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _initializeDeferredServices();
+      });
+    } catch (e) {
+      LoggerService.error('Critical initialization error',
+          tag: 'AppInitializer', error: e);
+      // Continue anyway - app may still work partially
+    }
   }
 
   /// Initialize non-critical services after first frame render
@@ -161,9 +175,9 @@ class AppInitializer {
   /// Initialize performance monitoring
   static Future<void> _initializePerformanceMonitoring() async {
     try {
-      // Initialize performance monitoring asynchronously to avoid blocking main thread
-      unawaited(PerformanceService().initialize());
-      LoggerService.debug('Performance monitoring initialized (async)',
+      // Initialize performance monitoring - await it properly
+      await PerformanceService().initialize();
+      LoggerService.debug('Performance monitoring initialized',
           tag: 'AppInitializer');
     } catch (e) {
       LoggerService.error('Performance monitoring initialization error',

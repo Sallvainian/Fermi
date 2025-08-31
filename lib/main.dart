@@ -197,10 +197,13 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
 
   Future<void> _initializeApp() async {
     try {
-      // Check if Firebase is already initialized (for authenticated users)
-      if (AppInitializer.isFirebaseInitialized) {
-        // Fast path - Firebase already initialized, skip splash screen
-        debugPrint('Fast initialization - Firebase already initialized');
+      // Check if user was already authenticated (from AppPasswordWrapper)
+      final wasAuthenticated = context.mounted ? AuthenticatedWrapper.of(context) : false;
+      
+      // Check if Firebase is already initialized (handles hot restart)
+      if (AppInitializer.isFirebaseInitialized && wasAuthenticated) {
+        // Fast path - Firebase already initialized and user authenticated
+        debugPrint('Fast initialization - Firebase initialized and user authenticated');
         setState(() {
           _quickInit = true;
           _isInitialized = true;

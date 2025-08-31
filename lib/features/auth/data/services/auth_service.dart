@@ -31,11 +31,20 @@ class AuthService {
   }
   
   void _initializeGoogleSignIn() async {
-    // Try both naming conventions for backwards compatibility
-    final clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? 
-                     dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
-    final clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? 
-                          dotenv.env['GOOGLE_CLIENT_SECRET'] ?? '';
+    String clientId = '';
+    String clientSecret = '';
+    
+    // Safely try to access dotenv - it might not be initialized yet
+    try {
+      // Try both naming conventions for backwards compatibility
+      clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? 
+                       dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
+      clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? 
+                            dotenv.env['GOOGLE_CLIENT_SECRET'] ?? '';
+    } catch (e) {
+      // dotenv not initialized yet - this is fine, we'll use empty strings
+      debugPrint('Note: .env not loaded yet, OAuth will use defaults');
+    }
     
     // Debug output to verify .env is loading
     debugPrint('=== OAuth Credentials Debug ===');
