@@ -61,10 +61,16 @@ Future<void> main() async {
       // Load environment variables from .env file
       try {
         await dotenv.load(fileName: ".env");
+        // Only print success in debug mode to verify it loaded
+        if (kDebugMode) {
+          debugPrint('.env file loaded successfully');
+        }
       } catch (e) {
+        // Only print warning if it's actually a file not found error
+        if (e.toString().contains('FileSystemException')) {
+          debugPrint('Note: .env file not found. Using defaults.');
+        }
         // .env file is optional - don't fail if it doesn't exist
-        debugPrint(
-            'Note: .env file not found or could not be loaded. Using defaults.');
       }
 
       runApp(const AppPasswordWrapper(
@@ -119,6 +125,7 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
               themeMode: themeProvider.themeMode,
               debugShowCheckedModeBanner: false,
               home: Scaffold(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 body: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +133,7 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
                       const CircularProgressIndicator(),
                       const SizedBox(height: 16),
                       Text(
-                        'Loading...',
+                        'Verifying authentication...',
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ],
@@ -178,6 +185,7 @@ class InitializationWrapper extends StatefulWidget {
 
 class _InitializationWrapperState extends State<InitializationWrapper> {
   bool _isInitialized = false;
+  bool _quickInit = false; // Fast path for authenticated users
   String _currentStatus = 'Starting app...';
   double? _progress;
 
@@ -189,6 +197,18 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
 
   Future<void> _initializeApp() async {
     try {
+      // Check if Firebase is already initialized (for authenticated users)
+      if (AppInitializer.isFirebaseInitialized) {
+        // Fast path - Firebase already initialized, skip splash screen
+        debugPrint('Fast initialization - Firebase already initialized');
+        setState(() {
+          _quickInit = true;
+          _isInitialized = true;
+          _progress = 1.0;
+        });
+        return;
+      }
+
       // Show initial status
       setState(() {
         _currentStatus = 'Loading environment...';
@@ -242,6 +262,11 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_isInitialized) {
+      // Skip splash for authenticated users
+      if (_quickInit) {
+        return const TeacherDashboardApp();
+      }
+      // Show app after normal initialization
       return const TeacherDashboardApp();
     }
 

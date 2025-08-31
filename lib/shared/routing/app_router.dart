@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
-import '../../features/auth/presentation/screens/role_selection_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
@@ -72,9 +71,11 @@ class AppRouter {
         final hasError = authProvider.status == AuthStatus.error;
         final isStudentRoute = state.matchedLocation.startsWith('/student');
 
-        // During initialization, don't redirect
+        // During initialization or authenticating, don't redirect
         // The app shows a loading screen before router is created
-        if (authProvider.status == AuthStatus.uninitialized) {
+        if (authProvider.status == AuthStatus.uninitialized || isAuthenticating) {
+          // Allow staying on current route during auth verification
+          // This prevents the login screen flash
           return null;
         }
 
@@ -84,14 +85,8 @@ class AppRouter {
           return '/auth/login';
         }
 
-        // If user is in the middle of OAuth flow (needs role selection)
-        // redirect to role selection screen
-        if (isAuthenticating && state.matchedLocation != '/auth/role-selection') {
-          return '/auth/role-selection';
-        }
-
         // Simple redirect logic - standard Flutter pattern
-        if (!isAuth && !isAuthenticating && !isAuthRoute && !hasError) {
+        if (!isAuth && !isAuthRoute && !hasError) {
           // Not authenticated and trying to access protected route
           return '/auth/login';
         }
@@ -138,10 +133,6 @@ class AppRouter {
           builder: (context, state) => const ForgotPasswordScreen(),
         ),
         GoRoute(
-          path: '/auth/role-selection',
-          builder: (context, state) => const RoleSelectionScreen(),
-        ),
-        GoRoute(
           path: '/auth/verify-email',
           builder: (context, state) => const VerifyEmailScreen(),
         ),
@@ -154,21 +145,7 @@ class AppRouter {
             // CRITICAL: Get fresh userModel every time, not cached
             final user = auth.userModel;
 
-            // Handle authenticating state (needs role selection)
-            // BUT only if the user has no role - this prevents infinite loop
-            // when transitioning from authenticating to authenticated
-            if (auth.status == AuthStatus.authenticating && 
-                user?.role == null && 
-                auth.firebaseUser != null) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/auth/role-selection');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
+            // Direct to appropriate dashboard based on role
 
             // Handle error state - shouldn't reach here due to redirect, but safety check
             if (auth.status == AuthStatus.error) {
@@ -200,17 +177,10 @@ class AppRouter {
               );
             }
 
-            // Check if user needs role selection
+            // If user has no role, default to student
             if (user?.role == null && auth.firebaseUser != null) {
-              // User is authenticated but has no role - redirect to role selection
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (context.mounted) {
-                  GoRouter.of(context).go('/auth/role-selection');
-                }
-              });
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
+              // Default to student dashboard
+              return const StudentDashboardScreen();
             }
 
             // Simple role-based dashboard

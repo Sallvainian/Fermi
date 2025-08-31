@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../features/auth/presentation/screens/app_password_screen.dart';
 
 class AppPasswordWrapper extends StatefulWidget {
@@ -17,6 +18,7 @@ class AppPasswordWrapper extends StatefulWidget {
 class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBindingObserver {
   bool _isUnlocked = false;
   bool _isChecking = true;
+  bool _hasAuthenticatedUser = false;
   
   @override
   void initState() {
@@ -67,23 +69,21 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
   
   Future<void> _checkUnlockStatus() async {
     final prefs = await SharedPreferences.getInstance();
-    final isUnlocked = prefs.getBool('app_unlocked') ?? false;
-    
-    setState(() {
-      _isUnlocked = isUnlocked;
-      _isChecking = false;
-    });
-  }
-  
-  Future<void> _lockApp() async {
-    final prefs = await SharedPreferences.getInstance();
+    // ALWAYS require password on app start
     await prefs.setBool('app_unlocked', false);
     
-    if (mounted) {
-      setState(() {
-        _isUnlocked = false;
-      });
+    // Check if there's an authenticated Firebase user
+    final currentUser = FirebaseAuth.instance.currentUser;
+    _hasAuthenticatedUser = currentUser != null;
+    
+    if (_hasAuthenticatedUser) {
+      debugPrint('AppPasswordWrapper: Found authenticated user: ${currentUser?.email}');
     }
+    
+    setState(() {
+      _isUnlocked = false;
+      _isChecking = false;
+    });
   }
   
   void _onPasswordSuccess() {
