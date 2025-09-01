@@ -1,0 +1,21 @@
+name: docs
+title: docs
+script: src\index.tsx
+description: ''
+scopes:
+  - space:content:read
+  - space:content:write
+  - space:metadata:read
+  - space:metadata:write
+  - space:views:read
+  - space:git:sync
+  - site:metadata:read
+  - site:adaptive:read
+  - site:adaptive:write
+blocks:
+  - id: docs
+    title: docs
+    description: My GitBook Integration
+organization: docs
+visibility: private
+secrets: {}
