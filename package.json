@@ -3,10 +3,7 @@
   "version": "0.9.3",
   "description": "Flutter education management platform",
   "scripts": {
-    "build": "flutter build web --release",
-    "deploy": "npx wrangler pages deploy build/web --project-name=fermi"
-  },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
+    "build": "echo 'Skipping Flutter build in Cloudflare environment'",
+    "deploy": "echo 'Deploy handled by Cloudflare Pages'"
   }
 }
