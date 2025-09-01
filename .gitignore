@@ -1,3 +1,60 @@
+# Flutter/Dart specific
+.dart_tool/
+.pub/
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+**/build/
+.snapshots/
+.vercel/
+.metadata
+apps/fermi/.dart_tool/
+apps/fermi/.flutter-plugins
+apps/fermi/.flutter-plugins-dependencies
+apps/fermi/.packages
+apps/fermi/build/
+
+# Security - NEVER commit these
+keys/
+*.p8
+*.p12
+*.pem
+*.key
+**/AuthKey_*.p8
+*.jks
+*.mobileprovision
+
+# Environment variables
+.env*
+*.env
+.env.local
+.env.*.local
+.envs/
+secrets.json
+web/firebase-config.js
+
+# IDE/Editor specific
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+.atom/
+.history
+.svn/
+.sonarlint/
+.grok/
+.trae/
+.claude/
+.cursor/
+.gemini/
+.clode/
+.claude-snapshots/
+.claude-checkpoints/
+.worktrees/
+.taskmaster/
+
 # Node modules
 node_modules/
 *.log
@@ -5,37 +62,96 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Platform-specific ephemerals/generated
+**/flutter/ephemeral
+**/Pods/
+**/.symlinks/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh
+**/Flutter/.last_build_id
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+# Xcode user-specific
+**/xcuserdata/
+**/xcshareddata/xcschemes/
+**/xcshareddata/*.xcsettings
+**/xcshareddata/IDEWorkspaceChecks.plist
+**/xcshareddata/WorkspaceSettings.xcsettings
+*.xcuserstate
+*.xcscheme
+**/DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Windows-specific
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+nul
+*/nul
+
+# Android specific
+/android/app/debug.keystore
+/android/local.properties
+/android/.gradle/
+/android/app/bin/
+android/init.gradle
+android/gradle.properties
+
+# Firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+emulator-debug.log
+firebase-export-*
+apps/fermi/.firebase/
 
 # Build outputs
 dist/
 build/
 out/
 .next/
+*.class
+*.pyc
+*.swp
+*.swo
+*~
+*.lock
+*.snapshot
+.buildlog/
+migrate_working_dir/
 
-# Flutter specific (for apps/fermi)
-apps/fermi/.dart_tool/
-apps/fermi/.flutter-plugins
-apps/fermi/.flutter-plugins-dependencies
-apps/fermi/.packages
-apps/fermi/build/
-apps/fermi/.firebase/
+# Test/Coverage
+coverage/
+*.lcov
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+.~*
+temp/
+tmp/
 
 # Mintlify specific (for apps/docs)
 apps/docs/.mintlify/
 
-# Temporary files
-*.tmp
-temp/
-tmp/
+# Personal/project-specific
+PROJECT_TODOS.md
+launch_app.sh
+.mcp.json
+devtools_options.yaml
+
+# Unwanted files
+*.exe
+firestore_rules_fix.txt
+fastlane/*.pkg
