@@ -300,32 +300,60 @@ class ClassProvider with ChangeNotifier {
     }
   }
 
-  /// Enrolls with an enrollment code.
+  /// Enrolls with an enrollment code with retry logic for blocked connections.
   Future<bool> enrollWithCode(String studentId, String enrollmentCode) async {
-    try {
-      final classQuery = await _firestore
-          .collection('classes')
-          .where('enrollmentCode', isEqualTo: enrollmentCode.toUpperCase())
-          .where('isActive', isEqualTo: true)
-          .limit(1)
-          .get();
+    // Add retry logic for ERR_BLOCKED_BY_CLIENT errors
+    int retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        // Small delay to avoid hitting rate limits
+        if (retryCount > 0) {
+          await Future.delayed(Duration(seconds: retryCount * 2));
+        }
+        
+        final classQuery = await _firestore
+            .collection('classes')
+            .where('enrollmentCode', isEqualTo: enrollmentCode.toUpperCase())
+            .where('isActive', isEqualTo: true)
+            .limit(1)
+            .get();
 
-      if (classQuery.docs.isEmpty) {
-        _setError('Invalid enrollment code');
-        return false;
+        if (classQuery.docs.isEmpty) {
+          _setError('Invalid enrollment code');
+          return false;
+        }
+
+        final classDoc = classQuery.docs.first;
+        
+        // Check if student is already enrolled
+        final classData = classDoc.data();
+        final studentIds = List<String>.from(classData['studentIds'] ?? []);
+        if (studentIds.contains(studentId)) {
+          _setError('You are already enrolled in this class');
+          return false;
+        }
+        
+        await classDoc.reference.update({
+          'studentIds': FieldValue.arrayUnion([studentId]),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        return true;
+      } catch (e) {
+        retryCount++;
+        LoggerService.warning('Enrollment attempt $retryCount failed: $e');
+        
+        if (retryCount >= maxRetries) {
+          _setError('Unable to join class. Please try again in a moment.');
+          return false;
+        }
+        // Continue to retry
       }
-
-      final classDoc = classQuery.docs.first;
-      await classDoc.reference.update({
-        'studentIds': FieldValue.arrayUnion([studentId]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      return true;
-    } catch (e) {
-      _setError(e.toString());
-      return false;
     }
+    
+    return false;
   }
 
   /// Creates a class from parameters.

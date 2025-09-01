@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../shared/models/user_model.dart';
 import '../data/services/auth_service.dart';
+import '../data/services/username_auth_service.dart';
 import '../../notifications/data/services/web_in_app_notification_service.dart';
 import '../../student/data/services/presence_service.dart';
 
@@ -40,6 +41,7 @@ typedef User = firebase_auth.User;
 class AuthProvider extends ChangeNotifier {
   // Dependencies
   final AuthService _authService;
+  final UsernameAuthService _usernameAuthService = UsernameAuthService();
   final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final PresenceService _presenceService = PresenceService();
@@ -179,6 +181,57 @@ class AuthProvider extends ChangeNotifier {
   }
   
   // ============= Core Authentication Methods =============
+  
+  /// Sign in with username and password
+  Future<void> signInWithUsername(String username, String password) async {
+    if (_authOperationInProgress) {
+      debugPrint('Auth operation already in progress');
+      return;
+    }
+    
+    _authOperationInProgress = true;
+    _startLoading();
+    
+    try {
+      // Validate input
+      if (username.isEmpty || password.isEmpty) {
+        throw Exception('Username and password are required');
+      }
+      
+      // Authenticate with Firebase using username
+      final user = await _usernameAuthService.signInWithUsername(
+        username: username,
+        password: password,
+      );
+      
+      if (user == null) {
+        throw Exception('Authentication failed');
+      }
+      
+      // Load user model from Firestore
+      final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+      
+      if (loadedUserModel == null || loadedUserModel.role == null) {
+        // User exists in Auth but not in Firestore - this shouldn't happen
+        debugPrint('User profile not found or incomplete');
+        await _authService.signOut();
+        throw Exception('User profile not found. Please contact support.');
+      }
+      
+      // SUCCESS: Update state atomically
+      _userModel = loadedUserModel;
+      _setAuthState(AuthStatus.authenticated);
+      _startNotificationsIfNeeded();
+      _updatePresenceOnline();
+      
+    } catch (e) {
+      debugPrint('Username sign-in error: $e');
+      _handleSignInError(e);
+    } finally {
+      _authOperationInProgress = false;
+      _stopLoading();
+    }
+  }
   
   /// Sign in with email and password
   Future<void> signInWithEmail(String email, String password) async {
@@ -838,6 +891,101 @@ class AuthProvider extends ChangeNotifier {
       // Silently fail - not critical
       debugPrint('Failed to refresh custom claims: $e');
     }
+  }
+  
+  // ============= Student Account Management (Teacher Only) =============
+  
+  /// Create a student account (teacher only)
+  Future<void> createStudentAccount({
+    required String username,
+    required String password,
+    required String firstName,
+    required String lastName,
+  }) async {
+    // Verify current user is a teacher
+    if (_userModel == null || !_userModel!.isTeacher) {
+      throw Exception('Only teachers can create student accounts');
+    }
+    
+    _startLoading();
+    
+    try {
+      final user = await _usernameAuthService.createStudentAccount(
+        username: username,
+        password: password,
+        firstName: firstName,
+        lastName: lastName,
+        teacherId: _userModel!.uid,
+      );
+      
+      if (user == null) {
+        throw Exception('Failed to create student account');
+      }
+      
+      // Don't change the current auth state - teacher remains logged in
+      // Just show success
+      debugPrint('Successfully created student account: $username');
+      
+    } catch (e) {
+      debugPrint('Create student account error: $e');
+      _errorMessage = e.toString();
+      notifyListeners();
+      rethrow;
+    } finally {
+      _stopLoading();
+    }
+  }
+  
+  /// Batch create multiple student accounts (teacher only)
+  Future<List<Map<String, String>>> batchCreateStudentAccounts({
+    required List<Map<String, String>> students,
+  }) async {
+    // Verify current user is a teacher
+    if (_userModel == null || !_userModel!.isTeacher) {
+      throw Exception('Only teachers can create student accounts');
+    }
+    
+    final results = <Map<String, String>>[];
+    final errors = <String>[];
+    
+    for (final student in students) {
+      try {
+        final username = student['username'] ?? '';
+        final password = student['password'] ?? '';
+        final firstName = student['firstName'] ?? '';
+        final lastName = student['lastName'] ?? '';
+        
+        if (username.isEmpty || password.isEmpty) {
+          errors.add('Invalid data for student: $firstName $lastName');
+          continue;
+        }
+        
+        await createStudentAccount(
+          username: username,
+          password: password,
+          firstName: firstName,
+          lastName: lastName,
+        );
+        
+        results.add({
+          'username': username,
+          'firstName': firstName,
+          'lastName': lastName,
+          'status': 'success',
+        });
+        
+      } catch (e) {
+        results.add({
+          'username': student['username'] ?? '',
+          'firstName': student['firstName'] ?? '',
+          'lastName': student['lastName'] ?? '',
+          'status': 'error',
+          'error': e.toString(),
+        });
+      }
+    }
+    
+    return results;
   }
   
   // ============= Account Management =============

@@ -86,11 +86,12 @@ class AuthService {
   User? get currentUser => _auth?.currentUser;
   Stream<User?> get authStateChanges => _auth?.authStateChanges() ?? Stream.value(null);
 
-  // Sign up
+  // Sign up with username support
   Future<User?> signUp({
     required String email,
     required String password,
     String? displayName,
+    String? username,
   }) async {
     
     final cred = await _auth!.createUserWithEmailAndPassword(
@@ -107,6 +108,12 @@ class AuthService {
       final lastName =
           nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
+      // Extract username from synthetic email if not provided
+      String? finalUsername = username;
+      if (finalUsername == null && email.endsWith('@fermi.local')) {
+        finalUsername = email.substring(0, email.indexOf('@'));
+      }
+
       // Create user document with proper structure
       await _firestore!.collection('users').doc(cred.user!.uid).set({
         'uid': cred.user!.uid,
@@ -115,6 +122,7 @@ class AuthService {
         'firstName': firstName,
         'lastName': lastName,
         'photoURL': null,
+        'username': finalUsername,
         'role': null, // Will be set during role selection
         'createdAt': FieldValue.serverTimestamp(),
         'lastActive': FieldValue.serverTimestamp(),
@@ -453,20 +461,28 @@ class AuthService {
     }
   }
 
-  // Save user role
+  // Save user role with username support
   Future<void> saveUserRole({
     required String uid,
     required String role,
     required String email,
     String? displayName,
     String? photoURL,
+    String? username,
   }) async {
+    // Extract username from synthetic email if not provided
+    String? finalUsername = username;
+    if (finalUsername == null && email.endsWith('@fermi.local')) {
+      finalUsername = email.substring(0, email.indexOf('@'));
+    }
+    
     await _firestore!.collection('users').doc(uid).set({
       'uid': uid,
       'role': role,
       'email': email,
       'displayName': displayName,
       'photoURL': photoURL,
+      'username': finalUsername,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));

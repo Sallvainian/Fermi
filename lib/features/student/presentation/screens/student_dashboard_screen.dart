@@ -14,6 +14,7 @@ import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../assignments/presentation/providers/student_assignment_provider_simple.dart';
 import '../widgets/online_users_card.dart';
+import '../../data/services/presence_service.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -82,12 +83,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
+            PresenceService().markUserActive(userRole: 'student');
             context.go('/student/notifications');
           },
         ),
         IconButton(
           icon: const Icon(Icons.settings_outlined),
           onPressed: () {
+            PresenceService().markUserActive(userRole: 'student');
             context.go('/settings');
           },
         ),
@@ -160,7 +163,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   ),
                 ),
                 FilledButton.icon(
-                  onPressed: () => context.go('/student/enroll'),
+                  onPressed: () {
+                    PresenceService().markUserActive(userRole: 'student');
+                    context.go('/student/enroll');
+                  },
                   icon: const Icon(Icons.add),
                   label: const Text('Join Class'),
                 ),
