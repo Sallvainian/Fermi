@@ -164,10 +164,10 @@ class AuthService {
         provider.addScope('email');
         provider.addScope('profile');
         
-        // Set custom parameters for better UX
-        provider.setCustomParameters({
-          'prompt': 'select_account', // Force account selection
-        });
+        // Remove the prompt parameter as it's causing issues with some Google OAuth configurations
+        // provider.setCustomParameters({
+        //   'prompt': 'select_account', // This can cause "Sign-in failed" errors
+        // });
         
         debugPrint('Google Sign-In: Attempting signInWithPopup...');
         
