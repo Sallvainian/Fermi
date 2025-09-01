@@ -7,7 +7,7 @@ This monorepo contains:
 ## Structure
 
 ```
-fermi-monorepo/
+Fermi-Monorepo/
 ├── apps/
 │   ├── fermi/          # Flutter education management app
 │   └── docs/           # Mintlify documentation site
