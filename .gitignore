@@ -47,9 +47,15 @@ keys/
 **/Flutter/Generated.xcconfig
 **/Flutter/flutter_export_environment.sh
 **/Flutter/.last_build_id
-**/Runner.xcworkspace/xcshareddata/
-**/Runner.xcodeproj/xcshareddata/
-**/Runner.xcodeproj/project.xcworkspace/
+
+# Xcode user-specific and environment-specific files
+# These cause conflicts when switching between macOS and Windows
+**/xcuserdata/
+**/xcshareddata/xcschemes/
+**/xcshareddata/*.xcsettings
+**/xcshareddata/IDEWorkspaceChecks.plist
+**/xcshareddata/WorkspaceSettings.xcsettings
+*.xcuserstate
 *.mode1v3
 *.mode2v3
 *.moved-aside
@@ -58,7 +64,21 @@ keys/
 *.xcscmblueprint
 *.xccheckout
 *.xcscheme
-xcuserdata/  # Made global
+**/DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Windows-specific files (for cross-platform development)
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
 
 # Android specific
 /android/app/debug.keystore
