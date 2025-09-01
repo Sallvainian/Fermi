@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Fermi Documentation",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
@@ -11,58 +11,82 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "User Guide",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
               "index",
-              "quickstart",
-              "development"
+              "user-guide/quickstart"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Teacher Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "user-guide/teacher/dashboard",
+              "user-guide/teacher/class-management",
+              "user-guide/teacher/assignments",
+              "user-guide/teacher/grading",
+              "user-guide/teacher/student-accounts"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Student Features",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "user-guide/student/dashboard",
+              "user-guide/student/assignments",
+              "user-guide/student/discussions",
+              "user-guide/student/chat"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Common Features",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "user-guide/essentials/settings",
+              "user-guide/essentials/navigation",
+              "user-guide/essentials/notifications",
+              "user-guide/essentials/calendar"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Developer",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Architecture",
             "pages": [
-              "api-reference/introduction"
+              "developer/development",
+              "developer/architecture/overview",
+              "developer/architecture/flutter-structure",
+              "developer/architecture/firebase-setup",
+              "developer/architecture/state-management"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Claude Context",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "developer/claude/guidelines",
+              "developer/claude/conventions",
+              "developer/claude/task-patterns",
+              "developer/claude/troubleshooting"
+            ]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "developer/api-reference/introduction",
+              "developer/api-reference/authentication",
+              "developer/api-reference/firestore-collections",
+              "developer/api-reference/cloud-functions"
+            ]
+          },
+          {
+            "group": "AI Tools Setup",
+            "pages": [
+              "developer/ai-tools/cursor",
+              "developer/ai-tools/claude-code",
+              "developer/ai-tools/windsurf"
             ]
           }
         ]
