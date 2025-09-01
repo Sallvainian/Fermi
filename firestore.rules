@@ -55,12 +55,11 @@ service cloud.firestore {
       // Allow read if:
       // - User is the teacher OR
       // - Document doesn't exist (checking before creation) OR
-      // - Any authenticated user with verified email (for enrollment code queries) OR
+      // - Any authenticated user (needed for enrollment code queries) OR
       // - User is enrolled in the class
       allow read: if isTheTeacher() || 
                      resource == null ||
-                     (isAuthenticated() && request.auth.token.email_verified == true) ||
-                     (isAuthenticated() && request.auth.uid in resource.data.studentIds);
+                     isAuthenticated();
       
       // Only THE teacher can create classes
       allow create: if isTheTeacher() && 
