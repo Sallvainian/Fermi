@@ -670,8 +670,16 @@ class AuthProvider extends ChangeNotifier {
     } else if (errorString.contains('Authorization was cancelled')) {
       message = 'Sign-in was cancelled';
     } else {
-      // Generic error - log for debugging but show user-friendly message
-      debugPrint('OAuth error details: $error');
+      // Generic error - log FULL details for debugging
+      debugPrint('==== GOOGLE OAUTH ERROR ====');
+      debugPrint('Error type: ${error.runtimeType}');
+      debugPrint('Error string: $errorString');
+      debugPrint('Full error: $error');
+      if (error is firebase_auth.FirebaseAuthException) {
+        debugPrint('Firebase error code: ${error.code}');
+        debugPrint('Firebase error message: ${error.message}');
+      }
+      debugPrint('==========================');
       message = 'Sign-in failed. Please use email/password sign-in instead.';
     }
     
