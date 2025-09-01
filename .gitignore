@@ -115,7 +115,7 @@ migrate_working_dir/
 secrets.json
 # google-services.json
 # GoogleService-Info.plist
-**/firebase.json
+# firebase.json - KEEP TRACKED - contains essential Firebase project configuration
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
