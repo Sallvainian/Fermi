@@ -111,7 +111,11 @@ class PresenceService {
         .snapshots()
         .map((snapshot) {
       debugPrint('PresenceService: Real-time update - received ${snapshot.docs.length} online users');
-      return _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
+      final allUsers = _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
+      // Filter to only show users who are actually active (last seen within 5 minutes)
+      final activeUsers = allUsers.where((user) => user.isActive).toList();
+      debugPrint('PresenceService: Filtered to ${activeUsers.length} active users (last 5 min)');
+      return activeUsers;
     }).handleError((error) {
       // Log the error but return empty list to keep UI functional
       debugPrint('PresenceService: Real-time stream error: $error');
@@ -134,7 +138,11 @@ class PresenceService {
             .get();
         
         debugPrint('PresenceService: Polling update - received ${snapshot.docs.length} online users');
-        yield _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
+        final allUsers = _processOnlineUsersData(snapshot.docs, currentUser, excludeSelf);
+        // Filter to only show users who are actually active (last seen within 5 minutes)
+        final activeUsers = allUsers.where((user) => user.isActive).toList();
+        debugPrint('PresenceService: Filtered to ${activeUsers.length} active users (last 5 min)');
+        yield activeUsers;
         
         // Poll every 3 seconds for Windows
         await Future.delayed(const Duration(seconds: 3));
@@ -244,8 +252,62 @@ class PresenceService {
     _auth.authStateChanges().listen((user) {
       if (user != null) {
         updateUserPresence(true, userRole: userRole);
+        // Start periodic presence updates to keep user shown as online
+        _startPeriodicPresenceUpdate(userRole);
       }
     });
+  }
+
+  // Periodically update presence to keep user shown as online
+  void _startPeriodicPresenceUpdate(String? userRole) {
+    // Update presence every 2 minutes to stay within 5-minute window
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(minutes: 2));
+      if (_auth.currentUser != null) {
+        await updateUserPresence(true, userRole: userRole);
+        return true; // Continue loop
+      }
+      return false; // Stop loop if user logged out
+    });
+  }
+
+  // Clean up stale presence records (users who appear online but haven't updated in >5 minutes)
+  Future<void> cleanupStalePresence() async {
+    try {
+      debugPrint('PresenceService: Cleaning up stale presence data...');
+      final snapshot = await _firestore
+          .collection('presence')
+          .where('online', isEqualTo: true)
+          .get();
+      
+      final now = DateTime.now();
+      final batch = _firestore.batch();
+      int staleCount = 0;
+      
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        if (data['lastSeen'] is Timestamp) {
+          final lastSeen = (data['lastSeen'] as Timestamp).toDate();
+          // If last seen is more than 5 minutes ago, mark as offline
+          if (now.difference(lastSeen).inMinutes >= 5) {
+            batch.update(doc.reference, {
+              'online': false,
+              'lastSeen': FieldValue.serverTimestamp(),
+            });
+            staleCount++;
+            debugPrint('PresenceService: Marking ${data['displayName']} as offline (stale)');
+          }
+        }
+      }
+      
+      if (staleCount > 0) {
+        await batch.commit();
+        debugPrint('PresenceService: Cleaned up $staleCount stale presence records');
+      }
+    } catch (error) {
+      debugPrint('PresenceService: Error cleaning stale presence: $error');
+      LoggerService.error('Error cleaning stale presence', error: error);
+    }
   }
 
   // Clean up presence on sign out
