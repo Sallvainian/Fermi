@@ -1,0 +1,59 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      # Skip tests if no test directory exists
+      - name: Check for tests
+        id: check_tests
+        run: |
+          if [ -d "test" ] && [ "$(find test -name '*_test.dart' -type f | wc -l)" -gt 0 ]; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test
+        if: steps.check_tests.outputs.has_tests == 'true'
+        run: flutter test --no-pub
+
+      - name: Build web without service worker
+        run: |
+          flutter build web --release --pwa-strategy=none             --dart-define=FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }}             --dart-define=FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}             --dart-define=FIREBASE_APP_ID_WEB=${{ secrets.FIREBASE_APP_ID_WEB }}             --dart-define=FIREBASE_VAPID_KEY=${{ secrets.FIREBASE_VAPID_KEY }}
+      
+      - name: Add cache busting version to bootstrap
+        run: |
+          BUILD_ID="${{ github.sha }}"
+          sed -i "s|flutter_bootstrap.js|flutter_bootstrap.js?v=${BUILD_ID:0:8}|" build/web/index.html
+      
+      - name: Inject Google Sign-In Client ID
+        run: |
+          sed -i "s|<!-- meta name=\"google-signin-client_id\" will be added by CI/CD -->|<meta name=\"google-signin-client_id\" content=\"${{ secrets.GOOGLE_SIGNIN_CLIENT_ID }}\">|" build/web/index.html
+
+      - name: Upload web artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: build/web

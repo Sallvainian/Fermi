@@ -1,0 +1,263 @@
+name: fermi_plus
+description: "A new Flutter project."
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 0.9.5+1
+
+environment:
+  sdk: ^3.8.0
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase Core - Required for all Firebase services
+  firebase_core: ^4.0.0
+
+  # Firebase Services
+  firebase_auth: ^6.0.1
+  cloud_firestore: ^6.0.0
+  firebase_storage: ^13.0.0
+  firebase_database: ^12.0.0
+  firebase_messaging: ^16.0.0
+  cloud_functions: ^6.0.0
+
+  # Authentication
+  google_sign_in: ^7.0.5  # For mobile platforms (iOS/Android)
+  
+  # OAuth2 for Windows desktop authentication
+  oauth2: ^2.0.0
+  http: ^1.5.0
+  crypto: ^3.0.6
+  window_to_front: ^0.0.3
+  url_launcher: ^6.3.2
+  
+  # Sign in with Apple (required for App Store compliance - Guideline 4.8)
+  sign_in_with_apple: ^7.0.1
+  
+  # Environment variables
+  flutter_dotenv: ^6.0.0
+
+  # Web support
+  web: ^1.1.1
+
+  # State Management
+  provider: ^6.1.5+1
+
+  # Charts and Data Visualization
+  fl_chart: ^1.0.0
+
+  # UI & Navigation
+  go_router: ^16.2.1
+  smooth_page_indicator: ^1.2.1
+
+  # Utilities
+  intl: ^0.20.2
+  image_picker: ^1.2.0
+  shared_preferences: ^2.5.3
+  get_it: ^8.2.0
+
+  # File handling
+  file_picker: ^10.3.2
+  path_provider: ^2.1.5
+
+
+  # Image caching for performance
+  cached_network_image: ^3.4.1
+
+  # Video support
+  video_player: ^2.10.0
+  video_compress: ^3.1.4  # Most popular & stable: 717 likes, 107k downloads, native code
+
+  # WebRTC for video/voice calling - Temporarily disabled due to web compilation issues
+  # TODO: Re-enable when implementing video calling features with updated packages
+  # flutter_webrtc: ^1.0.0
+  # permission_handler: ^12.0.1
+
+  # Notifications - Re-enabled with desktop support
+  flutter_local_notifications: ^19.4.1
+  timezone: ^0.9.4  # Using ^0.10.0 via dependency_overrides
+
+  # Call UI handled through standard notifications
+
+  # Calendar sync
+  device_calendar: ^4.3.3
+  icalendar_parser: ^2.1.0  # For iCalendar export
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.8
+  rxdart: ^0.28.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  fake_cloud_firestore: ^4.0.0
+
+  # Development tools
+  test: ^1.25.15  # Downgraded to resolve integration_test conflict
+  flutter_launcher_icons: ^0.14.4
+  build_runner: ^2.7.0
+  json_serializable: ^6.11.0
+  msix: ^3.16.12
+
+# Flutter launcher icons configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/fermi_icon.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/icon/fermi_icon.png"
+  web:
+    generate: true
+    image_path: "assets/icon/fermi_icon.png"
+    background_color: "#000000"
+    theme_color: "#8B5CF6"
+  windows:
+    generate: true
+    image_path: "assets/icon/fermi_icon.png"
+    icon_size: 48
+  freezed: ^3.2.0
+  freezed_annotation: ^3.1.0
+
+  # Code quality tools
+  import_sorter: ^4.6.0
+
+  # Testing tools
+  mockito: ^5.5.0
+  faker: ^2.2.0
+
+# Dependency overrides to resolve version conflicts
+dependency_overrides:
+  timezone: ^0.10.0  # Override for device_calendar compatibility with flutter_local_notifications
+
+
+  # CI/CD tools
+  flutter_gen_runner: ^5.11.0
+
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# Custom scripts for development workflow
+scripts:
+  # Code quality
+  analyze: flutter analyze
+  format: dart format .
+  format:check: dart format . --set-exit-if-changed
+  lint: flutter analyze && dart format . --set-exit-if-changed
+  fix: dart fix --apply
+
+  # Testing
+  test: flutter test
+  test:unit: flutter test test/
+  test:widget: flutter test test/widgets/
+  test:integration: flutter test integration_test
+  test:coverage: flutter test --coverage
+
+  # Build commands
+  build:apk: flutter build apk --release
+  build:ios: flutter build ios --release
+  build:web: flutter build web --release
+  build:windows: flutter build windows --release
+
+  # Development tools
+  clean: flutter clean && flutter pub get
+  deps: flutter pub get
+  deps:upgrade: flutter pub upgrade --major-versions
+  deps:outdated: flutter pub outdated
+
+  # Code generation
+  generate: flutter pub run build_runner build --delete-conflicting-outputs
+  generate:watch: flutter pub run build_runner watch --delete-conflicting-outputs
+
+  # Import sorting
+  sort: flutter pub run import_sorter:main
+
+  # Pre-commit checks
+  pre-commit: flutter analyze && dart format . --set-exit-if-changed && flutter test
+
+  # CI/CD helpers
+  ci:setup: flutter pub get && flutter pub run build_runner build --delete-conflicting-outputs
+  ci:test: flutter test --coverage --test-randomize-ordering-seed random
+  ci:analyze: flutter analyze --no-fatal-infos
+
+# The following section is specific to Flutter packages.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
+
+# MSIX Configuration for Windows Installer
+msix_config:
+  display_name: Fermi Plus
+  publisher_display_name: Fermi Plus Team
+  identity_name: com.fermiplus.app
+  msix_version: 0.9.3.0
+  logo_path: windows/runner/resources/app_icon.ico
+  capabilities: internetClient, privateNetworkClientServer
+  # Certificate will be configured after receiving Certum card
+  # certificate_subject: 'CN=Open Source Developer: Your Name'
+  # sign_msix: true
+  store: false  # We'll sign with Certum certificate

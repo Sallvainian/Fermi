@@ -1,0 +1,339 @@
+# Fastlane configuration for Fermi macOS app
+default_platform(:mac)
+
+# Helper to ensure CocoaPods is working with correct Ruby
+def ensure_cocoapods
+  # Verify CocoaPods is available via bundle exec
+  begin
+    sh("bundle exec pod --version")
+    UI.success("CocoaPods is properly configured via bundle exec")
+  rescue => e
+    UI.error("CocoaPods check failed: #{e.message}")
+    # Fallback to direct pod command if bundle exec fails
+    begin
+      sh("pod --version")
+      UI.success("CocoaPods is available directly")
+    rescue => e
+      UI.error("CocoaPods is not available")
+      raise e
+    end
+  end
+end
+
+platform :mac do
+  desc "Setup certificates for Developer ID signing"
+  lane :setup_signing do |options|
+    # Import the certificate if provided
+    if options[:cert_path] && File.exist?(options[:cert_path])
+      import_certificate(
+        certificate_path: options[:cert_path],
+        certificate_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
+        keychain_name: "login.keychain",
+        keychain_password: options[:keychain_password] || ENV["KEYCHAIN_PASSWORD"]
+      )
+      UI.success("Certificate imported successfully")
+    end
+
+    # NO provisioning profiles for Developer ID distribution
+    # Developer ID certificates are used for direct distribution (DMG/PKG)
+    # and don't require provisioning profiles
+
+    # Or use match if configured
+    if options[:use_match]
+      match(
+        type: "developer_id",
+        app_identifier: "com.academic-tools.fermi",
+        readonly: is_ci
+      )
+    end
+  end
+
+  desc "Build macOS app"
+  lane :build do |options|
+    # Ensure CocoaPods is properly configured
+    ensure_cocoapods
+    
+    # Setup signing based on environment
+    if is_ci
+      # In CI, use manual signing with provisioning profiles
+      setup_signing(
+        cert_path: options[:cert_path] || ENV["MACOS_CERTIFICATE_PATH"],
+        cert_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
+        use_match: options[:use_match] || false
+      )
+      
+      # Install provisioning profile if provided (for Mac App Store distribution)
+      if ENV["MACOS_PROVISIONING_PROFILE_BASE64"]
+        begin
+          profiles_path = File.expand_path("~/Library/MobileDevice/Provisioning Profiles")
+          sh("mkdir -p '#{profiles_path}'")
+          
+          profile_path = "#{profiles_path}/macos_app.provisionprofile"
+          
+          # Decode base64 with proper error handling
+          UI.message("Decoding provisioning profile from base64...")
+          
+          # Use printf instead of echo to avoid issues with newlines and special characters
+          sh("printf '%s' '#{ENV["MACOS_PROVISIONING_PROFILE_BASE64"]}' | base64 --decode > '#{profile_path}'")
+          
+          # Verify the file was created and is not empty
+          unless File.exist?(profile_path) && File.size(profile_path) > 0
+            UI.user_error!("Failed to decode provisioning profile - file is empty or missing")
+          end
+          
+          UI.message("Provisioning profile decoded successfully, size: #{File.size(profile_path)} bytes")
+          
+          # Extract UUID from the profile with better error handling
+          UI.message("Extracting UUID from provisioning profile...")
+          
+          begin
+            profile_uuid = sh("security cms -D -i '#{profile_path}' | grep -A1 'UUID' | grep -o '[0-9A-F-]\\{36\\}'").strip
+            
+            if profile_uuid.empty?
+              UI.user_error!("Could not extract UUID from provisioning profile - profile may be corrupted")
+            end
+            
+            UI.message("Extracted profile UUID: #{profile_uuid}")
+            
+            # Copy to the UUID-named file that Xcode expects
+            uuid_profile_path = "#{profiles_path}/#{profile_uuid}.provisionprofile"
+            sh("cp '#{profile_path}' '#{uuid_profile_path}'")
+            
+            # Verify the UUID-named profile exists
+            unless File.exist?(uuid_profile_path)
+              UI.user_error!("Failed to copy profile to UUID-named location")
+            end
+            
+            UI.success("Provisioning profile installed successfully: #{profile_uuid}")
+            
+            # Set environment variables for manual signing
+            ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Manual'
+            ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
+            ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = ENV["MACOS_IDENTITY"] || 'Apple Development'
+            ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = profile_uuid
+            
+            UI.message("Configured Flutter for manual signing with profile: #{profile_uuid}")
+            
+          rescue => e
+            UI.error("Failed to extract UUID from provisioning profile: #{e.message}")
+            UI.error("This usually means the profile is corrupted or invalid")
+            UI.user_error!("Please verify your MACOS_PROVISIONING_PROFILE_BASE64 secret contains a valid, base64-encoded .provisionprofile file")
+          end
+          
+        rescue => e
+          UI.error("Provisioning profile installation failed: #{e.message}")
+          UI.message("Falling back to automatic signing...")
+          
+          # Fallback to automatic signing if profile installation fails
+          ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
+          ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
+          ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
+          ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
+        end
+      else
+        # Fallback to automatic signing if no profile provided
+        ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
+        ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = ENV["DEVELOPMENT_TEAM"] || 'W778837A9L'
+        ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
+        ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
+      end
+    else
+      # Local build - use automatic signing
+      setup_signing(
+        cert_path: options[:cert_path] || ENV["MACOS_CERTIFICATE_PATH"],
+        cert_password: options[:cert_password] || ENV["MACOS_CERTIFICATE_PASSWORD"],
+        use_match: options[:use_match] || false
+      )
+      
+      ENV['FLUTTER_XCODE_CODE_SIGN_STYLE'] = 'Automatic'
+      ENV['FLUTTER_XCODE_DEVELOPMENT_TEAM'] = 'W778837A9L'
+      ENV['FLUTTER_XCODE_CODE_SIGN_IDENTITY'] = 'Apple Development'
+      ENV['FLUTTER_XCODE_PROVISIONING_PROFILE_SPECIFIER'] = ''
+    end
+    
+    # Clean and prepare Flutter project
+    sh("flutter clean")
+    sh("flutter pub get")
+    
+    version = options[:version] || "1.0.0"
+    build_number = options[:build_number] || "1"
+    
+    # Navigate to macos directory and ensure pods are installed
+    Dir.chdir("../macos") do
+      # Clean pods
+      sh("rm -rf Pods Podfile.lock")
+      
+      # Install pods with bundle exec
+      begin
+        sh("bundle exec pod install --repo-update")
+      rescue => e
+        UI.error("Bundle exec pod install failed: #{e.message}")
+        UI.message("Trying direct pod install...")
+        sh("pod install --repo-update")
+      end
+    end
+    
+    # Build using Flutter with the configured signing settings
+    sh("flutter build macos --release --build-name=#{version} --build-number=#{build_number}")
+    
+    UI.success("macOS build completed")
+  end
+
+  desc "Create macOS package installer"
+  lane :package do |options|
+    # Build the app first
+    build(options)
+    
+    # The macOS build produces an app bundle named "teacher_dashboard_flutter.app" (see
+    # project.pbxproj's productReference).  The previous hardcoded "Fermi" name
+    # caused the packaging step to look for `build/macos/Build/Products/Release/Fermi.app`,
+    # which does not exist.  Update the expected app name to match the actual
+    # build output.
+    app_name = "teacher_dashboard_flutter"
+    version = options[:version] || "1.0.0"
+    build_number = options[:build_number] || "1"
+
+    # Determine the output artifact names.  The actual Xcode product name for the
+    # macOS build is `teacher_dashboard_flutter.app` (see project.pbxproj), but we
+    # want the distributed DMG/PKG to be named "Fermi".  These variables capture
+    # the naming convention in one place.
+    dmg_file = "Fermi-#{version}.dmg"
+    pkg_file = "Fermi-#{version}.pkg"
+    
+    # Sign the app with Developer ID Application certificate
+    if options[:sign]
+      app_signing_identity = options[:app_identity] || ENV["MACOS_APP_IDENTITY"] || "Developer ID Application"
+      
+      sh("codesign --force --deep --sign '#{app_signing_identity}' '../build/macos/Build/Products/Release/#{app_name}.app'")
+      sh("codesign --verify --verbose '../build/macos/Build/Products/Release/#{app_name}.app'")
+      
+      UI.success("App signed successfully")
+    end
+    
+    # Create PKG installer ONLY
+    pkg_signing_identity = options[:pkg_identity] || ENV["MACOS_PKG_IDENTITY"] || "Developer ID Installer"
+    
+    sh("productbuild \\
+      --component '../build/macos/Build/Products/Release/#{app_name}.app' \\
+      /Applications \\
+      --sign '#{pkg_signing_identity}' \\
+      --product '../build/macos/Build/Products/Release/#{app_name}.app/Contents/Info.plist' \\
+      '#{pkg_file}'")
+    
+    UI.success("PKG installer created and signed")
+    
+    # Notarize if credentials are available
+    if options[:notarize] && ENV["APPLE_ID"] && ENV["APPLE_ID_PASSWORD"]
+      notarize(
+        package: pkg_file,
+        bundle_id: "com.academic-tools.fermi",
+        username: ENV["APPLE_ID"],
+        password: ENV["APPLE_ID_PASSWORD"],
+        asc_provider: ENV["APPLE_TEAM_ID"]
+      )
+      UI.success("PKG notarized successfully")
+    end
+    
+    UI.success("Package(s) created successfully")
+  end
+
+  desc "CI/CD build and release"
+  lane :ci_release do |options|
+    # In CI, use base64 encoded credentials
+    if is_ci
+      # Create a temporary keychain for CI
+      keychain_name = "ci-build.keychain"
+      keychain_password = ENV["KEYCHAIN_PASSWORD"] || "temporary"
+      
+      create_keychain(
+        name: keychain_name,
+        password: keychain_password,
+        default_keychain: true,
+        unlock: true,
+        timeout: 3600,
+        add_to_search_list: true
+      )
+      
+      # Decode app certificate (Developer ID Application)
+      if ENV["MACOS_CERTIFICATE_BASE64"]
+        cert_path = "/tmp/cert.p12"
+        sh("echo '#{ENV["MACOS_CERTIFICATE_BASE64"]}' | base64 --decode > #{cert_path}")
+        
+        # CRITICAL: Import the Developer ID Application certificate
+        import_certificate(
+          certificate_path: cert_path,
+          certificate_password: ENV["MACOS_CERTIFICATE_PASSWORD"],
+          keychain_name: keychain_name,
+          keychain_password: keychain_password
+        )
+        UI.success("Developer ID Application certificate imported")
+      end
+      
+      # Decode PKG installer certificate (Developer ID Installer) - optional
+      if ENV["MACOS_PKG_CERTIFICATE_BASE64"]
+        pkg_cert_path = "/tmp/pkg_cert.p12"
+        sh("echo '#{ENV["MACOS_PKG_CERTIFICATE_BASE64"]}' | base64 --decode > #{pkg_cert_path}")
+        
+        # Import the PKG certificate
+        import_certificate(
+          certificate_path: pkg_cert_path,
+          certificate_password: ENV["MACOS_CERTIFICATE_PASSWORD"],
+          keychain_name: keychain_name,
+          keychain_password: keychain_password
+        )
+        UI.success("Developer ID Installer certificate imported")
+      end
+      
+      # NO provisioning profile for Developer ID distribution
+      # Developer ID certificates don't use provisioning profiles
+    end
+    
+    # Build and package (creates PKG only)
+    package(
+      version: options[:version] || ENV["APP_VERSION"],
+      build_number: options[:build_number] || ENV["GITHUB_RUN_NUMBER"],
+      sign: true,
+      app_identity: ENV["MACOS_APP_IDENTITY"],
+      pkg_identity: ENV["MACOS_PKG_IDENTITY"],
+      notarize: ENV["APPLE_ID"] && ENV["APPLE_ID_PASSWORD"]
+    )
+    
+    # Upload artifacts
+    if ENV["GITHUB_ACTIONS"]
+      sh("echo '::set-output name=pkg_path::#{Dir.pwd}/Fermi-#{options[:version]}.pkg'")
+    end
+  end
+
+  # Helper lane for local testing
+  desc "Local build with existing certificates"
+  lane :local_build do
+    # Setup Developer ID Application certificate
+    setup_signing(
+      cert_path: "/Users/sallvain/Certificates:Keys/fermi-mac-distribution.p12",
+      cert_password: ENV["MACOS_CERTIFICATE_PASSWORD"]
+      # NO provisioning profile for Developer ID
+    )
+    
+    # Also import the Developer ID Installer certificate for PKG
+    import_certificate(
+      certificate_path: "/Users/sallvain/Certificates:Keys/fermi-pkg-mac.p12",
+      certificate_password: ENV["MACOS_CERTIFICATE_PASSWORD"],
+      keychain_name: "login.keychain",
+      keychain_password: ENV["KEYCHAIN_PASSWORD"]
+    )
+    
+    package(
+      version: "0.9.4",
+      sign: true,
+      app_identity: "Developer ID Application: Frank Cottone (W778837A9L)",
+      pkg_identity: "Developer ID Installer: Frank Cottone (W778837A9L)"
+    )
+  end
+
+  # Error handling
+  error do |lane, exception|
+    UI.error("Error in lane #{lane}: #{exception.message}")
+  end
+end
+
+# Helper actions removed - PKG only

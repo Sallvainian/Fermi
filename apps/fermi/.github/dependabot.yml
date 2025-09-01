@@ -1,0 +1,125 @@
+version: 2
+updates:
+  # Enable version updates for pub (Dart/Flutter) dependencies
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    pull-request-branch-name:
+      separator: "-"
+    labels:
+      - "dependencies"
+      - "dart"
+      - "automated"
+    assignees:
+      - "@owner"
+    reviewers:
+      - "@owner"
+    open-pull-requests-limit: 5
+    groups:
+      # Group Firebase dependencies together
+      firebase:
+        patterns:
+          - "firebase*"
+          - "cloud_firestore"
+          - "firebase_*"
+      # Group Flutter/Dart core dependencies
+      flutter:
+        patterns:
+          - "flutter*"
+          - "dart*"
+      # Group development dependencies
+      dev-dependencies:
+        dependency-type: "development"
+      # Group testing dependencies
+      testing:
+        patterns:
+          - "*test*"
+          - "mockito"
+          - "faker"
+          - "golden_toolkit"
+          - "patrol"
+    ignore:
+      # Ignore specific dependencies if needed
+      # - dependency-name: "example_package"
+      #   versions: ["1.x", "2.x"]
+    
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    pull-request-branch-name:
+      separator: "-"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    assignees:
+      - "@owner"
+    reviewers:
+      - "@owner"
+    open-pull-requests-limit: 3
+    
+  # Enable version updates for Android Gradle dependencies
+  - package-ecosystem: "gradle"
+    directory: "/android"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    pull-request-branch-name:
+      separator: "-"
+    labels:
+      - "dependencies"
+      - "android"
+      - "automated"
+    assignees:
+      - "@owner"
+    reviewers:
+      - "@owner"
+    open-pull-requests-limit: 3
+    groups:
+      # Group Android build tools
+      android-build:
+        patterns:
+          - "com.android.tools*"
+          - "com.android.application"
+          - "org.jetbrains.kotlin*"
+      # Group Google services
+      google-services:
+        patterns:
+          - "com.google.*"
+    
+  # Enable version updates for npm dependencies (if any)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    pull-request-branch-name:
+      separator: "-"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "automated"
+    assignees:
+      - "@owner"
+    reviewers:
+      - "@owner"
+    open-pull-requests-limit: 3
+    allow:
+      - dependency-type: "direct"
+    ignore:
+      # Ignore specific versions if needed
+      # - dependency-name: "example"
+      #   versions: ["1.x"]

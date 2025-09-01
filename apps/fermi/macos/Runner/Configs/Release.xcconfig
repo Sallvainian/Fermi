@@ -1,0 +1,4 @@
+#include? "../../Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
+#include "../../Flutter/Flutter-Release.xcconfig"
+
+OTHER_LDFLAGS = $(inherited) -Wl,-no_warn_duplicate_libraries

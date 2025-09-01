@@ -1,0 +1,175 @@
+platform :osx, '10.15'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'ephemeral', 'Flutter-Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure \"flutter pub get\" is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Flutter-Generated.xcconfig, then run \"flutter pub get\""
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_macos_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_macos_pods File.dirname(File.realpath(__FILE__))
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_macos_build_settings(target)
+    
+    # Fix abseil framework headers for Firebase dependencies
+    if target.name == 'abseil'
+      target.build_configurations.each do |config|
+        config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+        config.build_settings['HEADER_SEARCH_PATHS'] << ' "${PODS_ROOT}/abseil"'
+        config.build_settings['HEADER_SEARCH_PATHS'] << ' "${PODS_ROOT}/abseil/absl"'
+      end
+    end
+    
+    # CRITICAL: Completely disable ALL code signing for Pod dependencies
+    # Pods must NEVER have provisioning profiles or code signing
+    # This fixes the "doesn't support provisioning profiles" error
+    target.build_configurations.each do |config|
+      # Completely disable code signing
+      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+      config.build_settings['CODE_SIGN_IDENTITY'] = ''
+      config.build_settings['CODE_SIGN_IDENTITY[sdk=macosx*]'] = ''
+      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''
+      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY[sdk=macosx*]'] = ''
+      
+      # Remove ALL provisioning profile settings
+      config.build_settings['PROVISIONING_PROFILE'] = ''
+      config.build_settings['PROVISIONING_PROFILE_SPECIFIER'] = ''
+      config.build_settings['PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]'] = ''
+      
+      # Ensure automatic settings don't apply either
+      config.build_settings['CODE_SIGN_STYLE'] = 'Manual'
+      config.build_settings['DEVELOPMENT_TEAM'] = ''
+      
+      # Fix deployment target warnings
+      config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
+      
+      # Suppress specific warnings for Firebase plugins
+      if target.name.include?('firebase_auth') || target.name.include?('cloud_functions')
+        # Suppress deprecated API warnings for Firebase Auth
+        config.build_settings['GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS'] = 'NO'
+        config.build_settings['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS'] = 'NO'
+        
+        # Suppress unused variable warnings
+        config.build_settings['GCC_WARN_UNUSED_VARIABLE'] = 'NO'
+        config.build_settings['GCC_WARN_UNUSED_FUNCTION'] = 'NO'
+        
+        # Suppress Swift compatibility warnings
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+        
+        # Add retroactive conformance flag for Swift 6
+        if config.build_settings['SWIFT_VERSION']
+          swift_version = config.build_settings['SWIFT_VERSION'].to_f
+          if swift_version >= 6.0
+            config.build_settings['OTHER_SWIFT_FLAGS'] ||= ''
+            config.build_settings['OTHER_SWIFT_FLAGS'] += ' -Xfrontend -enable-upcoming-feature -Xfrontend RetroactiveAttribute'
+          end
+        end
+      end
+      
+      # Suppress gRPC-Core and gRPC-C++ zlib warnings
+      if ['gRPC-Core', 'gRPC-C++'].include?(target.name)
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'OS_CODE=10'
+        config.build_settings['GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS'] = 'NO'
+        # Add flag to suppress macro redefinition warnings
+        config.build_settings['OTHER_CFLAGS'] ||= []
+        config.build_settings['OTHER_CFLAGS'] = Array(config.build_settings['OTHER_CFLAGS']) + ['$(inherited)', '-Wno-macro-redefined']
+        config.build_settings['OTHER_CFLAGS'] = config.build_settings['OTHER_CFLAGS'].uniq
+      end
+      
+      # Suppress Firebase SDK warnings
+      if target.name.include?('Firebase')
+        config.build_settings['GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS'] = 'NO'
+        config.build_settings['CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS'] = 'NO'
+        config.build_settings['GCC_WARN_UNUSED_VARIABLE'] = 'NO'
+        config.build_settings['GCC_WARN_UNUSED_FUNCTION'] = 'NO'
+      end
+      
+      # Suppress warnings for all Pods in release mode
+      if config.name == 'Release'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      end
+    end
+  end
+  
+  # Fix deployment targets in all pod projects
+  installer.pods_project.build_configurations.each do |config|
+    config.build_settings['MACOSX_DEPLOYMENT_TARGET'] = '10.15'
+  end
+  
+  # Fix build phase warnings
+  installer.pods_project.targets.each do |target|
+    target.build_phases.each do |phase|
+      if phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase)
+        phase.always_out_of_date = '1' if phase.respond_to?(:always_out_of_date=)
+      end
+    end
+  end
+  
+  # Fix Firebase Swift 6 syntax errors for older Xcode versions
+  # This patches the invalid Swift 6 syntax that causes build failures
+  
+  # Fix FirebaseDataEncoder.swift
+  firebase_encoder_path = File.join(installer.sandbox.root, 'FirebaseSharedSwift/FirebaseSharedSwift/Sources/third_party/FirebaseDataEncoder/FirebaseDataEncoder.swift')
+  if File.exist?(firebase_encoder_path)
+    content = File.read(firebase_encoder_path)
+    if content.include?('throws -> sending Any')
+      puts "Patching FirebaseDataEncoder.swift to fix 'sending' keyword syntax error..."
+      patched_content = content.gsub('throws -> sending Any', 'throws -> Any')
+      File.write(firebase_encoder_path, patched_content)
+      puts "✅ FirebaseDataEncoder.swift patched successfully"
+    end
+  end
+  
+  # Fix UnfairLock.swift Swift 6 keywords (sending, borrowing, consuming)
+  unfair_lock_path = File.join(installer.sandbox.root, 'FirebaseCoreInternal/FirebaseCore/Internal/Sources/Utilities/UnfairLock.swift')
+  if File.exist?(unfair_lock_path) && File.writable?(unfair_lock_path)
+    content = File.read(unfair_lock_path)
+    if content.include?('consuming sending') || content.include?('borrowing func')
+      puts "Patching UnfairLock.swift to fix Swift 6 keywords..."
+      begin
+        patched_content = content
+          .gsub('consuming sending', '')
+          .gsub('inout sending', 'inout')
+          .gsub('-> sending', '->')
+          .gsub('borrowing func', 'func')
+          .gsub('private import', 'import')
+        File.write(unfair_lock_path, patched_content)
+        puts "✅ UnfairLock.swift patched successfully"
+      rescue => e
+        puts "⚠️  Could not patch UnfairLock.swift: #{e.message}"
+      end
+    end
+  end
+end

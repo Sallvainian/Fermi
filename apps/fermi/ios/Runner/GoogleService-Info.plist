@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>218352465432-5lt4mte28dqof4ae3igmi6m8i261jh99.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.218352465432-5lt4mte28dqof4ae3igmi6m8i261jh99</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>218352465432-2kmehjp1b5g8r4n5t2ul09t5gqiuajop.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBaxeQM1KUclw-FAdZZiboykk8wOYQb6r8</string>
+	<key>GCM_SENDER_ID</key>
+	<string>218352465432</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.academic-tools.fermi</string>
+	<key>PROJECT_ID</key>
+	<string>teacher-dashboard-flutterfire</string>
+	<key>STORAGE_BUCKET</key>
+	<string>teacher-dashboard-flutterfire.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:218352465432:ios:33fe51117562f8d938b56d</string>
+	<key>DATABASE_URL</key>
+	<string>https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>

@@ -1,0 +1,7 @@
+name: Fermi Plus
+files:
+  - windows/build/windows/x64/runner/Release/fermi_plus.exe
+signingPolicies:
+  release:
+    certificateAlias: "code-signing"
+    description: "Release signing for Fermi Plus"

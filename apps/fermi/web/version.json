@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "buildTime": "2025-08-11T02:00:00Z",
+  "features": [
+    "PWA auto-update support",
+    "Safe area handling for iOS",
+    "Icon tree-shaking optimization"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "teacher-dashboard-flutterfire"
+  },
+  "targets": {
+    "teacher-dashboard-flutterfire": {
+      "hosting": {
+        "teacher-dashboard-flutterfire": [
+          "teacher-dashboard-flutterfire"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

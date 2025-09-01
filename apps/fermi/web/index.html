@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Fermi - Education Management Platform">
+  <meta name="renderer" content="webkit">
+  
+  <!-- PREVENT HTML CACHING -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- PWA Configuration for better iOS support -->
+  <meta name="theme-color" content="#2196F3">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fermi">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="shortcut icon" type="image/png" href="favicon.png"/>
+
+  <!-- Google Sign-In Client ID - injected at build time -->
+  <!-- meta name="google-signin-client_id" will be added by CI/CD -->
+
+  <title>Fermi</title>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <script>
+    // Enhanced error handling for better debugging
+    window.addEventListener('error', e => {
+      console.error('window.onerror', e.error || e.message, e.filename, e.lineno, e.colno, e.error?.stack);
+    });
+    window.addEventListener('unhandledrejection', e => {
+      console.error('unhandledrejection', e.reason);
+    });
+    
+    // Cache busting debug logging
+    console.log('🚀 [CACHE DEBUG] Page loaded at:', new Date().toISOString());
+    
+    // TEMPORARY CLEANUP: Remove old service workers (can be deleted after a few deploys)
+    // This only helps AFTER first load, doesn't prevent stale bootstrap on first visit
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        if (registrations.length > 0) {
+          console.warn('🔄 [CACHE DEBUG] Found old service worker(s), unregistering...');
+          registrations.forEach(registration => {
+            registration.unregister().then(success => {
+              if (success) {
+                console.log('✅ [CACHE DEBUG] Successfully unregistered old service worker');
+                // Also clear all caches created by the old service worker
+                if ('caches' in window) {
+                  caches.keys().then(names => {
+                    names.forEach(name => {
+                      caches.delete(name).then(() => {
+                        console.log('🗑️ [CACHE DEBUG] Deleted cache:', name);
+                      });
+                    });
+                  });
+                }
+              } else {
+                console.error('❌ [CACHE DEBUG] Failed to unregister service worker');
+              }
+            });
+          });
+        } else {
+          console.log('✅ [CACHE DEBUG] No service worker registered (correct!)');
+        }
+      });
+    }
+    
+    // Log bootstrap version
+    window.addEventListener('DOMContentLoaded', () => {
+      const scripts = Array.from(document.scripts);
+      const bootstrap = scripts.find(s => s.src.includes('flutter_bootstrap.js'));
+      if (bootstrap) {
+        const url = new URL(bootstrap.src);
+        const version = url.searchParams.get('v');
+        console.log('✅ [CACHE DEBUG] Bootstrap version:', version || 'NO VERSION!');
+      }
+    });
+    
+    // Check caches
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        if (names.length > 0) {
+          console.warn('⚠️ [CACHE DEBUG] Active caches:', names);
+        } else {
+          console.log('✅ [CACHE DEBUG] No caches active');
+        }
+      });
+    }
+    
+    // Only clear IndexedDB if URL contains ?clear-cache=true
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('clear-cache') === 'true') {
+      console.warn('🗑️ [CACHE DEBUG] Clear cache requested via URL parameter');
+      if (window.indexedDB) {
+        // Clear Firebase Auth IndexedDB
+        indexedDB.deleteDatabase('firebaseLocalStorageDb').then(() => {
+          console.log('✅ [CACHE DEBUG] Cleared Firebase Auth IndexedDB');
+          // Remove the parameter and reload
+          urlParams.delete('clear-cache');
+          const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+          window.location.replace(newUrl);
+        }).catch(e => {
+          console.error('❌ [CACHE DEBUG] Could not clear Firebase Auth IndexedDB:', e);
+        });
+      }
+    }
+  </script>
+  
+  <!-- Load Flutter bootstrap with cache busting - AUTO-UPDATED ON BUILD -->
+  <script>
+    // Generate timestamp for cache busting
+    const cacheBuster = new Date().getTime();
+    const script = document.createElement('script');
+    script.src = `flutter_bootstrap.js?v=${cacheBuster}`;
+    script.defer = true;
+    document.body.appendChild(script);
+    console.log('🚀 [CACHE DEBUG] Loading flutter_bootstrap.js with version:', cacheBuster);
+  </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Disable caching for HTML files to ensure fresh content
+<FilesMatch "\.(html)$">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</FilesMatch>
+
+# Disable caching for Flutter bootstrap and main.dart.js
+<FilesMatch "(flutter_bootstrap\.js|main\.dart\.js|flutter\.js)$">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</FilesMatch>
+
+# Cache static assets for 1 year
+<FilesMatch "\.(ico|jpg|jpeg|png|gif|webp|svg|css|woff2|woff|ttf|eot)$">
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+# Enable GZIP compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json
+</IfModule>
