@@ -59,16 +59,16 @@ class _SignupScreenState extends State<SignupScreen> {
     final displayName = '$firstName $lastName'.trim();
 
     // Sign up with email, password, and display name
-    // Role will be selected after signup
+    // All users are automatically assigned student role
     await authProvider.signUpWithEmail(
       email: _emailController.text.trim(),
       password: _passwordController.text,
-      role: '', // Role will be selected in the next screen
+      role: 'student', // All new users are students
       displayName: displayName,
     );
 
     if (authProvider.isAuthenticated && mounted) {
-      // Router will automatically redirect to role selection
+      // Router will automatically redirect to student dashboard
       // No need to manually navigate - handled by main.dart redirect logic
     }
   }

@@ -55,25 +55,26 @@ service cloud.firestore {
       // Allow read if:
       // - User is the teacher OR
       // - Document doesn't exist (checking before creation) OR
-      // - Student is enrolled OR
-      // - Any authenticated student with verified email (for enrollment code queries)
+      // - Any authenticated user with verified email (for enrollment code queries) OR
+      // - User is enrolled in the class
       allow read: if isTheTeacher() || 
                      resource == null ||
-                     (isStudent() && request.auth.token.email_verified == true) ||
-                     (isStudent() && request.auth.uid in resource.data.studentIds);
+                     (isAuthenticated() && request.auth.token.email_verified == true) ||
+                     (isAuthenticated() && request.auth.uid in resource.data.studentIds);
       
       // Only THE teacher can create classes
       allow create: if isTheTeacher() && 
                        request.resource.data.teacherId == request.auth.uid;
       
-      // Updates allowed for teacher or student self-enrollment
+      // Updates allowed for teacher or any user self-enrollment
       allow update: if isTheTeacher() || 
-                       (isStudent() && 
+                       (isAuthenticated() && 
                         request.auth.token.email_verified == true &&
-                        // Only allow adding self to studentIds, not removing others
+                        // Allow users to add themselves to studentIds
                         request.auth.uid in request.resource.data.studentIds &&
+                        // Ensure all existing students are preserved in the new array
                         request.resource.data.studentIds.hasAll(resource.data.studentIds) &&
-                        // Prevent modifying other fields
+                        // Only allow modifying the studentIds field
                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentIds']));
          
       // Only THE teacher can delete classes

@@ -210,16 +210,16 @@ class AuthProvider extends ChangeNotifier {
       final loadedUserModel = await _loadUserModelWithRetry(user.uid);
       
       if (loadedUserModel == null || loadedUserModel.role == null) {
-        // Critical: User authenticated but no valid profile
+        // User exists in Auth but not in Firestore - this shouldn't happen
+        debugPrint('User profile not found or incomplete');
         await _authService.signOut();
-        throw Exception('User profile not found. Please contact support.');
+        throw Exception('User profile not found. Please contact support if you just signed up.');
       }
       
       // SUCCESS: Update state atomically
       _userModel = loadedUserModel;
       _setAuthState(AuthStatus.authenticated);
       _startNotificationsIfNeeded();
-      _updatePresenceOnline();
       _updatePresenceOnline();
       
     } catch (e) {
@@ -427,7 +427,7 @@ class AuthProvider extends ChangeNotifier {
     _startLoading();
     
     try {
-      // Validate input - role can be empty for initial signup
+      // Validate input
       if (email.isEmpty || password.isEmpty) {
         throw Exception('Email and password are required');
       }
@@ -443,48 +443,37 @@ class AuthProvider extends ChangeNotifier {
         throw Exception('Account creation failed');
       }
       
-      // If role is provided, save it immediately (legacy flow)
-      // Otherwise, defer role selection (new flow for email/password signup)
-      if (role.isNotEmpty) {
-        // Save user role immediately
-        await _authService.saveUserRole(
-          uid: user.uid,
-          role: role,
-          email: email,
-          displayName: displayName,
-        );
-        
-        // Wait for Firestore consistency
-        await Future.delayed(const Duration(milliseconds: 500));
-        
-        // Load complete user model
-        final loadedUserModel = await _loadUserModelWithRetry(user.uid);
-        
-        if (loadedUserModel == null || loadedUserModel.role == null) {
-          // Critical: Account created but profile save failed
-          await _authService.signOut();
-          throw Exception('Failed to create user profile. Please try signing in.');
-        }
-        
-        // SUCCESS: Update state atomically
-        _userModel = loadedUserModel;
-        _setAuthState(AuthStatus.authenticated);
-        _startNotificationsIfNeeded();
-        _updatePresenceOnline();
-      } else {
-        // New user needs role selection - save basic info first
-        // NOTE: The 'pending_users' collection has security rules restricting access
-        // to document owners only (see Firestore security rules for details)
-        await _firestore.collection('pending_users').doc(user.uid).set({
-          'uid': user.uid,
-          'email': email,
-          'displayName': displayName,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        
-        // Keep status as authenticating to trigger role selection flow
-        _setAuthState(AuthStatus.authenticating);
+      // Validate that role is provided
+      if (role.isEmpty) {
+        await _authService.signOut();
+        throw Exception('User role is required');
       }
+      
+      // Save user role immediately
+      await _authService.saveUserRole(
+        uid: user.uid,
+        role: role,
+        email: email,
+        displayName: displayName,
+      );
+      
+      // Wait for Firestore consistency
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Load complete user model
+      final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+      
+      if (loadedUserModel == null || loadedUserModel.role == null) {
+        // Critical: Account created but profile save failed
+        await _authService.signOut();
+        throw Exception('Failed to create user profile. Please try signing in.');
+      }
+      
+      // SUCCESS: Update state atomically
+      _userModel = loadedUserModel;
+      _setAuthState(AuthStatus.authenticated);
+      _startNotificationsIfNeeded();
+      _updatePresenceOnline();
       
     } catch (e) {
       debugPrint('Sign-up error: $e');
