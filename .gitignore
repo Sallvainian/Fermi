@@ -16,6 +16,9 @@ apps/fermi/build/
 
 # Security - NEVER commit these
 keys/
+**/keys/
+credentials/
+**/credentials/
 *.p8
 *.p12
 *.pem
@@ -23,6 +26,8 @@ keys/
 **/AuthKey_*.p8
 *.jks
 *.mobileprovision
+**/teacher-dashboard-flutterfire-*.json
+**/firebase-service-account*.json
 
 # Environment variables
 .env*

@@ -88,11 +88,11 @@ Task Master provides an MCP server that Claude Code can connect to. Configure in
       "args": ["-y", "--package=task-master-ai", "task-master-ai"],
       "env": {
         "ANTHROPIC_API_KEY": "your_key_here",
-        "PERPLEXITY_API_KEY": "your_key_here",
+        "PERPLEXITY_API_KEY": "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",
         "OPENAI_API_KEY": "OPENAI_API_KEY_HERE",
         "GOOGLE_API_KEY": "GOOGLE_API_KEY_HERE",
         "XAI_API_KEY": "XAI_API_KEY_HERE",
-        "OPENROUTER_API_KEY": "OPENROUTER_API_KEY_HERE",
+        "OPENROUTER_API_KEY": "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",
         "MISTRAL_API_KEY": "MISTRAL_API_KEY_HERE",
         "AZURE_OPENAI_API_KEY": "AZURE_OPENAI_API_KEY_HERE",
         "OLLAMA_API_KEY": "OLLAMA_API_KEY_HERE"
