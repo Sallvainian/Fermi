@@ -1,0 +1,12 @@
+{
+  "name": "fermi",
+  "version": "0.9.3",
+  "description": "Flutter education management platform",
+  "scripts": {
+    "build": "flutter build web --release",
+    "deploy": "npx wrangler pages deploy build/web --project-name=fermi"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
