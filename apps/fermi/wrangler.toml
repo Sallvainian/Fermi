@@ -8,5 +8,8 @@ directory = "./build/web"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
+[observability.logs]
+enabled = true
+
 # Build command for local reference (not used by Cloudflare)
 # Run this before deploying: flutter pub get && flutter build web --release
