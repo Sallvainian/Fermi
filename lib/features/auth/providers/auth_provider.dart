@@ -907,6 +907,124 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
+  /// Verify teacher with special password and create/update account
+  /// Used when a user enters the teacher verification password
+  Future<bool> verifyTeacherAndSignIn(
+    String username,
+    String verificationPassword,
+  ) async {
+    if (_authOperationInProgress) {
+      debugPrint('Auth operation already in progress');
+      return false;
+    }
+    
+    _authOperationInProgress = true;
+    _startLoading();
+    
+    try {
+      // Verify the teacher password
+      if (verificationPassword != 'educator2024') {
+        throw Exception('Invalid teacher verification code');
+      }
+      
+      // Check if user already exists
+      final existingUid = await _usernameAuthService.getUidByUsername(username);
+      
+      User? user;
+      
+      if (existingUid != null) {
+        // User exists - try to sign in with the verification password first
+        // If that fails, it means they have their own password already
+        try {
+          user = await _usernameAuthService.signInWithUsername(
+            username: username,
+            password: verificationPassword,
+          );
+        } catch (e) {
+          // User has a different password - update their role in Firestore
+          // but tell them to use their existing password
+          await _firestore.collection('users').doc(existingUid).update({
+            'role': 'teacher',
+            'verifiedAsTeacher': true,
+            'teacherVerifiedAt': FieldValue.serverTimestamp(),
+          });
+          
+          throw Exception('Teacher role granted! Please sign in with your existing password.');
+        }
+        
+        if (user != null) {
+          // Successfully signed in with verification password
+          // Update their role to teacher
+          await _firestore.collection('users').doc(user.uid).update({
+            'role': 'teacher',
+            'verifiedAsTeacher': true,
+            'teacherVerifiedAt': FieldValue.serverTimestamp(),
+          });
+        }
+        
+      } else {
+        // User doesn't exist - create new teacher account with the verification password
+        final email = _usernameAuthService.generateSyntheticEmail(username);
+        
+        // Create Firebase Auth account with the verification password
+        final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+          email: email,
+          password: verificationPassword,  // Use the verification password as initial password
+        );
+        
+        user = credential.user;
+        
+        if (user == null) {
+          throw Exception('Failed to create user account');
+        }
+        
+        // Create user document in Firestore with teacher role
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'username': username.toLowerCase(),
+          'email': email,
+          'displayName': username,
+          'role': 'teacher',
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastActive': FieldValue.serverTimestamp(),
+          'verifiedAsTeacher': true,
+          'teacherVerifiedAt': FieldValue.serverTimestamp(),
+          'needsPasswordReset': true,  // Teacher should change from default password
+        });
+      }
+      
+      // If we have a user at this point, complete the sign-in
+      if (user != null) {
+        // Load user model
+        final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+        
+        if (loadedUserModel == null) {
+          await _firebaseAuth.signOut();
+          throw Exception('Failed to load teacher profile');
+        }
+        
+        // Update state
+        _userModel = loadedUserModel;
+        _setAuthState(AuthStatus.authenticated);
+        _startNotificationsIfNeeded();
+        _updatePresenceOnline();
+        
+        return true;
+      }
+      
+      return false;
+      
+    } catch (e) {
+      debugPrint('Teacher verification error: $e');
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    } finally {
+      _authOperationInProgress = false;
+      _stopLoading();
+    }
+  }
+
   // ============= Student Account Management (Teacher Only) =============
   
   /// Create a student account (teacher only)

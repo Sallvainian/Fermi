@@ -60,6 +60,9 @@ class UserModel {
   /// The role assigned to the user.
   final UserRole? role;
 
+  /// Whether the user needs to reset their password (for new teacher accounts).
+  final bool? needsPasswordReset;
+
   /// Constructs a new [UserModel]. All fields other than [uid] are optional.
   const UserModel({
     required this.uid,
@@ -77,6 +80,7 @@ class UserModel {
     this.createdAt,
     this.lastActive,
     this.role,
+    this.needsPasswordReset,
   });
 
   /// Creates a new [UserModel] from Firestore data or snapshot.
@@ -131,6 +135,7 @@ class UserModel {
           ? data['lastActive'] as DateTime?
           : null,
       role: _roleFromString(asString(data['role'])),
+      needsPasswordReset: data['needsPasswordReset'] is bool ? data['needsPasswordReset'] as bool? : null,
     );
   }
 
@@ -143,6 +148,7 @@ class UserModel {
       if (firstName != null) 'firstName': firstName,
       if (lastName != null) 'lastName': lastName,
       if (photoURL != null) 'photoURL': photoURL,
+      if (needsPasswordReset != null) 'needsPasswordReset': needsPasswordReset,
       if (username != null) 'username': username,
       if (parentEmail != null) 'parentEmail': parentEmail,
       if (teacherId != null) 'teacherId': teacherId,
@@ -172,6 +178,7 @@ class UserModel {
     DateTime? createdAt,
     DateTime? lastActive,
     UserRole? role,
+    bool? needsPasswordReset,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -189,6 +196,7 @@ class UserModel {
       createdAt: createdAt ?? this.createdAt,
       lastActive: lastActive ?? this.lastActive,
       role: role ?? this.role,
+      needsPasswordReset: needsPasswordReset ?? this.needsPasswordReset,
     );
   }
 
