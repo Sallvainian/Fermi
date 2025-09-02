@@ -21,6 +21,7 @@ import 'shared/widgets/splash_screen.dart';
 import 'shared/widgets/pwa_update_notifier.dart';
 import 'shared/widgets/web_notification_handler.dart';
 import 'shared/widgets/app_password_wrapper.dart';
+import 'shared/services/logger_service.dart';
 
 /// Public getter for Firebase initialization status.
 bool get isFirebaseInitialized => AppInitializer.isFirebaseInitialized;
@@ -42,35 +43,34 @@ Future<void> main() async {
                 details.exception, details.stack ?? StackTrace.current);
           } else {
             // Fallback to simple logging if Zone is not available
-            debugPrint('Flutter Error: ${details.exception}');
-            debugPrint('Stack trace: ${details.stack}');
+            LoggerService.error('Flutter framework error',
+                error: details.exception, stackTrace: details.stack);
           }
         } catch (e) {
-          // Last resort fallback - just print the error
-          debugPrint('Error in error handler: $e');
-          debugPrint('Original error: ${details.exception}');
+          // Last resort fallback - just log the error
+          LoggerService.error('Error while handling FlutterError', error: e);
+          LoggerService.error('Original framework error',
+              error: details.exception, stackTrace: details.stack);
         }
       };
 
       // Catch uncaught engine/platform errors
       PlatformDispatcher.instance.onError = (error, stack) {
-        debugPrint('UNCAUGHT (platform): $error\n$stack');
+        LoggerService.error('UNCAUGHT (platform)', error: error, stackTrace: stack);
         return true; // prevent the default "Uncaught" spam
       };
 
       // Load environment variables from .env file
       try {
         await dotenv.load(fileName: ".env");
-        // Only print success in debug mode to verify it loaded
         if (kDebugMode) {
-          debugPrint('.env file loaded successfully');
+          LoggerService.debug('.env file loaded successfully', tag: 'Bootstrap');
         }
       } catch (e) {
-        // Only print warning if it's actually a file not found error
         if (e.toString().contains('FileSystemException')) {
-          debugPrint('Note: .env file not found. Using defaults.');
+          LoggerService.info('No .env file found. Using defaults.', tag: 'Bootstrap');
         }
-        // .env file is optional - don't fail if it doesn't exist
+        // .env is optional
       }
 
       runApp(const AppPasswordWrapper(
@@ -79,12 +79,11 @@ Future<void> main() async {
     },
     (error, stack) {
       // Zone error handler - catches errors not caught elsewhere
-      debugPrint('UNCAUGHT (zone): $error\n$stack');
-      // Only call AppInitializer if it won't cause recursive errors
+      LoggerService.error('UNCAUGHT (zone)', error: error, stackTrace: stack);
       try {
         AppInitializer.handleError(error, stack);
       } catch (e) {
-        debugPrint('Failed to handle error in AppInitializer: $e');
+        LoggerService.error('Failed to handle error in AppInitializer', error: e);
       }
     },
   );
@@ -209,7 +208,9 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       // Check if Firebase is already initialized (handles hot restart)
       if (AppInitializer.isFirebaseInitialized && wasAuthenticated) {
         // Fast path - Firebase already initialized and user authenticated
-        debugPrint('Fast initialization - Firebase initialized and user authenticated');
+        LoggerService.info(
+            'Fast initialization - Firebase initialized and user authenticated',
+            tag: 'Bootstrap');
         setState(() {
           _quickInit = true;
           _isInitialized = true;
@@ -219,6 +220,7 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       }
 
       // Show initial status
+      if (!mounted) return;
       setState(() {
         _currentStatus = 'Loading environment...';
         _progress = 0.1;
@@ -228,6 +230,7 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       await Future.delayed(
           const Duration(milliseconds: 100)); // Allow UI to update
 
+      if (!mounted) return;
       setState(() {
         _currentStatus = 'Initializing Firebase...';
         _progress = 0.3;
@@ -236,6 +239,7 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       // Perform actual initialization
       await AppInitializer.initialize();
 
+      if (!mounted) return;
       setState(() {
         _currentStatus = 'Setting up providers...';
         _progress = 0.8;
@@ -244,22 +248,26 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       // Small delay to show final progress
       await Future.delayed(const Duration(milliseconds: 300));
 
+      if (!mounted) return;
       // Mark as initialized
       setState(() {
         _isInitialized = true;
         _progress = 1.0;
       });
     } catch (e) {
-      debugPrint('Initialization error: $e');
+      LoggerService.error('Initialization error', error: e);
       // If it's a duplicate app error, try to proceed anyway
       if (e.toString().contains('duplicate-app')) {
-        debugPrint('Ignoring duplicate app error and proceeding...');
+        LoggerService.warning('Ignoring duplicate app error and proceeding...',
+            tag: 'Bootstrap');
+        if (!mounted) return;
         setState(() {
           _isInitialized = true;
           _progress = 1.0;
         });
       } else {
         // Show error state for other errors
+        if (!mounted) return;
         setState(() {
           _currentStatus = 'Initialization failed. Please restart the app.';
           _progress = null;

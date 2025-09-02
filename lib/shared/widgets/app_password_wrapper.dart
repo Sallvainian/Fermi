@@ -85,14 +85,14 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
         orElse: () => ThemeMode.light,
       );
       _hasLoadedTheme = true;
-      debugPrint('AppPasswordWrapper: Loaded theme preference: $_themeMode');
+      LoggerService.info('Loaded theme preference: $_themeMode', tag: 'AppPasswordWrapper');
     } else {
-      debugPrint('AppPasswordWrapper: No theme preference found, using default');
+      LoggerService.debug('No theme preference found, using default', tag: 'AppPasswordWrapper');
     }
     
     // Load color theme preference
     _colorThemeId = prefs.getString('color_theme');
-    debugPrint('AppPasswordWrapper: Loaded color theme: $_colorThemeId');
+    LoggerService.debug('Loaded color theme: $_colorThemeId', tag: 'AppPasswordWrapper');
     
     // Check if there's an authenticated Firebase user (only if Firebase is initialized)
     try {
@@ -102,17 +102,17 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper> with WidgetsBin
         _hasAuthenticatedUser = currentUser != null;
         
         if (_hasAuthenticatedUser) {
-          debugPrint('AppPasswordWrapper: Found authenticated user: ${currentUser?.email}');
+          LoggerService.info('Authenticated user: ${currentUser?.email}', tag: 'AppPasswordWrapper');
         } else {
-          debugPrint('AppPasswordWrapper: No authenticated user found');
+          LoggerService.debug('No authenticated user found', tag: 'AppPasswordWrapper');
         }
       } else {
-        debugPrint('AppPasswordWrapper: Firebase not initialized yet');
+        LoggerService.debug('Firebase not initialized yet', tag: 'AppPasswordWrapper');
         _hasAuthenticatedUser = false;
       }
     } catch (e) {
       // Firebase not initialized yet - that's OK, it will be initialized later
-      debugPrint('AppPasswordWrapper: Error checking auth: $e');
+      LoggerService.warning('Error checking auth: $e', tag: 'AppPasswordWrapper');
       _hasAuthenticatedUser = false;
     }
     
@@ -177,3 +177,4 @@ class AuthenticatedWrapper extends InheritedWidget {
   @override
   bool updateShouldNotify(AuthenticatedWrapper oldWidget) => false;
 }
+import '../services/logger_service.dart';

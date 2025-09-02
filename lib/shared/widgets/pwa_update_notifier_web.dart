@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:web/web.dart' as web;
 import 'dart:js_interop';
+import '../services/logger_service.dart';
 
 // Optional JavaScript functions - may not exist
 @JS('applyUpdate')
@@ -26,7 +27,7 @@ void _setFlutterUpdateAvailable(JSFunction? f) {
   try {
     _flutterUpdateAvailableJS = f;
   } catch (e) {
-    debugPrint('PWA update functions not available');
+    LoggerService.warning('PWA update functions not available', tag: 'PWAUpdate');
   }
 }
 
@@ -35,7 +36,7 @@ void _setCanAutoRefresh(JSFunction? f) {
   try {
     _canAutoRefreshJS = f;
   } catch (e) {
-    debugPrint('PWA update functions not available');
+    LoggerService.warning('PWA update functions not available', tag: 'PWAUpdate');
   }
 }
 
@@ -133,10 +134,10 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
           web.document.querySelector('meta[name="app-version"]');
       if (versionMeta != null) {
         _currentVersion = versionMeta.getAttribute('content') ?? '';
-        debugPrint('Current app version: $_currentVersion');
+        LoggerService.info('Current app version: $_currentVersion', tag: 'PWAUpdate');
       }
     } catch (e) {
-      debugPrint('Could not fetch version info: $e');
+      LoggerService.warning('Could not fetch version info: $e', tag: 'PWAUpdate');
     }
   }
 

@@ -262,19 +262,19 @@ class AppRouter {
             // Fallback - check if we're truly authenticated but missing user data
             // This should NEVER happen, but if it does, we need to handle it
             if (auth.status == AuthStatus.authenticated && user == null) {
-              debugPrint('CRITICAL: Dashboard in authenticated state but userModel is null!');
-              debugPrint('Auth status: ${auth.status}');
-              debugPrint('User model: ${auth.userModel}');
-              debugPrint('Firebase user: ${auth.firebaseUser?.uid}');
+              LoggerService.error('Dashboard authenticated but userModel is null', tag: 'AppRouter');
+              LoggerService.info('Auth status: ${auth.status}', tag: 'AppRouter');
+              LoggerService.info('User model: ${auth.userModel}', tag: 'AppRouter');
+              LoggerService.info('Firebase user: ${auth.firebaseUser?.uid}', tag: 'AppRouter');
               
               // Immediately try to reload user data
               Future.microtask(() async {
-                debugPrint('Emergency reload of user data...');
+                LoggerService.warning('Emergency reload of user data...', tag: 'AppRouter');
                 await auth.reloadUser();
                 
                 // If we still don't have a user model, sign out and restart
                 if (auth.userModel == null && context.mounted) {
-                  debugPrint('CRITICAL: Cannot load user model, signing out...');
+                  LoggerService.error('Cannot load user model, signing out...', tag: 'AppRouter');
                   await auth.signOut();
                   if (context.mounted) {
                     GoRouter.of(context).go('/auth/login');
@@ -285,7 +285,7 @@ class AppRouter {
               // Show loading for max 3 seconds then redirect to login
               Future.delayed(const Duration(seconds: 3), () {
                 if (context.mounted && auth.userModel == null) {
-                  debugPrint('Timeout waiting for user model, redirecting to login...');
+                  LoggerService.warning('Timeout waiting for user model, redirecting to login...', tag: 'AppRouter');
                   GoRouter.of(context).go('/auth/login');
                 }
               });
@@ -626,3 +626,4 @@ class AppRouter {
     );
   }
 }
+import '../services/logger_service.dart';
