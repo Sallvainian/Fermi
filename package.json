@@ -1,25 +1,12 @@
 {
-  "name": "fermi-monorepo",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Monorepo for Fermi education platform and documentation",
-  "workspaces": [
-    "apps/fermi",
-    "apps/docs"
-  ],
+  "name": "fermi",
+  "version": "0.9.3",
+  "description": "Flutter education management platform",
   "scripts": {
-    "dev:fermi": "cd apps/fermi && flutter run -d chrome",
-    "dev:docs": "cd apps/docs && mintlify dev",
-    "build:fermi": "cd apps/fermi && flutter build web",
-    "build:docs": "cd apps/docs && mintlify build",
-    "test:fermi": "cd apps/fermi && flutter test",
-    "analyze:fermi": "cd apps/fermi && flutter analyze",
-    "clean": "cd apps/fermi && flutter clean"
+    "build": "echo 'Skipping Flutter build in Cloudflare environment'",
+    "deploy": "echo 'Deploy handled by Cloudflare Pages'"
   },
-  "devDependencies": {
-    "mintlify": "^4.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+  "dependencies": {
+    "wrangler": "^4.33.1"
   }
 }

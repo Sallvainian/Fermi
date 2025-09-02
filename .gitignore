@@ -4,41 +4,27 @@
 .pub-cache/
 .flutter-plugins
 .flutter-plugins-dependencies
-**/build/
+**/build/  # Consolidated all build ignores
+/build
+build/
 .snapshots/
 .vercel/
 .metadata
-apps/fermi/.dart_tool/
-apps/fermi/.flutter-plugins
-apps/fermi/.flutter-plugins-dependencies
-apps/fermi/.packages
-apps/fermi/build/
+
+# General build artifacts
+app.*.symbols
+app.*.map.json
+*.hprof
 
 # Security - NEVER commit these
 keys/
-**/keys/
-credentials/
-**/credentials/
 *.p8
 *.p12
 *.pem
 *.key
 **/AuthKey_*.p8
-*.jks
-*.mobileprovision
-**/teacher-dashboard-flutterfire-*.json
-**/firebase-service-account*.json
 
-# Environment variables
-.env*
-*.env
-.env.local
-.env.*.local
-.envs/
-secrets.json
-web/firebase-config.js
-
-# IDE/Editor specific
+# IDE/Editor specific (trim if you don't use these)
 .idea/
 .vscode/
 *.iml
@@ -51,23 +37,8 @@ web/firebase-config.js
 .sonarlint/
 .grok/
 .trae/
-.claude/
-.cursor/
-.gemini/
-.clode/
-.claude-snapshots/
-.claude-checkpoints/
-.worktrees/
-.taskmaster/
 
-# Node modules
-node_modules/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Platform-specific ephemerals/generated
+# Platform-specific ephemerals/generated (consolidated)
 **/flutter/ephemeral
 **/Pods/
 **/.symlinks/
@@ -76,87 +47,96 @@ yarn-error.log*
 **/Flutter/Generated.xcconfig
 **/Flutter/flutter_export_environment.sh
 **/Flutter/.last_build_id
-
-# Xcode user-specific
-**/xcuserdata/
-**/xcshareddata/xcschemes/
-**/xcshareddata/*.xcsettings
-**/xcshareddata/IDEWorkspaceChecks.plist
-**/xcshareddata/WorkspaceSettings.xcsettings
-*.xcuserstate
+**/Runner.xcworkspace/xcshareddata/
+**/Runner.xcodeproj/xcshareddata/
+**/Runner.xcodeproj/project.xcworkspace/
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+*.xcscmblueprint
+*.xccheckout
 *.xcscheme
-**/DerivedData/
-*.hmap
-*.ipa
-*.dSYM.zip
-*.dSYM
-
-# Windows-specific
-Thumbs.db
-ehthumbs.db
-ehthumbs_vista.db
-desktop.ini
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-nul
-*/nul
+xcuserdata/  # Made global
 
 # Android specific
 /android/app/debug.keystore
 /android/local.properties
 /android/.gradle/
 /android/app/bin/
+*.jks
 android/init.gradle
 android/gradle.properties
 
-# Firebase
-firebase-debug.log
-firestore-debug.log
-ui-debug.log
-emulator-debug.log
-firebase-export-*
-apps/fermi/.firebase/
+# iOS specific
+# /ios/Runner/GoogleService-Info.plist  # Commented out - needed for CI/CD
 
-# Build outputs
-dist/
-build/
-out/
-.next/
+# General artifacts
 *.class
+*.log
 *.pyc
 *.swp
-*.swo
-*~
 *.lock
 *.snapshot
+*~
 .buildlog/
 migrate_working_dir/
-
-# Test/Coverage
-coverage/
-*.lcov
-
-# Temporary files
 *.tmp
 *.temp
 *.bak
 *.backup
 .~*
-temp/
-tmp/
 
-# Mintlify specific (for apps/docs)
-apps/docs/.mintlify/
+# Sensitive/Environment files (critical for public repo—keep these!)
+.env*
+*.env
+.envs/
+secrets.json
+# google-services.json
+# GoogleService-Info.plist
+**/firebase.json
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+emulator-debug.log
+firebase-export-*
+web/firebase-config.js  # Generated from .env, contains sensitive data
 
-# Personal/project-specific
+# Test/Coverage
+coverage/
+*.lcov
+
+# Personal/project-specific (keep for your workflow; safe in personal repo)
 PROJECT_TODOS.md
+# CLAUDE.md - Now tracked for AI assistant context
 launch_app.sh
 .mcp.json
+.claude/
+.cursor/
+.gemini/
 devtools_options.yaml
+
+# Windows-specific (keep if on Windows)
+nul
+*/nul
+web/nul!/build/
+
+# Claude Code IDE generated directories
+.clode/
+.claude-snapshots/
+.claude-checkpoints/
+.worktrees/
+!/.trae/
+*.p12
+*.mobileprovision
+Runner.xcarchive/
+temp.pem
 
 # Unwanted files
 *.exe
 firestore_rules_fix.txt
 fastlane/*.pkg
+
+.taskmaster/
+.trae/rules/

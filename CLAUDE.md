@@ -97,6 +97,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `lib/features/games/` - Educational games (Jeopardy)
 - `lib/shared/` - Shared utilities and widgets
 
+## Cloudflare Deployment
+
+### Successful Build Configuration
+The Cloudflare Workers deployment successfully builds with these settings:
+- **Build command**: `cd apps/fermi && sh build-for-cloudflare.sh`
+- **Deploy command**: `cd apps/fermi && npx wrangler deploy`
+- **Root directory**: `/`
+
 ## Development Commands
 
 ### Environment Setup
