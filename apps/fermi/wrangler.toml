@@ -1,4 +1,4 @@
-name = "fermi-plus"
+name = 'fermi-plus'
 main = "src/index.js"
 compatibility_date = "2025-09-01"
 route = "https://fermi-plus.com/*"
@@ -12,7 +12,7 @@ not_found_handling = "single-page-application"
 # Run this before deploying: flutter pub get && flutter build web --release
 
 [env.production]
-name = "fermi-plus"
+name = 'fermi-plus'
 
 [env.staging]
-name = "fermi-plus-staging"
+name = 'fermi-plus-staging'
