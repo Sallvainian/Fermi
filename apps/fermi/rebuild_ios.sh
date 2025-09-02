@@ -4,12 +4,12 @@
 # This script cleans and rebuilds the iOS app with fresh dependencies
 
 echo "🧹 Cleaning Flutter project..."
-flutter clean
+cd apps/fermi && flutter clean
 
 echo "📦 Getting Flutter dependencies..."
-flutter pub get
+cd apps/fermi && flutter pub get
 
 echo "🍎 Installing iOS CocoaPods..."
-cd ios && pod install
+cd apps/fermi/ios && pod install
 
 echo "✅ Done!"

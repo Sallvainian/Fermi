@@ -19,6 +19,9 @@ jobs:
   build-windows:
     name: Build Windows Desktop
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/fermi
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,7 +81,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-portable
-          path: Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
+          path: apps/fermi/Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
 
   create-release:
     name: Create GitHub Release

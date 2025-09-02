@@ -11,6 +11,9 @@ permissions:
 jobs:
   flutter:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/fermi
     steps:
       - uses: actions/checkout@v4
 
@@ -56,4 +59,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: web-build
-          path: build/web
+          path: apps/fermi/build/web

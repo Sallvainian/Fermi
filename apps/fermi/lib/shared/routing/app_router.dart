@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/student/data/services/presence_service.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -34,6 +35,7 @@ import '../../features/grades/presentation/screens/teacher/gradebook_screen.dart
 import '../../features/grades/presentation/screens/teacher/grade_analytics_screen.dart';
 import '../../features/grades/presentation/screens/student/grades_screen.dart';
 import '../../features/student/presentation/screens/teacher/students_screen.dart';
+import '../../features/teacher/presentation/screens/manage_student_accounts_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/notifications/presentation/screens/notifications_screen.dart';
 import '../../features/discussions/presentation/screens/discussion_boards_screen.dart';
@@ -93,6 +95,8 @@ class AppRouter {
 
         if (isAuth && isAuthRoute) {
           // Authenticated but on auth route - go to dashboard
+          // Mark user as active when they successfully authenticate
+          PresenceService().markUserActive(userRole: authProvider.userModel?.role?.name);
           return '/dashboard';
         }
 
@@ -123,7 +127,13 @@ class AppRouter {
               return null;
             }
             
-            return auth.isAuthenticated ? '/dashboard' : '/auth/login';
+            // Mark user active when accessing root and redirect to dashboard
+            if (auth.isAuthenticated) {
+              PresenceService().markUserActive(userRole: auth.userModel?.role?.name);
+              return '/dashboard';
+            }
+            
+            return '/auth/login';
           },
           builder: (context, state) {
             // This builder is only used during initialization
@@ -160,6 +170,9 @@ class AppRouter {
             final auth = Provider.of<AuthProvider>(context, listen: true);
             // CRITICAL: Get fresh userModel every time, not cached
             final user = auth.userModel;
+            
+            // Mark user active when accessing dashboard
+            PresenceService().markUserActive(userRole: user?.role?.name);
 
             // Direct to appropriate dashboard based on role
 
@@ -289,7 +302,11 @@ class AppRouter {
         // Chat routes
         GoRoute(
           path: '/messages',
-          builder: (context, state) => const ChatListScreen(),
+          builder: (context, state) {
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            PresenceService().markUserActive(userRole: auth.userModel?.role?.name);
+            return const ChatListScreen();
+          },
         ),
         // MUST BE BEFORE THE WILDCARD ROUTE!
         GoRoute(
@@ -300,6 +317,8 @@ class AppRouter {
           path: '/messages/:chatRoomId',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
+            final auth = Provider.of<AuthProvider>(context, listen: false);
+            PresenceService().markUserActive(userRole: auth.userModel?.role?.name);
             return ChatDetailScreen(chatRoomId: chatRoomId);
           },
         ),
@@ -410,6 +429,10 @@ class AppRouter {
         GoRoute(
           path: '/teacher/students',
           builder: (context, state) => const TeacherStudentsScreen(),
+        ),
+        GoRoute(
+          path: '/teacher/manage-accounts',
+          builder: (context, state) => const ManageStudentAccountsScreen(),
         ),
         GoRoute(
           path: '/teacher/games/jeopardy',
