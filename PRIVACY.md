@@ -93,7 +93,7 @@ You can:
 
 ## Children's Privacy
 
-This app is intended for educational use and may be used by students under 13 with appropriate supervision. We do not knowingly collect information from children under 13 without teacher or parental involvement. Student accounts require association with a teacher account.
+This app is intended for educational use and may be used by students of all ages. While supervision is recommended for younger students, it is not required. Students can create independent accounts without needing teacher association. We collect the same information from all users regardless of age, as outlined in the "Information We Collect" section above.
 
 ## Changes to This Policy
 
