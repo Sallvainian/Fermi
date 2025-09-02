@@ -6,7 +6,7 @@
     "build": "echo 'Skipping Flutter build in Cloudflare environment'",
     "deploy": "echo 'Deploy handled by Cloudflare Pages'"
   },
-  "dependencies": {
+  "devDependencies": {
     "wrangler": "^4.33.1"
   }
 }
