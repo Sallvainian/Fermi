@@ -20,6 +20,9 @@ jobs:
   build-windows:
     name: Build Windows
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/fermi
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -61,13 +64,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
+          path: apps/fermi/Fermi-Windows-v${{ steps.get_version.outputs.version }}.zip
           retention-days: 7
 
   build-macos:
     name: Build macOS
     runs-on: macos-latest
     timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/fermi
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -84,8 +90,8 @@ jobs:
         with:
           path: |
             ~/.cocoapods
-            macos/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+            apps/fermi/macos/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('apps/fermi/**/Podfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pods-
       
@@ -94,8 +100,8 @@ jobs:
         with:
           path: |
             ~/.pub-cache
-            .dart_tool
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+            apps/fermi/.dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('apps/fermi/**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-pub-
       
@@ -334,7 +340,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg
+          path: apps/fermi/Fermi-macOS-v${{ steps.get_version.outputs.version }}.dmg
           retention-days: 7
       
       - name: Clean up keychain

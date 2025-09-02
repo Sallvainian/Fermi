@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,8 +14,33 @@ class PresenceService {
   static const bool _showPhoto = true;
   static const bool _showRole = true;
 
+  // Failure threshold for disabling presence updates
+  static const int _maxFailureAttempts = 3;
+
+  // Track update attempts for error handling
+  static int _updateAttempts = 0;
+  static DateTime? _lastUpdateTime;
+  static bool _presenceDisabled = false;
+  static DateTime? _lastActivityTime;
+  static Timer? _heartbeatTimer;
+
   // Track user's online status with privacy controls
   Future<void> updateUserPresence(bool isOnline, {String? userRole}) async {
+    // If presence updates are disabled due to errors, skip
+    if (_presenceDisabled) {
+      debugPrint('PresenceService: Presence updates disabled due to errors');
+      return;
+    }
+
+    // Debounce rapid updates (minimum 30 seconds between updates to prevent blocking)
+    if (_lastUpdateTime != null) {
+      final timeSinceLastUpdate = DateTime.now().difference(_lastUpdateTime!);
+      if (timeSinceLastUpdate.inSeconds < 30) {
+        debugPrint('PresenceService: Skipping update, too soon since last update (${timeSinceLastUpdate.inSeconds}s)');
+        return;
+      }
+    }
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -30,7 +56,7 @@ class PresenceService {
         // User is online - store only necessary public information
         final presenceData = _buildPresenceData(user, true, userRole);
         debugPrint('PresenceService: Setting online presence data: $presenceData');
-        await userStatusDoc.set(presenceData);
+        await userStatusDoc.set(presenceData, SetOptions(merge: true));
         debugPrint('PresenceService: Successfully set online presence for ${user.email}');
       } else {
         // User is offline
@@ -41,9 +67,27 @@ class PresenceService {
         });
         debugPrint('PresenceService: Successfully set offline presence for ${user.email}');
       }
+
+      // Reset error counters on success
+      _updateAttempts = 0;
+      _lastUpdateTime = DateTime.now();
     } catch (error) {
-      debugPrint('PresenceService: ERROR updating presence: $error');
+      _updateAttempts++;
+      debugPrint('PresenceService: ERROR updating presence (attempt $_updateAttempts): $error');
       LoggerService.error('Error updating user presence', error: error);
+
+      // Disable presence updates after consecutive failures
+      if (_updateAttempts >= _maxFailureAttempts) {
+        _presenceDisabled = true;
+        debugPrint('PresenceService: Disabling presence updates after $_maxFailureAttempts failures');
+        
+        // Re-enable after 2 minutes (reduced from 5)
+        Future.delayed(const Duration(minutes: 2), () {
+          _presenceDisabled = false;
+          _updateAttempts = 0;
+          debugPrint('PresenceService: Re-enabling presence updates');
+        });
+      }
     }
   }
 
@@ -144,14 +188,14 @@ class PresenceService {
         debugPrint('PresenceService: Filtered to ${activeUsers.length} active users (last 5 min)');
         yield activeUsers;
         
-        // Poll every 3 seconds for Windows
-        await Future.delayed(const Duration(seconds: 3));
+        // Poll every 10 seconds for Windows to reduce Firestore reads
+        await Future.delayed(const Duration(seconds: 10));
       } catch (error) {
         debugPrint('PresenceService: Polling error: $error');
         LoggerService.error('Error polling online users', error: error);
         yield <OnlineUser>[];
         // Continue polling even on error, but with longer delay
-        await Future.delayed(const Duration(seconds: 5));
+        await Future.delayed(const Duration(seconds: 30));
       }
     }
   }
@@ -252,23 +296,54 @@ class PresenceService {
     _auth.authStateChanges().listen((user) {
       if (user != null) {
         updateUserPresence(true, userRole: userRole);
-        // Start periodic presence updates to keep user shown as online
-        _startPeriodicPresenceUpdate(userRole);
+        _startActivityBasedHeartbeat(userRole);
+      } else {
+        _stopHeartbeat();
       }
     });
   }
 
-  // Periodically update presence to keep user shown as online
-  void _startPeriodicPresenceUpdate(String? userRole) {
-    // Update presence every 2 minutes to stay within 5-minute window
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(minutes: 2));
-      if (_auth.currentUser != null) {
-        await updateUserPresence(true, userRole: userRole);
-        return true; // Continue loop
+  // Update presence on user activity (call this from UI interactions)
+  void markUserActive({String? userRole}) {
+    // This should be called from key user interactions like:
+    // - Navigation changes
+    // - Message sends
+    // - Button clicks
+    // - Form submissions
+    _lastActivityTime = DateTime.now();
+    
+    // Only update Firestore if enough time has passed
+    if (_auth.currentUser != null && !_presenceDisabled) {
+      updateUserPresence(true, userRole: userRole);
+    }
+  }
+
+  // Start activity-based heartbeat
+  void _startActivityBasedHeartbeat(String? userRole) {
+    _stopHeartbeat(); // Cancel any existing timer
+    
+    // Check every minute if user has been active
+    _heartbeatTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (_auth.currentUser == null) {
+        _stopHeartbeat();
+        return;
       }
-      return false; // Stop loop if user logged out
+      
+      // Only update if user has been active in the last 3 minutes
+      if (_lastActivityTime != null) {
+        final timeSinceActivity = DateTime.now().difference(_lastActivityTime!);
+        if (timeSinceActivity.inMinutes < 3) {
+          // User is active, update presence
+          updateUserPresence(true, userRole: userRole);
+        }
+      }
     });
+  }
+
+  // Stop the heartbeat timer
+  void _stopHeartbeat() {
+    _heartbeatTimer?.cancel();
+    _heartbeatTimer = null;
   }
 
   // Clean up stale presence records (users who appear online but haven't updated in >5 minutes)
@@ -312,6 +387,8 @@ class PresenceService {
 
   // Clean up presence on sign out
   Future<void> cleanupPresence() async {
+    _stopHeartbeat();
+    _lastActivityTime = null;
     await updateUserPresence(false);
   }
 

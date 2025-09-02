@@ -21,6 +21,9 @@ jobs:
   build-and-sign:
     runs-on: macos-latest
     timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/fermi
     
     steps:
     - name: Checkout repository
@@ -38,8 +41,8 @@ jobs:
       with:
         path: |
           ~/.cocoapods
-          macos/Pods
-        key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          apps/fermi/macos/Pods
+        key: ${{ runner.os }}-pods-${{ hashFiles('apps/fermi/**/Podfile.lock') }}
         restore-keys: |
           ${{ runner.os }}-pods-
     
@@ -48,8 +51,8 @@ jobs:
       with:
         path: |
           ~/.pub-cache
-          .dart_tool
-        key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          apps/fermi/.dart_tool
+        key: ${{ runner.os }}-pub-${{ hashFiles('apps/fermi/**/pubspec.lock') }}
         restore-keys: |
           ${{ runner.os }}-pub-
     
@@ -329,7 +332,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Fermi-macOS-DMG
-        path: Fermi.dmg
+        path: apps/fermi/Fermi.dmg
         retention-days: 7
     
     
