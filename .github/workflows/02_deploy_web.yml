@@ -12,9 +12,6 @@ jobs:
       contents: read
       deployments: write
     name: Deploy Flutter Web to Cloudflare Pages
-    defaults:
-      run:
-        working-directory: apps/fermi
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,7 +34,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: fermi
-          directory: apps/fermi/build/web
+          directory: build/web
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           branch: main
           wranglerVersion: '3'
