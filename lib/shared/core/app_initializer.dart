@@ -5,7 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
-import '../../config/firebase_options.dart';
+import '../../firebase_options.dart';
 import '../services/logger_service.dart';
 import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
