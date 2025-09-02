@@ -104,8 +104,6 @@ The Cloudflare Workers deployment successfully builds with these settings:
 - **Build command**: `cd apps/fermi && sh build-for-cloudflare.sh`
 - **Deploy command**: `cd apps/fermi && npx wrangler deploy`
 - **Root directory**: `/`
-- **Build token**: `fermi-plus build token`
-- **Environment variables**: None
 
 ## Development Commands
 
