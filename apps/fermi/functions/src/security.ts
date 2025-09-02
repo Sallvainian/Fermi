@@ -1,6 +1,6 @@
 import * as admin from "firebase-admin";
 import {HttpsError} from "firebase-functions/v2/https";
-import {FirebaseFunctionsRateLimiter} from "firebase-functions-rate-limiter";
+import {FirestoreRateLimiter} from "./rate-limiter";
 import {Request, Response} from "express";
 
 // Initialize rate limiter with Firestore backend
@@ -9,8 +9,8 @@ export const createRateLimiter = (
   name: string,
   maxCalls: number,
   periodSeconds: number
-): FirebaseFunctionsRateLimiter => {
-  const limiter = FirebaseFunctionsRateLimiter.withFirestoreBackend(
+): FirestoreRateLimiter => {
+  const limiter = FirestoreRateLimiter.withFirestoreBackend(
     {
       name,
       maxCalls,
@@ -36,11 +36,11 @@ export const oauthRateLimiters = {
 
 // Apply rate limiting to a request
 export const applyRateLimit = async (
-  limiter: FirebaseFunctionsRateLimiter,
+  limiter: FirestoreRateLimiter,
   identifier: string
 ): Promise<void> => {
   try {
-    // Use the correct method from FirebaseFunctionsRateLimiter
+    // Use the correct method from FirestoreRateLimiter
     await limiter.rejectOnQuotaExceededOrRecordUsage(identifier);
   } catch (error) {
     throw new HttpsError(
