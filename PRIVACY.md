@@ -1,23 +1,21 @@
-# Privacy Policy - Fermi Education Dashboard
+# Privacy Policy - Fermi+
 
-*Last Updated: January 2025*
+*Last Updated: August 2025*
 
 ## Overview
 
-The Fermi Education Dashboard ("Fermi", "the App") is an educational management platform that connects teachers and students. This privacy policy explains what information we collect and how we handle it.
+Fermi+ ("Fermi", "Fermi Plus", "the App") is an educational management platform that connects teachers and students. This privacy policy explains what information we collect and how we handle it.
 
 ## Information We Collect
 
 ### Account Information
 When you create an account, we collect:
-- Email address
 - Display name (optional)
-- First and last name (optional)
+- First and last name
 - User role (Teacher or Student)
 - Profile photo URL (optional)
 
 ### For Student Accounts
-- Parent email address (optional)
 - Grade level
 - Associated teacher ID
 - Enrolled class IDs
@@ -42,7 +40,6 @@ We use your information to:
 - Enable teachers to create classes and assignments
 - Allow students to view assignments and submit work
 - Store grades and academic progress
-- Send email notifications (if enabled)
 - Display user profiles and names within classes
 
 ## Data Storage
