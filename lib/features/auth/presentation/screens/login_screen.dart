@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 import '../../../../shared/models/user_model.dart';
@@ -18,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isTeacherRole = false;
+  bool _hasUserPreferences = false;
 
   @override
   void initState() {
@@ -26,6 +28,16 @@ class _LoginScreenState extends State<LoginScreen> {
     // Clear error when user starts typing
     _usernameController.addListener(_clearError);
     _passwordController.addListener(_clearError);
+    
+    // Check for saved user preferences
+    SharedPreferences.getInstance().then((prefs) {
+      final hasColorTheme = prefs.getString('color_theme') != null;
+      if (mounted) {
+        setState(() {
+          _hasUserPreferences = hasColorTheme;
+        });
+      }
+    });
 
     // Check for role parameter and auth errors
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -130,9 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final isLoading = authProvider.status == AuthStatus.authenticating;
 
     return Scaffold(
-      backgroundColor: _isTeacherRole 
-          ? theme.colorScheme.secondary.withValues(alpha: 0.05)
-          : theme.colorScheme.surface,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -143,31 +153,28 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo and Title
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: _isTeacherRole
-                          ? theme.colorScheme.secondary.withValues(alpha: 0.1)
-                          : theme.colorScheme.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+                    // Logo and Title
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: _isTeacherRole
+                            ? theme.colorScheme.secondary.withValues(alpha: 0.1)
+                            : theme.colorScheme.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isTeacherRole ? Icons.school : Icons.person,
+                        size: 60,
+                        color: _isTeacherRole
+                            ? theme.colorScheme.secondary
+                            : theme.colorScheme.primary,
+                      ),
                     ),
-                    child: Icon(
-                      _isTeacherRole ? Icons.school : Icons.person,
-                      size: 60,
-                      color: _isTeacherRole
-                          ? theme.colorScheme.secondary
-                          : theme.colorScheme.primary,
-                    ),
-                  ),
                   const SizedBox(height: 24),
                   Text(
                     _isTeacherRole ? 'Teacher Portal' : 'Student Login',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: _isTeacherRole
-                          ? theme.colorScheme.secondary
-                          : theme.colorScheme.primary,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -207,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Password Field
                         AuthTextField(
                           controller: _passwordController,
-                          label: _isTeacherRole ? 'Password or Teacher Code' : 'Password',
+                          label: 'Password',
                           prefixIcon: Icons.lock,
                           obscureText: _obscurePassword,
                           enabled: !isLoading,
@@ -268,11 +275,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                            ),
+                        ),
 
-
-                            // Error Display
-                            if (authProvider.errorMessage != null) ...[
+                        // Error Display
+                        if (authProvider.errorMessage != null) ...[
                               const SizedBox(height: 16),
                               Container(
                                 padding: const EdgeInsets.all(12),
@@ -302,25 +308,37 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ],
                                 ),
                               ),
-                            ],
+                        ],
 
-                            // Back to role selection
-                            const SizedBox(height: 24),
-                            TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => context.go('/auth/role-selection'),
-                              child: Text(
-                                'Back to Role Selection',
-                                style: TextStyle(
-                                  color: _isTeacherRole
-                                      ? theme.colorScheme.secondary
-                                      : theme.colorScheme.primary,
+                        // Sign up and back to role selection
+                        const SizedBox(height: 24),
+                        if (_isTeacherRole) ...[
+                          TextButton(
+                                onPressed: isLoading
+                                    ? null
+                                    : () => context.go('/auth/signup?role=teacher'),
+                                child: Text(
+                                  'Sign Up',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.secondary,
+                                  ),
                                 ),
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        TextButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => context.go('/auth/role-selection'),
+                          child: Text(
+                            'Back to Role Selection',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
                             ),
-                          ],
+                          ),
                         ),
+                      ],
+                    ),
                   ),
                 ],
               ),
