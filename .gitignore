@@ -140,3 +140,4 @@ fastlane/*.pkg
 
 .taskmaster/
 .trae/rules/
+rebuild_ios.sh
