@@ -32,6 +32,9 @@ class UserModel {
 
   /// URL to the user's profile picture.
   final String? photoURL;
+  
+  /// Username for login (unique identifier for username/password auth)
+  final String? username;
 
   /// Parent's email, for student accounts.
   final String? parentEmail;
@@ -65,6 +68,7 @@ class UserModel {
     this.firstName,
     this.lastName,
     this.photoURL,
+    this.username,
     this.parentEmail,
     this.teacherId,
     this.studentId,
@@ -115,6 +119,7 @@ class UserModel {
       firstName: asString(data['firstName']),
       lastName: asString(data['lastName']),
       photoURL: asString(data['photoURL']) ?? asString(data['photoUrl']),
+      username: asString(data['username']),
       parentEmail: asString(data['parentEmail']),
       teacherId: asString(data['teacherId']),
       studentId: asString(data['studentId']),
@@ -138,6 +143,7 @@ class UserModel {
       if (firstName != null) 'firstName': firstName,
       if (lastName != null) 'lastName': lastName,
       if (photoURL != null) 'photoURL': photoURL,
+      if (username != null) 'username': username,
       if (parentEmail != null) 'parentEmail': parentEmail,
       if (teacherId != null) 'teacherId': teacherId,
       if (studentId != null) 'studentId': studentId,
@@ -157,6 +163,7 @@ class UserModel {
     String? firstName,
     String? lastName,
     String? photoURL,
+    String? username,
     String? parentEmail,
     String? teacherId,
     String? studentId,
@@ -173,6 +180,7 @@ class UserModel {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       photoURL: photoURL ?? this.photoURL,
+      username: username ?? this.username,
       parentEmail: parentEmail ?? this.parentEmail,
       teacherId: teacherId ?? this.teacherId,
       studentId: studentId ?? this.studentId,
