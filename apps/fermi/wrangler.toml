@@ -1,6 +1,7 @@
 name = "fermi-plus"
 main = "src/index.js"
 compatibility_date = "2025-09-01"
+route = "https://fermi-plus.com/*"
 
 [assets]
 directory = "./build/web"
