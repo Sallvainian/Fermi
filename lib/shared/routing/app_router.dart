@@ -8,6 +8,8 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_email_screen.dart';
+import '../../features/auth/presentation/screens/role_selection_screen.dart';
+import '../../features/auth/presentation/screens/teacher_password_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
@@ -90,7 +92,8 @@ class AppRouter {
         // Simple redirect logic - standard Flutter pattern
         if (!isAuth && !isAuthRoute && !hasError) {
           // Not authenticated and trying to access protected route
-          return '/auth/login';
+          // First check if they've selected a role
+          return '/auth/role-selection';
         }
 
         if (isAuth && isAuthRoute) {
@@ -146,6 +149,14 @@ class AppRouter {
         ),
 
         // Auth routes
+        GoRoute(
+          path: '/auth/role-selection',
+          builder: (context, state) => const RoleSelectionScreen(),
+        ),
+        GoRoute(
+          path: '/auth/teacher-password',
+          builder: (context, state) => const TeacherPasswordScreen(),
+        ),
         GoRoute(
           path: '/auth/login',
           builder: (context, state) => const LoginScreen(),

@@ -52,6 +52,7 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _isLoading = false;
   bool _rememberMe = false;
+  String? _selectedRole; // Track selected role before login
   
   // Retry configuration for Firestore reads
   static const int _maxRetries = 5;
@@ -81,6 +82,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _status == AuthStatus.authenticated && _userModel != null;
   bool get rememberMe => _rememberMe;
+  String? get selectedRole => _selectedRole;
   
   // ============= Initialization =============
   
@@ -807,6 +809,18 @@ class AuthProvider extends ChangeNotifier {
   
   void setRememberMe(bool value) {
     _rememberMe = value;
+    notifyListeners();
+  }
+  
+  /// Set the selected role before login
+  void setSelectedRole(String role) {
+    _selectedRole = role;
+    notifyListeners();
+  }
+  
+  /// Clear the selected role
+  void clearSelectedRole() {
+    _selectedRole = null;
     notifyListeners();
   }
   
