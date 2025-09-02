@@ -14,6 +14,9 @@ class PresenceService {
   static const bool _showPhoto = true;
   static const bool _showRole = true;
 
+  // Failure threshold for disabling presence updates
+  static const int _maxFailureAttempts = 3;
+
   // Track update attempts for error handling
   static int _updateAttempts = 0;
   static DateTime? _lastUpdateTime;
@@ -73,10 +76,10 @@ class PresenceService {
       debugPrint('PresenceService: ERROR updating presence (attempt $_updateAttempts): $error');
       LoggerService.error('Error updating user presence', error: error);
 
-      // Disable presence updates after 3 consecutive failures (reduced from 5)
-      if (_updateAttempts >= 3) {
+      // Disable presence updates after consecutive failures
+      if (_updateAttempts >= _maxFailureAttempts) {
         _presenceDisabled = true;
-        debugPrint('PresenceService: Disabling presence updates after 3 failures');
+        debugPrint('PresenceService: Disabling presence updates after $_maxFailureAttempts failures');
         
         // Re-enable after 2 minutes (reduced from 5)
         Future.delayed(const Duration(minutes: 2), () {

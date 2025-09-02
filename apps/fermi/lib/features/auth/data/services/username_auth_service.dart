@@ -10,8 +10,11 @@ class UsernameAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
-  /// Domain suffix for synthetic emails
-  static const String _emailDomain = '@fermi.local';
+  /// Domain suffix for synthetic emails (using .example to avoid mDNS conflicts)
+  static const String _emailDomain = '@fermi.example';
+  
+  /// Maximum number of username suffix attempts
+  static const int _maxUsernameSuffixAttempts = 100;
   
   /// Generate a synthetic email from a username
   String generateSyntheticEmail(String username) {
@@ -283,8 +286,8 @@ class UsernameAuthService {
     // Remove any trailing numbers
     final cleanBase = baseUsername.replaceAll(RegExp(r'\d+$'), '');
     
-    // Try up to 99 suffixes
-    for (int i = 1; i < 100; i++) {
+    // Try suffixes up to the maximum attempts
+    for (int i = 1; i < _maxUsernameSuffixAttempts; i++) {
       final username = '$cleanBase${i.toString().padLeft(2, '0')}';
       if (await isUsernameAvailable(username)) {
         return username;

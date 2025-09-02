@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -70,11 +72,11 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
   }
 
   void _generatePassword() {
-    // Simple password generation - can be customized
-    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    final password = List.generate(8, (index) {
-      final randomIndex = DateTime.now().millisecondsSinceEpoch % chars.length;
-      return chars[(randomIndex + index) % chars.length];
+    // Secure password generation using cryptographically secure random
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final random = Random.secure();
+    final password = List.generate(8, (_) {
+      return chars[random.nextInt(chars.length)];
     }).join();
     
     _passwordController.text = password;
