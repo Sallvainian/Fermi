@@ -1,0 +1,17 @@
+name = "fermi-plus"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+[assets]
+directory = "./build/web"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+# Build command for local reference (not used by Cloudflare)
+# Run this before deploying: flutter pub get && flutter build web --release
+
+[env.production]
+name = "fermi-plus"
+
+[env.staging]
+name = "fermi-plus-staging"
