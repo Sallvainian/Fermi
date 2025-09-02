@@ -29,7 +29,6 @@ When you create an account, we collect:
 
 ### Authentication Data
 - Authentication tokens from Firebase Auth
-- Email verification status
 - Login timestamps
 - Last active timestamps
 
@@ -52,14 +51,6 @@ All data is stored using Google Firebase services:
 Data is stored on Google's secure cloud infrastructure with built-in encryption at rest.
 
 ## Third-Party Services
-
-### Google Sign-In
-If you choose to sign in with Google, we receive:
-- Your Google email address
-- Your Google display name
-- Your Google profile photo URL
-
-We do not access any other Google account data.
 
 ### Firebase Services
 We use Firebase (owned by Google) for all backend services. Firebase's privacy practices are governed by [Google's Privacy Policy](https://policies.google.com/privacy).
@@ -88,7 +79,7 @@ We do not sell or share your personal information with third parties. Informatio
 
 You can:
 - View and update your profile information
-- Delete your account (contact the administrator)
+- Delete your account (In the Settings Menu)
 - Request a copy of your data (contact the administrator)
 
 ## Children's Privacy
@@ -97,11 +88,11 @@ This app is intended for educational use and may be used by students of all ages
 
 ## Changes to This Policy
 
-We may update this privacy policy as the app develops. Users will be notified of significant changes through the app or via email.
+We may update this privacy policy as the app develops. Users will be notified of significant changes through the app.
 
 ## Contact Information
 
-For privacy concerns or data requests, contact:
+For privacy concerns or data requests, contact the administrator:
 **Email**: frank.cottone97@proton.me
 
 ## Legal Basis
@@ -112,4 +103,4 @@ This app is provided as-is for educational purposes. We process data based on:
 
 ---
 
-*This privacy policy applies to the Fermi Education Dashboard web and mobile applications.*
+*This privacy policy applies to the Fermi+ Dashboard web, mobile applications, and Desktop Programs.*
