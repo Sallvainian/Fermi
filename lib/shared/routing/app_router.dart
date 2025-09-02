@@ -8,6 +8,10 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/verify_email_screen.dart';
+import '../../features/auth/presentation/screens/role_selection_screen.dart';
+import '../../features/auth/presentation/screens/teacher_password_screen.dart';
+import '../../features/auth/presentation/screens/teacher_password_reset_screen.dart';
+import '../../features/auth/presentation/screens/email_linking_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
@@ -90,10 +94,24 @@ class AppRouter {
         // Simple redirect logic - standard Flutter pattern
         if (!isAuth && !isAuthRoute && !hasError) {
           // Not authenticated and trying to access protected route
-          return '/auth/login';
+          // First check if they've selected a role
+          return '/auth/role-selection';
+        }
+
+        // Check for post-signup flow (teacher password reset)
+        if (isAuth && authProvider.userModel?.needsPasswordReset == true) {
+          // Teacher needs to reset their password before accessing app
+          if (!state.matchedLocation.startsWith('/auth/teacher-setup')) {
+            return '/auth/teacher-setup/password';
+          }
         }
 
         if (isAuth && isAuthRoute) {
+          // Skip redirect for setup routes
+          if (state.matchedLocation.startsWith('/auth/teacher-setup') || 
+              state.matchedLocation.startsWith('/auth/student-setup')) {
+            return null;
+          }
           // Authenticated but on auth route - go to dashboard
           // Mark user as active when they successfully authenticate
           PresenceService().markUserActive(userRole: authProvider.userModel?.role?.name);
@@ -147,6 +165,14 @@ class AppRouter {
 
         // Auth routes
         GoRoute(
+          path: '/auth/role-selection',
+          builder: (context, state) => const RoleSelectionScreen(),
+        ),
+        GoRoute(
+          path: '/auth/teacher-password',
+          builder: (context, state) => const TeacherPasswordScreen(),
+        ),
+        GoRoute(
           path: '/auth/login',
           builder: (context, state) => const LoginScreen(),
         ),
@@ -161,6 +187,20 @@ class AppRouter {
         GoRoute(
           path: '/auth/verify-email',
           builder: (context, state) => const VerifyEmailScreen(),
+        ),
+        
+        // Post-signup setup routes
+        GoRoute(
+          path: '/auth/teacher-setup/password',
+          builder: (context, state) => const TeacherPasswordResetScreen(),
+        ),
+        GoRoute(
+          path: '/auth/teacher-setup/email',
+          builder: (context, state) => const EmailLinkingScreen(userType: 'teacher'),
+        ),
+        GoRoute(
+          path: '/auth/student-setup/email',
+          builder: (context, state) => const EmailLinkingScreen(userType: 'student'),
         ),
 
         // Main app routes

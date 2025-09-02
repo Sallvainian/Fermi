@@ -1,3 +1,6 @@
+# Node modules (JavaScript dependencies)
+node_modules/
+
 # Flutter/Dart specific
 .dart_tool/
 .pub/
@@ -141,3 +144,4 @@ fastlane/*.pkg
 .taskmaster/
 .trae/rules/
 rebuild_ios.sh
+node_modules/
