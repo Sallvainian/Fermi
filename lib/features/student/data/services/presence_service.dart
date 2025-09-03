@@ -28,6 +28,11 @@ class PresenceService {
   static DateTime? _lastActivityTime;
   static Timer? _heartbeatTimer;
 
+  // Standard practice: use real-time listeners across platforms.
+  // Keep a Windows polling fallback behind a feature flag for environments
+  // where long-lived connections are unreliable (rare). Disabled by default.
+  static bool enableWindowsPollingFallback = false;
+
   // Track user's online status with privacy controls
   Future<void> updateUserPresence(bool isOnline, {String? userRole}) async {
     // If presence updates are disabled due to errors, skip
@@ -175,14 +180,15 @@ class PresenceService {
       tag: 'PresenceService',
     );
 
-    // Platform-specific implementation due to Windows Firebase limitations
-    if (!kIsWeb && Platform.isWindows) {
-      LoggerService.warning('Using polling fallback for Windows', tag: 'PresenceService');
+    // Use real-time listeners everywhere by default.
+    // Optionally enable polling on Windows if needed for specific environments.
+    if (!kIsWeb && Platform.isWindows && enableWindowsPollingFallback) {
+      LoggerService.warning('Using polling fallback for Windows (flag enabled)', tag: 'PresenceService');
       return _getOnlineUsersPolling(excludeSelf: excludeSelf);
-    } else {
-      LoggerService.debug('Using real-time listeners for web/mobile', tag: 'PresenceService');
-      return _getOnlineUsersRealtime(excludeSelf: excludeSelf);
     }
+
+    LoggerService.debug('Using real-time listeners', tag: 'PresenceService');
+    return _getOnlineUsersRealtime(excludeSelf: excludeSelf);
   }
 
   // Real-time implementation for web/mobile
