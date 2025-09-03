@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 
@@ -21,6 +22,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isTeacherRole = false;
+  bool _hasUserPreferences = false;
 
   @override
   void initState() {
@@ -31,6 +34,41 @@ class _SignupScreenState extends State<SignupScreen> {
     _confirmPasswordController.addListener(_clearError);
     _firstNameController.addListener(_clearError);
     _lastNameController.addListener(_clearError);
+    
+    // Check for saved user preferences
+    SharedPreferences.getInstance().then((prefs) {
+      final hasColorTheme = prefs.getString('color_theme') != null;
+      if (mounted) {
+        setState(() {
+          _hasUserPreferences = hasColorTheme;
+        });
+      }
+    });
+    
+    // Check for role parameter
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final goRouterState = GoRouterState.of(context);
+        final uri = goRouterState.uri;
+        
+        // Check query parameters
+        String? role = uri.queryParameters['role'];
+        
+        // If not found, check the full location for hash routing
+        if (role == null) {
+          final fullLocation = goRouterState.fullPath ?? goRouterState.matchedLocation;
+          if (fullLocation.contains('role=teacher')) {
+            role = 'teacher';
+          }
+        }
+        
+        setState(() {
+          _isTeacherRole = role == 'teacher';
+        });
+      } catch (e) {
+        debugPrint('Error parsing role parameter: $e');
+      }
+    });
   }
 
   @override
@@ -59,11 +97,11 @@ class _SignupScreenState extends State<SignupScreen> {
     final displayName = '$firstName $lastName'.trim();
 
     // Sign up with email, password, and display name
-    // All users are automatically assigned student role
+    // Role is based on signup flow
     await authProvider.signUpWithEmail(
       email: _emailController.text.trim(),
       password: _passwordController.text,
-      role: 'student', // All new users are students
+      role: _isTeacherRole ? 'teacher' : 'student',
       displayName: displayName,
     );
 
@@ -78,10 +116,13 @@ class _SignupScreenState extends State<SignupScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/auth/login'),
+          onPressed: () => context.go(_isTeacherRole 
+              ? '/auth/login?role=teacher' 
+              : '/auth/login'),
         ),
       ),
       body: SafeArea(
@@ -96,25 +137,25 @@ class _SignupScreenState extends State<SignupScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Title
-                  Text(
-                    'Create Account',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Title
+                    Text(
+                      'Create Account',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Join the Teacher Dashboard community',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 8),
+                    Text(
+                      'Join the Fermi community',
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
                   // Sign Up Form
                   Form(
@@ -240,6 +281,12 @@ class _SignupScreenState extends State<SignupScreen> {
                         onPressed: authProvider.isLoading ? null : _signUp,
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(56),
+                          backgroundColor: _isTeacherRole 
+                              ? theme.colorScheme.secondary
+                              : null,
+                          foregroundColor: _isTeacherRole
+                              ? theme.colorScheme.onSecondary
+                              : null,
                         ),
                         child: authProvider.isLoading
                             ? const SizedBox(
@@ -265,7 +312,9 @@ class _SignupScreenState extends State<SignupScreen> {
                         style: theme.textTheme.bodyMedium,
                       ),
                       TextButton(
-                        onPressed: () => context.go('/auth/login'),
+                        onPressed: () => context.go(_isTeacherRole 
+                            ? '/auth/login?role=teacher'
+                            : '/auth/login'),
                         child: const Text('Sign In'),
                       ),
                     ],

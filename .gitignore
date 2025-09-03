@@ -169,3 +169,9 @@ dev-debug.log
 # Task files
 # tasks.json
 # tasks/ 
+
+## Fastlane artifacts
+fastlane/report.xml
+fastlane/report.html
+fastlane/screenshots/
+fastlane/test_output/

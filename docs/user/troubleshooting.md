@@ -6,10 +6,7 @@
 
 #### Problem: Invalid credentials error
 **Solutions:**
-1. [Check username/email spelling]
-2. [Verify password is correct]
-3. [Try password reset]
-4. [Clear browser cache]
+4. In your browser settings, go to Privacy and Security, then select "Clear browsing data" and choose "Cached images and files" to clear your browser cache.
 
 #### Problem: Account locked
 **Solutions:**
