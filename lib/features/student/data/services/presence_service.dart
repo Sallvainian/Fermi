@@ -17,6 +17,10 @@ class PresenceService {
   // Failure threshold for disabling presence updates
   static const int _maxFailureAttempts = 3;
 
+  // Configurable thresholds
+  static const int _updateDebounceSeconds = 30;
+  static const int _stalePresenceMinutes = 5;
+
   // Track update attempts for error handling
   static int _updateAttempts = 0;
   static DateTime? _lastUpdateTime;
@@ -38,9 +42,9 @@ class PresenceService {
     // Debounce rapid updates (minimum 30 seconds between updates to prevent blocking)
     if (_lastUpdateTime != null) {
       final timeSinceLastUpdate = DateTime.now().difference(_lastUpdateTime!);
-      if (timeSinceLastUpdate.inSeconds < 30) {
+      if (timeSinceLastUpdate.inSeconds < _updateDebounceSeconds) {
         LoggerService.debug(
-          'Skipping update, too soon (${timeSinceLastUpdate.inSeconds}s)',
+          'Skipping update, too soon (${timeSinceLastUpdate.inSeconds}s < ${_updateDebounceSeconds}s)',
           tag: 'PresenceService',
         );
         return;
@@ -199,10 +203,10 @@ class PresenceService {
             currentUser,
             excludeSelf,
           );
-          // Filter to only show users who are actually active (last seen within 5 minutes)
+          // Filter to only show users who are actually active (last seen within threshold)
           final activeUsers = allUsers.where((user) => user.isActive).toList();
           LoggerService.debug(
-            'Filtered to ${activeUsers.length} active users (5m)',
+            'Filtered to ${activeUsers.length} active users (${_stalePresenceMinutes}m)',
             tag: 'PresenceService',
           );
           return activeUsers;
@@ -239,10 +243,10 @@ class PresenceService {
           currentUser,
           excludeSelf,
         );
-        // Filter to only show users who are actually active (last seen within 5 minutes)
+        // Filter to only show users who are actually active (last seen within threshold)
         final activeUsers = allUsers.where((user) => user.isActive).toList();
         LoggerService.debug(
-          'Filtered to ${activeUsers.length} active users (5m)',
+          'Filtered to ${activeUsers.length} active users (${_stalePresenceMinutes}m)',
           tag: 'PresenceService',
         );
         yield activeUsers;
@@ -445,8 +449,8 @@ class PresenceService {
         final data = doc.data();
         if (data['lastSeen'] is Timestamp) {
           final lastSeen = (data['lastSeen'] as Timestamp).toDate();
-          // If last seen is more than 5 minutes ago, mark as offline
-          if (now.difference(lastSeen).inMinutes >= 5) {
+          // If last seen is older than threshold, mark as offline
+          if (now.difference(lastSeen).inMinutes >= _stalePresenceMinutes) {
             batch.update(doc.reference, {
               'online': false,
               'lastSeen': FieldValue.serverTimestamp(),
@@ -589,7 +593,8 @@ class OnlineUser {
 
   // Helper to check if user is active (online in last 5 minutes)
   bool get isActive {
-    return DateTime.now().difference(lastSeen).inMinutes < 5;
+    return DateTime.now().difference(lastSeen).inMinutes <
+        PresenceService._stalePresenceMinutes;
   }
 }
 

@@ -71,6 +71,9 @@ class AppRouter {
     return GoRouter(
       initialLocation: '/',
       refreshListenable: authProvider,
+      observers: [
+        _LoggingNavigatorObserver(),
+      ],
       redirect: (context, state) {
         final isAuth = authProvider.status == AuthStatus.authenticated;
         final isAuthenticating =
@@ -660,5 +663,34 @@ class AppRouter {
         ),
       ),
     );
+  }
+}
+
+class _LoggingNavigatorObserver extends NavigatorObserver {
+  @override
+  void didPush(Route route, Route? previousRoute) {
+    LoggerService.info(
+      'Route push: \\n${route.settings.name ?? route.settings.arguments ?? route}',
+      tag: 'Router',
+    );
+    super.didPush(route, previousRoute);
+  }
+
+  @override
+  void didPop(Route route, Route? previousRoute) {
+    LoggerService.info(
+      'Route pop: \\n${route.settings.name ?? route.settings.arguments ?? route}',
+      tag: 'Router',
+    );
+    super.didPop(route, previousRoute);
+  }
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) {
+    LoggerService.info(
+      'Route replace: old=${oldRoute?.settings.name} new=${newRoute?.settings.name}',
+      tag: 'Router',
+    );
+    super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 }
