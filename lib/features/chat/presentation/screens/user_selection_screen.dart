@@ -17,7 +17,7 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<Map<String, dynamic>> _users = [];
   List<Map<String, dynamic>> _filteredUsers = [];
   bool _isLoading = true;
@@ -59,9 +59,9 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
         _isLoading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load users: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load users: $e')));
       }
     }
   }
@@ -75,8 +75,8 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
         _filteredUsers = _users.where((user) {
           final name = (user['displayName'] ?? '').toString().toLowerCase();
           final email = (user['email'] ?? '').toString().toLowerCase();
-          return name.contains(query.toLowerCase()) || 
-                 email.contains(query.toLowerCase());
+          return name.contains(query.toLowerCase()) ||
+              email.contains(query.toLowerCase());
         }).toList();
       }
     });
@@ -89,15 +89,17 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
         selectedUser['uid'] ?? selectedUser['id'],
         selectedUser['displayName'] ?? selectedUser['email'] ?? 'User',
       );
-      
+
       if (mounted) {
-        context.go('/simple-chat/$chatRoomId?title=${Uri.encodeComponent(selectedUser['displayName'] ?? selectedUser['email'] ?? 'User')}');
+        context.go(
+          '/simple-chat/$chatRoomId?title=${Uri.encodeComponent(selectedUser['displayName'] ?? selectedUser['email'] ?? 'User')}',
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start chat: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to start chat: $e')));
       }
     }
   }
@@ -126,49 +128,61 @@ class _UserSelectionScreenState extends State<UserSelectionScreen> {
               onChanged: _filterUsers,
             ),
           ),
-          
+
           // User list
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredUsers.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.search_off, size: 64),
-                            const SizedBox(height: 16),
-                            Text(_searchQuery.isEmpty 
-                                ? 'No users found' 
-                                : 'No users match "$_searchQuery"'),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search_off, size: 64),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchQuery.isEmpty
+                              ? 'No users found'
+                              : 'No users match "$_searchQuery"',
                         ),
-                      )
-                    : ListView.builder(
-                        itemCount: _filteredUsers.length,
-                        itemBuilder: (context, index) {
-                          final user = _filteredUsers[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundImage: user['photoUrl'] != null
-                                  ? NetworkImage(user['photoUrl'])
-                                  : null,
-                              child: user['photoUrl'] == null
-                                  ? Text(
-                                      (user['displayName'] ?? user['email'] ?? '?')[0].toUpperCase(),
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
-                                    )
-                                  : null,
-                            ),
-                            title: Text(user['displayName'] ?? user['email'] ?? 'Unknown User'),
-                            subtitle: user['displayName'] != null && user['email'] != null
-                                ? Text(user['email'])
-                                : Text(user['role'] ?? ''),
-                            trailing: const Icon(Icons.chat_bubble_outline),
-                            onTap: () => _startChat(user),
-                          );
-                        },
-                      ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _filteredUsers.length,
+                    itemBuilder: (context, index) {
+                      final user = _filteredUsers[index];
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundImage: user['photoUrl'] != null
+                              ? NetworkImage(user['photoUrl'])
+                              : null,
+                          child: user['photoUrl'] == null
+                              ? Text(
+                                  (user['displayName'] ??
+                                          user['email'] ??
+                                          '?')[0]
+                                      .toUpperCase(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
+                        ),
+                        title: Text(
+                          user['displayName'] ??
+                              user['email'] ??
+                              'Unknown User',
+                        ),
+                        subtitle:
+                            user['displayName'] != null && user['email'] != null
+                            ? Text(user['email'])
+                            : Text(user['role'] ?? ''),
+                        trailing: const Icon(Icons.chat_bubble_outline),
+                        onTap: () => _startChat(user),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

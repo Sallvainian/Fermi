@@ -21,7 +21,7 @@ class SimpleStudentProvider with ChangeNotifier {
   Future<void> loadAllStudents() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final snapshot = await _firestore
           .collection('users')
@@ -38,7 +38,9 @@ class SimpleStudentProvider with ChangeNotifier {
           username: data['username'] ?? '',
           firstName: data['firstName'] ?? '',
           lastName: data['lastName'] ?? '',
-          displayName: data['displayName'] ?? '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+          displayName:
+              data['displayName'] ??
+              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
@@ -46,11 +48,13 @@ class SimpleStudentProvider with ChangeNotifier {
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
-          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          createdAt:
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          updatedAt:
+              (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         );
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -65,7 +69,7 @@ class SimpleStudentProvider with ChangeNotifier {
   Future<void> loadTeacherStudents(List<dynamic> teacherClasses) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       if (teacherClasses.isEmpty) {
         _students = [];
@@ -99,7 +103,9 @@ class SimpleStudentProvider with ChangeNotifier {
           username: data['username'] ?? '',
           firstName: data['firstName'] ?? '',
           lastName: data['lastName'] ?? '',
-          displayName: data['displayName'] ?? '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+          displayName:
+              data['displayName'] ??
+              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
@@ -107,11 +113,13 @@ class SimpleStudentProvider with ChangeNotifier {
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
-          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          createdAt:
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          updatedAt:
+              (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         );
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -140,7 +148,9 @@ class SimpleStudentProvider with ChangeNotifier {
           username: data['username'] ?? '',
           firstName: data['firstName'] ?? '',
           lastName: data['lastName'] ?? '',
-          displayName: data['displayName'] ?? '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+          displayName:
+              data['displayName'] ??
+              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
@@ -148,8 +158,10 @@ class SimpleStudentProvider with ChangeNotifier {
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
-          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          createdAt:
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          updatedAt:
+              (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         );
       }).toList();
     } catch (e) {
@@ -169,10 +181,11 @@ class SimpleStudentProvider with ChangeNotifier {
   }) async {
     try {
       // Create auth user
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: _generateTempPassword(),
-      );
+      final credential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: email,
+            password: _generateTempPassword(),
+          );
 
       // Create user document
       await _firestore.collection('users').doc(credential.user!.uid).set({
@@ -201,7 +214,10 @@ class SimpleStudentProvider with ChangeNotifier {
   }
 
   /// Update student information
-  Future<bool> updateStudent(String studentId, Map<String, dynamic> updates) async {
+  Future<bool> updateStudent(
+    String studentId,
+    Map<String, dynamic> updates,
+  ) async {
     try {
       await _firestore.collection('users').doc(studentId).update(updates);
       await loadAllStudents(); // Reload
@@ -218,11 +234,11 @@ class SimpleStudentProvider with ChangeNotifier {
     try {
       // Delete from Firestore
       await _firestore.collection('users').doc(studentId).delete();
-      
+
       // Note: Deleting from Firebase Auth requires admin SDK
       // For now, just disable the account
       await updateStudent(studentId, {'disabled': true});
-      
+
       await loadAllStudents(); // Reload
       return true;
     } catch (e) {
@@ -264,7 +280,8 @@ class SimpleStudentProvider with ChangeNotifier {
 
   /// Generate temporary password
   String _generateTempPassword() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*';
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*';
     final random = DateTime.now().millisecondsSinceEpoch;
     String password = '';
     for (int i = 0; i < 12; i++) {

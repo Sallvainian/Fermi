@@ -67,9 +67,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         !callProvider.isNavigationInProgress) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         callProvider.setNavigationInProgress(true);
-        context
-            .push('/incoming-call', extra: callProvider.incomingCall)
-            .then((_) {
+        context.push('/incoming-call', extra: callProvider.incomingCall).then((
+          _,
+        ) {
           // Reset navigation state after call screen is popped
           callProvider.setNavigationInProgress(false);
           // Optional: Add any post-call logic here
@@ -206,8 +206,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     );
   }
 
-  Widget _buildQuickStats(BuildContext context, ClassProvider classProvider,
-      DashboardProvider dashboardProvider) {
+  Widget _buildQuickStats(
+    BuildContext context,
+    ClassProvider classProvider,
+    DashboardProvider dashboardProvider,
+  ) {
     final enrolledClasses = classProvider.studentClasses;
 
     return SizedBox(
@@ -255,11 +258,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Widget _buildClassesSection(
-      BuildContext context, ClassProvider classProvider) {
+    BuildContext context,
+    ClassProvider classProvider,
+  ) {
     if (classProvider.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     final enrolledClasses = classProvider.studentClasses;
@@ -285,8 +288,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 Text(
                   'Join a class to get started',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
@@ -305,10 +308,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
     return Column(
       children: [
-        ...displayClasses.map((course) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildClassCard(context, course),
-            )),
+        ...displayClasses.map(
+          (course) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildClassCard(context, course),
+          ),
+        ),
         if (enrolledClasses.length > 4) ...[
           const SizedBox(height: 4),
           SizedBox(
@@ -394,7 +399,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     context.read<ClassProvider>().setSelectedClass(course);
     // Navigate to class detail or assignments
     context.go(
-        '/student/courses'); // You can change this to a specific class detail route
+      '/student/courses',
+    ); // You can change this to a specific class detail route
   }
 
   Widget _buildCompactStatCard(
@@ -421,11 +427,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      icon,
-                      size: 20,
-                      color: color,
-                    ),
+                    Icon(icon, size: 20, color: color),
                     const SizedBox(width: 8),
                     Text(
                       value,
@@ -464,11 +466,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             text,
@@ -482,7 +480,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Widget _buildUpcomingAssignmentsCard(
-      BuildContext context, DashboardProvider dashboardProvider) {
+    BuildContext context,
+    DashboardProvider dashboardProvider,
+  ) {
     final assignments = dashboardProvider.upcomingAssignments;
 
     return Card(
@@ -512,9 +512,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     Text(
                       'Your assignments will appear here when available',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ] else ...[
@@ -599,11 +598,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: color.withValues(alpha: 0.1),
-        child: Icon(
-          Icons.assignment,
-          color: color,
-          size: 20,
-        ),
+        child: Icon(Icons.assignment, color: color, size: 20),
       ),
       title: Text(
         title,
@@ -632,7 +627,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   Widget _buildRecentGradesCard(
-      BuildContext context, DashboardProvider dashboardProvider) {
+    BuildContext context,
+    DashboardProvider dashboardProvider,
+  ) {
     final grades = dashboardProvider.recentGrades;
 
     return Card(
@@ -662,9 +659,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     Text(
                       'Your grades will appear here once available',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ] else ...[
@@ -676,8 +672,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                         grade: grades[i].grade.letterGrade ?? '-',
                         points:
                             '${grades[i].grade.pointsEarned.toInt()}/${grades[i].grade.pointsPossible.toInt()}',
-                        color:
-                            _getGradeColor(grades[i].grade.letterGrade ?? 'F'),
+                        color: _getGradeColor(
+                          grades[i].grade.letterGrade ?? 'F',
+                        ),
                       ),
                       if (i < grades.take(3).length - 1) const Divider(),
                     ],

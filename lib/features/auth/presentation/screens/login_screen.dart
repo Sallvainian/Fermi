@@ -1,138 +1,152 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:logging/logging.dart';
+
 import '../widgets/auth_text_field.dart';
-import '../../../../shared/models/user_model.dart';
+import '../widgets/forgot_password_button.dart';
+import '../../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final String? role;
+
+  const LoginScreen({
+    super.key,
+    this.role,
+  });
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class LoginScreenState extends State<LoginScreen> {
+  static final _logger = Logger('LoginScreen');
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _isTeacherRole = false;
-  bool _hasUserPreferences = false;
 
   @override
   void initState() {
     super.initState();
-    
-    // Clear error when user starts typing
-    _usernameController.addListener(_clearError);
-    _passwordController.addListener(_clearError);
-    
-    // Check for saved user preferences
-    SharedPreferences.getInstance().then((prefs) {
-      final hasColorTheme = prefs.getString('color_theme') != null;
-      if (mounted) {
-        setState(() {
-          _hasUserPreferences = hasColorTheme;
-        });
-      }
-    });
-
-    // Check for role parameter and auth errors
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Check for role parameter - handle both hash and non-hash routing
-      try {
-        final goRouterState = GoRouterState.of(context);
-        final uri = goRouterState.uri;
-        
-        // First try standard query parameters
-        String? role = uri.queryParameters['role'];
-        
-        // If not found, check the full location for hash routing
-        if (role == null) {
-          final fullLocation = goRouterState.fullPath ?? goRouterState.matchedLocation;
-          if (fullLocation.contains('role=teacher')) {
-            role = 'teacher';
-          }
-        }
-        
-        setState(() {
-          _isTeacherRole = role == 'teacher';
-        });
-      } catch (e) {
-        debugPrint('Error parsing role parameter: $e');
-      }
-
-      // Check for auth errors
-      final authProvider = context.read<AuthProvider>();
-      if (authProvider.status == AuthStatus.error && authProvider.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(authProvider.errorMessage!),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: Theme.of(context).colorScheme.onError,
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            ),
-          ),
-        );
-      }
-    });
+    _isTeacherRole = widget.role == 'teacher';
+    _logger.info('LoginScreen initialized with role: ${widget.role}');
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _clearError() {
-    final authProvider = context.read<AuthProvider>();
-    if (authProvider.errorMessage != null) {
-      authProvider.clearError();
+  Future<void> _signIn() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      final authProvider = context.read<AuthProvider>();
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+
+      try {
+        _logger.info('Attempting sign in for email: $email');
+        await authProvider.signIn(email, password);
+        _logger.info('Sign in successful for email: $email');
+
+        if (!mounted) return;
+
+        // Navigate based on auth state
+        if (authProvider.currentUser != null) {
+          final String userRole = authProvider.currentUser!.role;
+          _logger.info('User role detected: $userRole');
+
+          // Navigate based on role
+          if (userRole == 'teacher') {
+            _logger.info('Navigating to teacher dashboard');
+            context.go('/teacher/dashboard');
+          } else if (userRole == 'student') {
+            _logger.info('Navigating to student dashboard');
+            context.go('/student/dashboard');
+          } else {
+            _logger.info('Unknown role, navigating to role selection');
+            context.go('/auth/role-selection');
+          }
+        }
+      } catch (e) {
+        _logger.severe('Sign in error: $e', e);
+        if (!mounted) return;
+
+        String errorMessage;
+        if (e.toString().contains('invalid-email') ||
+            e.toString().contains('user-not-found')) {
+          errorMessage = 'Invalid email or password';
+        } else if (e.toString().contains('wrong-password')) {
+          errorMessage = 'Invalid password';
+        } else if (e.toString().contains('too-many-requests')) {
+          errorMessage = 'Too many attempts. Please try again later';
+        } else if (e.toString().contains('network')) {
+          errorMessage = 'Network error. Please check your connection';
+        } else {
+          errorMessage = 'Login failed. Please try again';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
   }
 
-  Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
-
+  Future<void> _signInWithGoogle() async {
     final authProvider = context.read<AuthProvider>();
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
 
-    // Check if this is a teacher verification password
-    if (_isTeacherRole && password == 'educator2024') {
-      // This is a teacher verification - create/update user with teacher role
-      final success = await authProvider.verifyTeacherAndSignIn(username, password);
-      if (success && mounted) {
-        context.go('/dashboard');
-      }
-      return;
-    }
+    try {
+      _logger.info('Attempting Google sign in');
+      await authProvider.signInWithGoogle();
+      _logger.info('Google sign in successful');
 
-    // Normal sign in flow
-    await authProvider.signInWithUsername(username, password);
+      if (!mounted) return;
 
-    if (authProvider.isAuthenticated && mounted) {
-      // Check if user needs email linking
-      final hasEmail = authProvider.userModel?.email?.isNotEmpty ?? false;
-      if (!hasEmail) {
-        // Route based on role
-        if (authProvider.userModel?.role == UserRole.teacher) {
-          context.go('/auth/teacher-setup/email');
+      // Navigate after successful Google sign-in
+      if (authProvider.currentUser != null) {
+        final String userRole = authProvider.currentUser!.role;
+        _logger.info('User role from Google sign-in: $userRole');
+
+        if (userRole == 'teacher') {
+          context.go('/teacher/dashboard');
+        } else if (userRole == 'student') {
+          context.go('/student/dashboard');
         } else {
-          context.go('/auth/student-setup/email');
+          context.go('/auth/role-selection');
         }
-      } else {
-        context.go('/dashboard');
       }
+    } catch (e) {
+      _logger.severe('Google sign in error: $e', e);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Google sign-in failed: ${e.toString()}',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     }
+  }
+
+  String? _validateEmail(String? value) {
+    if (value?.isEmpty ?? true) {
+      return 'Please enter your email';
+    }
+    return null;
   }
 
   @override
@@ -142,7 +156,9 @@ class _LoginScreenState extends State<LoginScreen> {
     final isLoading = authProvider.status == AuthStatus.authenticating;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: _isTeacherRole
+          ? theme.colorScheme.secondary.withValues(alpha: 0.05)
+          : theme.colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -150,101 +166,109 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                    // Logo and Title
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: _isTeacherRole
-                            ? theme.colorScheme.secondary.withValues(alpha: 0.1)
-                            : theme.colorScheme.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _isTeacherRole ? Icons.school : Icons.person,
-                        size: 60,
-                        color: _isTeacherRole
-                            ? theme.colorScheme.secondary
-                            : theme.colorScheme.primary,
-                      ),
-                    ),
-                  const SizedBox(height: 24),
+                  // Header
+                  Icon(
+                    Icons.school,
+                    size: 72,
+                    color: _isTeacherRole
+                        ? theme.colorScheme.secondary
+                        : theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 16),
                   Text(
-                    _isTeacherRole ? 'Teacher Portal' : 'Student Login',
+                    _isTeacherRole ? 'Teacher Login' : 'Student Login',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isTeacherRole 
-                        ? 'Enter your credentials or use teacher verification password'
-                        : 'Enter your credentials to continue',
+                    'Welcome back to Fermi',
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 32),
+
+                  const SizedBox(height: 48),
 
                   // Form
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        // Username Field
-                        AuthTextField(
-                          controller: _usernameController,
-                          label: 'Username',
-                          prefixIcon: Icons.person,
-                          enabled: !isLoading,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a username';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Password Field
-                        AuthTextField(
-                          controller: _passwordController,
-                          label: 'Password',
-                          prefixIcon: Icons.lock,
-                          obscureText: _obscurePassword,
-                          enabled: !isLoading,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
+                  Card(
+                    elevation: 0,
+                    color: theme.colorScheme.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Email Field
+                            AuthTextField(
+                              controller: _emailController,
+                              label: _isTeacherRole
+                                  ? 'Teacher Email'
+                                  : 'Student Email',
+                              prefixIcon: Icons.email,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: _validateEmail,
+                              enabled: !isLoading,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscurePassword = !_obscurePassword;
-                              });
-                            },
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a password';
-                            }
-                            return null;
-                          },
-                        ),
 
-                        const SizedBox(height: 24),
+                            const SizedBox(height: 16),
 
-                        // Submit Button
-                        ElevatedButton(
-                          onPressed: isLoading 
-                              ? null 
-                              : _signIn,
+                            // Password Field
+                            AuthTextField(
+                              controller: _passwordController,
+                              label: _isTeacherRole
+                                  ? 'Password or Teacher Code'
+                                  : 'Password',
+                              prefixIcon: Icons.lock,
+                              obscureText: _obscurePassword,
+                              enabled: !isLoading,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                              ),
+                              validator: (value) {
+                                if (value?.isEmpty ?? true) {
+                                  return 'Please enter your password';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Forgot Password
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: ForgotPasswordButton(
+                                isTeacherRole: _isTeacherRole,
+                              ),
+                            ),
+
+                            const SizedBox(height: 24),
+
+                            // Submit Button
+                            ElevatedButton(
+                              onPressed: isLoading ? null : _signIn,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 backgroundColor: _isTeacherRole
@@ -275,18 +299,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                        ),
+                            ),
 
-                        // Error Display
-                        if (authProvider.errorMessage != null) ...[
+                            // Error Display
+                            if (authProvider.errorMessage != null) ...[
                               const SizedBox(height: 16),
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.error.withValues(alpha: 0.1),
+                                  color: theme.colorScheme.error.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: theme.colorScheme.error.withValues(alpha: 0.3),
+                                    color: theme.colorScheme.error.withValues(
+                                      alpha: 0.3,
+                                    ),
                                   ),
                                 ),
                                 child: Row(
@@ -308,12 +336,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ],
                                 ),
                               ),
-                        ],
+                            ],
 
-                        // Sign up and back to role selection
-                        const SizedBox(height: 24),
-                        if (_isTeacherRole) ...[
-                          TextButton(
+                            // Sign up and back to role selection
+                            const SizedBox(height: 24),
+                            if (_isTeacherRole) ...[
+                              TextButton(
                                 onPressed: isLoading
                                     ? null
                                     : () => context.go('/auth/signup?role=teacher'),
@@ -323,23 +351,76 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: theme.colorScheme.secondary,
                                   ),
                                 ),
-                          ),
-                          const SizedBox(height: 8),
-                        ],
-                        TextButton(
-                          onPressed: isLoading
-                              ? null
-                              : () => context.go('/auth/role-selection'),
-                          child: Text(
-                            'Back to Role Selection',
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                            TextButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () => context.go('/auth/role-selection'),
+                              child: Text(
+                                'Back to Role Selection',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Google Sign In
+                  if (!kIsWeb || (kIsWeb && !Platform.isWindows)) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Text(
+                            'OR',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color:
+                                  theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                    OutlinedButton.icon(
+                      onPressed: isLoading ? null : _signInWithGoogle,
+                      icon: Image.asset(
+                        'assets/icons/google_logo.png',
+                        height: 20,
+                      ),
+                      label: const Text('Sign in with Google'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 24,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: BorderSide(
+                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -16,17 +16,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
   Future<void> _selectRole(String role) async {
     setState(() => _isLoading = true);
-    
+
     try {
       // Update AuthProvider with selected role first (before async)
       if (!mounted) return;
       final authProvider = context.read<AuthProvider>();
       authProvider.setSelectedRole(role);
-      
+
       // Save selected role to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('selected_role', role);
-      
+
       // Navigate based on role
       if (mounted) {
         if (role == 'teacher') {
@@ -58,7 +58,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isLandscape = size.width > size.height;
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
@@ -78,7 +78,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Title
                   Text(
                     'Welcome to Fermi+',
@@ -88,7 +88,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Subtitle
                   Text(
                     'Please select your role to continue',
@@ -98,7 +98,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
-                  
+
                   // Role selection cards/buttons
                   if (isLandscape) ...[
                     // Landscape: Side by side
@@ -109,7 +109,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             context: context,
                             role: 'student',
                             title: "I'm a Student",
-                            subtitle: 'Access assignments, grades, and class materials',
+                            subtitle:
+                                'Access assignments, grades, and class materials',
                             icon: Icons.person,
                             color: theme.colorScheme.primary,
                           ),
@@ -120,7 +121,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             context: context,
                             role: 'teacher',
                             title: "I'm a Teacher",
-                            subtitle: 'Manage classes, create assignments, and track progress',
+                            subtitle:
+                                'Manage classes, create assignments, and track progress',
                             icon: Icons.school,
                             color: theme.colorScheme.secondary,
                           ),
@@ -133,7 +135,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       context: context,
                       role: 'student',
                       title: "I'm a Student",
-                      subtitle: 'Access assignments, grades, and class materials',
+                      subtitle:
+                          'Access assignments, grades, and class materials',
                       icon: Icons.person,
                       color: theme.colorScheme.primary,
                     ),
@@ -142,7 +145,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       context: context,
                       role: 'teacher',
                       title: "I'm a Teacher",
-                      subtitle: 'Manage classes, create assignments, and track progress',
+                      subtitle:
+                          'Manage classes, create assignments, and track progress',
                       icon: Icons.school,
                       color: theme.colorScheme.secondary,
                     ),
@@ -165,12 +169,10 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     required Color color,
   }) {
     final theme = Theme.of(context);
-    
+
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: _isLoading ? null : () => _selectRole(role),
         borderRadius: BorderRadius.circular(16),
@@ -178,10 +180,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: color.withValues(alpha: 0.3),
-              width: 2,
-            ),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -192,11 +191,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
-                  icon,
-                  size: 48,
-                  color: color,
-                ),
+                child: Icon(icon, size: 48, color: color),
               ),
               const SizedBox(height: 16),
               Text(
@@ -225,10 +220,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else
-                Icon(
-                  Icons.arrow_forward,
-                  color: color,
-                ),
+                Icon(Icons.arrow_forward, color: color),
             ],
           ),
         ),

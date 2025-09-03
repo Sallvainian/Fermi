@@ -122,10 +122,7 @@ class RetryService {
 
     for (int i = 0; i < operations.length; i++) {
       try {
-        final result = await withRetry(
-          operations[i],
-          config: config,
-        );
+        final result = await withRetry(operations[i], config: config);
         results.add(RetryResult.success(result, index: i));
       } catch (error) {
         results.add(RetryResult.failure(error, index: i));
@@ -311,11 +308,7 @@ class RetryResult<T> {
 
   /// Create a skipped result
   factory RetryResult.skipped({required int index}) {
-    return RetryResult._(
-      success: false,
-      skipped: true,
-      index: index,
-    );
+    return RetryResult._(success: false, skipped: true, index: index);
   }
 }
 
@@ -330,11 +323,7 @@ class RetryException implements Exception {
   /// Number of attempts made
   final int attempts;
 
-  const RetryException(
-    this.message, {
-    this.lastError,
-    required this.attempts,
-  });
+  const RetryException(this.message, {this.lastError, required this.attempts});
 
   @override
   String toString() {
@@ -366,7 +355,5 @@ class RetryConfigs {
   );
 
   /// No retry (single attempt)
-  static const noRetry = RetryConfig(
-    maxAttempts: 1,
-  );
+  static const noRetry = RetryConfig(maxAttempts: 1);
 }

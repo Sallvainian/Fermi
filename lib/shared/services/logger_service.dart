@@ -13,12 +13,7 @@ import 'package:flutter/foundation.dart';
 /// - info: General informational messages
 /// - warning: Potentially problematic situations
 /// - error: Error events requiring attention
-enum LogLevel {
-  debug,
-  info,
-  warning,
-  error,
-}
+enum LogLevel { debug, info, warning, error }
 
 /// Singleton service for centralized application logging.
 ///
@@ -40,8 +35,32 @@ class LoggerService {
   LoggerService._internal();
 
   /// Minimum log level to display (can be configured via environment)
-  static LogLevel minimumLogLevel =
-      kDebugMode ? LogLevel.warning : LogLevel.warning;
+  static LogLevel minimumLogLevel = kDebugMode
+      ? LogLevel.info
+      : LogLevel.warning;
+
+  /// Optional external sinks for log forwarding (e.g., remote logging)
+  ///
+  /// A sink receives the formatted components and can decide how to handle them.
+  static final List<void Function(DateTime, LogLevel, String?, String, dynamic, StackTrace?)>
+      _sinks = [];
+
+  /// Programmatically adjust minimum log level (e.g., per flavor or env)
+  static void setMinimumLogLevel(LogLevel level) {
+    minimumLogLevel = level;
+  }
+
+  /// Register an external sink to receive logs
+  static void addSink(
+    void Function(DateTime, LogLevel, String?, String, dynamic, StackTrace?) sink,
+  ) {
+    _sinks.add(sink);
+  }
+
+  /// Remove all registered sinks
+  static void clearSinks() {
+    _sinks.clear();
+  }
 
   /// Logs a debug message (only in debug mode).
   ///
@@ -89,10 +108,19 @@ class LoggerService {
   /// @param tag Optional tag for categorizing the error
   /// @param error Optional error object (Exception, Error, etc.)
   /// @param stackTrace Optional stack trace for debugging
-  static void error(String message,
-      {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message,
-        tag: tag, error: error, stackTrace: stackTrace);
+  static void error(
+    String message, {
+    String? tag,
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.error,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// Internal logging method handling all log levels.
@@ -151,6 +179,22 @@ class LoggerService {
         debugPrint(logMessage);
       }
     }
+
+    // Forward to external sinks if any
+    for (final sink in _sinks) {
+      try {
+        sink(
+          DateTime.now(),
+          level,
+          tag,
+          message,
+          error,
+          stackTrace,
+        );
+      } catch (_) {
+        // Never let sinks break logging
+      }
+    }
   }
 }
 
@@ -200,6 +244,10 @@ extension LoggerExtension on Object {
   /// @param error Optional error object
   /// @param stackTrace Optional stack trace
   void logError(String message, {dynamic error, StackTrace? stackTrace}) =>
-      LoggerService.error(message,
-          tag: runtimeType.toString(), error: error, stackTrace: stackTrace);
+      LoggerService.error(
+        message,
+        tag: runtimeType.toString(),
+        error: error,
+        stackTrace: stackTrace,
+      );
 }

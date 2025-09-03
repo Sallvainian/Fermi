@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
@@ -116,27 +117,25 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                 Icon(
                   Icons.grid_view_rounded,
                   size: 64,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No games created yet',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Create your first Jeopardy game',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withValues(alpha: 0.7),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
@@ -175,27 +174,25 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                 Icon(
                   Icons.bookmark_outline,
                   size: 64,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No saved games yet',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Your reusable game templates will appear here',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withValues(alpha: 0.7),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
                 ),
               ],
             ),
@@ -205,7 +202,8 @@ class _JeopardyScreenState extends State<JeopardyScreen>
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: savedGames.length,
-          itemBuilder: (context, index) => _buildSavedGameCard(savedGames[index]),
+          itemBuilder: (context, index) =>
+              _buildSavedGameCard(savedGames[index]),
         );
       },
     );
@@ -224,27 +222,25 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                 Icon(
                   Icons.play_circle_outline,
                   size: 64,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No active games',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Start a game from your saved templates',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withValues(alpha: 0.7),
-                      ),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  ),
                 ),
               ],
             ),
@@ -261,7 +257,9 @@ class _JeopardyScreenState extends State<JeopardyScreen>
               child: ListTile(
                 leading: const Icon(Icons.play_arrow, size: 32),
                 title: Text('Game Session ${index + 1}'),
-                subtitle: Text('Started ${_formatDate(session['startedAt'] ?? DateTime.now())}'),
+                subtitle: Text(
+                  'Started ${_formatDate(session['startedAt'] ?? DateTime.now())}',
+                ),
                 trailing: FilledButton(
                   onPressed: () {
                     // Navigate to active game
@@ -325,8 +323,9 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                     Text(
                       'Updated ${_formatDate(game.updatedAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   ],
@@ -338,10 +337,15 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                 onSelected: (value) => _handleGameAction(game, value),
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'play', child: Text('Play')),
-                  const PopupMenuItem(value: 'assign', child: Text('Assign to Classes')),
+                  const PopupMenuItem(
+                    value: 'assign',
+                    child: Text('Assign to Classes'),
+                  ),
                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
                   const PopupMenuItem(
-                      value: 'duplicate', child: Text('Duplicate')),
+                    value: 'duplicate',
+                    child: Text('Duplicate'),
+                  ),
                   PopupMenuItem(
                     value: 'share',
                     child: Text(game.isPublic ? 'Make Private' : 'Make Public'),
@@ -400,7 +404,10 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                         ),
                         if (game.gameMode == GameMode.async)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.tertiaryContainer,
                               borderRadius: BorderRadius.circular(12),
@@ -426,7 +433,9 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                       Text(
                         'Double Jeopardy: ${game.doubleJeopardyCategories!.length} categories',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
                     ],
@@ -458,15 +467,22 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                 onSelected: (value) => _handleGameAction(game, value),
                 itemBuilder: (context) => [
                   const PopupMenuItem(value: 'play', child: Text('Start Game')),
-                  const PopupMenuItem(value: 'assign', child: Text('Assign to Classes')),
+                  const PopupMenuItem(
+                    value: 'assign',
+                    child: Text('Assign to Classes'),
+                  ),
                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
                   const PopupMenuItem(
-                      value: 'duplicate', child: Text('Duplicate')),
+                    value: 'duplicate',
+                    child: Text('Duplicate'),
+                  ),
                   PopupMenuItem(
                     value: 'mode',
-                    child: Text(game.gameMode == GameMode.realtime 
-                        ? 'Enable Async Mode' 
-                        : 'Enable Realtime Mode'),
+                    child: Text(
+                      game.gameMode == GameMode.realtime
+                          ? 'Enable Async Mode'
+                          : 'Enable Realtime Mode',
+                    ),
                   ),
                   const PopupMenuItem(value: 'delete', child: Text('Delete')),
                 ],
@@ -553,9 +569,11 @@ class _JeopardyScreenState extends State<JeopardyScreen>
 
               scaffoldMessenger.showSnackBar(
                 SnackBar(
-                  content: Text(success
-                      ? 'Deleted "${game.title}"'
-                      : 'Failed to delete game'),
+                  content: Text(
+                    success
+                        ? 'Deleted "${game.title}"'
+                        : 'Failed to delete game',
+                  ),
                   backgroundColor: success ? null : Colors.red,
                 ),
               );
@@ -574,9 +592,11 @@ class _JeopardyScreenState extends State<JeopardyScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success
-              ? (game.isPublic ? 'Made private' : 'Made public')
-              : 'Failed to update game visibility'),
+          content: Text(
+            success
+                ? (game.isPublic ? 'Made private' : 'Made public')
+                : 'Failed to update game visibility',
+          ),
           backgroundColor: success ? null : Colors.red,
         ),
       );
@@ -592,18 +612,20 @@ class _JeopardyScreenState extends State<JeopardyScreen>
 
   void _toggleGameMode(JeopardyGame game) async {
     final provider = context.read<SimpleJeopardyProvider>();
-    final newMode = game.gameMode == GameMode.realtime 
-        ? GameMode.async 
+    final newMode = game.gameMode == GameMode.realtime
+        ? GameMode.async
         : GameMode.realtime;
-    
+
     final success = await provider.updateGameMode(game.id, newMode.name);
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success
-              ? 'Game mode updated to ${newMode.name}'
-              : 'Failed to update game mode'),
+          content: Text(
+            success
+                ? 'Game mode updated to ${newMode.name}'
+                : 'Failed to update game mode',
+          ),
           backgroundColor: success ? null : Colors.red,
         ),
       );
@@ -678,7 +700,7 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
   void _loadTeacherClasses() async {
     final authProvider = context.read<AuthProvider>();
     final teacherId = authProvider.userModel?.uid ?? '';
-    
+
     if (teacherId.isNotEmpty) {
       try {
         final classesStream = _classService.getClassesByTeacher(teacherId);
@@ -691,7 +713,7 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
           }
         });
       } catch (e) {
-        debugPrint('Error loading classes: $e');
+        LoggerService.error('Error loading classes: $e', tag: 'JeopardyScreen');
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -704,7 +726,7 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return AlertDialog(
       title: Text('Assign "${widget.game.title}" to Classes'),
       content: SizedBox(
@@ -737,7 +759,9 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: _availableClasses.map((classModel) {
-                      final isSelected = _selectedClassIds.contains(classModel.id);
+                      final isSelected = _selectedClassIds.contains(
+                        classModel.id,
+                      );
                       return CheckboxListTile(
                         title: Text(classModel.name),
                         subtitle: Text(
@@ -827,9 +851,11 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success
-              ? 'Game assigned to ${_selectedClassIds.length} class${_selectedClassIds.length == 1 ? '' : 'es'}'
-              : 'Failed to assign game to classes'),
+          content: Text(
+            success
+                ? 'Game assigned to ${_selectedClassIds.length} class${_selectedClassIds.length == 1 ? '' : 'es'}'
+                : 'Failed to assign game to classes',
+          ),
           backgroundColor: success ? null : Colors.red,
         ),
       );

@@ -17,11 +17,7 @@ class FirebaseErrorBoundary extends StatefulWidget {
   final Widget child;
   final VoidCallback? onRetry;
 
-  const FirebaseErrorBoundary({
-    super.key,
-    required this.child,
-    this.onRetry,
-  });
+  const FirebaseErrorBoundary({super.key, required this.child, this.onRetry});
 
   @override
   State<FirebaseErrorBoundary> createState() => _FirebaseErrorBoundaryState();
@@ -61,10 +57,7 @@ class _FirebaseErrorBoundaryState extends State<FirebaseErrorBoundary> {
     }
 
     // Wrap child in error handler
-    return ErrorBoundary(
-      onError: _handleError,
-      child: widget.child,
-    );
+    return ErrorBoundary(onError: _handleError, child: widget.child);
   }
 
   Widget _buildErrorWidget(BuildContext context) {
@@ -115,11 +108,7 @@ class ErrorBoundary extends StatefulWidget {
   final Widget child;
   final void Function(dynamic error)? onError;
 
-  const ErrorBoundary({
-    super.key,
-    required this.child,
-    this.onError,
-  });
+  const ErrorBoundary({super.key, required this.child, this.onError});
 
   @override
   State<ErrorBoundary> createState() => _ErrorBoundaryState();

@@ -44,12 +44,13 @@ class FirebaseNotificationService {
       return snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))
           .where((notification) {
-        // Filter out expired notifications
-        if (notification.isExpired) return false;
-        // Filter out scheduled notifications not yet due
-        if (notification.isScheduled) return false;
-        return true;
-      }).toList();
+            // Filter out expired notifications
+            if (notification.isExpired) return false;
+            // Filter out scheduled notifications not yet due
+            if (notification.isScheduled) return false;
+            return true;
+          })
+          .toList();
     });
   }
 
@@ -62,21 +63,25 @@ class FirebaseNotificationService {
 
     return _notificationsCollection
         .where('userId', isEqualTo: userId)
-        .where('type', whereIn: [
-          NotificationType.grade.name,
-          NotificationType.assignment.name,
-          NotificationType.submission.name,
-        ])
+        .where(
+          'type',
+          whereIn: [
+            NotificationType.grade.name,
+            NotificationType.assignment.name,
+            NotificationType.submission.name,
+          ],
+        )
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => NotificationModel.fromFirestore(doc))
               .where((notification) {
-            if (notification.isExpired) return false;
-            if (notification.isScheduled) return false;
-            return true;
-          }).toList();
+                if (notification.isExpired) return false;
+                if (notification.isScheduled) return false;
+                return true;
+              })
+              .toList();
         });
   }
 
@@ -92,21 +97,20 @@ class FirebaseNotificationService {
         .where('isRead', isEqualTo: false)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => NotificationModel.fromFirestore(doc))
-          .where((notification) {
-        if (notification.isExpired) return false;
-        if (notification.isScheduled) return false;
-        return true;
-      }).length;
-    });
+          return snapshot.docs
+              .map((doc) => NotificationModel.fromFirestore(doc))
+              .where((notification) {
+                if (notification.isExpired) return false;
+                if (notification.isScheduled) return false;
+                return true;
+              })
+              .length;
+        });
   }
 
   // Mark notification as read
   Future<void> markAsRead(String notificationId) async {
-    await _notificationsCollection.doc(notificationId).update({
-      'isRead': true,
-    });
+    await _notificationsCollection.doc(notificationId).update({'isRead': true});
   }
 
   // Mark notification as unread
@@ -261,10 +265,7 @@ class FirebaseNotificationService {
       title: 'New Message from $senderName',
       message: messagePreview,
       priority: NotificationPriority.normal,
-      actionData: {
-        'chatRoomId': chatRoomId,
-        'senderName': senderName,
-      },
+      actionData: {'chatRoomId': chatRoomId, 'senderName': senderName},
       imageUrl: senderPhotoUrl,
     );
   }

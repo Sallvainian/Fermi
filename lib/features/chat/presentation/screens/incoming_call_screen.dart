@@ -7,10 +7,7 @@ import '../../data/services/webrtc_service.dart';
 class IncomingCallScreen extends StatefulWidget {
   final Call call;
 
-  const IncomingCallScreen({
-    super.key,
-    required this.call,
-  });
+  const IncomingCallScreen({super.key, required this.call});
 
   @override
   State<IncomingCallScreen> createState() => _IncomingCallScreenState();
@@ -30,13 +27,9 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
       vsync: this,
     )..repeat(reverse: true);
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.95,
-      end: 1.05,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
   }
 
   @override
@@ -101,10 +94,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                   const SizedBox(height: 16),
                   Text(
                     'Incoming ${isVideoCall ? 'Video' : 'Voice'} Call',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 20,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 20),
                   ),
                 ],
               ),
@@ -119,7 +109,8 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
                       backgroundColor: Colors.white24,
                       backgroundImage: widget.call.callerPhotoUrl.isNotEmpty
                           ? CachedNetworkImageProvider(
-                              widget.call.callerPhotoUrl)
+                              widget.call.callerPhotoUrl,
+                            )
                           : null,
                       child: widget.call.callerPhotoUrl.isEmpty
                           ? Text(

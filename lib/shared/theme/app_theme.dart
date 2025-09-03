@@ -44,22 +44,42 @@ class AppTheme {
   /// @param brightness Light or dark theme brightness
   /// @param seedColor Optional custom seed color
   /// @return Generated color scheme
-  static ColorScheme _createColorScheme(Brightness brightness, {Color? seedColor, Color? secondaryColor}) {
+  static ColorScheme _createColorScheme(
+    Brightness brightness, {
+    Color? seedColor,
+    Color? secondaryColor,
+  }) {
     final baseScheme = ColorScheme.fromSeed(
       seedColor: seedColor ?? primaryColor,
       brightness: brightness,
     );
-    
+
     // Explicitly override primary and secondary to ensure our custom colors are used
     return baseScheme.copyWith(
       primary: seedColor ?? primaryColor,
       secondary: secondaryColor ?? AppTheme.secondaryColor,
       primaryContainer: brightness == Brightness.light
-          ? Color.alphaBlend((seedColor ?? primaryColor).withValues(alpha: 0.3), Colors.white)
-          : Color.alphaBlend((seedColor ?? primaryColor).withValues(alpha: 0.4), Colors.black),
+          ? Color.alphaBlend(
+              (seedColor ?? primaryColor).withValues(alpha: 0.3),
+              Colors.white,
+            )
+          : Color.alphaBlend(
+              (seedColor ?? primaryColor).withValues(alpha: 0.4),
+              Colors.black,
+            ),
       secondaryContainer: brightness == Brightness.light
-          ? Color.alphaBlend((secondaryColor ?? AppTheme.secondaryColor).withValues(alpha: 0.3), Colors.white)
-          : Color.alphaBlend((secondaryColor ?? AppTheme.secondaryColor).withValues(alpha: 0.4), Colors.black),
+          ? Color.alphaBlend(
+              (secondaryColor ?? AppTheme.secondaryColor).withValues(
+                alpha: 0.3,
+              ),
+              Colors.white,
+            )
+          : Color.alphaBlend(
+              (secondaryColor ?? AppTheme.secondaryColor).withValues(
+                alpha: 0.4,
+              ),
+              Colors.black,
+            ),
     );
   }
 
@@ -74,7 +94,7 @@ class AppTheme {
   static ThemeData lightTheme({String? colorThemeId}) {
     final colorTheme = AppColors.getTheme(colorThemeId);
     final colorScheme = _createColorScheme(
-      Brightness.light, 
+      Brightness.light,
       seedColor: colorTheme.primary,
       secondaryColor: colorTheme.secondary,
     );
@@ -108,7 +128,9 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-              color: colorScheme.outline.withValues(alpha: 0.2), width: 0.5),
+            color: colorScheme.outline.withValues(alpha: 0.2),
+            width: 0.5,
+          ),
         ),
       ),
 
@@ -117,9 +139,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           elevation: 2,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -127,9 +147,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -137,9 +155,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -147,9 +163,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -177,15 +191,15 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
 
       // List Tile Theme
       listTileTheme: ListTileThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
 
@@ -215,9 +229,7 @@ class AppTheme {
               fontWeight: FontWeight.w600,
             );
           }
-          return TextStyle(
-            color: colorScheme.onSurfaceVariant,
-          );
+          return TextStyle(color: colorScheme.onSurfaceVariant);
         }),
       ),
 
@@ -226,27 +238,21 @@ class AppTheme {
         backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.primaryContainer,
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
 
       // Dialog Theme
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
 
       // Snack Bar Theme
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colorScheme.inverseSurface,
         contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         behavior: SnackBarBehavior.floating,
       ),
 
@@ -258,9 +264,7 @@ class AppTheme {
         focusElevation: 8,
         hoverElevation: 8,
         highlightElevation: 12,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -283,11 +287,11 @@ class AppTheme {
 
     final colorTheme = AppColors.getTheme(colorThemeId);
     final baseColorScheme = _createColorScheme(
-      Brightness.dark, 
+      Brightness.dark,
       seedColor: colorTheme.primary,
       secondaryColor: colorTheme.secondary,
     );
-    
+
     // Keep the dark surfaces but use dynamic accent colors
     final colorScheme = baseColorScheme.copyWith(
       surface: surfaceBlack,
@@ -345,9 +349,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           elevation: 2,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -355,9 +357,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -365,9 +365,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -375,9 +373,7 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
 
@@ -405,15 +401,15 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.error, width: 2),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
 
       // List Tile Theme
       listTileTheme: ListTileThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
 
@@ -443,9 +439,7 @@ class AppTheme {
               fontWeight: FontWeight.w600,
             );
           }
-          return TextStyle(
-            color: colorScheme.onSurfaceVariant,
-          );
+          return TextStyle(color: colorScheme.onSurfaceVariant);
         }),
       ),
 
@@ -454,27 +448,21 @@ class AppTheme {
         backgroundColor: colorScheme.surfaceContainerHighest,
         selectedColor: colorScheme.primaryContainer,
         labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
 
       // Dialog Theme
       dialogTheme: DialogThemeData(
         backgroundColor: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
 
       // Snack Bar Theme
       snackBarTheme: SnackBarThemeData(
         backgroundColor: colorScheme.inverseSurface,
         contentTextStyle: TextStyle(color: colorScheme.onInverseSurface),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         behavior: SnackBarBehavior.floating,
       ),
 
@@ -486,9 +474,7 @@ class AppTheme {
         focusElevation: 8,
         hoverElevation: 8,
         highlightElevation: 12,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -498,21 +484,19 @@ class AppTheme {
   /// Full Material Color palette for the primary indigo color
   /// with all standard Material Design color stops from 50-900.
   /// Used for generating color variations and tonal palettes.
-  static const MaterialColor customPrimary = MaterialColor(
-    0xFF3F51B5,
-    <int, Color>{
-      50: Color(0xFFE8EAF6),
-      100: Color(0xFFC5CAE9),
-      200: Color(0xFF9FA8DA),
-      300: Color(0xFF7986CB),
-      400: Color(0xFF5C6BC0),
-      500: Color(0xFF3F51B5),
-      600: Color(0xFF3949AB),
-      700: Color(0xFF303F9F),
-      800: Color(0xFF283593),
-      900: Color(0xFF1A237E),
-    },
-  );
+  static const MaterialColor customPrimary =
+      MaterialColor(0xFF3F51B5, <int, Color>{
+        50: Color(0xFFE8EAF6),
+        100: Color(0xFFC5CAE9),
+        200: Color(0xFF9FA8DA),
+        300: Color(0xFF7986CB),
+        400: Color(0xFF5C6BC0),
+        500: Color(0xFF3F51B5),
+        600: Color(0xFF3949AB),
+        700: Color(0xFF303F9F),
+        800: Color(0xFF283593),
+        900: Color(0xFF1A237E),
+      });
 
   /// Excellent grade color (A) - Green for outstanding performance.
   static const Color gradeA = Color(0xFF4CAF50); // Green

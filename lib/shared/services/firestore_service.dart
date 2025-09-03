@@ -218,8 +218,9 @@ class FirestoreService<T> {
         query = query.limit(limit);
       }
 
-      return query.snapshots().map((snapshot) =>
-          snapshot.docs.map((doc) => fromFirestore(doc)).toList());
+      return query.snapshots().map(
+        (snapshot) => snapshot.docs.map((doc) => fromFirestore(doc)).toList(),
+      );
     } catch (e) {
       LoggerService.error('Error querying documents', error: e);
       rethrow;
@@ -348,8 +349,5 @@ class OrderBy {
   ///
   /// @param field Field name to sort by
   /// @param descending Whether to sort in descending order (default: false)
-  OrderBy({
-    required this.field,
-    this.descending = false,
-  });
+  OrderBy({required this.field, this.descending = false});
 }

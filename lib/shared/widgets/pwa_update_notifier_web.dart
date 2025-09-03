@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:web/web.dart' as web;
 import 'dart:js_interop';
+import '../services/logger_service.dart';
 
 // Optional JavaScript functions - may not exist
 @JS('applyUpdate')
@@ -26,7 +27,10 @@ void _setFlutterUpdateAvailable(JSFunction? f) {
   try {
     _flutterUpdateAvailableJS = f;
   } catch (e) {
-    debugPrint('PWA update functions not available');
+    LoggerService.warning(
+      'PWA update functions not available',
+      tag: 'PWAUpdate',
+    );
   }
 }
 
@@ -35,7 +39,10 @@ void _setCanAutoRefresh(JSFunction? f) {
   try {
     _canAutoRefreshJS = f;
   } catch (e) {
-    debugPrint('PWA update functions not available');
+    LoggerService.warning(
+      'PWA update functions not available',
+      tag: 'PWAUpdate',
+    );
   }
 }
 
@@ -106,37 +113,50 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
     web.document.addEventListener('pwa-update-available', listener);
 
     // Register Flutter callback for JavaScript to call (fallback)
-    _setFlutterUpdateAvailable(((JSAny? data) {
-      if (mounted && data != null) {
-        setState(() {
-          _updateAvailable = true;
-          // Parse version info from data if available
-        });
+    _setFlutterUpdateAvailable(
+      ((JSAny? data) {
+            if (mounted && data != null) {
+              setState(() {
+                _updateAvailable = true;
+                // Parse version info from data if available
+              });
 
-        // Show update notification
-        _showUpdateNotification();
-      }
-    }.toJS as JSFunction));
+              // Show update notification
+              _showUpdateNotification();
+            }
+          }.toJS
+          as JSFunction),
+    );
 
     // Register auto-refresh check
-    _setCanAutoRefresh((() {
-      // Return false if user has unsaved work or is in middle of something
-      // For now, we'll always return false to let user decide
-      return false.toJS;
-    }.toJS as JSFunction));
+    _setCanAutoRefresh(
+      (() {
+            // Return false if user has unsaved work or is in middle of something
+            // For now, we'll always return false to let user decide
+            return false.toJS;
+          }.toJS
+          as JSFunction),
+    );
   }
 
   void _checkInitialVersion() {
     try {
       // Get current version from DOM if available
-      final versionMeta =
-          web.document.querySelector('meta[name="app-version"]');
+      final versionMeta = web.document.querySelector(
+        'meta[name="app-version"]',
+      );
       if (versionMeta != null) {
         _currentVersion = versionMeta.getAttribute('content') ?? '';
-        debugPrint('Current app version: $_currentVersion');
+        LoggerService.info(
+          'Current app version: $_currentVersion',
+          tag: 'PWAUpdate',
+        );
       }
     } catch (e) {
-      debugPrint('Could not fetch version info: $e');
+      LoggerService.warning(
+        'Could not fetch version info: $e',
+        tag: 'PWAUpdate',
+      );
     }
   }
 
@@ -181,9 +201,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
           ),
           behavior: SnackBarBehavior.floating,
           backgroundColor: Colors.blueGrey.shade800,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     });
@@ -297,8 +315,9 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
                           onPressed: _applyUpdate,
                           style: TextButton.styleFrom(
                             foregroundColor: Colors.white,
-                            backgroundColor:
-                                Colors.white.withValues(alpha: 0.2),
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.2,
+                            ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
                               vertical: 4,

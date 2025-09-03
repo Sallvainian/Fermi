@@ -31,39 +31,37 @@ extension GradeStatusTransition on GradeStatus {
   /// Checks if this status can transition to the target status.
   ///
   /// Validates transitions based on the grading lifecycle rules.
-  /// 
+  ///
   /// @param target The desired status to transition to
   /// @return true if the transition is valid, false otherwise
   bool canTransitionTo(GradeStatus target) {
     switch (this) {
       case GradeStatus.draft:
         // Draft can go to pending (submission received), graded (direct grading), or notSubmitted
-        return target == GradeStatus.pending || 
-               target == GradeStatus.graded || 
-               target == GradeStatus.notSubmitted;
-      
+        return target == GradeStatus.pending ||
+            target == GradeStatus.graded ||
+            target == GradeStatus.notSubmitted;
+
       case GradeStatus.pending:
         // Pending can be graded or marked as not submitted
-        return target == GradeStatus.graded || 
-               target == GradeStatus.notSubmitted;
-      
+        return target == GradeStatus.graded ||
+            target == GradeStatus.notSubmitted;
+
       case GradeStatus.graded:
         // Graded can be returned to student or revised
-        return target == GradeStatus.returned || 
-               target == GradeStatus.revised;
-      
+        return target == GradeStatus.returned || target == GradeStatus.revised;
+
       case GradeStatus.returned:
         // Returned grades can be revised
         return target == GradeStatus.revised;
-      
+
       case GradeStatus.revised:
         // Revised grades can be returned again
         return target == GradeStatus.returned;
-      
+
       case GradeStatus.notSubmitted:
         // Not submitted can transition to pending (late submission) or graded (override)
-        return target == GradeStatus.pending || 
-               target == GradeStatus.graded;
+        return target == GradeStatus.pending || target == GradeStatus.graded;
     }
   }
 
@@ -71,7 +69,7 @@ extension GradeStatusTransition on GradeStatus {
   ///
   /// Returns the target status if the transition is valid,
   /// otherwise returns the current status unchanged.
-  /// 
+  ///
   /// @param target The desired status to transition to
   /// @return The resulting status after transition attempt
   GradeStatus transitionTo(GradeStatus target) {
@@ -84,25 +82,29 @@ extension GradeStatusTransition on GradeStatus {
   /// Gets a list of valid target statuses from the current status.
   ///
   /// Useful for UI elements that need to show available actions.
-  /// 
+  ///
   /// @return List of statuses this status can transition to
   List<GradeStatus> get validTransitions {
     switch (this) {
       case GradeStatus.draft:
-        return [GradeStatus.pending, GradeStatus.graded, GradeStatus.notSubmitted];
-      
+        return [
+          GradeStatus.pending,
+          GradeStatus.graded,
+          GradeStatus.notSubmitted,
+        ];
+
       case GradeStatus.pending:
         return [GradeStatus.graded, GradeStatus.notSubmitted];
-      
+
       case GradeStatus.graded:
         return [GradeStatus.returned, GradeStatus.revised];
-      
+
       case GradeStatus.returned:
         return [GradeStatus.revised];
-      
+
       case GradeStatus.revised:
         return [GradeStatus.returned];
-      
+
       case GradeStatus.notSubmitted:
         return [GradeStatus.pending, GradeStatus.graded];
     }
@@ -111,30 +113,30 @@ extension GradeStatusTransition on GradeStatus {
   /// Gets a human-readable description of invalid transition attempts.
   ///
   /// Useful for providing feedback when a transition is not allowed.
-  /// 
+  ///
   /// @param target The attempted target status
   /// @return Error message explaining why the transition is invalid
   String getTransitionError(GradeStatus target) {
     if (canTransitionTo(target)) {
       return '';
     }
-    
+
     switch (this) {
       case GradeStatus.draft:
         return 'Draft grades can only transition to pending, graded, or not submitted';
-      
+
       case GradeStatus.pending:
         return 'Pending grades can only be graded or marked as not submitted';
-      
+
       case GradeStatus.graded:
         return 'Graded work can only be returned to students or revised';
-      
+
       case GradeStatus.returned:
         return 'Returned grades can only be revised';
-      
+
       case GradeStatus.revised:
         return 'Revised grades can only be returned to students';
-      
+
       case GradeStatus.notSubmitted:
         return 'Not submitted status can only transition to pending or graded';
     }
@@ -143,23 +145,23 @@ extension GradeStatusTransition on GradeStatus {
   /// Checks if this status represents a finalized grade.
   ///
   /// Finalized grades are those that have been assigned a score.
-  /// 
+  ///
   /// @return true if the grade has been finalized with a score
   bool get isFinalized {
-    return this == GradeStatus.graded || 
-           this == GradeStatus.returned || 
-           this == GradeStatus.revised;
+    return this == GradeStatus.graded ||
+        this == GradeStatus.returned ||
+        this == GradeStatus.revised;
   }
 
   /// Checks if this status allows editing the grade score.
   ///
   /// Score can be edited in draft, graded, and revised states.
-  /// 
+  ///
   /// @return true if the grade score can be modified
   bool get canEditScore {
-    return this == GradeStatus.draft || 
-           this == GradeStatus.graded || 
-           this == GradeStatus.revised;
+    return this == GradeStatus.draft ||
+        this == GradeStatus.graded ||
+        this == GradeStatus.revised;
   }
 }
 
@@ -479,16 +481,18 @@ class GradeStatistics {
       ..sort((a, b) => a.percentage.compareTo(b.percentage));
 
     // Calculate average
-    final sum =
-        grades.fold<double>(0, (prev, grade) => prev + grade.percentage);
+    final sum = grades.fold<double>(
+      0,
+      (prev, grade) => prev + grade.percentage,
+    );
     final average = sum / grades.length;
 
     // Calculate median
     final middle = grades.length ~/ 2;
     final median = grades.length % 2 == 0
         ? (sortedGrades[middle - 1].percentage +
-                sortedGrades[middle].percentage) /
-            2
+                  sortedGrades[middle].percentage) /
+              2
         : sortedGrades[middle].percentage;
 
     // Get highest and lowest

@@ -38,11 +38,7 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
   bool _isLoading = false;
 
   // Grade levels
-  final List<String> _gradeLevels = [
-    '6th Grade',
-    '7th Grade',
-    '8th Grade',
-  ];
+  final List<String> _gradeLevels = ['6th Grade', '7th Grade', '8th Grade'];
 
   @override
   void dispose() {
@@ -127,7 +123,8 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
     final screenHeight = MediaQuery.of(context).size.height;
     final maxDialogHeight = screenHeight * 0.95; // Use 95% of screen height max
 
-    final isWeb = Theme.of(context).platform == TargetPlatform.windows ||
+    final isWeb =
+        Theme.of(context).platform == TargetPlatform.windows ||
         Theme.of(context).platform == TargetPlatform.macOS ||
         Theme.of(context).platform == TargetPlatform.linux;
     final screenWidth = MediaQuery.of(context).size.width;
@@ -138,8 +135,10 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
         : (screenWidth > 500 ? 500.0 : screenWidth * 0.9);
 
     return Dialog(
-      insetPadding:
-          EdgeInsets.symmetric(horizontal: isWeb ? 40 : 16, vertical: 16),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isWeb ? 40 : 16,
+        vertical: 16,
+      ),
       child: Container(
         width: dialogWidth,
         constraints: BoxConstraints(
@@ -222,7 +221,9 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                                   prefixIcon: Icon(Icons.grade),
                                   isDense: true,
                                   contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
                                 ),
                                 isExpanded: true,
                                 items: _gradeLevels.map((grade) {
@@ -277,9 +278,9 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -309,8 +310,9 @@ class _CreateClassDialogState extends State<CreateClassDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed:
-                          _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 12),

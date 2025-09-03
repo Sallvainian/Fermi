@@ -41,9 +41,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) {
@@ -84,11 +84,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 32),
-          Icon(
-            Icons.lock_reset,
-            size: 64,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(Icons.lock_reset, size: 64, color: theme.colorScheme.primary),
           const SizedBox(height: 24),
           Text(
             'Forgot Password?',
@@ -151,11 +147,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.check_circle,
-          size: 64,
-          color: theme.colorScheme.primary,
-        ),
+        Icon(Icons.check_circle, size: 64, color: theme.colorScheme.primary),
         const SizedBox(height: 24),
         Text(
           'Email Sent!',

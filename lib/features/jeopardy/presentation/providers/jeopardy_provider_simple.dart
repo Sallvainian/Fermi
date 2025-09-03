@@ -23,7 +23,7 @@ class SimpleJeopardyProvider with ChangeNotifier {
   Future<void> loadGames() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -43,7 +43,7 @@ class SimpleJeopardyProvider with ChangeNotifier {
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -74,8 +74,10 @@ class SimpleJeopardyProvider with ChangeNotifier {
         'playCount': 0,
       };
 
-      final docRef = await _firestore.collection('jeopardy_games').add(gameData);
-      
+      final docRef = await _firestore
+          .collection('jeopardy_games')
+          .add(gameData);
+
       // Add questions for each category
       for (final category in categories) {
         await _createCategoryQuestions(docRef.id, category);
@@ -91,10 +93,13 @@ class SimpleJeopardyProvider with ChangeNotifier {
   }
 
   /// Create questions for a category
-  Future<void> _createCategoryQuestions(String gameId, Map<String, dynamic> category) async {
+  Future<void> _createCategoryQuestions(
+    String gameId,
+    Map<String, dynamic> category,
+  ) async {
     final categoryName = category['name'] ?? 'Category';
     final questions = category['questions'] ?? [];
-    
+
     for (int i = 0; i < questions.length; i++) {
       final question = questions[i];
       await _firestore.collection('jeopardy_questions').add({
@@ -113,7 +118,7 @@ class SimpleJeopardyProvider with ChangeNotifier {
   Future<void> loadGameQuestions(String gameId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final snapshot = await _firestore
           .collection('jeopardy_questions')
@@ -127,7 +132,7 @@ class SimpleJeopardyProvider with ChangeNotifier {
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -154,7 +159,9 @@ class SimpleJeopardyProvider with ChangeNotifier {
         'currentQuestion': null,
       };
 
-      final docRef = await _firestore.collection('jeopardy_sessions').add(sessionData);
+      final docRef = await _firestore
+          .collection('jeopardy_sessions')
+          .add(sessionData);
       return docRef.id;
     } catch (e) {
       _error = e.toString();
@@ -164,7 +171,11 @@ class SimpleJeopardyProvider with ChangeNotifier {
   }
 
   /// Join a game session
-  Future<bool> joinSession(String sessionId, String teamName, List<String> playerIds) async {
+  Future<bool> joinSession(
+    String sessionId,
+    String teamName,
+    List<String> playerIds,
+  ) async {
     try {
       final teamData = {
         'name': teamName,
@@ -207,24 +218,27 @@ class SimpleJeopardyProvider with ChangeNotifier {
             .collection('jeopardy_questions')
             .doc(questionId)
             .get();
-        
+
         final points = questionDoc.data()?['points'] ?? 0;
-        
+
         // Update team score in session
         final sessionDoc = await _firestore
             .collection('jeopardy_sessions')
             .doc(sessionId)
             .get();
-        
-        final teams = List<Map<String, dynamic>>.from(sessionDoc.data()?['teams'] ?? []);
+
+        final teams = List<Map<String, dynamic>>.from(
+          sessionDoc.data()?['teams'] ?? [],
+        );
         final teamIndex = teams.indexWhere((t) => t['name'] == teamId);
-        
+
         if (teamIndex != -1) {
           teams[teamIndex]['score'] = (teams[teamIndex]['score'] ?? 0) + points;
-          
-          await _firestore.collection('jeopardy_sessions').doc(sessionId).update({
-            'teams': teams,
-          });
+
+          await _firestore
+              .collection('jeopardy_sessions')
+              .doc(sessionId)
+              .update({'teams': teams});
         }
       }
 
@@ -259,13 +273,13 @@ class SimpleJeopardyProvider with ChangeNotifier {
         .doc(sessionId)
         .snapshots()
         .map((doc) {
-      if (doc.exists) {
-        final data = doc.data()!;
-        data['id'] = doc.id;
-        return data;
-      }
-      return null;
-    });
+          if (doc.exists) {
+            final data = doc.data()!;
+            data['id'] = doc.id;
+            return data;
+          }
+          return null;
+        });
   }
 
   /// Update game
@@ -290,14 +304,14 @@ class SimpleJeopardyProvider with ChangeNotifier {
           .collection('jeopardy_questions')
           .where('gameId', isEqualTo: gameId)
           .get();
-      
+
       for (final doc in questionsSnapshot.docs) {
         await doc.reference.delete();
       }
 
       // Delete the game
       await _firestore.collection('jeopardy_games').doc(gameId).delete();
-      
+
       await loadGames(); // Reload
       return true;
     } catch (e) {
@@ -310,8 +324,11 @@ class SimpleJeopardyProvider with ChangeNotifier {
   /// Get game by ID
   Future<Map<String, dynamic>?> getGameById(String gameId) async {
     try {
-      final doc = await _firestore.collection('jeopardy_games').doc(gameId).get();
-      
+      final doc = await _firestore
+          .collection('jeopardy_games')
+          .doc(gameId)
+          .get();
+
       if (doc.exists) {
         final data = doc.data()!;
         data['id'] = doc.id;

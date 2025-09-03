@@ -74,8 +74,10 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
     final classes = classProvider.studentClasses;
 
     // Filter grades based on search and filters
-    final allAssignments =
-        _getAllStudentAssignments(classes, assignmentProvider);
+    final allAssignments = _getAllStudentAssignments(
+      classes,
+      assignmentProvider,
+    );
     final filteredGrades = _filterGrades(grades, classes, allAssignments);
 
     // Group grades by course
@@ -97,51 +99,51 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
       body: gradeProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : grades.isEmpty
-              ? _buildEmptyState(context)
-              : Column(
-                  children: [
-                    // Statistics Summary
-                    _buildStatsHeader(context, stats),
+          ? _buildEmptyState(context)
+          : Column(
+              children: [
+                // Statistics Summary
+                _buildStatsHeader(context, stats),
 
-                    // Search and Filters
-                    _buildSearchAndFilters(context, classes),
+                // Search and Filters
+                _buildSearchAndFilters(context, classes),
 
-                    // Grades List
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: courseGroups.length,
-                        itemBuilder: (context, index) {
-                          final courseId = courseGroups.keys.elementAt(index);
-                          final courseGrades = courseGroups[courseId]!;
-                          final course = classes.firstWhere(
-                            (c) => c.id == courseId,
-                            orElse: () => ClassModel(
-                              id: courseId,
-                              name: 'Unknown Course',
-                              teacherId: '',
-                              subject: '',
-                              gradeLevel: '',
-                              studentIds: [],
-                              createdAt: DateTime.now(),
-                              updatedAt: DateTime.now(),
-                              academicYear: DateTime.now().year.toString(),
-                              semester: 'Fall',
-                              isActive: true,
-                            ),
-                          );
+                // Grades List
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: courseGroups.length,
+                    itemBuilder: (context, index) {
+                      final courseId = courseGroups.keys.elementAt(index);
+                      final courseGrades = courseGroups[courseId]!;
+                      final course = classes.firstWhere(
+                        (c) => c.id == courseId,
+                        orElse: () => ClassModel(
+                          id: courseId,
+                          name: 'Unknown Course',
+                          teacherId: '',
+                          subject: '',
+                          gradeLevel: '',
+                          studentIds: [],
+                          createdAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                          academicYear: DateTime.now().year.toString(),
+                          semester: 'Fall',
+                          isActive: true,
+                        ),
+                      );
 
-                          return _buildCourseSection(
-                            context,
-                            course,
-                            courseGrades,
-                            allAssignments,
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                      return _buildCourseSection(
+                        context,
+                        course,
+                        courseGrades,
+                        allAssignments,
+                      );
+                    },
+                  ),
                 ),
+              ],
+            ),
     );
   }
 
@@ -153,24 +155,23 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
           Icon(
             Icons.grade_outlined,
             size: 80,
-            color: Theme.of(context)
-                .colorScheme
-                .onSurfaceVariant
-                .withValues(alpha: 0.5),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No Grades Yet',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'Your grades will appear here once your\nteacher grades your assignments',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -258,7 +259,9 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   }
 
   Widget _buildSearchAndFilters(
-      BuildContext context, List<ClassModel> classes) {
+    BuildContext context,
+    List<ClassModel> classes,
+  ) {
     final theme = Theme.of(context);
 
     return Container(
@@ -301,32 +304,29 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                   },
                 ),
                 const SizedBox(width: 8),
-                ...classes.map((course) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: _buildFilterChip(
-                        context,
-                        course.name,
-                        _selectedCourseId == course.id,
-                        () {
-                          setState(() {
-                            _selectedCourseId = course.id;
-                          });
-                        },
-                      ),
-                    )),
+                ...classes.map(
+                  (course) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _buildFilterChip(
+                      context,
+                      course.name,
+                      _selectedCourseId == course.id,
+                      () {
+                        setState(() {
+                          _selectedCourseId = course.id;
+                        });
+                      },
+                    ),
+                  ),
+                ),
 
                 // Status Filter
                 const SizedBox(width: 16),
-                _buildFilterChip(
-                  context,
-                  'All',
-                  _selectedFilter == 'All',
-                  () {
-                    setState(() {
-                      _selectedFilter = 'All';
-                    });
-                  },
-                ),
+                _buildFilterChip(context, 'All', _selectedFilter == 'All', () {
+                  setState(() {
+                    _selectedFilter = 'All';
+                  });
+                }),
                 const SizedBox(width: 8),
                 _buildFilterChip(
                   context,
@@ -387,13 +387,15 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
 
     // Calculate course average
     final gradedGrades = grades
-        .where((g) =>
-            g['status'] == 'graded' || g['status'] == 'returned')
+        .where((g) => g['status'] == 'graded' || g['status'] == 'returned')
         .toList();
     final courseAverage = gradedGrades.isEmpty
         ? 0.0
-        : gradedGrades.fold<double>(0, (sum, g) => sum + (g['percentage'] as double)) /
-            gradedGrades.length;
+        : gradedGrades.fold<double>(
+                0,
+                (sum, g) => sum + (g['percentage'] as double),
+              ) /
+              gradedGrades.length;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -503,8 +505,8 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
     Color courseColor,
   ) {
     final theme = Theme.of(context);
-    final isGraded = grade['status'] == 'graded' ||
-        grade['status'] == 'returned';
+    final isGraded =
+        grade['status'] == 'graded' || grade['status'] == 'returned';
 
     return InkWell(
       onTap: () => _showGradeDetails(context, grade, assignment),
@@ -524,8 +526,9 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _getAssignmentTypeColor(assignment['type'])
-                    .withValues(alpha: 0.1),
+                color: _getAssignmentTypeColor(
+                  assignment['type'],
+                ).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -593,7 +596,8 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        grade['letterGrade'] ?? _getLetterGrade(grade['percentage'] as double),
+                        grade['letterGrade'] ??
+                            _getLetterGrade(grade['percentage'] as double),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: _getGradeColor(grade['percentage'] as double),
                           fontWeight: FontWeight.w600,
@@ -603,11 +607,14 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                   ),
                 ] else ...[
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color:
-                          _getStatusColor(grade['status']).withValues(alpha: 0.1),
+                      color: _getStatusColor(
+                        grade['status'],
+                      ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -628,20 +635,24 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   }
 
   void _showGradeDetails(
-      BuildContext context, Map<String, dynamic> grade, Map<String, dynamic> assignment) {
+    BuildContext context,
+    Map<String, dynamic> grade,
+    Map<String, dynamic> assignment,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _GradeDetailsSheet(
-        grade: grade,
-        assignment: assignment,
-      ),
+      builder: (context) =>
+          _GradeDetailsSheet(grade: grade, assignment: assignment),
     );
   }
 
-  List<Map<String, dynamic>> _filterGrades(List<Map<String, dynamic>> grades, List<ClassModel> classes,
-      List<Map<String, dynamic>> assignments) {
+  List<Map<String, dynamic>> _filterGrades(
+    List<Map<String, dynamic>> grades,
+    List<ClassModel> classes,
+    List<Map<String, dynamic>> assignments,
+  ) {
     return grades.where((grade) {
       // Course filter
       if (_selectedCourseId != 'all' && grade['classId'] != _selectedCourseId) {
@@ -686,9 +697,9 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
           },
         );
 
-        return (assignment['title'] ?? '')
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase());
+        return (assignment['title'] ?? '').toLowerCase().contains(
+          _searchQuery.toLowerCase(),
+        );
       }
 
       return true;
@@ -696,7 +707,9 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
   }
 
   Map<String, List<Map<String, dynamic>>> _groupGradesByCourse(
-      List<Map<String, dynamic>> grades, List<ClassModel> classes) {
+    List<Map<String, dynamic>> grades,
+    List<ClassModel> classes,
+  ) {
     final Map<String, List<Map<String, dynamic>>> groups = {};
 
     for (final grade in grades) {
@@ -708,7 +721,10 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
 
     // Sort grades within each group by date
     for (final grades in groups.values) {
-      grades.sort((a, b) => (b['createdAt'] as DateTime).compareTo(a['createdAt'] as DateTime));
+      grades.sort(
+        (a, b) =>
+            (b['createdAt'] as DateTime).compareTo(a['createdAt'] as DateTime),
+      );
     }
 
     return groups;
@@ -716,19 +732,20 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
 
   Map<String, dynamic> _calculateStatistics(List<Map<String, dynamic>> grades) {
     final gradedGrades = grades
-        .where((g) =>
-            g['status'] == 'graded' || g['status'] == 'returned')
+        .where((g) => g['status'] == 'graded' || g['status'] == 'returned')
         .toList();
 
     final pendingGrades = grades
-        .where((g) =>
-            g['status'] == 'pending' || g['status'] == 'draft')
+        .where((g) => g['status'] == 'pending' || g['status'] == 'draft')
         .toList();
 
     final average = gradedGrades.isEmpty
         ? 0.0
-        : gradedGrades.fold<double>(0, (sum, g) => sum + (g['percentage'] as double)) /
-            gradedGrades.length;
+        : gradedGrades.fold<double>(
+                0,
+                (sum, g) => sum + (g['percentage'] as double),
+              ) /
+              gradedGrades.length;
 
     final gpa = _calculateGPA(average);
 
@@ -914,16 +931,13 @@ class _GradeDetailsSheet extends StatelessWidget {
   final Map<String, dynamic> grade;
   final Map<String, dynamic> assignment;
 
-  const _GradeDetailsSheet({
-    required this.grade,
-    required this.assignment,
-  });
+  const _GradeDetailsSheet({required this.grade, required this.assignment});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isGraded = grade['status'] == 'graded' ||
-        grade['status'] == 'returned';
+    final isGraded =
+        grade['status'] == 'graded' || grade['status'] == 'returned';
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -966,9 +980,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                   // Assignment Type and Due Date
                   Row(
                     children: [
-                      StatusBadge.assignmentType(
-                        type: assignment['type'],
-                      ),
+                      StatusBadge.assignmentType(type: assignment['type']),
                       const SizedBox(width: 8),
                       Text(
                         'Due ${_formatDate(assignment['dueDate'])}',
@@ -996,19 +1008,20 @@ class _GradeDetailsSheet extends StatelessWidget {
                                   children: [
                                     Text(
                                       'Your Score',
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       '${(grade['pointsEarned'] as double).toStringAsFixed(1)} / ${(grade['pointsPossible'] as double).toStringAsFixed(0)}',
                                       style: theme.textTheme.headlineMedium
                                           ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -1017,11 +1030,12 @@ class _GradeDetailsSheet extends StatelessWidget {
                                   children: [
                                     Text(
                                       'Grade',
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                     const SizedBox(height: 4),
                                     Row(
@@ -1030,21 +1044,25 @@ class _GradeDetailsSheet extends StatelessWidget {
                                           '${(grade['percentage'] as double).toStringAsFixed(1)}%',
                                           style: theme.textTheme.headlineMedium
                                               ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: _getGradeColor(
-                                                grade['percentage'] as double),
-                                          ),
+                                                fontWeight: FontWeight.bold,
+                                                color: _getGradeColor(
+                                                  grade['percentage'] as double,
+                                                ),
+                                              ),
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
                                           grade['letterGrade'] ??
-                                              _getLetterGrade(grade['percentage'] as double),
+                                              _getLetterGrade(
+                                                grade['percentage'] as double,
+                                              ),
                                           style: theme.textTheme.headlineMedium
                                               ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: _getGradeColor(
-                                                grade['percentage'] as double),
-                                          ),
+                                                fontWeight: FontWeight.bold,
+                                                color: _getGradeColor(
+                                                  grade['percentage'] as double,
+                                                ),
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -1055,8 +1073,10 @@ class _GradeDetailsSheet extends StatelessWidget {
                             if (grade['gradedAt'] != null) ...[
                               const SizedBox(height: 16),
                               Divider(
-                                  color: theme.colorScheme.primary
-                                      .withValues(alpha: 0.2)),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.2,
+                                ),
+                              ),
                               const SizedBox(height: 8),
                               Row(
                                 mainAxisAlignment:
@@ -1107,8 +1127,9 @@ class _GradeDetailsSheet extends StatelessWidget {
                   ] else ...[
                     // Pending Status
                     Card(
-                      color:
-                          _getStatusColor(grade['status']).withValues(alpha: 0.1),
+                      color: _getStatusColor(
+                        grade['status'],
+                      ).withValues(alpha: 0.1),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(
@@ -1125,11 +1146,13 @@ class _GradeDetailsSheet extends StatelessWidget {
                                 children: [
                                   Text(
                                     _getStatusText(grade['status']),
-                                    style:
-                                        theme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: _getStatusColor(grade['status']),
-                                    ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: _getStatusColor(
+                                            grade['status'],
+                                          ),
+                                        ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -1180,24 +1203,29 @@ class _GradeDetailsSheet extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
-                          children: (grade['rubricScores']! as Map<String, dynamic>).entries.map((entry) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(entry.key),
-                                  Text(
-                                    entry.value.toString(),
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                          children:
+                              (grade['rubricScores']! as Map<String, dynamic>)
+                                  .entries
+                                  .map((entry) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(entry.key),
+                                          Text(
+                                            entry.value.toString(),
+                                            style: theme.textTheme.bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  })
+                                  .toList(),
                         ),
                       ),
                     ),

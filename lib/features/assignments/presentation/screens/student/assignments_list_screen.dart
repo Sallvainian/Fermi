@@ -122,19 +122,22 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                             // Subject Filter
                             Expanded(
                               child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
                                 decoration: BoxDecoration(
                                   border: Border.all(
-                                      color: theme.colorScheme.outline),
+                                    color: theme.colorScheme.outline,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: DropdownButtonHideUnderline(
                                   child: DropdownButton<String>(
                                     value: _selectedSubject,
                                     isExpanded: true,
-                                    items: _getSubjectsList(assignments)
-                                        .map((subject) {
+                                    items: _getSubjectsList(assignments).map((
+                                      subject,
+                                    ) {
                                       return DropdownMenuItem(
                                         value: subject,
                                         child: Text(subject),
@@ -152,33 +155,36 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                             const SizedBox(width: 12),
                             // Sort Dropdown
                             Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                    color: theme.colorScheme.outline),
+                                  color: theme.colorScheme.outline,
+                                ),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
                                   value: _sortBy,
-                                  items: [
-                                    'Due Date',
-                                    'Subject',
-                                    'Priority',
-                                    'Points',
-                                  ].map((sort) {
-                                    return DropdownMenuItem(
-                                      value: sort,
-                                      child: Row(
-                                        children: [
-                                          const Icon(Icons.sort, size: 18),
-                                          const SizedBox(width: 8),
-                                          Text(sort),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
+                                  items:
+                                      [
+                                        'Due Date',
+                                        'Subject',
+                                        'Priority',
+                                        'Points',
+                                      ].map((sort) {
+                                        return DropdownMenuItem(
+                                          value: sort,
+                                          child: Row(
+                                            children: [
+                                              const Icon(Icons.sort, size: 18),
+                                              const SizedBox(width: 8),
+                                              Text(sort),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
                                   onChanged: (value) {
                                     setState(() {
                                       _sortBy = value!;
@@ -199,19 +205,22 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       children: [
                         _buildAssignmentsList(
                           _filterAssignments(
-                              _getPendingAssignments(assignments)),
+                            _getPendingAssignments(assignments),
+                          ),
                           emptyMessage: 'No pending assignments! 🎉',
                           emptyIcon: Icons.celebration_outlined,
                         ),
                         _buildAssignmentsList(
                           _filterAssignments(
-                              _getSubmittedAssignments(assignments)),
+                            _getSubmittedAssignments(assignments),
+                          ),
                           emptyMessage: 'No assignments waiting for grades',
                           emptyIcon: Icons.hourglass_empty,
                         ),
                         _buildAssignmentsList(
                           _filterAssignments(
-                              _getGradedAssignments(assignments)),
+                            _getGradedAssignments(assignments),
+                          ),
                           emptyMessage: 'No graded assignments yet',
                           emptyIcon: Icons.grade_outlined,
                         ),
@@ -241,22 +250,32 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
   }
 
   List<Map<String, dynamic>> _getPendingAssignments(
-      List<Map<String, dynamic>> assignments) {
-    return assignments.where((a) => !(a['isSubmitted'] ?? false) && !(a['isOverdue'] ?? false)).toList();
+    List<Map<String, dynamic>> assignments,
+  ) {
+    return assignments
+        .where(
+          (a) => !(a['isSubmitted'] ?? false) && !(a['isOverdue'] ?? false),
+        )
+        .toList();
   }
 
   List<Map<String, dynamic>> _getSubmittedAssignments(
-      List<Map<String, dynamic>> assignments) {
-    return assignments.where((a) => (a['isSubmitted'] ?? false) && !(a['isGraded'] ?? false)).toList();
+    List<Map<String, dynamic>> assignments,
+  ) {
+    return assignments
+        .where((a) => (a['isSubmitted'] ?? false) && !(a['isGraded'] ?? false))
+        .toList();
   }
 
   List<Map<String, dynamic>> _getGradedAssignments(
-      List<Map<String, dynamic>> assignments) {
+    List<Map<String, dynamic>> assignments,
+  ) {
     return assignments.where((a) => a['isGraded'] ?? false).toList();
   }
 
   List<Map<String, dynamic>> _filterAssignments(
-      List<Map<String, dynamic>> assignments) {
+    List<Map<String, dynamic>> assignments,
+  ) {
     var filtered = assignments;
 
     // Apply search filter
@@ -288,8 +307,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
         });
         break;
       case 'Subject':
-        filtered.sort((a, b) => 
-            (a['title'] ?? '').compareTo(b['title'] ?? ''));
+        filtered.sort((a, b) => (a['title'] ?? '').compareTo(b['title'] ?? ''));
         break;
       case 'Priority':
         // Sort by due date as proxy for priority
@@ -302,8 +320,9 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
         });
         break;
       case 'Points':
-        filtered.sort((a, b) =>
-            (b['totalPoints'] ?? 0).compareTo(a['totalPoints'] ?? 0));
+        filtered.sort(
+          (a, b) => (b['totalPoints'] ?? 0).compareTo(a['totalPoints'] ?? 0),
+        );
         break;
     }
 
@@ -329,9 +348,9 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
             Text(
               emptyMessage,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -340,7 +359,8 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
 
     return ResponsiveContainer(
       child: RefreshIndicator(
-        onRefresh: () => context.read<SimpleStudentAssignmentProvider>().refresh(),
+        onRefresh: () =>
+            context.read<SimpleStudentAssignmentProvider>().refresh(),
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: assignments.length,
@@ -355,14 +375,20 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
 
   Widget _buildAssignmentCard(Map<String, dynamic> studentAssignment) {
     final theme = Theme.of(context);
-    final assignment = studentAssignment['assignment'] ?? studentAssignment; // Use assignment data or the whole object
+    final assignment =
+        studentAssignment['assignment'] ??
+        studentAssignment; // Use assignment data or the whole object
     final dueDate = assignment['dueDate'] as Timestamp?;
     final isOverdue = studentAssignment['isOverdue'] ?? false;
     final isDueSoon = studentAssignment['isDueSoon'] ?? false;
 
     Color priorityColor = _getPriorityColor(assignment);
-    Color statusColor = _getStatusColor(studentAssignment['status'] ?? 'pending');
-    IconData statusIcon = _getStatusIcon(studentAssignment['status'] ?? 'pending');
+    Color statusColor = _getStatusColor(
+      studentAssignment['status'] ?? 'pending',
+    );
+    IconData statusIcon = _getStatusIcon(
+      studentAssignment['status'] ?? 'pending',
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -412,8 +438,10 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                   ),
                   // Priority Badge
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: priorityColor.withAlpha(26),
                       borderRadius: BorderRadius.circular(12),
@@ -436,8 +464,10 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                 children: [
                   // Status
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withAlpha(26),
                       borderRadius: BorderRadius.circular(20),
@@ -476,8 +506,9 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                           color: isOverdue
                               ? Colors.red
                               : theme.colorScheme.onSurfaceVariant,
-                          fontWeight:
-                              isDueSoon ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isDueSoon
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                         ),
                       ),
                     ],
@@ -509,7 +540,8 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       icon: Icons.school,
                       label: studentAssignment['letterGrade'] ?? 'N/A',
                       color: _getGradeColor(
-                          studentAssignment['letterGrade'] ?? 'N/A'),
+                        studentAssignment['letterGrade'] ?? 'N/A',
+                      ),
                     ),
                   ],
                 ],
@@ -525,7 +557,8 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                     TextButton.icon(
                       onPressed: () {
                         context.push(
-                            '/student/assignments/${studentAssignment['assignment']?['id'] ?? studentAssignment['id']}/submit');
+                          '/student/assignments/${studentAssignment['assignment']?['id'] ?? studentAssignment['id']}/submit',
+                        );
                       },
                       icon: const Icon(Icons.upload, size: 18),
                       label: const Text('Submit'),
@@ -534,7 +567,8 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                     TextButton.icon(
                       onPressed: () {
                         context.push(
-                            '/student/assignments/${studentAssignment['assignment']?['id'] ?? studentAssignment['id']}/submit');
+                          '/student/assignments/${studentAssignment['assignment']?['id'] ?? studentAssignment['id']}/submit',
+                        );
                       },
                       icon: const Icon(Icons.description, size: 18),
                       label: const Text('View Submission'),
@@ -645,7 +679,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
   Color _getPriorityColor(Map<String, dynamic> assignment) {
     final dueDateTimestamp = assignment['dueDate'] as Timestamp?;
     if (dueDateTimestamp == null) return Colors.grey;
-    
+
     final dueDate = dueDateTimestamp.toDate();
     final daysUntilDue = dueDate.difference(DateTime.now()).inDays;
     if (daysUntilDue <= 1) return Colors.red;
@@ -656,7 +690,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
   String _getPriorityText(Map<String, dynamic> assignment) {
     final dueDateTimestamp = assignment['dueDate'] as Timestamp?;
     if (dueDateTimestamp == null) return 'Unknown';
-    
+
     final dueDate = dueDateTimestamp.toDate();
     final daysUntilDue = dueDate.difference(DateTime.now()).inDays;
     if (daysUntilDue <= 1) return 'High';
@@ -749,14 +783,12 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
           children: [
             Text(
               'Grade: ${studentAssignment['letterGrade'] ?? 'N/A'}',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Text(
-                'Points: ${(studentAssignment['earnedPoints'] ?? 0).toInt()}/${(studentAssignment['assignment']?['totalPoints'] ?? 0).toInt()}'),
+              'Points: ${(studentAssignment['earnedPoints'] ?? 0).toInt()}/${(studentAssignment['assignment']?['totalPoints'] ?? 0).toInt()}',
+            ),
             const SizedBox(height: 16),
             const Text(
               'Feedback:',
@@ -781,10 +813,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
 class AssignmentDetailSheet extends StatelessWidget {
   final Map<String, dynamic> studentAssignment;
 
-  const AssignmentDetailSheet({
-    super.key,
-    required this.studentAssignment,
-  });
+  const AssignmentDetailSheet({super.key, required this.studentAssignment});
 
   @override
   Widget build(BuildContext context) {
@@ -813,10 +842,9 @@ class AssignmentDetailSheet extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
-                          .withAlpha(77),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withAlpha(77),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -838,7 +866,9 @@ class AssignmentDetailSheet extends StatelessWidget {
                             ),
                           ),
                         ),
-                        _buildStatusBadge(studentAssignment['status'] ?? 'pending'),
+                        _buildStatusBadge(
+                          studentAssignment['status'] ?? 'pending',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -899,14 +929,28 @@ class AssignmentDetailSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildDetailRow('Type', (assignment['type'] ?? 'assignment').toString().toUpperCase()),
                     _buildDetailRow(
-                        'Points', '${(assignment['totalPoints'] ?? 0).toInt()}'),
+                      'Type',
+                      (assignment['type'] ?? 'assignment')
+                          .toString()
+                          .toUpperCase(),
+                    ),
                     _buildDetailRow(
-                        'Due Date', _formatDetailDate((assignment['dueDate'] as Timestamp?)?.toDate() ?? DateTime.now())),
+                      'Points',
+                      '${(assignment['totalPoints'] ?? 0).toInt()}',
+                    ),
+                    _buildDetailRow(
+                      'Due Date',
+                      _formatDetailDate(
+                        (assignment['dueDate'] as Timestamp?)?.toDate() ??
+                            DateTime.now(),
+                      ),
+                    ),
                     if (assignment['allowLateSubmissions'] ?? false)
-                      _buildDetailRow('Late Penalty',
-                          '${assignment['latePenaltyPercentage'] ?? 0}% per day'),
+                      _buildDetailRow(
+                        'Late Penalty',
+                        '${assignment['latePenaltyPercentage'] ?? 0}% per day',
+                      ),
 
                     if (studentAssignment['isSubmitted'] ?? false) ...[
                       const SizedBox(height: 24),
@@ -919,14 +963,20 @@ class AssignmentDetailSheet extends StatelessWidget {
                       const SizedBox(height: 12),
                       if (studentAssignment['submission'] != null)
                         _buildDetailRow(
-                            'Submitted',
-                            _formatDetailDate(
-                                studentAssignment['submission']!['submittedAt'])),
+                          'Submitted',
+                          _formatDetailDate(
+                            studentAssignment['submission']!['submittedAt'],
+                          ),
+                        ),
                       if (studentAssignment['isGraded'] ?? false) ...[
                         _buildDetailRow(
-                            'Grade', studentAssignment['letterGrade'] ?? 'N/A'),
-                        _buildDetailRow('Points Earned',
-                            '${(studentAssignment['earnedPoints'] ?? 0).toInt()}/${(assignment['totalPoints'] ?? 0).toInt()}'),
+                          'Grade',
+                          studentAssignment['letterGrade'] ?? 'N/A',
+                        ),
+                        _buildDetailRow(
+                          'Points Earned',
+                          '${(studentAssignment['earnedPoints'] ?? 0).toInt()}/${(assignment['totalPoints'] ?? 0).toInt()}',
+                        ),
                         if (studentAssignment['feedback'] != null) ...[
                           const SizedBox(height: 16),
                           Text(
@@ -1000,14 +1050,8 @@ class AssignmentDetailSheet extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(color: Colors.grey),
-          ),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -1026,7 +1070,7 @@ class AssignmentDetailSheet extends StatelessWidget {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

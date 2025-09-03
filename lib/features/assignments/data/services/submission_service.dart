@@ -31,8 +31,8 @@ class SubmissionService {
   ///
   /// @param firestore Optional Firestore instance for testing
   SubmissionService({FirebaseFirestore? firestore})
-      : _submissionsCollection =
-            (firestore ?? FirebaseFirestore.instance).collection('submissions');
+    : _submissionsCollection = (firestore ?? FirebaseFirestore.instance)
+          .collection('submissions');
 
   /// Creates a new assignment submission.
   ///
@@ -127,8 +127,11 @@ class SubmissionService {
         .where('assignmentId', isEqualTo: assignmentId)
         .orderBy('submittedAt', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Submission.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Submission.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   /// Streams all submissions for a specific student.
@@ -147,8 +150,11 @@ class SubmissionService {
         .where('studentId', isEqualTo: studentId)
         .orderBy('submittedAt', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Submission.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Submission.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   /// Updates an existing submission.
@@ -238,7 +244,9 @@ class SubmissionService {
   /// @param assignmentId ID of the assignment to check
   /// @return true if submitted, false otherwise or on error
   Future<bool> isAssignmentSubmitted(
-      String studentId, String assignmentId) async {
+    String studentId,
+    String assignmentId,
+  ) async {
     try {
       final submission = await getSubmissionForStudentAndAssignment(
         studentId,
@@ -285,8 +293,11 @@ class SubmissionService {
         .where('assignmentId', isEqualTo: assignmentId)
         .where('submittedAt', isGreaterThan: Timestamp.fromDate(dueDate))
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Submission.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Submission.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   /// Submits a text-only assignment response.

@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/chat_provider_simple.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -85,13 +86,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   final currentUserId = authProvider.userModel?.uid ?? '';
                   final displayName = _getDisplayName(room, currentUserId);
 
-                  return displayName
-                          .toLowerCase()
-                          .contains(_searchQuery.toLowerCase()) ||
-                      (room['lastMessage']
-                              ?.toString()
-                              .toLowerCase()
-                              .contains(_searchQuery.toLowerCase()) ??
+                  return displayName.toLowerCase().contains(
+                        _searchQuery.toLowerCase(),
+                      ) ||
+                      (room['lastMessage']?.toString().toLowerCase().contains(
+                            _searchQuery.toLowerCase(),
+                          ) ??
                           false);
                 }).toList();
 
@@ -157,7 +157,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
     );
   }
 
-  Widget _buildChatRoomTile(BuildContext context, Map<String, dynamic> chatRoom) {
+  Widget _buildChatRoomTile(
+    BuildContext context,
+    Map<String, dynamic> chatRoom,
+  ) {
     final theme = Theme.of(context);
     final hasUnread = (chatRoom['unreadCount'] ?? 0) > 0;
     final authProvider = context.read<AuthProvider>();
@@ -165,7 +168,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
     // Get the display name and photo for this chat room from current user's perspective
     final String displayName = _getDisplayName(chatRoom, currentUserId);
-    final String? displayPhotoUrl = _getDisplayPhotoUrl(chatRoom, currentUserId);
+    final String? displayPhotoUrl = _getDisplayPhotoUrl(
+      chatRoom,
+      currentUserId,
+    );
 
     return Dismissible(
       key: Key(chatRoom['id']),
@@ -174,10 +180,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: Colors.red,
-        child: const Icon(
-          Icons.delete,
-          color: Colors.white,
-        ),
+        child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: (direction) async {
         return await showDialog(
@@ -185,7 +188,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Delete Chat'),
-              content: Text('Are you sure you want to delete this chat with $displayName? This action cannot be undone.'),
+              content: Text(
+                'Are you sure you want to delete this chat with $displayName? This action cannot be undone.',
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
@@ -193,9 +198,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                 ),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(true),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
                   child: const Text('Delete'),
                 ),
               ],
@@ -207,143 +210,144 @@ class _ChatListScreenState extends State<ChatListScreen> {
         await _deleteChat(chatRoom['id']);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Chat with $displayName deleted'),
-            ),
+            SnackBar(content: Text('Chat with $displayName deleted')),
           );
         }
       },
       child: ListTile(
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.primaryContainer,
-        backgroundImage: displayPhotoUrl != null
-            ? CachedNetworkImageProvider(displayPhotoUrl)
-            : null,
-        child: displayPhotoUrl == null
-            ? Text(
-                displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
-              )
-            : null,
-      ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              displayName,
-              style: TextStyle(
-                fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ),
-          if (chatRoom['lastMessageTime'] != null)
-            Text(
-              _formatTime(chatRoom['lastMessageTime'].toDate()),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: hasUnread
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-        ],
-      ),
-      subtitle: Row(
-        children: [
-          Expanded(
-            child: Text(
-              chatRoom['lastMessage'] ?? 'No messages yet',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: hasUnread
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurfaceVariant,
-                fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-              ),
-            ),
-          ),
-          if (hasUnread)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
+        leading: CircleAvatar(
+          backgroundColor: theme.colorScheme.primaryContainer,
+          backgroundImage: displayPhotoUrl != null
+              ? CachedNetworkImageProvider(displayPhotoUrl)
+              : null,
+          child: displayPhotoUrl == null
+              ? Text(
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : null,
+        ),
+        title: Row(
+          children: [
+            Expanded(
               child: Text(
-                (chatRoom['unreadCount'] ?? 0).toString(),
+                displayName,
                 style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ),
-        ],
-      ),
-      onTap: () {
-        context.read<SimpleChatProvider>().setCurrentChatRoom(chatRoom);
-        // Use the new simple chat screen that actually works
-        context.push(
-            '/simple-chat/${chatRoom['id']}?title=${Uri.encodeComponent(displayName)}');
-      },
-      onLongPress: () {
-        // Show delete confirmation directly
-        showDialog(
-          context: context,
-          builder: (BuildContext dialogContext) => AlertDialog(
-            title: const Text('Delete Chat?'),
-            content: Text('Are you sure you want to delete your chat with $displayName?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  _deleteChat(chatRoom['id']).then((_) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Chat with $displayName deleted'),
-                        ),
-                      );
-                    }
-                  }).catchError((error) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Failed to delete chat: $error'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  });
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.red,
+            if (chatRoom['lastMessageTime'] != null)
+              Text(
+                _formatTime(chatRoom['lastMessageTime'].toDate()),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: hasUnread
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurfaceVariant,
                 ),
-                child: const Text('Delete'),
               ),
-            ],
-          ),
-        );
-      },
+          ],
+        ),
+        subtitle: Row(
+          children: [
+            Expanded(
+              child: Text(
+                chatRoom['lastMessage'] ?? 'No messages yet',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: hasUnread
+                      ? theme.colorScheme.onSurface
+                      : theme.colorScheme.onSurfaceVariant,
+                  fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
+                ),
+              ),
+            ),
+            if (hasUnread)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  (chatRoom['unreadCount'] ?? 0).toString(),
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        onTap: () {
+          context.read<SimpleChatProvider>().setCurrentChatRoom(chatRoom);
+          // Use the new simple chat screen that actually works
+          context.push(
+            '/simple-chat/${chatRoom['id']}?title=${Uri.encodeComponent(displayName)}',
+          );
+        },
+        onLongPress: () {
+          // Show delete confirmation directly
+          showDialog(
+            context: context,
+            builder: (BuildContext dialogContext) => AlertDialog(
+              title: const Text('Delete Chat?'),
+              content: Text(
+                'Are you sure you want to delete your chat with $displayName?',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _deleteChat(chatRoom['id'])
+                        .then((_) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Chat with $displayName deleted'),
+                              ),
+                            );
+                          }
+                        })
+                        .catchError((error) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to delete chat: $error'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        });
+                  },
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
-  
+
   Future<void> _deleteChat(String chatRoomId) async {
     try {
       // Use the provider's delete method which properly updates local state
       final chatProvider = context.read<SimpleChatProvider>();
       await chatProvider.deleteChatRoom(chatRoomId);
-      debugPrint('Chat room $chatRoomId deleted successfully');
+      LoggerService.info('Deleted chat room $chatRoomId', tag: 'ChatListScreen');
     } catch (e) {
-      debugPrint('Error deleting chat: $e');
+      LoggerService.error('Error deleting chat: $e', tag: 'ChatListScreen');
       rethrow;
     }
   }
@@ -352,7 +356,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
     // For direct chats, show the other participant's name
     if (chatRoom['type'] == 'direct') {
       // First check participantNames (new structure)
-      final participantNames = chatRoom['participantNames'] as Map<String, dynamic>?;
+      final participantNames =
+          chatRoom['participantNames'] as Map<String, dynamic>?;
       if (participantNames != null) {
         for (var entry in participantNames.entries) {
           if (entry.key != currentUserId) {
@@ -360,14 +365,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
           }
         }
       }
-      
+
       // Then check participants array (legacy structure)
       final participants = chatRoom['participants'] as List<dynamic>?;
       if (participants != null) {
         for (var participant in participants) {
-          if (participant is Map<String, dynamic> && 
+          if (participant is Map<String, dynamic> &&
               participant['uid'] != currentUserId) {
-            return participant['displayName'] ?? participant['email'] ?? 'Unknown User';
+            return participant['displayName'] ??
+                participant['email'] ??
+                'Unknown User';
           }
         }
       }
@@ -381,25 +388,28 @@ class _ChatListScreenState extends State<ChatListScreen> {
         return chatRoom['name'] ?? otherUserId ?? 'Direct Chat';
       }
     }
-    
+
     // For group/class chats, use the chat room name
     return chatRoom['name'] ?? 'Unnamed Chat';
   }
 
-  String? _getDisplayPhotoUrl(Map<String, dynamic> chatRoom, String currentUserId) {
+  String? _getDisplayPhotoUrl(
+    Map<String, dynamic> chatRoom,
+    String currentUserId,
+  ) {
     // For direct chats, show the other participant's photo
     if (chatRoom['type'] == 'direct') {
       final participants = chatRoom['participants'] as List<dynamic>?;
       if (participants != null) {
         for (var participant in participants) {
-          if (participant is Map<String, dynamic> && 
+          if (participant is Map<String, dynamic> &&
               participant['uid'] != currentUserId) {
             return participant['photoUrl'];
           }
         }
       }
     }
-    
+
     // For group/class chats, could return a default group icon URL
     return null;
   }
@@ -431,14 +441,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
               leading: const Icon(Icons.person),
               title: const Text('Direct Message'),
               onTap: () {
-                debugPrint('DEBUG: Direct Message clicked');
+                LoggerService.debug('Direct Message clicked', tag: 'ChatListScreen');
                 // Close dialog FIRST
                 Navigator.of(dialogContext).pop();
-                
+
                 // Navigate directly without delay - just GO there!
-                debugPrint('DEBUG: About to navigate to user selection');
-                parentContext.go('/messages/select-user'); // Try a different route
-                debugPrint('DEBUG: Navigation command sent');
+                LoggerService.debug('About to navigate to user selection', tag: 'ChatListScreen');
+                parentContext.go(
+                  '/messages/select-user',
+                ); // Try a different route
+                LoggerService.debug('Navigation command sent', tag: 'ChatListScreen');
               },
             ),
             ListTile(

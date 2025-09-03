@@ -52,9 +52,13 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               borderRadius: BorderRadius.circular(16),
               child: Container(
                 decoration: BoxDecoration(
-                  color: isDark 
-                      ? (isSelected ? colorTheme.primary.withValues(alpha: 0.3) : Colors.grey[900])
-                      : (isSelected ? colorTheme.primary.withValues(alpha: 0.2) : Colors.grey[100]),
+                  color: isDark
+                      ? (isSelected
+                            ? colorTheme.primary.withValues(alpha: 0.3)
+                            : Colors.grey[900])
+                      : (isSelected
+                            ? colorTheme.primary.withValues(alpha: 0.2)
+                            : Colors.grey[100]),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: isSelected ? colorTheme.primary : Colors.transparent,
@@ -89,7 +93,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       colorTheme.name,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: isSelected ? colorTheme.primary : null,
                       ),
                       textAlign: TextAlign.center,
@@ -114,7 +120,9 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Theme changed to ${AppColors.availableThemes[_selectedTheme]!.name}'),
+                  content: Text(
+                    'Theme changed to ${AppColors.availableThemes[_selectedTheme]!.name}',
+                  ),
                   duration: const Duration(seconds: 2),
                 ),
               );

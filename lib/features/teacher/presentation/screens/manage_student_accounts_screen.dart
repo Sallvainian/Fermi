@@ -12,17 +12,19 @@ class ManageStudentAccountsScreen extends StatefulWidget {
   const ManageStudentAccountsScreen({super.key});
 
   @override
-  State<ManageStudentAccountsScreen> createState() => _ManageStudentAccountsScreenState();
+  State<ManageStudentAccountsScreen> createState() =>
+      _ManageStudentAccountsScreenState();
 }
 
-class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScreen> {
+class _ManageStudentAccountsScreenState
+    extends State<ManageStudentAccountsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameAuthService = UsernameAuthService();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = false;
   String? _generatedUsername;
@@ -39,23 +41,28 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
   void _generateUsername() async {
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
-    
+
     if (firstName.isEmpty || lastName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter first and last name')),
       );
       return;
     }
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       // Generate base username
-      final baseUsername = _usernameAuthService.generateUsername(firstName, lastName);
-      
+      final baseUsername = _usernameAuthService.generateUsername(
+        firstName,
+        lastName,
+      );
+
       // Get next available username
-      final username = await _usernameAuthService.getNextAvailableUsername(baseUsername);
-      
+      final username = await _usernameAuthService.getNextAvailableUsername(
+        baseUsername,
+      );
+
       setState(() {
         _generatedUsername = username;
         _usernameController.text = username;
@@ -73,30 +80,31 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
 
   void _generatePassword() {
     // Secure password generation using cryptographically secure random
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     final random = Random.secure();
     final password = List.generate(8, (_) {
       return chars[random.nextInt(chars.length)];
     }).join();
-    
+
     _passwordController.text = password;
   }
 
   Future<void> _createStudent() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final authProvider = context.read<AuthProvider>();
-      
+
       await authProvider.createStudentAccount(
         username: _usernameController.text.trim(),
         password: _passwordController.text,
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
       );
-      
+
       if (mounted) {
         // Show success dialog with credentials
         showDialog(
@@ -113,19 +121,26 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                 SelectableText('Username: ${_usernameController.text}'),
                 SelectableText('Password: ${_passwordController.text}'),
                 const SizedBox(height: 16),
-                const Text('Save these credentials for the student.', 
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Save these credentials for the student.',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () {
                   // Copy to clipboard
-                  Clipboard.setData(ClipboardData(
-                    text: 'Username: ${_usernameController.text}\nPassword: ${_passwordController.text}',
-                  ));
+                  Clipboard.setData(
+                    ClipboardData(
+                      text:
+                          'Username: ${_usernameController.text}\nPassword: ${_passwordController.text}',
+                    ),
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Credentials copied to clipboard')),
+                    const SnackBar(
+                      content: Text('Credentials copied to clipboard'),
+                    ),
                   );
                 },
                 child: const Text('Copy'),
@@ -164,11 +179,9 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Student Accounts'),
-      ),
+      appBar: AppBar(title: const Text('Manage Student Accounts')),
       body: Row(
         children: [
           // Create Student Form
@@ -188,7 +201,7 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                         style: theme.textTheme.headlineSmall,
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Name fields
                       Row(
                         children: [
@@ -228,7 +241,7 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Username field with generate button
                       Row(
                         children: [
@@ -238,16 +251,20 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                               decoration: InputDecoration(
                                 labelText: 'Username',
                                 border: const OutlineInputBorder(),
-                                prefixIcon: const Icon(Icons.account_circle_outlined),
-                                helperText: _generatedUsername != null 
-                                  ? 'Generated username' 
-                                  : 'Enter manually or generate',
+                                prefixIcon: const Icon(
+                                  Icons.account_circle_outlined,
+                                ),
+                                helperText: _generatedUsername != null
+                                    ? 'Generated username'
+                                    : 'Enter manually or generate',
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Required';
                                 }
-                                if (!_usernameAuthService.isValidUsername(value)) {
+                                if (!_usernameAuthService.isValidUsername(
+                                  value,
+                                )) {
                                   return 'Invalid username format';
                                 }
                                 return null;
@@ -262,7 +279,7 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Password field with generate button
                       Row(
                         children: [
@@ -275,9 +292,11 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                                 border: const OutlineInputBorder(),
                                 prefixIcon: const Icon(Icons.lock_outline),
                                 suffixIcon: IconButton(
-                                  icon: Icon(_obscurePassword 
-                                    ? Icons.visibility_outlined 
-                                    : Icons.visibility_off_outlined),
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_outlined
+                                        : Icons.visibility_off_outlined,
+                                  ),
                                   onPressed: () {
                                     setState(() {
                                       _obscurePassword = !_obscurePassword;
@@ -304,7 +323,7 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                         ],
                       ),
                       const SizedBox(height: 32),
-                      
+
                       // Create button
                       SizedBox(
                         width: double.infinity,
@@ -312,15 +331,15 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                         child: FilledButton(
                           onPressed: _isLoading ? null : _createStudent,
                           child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Create Student Account'),
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Create Student Account'),
                         ),
                       ),
                     ],
@@ -329,7 +348,7 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
               ),
             ),
           ),
-          
+
           // Existing Students List
           Expanded(
             flex: 3,
@@ -350,38 +369,53 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                       stream: FirebaseFirestore.instance
                           .collection('users')
                           .where('role', isEqualTo: 'student')
-                          .where('teacherId', isEqualTo: context.read<AuthProvider>().userModel?.uid)
+                          .where(
+                            'teacherId',
+                            isEqualTo: context
+                                .read<AuthProvider>()
+                                .userModel
+                                ?.uid,
+                          )
                           .orderBy('createdAt', descending: true)
                           .snapshots(),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
-                        
+
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                           return const Center(
                             child: Text('No students created yet'),
                           );
                         }
-                        
+
                         final students = snapshot.data!.docs;
-                        
+
                         return ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
                           itemCount: students.length,
                           itemBuilder: (context, index) {
-                            final data = students[index].data() as Map<String, dynamic>;
+                            final data =
+                                students[index].data() as Map<String, dynamic>;
                             final student = UserModel.fromFirestore(data);
-                            
+
                             return Card(
                               child: ListTile(
                                 leading: CircleAvatar(
                                   child: Text(
-                                    '${student.firstName?[0] ?? ''}${student.lastName?[0] ?? ''}'.toUpperCase(),
+                                    '${student.firstName?[0] ?? ''}${student.lastName?[0] ?? ''}'
+                                        .toUpperCase(),
                                   ),
                                 ),
-                                title: Text('${student.firstName} ${student.lastName}'),
-                                subtitle: Text('Username: ${student.username ?? 'N/A'}'),
+                                title: Text(
+                                  '${student.firstName} ${student.lastName}',
+                                ),
+                                subtitle: Text(
+                                  'Username: ${student.username ?? 'N/A'}',
+                                ),
                                 trailing: PopupMenuButton(
                                   itemBuilder: (context) => [
                                     const PopupMenuItem(
@@ -397,7 +431,9 @@ class _ManageStudentAccountsScreenState extends State<ManageStudentAccountsScree
                                     // TODO: Implement password reset and delete
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
-                                        content: Text('$value not yet implemented'),
+                                        content: Text(
+                                          '$value not yet implemented',
+                                        ),
                                       ),
                                     );
                                   },

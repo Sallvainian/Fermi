@@ -118,6 +118,7 @@ launch_app.sh
 .claude/
 .cursor/
 .gemini/
+.codex/
 devtools_options.yaml
 
 # Windows-specific (keep if on Windows)
@@ -145,6 +146,30 @@ fastlane/*.pkg
 .trae/rules/
 rebuild_ios.sh
 node_modules/
+
+# Logs
+logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dev-debug.log
+# Dependency directories
+# Environment variables
+.env
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/ 
+
 ## Fastlane artifacts
 fastlane/report.xml
 fastlane/report.html

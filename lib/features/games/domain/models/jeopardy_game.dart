@@ -33,56 +33,67 @@ class JeopardyGame {
   });
 
   factory JeopardyGame.empty() => JeopardyGame(
-        id: '',
-        title: 'New Jeopardy Game',
-        teacherId: '',
-        categories: [],
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+    id: '',
+    title: 'New Jeopardy Game',
+    teacherId: '',
+    categories: [],
+    createdAt: DateTime.now(),
+    updatedAt: DateTime.now(),
+  );
 
   Map<String, dynamic> toFirestore() => {
-        'title': title,
-        'teacherId': teacherId,
-        'categories': categories.map((c) => c.toJson()).toList(),
-        'doubleJeopardyCategories': doubleJeopardyCategories?.map((c) => c.toJson()).toList(),
-        'finalJeopardy': finalJeopardy?.toJson(),
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'isPublic': isPublic,
-        'gameMode': gameMode.name,
-        'assignedClassIds': assignedClassIds,
-        'dailyDoubles': dailyDoubles.map((dd) => dd.toJson()).toList(),
-        'randomDailyDoubles': randomDailyDoubles,
-      };
-  
-  factory JeopardyGame.fromFirestore(Map<String, dynamic> data, String id) => JeopardyGame(
+    'title': title,
+    'teacherId': teacherId,
+    'categories': categories.map((c) => c.toJson()).toList(),
+    'doubleJeopardyCategories': doubleJeopardyCategories
+        ?.map((c) => c.toJson())
+        .toList(),
+    'finalJeopardy': finalJeopardy?.toJson(),
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'isPublic': isPublic,
+    'gameMode': gameMode.name,
+    'assignedClassIds': assignedClassIds,
+    'dailyDoubles': dailyDoubles.map((dd) => dd.toJson()).toList(),
+    'randomDailyDoubles': randomDailyDoubles,
+  };
+
+  factory JeopardyGame.fromFirestore(Map<String, dynamic> data, String id) =>
+      JeopardyGame(
         id: id,
         title: data['title'] ?? '',
         teacherId: data['teacherId'] ?? '',
-        categories: (data['categories'] as List?)
-            ?.map((c) => JeopardyCategory.fromJson(c))
-            .toList() ?? [],
+        categories:
+            (data['categories'] as List?)
+                ?.map((c) => JeopardyCategory.fromJson(c))
+                .toList() ??
+            [],
         doubleJeopardyCategories: (data['doubleJeopardyCategories'] as List?)
             ?.map((c) => JeopardyCategory.fromJson(c))
             .toList(),
         finalJeopardy: data['finalJeopardy'] != null
             ? FinalJeopardyData.fromJson(data['finalJeopardy'])
             : null,
-        createdAt: DateTime.parse(data['createdAt'] ?? DateTime.now().toIso8601String()),
-        updatedAt: DateTime.parse(data['updatedAt'] ?? DateTime.now().toIso8601String()),
+        createdAt: DateTime.parse(
+          data['createdAt'] ?? DateTime.now().toIso8601String(),
+        ),
+        updatedAt: DateTime.parse(
+          data['updatedAt'] ?? DateTime.now().toIso8601String(),
+        ),
         isPublic: data['isPublic'] ?? false,
         gameMode: GameMode.values.firstWhere(
           (m) => m.name == data['gameMode'],
           orElse: () => GameMode.realtime,
         ),
         assignedClassIds: List<String>.from(data['assignedClassIds'] ?? []),
-        dailyDoubles: (data['dailyDoubles'] as List?)
-            ?.map((dd) => DailyDouble.fromJson(dd))
-            .toList() ?? [],
+        dailyDoubles:
+            (data['dailyDoubles'] as List?)
+                ?.map((dd) => DailyDouble.fromJson(dd))
+                .toList() ??
+            [],
         randomDailyDoubles: data['randomDailyDoubles'] ?? false,
       );
-  
+
   JeopardyGame copyWith({
     String? id,
     String? title,
@@ -98,44 +109,41 @@ class JeopardyGame {
     List<DailyDouble>? dailyDoubles,
     bool? randomDailyDoubles,
   }) => JeopardyGame(
-        id: id ?? this.id,
-        title: title ?? this.title,
-        teacherId: teacherId ?? this.teacherId,
-        categories: categories ?? this.categories,
-        doubleJeopardyCategories: doubleJeopardyCategories ?? this.doubleJeopardyCategories,
-        finalJeopardy: finalJeopardy ?? this.finalJeopardy,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        isPublic: isPublic ?? this.isPublic,
-        gameMode: gameMode ?? this.gameMode,
-        assignedClassIds: assignedClassIds ?? this.assignedClassIds,
-        dailyDoubles: dailyDoubles ?? this.dailyDoubles,
-        randomDailyDoubles: randomDailyDoubles ?? this.randomDailyDoubles,
-      );
+    id: id ?? this.id,
+    title: title ?? this.title,
+    teacherId: teacherId ?? this.teacherId,
+    categories: categories ?? this.categories,
+    doubleJeopardyCategories:
+        doubleJeopardyCategories ?? this.doubleJeopardyCategories,
+    finalJeopardy: finalJeopardy ?? this.finalJeopardy,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    isPublic: isPublic ?? this.isPublic,
+    gameMode: gameMode ?? this.gameMode,
+    assignedClassIds: assignedClassIds ?? this.assignedClassIds,
+    dailyDoubles: dailyDoubles ?? this.dailyDoubles,
+    randomDailyDoubles: randomDailyDoubles ?? this.randomDailyDoubles,
+  );
 }
 
 class JeopardyCategory {
   final String name;
   final List<JeopardyQuestion> questions;
 
-  JeopardyCategory({
-    required this.name,
-    required this.questions,
-  });
+  JeopardyCategory({required this.name, required this.questions});
 
   JeopardyCategory copyWith({
     String? name,
     List<JeopardyQuestion>? questions,
-  }) =>
-      JeopardyCategory(
-        name: name ?? this.name,
-        questions: questions ?? this.questions,
-      );
+  }) => JeopardyCategory(
+    name: name ?? this.name,
+    questions: questions ?? this.questions,
+  );
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'questions': questions.map((q) => q.toJson()).toList(),
-      };
+    'name': name,
+    'questions': questions.map((q) => q.toJson()).toList(),
+  };
 
   factory JeopardyCategory.fromJson(Map<String, dynamic> json) =>
       JeopardyCategory(
@@ -170,24 +178,23 @@ class JeopardyQuestion {
     bool? isAnswered,
     String? answeredBy,
     bool? isDailyDouble,
-  }) =>
-      JeopardyQuestion(
-        question: question ?? this.question,
-        answer: answer ?? this.answer,
-        points: points ?? this.points,
-        isAnswered: isAnswered ?? this.isAnswered,
-        answeredBy: answeredBy ?? this.answeredBy,
-        isDailyDouble: isDailyDouble ?? this.isDailyDouble,
-      );
+  }) => JeopardyQuestion(
+    question: question ?? this.question,
+    answer: answer ?? this.answer,
+    points: points ?? this.points,
+    isAnswered: isAnswered ?? this.isAnswered,
+    answeredBy: answeredBy ?? this.answeredBy,
+    isDailyDouble: isDailyDouble ?? this.isDailyDouble,
+  );
 
   Map<String, dynamic> toJson() => {
-        'question': question,
-        'answer': answer,
-        'points': points,
-        'isAnswered': isAnswered,
-        'answeredBy': answeredBy,
-        'isDailyDouble': isDailyDouble,
-      };
+    'question': question,
+    'answer': answer,
+    'points': points,
+    'isAnswered': isAnswered,
+    'answeredBy': answeredBy,
+    'isDailyDouble': isDailyDouble,
+  };
 
   factory JeopardyQuestion.fromJson(Map<String, dynamic> json) =>
       JeopardyQuestion(
@@ -214,18 +221,18 @@ class JeopardyPlayer {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'score': score,
-        'teamId': teamId,
-      };
+    'id': id,
+    'name': name,
+    'score': score,
+    'teamId': teamId,
+  };
 
   factory JeopardyPlayer.fromJson(Map<String, dynamic> json) => JeopardyPlayer(
-        id: json['id'],
-        name: json['name'],
-        score: json['score'] ?? 0,
-        teamId: json['teamId'],
-      );
+    id: json['id'],
+    name: json['name'],
+    score: json['score'] ?? 0,
+    teamId: json['teamId'],
+  );
 }
 
 class JeopardyTeam {
@@ -242,18 +249,18 @@ class JeopardyTeam {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'memberIds': memberIds,
-        'score': score,
-      };
+    'id': id,
+    'name': name,
+    'memberIds': memberIds,
+    'score': score,
+  };
 
   factory JeopardyTeam.fromJson(Map<String, dynamic> json) => JeopardyTeam(
-        id: json['id'],
-        name: json['name'],
-        memberIds: List<String>.from(json['memberIds'] ?? []),
-        score: json['score'] ?? 0,
-      );
+    id: json['id'],
+    name: json['name'],
+    memberIds: List<String>.from(json['memberIds'] ?? []),
+    score: json['score'] ?? 0,
+  );
 }
 
 class FinalJeopardyData {
@@ -268,10 +275,10 @@ class FinalJeopardyData {
   });
 
   Map<String, dynamic> toJson() => {
-        'category': category,
-        'question': question,
-        'answer': answer,
-      };
+    'category': category,
+    'question': question,
+    'answer': answer,
+  };
 
   factory FinalJeopardyData.fromJson(Map<String, dynamic> json) =>
       FinalJeopardyData(
@@ -283,13 +290,13 @@ class FinalJeopardyData {
 
 /// Enum for game modes
 enum GameMode {
-  realtime,  // Students play together in class
-  async,     // Students can play anytime for study
+  realtime, // Students play together in class
+  async, // Students can play anytime for study
 }
 
 /// Daily Double location in the game
 class DailyDouble {
-  final String round;  // 'jeopardy' or 'doubleJeopardy'
+  final String round; // 'jeopardy' or 'doubleJeopardy'
   final int categoryIndex;
   final int questionIndex;
 
@@ -300,16 +307,16 @@ class DailyDouble {
   });
 
   Map<String, dynamic> toJson() => {
-        'round': round,
-        'categoryIndex': categoryIndex,
-        'questionIndex': questionIndex,
-      };
+    'round': round,
+    'categoryIndex': categoryIndex,
+    'questionIndex': questionIndex,
+  };
 
   factory DailyDouble.fromJson(Map<String, dynamic> json) => DailyDouble(
-        round: json['round'],
-        categoryIndex: json['categoryIndex'],
-        questionIndex: json['questionIndex'],
-      );
+    round: json['round'],
+    categoryIndex: json['categoryIndex'],
+    questionIndex: json['questionIndex'],
+  );
 }
 
 /// Active game session model
@@ -323,7 +330,8 @@ class JeopardyGameSession {
   final List<JeopardyPlayer> players;
   final List<JeopardyTeam>? teams;
   final String currentRound; // 'jeopardy', 'doubleJeopardy', 'finalJeopardy'
-  final Map<String, Map<String, bool>> answeredQuestions; // round -> categoryIndex_questionIndex -> answered
+  final Map<String, Map<String, bool>>
+  answeredQuestions; // round -> categoryIndex_questionIndex -> answered
   final bool isActive;
 
   JeopardyGameSession({
@@ -341,26 +349,29 @@ class JeopardyGameSession {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'gameId': gameId,
-        'teacherId': teacherId,
-        'classId': classId,
-        'startedAt': startedAt.toIso8601String(),
-        'endedAt': endedAt?.toIso8601String(),
-        'players': players.map((p) => p.toJson()).toList(),
-        'teams': teams?.map((t) => t.toJson()).toList(),
-        'currentRound': currentRound,
-        'answeredQuestions': answeredQuestions,
-        'isActive': isActive,
-      };
+    'id': id,
+    'gameId': gameId,
+    'teacherId': teacherId,
+    'classId': classId,
+    'startedAt': startedAt.toIso8601String(),
+    'endedAt': endedAt?.toIso8601String(),
+    'players': players.map((p) => p.toJson()).toList(),
+    'teams': teams?.map((t) => t.toJson()).toList(),
+    'currentRound': currentRound,
+    'answeredQuestions': answeredQuestions,
+    'isActive': isActive,
+  };
 
-  factory JeopardyGameSession.fromJson(Map<String, dynamic> json) => JeopardyGameSession(
+  factory JeopardyGameSession.fromJson(Map<String, dynamic> json) =>
+      JeopardyGameSession(
         id: json['id'],
         gameId: json['gameId'],
         teacherId: json['teacherId'],
         classId: json['classId'],
         startedAt: DateTime.parse(json['startedAt']),
-        endedAt: json['endedAt'] != null ? DateTime.parse(json['endedAt']) : null,
+        endedAt: json['endedAt'] != null
+            ? DateTime.parse(json['endedAt'])
+            : null,
         players: (json['players'] as List)
             .map((p) => JeopardyPlayer.fromJson(p))
             .toList(),
@@ -368,8 +379,11 @@ class JeopardyGameSession {
             ?.map((t) => JeopardyTeam.fromJson(t))
             .toList(),
         currentRound: json['currentRound'] ?? 'jeopardy',
-        answeredQuestions: (json['answeredQuestions'] as Map<String, dynamic>?)
-            ?.map((key, value) => MapEntry(key, Map<String, bool>.from(value))) ?? {},
+        answeredQuestions:
+            (json['answeredQuestions'] as Map<String, dynamic>?)?.map(
+              (key, value) => MapEntry(key, Map<String, bool>.from(value)),
+            ) ??
+            {},
         isActive: json['isActive'] ?? true,
       );
 }

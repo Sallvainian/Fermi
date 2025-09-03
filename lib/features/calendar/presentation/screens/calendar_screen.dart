@@ -141,14 +141,18 @@ class _CalendarScreenState extends State<CalendarScreen>
                             value: null,
                             child: Text('All Events'),
                           ),
-                          ...EventType.values.map((type) => PopupMenuItem(
-                                value: type,
-                                child: Text(type.displayName),
-                              )),
+                          ...EventType.values.map(
+                            (type) => PopupMenuItem(
+                              value: type,
+                              child: Text(type.displayName),
+                            ),
+                          ),
                         ],
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           child: Row(
                             children: [
                               const Icon(Icons.filter_list, size: 20),
@@ -188,9 +192,7 @@ class _CalendarScreenState extends State<CalendarScreen>
           // Calendar Header (Days of Week)
           _buildCalendarHeader(),
           // Calendar Grid
-          Expanded(
-            child: _buildCalendarGrid(provider),
-          ),
+          Expanded(child: _buildCalendarGrid(provider)),
         ],
       ),
     );
@@ -223,8 +225,9 @@ class _CalendarScreenState extends State<CalendarScreen>
   Widget _buildCalendarGrid(CalendarProvider provider) {
     final focusedDate = provider.focusedDate;
     final firstDayOfMonth = DateTime(focusedDate.year, focusedDate.month, 1);
-    final firstDayOfCalendar =
-        firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday % 7));
+    final firstDayOfCalendar = firstDayOfMonth.subtract(
+      Duration(days: firstDayOfMonth.weekday % 7),
+    );
 
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -279,8 +282,8 @@ class _CalendarScreenState extends State<CalendarScreen>
           color: isSelected
               ? theme.colorScheme.primary
               : isToday
-                  ? theme.colorScheme.primaryContainer
-                  : null,
+              ? theme.colorScheme.primaryContainer
+              : null,
           borderRadius: BorderRadius.circular(8),
           border: isToday && !isSelected
               ? Border.all(color: theme.colorScheme.primary, width: 2)
@@ -296,13 +299,13 @@ class _CalendarScreenState extends State<CalendarScreen>
                 color: isSelected
                     ? theme.colorScheme.onPrimary
                     : isToday
-                        ? theme.colorScheme.onPrimaryContainer
-                        : isCurrentMonth
-                            ? theme.colorScheme.onSurface
-                            : theme.colorScheme.onSurfaceVariant
-                                .withValues(alpha: 0.5),
-                fontWeight:
-                    isToday || isSelected ? FontWeight.bold : FontWeight.normal,
+                    ? theme.colorScheme.onPrimaryContainer
+                    : isCurrentMonth
+                    ? theme.colorScheme.onSurface
+                    : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                fontWeight: isToday || isSelected
+                    ? FontWeight.bold
+                    : FontWeight.normal,
               ),
             ),
             // Event Indicators
@@ -315,9 +318,10 @@ class _CalendarScreenState extends State<CalendarScreen>
                     width: 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: Color(int.parse(event.displayColor.substring(1),
-                              radix: 16) +
-                          0xFF000000),
+                      color: Color(
+                        int.parse(event.displayColor.substring(1), radix: 16) +
+                            0xFF000000,
+                      ),
                       shape: BoxShape.circle,
                     ),
                   );
@@ -347,9 +351,7 @@ class _CalendarScreenState extends State<CalendarScreen>
           // Week Header
           _buildWeekHeader(provider),
           // Week Grid
-          Expanded(
-            child: _buildWeekGrid(provider),
-          ),
+          Expanded(child: _buildWeekGrid(provider)),
         ],
       ),
     );
@@ -358,8 +360,9 @@ class _CalendarScreenState extends State<CalendarScreen>
   Widget _buildWeekHeader(CalendarProvider provider) {
     final theme = Theme.of(context);
     final selectedDate = provider.selectedDate;
-    final startOfWeek =
-        selectedDate.subtract(Duration(days: selectedDate.weekday % 7));
+    final startOfWeek = selectedDate.subtract(
+      Duration(days: selectedDate.weekday % 7),
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -392,8 +395,9 @@ class _CalendarScreenState extends State<CalendarScreen>
                         color: isToday
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.onSurface,
-                        fontWeight:
-                            isToday ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isToday
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -408,8 +412,9 @@ class _CalendarScreenState extends State<CalendarScreen>
 
   Widget _buildWeekGrid(CalendarProvider provider) {
     final selectedDate = provider.selectedDate;
-    final startOfWeek =
-        selectedDate.subtract(Duration(days: selectedDate.weekday % 7));
+    final startOfWeek = selectedDate.subtract(
+      Duration(days: selectedDate.weekday % 7),
+    );
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -421,7 +426,10 @@ class _CalendarScreenState extends State<CalendarScreen>
   }
 
   Widget _buildHourRow(
-      CalendarProvider provider, int hour, DateTime startOfWeek) {
+    CalendarProvider provider,
+    int hour,
+    DateTime startOfWeek,
+  ) {
     final theme = Theme.of(context);
 
     return Container(
@@ -451,8 +459,9 @@ class _CalendarScreenState extends State<CalendarScreen>
                   child: Container(
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: theme.colorScheme.outlineVariant
-                            .withValues(alpha: 0.3),
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                     ),
                     child: events.isNotEmpty
@@ -471,7 +480,8 @@ class _CalendarScreenState extends State<CalendarScreen>
   Widget _buildEventBlock(CalendarEvent event) {
     final theme = Theme.of(context);
     final color = Color(
-        int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
+      int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000,
+    );
 
     return Container(
       margin: const EdgeInsets.all(1),
@@ -514,8 +524,9 @@ class _CalendarScreenState extends State<CalendarScreen>
           var dayEvents = groupedEvents[date] ?? [];
 
           if (_selectedFilter != null) {
-            dayEvents =
-                dayEvents.where((e) => e.type == _selectedFilter).toList();
+            dayEvents = dayEvents
+                .where((e) => e.type == _selectedFilter)
+                .toList();
           }
 
           return _buildAgendaDay(provider, date, dayEvents);
@@ -525,7 +536,10 @@ class _CalendarScreenState extends State<CalendarScreen>
   }
 
   Widget _buildAgendaDay(
-      CalendarProvider provider, DateTime date, List<CalendarEvent> events) {
+    CalendarProvider provider,
+    DateTime date,
+    List<CalendarEvent> events,
+  ) {
     final theme = Theme.of(context);
     final isToday = _isSameDay(date, DateTime.now());
 
@@ -547,8 +561,10 @@ class _CalendarScreenState extends State<CalendarScreen>
               if (isToday) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary,
                     borderRadius: BorderRadius.circular(12),
@@ -575,7 +591,8 @@ class _CalendarScreenState extends State<CalendarScreen>
   Widget _buildAgendaEvent(CalendarProvider provider, CalendarEvent event) {
     final theme = Theme.of(context);
     final color = Color(
-        int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
+      int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -692,7 +709,7 @@ class _CalendarScreenState extends State<CalendarScreen>
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     return '${months[date.month - 1]} ${date.year}';
   }
@@ -717,7 +734,7 @@ class _CalendarScreenState extends State<CalendarScreen>
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     const days = [
       'Sunday',
@@ -726,7 +743,7 @@ class _CalendarScreenState extends State<CalendarScreen>
       'Wednesday',
       'Thursday',
       'Friday',
-      'Saturday'
+      'Saturday',
     ];
     return '${days[date.weekday % 7]}, ${months[date.month - 1]} ${date.day}';
   }
@@ -741,7 +758,10 @@ class _CalendarScreenState extends State<CalendarScreen>
   }
 
   List<CalendarEvent> _getEventsForDateAndHour(
-      CalendarProvider provider, DateTime date, int hour) {
+    CalendarProvider provider,
+    DateTime date,
+    int hour,
+  ) {
     final events = provider.getEventsForDate(date);
     return events.where((event) {
       if (event.isAllDay) return false;
@@ -884,8 +904,9 @@ class DayEventsSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.3),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.3,
+                    ),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -932,7 +953,8 @@ class DayEventsSheet extends StatelessWidget {
   Widget _buildEventCard(BuildContext context, CalendarEvent event) {
     final theme = Theme.of(context);
     final color = Color(
-        int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
+      int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1012,7 +1034,7 @@ class DayEventsSheet extends StatelessWidget {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     const days = [
       'Sunday',
@@ -1021,7 +1043,7 @@ class DayEventsSheet extends StatelessWidget {
       'Wednesday',
       'Thursday',
       'Friday',
-      'Saturday'
+      'Saturday',
     ];
     return '${days[date.weekday % 7]}, ${months[date.month - 1]} ${date.day}';
   }
@@ -1053,7 +1075,8 @@ class EventDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = Color(
-        int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000);
+      int.parse(event.displayColor.substring(1), radix: 16) + 0xFF000000,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -1075,21 +1098,22 @@ class EventDetailSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.3),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.3,
+                    ),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               // Header
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(
-                      color: theme.colorScheme.outlineVariant,
-                    ),
+                    bottom: BorderSide(color: theme.colorScheme.outlineVariant),
                   ),
                 ),
                 child: Row(
@@ -1109,7 +1133,8 @@ class EventDetailSheet extends StatelessWidget {
                               builder: (context) => AlertDialog(
                                 title: const Text('Sync to Device Calendar'),
                                 content: const Text(
-                                    'Do you want to add this event to your device calendar?'),
+                                  'Do you want to add this event to your device calendar?',
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () =>
@@ -1135,9 +1160,11 @@ class EventDetailSheet extends StatelessWidget {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text(eventId != null
-                                          ? 'Event synced to device calendar'
-                                          : 'Failed to sync event to device calendar'),
+                                      content: Text(
+                                        eventId != null
+                                            ? 'Event synced to device calendar'
+                                            : 'Failed to sync event to device calendar',
+                                      ),
                                     ),
                                   );
                                 }
@@ -1167,7 +1194,8 @@ class EventDetailSheet extends StatelessWidget {
                               builder: (context) => AlertDialog(
                                 title: const Text('Delete Event'),
                                 content: const Text(
-                                    'Are you sure you want to delete this event?'),
+                                  'Are you sure you want to delete this event?',
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(context),
@@ -1294,11 +1322,7 @@ class EventDetailSheet extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: color ?? Colors.grey,
-          ),
+          Icon(icon, size: 20, color: color ?? Colors.grey),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1306,17 +1330,11 @@ class EventDetailSheet extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 Text(
                   value,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: color),
                 ),
               ],
             ),
@@ -1339,7 +1357,7 @@ class EventDetailSheet extends StatelessWidget {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -1383,7 +1401,7 @@ class EventDetailSheet extends StatelessWidget {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}';
   }
@@ -1396,7 +1414,7 @@ class EventDetailSheet extends StatelessWidget {
       'Thursday',
       'Friday',
       'Saturday',
-      'Sunday'
+      'Sunday',
     ];
     return days[weekday - 1];
   }
@@ -1418,10 +1436,7 @@ class EventDetailSheet extends StatelessWidget {
 class CreateEventSheet extends StatefulWidget {
   final Function(Map<String, dynamic>) onEventCreated;
 
-  const CreateEventSheet({
-    super.key,
-    required this.onEventCreated,
-  });
+  const CreateEventSheet({super.key, required this.onEventCreated});
 
   @override
   State<CreateEventSheet> createState() => _CreateEventSheetState();
@@ -1467,8 +1482,9 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1661,15 +1677,25 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                       ),
                       items: const [
                         DropdownMenuItem(
-                            value: 15, child: Text('15 minutes before')),
+                          value: 15,
+                          child: Text('15 minutes before'),
+                        ),
                         DropdownMenuItem(
-                            value: 30, child: Text('30 minutes before')),
+                          value: 30,
+                          child: Text('30 minutes before'),
+                        ),
                         DropdownMenuItem(
-                            value: 60, child: Text('1 hour before')),
+                          value: 60,
+                          child: Text('1 hour before'),
+                        ),
                         DropdownMenuItem(
-                            value: 120, child: Text('2 hours before')),
+                          value: 120,
+                          child: Text('2 hours before'),
+                        ),
                         DropdownMenuItem(
-                            value: 1440, child: Text('1 day before')),
+                          value: 1440,
+                          child: Text('1 day before'),
+                        ),
                       ],
                       onChanged: (value) {
                         setState(() {
@@ -1683,8 +1709,9 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                   // Device Calendar Sync Switch
                   SwitchListTile(
                     title: const Text('Sync to Device Calendar'),
-                    subtitle:
-                        const Text('Add this event to your device calendar'),
+                    subtitle: const Text(
+                      'Add this event to your device calendar',
+                    ),
                     value: _syncToDeviceCalendar,
                     onChanged: (value) {
                       setState(() {
@@ -1789,8 +1816,9 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
                             ? null
                             : _descriptionController.text,
                         'hasReminder': _hasReminder,
-                        'reminderMinutes':
-                            _hasReminder ? _reminderMinutes : null,
+                        'reminderMinutes': _hasReminder
+                            ? _reminderMinutes
+                            : null,
                         'syncToDeviceCalendar': _syncToDeviceCalendar,
                       });
 

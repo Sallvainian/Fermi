@@ -37,24 +37,20 @@ class _PreviewDialogState extends State<PreviewDialog>
     return Dialog(
       backgroundColor: theme.colorScheme.surface,
       surfaceTintColor: theme.colorScheme.surfaceTint,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         width: screenSize.width * 0.9,
         height: screenSize.height * 0.85,
-        constraints: const BoxConstraints(
-          maxWidth: 1200,
-          minWidth: 600,
-        ),
+        constraints: const BoxConstraints(maxWidth: 1200, minWidth: 600),
         child: Column(
           children: [
             // Header
             Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -160,17 +156,15 @@ class _PreviewDialogState extends State<PreviewDialog>
                 fontWeight: FontWeight.w600,
               ),
             ),
-            subtitle:
-                Text('Grade ${student.gradeLevel ?? ''} • ${student.email}'),
+            subtitle: Text(
+              'Grade ${student.gradeLevel ?? ''} • ${student.email}',
+            ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildStatusChip('Active', Colors.green),
                 const SizedBox(width: AppSpacing.sm),
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: () {},
-                ),
+                IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
               ],
             ),
           ),
@@ -245,11 +239,15 @@ class _PreviewDialogState extends State<PreviewDialog>
                     const SizedBox(height: AppSpacing.lg),
                     Row(
                       children: [
-                        _buildClassInfo(Icons.people,
-                            '${classModel.studentCount} students'),
+                        _buildClassInfo(
+                          Icons.people,
+                          '${classModel.studentCount} students',
+                        ),
                         const SizedBox(width: AppSpacing.md),
                         _buildClassInfo(
-                            Icons.schedule, classModel.schedule ?? 'Daily'),
+                          Icons.schedule,
+                          classModel.schedule ?? 'Daily',
+                        ),
                       ],
                     ),
                     if (classModel.room != null) ...[
@@ -285,13 +283,29 @@ class _PreviewDialogState extends State<PreviewDialog>
             desktopColumns: 4,
             children: [
               _buildSummaryCard(
-                  'Class Average', '87.5%', Icons.school, Colors.blue),
+                'Class Average',
+                '87.5%',
+                Icons.school,
+                Colors.blue,
+              ),
               _buildSummaryCard(
-                  'Top Performer', 'Sarah Johnson', Icons.star, Colors.amber),
+                'Top Performer',
+                'Sarah Johnson',
+                Icons.star,
+                Colors.amber,
+              ),
               _buildSummaryCard(
-                  'Attendance', '94%', Icons.check_circle, Colors.green),
+                'Attendance',
+                '94%',
+                Icons.check_circle,
+                Colors.green,
+              ),
               _buildSummaryCard(
-                  'Assignments', '142', Icons.assignment, Colors.purple),
+                'Assignments',
+                '142',
+                Icons.assignment,
+                Colors.purple,
+              ),
             ],
           ),
 
@@ -420,11 +434,7 @@ class _PreviewDialogState extends State<PreviewDialog>
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+        Icon(icon, size: 16, color: theme.colorScheme.onSurfaceVariant),
         const SizedBox(width: 4),
         Text(
           text,
@@ -437,7 +447,11 @@ class _PreviewDialogState extends State<PreviewDialog>
   }
 
   Widget _buildSummaryCard(
-      String title, String value, IconData icon, Color color) {
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     return Card(
       child: Padding(
@@ -475,7 +489,7 @@ class _PreviewDialogState extends State<PreviewDialog>
       Colors.blue,
       Colors.orange,
       Colors.deepOrange,
-      Colors.red
+      Colors.red,
     ];
 
     return Column(
@@ -540,7 +554,7 @@ class _PreviewDialogState extends State<PreviewDialog>
       {
         'title': 'Math Quiz - Chapter 5',
         'date': 'Jan 18, 2025',
-        'average': '85%'
+        'average': '85%',
       },
       {'title': 'Science Lab Report', 'date': 'Jan 15, 2025', 'average': '92%'},
       {'title': 'English Essay', 'date': 'Jan 12, 2025', 'average': '88%'},
@@ -559,15 +573,15 @@ class _PreviewDialogState extends State<PreviewDialog>
               Text(
                 assessment['average']!,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
               ),
               Text(
                 'Class Average',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

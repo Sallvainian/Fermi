@@ -91,9 +91,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       ),
                     ),
                     onChanged: (value) {
-                      context
-                          .read<NotificationProvider>()
-                          .updateSearchQuery(value);
+                      context.read<NotificationProvider>().updateSearchQuery(
+                        value,
+                      );
                     },
                   ),
                 ),
@@ -109,26 +109,38 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                     onSelected: (value) {
                       setState(() {
                         _selectedFilter = value;
-                        context
-                            .read<NotificationProvider>()
-                            .updateFilter(value);
+                        context.read<NotificationProvider>().updateFilter(
+                          value,
+                        );
                       });
                     },
                     itemBuilder: (context) => [
                       const PopupMenuItem(
-                          value: 'All', child: Text('All Types')),
+                        value: 'All',
+                        child: Text('All Types'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Grades', child: Text('Grades')),
+                        value: 'Grades',
+                        child: Text('Grades'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Assignments', child: Text('Assignments')),
+                        value: 'Assignments',
+                        child: Text('Assignments'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Messages', child: Text('Messages')),
+                        value: 'Messages',
+                        child: Text('Messages'),
+                      ),
                       const PopupMenuItem(
-                          value: 'System', child: Text('System')),
+                        value: 'System',
+                        child: Text('System'),
+                      ),
                     ],
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -193,17 +205,16 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 Icon(
                   Icons.notifications_none,
                   size: 64,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No notifications',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -231,24 +242,23 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 Icon(
                   Icons.mark_email_read,
                   size: 64,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'All caught up!',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'No unread notifications',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -276,17 +286,16 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                 Icon(
                   Icons.school_outlined,
                   size: 64,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurfaceVariant
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   'No academic notifications',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -383,7 +392,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             border: isUnread
                 ? Border.all(
                     color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    width: 1)
+                    width: 1,
+                  )
                 : null,
           ),
           child: Row(
@@ -439,8 +449,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                           child: Text(
                             notification.title,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight:
-                                  isUnread ? FontWeight.bold : FontWeight.w600,
+                              fontWeight: isUnread
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -449,8 +460,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                           _formatNotificationTime(notification.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight:
-                                isUnread ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: isUnread
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -461,8 +473,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                       notification.message,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight:
-                            isUnread ? FontWeight.w500 : FontWeight.normal,
+                        fontWeight: isUnread
+                            ? FontWeight.w500
+                            : FontWeight.normal,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -617,7 +630,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       // Navigate to specific assignment's grades
       if (isTeacher) {
         context.go(
-            '/teacher/gradebook?assignmentId=${actionData['assignmentId']}');
+          '/teacher/gradebook?assignmentId=${actionData['assignmentId']}',
+        );
       } else {
         // For students, just go to their grades page
         context.go('/student/grades');
@@ -684,7 +698,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
   }
 
   void _handleNotificationAction(
-      String action, NotificationModel notification) {
+    String action,
+    NotificationModel notification,
+  ) {
     final provider = context.read<NotificationProvider>();
 
     switch (action) {
@@ -713,8 +729,9 @@ class _NotificationsScreenState extends State<NotificationsScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Notification'),
-        content:
-            const Text('Are you sure you want to delete this notification?'),
+        content: const Text(
+          'Are you sure you want to delete this notification?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -723,13 +740,11 @@ class _NotificationsScreenState extends State<NotificationsScreen>
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              context
-                  .read<NotificationProvider>()
-                  .deleteNotification(notification.id);
+              context.read<NotificationProvider>().deleteNotification(
+                notification.id,
+              );
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Notification deleted'),
-                ),
+                const SnackBar(content: Text('Notification deleted')),
               );
             },
             child: const Text('Delete'),
@@ -787,8 +802,9 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -829,8 +845,9 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                   const SizedBox(height: 12),
                   SwitchListTile(
                     title: const Text('Push Notifications'),
-                    subtitle:
-                        const Text('Receive notifications on this device'),
+                    subtitle: const Text(
+                      'Receive notifications on this device',
+                    ),
                     value: _pushNotifications,
                     onChanged: (value) {
                       setState(() {
@@ -881,8 +898,9 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
                   ),
                   SwitchListTile(
                     title: const Text('Message Notifications'),
-                    subtitle:
-                        const Text('New messages from teachers and staff'),
+                    subtitle: const Text(
+                      'New messages from teachers and staff',
+                    ),
                     value: _messageNotifications,
                     onChanged: (value) {
                       setState(() {

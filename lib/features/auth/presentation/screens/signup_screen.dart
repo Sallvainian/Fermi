@@ -66,7 +66,7 @@ class _SignupScreenState extends State<SignupScreen> {
           _isTeacherRole = role == 'teacher';
         });
       } catch (e) {
-        debugPrint('Error parsing role parameter: $e');
+        LoggerService.error('Error parsing role parameter: $e', tag: 'SignupScreen');
       }
     });
   }
@@ -129,7 +129,11 @@ class _SignupScreenState extends State<SignupScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
-                24.0, 24.0, 24.0, 48.0), // Extra bottom padding
+              24.0,
+              24.0,
+              24.0,
+              48.0,
+            ), // Extra bottom padding
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
               child: Column(
@@ -215,9 +219,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           obscureText: _obscurePassword,
                           prefixIcon: Icons.lock_outline,
                           suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined),
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
@@ -241,9 +247,11 @@ class _SignupScreenState extends State<SignupScreen> {
                           obscureText: _obscureConfirmPassword,
                           prefixIcon: Icons.lock_outline,
                           suffixIcon: IconButton(
-                            icon: Icon(_obscureConfirmPassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined),
+                            icon: Icon(
+                              _obscureConfirmPassword
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
+                            ),
                             onPressed: () {
                               setState(() {
                                 _obscureConfirmPassword =

@@ -81,19 +81,22 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
           .orderBy('createdAt', descending: false)
           .snapshots()
           .listen((snapshot) {
-        if (mounted) {
-          setState(() {
-            _replies = snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList();
+            if (mounted) {
+              setState(() {
+                _replies = snapshot.docs.map((doc) {
+                  final data = doc.data();
+                  data['id'] = doc.id;
+                  return data;
+                }).toList();
+              });
+            }
           });
-        }
-      });
     } catch (e) {
-      LoggerService.error('Error loading thread',
-          tag: 'ThreadDetailScreen', error: e);
+      LoggerService.error(
+        'Error loading thread',
+        tag: 'ThreadDetailScreen',
+        error: e,
+      );
       setState(() {
         _isLoading = false;
       });
@@ -124,11 +127,11 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
           .doc(widget.threadId)
           .collection('replies')
           .add({
-        'content': text,
-        'authorId': userId,
-        'authorName': authorName,
-        'createdAt': Timestamp.now(),
-      });
+            'content': text,
+            'authorId': userId,
+            'authorName': authorName,
+            'createdAt': Timestamp.now(),
+          });
 
       // Update reply count
       await _firestore
@@ -136,9 +139,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
           .doc(widget.boardId)
           .collection('threads')
           .doc(widget.threadId)
-          .update({
-        'replyCount': FieldValue.increment(1),
-      });
+          .update({'replyCount': FieldValue.increment(1)});
 
       _replyController.clear();
       if (mounted) {
@@ -151,8 +152,11 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
         );
       }
     } catch (e) {
-      LoggerService.error('Failed to add reply',
-          tag: 'ThreadDetailScreen', error: e);
+      LoggerService.error(
+        'Failed to add reply',
+        tag: 'ThreadDetailScreen',
+        error: e,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -176,17 +180,13 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
     final dateFormat = DateFormat.yMMMd().add_jm();
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_thread == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Thread')),
-        body: const Center(
-          child: Text('Thread not found'),
-        ),
+        body: const Center(child: Text('Thread not found')),
       );
     }
 
@@ -201,7 +201,8 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
         children: [
           Expanded(
             child: ListView(
-              physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
+              physics:
+                  const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
               padding: const EdgeInsets.all(16),
               children: [
                 // Thread header
@@ -259,7 +260,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                             Icon(
                               Icons.access_time,
                               size: 14,
-                              color: theme.brightness == Brightness.dark 
+                              color: theme.brightness == Brightness.dark
                                   ? Colors.white70
                                   : theme.colorScheme.outline,
                             ),
@@ -267,7 +268,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                             Text(
                               dateFormat.format(_thread!.createdAt),
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.brightness == Brightness.dark 
+                                color: theme.brightness == Brightness.dark
                                     ? Colors.white70
                                     : theme.colorScheme.outline,
                               ),
@@ -288,13 +289,15 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  ..._replies.map((reply) => _ReplyCard(
-                        reply: reply,
-                        dateFormat: dateFormat,
-                        boardId: widget.boardId,
-                        threadId: widget.threadId,
-                        onDeleted: _loadThreadAndReplies,
-                      )),
+                  ..._replies.map(
+                    (reply) => _ReplyCard(
+                      reply: reply,
+                      dateFormat: dateFormat,
+                      boardId: widget.boardId,
+                      threadId: widget.threadId,
+                      onDeleted: _loadThreadAndReplies,
+                    ),
+                  ),
                 ] else ...[
                   Center(
                     child: Padding(
@@ -372,8 +375,9 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.5),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
               ),
               child: Row(
                 children: [
@@ -412,7 +416,7 @@ class _ReplyCard extends StatefulWidget {
     required this.threadId,
     required this.onDeleted,
   });
-  
+
   @override
   State<_ReplyCard> createState() => _ReplyCardState();
 }
@@ -421,18 +425,18 @@ class _ReplyCardState extends State<_ReplyCard> {
   bool _isLiked = false;
   int _likeCount = 0;
   final dateFormat = DateFormat('MMM d, h:mm a');
-  
+
   @override
   void initState() {
     super.initState();
     _likeCount = widget.reply['likeCount'] ?? 0;
     _checkIfLiked();
   }
-  
+
   Future<void> _checkIfLiked() async {
     final currentUserId = context.read<AuthProvider>().firebaseUser?.uid ?? '';
     if (currentUserId.isEmpty) return;
-    
+
     try {
       final likeDoc = await FirebaseFirestore.instance
           .collection('discussion_boards')
@@ -444,7 +448,7 @@ class _ReplyCardState extends State<_ReplyCard> {
           .collection('likes')
           .doc(currentUserId)
           .get();
-      
+
       if (mounted) {
         setState(() {
           _isLiked = likeDoc.exists;
@@ -454,11 +458,11 @@ class _ReplyCardState extends State<_ReplyCard> {
       LoggerService.debug('Failed to check like status: $e', tag: '_ReplyCard');
     }
   }
-  
+
   Future<void> _toggleLike() async {
     final currentUserId = context.read<AuthProvider>().firebaseUser?.uid ?? '';
     if (currentUserId.isEmpty) return;
-    
+
     try {
       final replyRef = FirebaseFirestore.instance
           .collection('discussion_boards')
@@ -467,15 +471,13 @@ class _ReplyCardState extends State<_ReplyCard> {
           .doc(widget.threadId)
           .collection('replies')
           .doc(widget.reply['id']);
-      
+
       final likeRef = replyRef.collection('likes').doc(currentUserId);
-      
+
       if (_isLiked) {
         // Unlike
         await likeRef.delete();
-        await replyRef.update({
-          'likeCount': FieldValue.increment(-1),
-        });
+        await replyRef.update({'likeCount': FieldValue.increment(-1)});
         setState(() {
           _isLiked = false;
           _likeCount--;
@@ -486,9 +488,7 @@ class _ReplyCardState extends State<_ReplyCard> {
           'userId': currentUserId,
           'likedAt': FieldValue.serverTimestamp(),
         });
-        await replyRef.update({
-          'likeCount': FieldValue.increment(1),
-        });
+        await replyRef.update({'likeCount': FieldValue.increment(1)});
         setState(() {
           _isLiked = true;
           _likeCount++;
@@ -505,7 +505,7 @@ class _ReplyCardState extends State<_ReplyCard> {
       }
     }
   }
-  
+
   Future<void> _deleteReply(BuildContext context) async {
     try {
       await FirebaseFirestore.instance
@@ -516,23 +516,19 @@ class _ReplyCardState extends State<_ReplyCard> {
           .collection('replies')
           .doc(widget.reply['id'])
           .delete();
-      
+
       // Update reply count
       await FirebaseFirestore.instance
           .collection('discussion_boards')
           .doc(widget.boardId)
           .collection('threads')
           .doc(widget.threadId)
-          .update({
-        'replyCount': FieldValue.increment(-1),
-      });
-      
+          .update({'replyCount': FieldValue.increment(-1)});
+
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Reply deleted'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Reply deleted')));
       }
       widget.onDeleted();
     } catch (e) {
@@ -546,7 +542,7 @@ class _ReplyCardState extends State<_ReplyCard> {
       }
     }
   }
-  
+
   Future<bool> _showDeleteDialog(BuildContext context) async {
     final result = await showDialog<bool>(
       context: context,
@@ -562,9 +558,7 @@ class _ReplyCardState extends State<_ReplyCard> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -610,7 +604,7 @@ class _ReplyCardState extends State<_ReplyCard> {
               Text(
                 dateFormat.format(createdAt),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.brightness == Brightness.dark 
+                  color: theme.brightness == Brightness.dark
                       ? Colors.white70
                       : theme.colorScheme.outline,
                 ),
@@ -643,19 +637,26 @@ class _ReplyCardState extends State<_ReplyCard> {
                 onTap: _toggleLike,
                 borderRadius: BorderRadius.circular(20),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       Icon(
                         _isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
                         size: 16,
-                        color: _isLiked ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                        color: _isLiked
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _likeCount.toString(),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: _isLiked ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                          color: _isLiked
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -681,10 +682,7 @@ class _ReplyCardState extends State<_ReplyCard> {
             color: Colors.red,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.delete, color: Colors.white),
         ),
         confirmDismiss: (direction) async {
           return await _showDeleteDialog(context);
@@ -709,10 +707,7 @@ class _ReplyCardState extends State<_ReplyCard> {
         ),
       );
     }
-    
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: cardContent,
-    );
+
+    return Card(margin: const EdgeInsets.only(bottom: 8), child: cardContent);
   }
 }

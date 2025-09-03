@@ -21,7 +21,7 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
   Future<void> loadStudentAssignments() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -34,7 +34,7 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
           .collection('classes')
           .where('studentIds', arrayContains: user.uid)
           .get();
-      
+
       if (classesSnapshot.docs.isEmpty) {
         _assignments = [];
         _error = null;
@@ -58,8 +58,10 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
         data['id'] = doc.id;
         // Add computed fields
         final dueDate = data['dueDate'];
-        data['isOverdue'] = dueDate != null && 
-            (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now());
+        data['isOverdue'] =
+            dueDate != null &&
+            (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime)
+                .isBefore(DateTime.now());
         data['isSubmitted'] = false; // Will check submissions collection
         data['isGraded'] = false;
         return data;
@@ -72,7 +74,7 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
             .where('assignmentId', isEqualTo: assignment['id'])
             .where('studentId', isEqualTo: user.uid)
             .get();
-        
+
         if (submissionSnapshot.docs.isNotEmpty) {
           final submission = submissionSnapshot.docs.first.data();
           assignment['isSubmitted'] = true;
@@ -86,7 +88,7 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
           }
         }
       }
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -101,18 +103,19 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
   Future<void> loadAssignmentDetails(String assignmentId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final doc = await _firestore
           .collection('assignments')
           .doc(assignmentId)
           .get();
-      
+
       if (doc.exists) {
         _currentAssignment = doc.data()!;
         _currentAssignment!['id'] = doc.id;
-        _currentAssignment!['assignment'] = _currentAssignment; // Nested reference
-        
+        _currentAssignment!['assignment'] =
+            _currentAssignment; // Nested reference
+
         // Check for submission
         final user = _auth.currentUser;
         if (user != null) {
@@ -121,29 +124,34 @@ class SimpleStudentAssignmentProvider with ChangeNotifier {
               .where('assignmentId', isEqualTo: assignmentId)
               .where('studentId', isEqualTo: user.uid)
               .get();
-          
+
           if (submissionSnapshot.docs.isNotEmpty) {
             final submission = submissionSnapshot.docs.first.data();
             _currentAssignment!['isSubmitted'] = true;
             _currentAssignment!['submission'] = submission;
             _currentAssignment!['isGraded'] = submission['grade'] != null;
             if (submission['grade'] != null) {
-              _currentAssignment!['earnedPoints'] = submission['grade']['points'];
-              _currentAssignment!['percentage'] = submission['grade']['percentage'];
-              _currentAssignment!['letterGrade'] = submission['grade']['letter'];
+              _currentAssignment!['earnedPoints'] =
+                  submission['grade']['points'];
+              _currentAssignment!['percentage'] =
+                  submission['grade']['percentage'];
+              _currentAssignment!['letterGrade'] =
+                  submission['grade']['letter'];
               _currentAssignment!['feedback'] = submission['grade']['feedback'];
             }
           } else {
             _currentAssignment!['isSubmitted'] = false;
             _currentAssignment!['isGraded'] = false;
           }
-          
+
           final dueDate = _currentAssignment!['dueDate'];
-          _currentAssignment!['isOverdue'] = dueDate != null && 
-              (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now());
+          _currentAssignment!['isOverdue'] =
+              dueDate != null &&
+              (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime)
+                  .isBefore(DateTime.now());
         }
       }
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();

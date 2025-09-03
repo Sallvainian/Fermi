@@ -99,19 +99,31 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen>
                     },
                     itemBuilder: (context) => [
                       const PopupMenuItem(
-                          value: 'All', child: Text('All Messages')),
+                        value: 'All',
+                        child: Text('All Messages'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Unread', child: Text('Unread')),
+                        value: 'Unread',
+                        child: Text('Unread'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Starred', child: Text('Starred')),
+                        value: 'Starred',
+                        child: Text('Starred'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Students', child: Text('From Students')),
+                        value: 'Students',
+                        child: Text('From Students'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Parents', child: Text('From Parents')),
+                        value: 'Parents',
+                        child: Text('From Parents'),
+                      ),
                     ],
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -324,8 +336,9 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen>
                           _formatMessageTime(message['time']),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight:
-                                isUnread ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: isUnread
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -335,8 +348,9 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen>
                     Text(
                       message['subject'],
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight:
-                            isUnread ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight: isUnread
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -425,10 +439,7 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen>
 class MessageDetailSheet extends StatelessWidget {
   final Map<String, dynamic> message;
 
-  const MessageDetailSheet({
-    super.key,
-    required this.message,
-  });
+  const MessageDetailSheet({super.key, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -454,21 +465,22 @@ class MessageDetailSheet extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.3),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.3,
+                    ),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               // Header
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(
-                      color: theme.colorScheme.outlineVariant,
-                    ),
+                    bottom: BorderSide(color: theme.colorScheme.outlineVariant),
                   ),
                 ),
                 child: Row(
@@ -525,9 +537,7 @@ class MessageDetailSheet extends StatelessWidget {
                       Row(
                         children: [
                           CircleAvatar(
-                            child: Text(
-                              message['sender'][0].toUpperCase(),
-                            ),
+                            child: Text(message['sender'][0].toUpperCase()),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -559,8 +569,7 @@ class MessageDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       // Message Body
-                      Text(
-                        '''Hi Mr. Smith,
+                      Text('''Hi Mr. Smith,
 
 I'm having trouble understanding problem 5 from the homework assignment. I've tried following the steps we learned in class, but I keep getting a different answer than what's in the answer key.
 
@@ -569,9 +578,7 @@ Could you please help me understand where I might be going wrong? I've attached 
 Thank you for your time!
 
 Best regards,
-${message['sender']}''',
-                        style: theme.textTheme.bodyLarge,
-                      ),
+${message['sender']}''', style: theme.textTheme.bodyLarge),
 
                       if (message['hasAttachment']) ...[
                         const SizedBox(height: 24),
@@ -596,7 +603,8 @@ ${message['sender']}''',
                                     Text(
                                       'homework_problem_5.pdf',
                                       style: TextStyle(
-                                          fontWeight: FontWeight.w600),
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                     Text(
                                       '245 KB',
@@ -676,7 +684,7 @@ ${message['sender']}''',
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     final hour = date.hour > 12 ? date.hour - 12 : date.hour;
     final amPm = date.hour >= 12 ? 'PM' : 'AM';
@@ -684,7 +692,9 @@ ${message['sender']}''',
   }
 
   void _showReplyMessage(
-      BuildContext context, Map<String, dynamic> originalMessage) {
+    BuildContext context,
+    Map<String, dynamic> originalMessage,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -697,14 +707,15 @@ ${message['sender']}''',
   }
 
   void _showForwardMessage(
-      BuildContext context, Map<String, dynamic> originalMessage) {
+    BuildContext context,
+    Map<String, dynamic> originalMessage,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ComposeMessageSheet(
-        subject: 'Fwd: ${originalMessage['subject']}',
-      ),
+      builder: (context) =>
+          ComposeMessageSheet(subject: 'Fwd: ${originalMessage['subject']}'),
     );
   }
 }
@@ -714,11 +725,7 @@ class ComposeMessageSheet extends StatefulWidget {
   final String? recipient;
   final String? subject;
 
-  const ComposeMessageSheet({
-    super.key,
-    this.recipient,
-    this.subject,
-  });
+  const ComposeMessageSheet({super.key, this.recipient, this.subject});
 
   @override
   State<ComposeMessageSheet> createState() => _ComposeMessageSheetState();
@@ -768,8 +775,9 @@ class _ComposeMessageSheetState extends State<ComposeMessageSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -899,9 +907,7 @@ class _ComposeMessageSheetState extends State<ComposeMessageSheet> {
                       // Save as draft
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Message saved as draft'),
-                        ),
+                        const SnackBar(content: Text('Message saved as draft')),
                       );
                     },
                     style: OutlinedButton.styleFrom(

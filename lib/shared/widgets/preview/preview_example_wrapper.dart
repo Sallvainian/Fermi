@@ -40,7 +40,7 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
 
   /// Builder function to render the data
   final Widget Function(BuildContext context, List<T> data, bool isExample)
-      builder;
+  builder;
 
   /// Whether data is currently loading
   final bool isLoading;
@@ -97,13 +97,16 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
         return FadeTransition(
           opacity: animation,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.0, 0.1),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            )),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(0.0, 0.1),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           ),
         );
@@ -193,9 +196,7 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
             Positioned(
               top: 8,
               right: 8,
-              child: ExampleBadge(
-                onTap: onExampleTap,
-              ),
+              child: ExampleBadge(onTap: onExampleTap),
             ),
         ],
       ),
@@ -229,8 +230,8 @@ class PreviewExampleWrapper<T> extends StatelessWidget {
             Text(
               'Create your first item to get started',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -244,10 +245,7 @@ class _InteractionGuard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
 
-  const _InteractionGuard({
-    required this.child,
-    this.onTap,
-  });
+  const _InteractionGuard({required this.child, this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -5,11 +5,7 @@ class SplashScreen extends StatelessWidget {
   final String? message;
   final double? progress;
 
-  const SplashScreen({
-    super.key,
-    this.message,
-    this.progress,
-  });
+  const SplashScreen({super.key, this.message, this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -22,11 +18,7 @@ class SplashScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // App logo or icon
-              const Icon(
-                Icons.school,
-                size: 80,
-                color: Color(0xFF2196F3),
-              ),
+              const Icon(Icons.school, size: 80, color: Color(0xFF2196F3)),
               const SizedBox(height: 24),
 
               // App title

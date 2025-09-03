@@ -18,33 +18,37 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
   bool _obscurePassword = true;
   int _failedAttempts = 0;
   static const int _maxAttempts = 3;
-  
+
   // Hash of teacher password - you can change this password by updating the hash
-  // Default password: "educator2024" 
+  // Default password: "educator2024"
   // To generate new hash: print(sha256.convert(utf8.encode('your_new_password')).toString());
-  static const String _teacherPasswordHash = '6cd7ac617ec119dfbc5cee823bf710b7753512a18fa3608b0c51645ea818f2e2';
-  
+  static const String _teacherPasswordHash =
+      '6cd7ac617ec119dfbc5cee823bf710b7753512a18fa3608b0c51645ea818f2e2';
+
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
     var digest = sha256.convert(bytes);
     return digest.toString();
   }
-  
+
   Future<void> _verifyPassword() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     final enteredPassword = _passwordController.text;
     final enteredHash = _hashPassword(enteredPassword);
-    
+
     // Check if password is correct
     if (enteredHash == _teacherPasswordHash) {
       // Success - save teacher verification status
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('teacher_verified', true);
-      await prefs.setInt('teacher_verify_time', DateTime.now().millisecondsSinceEpoch);
-      
+      await prefs.setInt(
+        'teacher_verify_time',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+
       // Navigate to teacher login
       if (mounted) {
         context.go('/auth/login?role=teacher');
@@ -53,16 +57,18 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
       // Failed attempt
       _failedAttempts++;
       _passwordController.clear();
-      
+
       if (_failedAttempts >= _maxAttempts) {
         // Too many failed attempts - go back to role selection
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('selected_role');
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Too many failed attempts. Please select your role again.'),
+              content: const Text(
+                'Too many failed attempts. Please select your role again.',
+              ),
               backgroundColor: Colors.red.shade700,
               duration: const Duration(seconds: 3),
             ),
@@ -72,14 +78,16 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
       } else {
         // Show error with remaining attempts
         if (mounted) {
-          _showError('Incorrect password. ${_maxAttempts - _failedAttempts} attempts remaining.');
+          _showError(
+            'Incorrect password. ${_maxAttempts - _failedAttempts} attempts remaining.',
+          );
         }
       }
     }
-    
+
     setState(() => _isLoading = false);
   }
-  
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -89,7 +97,7 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
       ),
     );
   }
-  
+
   void _goBack() {
     // Clear selected role and go back to role selection
     SharedPreferences.getInstance().then((prefs) {
@@ -97,17 +105,17 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
     });
     context.go('/auth/role-selection');
   }
-  
+
   @override
   void dispose() {
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
@@ -132,12 +140,14 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Teacher Icon
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.secondary.withValues(alpha: 0.1),
+                        color: theme.colorScheme.secondary.withValues(
+                          alpha: 0.1,
+                        ),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -147,7 +157,7 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Title
                     Text(
                       'Teacher Verification',
@@ -157,16 +167,18 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    
+
                     Text(
                       'Enter the teacher password to continue',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
@@ -178,7 +190,9 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
                         prefixIcon: const Icon(Icons.lock_person),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                           ),
                           onPressed: () {
                             setState(() {
@@ -206,7 +220,7 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
                       autofocus: true,
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Submit Button
                     ElevatedButton(
                       onPressed: _isLoading ? null : _verifyPassword,
@@ -229,22 +243,23 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
                             )
                           : const Text(
                               'Verify & Continue',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Cancel Button
                     TextButton(
                       onPressed: _isLoading ? null : _goBack,
                       child: Text(
                         'Not a teacher? Go back',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                        ),
+                        style: TextStyle(color: theme.colorScheme.primary),
                       ),
                     ),
-                    
+
                     if (_failedAttempts > 0) ...[
                       const SizedBox(height: 16),
                       Container(
@@ -258,7 +273,11 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.warning, color: Colors.orange, size: 20),
+                            const Icon(
+                              Icons.warning,
+                              color: Colors.orange,
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(

@@ -8,10 +8,7 @@ import '../providers/class_provider.dart';
 class EditClassDialog extends StatefulWidget {
   final ClassModel classModel;
 
-  const EditClassDialog({
-    super.key,
-    required this.classModel,
-  });
+  const EditClassDialog({super.key, required this.classModel});
 
   @override
   State<EditClassDialog> createState() => _EditClassDialogState();
@@ -33,11 +30,13 @@ class _EditClassDialogState extends State<EditClassDialog> {
     super.initState();
     _nameController = TextEditingController(text: widget.classModel.name);
     _subjectController = TextEditingController(text: widget.classModel.subject);
-    _gradeLevelController =
-        TextEditingController(text: widget.classModel.gradeLevel);
+    _gradeLevelController = TextEditingController(
+      text: widget.classModel.gradeLevel,
+    );
     _roomController = TextEditingController(text: widget.classModel.room ?? '');
-    _scheduleController =
-        TextEditingController(text: widget.classModel.schedule ?? '');
+    _scheduleController = TextEditingController(
+      text: widget.classModel.schedule ?? '',
+    );
     _maxStudentsController = TextEditingController(
       text: widget.classModel.maxStudents?.toString() ?? '',
     );
@@ -162,9 +161,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                   prefixIcon: Icon(Icons.people),
                 ),
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 validator: (value) {
                   if (value != null && value.isNotEmpty) {
                     final number = int.tryParse(value);
@@ -205,9 +202,7 @@ class _EditClassDialogState extends State<EditClassDialog> {
                           ),
                           Text(
                             widget.classModel.enrollmentCode ?? 'No Code',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.2,
@@ -356,8 +351,9 @@ class _EditClassDialogState extends State<EditClassDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Class "${widget.classModel.name}" deleted successfully'),
+            content: Text(
+              'Class "${widget.classModel.name}" deleted successfully',
+            ),
             backgroundColor: Colors.green,
           ),
         );

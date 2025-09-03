@@ -19,13 +19,13 @@ class AssignmentService {
   AssignmentService({
     FirebaseFirestore? firestore,
     NotificationService? notificationService,
-  })  : _repository = FirestoreRepository<Assignment>(
-          collectionPath: 'assignments',
-          firestore: firestore,
-          fromFirestore: (doc) => Assignment.fromFirestore(doc),
-          toFirestore: (model) => model.toFirestore(),
-        ),
-        _notificationService = notificationService;
+  }) : _repository = FirestoreRepository<Assignment>(
+         collectionPath: 'assignments',
+         firestore: firestore,
+         fromFirestore: (doc) => Assignment.fromFirestore(doc),
+         toFirestore: (model) => model.toFirestore(),
+       ),
+       _notificationService = notificationService;
 
   /// Creates a new assignment with notification scheduling
   Future<Assignment> createAssignment(Assignment assignment) async {
@@ -33,20 +33,24 @@ class AssignmentService {
       () async {
         final id = await _repository.create(assignment.toFirestore());
         final createdAssignment = assignment.copyWith(id: id);
-        
+
         // Schedule notification reminder for due date if service is available
         if (_notificationService != null) {
-          await _notificationService.scheduleAssignmentReminder(createdAssignment);
+          await _notificationService.scheduleAssignmentReminder(
+            createdAssignment,
+          );
         }
-        
+
         LoggerService.info(
-            'Created assignment: ${createdAssignment.title} for class ${createdAssignment.classId}');
+          'Created assignment: ${createdAssignment.title} for class ${createdAssignment.classId}',
+        );
         return createdAssignment;
       },
       config: RetryConfigs.standard,
       onRetry: (attempt, delay, error) {
         LoggerService.warning(
-            'Retrying assignment creation (attempt $attempt): ${error.toString()}');
+          'Retrying assignment creation (attempt $attempt): ${error.toString()}',
+        );
       },
     );
   }
@@ -58,69 +62,74 @@ class AssignmentService {
 
   /// Updates an existing assignment
   Future<void> updateAssignment(Assignment assignment) async {
-    await RetryService.withRetry(
-      () async {
-        await _repository.update(assignment.id, assignment.toFirestore());
-        LoggerService.info('Updated assignment: ${assignment.title}');
-      },
-      config: RetryConfigs.standard,
-    );
+    await RetryService.withRetry(() async {
+      await _repository.update(assignment.id, assignment.toFirestore());
+      LoggerService.info('Updated assignment: ${assignment.title}');
+    }, config: RetryConfigs.standard);
   }
 
   /// Deletes an assignment and cascades to related grades with transaction safety
   Future<void> deleteAssignment(String assignmentId) async {
     await _repository.runTransaction<void>((transaction, collection) async {
       // First, verify the assignment exists
-      final assignmentDoc = await transaction.get(
-        collection.doc(assignmentId),
-      );
-      
+      final assignmentDoc = await transaction.get(collection.doc(assignmentId));
+
       if (!assignmentDoc.exists) {
         throw Exception('Assignment not found: $assignmentId');
       }
-      
+
       // Fetch all grades for this assignment
-      final gradesQuery = await _repository.getCollectionReference('grades')
+      final gradesQuery = await _repository
+          .getCollectionReference('grades')
           .where('assignmentId', isEqualTo: assignmentId)
           .get();
-      
+
       // Delete all related grades within the transaction
       for (final gradeDoc in gradesQuery.docs) {
         transaction.delete(gradeDoc.reference);
       }
-      
+
       // Finally, delete the assignment itself
       transaction.delete(assignmentDoc.reference);
-      
+
       LoggerService.info(
-          'Deleted assignment $assignmentId and ${gradesQuery.docs.length} related grades');
+        'Deleted assignment $assignmentId and ${gradesQuery.docs.length} related grades',
+      );
     });
   }
 
   /// Streams published assignments for a specific class
   Stream<List<Assignment>> getAssignmentsForClass(String classId) {
-    return _repository.streamList((col) => col
-        .where('classId', isEqualTo: classId)
-        .where('isPublished', isEqualTo: true)
-        .orderBy('dueDate', descending: false));
+    return _repository.streamList(
+      (col) => col
+          .where('classId', isEqualTo: classId)
+          .where('isPublished', isEqualTo: true)
+          .orderBy('dueDate', descending: false),
+    );
   }
 
   /// Streams all assignments created by a specific teacher
   Stream<List<Assignment>> getAssignmentsForTeacher(String teacherId) {
-    return _repository.streamList((col) => col
-        .where('teacherId', isEqualTo: teacherId)
-        .orderBy('createdAt', descending: true));
+    return _repository.streamList(
+      (col) => col
+          .where('teacherId', isEqualTo: teacherId)
+          .orderBy('createdAt', descending: true),
+    );
   }
 
   /// Gets assignments for a specific student based on their classes
   Future<List<Assignment>> getAssignmentsForStudent(
-      String studentId, List<String> classIds) async {
+    String studentId,
+    List<String> classIds,
+  ) async {
     if (classIds.isEmpty) return [];
-    
-    return await _repository.getList((col) => col
-        .where('classId', whereIn: classIds)
-        .where('isPublished', isEqualTo: true)
-        .orderBy('dueDate', descending: false));
+
+    return await _repository.getList(
+      (col) => col
+          .where('classId', whereIn: classIds)
+          .where('isPublished', isEqualTo: true)
+          .orderBy('dueDate', descending: false),
+    );
   }
 
   /// Publishes a draft assignment
@@ -147,13 +156,15 @@ class AssignmentService {
     await RetryService.withRetry(
       () async {
         final now = DateTime.now();
-        
-        final assignments = await _repository.getList((col) => col
-            .where('isPublished', isEqualTo: false)
-            .where('publishAt', isLessThanOrEqualTo: Timestamp.fromDate(now)));
-        
+
+        final assignments = await _repository.getList(
+          (col) => col
+              .where('isPublished', isEqualTo: false)
+              .where('publishAt', isLessThanOrEqualTo: Timestamp.fromDate(now)),
+        );
+
         if (assignments.isEmpty) return;
-        
+
         final updates = <String, Map<String, dynamic>>{};
         for (final assignment in assignments) {
           updates[assignment.id] = {
@@ -162,78 +173,93 @@ class AssignmentService {
             'updatedAt': FieldValue.serverTimestamp(),
           };
         }
-        
+
         await _repository.batchUpdate(updates);
-        LoggerService.info('Published ${assignments.length} scheduled assignments');
+        LoggerService.info(
+          'Published ${assignments.length} scheduled assignments',
+        );
       },
-      config: RetryConfigs.aggressive,  // More retries for scheduled jobs
+      config: RetryConfigs.aggressive, // More retries for scheduled jobs
       onRetry: (attempt, delay, error) {
         LoggerService.warning(
-            'Retrying scheduled assignment publishing (attempt $attempt): ${error.toString()}');
+          'Retrying scheduled assignment publishing (attempt $attempt): ${error.toString()}',
+        );
       },
     );
   }
 
   /// Gets upcoming assignments for a class
-  Future<List<Assignment>> getUpcomingAssignments(String classId, {int days = 7}) async {
+  Future<List<Assignment>> getUpcomingAssignments(
+    String classId, {
+    int days = 7,
+  }) async {
     final cutoffDate = DateTime.now().add(Duration(days: days));
-    
-    return await _repository.getList((col) => col
-        .where('classId', isEqualTo: classId)
-        .where('isPublished', isEqualTo: true)
-        .where('dueDate', isLessThanOrEqualTo: Timestamp.fromDate(cutoffDate))
-        .where('dueDate', isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now()))
-        .orderBy('dueDate'));
+
+    return await _repository.getList(
+      (col) => col
+          .where('classId', isEqualTo: classId)
+          .where('isPublished', isEqualTo: true)
+          .where('dueDate', isLessThanOrEqualTo: Timestamp.fromDate(cutoffDate))
+          .where(
+            'dueDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now()),
+          )
+          .orderBy('dueDate'),
+    );
   }
 
   /// Gets overdue assignments for a class
   Future<List<Assignment>> getOverdueAssignments(String classId) async {
-    return await _repository.getList((col) => col
-        .where('classId', isEqualTo: classId)
-        .where('isPublished', isEqualTo: true)
-        .where('dueDate', isLessThan: Timestamp.fromDate(DateTime.now()))
-        .where('status', isEqualTo: AssignmentStatus.active.name)
-        .orderBy('dueDate', descending: true));
+    return await _repository.getList(
+      (col) => col
+          .where('classId', isEqualTo: classId)
+          .where('isPublished', isEqualTo: true)
+          .where('dueDate', isLessThan: Timestamp.fromDate(DateTime.now()))
+          .where('status', isEqualTo: AssignmentStatus.active.name)
+          .orderBy('dueDate', descending: true),
+    );
   }
 
   /// Archives completed assignments older than specified days
   Future<void> archiveOldAssignments({int daysOld = 30}) async {
-    await RetryService.withRetry(
-      () async {
-        final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
-        
-        final assignments = await _repository.getList((col) => col
+    await RetryService.withRetry(() async {
+      final cutoffDate = DateTime.now().subtract(Duration(days: daysOld));
+
+      final assignments = await _repository.getList(
+        (col) => col
             .where('status', isEqualTo: AssignmentStatus.completed.name)
-            .where('dueDate', isLessThan: Timestamp.fromDate(cutoffDate)));
-        
-        if (assignments.isEmpty) return;
-        
-        final updates = <String, Map<String, dynamic>>{};
-        for (final assignment in assignments) {
-          updates[assignment.id] = {
-            'status': AssignmentStatus.archived.name,
-            'updatedAt': FieldValue.serverTimestamp(),
-          };
-        }
-        
-        await _repository.batchUpdate(updates);
-        LoggerService.info('Archived ${assignments.length} old assignments');
-      },
-      config: RetryConfigs.standard,
-    );
+            .where('dueDate', isLessThan: Timestamp.fromDate(cutoffDate)),
+      );
+
+      if (assignments.isEmpty) return;
+
+      final updates = <String, Map<String, dynamic>>{};
+      for (final assignment in assignments) {
+        updates[assignment.id] = {
+          'status': AssignmentStatus.archived.name,
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+      }
+
+      await _repository.batchUpdate(updates);
+      LoggerService.info('Archived ${assignments.length} old assignments');
+    }, config: RetryConfigs.standard);
   }
 
   /// Gets assignment statistics for a teacher
-  Future<Map<String, dynamic>> getTeacherAssignmentStats(String teacherId) async {
-    final assignments = await _repository.getList((col) => col
-        .where('teacherId', isEqualTo: teacherId));
-    
+  Future<Map<String, dynamic>> getTeacherAssignmentStats(
+    String teacherId,
+  ) async {
+    final assignments = await _repository.getList(
+      (col) => col.where('teacherId', isEqualTo: teacherId),
+    );
+
     final now = DateTime.now();
     int activeCount = 0;
     int overdueCount = 0;
     int upcomingCount = 0;
     int draftCount = 0;
-    
+
     for (final assignment in assignments) {
       if (assignment.status == AssignmentStatus.draft) {
         draftCount++;
@@ -246,7 +272,7 @@ class AssignmentService {
         }
       }
     }
-    
+
     return {
       'totalAssignments': assignments.length,
       'activeAssignments': activeCount,

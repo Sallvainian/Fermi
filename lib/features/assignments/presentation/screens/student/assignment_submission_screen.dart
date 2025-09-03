@@ -14,10 +14,7 @@ import '../../../../../shared/widgets/common/responsive_layout.dart';
 class AssignmentSubmissionScreen extends StatefulWidget {
   final String assignmentId;
 
-  const AssignmentSubmissionScreen({
-    super.key,
-    required this.assignmentId,
-  });
+  const AssignmentSubmissionScreen({super.key, required this.assignmentId});
 
   @override
   State<AssignmentSubmissionScreen> createState() =>
@@ -179,9 +176,7 @@ class _AssignmentSubmissionScreenState
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_studentAssignment == null) {
@@ -196,7 +191,8 @@ class _AssignmentSubmissionScreenState
     final assignment = _studentAssignment!['assignment'];
     final isSubmitted = _studentAssignment!['isSubmitted'] ?? false;
     final isOverdue = _studentAssignment!['isOverdue'] ?? false;
-    final canSubmit = !isOverdue || (assignment['allowLateSubmissions'] ?? false);
+    final canSubmit =
+        !isOverdue || (assignment['allowLateSubmissions'] ?? false);
 
     return AdaptiveLayout(
       title: isSubmitted ? 'View Submission' : 'Submit Assignment',
@@ -219,12 +215,12 @@ class _AssignmentSubmissionScreenState
 
                 // Submission Form
                 if (!isSubmitted ||
-                    _studentAssignment!['submission']?['status'] ==
-                        'submitted')
+                    _studentAssignment!['submission']?['status'] == 'submitted')
                   _buildSubmissionForm(theme, assignment, canSubmit),
 
                 // Grading Info (if graded)
-                if (_studentAssignment!['isGraded'] ?? false) _buildGradingCard(theme),
+                if (_studentAssignment!['isGraded'] ?? false)
+                  _buildGradingCard(theme),
               ],
             ),
           ),
@@ -233,7 +229,10 @@ class _AssignmentSubmissionScreenState
     );
   }
 
-  Widget _buildAssignmentInfoCard(ThemeData theme, Map<String, dynamic> assignment) {
+  Widget _buildAssignmentInfoCard(
+    ThemeData theme,
+    Map<String, dynamic> assignment,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -357,7 +356,10 @@ class _AssignmentSubmissionScreenState
   }
 
   Widget _buildSubmissionForm(
-      ThemeData theme, Map<String, dynamic> assignment, bool canSubmit) {
+    ThemeData theme,
+    Map<String, dynamic> assignment,
+    bool canSubmit,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -432,7 +434,8 @@ class _AssignmentSubmissionScreenState
                     onPressed: canSubmit && !_isSubmitting ? _pickFile : null,
                     icon: const Icon(Icons.attach_file),
                     label: Text(
-                        _selectedFile == null ? 'Attach File' : 'Change File'),
+                      _selectedFile == null ? 'Attach File' : 'Change File',
+                    ),
                   ),
                 ),
                 if (_selectedFile != null) ...[
@@ -515,8 +518,8 @@ class _AssignmentSubmissionScreenState
               child: FilledButton.icon(
                 onPressed: canSubmit && !_isSubmitting
                     ? ((_studentAssignment!['isSubmitted'] ?? false)
-                        ? _updateSubmission
-                        : _submitAssignment)
+                          ? _updateSubmission
+                          : _submitAssignment)
                     : null,
                 icon: _isSubmitting
                     ? const SizedBox(
@@ -524,15 +527,17 @@ class _AssignmentSubmissionScreenState
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Icon((_studentAssignment!['isSubmitted'] ?? false)
-                        ? Icons.update
-                        : Icons.upload),
+                    : Icon(
+                        (_studentAssignment!['isSubmitted'] ?? false)
+                            ? Icons.update
+                            : Icons.upload,
+                      ),
                 label: Text(
                   _isSubmitting
                       ? 'Submitting...'
                       : ((_studentAssignment!['isSubmitted'] ?? false)
-                          ? 'Update Submission'
-                          : 'Submit Assignment'),
+                            ? 'Update Submission'
+                            : 'Submit Assignment'),
                 ),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.all(16),
@@ -582,10 +587,7 @@ class _AssignmentSubmissionScreenState
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.grade,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.grade, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Grading',
@@ -604,9 +606,9 @@ class _AssignmentSubmissionScreenState
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color:
-                        _getGradeColor(_studentAssignment!['letterGrade'] ?? 'N/A')
-                            .withValues(alpha: 0.2),
+                    color: _getGradeColor(
+                      _studentAssignment!['letterGrade'] ?? 'N/A',
+                    ).withValues(alpha: 0.2),
                   ),
                   child: Center(
                     child: Column(
@@ -618,7 +620,8 @@ class _AssignmentSubmissionScreenState
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             color: _getGradeColor(
-                                _studentAssignment!['letterGrade'] ?? 'N/A'),
+                              _studentAssignment!['letterGrade'] ?? 'N/A',
+                            ),
                           ),
                         ),
                         Text(
@@ -626,7 +629,8 @@ class _AssignmentSubmissionScreenState
                           style: TextStyle(
                             fontSize: 12,
                             color: _getGradeColor(
-                                _studentAssignment!['letterGrade'] ?? 'N/A'),
+                              _studentAssignment!['letterGrade'] ?? 'N/A',
+                            ),
                           ),
                         ),
                       ],
@@ -644,11 +648,13 @@ class _AssignmentSubmissionScreenState
                         '${_studentAssignment!['earnedPoints']?.toInt() ?? 0} / ${_studentAssignment!['assignment']?['totalPoints']?.toInt() ?? 0}',
                       ),
                       const SizedBox(height: 8),
-                      if (_studentAssignment!['submission']?['gradedAt'] != null)
+                      if (_studentAssignment!['submission']?['gradedAt'] !=
+                          null)
                         _buildGradeRow(
                           'Graded On',
                           _formatDate(
-                              _studentAssignment!['submission']!['gradedAt']!),
+                            _studentAssignment!['submission']!['gradedAt']!,
+                          ),
                         ),
                     ],
                   ),
@@ -685,7 +691,11 @@ class _AssignmentSubmissionScreenState
   }
 
   Widget _buildInfoRow(
-      IconData icon, String label, String value, Color? color) {
+    IconData icon,
+    String label,
+    String value,
+    Color? color,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -702,10 +712,7 @@ class _AssignmentSubmissionScreenState
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: color, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -717,14 +724,8 @@ class _AssignmentSubmissionScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(color: Colors.grey),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -775,7 +776,7 @@ class _AssignmentSubmissionScreenState
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -790,7 +791,7 @@ class _AssignmentSubmissionScreenState
     } else {
       return 'No date';
     }
-    
+
     final time = TimeOfDay.fromDateTime(date);
     return '${_formatDate(date)} at ${time.format(context)}';
   }

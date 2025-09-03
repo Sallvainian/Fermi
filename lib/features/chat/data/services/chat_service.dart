@@ -50,7 +50,9 @@ class ChatService {
   /// @return ChatRoom instance for the direct chat
   /// @throws Exception if user is not authenticated
   Future<ChatRoom> createOrGetDirectChat(
-      String otherUserId, String otherUserName) async {
+    String otherUserId,
+    String otherUserName,
+  ) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) throw Exception('User not authenticated');
 
@@ -59,8 +61,10 @@ class ChatService {
     final chatRoomId = '${userIds[0]}_${userIds[1]}';
 
     // Check if chat room already exists
-    final chatRoomDoc =
-        await _firestore.collection('chat_rooms').doc(chatRoomId).get();
+    final chatRoomDoc = await _firestore
+        .collection('chat_rooms')
+        .doc(chatRoomId)
+        .get();
 
     if (chatRoomDoc.exists) {
       return ChatRoom.fromFirestore(chatRoomDoc);
@@ -71,7 +75,7 @@ class ChatService {
         .collection('users')
         .doc(currentUser.uid)
         .get();
-    
+
     final otherUserDoc = await _firestore
         .collection('users')
         .doc(otherUserId)
@@ -81,12 +85,12 @@ class ChatService {
     String currentUserRole = 'student'; // Default fallback
     String otherUserRole = 'student'; // Default fallback
     String? otherUserPhoto;
-    
+
     if (currentUserDoc.exists) {
       final data = currentUserDoc.data() as Map<String, dynamic>;
       currentUserRole = data['role'] ?? 'student';
     }
-    
+
     if (otherUserDoc.exists) {
       final data = otherUserDoc.data() as Map<String, dynamic>;
       otherUserRole = data['role'] ?? 'student';
@@ -124,8 +128,10 @@ class ChatService {
     };
 
     await _firestore.collection('chat_rooms').doc(chatRoomId).set(newChatRoom);
-    final newDoc =
-        await _firestore.collection('chat_rooms').doc(chatRoomId).get();
+    final newDoc = await _firestore
+        .collection('chat_rooms')
+        .doc(chatRoomId)
+        .get();
     return ChatRoom.fromFirestore(newDoc);
   }
 
@@ -193,8 +199,10 @@ class ChatService {
         .where('participantIds', arrayContains: currentUser.uid)
         .orderBy('lastMessageTime', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => ChatRoom.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => ChatRoom.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Streams messages for a specific chat room.
@@ -212,8 +220,10 @@ class ChatService {
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Message.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Message.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Sends a new message to a chat room.
@@ -303,10 +313,9 @@ class ChatService {
     }
 
     // Reset unread count for current user
-    batch.update(
-      _firestore.collection('chat_rooms').doc(chatRoomId),
-      {'unreadCount': 0},
-    );
+    batch.update(_firestore.collection('chat_rooms').doc(chatRoomId), {
+      'unreadCount': 0,
+    });
 
     await batch.commit();
   }
@@ -353,7 +362,7 @@ class ChatService {
           ).displayNameOrFallback,
           'role': 'teacher', // This should be fetched from user profile
           'photoUrl': currentUser.photoURL,
-        }
+        },
       ]),
     });
   }
@@ -380,9 +389,11 @@ class ChatService {
 
     final messages = querySnapshot.docs
         .map((doc) => Message.fromFirestore(doc))
-        .where((message) =>
-            message.content.toLowerCase().contains(query.toLowerCase()) ||
-            message.senderName.toLowerCase().contains(query.toLowerCase()))
+        .where(
+          (message) =>
+              message.content.toLowerCase().contains(query.toLowerCase()) ||
+              message.senderName.toLowerCase().contains(query.toLowerCase()),
+        )
         .toList();
 
     messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));

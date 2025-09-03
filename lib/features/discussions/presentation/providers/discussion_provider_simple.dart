@@ -170,11 +170,11 @@ class SimpleDiscussionProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get currentUserId => _auth.currentUser?.uid ?? '';
-  
+
   /// Current user's role (teacher or student).
   String _userRole = 'student';
   String get userRole => _userRole;
-  
+
   /// Fetches and caches the user's role from Firestore.
   Future<void> _fetchUserRole() async {
     try {
@@ -195,7 +195,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
   /// Returns cached display name or fetches and caches it
   String get currentUserName {
     // Check if cache is still valid
-    if (_cachedDisplayName != null && 
+    if (_cachedDisplayName != null &&
         _cacheTimestamp != null &&
         DateTime.now().difference(_cacheTimestamp!) < _cacheTTL) {
       return _cachedDisplayName!;
@@ -221,7 +221,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
       _cacheTimestamp = DateTime.now();
       return _cachedDisplayName!;
     }
-    
+
     return 'Unknown User';
   }
 
@@ -239,40 +239,46 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
       // Cancel existing subscription
       await _userDocSubscription?.cancel();
-      
+
       // Listen to user document changes for cache invalidation
       _userDocSubscription = _firestore
           .collection('users')
           .doc(userId)
           .snapshots()
           .listen(
-        (snapshot) {
-          if (snapshot.exists) {
-            _cachedUserModel = UserModel.fromFirestore(snapshot);
-            _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
-            _cacheTimestamp = DateTime.now();
-            notifyListeners();
-          }
-        },
-        onError: (error) {
-          LoggerService.error('Failed to listen to user document',
-              tag: _tag, error: error);
-          // Fallback to Firebase Auth display name
-          final user = _auth.currentUser;
-          if (user != null) {
-            final tempUser = UserModel(
-              uid: user.uid,
-              email: user.email,
-              displayName: user.displayName,
-            );
-            _cachedDisplayName = tempUser.displayNameOrFallback;
-            _cacheTimestamp = DateTime.now();
-          }
-        },
-      );
+            (snapshot) {
+              if (snapshot.exists) {
+                _cachedUserModel = UserModel.fromFirestore(snapshot);
+                _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
+                _cacheTimestamp = DateTime.now();
+                notifyListeners();
+              }
+            },
+            onError: (error) {
+              LoggerService.error(
+                'Failed to listen to user document',
+                tag: _tag,
+                error: error,
+              );
+              // Fallback to Firebase Auth display name
+              final user = _auth.currentUser;
+              if (user != null) {
+                final tempUser = UserModel(
+                  uid: user.uid,
+                  email: user.email,
+                  displayName: user.displayName,
+                );
+                _cachedDisplayName = tempUser.displayNameOrFallback;
+                _cacheTimestamp = DateTime.now();
+              }
+            },
+          );
     } catch (e) {
-      LoggerService.error('Failed to load user model for display name',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Failed to load user model for display name',
+        tag: _tag,
+        error: e,
+      );
       // Fallback to Firebase Auth display name
       final user = _auth.currentUser;
       if (user != null) {
@@ -304,12 +310,12 @@ class SimpleDiscussionProvider with ChangeNotifier {
   Future<void> initializeBoards() async {
     await loadBoards();
   }
-  
+
   /// Load all discussion boards
   Future<void> loadBoards() async {
     _setLoading(true);
     _error = null;
-    
+
     // Fetch user role first
     await _fetchUserRole();
 
@@ -324,81 +330,95 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .listen(
-        (snapshot) async {
-          LoggerService.debug('Loaded ${snapshot.docs.length} boards',
-              tag: _tag);
-          
-          // Load boards and fetch display names for all
-          final boardsList = <SimpleDiscussionBoard>[];
-          
-          for (final doc in snapshot.docs) {
-            var board = SimpleDiscussionBoard.fromFirestore(doc);
-            String displayName = 'Unknown User';
-            
-            // Always try to fetch display name using createdBy as user ID
-            try {
-              final userDoc = await _firestore
-                  .collection('users')
-                  .doc(board.createdBy)
-                  .get();
-                  
-              if (userDoc.exists) {
-                final userData = userDoc.data();
-                if (userData != null) {
-                  // Try firstName + lastName first
-                  final firstName = userData['firstName'] as String?;
-                  final lastName = userData['lastName'] as String?;
-                  if (firstName != null && lastName != null) {
-                    displayName = '$firstName $lastName'.trim();
-                  } else if (userData['displayName'] != null) {
-                    displayName = userData['displayName'] as String;
-                  } else if (userData['email'] != null) {
-                    final email = userData['email'] as String;
-                    displayName = email.split('@').first;
+            (snapshot) async {
+              LoggerService.debug(
+                'Loaded ${snapshot.docs.length} boards',
+                tag: _tag,
+              );
+
+              // Load boards and fetch display names for all
+              final boardsList = <SimpleDiscussionBoard>[];
+
+              for (final doc in snapshot.docs) {
+                var board = SimpleDiscussionBoard.fromFirestore(doc);
+                String displayName = 'Unknown User';
+
+                // Always try to fetch display name using createdBy as user ID
+                try {
+                  final userDoc = await _firestore
+                      .collection('users')
+                      .doc(board.createdBy)
+                      .get();
+
+                  if (userDoc.exists) {
+                    final userData = userDoc.data();
+                    if (userData != null) {
+                      // Try firstName + lastName first
+                      final firstName = userData['firstName'] as String?;
+                      final lastName = userData['lastName'] as String?;
+                      if (firstName != null && lastName != null) {
+                        displayName = '$firstName $lastName'.trim();
+                      } else if (userData['displayName'] != null) {
+                        displayName = userData['displayName'] as String;
+                      } else if (userData['email'] != null) {
+                        final email = userData['email'] as String;
+                        displayName = email.split('@').first;
+                      }
+                    }
                   }
+                } catch (e) {
+                  // If it fails, createdBy might already be a display name
+                  if (board.createdBy.contains(' ') ||
+                      board.createdBy.contains('@')) {
+                    displayName =
+                        board.createdBy; // Use as-is if it looks like a name
+                  }
+                  LoggerService.debug(
+                    'Using createdBy as-is for board ${board.id}',
+                    tag: _tag,
+                  );
                 }
+
+                // Create board with display name
+                board = SimpleDiscussionBoard(
+                  id: board.id,
+                  title: board.title,
+                  description: board.description,
+                  createdBy: displayName,
+                  createdAt: board.createdAt,
+                  threadCount: board.threadCount,
+                  isPinned: board.isPinned,
+                  tags: board.tags,
+                );
+
+                LoggerService.debug(
+                  'Board loaded - ID: ${board.id}, Title: ${board.title}',
+                  tag: _tag,
+                );
+                boardsList.add(board);
               }
-            } catch (e) {
-              // If it fails, createdBy might already be a display name
-              if (board.createdBy.contains(' ') || board.createdBy.contains('@')) {
-                displayName = board.createdBy; // Use as-is if it looks like a name
-              }
-              LoggerService.debug('Using createdBy as-is for board ${board.id}',
-                  tag: _tag);
-            }
-            
-            // Create board with display name
-            board = SimpleDiscussionBoard(
-              id: board.id,
-              title: board.title,
-              description: board.description,
-              createdBy: displayName,
-              createdAt: board.createdAt,
-              threadCount: board.threadCount,
-              isPinned: board.isPinned,
-              tags: board.tags,
-            );
-            
-            LoggerService.debug(
-                'Board loaded - ID: ${board.id}, Title: ${board.title}',
-                tag: _tag);
-            boardsList.add(board);
-          }
-          
-          _boards = boardsList;
-          _setLoading(false);
-          notifyListeners();
-        },
-        onError: (error) {
-          LoggerService.error('Failed to load boards', tag: _tag, error: error);
-          _error = 'Failed to load discussion boards';
-          _setLoading(false);
-          notifyListeners();
-        },
-      );
+
+              _boards = boardsList;
+              _setLoading(false);
+              notifyListeners();
+            },
+            onError: (error) {
+              LoggerService.error(
+                'Failed to load boards',
+                tag: _tag,
+                error: error,
+              );
+              _error = 'Failed to load discussion boards';
+              _setLoading(false);
+              notifyListeners();
+            },
+          );
     } catch (e) {
-      LoggerService.error('Failed to setup board listener',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Failed to setup board listener',
+        tag: _tag,
+        error: e,
+      );
       _error = 'Failed to load discussion boards';
       _setLoading(false);
       notifyListeners();
@@ -417,7 +437,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
     try {
       // Store user ID in createdBy field
       final userId = currentUserId;
-      
+
       final board = SimpleDiscussionBoard(
         id: '', // Will be set by Firestore
         title: title,
@@ -456,24 +476,30 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .orderBy('createdAt', descending: true)
           .snapshots()
           .listen(
-        (snapshot) {
-          // Simple load first, then check likes asynchronously
-          _boardThreads[boardId] = snapshot.docs
-              .map((doc) => SimpleDiscussionThread.fromFirestore(doc))
-              .toList();
-          notifyListeners();
-          
-          // Then update with like status
-          _updateThreadLikes(boardId, snapshot.docs);
-        },
-        onError: (error) {
-          LoggerService.error('Failed to load threads for board $boardId',
-              tag: _tag, error: error);
-        },
-      );
+            (snapshot) {
+              // Simple load first, then check likes asynchronously
+              _boardThreads[boardId] = snapshot.docs
+                  .map((doc) => SimpleDiscussionThread.fromFirestore(doc))
+                  .toList();
+              notifyListeners();
+
+              // Then update with like status
+              _updateThreadLikes(boardId, snapshot.docs);
+            },
+            onError: (error) {
+              LoggerService.error(
+                'Failed to load threads for board $boardId',
+                tag: _tag,
+                error: error,
+              );
+            },
+          );
     } catch (e) {
-      LoggerService.error('Failed to setup thread listener',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Failed to setup thread listener',
+        tag: _tag,
+        error: e,
+      );
     }
   }
 
@@ -510,8 +536,11 @@ class SimpleDiscussionProvider with ChangeNotifier {
       // Fallback to Firebase Auth displayName
       return _auth.currentUser?.displayName ?? 'Unknown User';
     } catch (e) {
-      LoggerService.error('Failed to get user display name',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Failed to get user display name',
+        tag: _tag,
+        error: e,
+      );
       return _auth.currentUser?.displayName ?? 'Unknown User';
     }
   }
@@ -547,10 +576,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
           .add(thread.toFirestore());
 
       // Update the thread count on the board
-      await _firestore
-          .collection('discussion_boards')
-          .doc(boardId)
-          .update({
+      await _firestore.collection('discussion_boards').doc(boardId).update({
         'threadCount': FieldValue.increment(1),
       });
 
@@ -587,17 +613,20 @@ class SimpleDiscussionProvider with ChangeNotifier {
   }
 
   /// Update thread like status for current user
-  Future<void> _updateThreadLikes(String boardId, List<QueryDocumentSnapshot> threadDocs) async {
+  Future<void> _updateThreadLikes(
+    String boardId,
+    List<QueryDocumentSnapshot> threadDocs,
+  ) async {
     try {
       final userId = currentUserId;
       if (userId.isEmpty) return;
-      
+
       // Create a list to hold updated threads
       final updatedThreads = <SimpleDiscussionThread>[];
-      
+
       for (final doc in threadDocs) {
         var thread = SimpleDiscussionThread.fromFirestore(doc);
-        
+
         // Check if current user has liked this thread
         try {
           final likeDoc = await _firestore
@@ -608,7 +637,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
               .collection('likes')
               .doc(userId)
               .get();
-          
+
           // Create a new thread with updated like status
           thread = SimpleDiscussionThread(
             id: thread.id,
@@ -625,13 +654,15 @@ class SimpleDiscussionProvider with ChangeNotifier {
             isLikedByCurrentUser: likeDoc.exists,
           );
         } catch (e) {
-          LoggerService.debug('Failed to check like status for thread ${thread.id}: $e', 
-              tag: _tag);
+          LoggerService.debug(
+            'Failed to check like status for thread ${thread.id}: $e',
+            tag: _tag,
+          );
         }
-        
+
         updatedThreads.add(thread);
       }
-      
+
       // Update the threads list with like status
       _boardThreads[boardId] = updatedThreads;
       notifyListeners();

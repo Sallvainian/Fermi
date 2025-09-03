@@ -32,7 +32,7 @@ class UserModel {
 
   /// URL to the user's profile picture.
   final String? photoURL;
-  
+
   /// Username for login (unique identifier for username/password auth)
   final String? username;
 
@@ -129,13 +129,16 @@ class UserModel {
       studentId: asString(data['studentId']),
       gradeLevel: asString(data['gradeLevel']),
       enrolledClassIds: (data['enrolledClassIds'] as List?)?.cast<String>(),
-      createdAt:
-          data['createdAt'] is DateTime ? data['createdAt'] as DateTime? : null,
+      createdAt: data['createdAt'] is DateTime
+          ? data['createdAt'] as DateTime?
+          : null,
       lastActive: data['lastActive'] is DateTime
           ? data['lastActive'] as DateTime?
           : null,
       role: _roleFromString(asString(data['role'])),
-      needsPasswordReset: data['needsPasswordReset'] is bool ? data['needsPasswordReset'] as bool? : null,
+      needsPasswordReset: data['needsPasswordReset'] is bool
+          ? data['needsPasswordReset'] as bool?
+          : null,
     );
   }
 
@@ -218,8 +221,10 @@ class UserModel {
     if (displayName != null && displayName!.isNotEmpty) {
       return displayName!;
     }
-    final nameParts =
-        [firstName, lastName].where((e) => e != null && e.isNotEmpty).toList();
+    final nameParts = [
+      firstName,
+      lastName,
+    ].where((e) => e != null && e.isNotEmpty).toList();
     if (nameParts.isNotEmpty) {
       return nameParts.join(' ');
     }

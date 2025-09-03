@@ -26,7 +26,7 @@ class SimpleJeopardyProvider with ChangeNotifier {
   Future<void> loadGames() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Stub - would query Firestore when feature is implemented
       _games = [];
@@ -48,7 +48,7 @@ class SimpleJeopardyProvider with ChangeNotifier {
   Future<JeopardyGame?> loadGame(String gameId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Stub - would load specific game from Firestore
       _currentGame = JeopardyGame(

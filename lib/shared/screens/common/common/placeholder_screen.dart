@@ -16,17 +16,12 @@ import 'package:flutter/material.dart';
 class PlaceholderScreen extends StatelessWidget {
   final String title;
 
-  const PlaceholderScreen({
-    super.key,
-    required this.title,
-  });
+  const PlaceholderScreen({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -37,16 +32,13 @@ class PlaceholderScreen extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 16),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text(title, style: Theme.of(context).textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
               'This screen is under construction',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

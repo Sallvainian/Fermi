@@ -96,9 +96,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                       ),
                     ),
                     onChanged: (value) {
-                      context
-                          .read<NotificationProvider>()
-                          .updateSearchQuery(value);
+                      context.read<NotificationProvider>().updateSearchQuery(
+                        value,
+                      );
                     },
                   ),
                 ),
@@ -114,27 +114,38 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                     onSelected: (value) {
                       setState(() {
                         _selectedFilter = value;
-                        context
-                            .read<NotificationProvider>()
-                            .updateFilter(value);
+                        context.read<NotificationProvider>().updateFilter(
+                          value,
+                        );
                       });
                     },
                     itemBuilder: (context) => [
                       const PopupMenuItem(
-                          value: 'All', child: Text('All Types')),
+                        value: 'All',
+                        child: Text('All Types'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Grades', child: Text('Grades')),
+                        value: 'Grades',
+                        child: Text('Grades'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Assignments', child: Text('Assignments')),
+                        value: 'Assignments',
+                        child: Text('Assignments'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Announcements', child: Text('Announcements')),
+                        value: 'Announcements',
+                        child: Text('Announcements'),
+                      ),
                       const PopupMenuItem(
-                          value: 'Messages',
-                          child: Text('Messages from Teachers')),
+                        value: 'Messages',
+                        child: Text('Messages from Teachers'),
+                      ),
                     ],
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
                           const Icon(Icons.filter_list, size: 20),
@@ -234,8 +245,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         }
 
         // Filter for class-related notifications
-        final notifications =
-            provider.getNotificationsByTab('all').where((notif) {
+        final notifications = provider.getNotificationsByTab('all').where((
+          notif,
+        ) {
           return notif.type == NotificationType.announcement ||
               notif.type == NotificationType.calendar ||
               notif.type == NotificationType.discussion;
@@ -262,8 +274,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         }
 
         // Filter for grade-related notifications
-        final notifications =
-            provider.getNotificationsByTab('all').where((notif) {
+        final notifications = provider.getNotificationsByTab('all').where((
+          notif,
+        ) {
           return notif.type == NotificationType.grade ||
               notif.type == NotificationType.submission;
         }).toList();
@@ -383,7 +396,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
             border: isUnread
                 ? Border.all(
                     color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    width: 1)
+                    width: 1,
+                  )
                 : null,
           ),
           child: Row(
@@ -433,8 +447,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                           child: Text(
                             notification.title,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight:
-                                  isUnread ? FontWeight.bold : FontWeight.w600,
+                              fontWeight: isUnread
+                                  ? FontWeight.bold
+                                  : FontWeight.w600,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -443,8 +458,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                           _formatNotificationTime(notification.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontWeight:
-                                isUnread ? FontWeight.w600 : FontWeight.normal,
+                            fontWeight: isUnread
+                                ? FontWeight.w600
+                                : FontWeight.normal,
                           ),
                         ),
                       ],
@@ -455,8 +471,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                       notification.message,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight:
-                            isUnread ? FontWeight.w500 : FontWeight.normal,
+                        fontWeight: isUnread
+                            ? FontWeight.w500
+                            : FontWeight.normal,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -466,7 +483,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                     if (notification.actionData?['courseName'] != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primaryContainer,
                           borderRadius: BorderRadius.circular(8),
@@ -560,7 +579,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         // Navigate to assignments screen with specific assignment
         if (notification.actionData?['assignmentId'] != null) {
           context.go(
-              '/student/assignments/${notification.actionData!['assignmentId']}');
+            '/student/assignments/${notification.actionData!['assignmentId']}',
+          );
         } else {
           context.go('/student/assignments');
         }
@@ -569,7 +589,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         // Navigate to messages/chat
         if (notification.actionData?['conversationId'] != null) {
           context.go(
-              '/student/messages/${notification.actionData!['conversationId']}');
+            '/student/messages/${notification.actionData!['conversationId']}',
+          );
         } else {
           context.go('/student/messages');
         }
@@ -582,7 +603,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         // Navigate to specific submission
         if (notification.actionData?['assignmentId'] != null) {
           context.go(
-              '/student/assignments/${notification.actionData!['assignmentId']}');
+            '/student/assignments/${notification.actionData!['assignmentId']}',
+          );
         }
         break;
       case NotificationType.calendar:
@@ -593,7 +615,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
         // Navigate to class discussions
         if (notification.actionData?['discussionId'] != null) {
           context.go(
-              '/student/discussions/${notification.actionData!['discussionId']}');
+            '/student/discussions/${notification.actionData!['discussionId']}',
+          );
         } else {
           context.go('/student/discussions');
         }
@@ -618,9 +641,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
                 Text(
                   notification.actionData!['courseName'],
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -642,7 +665,8 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
               onPressed: () {
                 Navigator.pop(context);
                 context.go(
-                    '/student/classes/${notification.actionData!['classId']}');
+                  '/student/classes/${notification.actionData!['classId']}',
+                );
               },
               child: const Text('View Class'),
             ),
@@ -668,7 +692,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
   }
 
   void _handleNotificationAction(
-      String action, NotificationModel notification) {
+    String action,
+    NotificationModel notification,
+  ) {
     final provider = context.read<NotificationProvider>();
 
     switch (action) {
@@ -697,8 +723,9 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Notification'),
-        content:
-            const Text('Are you sure you want to delete this notification?'),
+        content: const Text(
+          'Are you sure you want to delete this notification?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -707,13 +734,11 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
           FilledButton(
             onPressed: () {
               Navigator.pop(context);
-              context
-                  .read<NotificationProvider>()
-                  .deleteNotification(notification.id);
+              context.read<NotificationProvider>().deleteNotification(
+                notification.id,
+              );
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Notification deleted'),
-                ),
+                const SnackBar(content: Text('Notification deleted')),
               );
             },
             child: const Text('Delete'),
@@ -728,9 +753,7 @@ class _StudentNotificationsScreenState extends State<StudentNotificationsScreen>
     provider.markAllAsRead();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('All notifications marked as read'),
-      ),
+      const SnackBar(content: Text('All notifications marked as read')),
     );
   }
 
@@ -783,8 +806,9 @@ class _StudentNotificationSettingsSheetState
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -866,8 +890,9 @@ class _StudentNotificationSettingsSheetState
                   ),
                   SwitchListTile(
                     title: const Text('Assignment Updates'),
-                    subtitle:
-                        const Text('New assignments and due date reminders'),
+                    subtitle: const Text(
+                      'New assignments and due date reminders',
+                    ),
                     value: _assignmentNotifications,
                     onChanged: (value) {
                       setState(() {

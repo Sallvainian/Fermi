@@ -9,10 +9,7 @@ import '../providers/jeopardy_provider_simple.dart';
 class JeopardyPlayScreen extends StatefulWidget {
   final String gameId;
 
-  const JeopardyPlayScreen({
-    super.key,
-    required this.gameId,
-  });
+  const JeopardyPlayScreen({super.key, required this.gameId});
 
   @override
   State<JeopardyPlayScreen> createState() => _JeopardyPlayScreenState();
@@ -48,69 +45,95 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
     if (loadedGame != null) {
       JeopardyGame gameWithDailyDoubles = loadedGame;
-      
-      LoggerService.debug('Daily Doubles in game: ${loadedGame.dailyDoubles.length}', tag: 'JeopardyPlayScreen');
+
+      LoggerService.debug(
+        'Daily Doubles in game: ${loadedGame.dailyDoubles.length}',
+        tag: 'JeopardyPlayScreen',
+      );
       for (final dd in loadedGame.dailyDoubles) {
-        LoggerService.debug('  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
+        LoggerService.debug(
+          '  - Round: ${dd.round}, Category: ${dd.categoryIndex}, Question: ${dd.questionIndex}',
+          tag: 'JeopardyPlayScreen',
+        );
       }
 
       if (loadedGame.dailyDoubles.isNotEmpty) {
+        List<JeopardyCategory> updatedCategories = List<JeopardyCategory>.from(
+          loadedGame.categories,
+        );
 
-        List<JeopardyCategory> updatedCategories = List<JeopardyCategory>.from(loadedGame.categories);
-        
         for (final dd in loadedGame.dailyDoubles) {
-          if (dd.round == 'jeopardy' && 
+          if (dd.round == 'jeopardy' &&
               dd.categoryIndex < updatedCategories.length &&
-              dd.questionIndex < updatedCategories[dd.categoryIndex].questions.length) {
-            
-            final updatedQuestions = List<JeopardyQuestion>.from(updatedCategories[dd.categoryIndex].questions);
-            updatedQuestions[dd.questionIndex] = updatedQuestions[dd.questionIndex].copyWith(isDailyDouble: true);
-            updatedCategories[dd.categoryIndex] = updatedCategories[dd.categoryIndex].copyWith(questions: updatedQuestions);
-            LoggerService.debug('Marked Daily Double at category ${dd.categoryIndex}, question ${dd.questionIndex}', tag: 'JeopardyPlayScreen');
+              dd.questionIndex <
+                  updatedCategories[dd.categoryIndex].questions.length) {
+            final updatedQuestions = List<JeopardyQuestion>.from(
+              updatedCategories[dd.categoryIndex].questions,
+            );
+            updatedQuestions[dd.questionIndex] =
+                updatedQuestions[dd.questionIndex].copyWith(
+                  isDailyDouble: true,
+                );
+            updatedCategories[dd.categoryIndex] =
+                updatedCategories[dd.categoryIndex].copyWith(
+                  questions: updatedQuestions,
+                );
+            LoggerService.debug(
+              'Marked Daily Double at category ${dd.categoryIndex}, question ${dd.questionIndex}',
+              tag: 'JeopardyPlayScreen',
+            );
           }
         }
-        
 
         List<JeopardyCategory>? updatedDoubleCategories;
         if (loadedGame.doubleJeopardyCategories != null) {
-          updatedDoubleCategories = List<JeopardyCategory>.from(loadedGame.doubleJeopardyCategories!);
-          
+          updatedDoubleCategories = List<JeopardyCategory>.from(
+            loadedGame.doubleJeopardyCategories!,
+          );
+
           for (final dd in loadedGame.dailyDoubles) {
-            if (dd.round == 'doubleJeopardy' && 
+            if (dd.round == 'doubleJeopardy' &&
                 dd.categoryIndex < updatedDoubleCategories.length &&
-                dd.questionIndex < updatedDoubleCategories[dd.categoryIndex].questions.length) {
-              
-              final updatedQuestions = List<JeopardyQuestion>.from(updatedDoubleCategories[dd.categoryIndex].questions);
-              updatedQuestions[dd.questionIndex] = updatedQuestions[dd.questionIndex].copyWith(isDailyDouble: true);
-              updatedDoubleCategories[dd.categoryIndex] = updatedDoubleCategories[dd.categoryIndex].copyWith(questions: updatedQuestions);
+                dd.questionIndex <
+                    updatedDoubleCategories[dd.categoryIndex]
+                        .questions
+                        .length) {
+              final updatedQuestions = List<JeopardyQuestion>.from(
+                updatedDoubleCategories[dd.categoryIndex].questions,
+              );
+              updatedQuestions[dd.questionIndex] =
+                  updatedQuestions[dd.questionIndex].copyWith(
+                    isDailyDouble: true,
+                  );
+              updatedDoubleCategories[dd.categoryIndex] =
+                  updatedDoubleCategories[dd.categoryIndex].copyWith(
+                    questions: updatedQuestions,
+                  );
             }
           }
         }
-        
+
         gameWithDailyDoubles = loadedGame.copyWith(
           categories: updatedCategories,
           doubleJeopardyCategories: updatedDoubleCategories,
         );
       }
-      
+
       setState(() {
         _game = gameWithDailyDoubles;
         _isLoading = false;
       });
     } else {
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Game not found')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Game not found')));
         context.go('/teacher/games/jeopardy');
       }
     }
   }
 
-  void _initializePlayers() {
-
-  }
+  void _initializePlayers() {}
 
   @override
   Widget build(BuildContext context) {
@@ -119,9 +142,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: theme.colorScheme.surface,
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -191,10 +212,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Teams/Players',
-                  style: theme.textTheme.titleLarge,
-                ),
+                Text('Teams/Players', style: theme.textTheme.titleLarge),
                 FilledButton.icon(
                   onPressed: _addPlayer,
                   icon: const Icon(Icons.add),
@@ -282,17 +300,19 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   void _addPlayer() {
     if (_players.length >= 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum 6 teams allowed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Maximum 6 teams allowed')));
       return;
     }
 
     setState(() {
-      _players.add(JeopardyPlayer(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: 'Team ${_players.length + 1}',
-      ));
+      _players.add(
+        JeopardyPlayer(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          name: 'Team ${_players.length + 1}',
+        ),
+      );
     });
   }
 
@@ -342,7 +362,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                   children: [
                     IconButton(
                       onPressed: () {
-
                         context.go('/teacher/games/jeopardy');
                       },
                       icon: const Icon(Icons.close),
@@ -398,9 +417,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   Widget _buildGameBoard() {
     final theme = Theme.of(context);
-    
 
-    final categories = _currentRound == 'doubleJeopardy' && _game?.doubleJeopardyCategories != null
+    final categories =
+        _currentRound == 'doubleJeopardy' &&
+            _game?.doubleJeopardyCategories != null
         ? _game!.doubleJeopardyCategories!
         : _game?.categories ?? [];
 
@@ -423,37 +443,39 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               ),
             ),
           ),
-        
+
         // Category headers row
         SizedBox(
           height: 60,
           child: Row(
             children: categories
-                .map((category) => Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Text(
-                              category.name.toUpperCase(),
-                              style: TextStyle(
-                                color: theme.colorScheme.onPrimary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
-                              ),
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                .map(
+                  (category) => Expanded(
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Text(
+                            category.name.toUpperCase(),
+                            style: TextStyle(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
                             ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
-                    ))
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ),
@@ -463,19 +485,22 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         Expanded(
           child: Row(
             children: categories
-                .map((category) => Expanded(
-                      child: Column(
-                        children: category.questions
-                            .map((question) => Expanded(
-                                  child: Container(
-                                    margin: const EdgeInsets.all(4),
-                                    child:
-                                        _buildQuestionTile(category, question),
-                                  ),
-                                ))
-                            .toList(),
-                      ),
-                    ))
+                .map(
+                  (category) => Expanded(
+                    child: Column(
+                      children: category.questions
+                          .map(
+                            (question) => Expanded(
+                              child: Container(
+                                margin: const EdgeInsets.all(4),
+                                child: _buildQuestionTile(category, question),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ),
@@ -489,13 +514,16 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   Widget _buildQuestionTile(
-      JeopardyCategory category, JeopardyQuestion question) {
+    JeopardyCategory category,
+    JeopardyQuestion question,
+  ) {
     final theme = Theme.of(context);
     final questionId = _getQuestionId(category.name, question.points);
     final isAnswered = _answeredQuestions.contains(questionId);
-    
 
-    final displayPoints = _currentRound == 'doubleJeopardy' ? question.points * 2 : question.points;
+    final displayPoints = _currentRound == 'doubleJeopardy'
+        ? question.points * 2
+        : question.points;
 
     return Material(
       color: isAnswered
@@ -522,7 +550,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                   isAnswered ? '' : '\$$displayPoints',
                   style: TextStyle(
                     color: isAnswered
-                        ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
+                        ? theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.3,
+                          )
                         : theme.colorScheme.onPrimaryContainer,
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
@@ -565,8 +595,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 Text(
                   player.name,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight:
-                        isCurrentPlayer ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isCurrentPlayer
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -688,14 +719,16 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      ..._players.map((player) => FilledButton.tonal(
-                            onPressed: () => _awardPoints(player),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _getPlayerColor(player.id),
-                              foregroundColor: Colors.white,
-                            ),
-                            child: Text(player.name),
-                          )),
+                      ..._players.map(
+                        (player) => FilledButton.tonal(
+                          onPressed: () => _awardPoints(player),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: _getPlayerColor(player.id),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: Text(player.name),
+                        ),
+                      ),
                       OutlinedButton(
                         onPressed: () => _scoreQuestion(false),
                         style: OutlinedButton.styleFrom(
@@ -716,7 +749,6 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _selectQuestion(JeopardyCategory category, JeopardyQuestion question) {
-
     // We'll handle point doubling in the display and scoring logic
     setState(() {
       _selectedQuestion = question;
@@ -757,13 +789,16 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
     setState(() {
       // Update score - double points for Double Jeopardy round
-      final pointsToAward = _currentRound == 'doubleJeopardy' 
-          ? _selectedQuestion!.points * 2 
+      final pointsToAward = _currentRound == 'doubleJeopardy'
+          ? _selectedQuestion!.points * 2
           : _selectedQuestion!.points;
       player.score += pointsToAward;
 
       // Simply mark question as answered - use ORIGINAL points for ID
-      final questionId = _getQuestionId(_selectedCategory!.name, _selectedQuestion!.points);
+      final questionId = _getQuestionId(
+        _selectedCategory!.name,
+        _selectedQuestion!.points,
+      );
       _answeredQuestions.add(questionId);
 
       // Set current player for next selection
@@ -784,7 +819,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
     setState(() {
       // Simply mark question as answered (no one got it)
-      final questionId = _getQuestionId(_selectedCategory!.name, _selectedQuestion!.points);
+      final questionId = _getQuestionId(
+        _selectedCategory!.name,
+        _selectedQuestion!.points,
+      );
       _answeredQuestions.add(questionId);
 
       // Close question overlay
@@ -799,10 +837,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
 
   void _checkGameComplete() {
     // Check current round completion
-    final categories = _currentRound == 'doubleJeopardy' && _game?.doubleJeopardyCategories != null
+    final categories =
+        _currentRound == 'doubleJeopardy' &&
+            _game?.doubleJeopardyCategories != null
         ? _game!.doubleJeopardyCategories!
         : _game?.categories ?? [];
-    
+
     // Check if all questions in current round are answered
     bool roundComplete = true;
     for (final category in categories) {
@@ -817,7 +857,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     }
 
     if (roundComplete) {
-      if (_currentRound == 'jeopardy' && _game?.doubleJeopardyCategories != null && _game!.doubleJeopardyCategories!.isNotEmpty) {
+      if (_currentRound == 'jeopardy' &&
+          _game?.doubleJeopardyCategories != null &&
+          _game!.doubleJeopardyCategories!.isNotEmpty) {
         // Move to Double Jeopardy round
         setState(() {
           _currentRound = 'doubleJeopardy';
@@ -830,7 +872,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       }
     }
   }
-  
+
   void _showRoundTransition(String roundName) {
     showDialog(
       context: context,
@@ -883,11 +925,12 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
           children: [
             Text('Winner: ${winner.name} with \$${winner.score}!'),
             const SizedBox(height: 16),
-            ...(_players..sort((a, b) => b.score.compareTo(a.score)))
-                .map((player) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Text('${player.name}: \$${player.score}'),
-                    )),
+            ...(_players..sort((a, b) => b.score.compareTo(a.score))).map(
+              (player) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text('${player.name}: \$${player.score}'),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -911,24 +954,26 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: _players
-              .map((player) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(player.name),
-                        Text(
-                          '\$${player.score}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: player.score < 0
-                                ? Theme.of(context).colorScheme.error
-                                : null,
-                          ),
+              .map(
+                (player) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(player.name),
+                      Text(
+                        '\$${player.score}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: player.score < 0
+                              ? Theme.of(context).colorScheme.error
+                              : null,
                         ),
-                      ],
-                    ),
-                  ))
+                      ),
+                    ],
+                  ),
+                ),
+              )
               .toList(),
         ),
         actions: [
@@ -945,7 +990,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     final theme = Theme.of(context);
     // If player has $0, they can wager up to the question's value
     // Otherwise, they can wager up to their current score
-    final maxWager = _dailyDoublePlayer!.score > 0 
+    final maxWager = _dailyDoublePlayer!.score > 0
         ? _dailyDoublePlayer!.score
         : (_selectedQuestion?.points ?? 200);
 
@@ -1000,12 +1045,15 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                     labelText: 'Wager',
                     labelStyle: TextStyle(color: theme.colorScheme.onPrimary),
                     enabledBorder: OutlineInputBorder(
-                      borderSide:
-                          BorderSide(color: theme.colorScheme.onPrimary),
+                      borderSide: BorderSide(
+                        color: theme.colorScheme.onPrimary,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderSide: BorderSide(
-                          color: theme.colorScheme.onPrimary, width: 2),
+                        color: theme.colorScheme.onPrimary,
+                        width: 2,
+                      ),
                     ),
                   ),
                   onChanged: (value) {
@@ -1018,8 +1066,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               ),
               const SizedBox(height: 24),
               FilledButton.tonal(
-                onPressed:
-                    _dailyDoubleWager > 0 ? _confirmDailyDoubleWager : null,
+                onPressed: _dailyDoubleWager > 0
+                    ? _confirmDailyDoubleWager
+                    : null,
                 child: const Text('Confirm Wager'),
               ),
             ],
@@ -1036,7 +1085,11 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   }
 
   void _scoreDailyDouble(bool correct) {
-    if (_selectedQuestion == null || _dailyDoublePlayer == null || _selectedCategory == null) return;
+    if (_selectedQuestion == null ||
+        _dailyDoublePlayer == null ||
+        _selectedCategory == null) {
+      return;
+    }
 
     setState(() {
       // Update score
@@ -1047,7 +1100,10 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
       }
 
       // Simply mark question as answered
-      final questionId = _getQuestionId(_selectedCategory!.name, _selectedQuestion!.points);
+      final questionId = _getQuestionId(
+        _selectedCategory!.name,
+        _selectedQuestion!.points,
+      );
       _answeredQuestions.add(questionId);
 
       // Set current player for next selection
@@ -1110,42 +1166,47 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             const SizedBox(height: 8),
             Text('Answer: ${_game?.finalJeopardy?.answer ?? ''}'),
             const SizedBox(height: 16),
-            ..._players.map((player) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(player.name,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            Text(
-                                'Answer: ${_finalJeopardyAnswers[player.id] ?? "No answer"}'),
-                            Text(
-                                'Wager: \$${_finalJeopardyWagers[player.id] ?? 0}'),
-                          ],
-                        ),
-                      ),
-                      Row(
+            ..._players.map(
+              (player) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.check, color: Colors.green),
-                            onPressed: () =>
-                                _scoreFinalJeopardyPlayer(player, true),
+                          Text(
+                            player.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.red),
-                            onPressed: () =>
-                                _scoreFinalJeopardyPlayer(player, false),
+                          Text(
+                            'Answer: ${_finalJeopardyAnswers[player.id] ?? "No answer"}',
+                          ),
+                          Text(
+                            'Wager: \$${_finalJeopardyWagers[player.id] ?? 0}',
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                )),
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.check, color: Colors.green),
+                          onPressed: () =>
+                              _scoreFinalJeopardyPlayer(player, true),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.red),
+                          onPressed: () =>
+                              _scoreFinalJeopardyPlayer(player, false),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
         actions: [
@@ -1305,20 +1366,22 @@ class _FinalJeopardyDialogState extends State<_FinalJeopardyDialog> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ...widget.players.map((player) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: TextFormField(
-                    decoration: InputDecoration(
-                      labelText: '${player.name}\'s Answer',
-                      border: const OutlineInputBorder(),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _answers[player.id] = value;
-                      });
-                    },
+            ...widget.players.map(
+              (player) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: TextFormField(
+                  decoration: InputDecoration(
+                    labelText: '${player.name}\'s Answer',
+                    border: const OutlineInputBorder(),
                   ),
-                )),
+                  onChanged: (value) {
+                    setState(() {
+                      _answers[player.id] = value;
+                    });
+                  },
+                ),
+              ),
+            ),
           ],
         ),
         actions: [

@@ -18,10 +18,7 @@ class UserRoleClaims {
     try {
       // Call the cloud function
       final callable = _functions.httpsCallable('setRoleClaim');
-      await callable.call({
-        'uid': uid,
-        'role': role,
-      });
+      await callable.call({'uid': uid, 'role': role});
 
       // Role claim set successfully
       // Result data available if needed for debugging

@@ -31,15 +31,20 @@ class CallProvider extends ChangeNotifier {
       _setupNotificationHandlers();
       _setupFirebaseMessagingHandlers();
     } catch (e) {
-      LoggerService.error('Failed to initialize call provider',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Failed to initialize call provider',
+        tag: _tag,
+        error: e,
+      );
     }
   }
 
   void _setupNotificationHandlers() {
     // Placeholder - notification handlers for incoming calls will be implemented later
-    LoggerService.info('Setting up notification handlers (placeholder)',
-        tag: _tag);
+    LoggerService.info(
+      'Setting up notification handlers (placeholder)',
+      tag: _tag,
+    );
   }
 
   void _setupFirebaseMessagingHandlers() {

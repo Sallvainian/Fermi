@@ -5,10 +5,7 @@ import '../providers/discussion_provider_simple.dart';
 class CreateThreadDialog extends StatefulWidget {
   final String boardId;
 
-  const CreateThreadDialog({
-    super.key,
-    required this.boardId,
-  });
+  const CreateThreadDialog({super.key, required this.boardId});
 
   @override
   State<CreateThreadDialog> createState() => _CreateThreadDialogState();
@@ -143,9 +140,7 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       try {
@@ -174,8 +169,9 @@ class _CreateThreadDialogState extends State<CreateThreadDialog> {
           // Show error if thread creation failed
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(discussionProvider.error ?? 'Failed to create thread'),
+              content: Text(
+                discussionProvider.error ?? 'Failed to create thread',
+              ),
               backgroundColor: Colors.red,
             ),
           );

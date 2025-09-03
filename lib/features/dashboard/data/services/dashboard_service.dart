@@ -8,8 +8,10 @@ class DashboardService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Get recent activities for a teacher
-  Future<List<ActivityModel>> getTeacherActivities(String teacherId,
-      {int limit = 10}) async {
+  Future<List<ActivityModel>> getTeacherActivities(
+    String teacherId, {
+    int limit = 10,
+  }) async {
     try {
       // First check if the collection exists
       final querySnapshot = await _firestore
@@ -25,8 +27,9 @@ class DashboardService {
     } catch (e) {
       // Log the full error which includes index creation link in development
       LoggerService.error(
-          'Error fetching teacher activities - if index is missing, check console for creation link',
-          error: e);
+        'Error fetching teacher activities - if index is missing, check console for creation link',
+        error: e,
+      );
       // Return empty list to prevent app crash
       return [];
     }
@@ -34,8 +37,10 @@ class DashboardService {
 
   // Get recent activities for a student
   Future<List<ActivityModel>> getStudentActivities(
-      String studentId, List<String> classIds,
-      {int limit = 10}) async {
+    String studentId,
+    List<String> classIds, {
+    int limit = 10,
+  }) async {
     try {
       if (classIds.isEmpty) return [];
 
@@ -72,9 +77,9 @@ class DashboardService {
           .where('needsGrading', isEqualTo: true)
           .get()
           .catchError((e) {
-        LoggerService.warning('Assignment grading query failed: $e');
-        return _firestore.collection('assignments').limit(0).get();
-      });
+            LoggerService.warning('Assignment grading query failed: $e');
+            return _firestore.collection('assignments').limit(0).get();
+          });
 
       return {
         'totalAssignments': assignmentsQuery.size,
@@ -82,22 +87,18 @@ class DashboardService {
       };
     } catch (e) {
       LoggerService.error('Error fetching assignment stats', error: e);
-      return {
-        'totalAssignments': 0,
-        'toGrade': 0,
-      };
+      return {'totalAssignments': 0, 'toGrade': 0};
     }
   }
 
   // Get assignment statistics for student dashboard
   Future<Map<String, int>> getStudentAssignmentStats(
-      String studentId, List<String> classIds) async {
+    String studentId,
+    List<String> classIds,
+  ) async {
     try {
       if (classIds.isEmpty) {
-        return {
-          'totalAssignments': 0,
-          'dueSoon': 0,
-        };
+        return {'totalAssignments': 0, 'dueSoon': 0};
       }
 
       final now = DateTime.now();
@@ -124,10 +125,7 @@ class DashboardService {
       };
     } catch (e) {
       LoggerService.error('Error fetching student assignment stats', error: e);
-      return {
-        'totalAssignments': 0,
-        'dueSoon': 0,
-      };
+      return {'totalAssignments': 0, 'dueSoon': 0};
     }
   }
 
@@ -142,8 +140,10 @@ class DashboardService {
 
   // Get upcoming assignments for a student
   Future<List<Assignment>> getUpcomingAssignments(
-      String studentId, List<String> classIds,
-      {int limit = 5}) async {
+    String studentId,
+    List<String> classIds, {
+    int limit = 5,
+  }) async {
     try {
       if (classIds.isEmpty) return [];
 

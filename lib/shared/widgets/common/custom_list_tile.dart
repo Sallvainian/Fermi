@@ -111,7 +111,8 @@ class CustomListTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
         // Apply background color with selection state handling
-        color: backgroundColor ??
+        color:
+            backgroundColor ??
             (isSelected
                 ? colorScheme.primaryContainer.withValues(alpha: 0.1)
                 : null),
@@ -231,7 +232,8 @@ class StudentListTile extends StatelessWidget {
 
     return CustomListTile(
       // Generate avatar with initials or use custom avatar
-      leading: avatar ??
+      leading:
+          avatar ??
           CircleAvatar(
             backgroundColor: colorScheme.primaryContainer,
             child: Text(
@@ -245,9 +247,7 @@ class StudentListTile extends StatelessWidget {
       // Display student name with medium weight
       title: Text(
         name,
-        style: textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
       // Conditionally show email in subtitle
       subtitle: showEmail && email != null
@@ -273,10 +273,7 @@ class StudentListTile extends StatelessWidget {
             const SizedBox(width: 8),
           ],
           // Display status indicator
-          if (status != null) ...[
-            status!,
-            const SizedBox(width: 8),
-          ],
+          if (status != null) ...[status!, const SizedBox(width: 8)],
           // Standard navigation chevron
           const Icon(Icons.chevron_right),
         ],
@@ -376,17 +373,12 @@ class ClassListTile extends StatelessWidget {
       // Class icon with secondary container theming
       leading: CircleAvatar(
         backgroundColor: colorScheme.secondaryContainer,
-        child: Icon(
-          Icons.class_,
-          color: colorScheme.onSecondaryContainer,
-        ),
+        child: Icon(Icons.class_, color: colorScheme.onSecondaryContainer),
       ),
       // Display class name with medium weight
       title: Text(
         className,
-        style: textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
+        style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
       // Organize class details in column layout
       subtitle: Column(
@@ -403,9 +395,7 @@ class ClassListTile extends StatelessWidget {
           // Student count with primary color emphasis
           Text(
             '$studentCount students',
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.primary,
-            ),
+            style: textTheme.bodySmall?.copyWith(color: colorScheme.primary),
           ),
           // Display schedule if provided
           if (schedule != null)
@@ -422,10 +412,7 @@ class ClassListTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Display status indicator
-          if (status != null) ...[
-            status!,
-            const SizedBox(width: 8),
-          ],
+          if (status != null) ...[status!, const SizedBox(width: 8)],
           // Standard navigation chevron
           const Icon(Icons.chevron_right),
         ],

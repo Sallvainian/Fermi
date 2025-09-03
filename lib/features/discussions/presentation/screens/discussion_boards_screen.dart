@@ -53,9 +53,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ),
-          Expanded(
-            child: _buildBoardsList(),
-          ),
+          Expanded(child: _buildBoardsList()),
         ],
       ),
     );
@@ -105,8 +103,8 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                 Text(
                   'Create the first board to start discussions',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -114,7 +112,8 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         }
 
         return ListView.builder(
-          physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
+          physics:
+              const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
           padding: const EdgeInsets.all(16),
           itemCount: provider.boards.length,
           itemBuilder: (context, index) {
@@ -131,8 +130,9 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
 
   Widget _buildBoardCard({required SimpleDiscussionBoard board}) {
     final theme = Theme.of(context);
-    final isTeacher = context.read<AuthProvider>().userModel?.role == UserRole.teacher;
-    
+    final isTeacher =
+        context.read<AuthProvider>().userModel?.role == UserRole.teacher;
+
     final cardContent = Card(
       child: InkWell(
         onTap: () {
@@ -140,11 +140,14 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
           context.read<SimpleDiscussionProvider>().selectBoard(board);
 
           context.go(
-              '/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}');
+            '/discussions/${board.id}?title=${Uri.encodeComponent(board.title)}',
+          );
         },
-        onLongPress: isTeacher ? () {
-          _showDeleteBoardDialog(board);
-        } : null,
+        onLongPress: isTeacher
+            ? () {
+                _showDeleteBoardDialog(board);
+              }
+            : null,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -217,7 +220,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     child: Text(
                       '${board.threadCount} threads',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.brightness == Brightness.dark 
+                        color: theme.brightness == Brightness.dark
                             ? Colors.white
                             : theme.colorScheme.onSecondaryContainer,
                         fontWeight: FontWeight.w500,
@@ -240,10 +243,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   runSpacing: 6,
                   children: board.tags.take(3).map((tag) {
                     return Chip(
-                      label: Text(
-                        tag,
-                        style: theme.textTheme.labelSmall,
-                      ),
+                      label: Text(tag, style: theme.textTheme.labelSmall),
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     );
@@ -262,7 +262,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   Text(
                     _formatLastActivity(board.createdAt),
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.brightness == Brightness.dark 
+                      color: theme.brightness == Brightness.dark
                           ? Colors.white
                           : theme.colorScheme.onSurfaceVariant,
                     ),
@@ -271,7 +271,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                   Text(
                     'by ${board.createdBy}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.brightness == Brightness.dark 
+                      color: theme.brightness == Brightness.dark
                           ? Colors.white
                           : theme.colorScheme.onSurfaceVariant,
                     ),
@@ -283,7 +283,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         ),
       ),
     );
-    
+
     // Wrap with Dismissible for teachers only
     if (isTeacher) {
       return Dismissible(
@@ -296,10 +296,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
             color: Colors.red,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.delete, color: Colors.white),
         ),
         confirmDismiss: (direction) async {
           return await _showDeleteBoardDialog(board);
@@ -310,7 +307,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
         child: cardContent,
       );
     }
-    
+
     return cardContent;
   }
 
@@ -337,7 +334,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
       builder: (context) => const CreateBoardDialog(),
     );
   }
-  
+
   Future<bool> _showDeleteBoardDialog(SimpleDiscussionBoard board) async {
     final result = await showDialog<bool>(
       context: context,
@@ -360,14 +357,12 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                     .collection('discussion_boards')
                     .doc(board.id)
                     .delete();
-                    
+
                 // Refresh the boards list
                 if (!mounted) return;
                 context.read<SimpleDiscussionProvider>().initializeBoards();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Board "${board.title}" deleted'),
-                  ),
+                  SnackBar(content: Text('Board "${board.title}" deleted')),
                 );
               } catch (e) {
                 if (!mounted) return;
@@ -379,9 +374,7 @@ class _DiscussionBoardsScreenState extends State<DiscussionBoardsScreen> {
                 );
               }
             },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

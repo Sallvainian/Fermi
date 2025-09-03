@@ -24,19 +24,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ThemeProvider with ChangeNotifier {
   /// SharedPreferences key for storing theme preference.
   static const String _themeKey = 'theme_mode';
-  
+
   /// SharedPreferences key for storing color theme.
   static const String _colorThemeKey = 'color_theme';
 
   /// Current theme mode (light, dark, or system).
   ThemeMode _themeMode = ThemeMode.system;
-  
+
   /// Current color theme ID.
   String _colorThemeId = 'indigo';
 
   /// Current theme mode setting.
   ThemeMode get themeMode => _themeMode;
-  
+
   /// Current color theme ID.
   String get colorThemeId => _colorThemeId;
 
@@ -75,11 +75,11 @@ class ThemeProvider with ChangeNotifier {
         orElse: () => ThemeMode.system,
       );
     }
-    
+
     if (colorTheme != null) {
       _colorThemeId = colorTheme;
     }
-    
+
     notifyListeners();
   }
 
@@ -118,7 +118,7 @@ class ThemeProvider with ChangeNotifier {
     await prefs.setString(_themeKey, mode.toString());
     notifyListeners();
   }
-  
+
   /// Sets the color theme for the application.
   ///
   /// Changes the accent color used throughout the app.

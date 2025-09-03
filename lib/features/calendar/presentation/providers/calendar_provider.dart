@@ -93,18 +93,19 @@ class CalendarProvider with ChangeNotifier {
       await _eventsSubscription?.cancel();
 
       // Subscribe to user events
-      _eventsSubscription = calendarService
-          .getEventsGroupedByDate()
-          .listen((grouped) {
-        _eventsByDate = grouped;
-        _allEvents = grouped.values.expand((events) => events).toList();
-        _isLoading = false;
-        notifyListeners();
-      }, onError: (error) {
-        _error = error.toString();
-        _isLoading = false;
-        notifyListeners();
-      });
+      _eventsSubscription = calendarService.getEventsGroupedByDate().listen(
+        (grouped) {
+          _eventsByDate = grouped;
+          _allEvents = grouped.values.expand((events) => events).toList();
+          _isLoading = false;
+          notifyListeners();
+        },
+        onError: (error) {
+          _error = error.toString();
+          _isLoading = false;
+          notifyListeners();
+        },
+      );
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
@@ -163,9 +164,10 @@ class CalendarProvider with ChangeNotifier {
           .collection('users')
           .doc(_currentUserId)
           .get();
-      final userName = userDoc.data()?['displayName'] ?? 
-                       userDoc.data()?['username'] ?? 
-                       'Unknown User';
+      final userName =
+          userDoc.data()?['displayName'] ??
+          userDoc.data()?['username'] ??
+          'Unknown User';
 
       await calendarService.createEvent(
         title: title,
@@ -266,8 +268,9 @@ class CalendarProvider with ChangeNotifier {
 
       // Add basic recurrence rule if needed
       if (event.recurrence != RecurrenceType.none) {
-        buffer
-            .writeln('RRULE:FREQ=${_mapRecurrenceToString(event.recurrence)}');
+        buffer.writeln(
+          'RRULE:FREQ=${_mapRecurrenceToString(event.recurrence)}',
+        );
       }
 
       buffer.writeln('END:VEVENT');
@@ -304,19 +307,13 @@ class CalendarProvider with ChangeNotifier {
   void navigatePrevious() {
     switch (_currentView) {
       case CalendarView.month:
-        _focusedDate = DateTime(
-          _focusedDate.year,
-          _focusedDate.month - 1,
-        );
+        _focusedDate = DateTime(_focusedDate.year, _focusedDate.month - 1);
         break;
       case CalendarView.week:
         _focusedDate = _focusedDate.subtract(const Duration(days: 7));
         break;
       case CalendarView.agenda:
-        _focusedDate = DateTime(
-          _focusedDate.year,
-          _focusedDate.month - 1,
-        );
+        _focusedDate = DateTime(_focusedDate.year, _focusedDate.month - 1);
         break;
     }
     notifyListeners();
@@ -326,19 +323,13 @@ class CalendarProvider with ChangeNotifier {
   void navigateNext() {
     switch (_currentView) {
       case CalendarView.month:
-        _focusedDate = DateTime(
-          _focusedDate.year,
-          _focusedDate.month + 1,
-        );
+        _focusedDate = DateTime(_focusedDate.year, _focusedDate.month + 1);
         break;
       case CalendarView.week:
         _focusedDate = _focusedDate.add(const Duration(days: 7));
         break;
       case CalendarView.agenda:
-        _focusedDate = DateTime(
-          _focusedDate.year,
-          _focusedDate.month + 1,
-        );
+        _focusedDate = DateTime(_focusedDate.year, _focusedDate.month + 1);
         break;
     }
     notifyListeners();
@@ -359,8 +350,4 @@ class CalendarProvider with ChangeNotifier {
 }
 
 /// Enumeration of calendar view modes.
-enum CalendarView {
-  month,
-  week,
-  agenda,
-}
+enum CalendarView { month, week, agenda }

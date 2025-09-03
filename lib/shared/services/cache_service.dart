@@ -58,10 +58,7 @@ class CacheService {
   /// @param key Cache key
   /// @param forceFresh Skip cache and return null
   /// @return Cached value or null if not found/expired
-  Future<T?> get<T>(
-    String key, {
-    bool forceFresh = false,
-  }) async {
+  Future<T?> get<T>(String key, {bool forceFresh = false}) async {
     if (forceFresh) {
       _stats.recordMiss();
       return null;
@@ -92,13 +89,14 @@ class CacheService {
 
           // Promote to memory cache
           _setMemory(
-              key,
-              value,
-              Duration(
-                milliseconds: ttl != null
-                    ? ttl - DateTime.now().millisecondsSinceEpoch
-                    : 3600000, // 1 hour default
-              ));
+            key,
+            value,
+            Duration(
+              milliseconds: ttl != null
+                  ? ttl - DateTime.now().millisecondsSinceEpoch
+                  : 3600000, // 1 hour default
+            ),
+          );
 
           return value;
         }
@@ -213,8 +211,9 @@ class CacheService {
   /// Clear cache by pattern.
   Future<void> clearPattern(String pattern) async {
     // Clear from memory
-    final keysToRemove =
-        _memoryCache.keys.where((key) => key.contains(pattern)).toList();
+    final keysToRemove = _memoryCache.keys
+        .where((key) => key.contains(pattern))
+        .toList();
 
     for (final key in keysToRemove) {
       await remove(key);
@@ -261,8 +260,8 @@ class CacheService {
     final size = _estimateSize(value);
 
     // Evict if necessary
-    while (
-        _currentMemorySize + size > _maxMemorySize && _memoryCache.isNotEmpty) {
+    while (_currentMemorySize + size > _maxMemorySize &&
+        _memoryCache.isNotEmpty) {
       _evictOldest();
     }
 
@@ -451,12 +450,12 @@ class CacheStatistics {
   }
 
   Map<String, dynamic> toJson() => {
-        'hits': _hits,
-        'misses': _misses,
-        'sets': _sets,
-        'evictions': _evictions,
-        'hitRate': hitRate,
-      };
+    'hits': _hits,
+    'misses': _misses,
+    'sets': _sets,
+    'evictions': _evictions,
+    'hitRate': hitRate,
+  };
 }
 
 /// Cache size information.
@@ -478,19 +477,16 @@ class CacheSizeInfo {
   int get totalBytes => memoryBytes + persistentBytes;
 
   Map<String, dynamic> toJson() => {
-        'memory': {
-          'entries': memoryEntries,
-          'bytes': memoryBytes,
-          'mb': (memoryBytes / 1024 / 1024).toStringAsFixed(2),
-        },
-        'persistent': {
-          'entries': persistentEntries,
-          'bytes': persistentBytes,
-          'kb': (persistentBytes / 1024).toStringAsFixed(2),
-        },
-        'total': {
-          'entries': totalEntries,
-          'bytes': totalBytes,
-        },
-      };
+    'memory': {
+      'entries': memoryEntries,
+      'bytes': memoryBytes,
+      'mb': (memoryBytes / 1024 / 1024).toStringAsFixed(2),
+    },
+    'persistent': {
+      'entries': persistentEntries,
+      'bytes': persistentBytes,
+      'kb': (persistentBytes / 1024).toStringAsFixed(2),
+    },
+    'total': {'entries': totalEntries, 'bytes': totalBytes},
+  };
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -8,7 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_compress/video_compress.dart';
-import '../../../../shared/services/logger_service.dart';
+// (removed duplicate logger_service import)
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -91,10 +92,7 @@ final Uint8List kTransparentImage = Uint8List.fromList(<int>[
 class ChatDetailScreen extends StatefulWidget {
   final String chatRoomId;
 
-  const ChatDetailScreen({
-    super.key,
-    required this.chatRoomId,
-  });
+  const ChatDetailScreen({super.key, required this.chatRoomId});
 
   @override
   State<ChatDetailScreen> createState() => _ChatDetailScreenState();
@@ -164,7 +162,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
             String displayName = 'Chat';
             if (chatRoom != null) {
-              if (chatRoom['type'] == 'direct' && (chatRoom['participants'] as List?)?.length == 2) {
+              if (chatRoom['type'] == 'direct' &&
+                  (chatRoom['participants'] as List?)?.length == 2) {
                 final participants = chatRoom['participants'] as List<dynamic>;
                 final otherParticipant = participants.firstWhere(
                   (p) => p['id'] != currentUserId,
@@ -212,7 +211,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   showSearch(
                     context: context,
                     delegate: ChatSearchDelegate(
-                        messages: chatProvider.currentMessages),
+                      messages: chatProvider.currentMessages,
+                    ),
                   );
                   break;
                 case 'mute':
@@ -234,10 +234,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               ),
               if (context.read<SimpleChatProvider>().currentChatRoom?['type'] !=
                   'direct')
-                const PopupMenuItem(
-                  value: 'leave',
-                  child: Text('Leave chat'),
-                ),
+                const PopupMenuItem(value: 'leave', child: Text('Leave chat')),
             ],
           ),
         ],
@@ -255,8 +252,11 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline,
-                            size: 48, color: Colors.red),
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
                         const SizedBox(height: 16),
                         Text('Error: $error'),
                         const SizedBox(height: 16),
@@ -288,9 +288,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         ? messages[index + 1]
                         : null;
 
-                    final showDate = previousMessage == null ||
+                    final showDate =
+                        previousMessage == null ||
                         !_isSameDay(
-                            message['timestamp'], previousMessage['timestamp']);
+                          message['timestamp'],
+                          previousMessage['timestamp'],
+                        );
 
                     return Column(
                       children: [
@@ -306,8 +309,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           if (_isUploading)
             LinearProgressIndicator(
               value: _uploadProgress,
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
             ),
           _buildMessageInput(context),
         ],
@@ -340,15 +344,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           child: Text(
             dateText,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildMessageBubble(BuildContext context, Map<String, dynamic> message) {
+  Widget _buildMessageBubble(
+    BuildContext context,
+    Map<String, dynamic> message,
+  ) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final isMe = message['senderId'] == currentUserId;
     final theme = Theme.of(context);
@@ -361,8 +368,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (!isMe)
               Padding(
@@ -392,7 +400,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (message['attachmentUrl'] != null) _buildAttachment(message),
+                  if (message['attachmentUrl'] != null)
+                    _buildAttachment(message),
                   // Only show text if it's not a placeholder OR if there's no attachment
                   if (message['attachmentUrl'] == null ||
                       (message['content'] != 'Sent an image' &&
@@ -426,8 +435,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Widget _buildAttachment(Map<String, dynamic> message) {
-    if (message['attachmentType'] == 'image' && message['attachmentUrl'] != null) {
-
+    if (message['attachmentType'] == 'image' &&
+        message['attachmentUrl'] != null) {
       // Simplified approach - just use Image.network without any containers
       return Image.network(
         message['attachmentUrl']!,
@@ -447,15 +456,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
     }
 
-    if (message['attachmentType'] == 'video' && message['attachmentUrl'] != null) {
+    if (message['attachmentType'] == 'video' &&
+        message['attachmentUrl'] != null) {
       return GestureDetector(
         onTap: () => _viewFullScreenVideo(message['attachmentUrl']!),
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
-          constraints: const BoxConstraints(
-            maxHeight: 200,
-            maxWidth: 300,
-          ),
+          constraints: const BoxConstraints(maxHeight: 200, maxWidth: 300),
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -506,10 +513,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _getAttachmentIcon(message['attachmentType']),
-            size: 20,
-          ),
+          Icon(_getAttachmentIcon(message['attachmentType']), size: 20),
           const SizedBox(width: 8),
           const Text('Attachment'),
         ],
@@ -558,8 +562,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 10,
@@ -625,11 +630,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       await context.read<SimpleChatProvider>().sendMessage(content: message);
     } catch (e) {
       if (mounted) {
-        LoggerService.error('Failed to send message in ChatDetailScreen',
-            error: e);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send message: $e')),
+        LoggerService.error(
+          'Failed to send message in ChatDetailScreen',
+          error: e,
         );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
       }
     }
   }
@@ -658,21 +665,26 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ),
             const SizedBox(height: 8),
             Text('Type: ${chatRoom['type'] ?? 'unknown'}'),
-            Text('Participants: ${(chatRoom['participantIds'] as List?)?.length ?? 0}'),
-            if (chatRoom['classId'] != null) Text('Class ID: ${chatRoom['classId']}'),
+            Text(
+              'Participants: ${(chatRoom['participantIds'] as List?)?.length ?? 0}',
+            ),
+            if (chatRoom['classId'] != null)
+              Text('Class ID: ${chatRoom['classId']}'),
             const SizedBox(height: 16),
             const Text(
               'Participants:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ...(chatRoom['participants'] as List<dynamic>? ?? []).map((participant) => ListTile(
-                  leading: CircleAvatar(
-                    child: Text((participant['name'] ?? 'U')[0].toUpperCase()),
-                  ),
-                  title: Text(participant['name'] ?? 'Unknown'),
-                  subtitle: Text(participant['role'] ?? ''),
-                )),
+            ...(chatRoom['participants'] as List<dynamic>? ?? []).map(
+              (participant) => ListTile(
+                leading: CircleAvatar(
+                  child: Text((participant['name'] ?? 'U')[0].toUpperCase()),
+                ),
+                title: Text(participant['name'] ?? 'Unknown'),
+                subtitle: Text(participant['role'] ?? ''),
+              ),
+            ),
           ],
         ),
       ),
@@ -690,7 +702,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final participants = chatRoom['participants'] as List<dynamic>? ?? [];
       final otherParticipant = participants.firstWhere(
         (p) => p['id'] != FirebaseAuth.instance.currentUser?.uid,
-        orElse: () => participants.isNotEmpty ? participants.first : {'id': '', 'name': 'Unknown'},
+        orElse: () => participants.isNotEmpty
+            ? participants.first
+            : {'id': '', 'name': 'Unknown'},
       );
 
       // Fetch receiver's photo URL from Firestore
@@ -717,9 +731,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       // For group calls, show participant selection or use a different approach
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Group calls are not supported yet'),
-          ),
+          const SnackBar(content: Text('Group calls are not supported yet')),
         );
       }
     }
@@ -742,9 +754,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               Navigator.pop(context);
               // Navigate back to messages list
               context.go('/messages');
-              await context
-                  .read<SimpleChatProvider>()
-                  .leaveChatRoom(widget.chatRoomId);
+              await context.read<SimpleChatProvider>().leaveChatRoom(
+                widget.chatRoomId,
+              );
             },
             child: const Text('Leave'),
           ),
@@ -757,10 +769,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return;
 
-    final userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(userId).get();
-    List<String> mutedChats =
-        List<String>.from(userDoc.data()?['mutedChats'] ?? []);
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+    List<String> mutedChats = List<String>.from(
+      userDoc.data()?['mutedChats'] ?? [],
+    );
 
     final isCurrentlyMuted = mutedChats.contains(widget.chatRoomId);
 
@@ -770,17 +785,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       mutedChats.add(widget.chatRoomId);
     }
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .update({'mutedChats': mutedChats});
+    await FirebaseFirestore.instance.collection('users').doc(userId).update({
+      'mutedChats': mutedChats,
+    });
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isCurrentlyMuted
-              ? 'Notifications unmuted'
-              : 'Notifications muted'),
+          content: Text(
+            isCurrentlyMuted ? 'Notifications unmuted' : 'Notifications muted',
+          ),
         ),
       );
     }
@@ -864,9 +878,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
       }
     }
   }
@@ -889,7 +903,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Image is too large. Maximum size is 10MB')),
+            content: Text('Image is too large. Maximum size is 10MB'),
+          ),
         );
       }
       return;
@@ -929,6 +944,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        if (!mounted) return;
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
@@ -938,30 +954,31 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       final TaskSnapshot taskSnapshot = await uploadTask;
       final String downloadUrl = await taskSnapshot.ref.getDownloadURL();
 
-
       // Send message with image attachment
       if (mounted) {
         await context.read<SimpleChatProvider>().sendMessage(
-              content: _messageController.text.trim().isEmpty
-                  ? 'Sent an image'
-                  : _messageController.text.trim(),
-              attachmentUrl: downloadUrl,
-              attachmentType: 'image',
-            );
+          content: _messageController.text.trim().isEmpty
+              ? 'Sent an image'
+              : _messageController.text.trim(),
+          attachmentUrl: downloadUrl,
+          attachmentType: 'image',
+        );
 
         _messageController.clear();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to upload image: $e')));
       }
     } finally {
-      setState(() {
-        _isUploading = false;
-        _uploadProgress = 0.0;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadProgress = 0.0;
+        });
+      }
     }
   }
 
@@ -977,9 +994,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking video: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error picking video: $e')));
       }
     }
   }
@@ -1004,7 +1021,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Video is too large. Maximum size is 100MB')),
+            content: Text('Video is too large. Maximum size is 100MB'),
+          ),
         );
       }
       return;
@@ -1055,17 +1073,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
           if (info != null && info.file != null) {
             videoToUpload = XFile(info.file!.path);
-            final originalSizeMB =
-                (await file.length() / (1024 * 1024)).toStringAsFixed(1);
+            final originalSizeMB = (await file.length() / (1024 * 1024))
+                .toStringAsFixed(1);
             final compressedFile = File(info.file!.path);
             final compressedSizeMB =
-                (await compressedFile.length() / (1024 * 1024))
-                    .toStringAsFixed(1);
+                (await compressedFile.length() / (1024 * 1024)).toStringAsFixed(
+                  1,
+                );
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                      'Video compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB'),
+                    'Video compressed: ${originalSizeMB}MB → ${compressedSizeMB}MB',
+                  ),
                   duration: const Duration(seconds: 2),
                 ),
               );
@@ -1073,7 +1093,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           }
         } catch (compressionError) {
           // If compression fails, use original file
-          debugPrint('Video compression failed: $compressionError');
+          LoggerService.warning('Video compression failed', tag: 'ChatDetailScreen');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1113,6 +1133,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        if (!mounted) return;
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
@@ -1125,12 +1146,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       // Send message with video attachment
       if (mounted) {
         await context.read<SimpleChatProvider>().sendMessage(
-              content: _messageController.text.trim().isEmpty
-                  ? 'Sent a video'
-                  : _messageController.text.trim(),
-              attachmentUrl: downloadUrl,
-              attachmentType: 'video',
-            );
+          content: _messageController.text.trim().isEmpty
+              ? 'Sent a video'
+              : _messageController.text.trim(),
+          attachmentUrl: downloadUrl,
+          attachmentType: 'video',
+        );
 
         _messageController.clear();
       }
@@ -1143,20 +1164,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             await compressedFile.delete();
           }
         } catch (e) {
-          debugPrint('Failed to delete compressed video: $e');
+          LoggerService.warning('Failed to delete compressed video', tag: 'ChatDetailScreen');
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload video: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to upload video: $e')));
       }
     } finally {
-      setState(() {
-        _isUploading = false;
-        _uploadProgress = 0.0;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadProgress = 0.0;
+        });
+      }
 
       // Cancel any ongoing compression
       await VideoCompress.cancelCompression();
@@ -1176,9 +1199,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final message = _messageController.text.trim();
     if (message.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please type a message first'),
-        ),
+        const SnackBar(content: Text('Please type a message first')),
       );
       return;
     }
@@ -1211,8 +1232,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           context: context,
                           initialDate: selectedDate,
                           firstDate: DateTime.now(),
-                          lastDate:
-                              DateTime.now().add(const Duration(days: 365)),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 365),
+                          ),
                         );
                         if (date != null) {
                           setState(() {
@@ -1349,8 +1371,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             const Divider(),
             Expanded(
               child: StreamBuilder<List<Map<String, dynamic>>>(
-                stream: _scheduledMessagesService
-                    .getScheduledMessages(widget.chatRoomId),
+                stream: _scheduledMessagesService.getScheduledMessages(
+                  widget.chatRoomId,
+                ),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -1359,9 +1382,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   final scheduledMessages = snapshot.data ?? [];
 
                   if (scheduledMessages.isEmpty) {
-                    return const Center(
-                      child: Text('No scheduled messages'),
-                    );
+                    return const Center(child: Text('No scheduled messages'));
                   }
 
                   return ListView.builder(
@@ -1380,9 +1401,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           onPressed: () async {
                             final messenger = ScaffoldMessenger.of(context);
                             await _scheduledMessagesService
-                                .cancelScheduledMessage(
-                              scheduled['id'] ?? '',
-                            );
+                                .cancelScheduledMessage(scheduled['id'] ?? '');
                             if (mounted) {
                               messenger.showSnackBar(
                                 const SnackBar(
@@ -1585,8 +1604,11 @@ class ChatSearchDelegate extends SearchDelegate<Map<String, dynamic>?> {
 
   Widget _buildSearchResults() {
     final results = messages
-        .where((message) =>
-            (message['content'] ?? '').toLowerCase().contains(query.toLowerCase()))
+        .where(
+          (message) => (message['content'] ?? '').toLowerCase().contains(
+            query.toLowerCase(),
+          ),
+        )
         .toList();
 
     return ListView.builder(
@@ -1595,7 +1617,9 @@ class ChatSearchDelegate extends SearchDelegate<Map<String, dynamic>?> {
         final message = results[index];
         return ListTile(
           title: Text(message['content'] ?? ''),
-          subtitle: Text(DateFormat('MMM d, h:mm a').format(message['timestamp'])),
+          subtitle: Text(
+            DateFormat('MMM d, h:mm a').format(message['timestamp']),
+          ),
           onTap: () {
             close(context, message);
           },

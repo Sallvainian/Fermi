@@ -10,10 +10,7 @@ import '../../../../../shared/models/user_model.dart';
 class AssignmentCreateScreen extends StatefulWidget {
   final String? classId;
 
-  const AssignmentCreateScreen({
-    super.key,
-    this.classId,
-  });
+  const AssignmentCreateScreen({super.key, this.classId});
 
   @override
   State<AssignmentCreateScreen> createState() => _AssignmentCreateScreenState();
@@ -145,8 +142,9 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Assignment "${assignment['title']}" created successfully'),
+            content: Text(
+              'Assignment "${assignment['title']}" created successfully',
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -179,320 +177,186 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/teacher/assignments');
-            }
-          },
-          tooltip: 'Back',
-        ),
-        title: const Text('Create Assignment'),
-        actions: [
-          TextButton.icon(
-            onPressed: _isLoading ? null : _createAssignment,
-            icon: const Icon(Icons.save),
-            label: const Text('Save'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/teacher/assignments');
+              }
+            },
+            tooltip: 'Back',
           ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Basic Information',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Assignment Title',
-                        prefixIcon: Icon(Icons.title),
+          title: const Text('Create Assignment'),
+          actions: [
+            TextButton.icon(
+              onPressed: _isLoading ? null : _createAssignment,
+              icon: const Icon(Icons.save),
+              label: const Text('Save'),
+            ),
+          ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Basic Information',
+                        style: theme.textTheme.titleLarge,
                       ),
-                      textInputAction: TextInputAction.next,
-                      textCapitalization: TextCapitalization.sentences,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a title';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Brief Description',
-                        prefixIcon: Icon(Icons.description),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _titleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Assignment Title',
+                          prefixIcon: Icon(Icons.title),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        textCapitalization: TextCapitalization.sentences,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a title';
+                          }
+                          return null;
+                        },
                       ),
-                      maxLines: 2,
-                      textInputAction: TextInputAction.next,
-                      textCapitalization: TextCapitalization.sentences,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a description';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedType,
-                      decoration: const InputDecoration(
-                        labelText: 'Assignment Type',
-                        prefixIcon: Icon(Icons.category),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _descriptionController,
+                        decoration: const InputDecoration(
+                          labelText: 'Brief Description',
+                          prefixIcon: Icon(Icons.description),
+                        ),
+                        maxLines: 2,
+                        textInputAction: TextInputAction.next,
+                        textCapitalization: TextCapitalization.sentences,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a description';
+                          }
+                          return null;
+                        },
                       ),
-                      items: ['essay', 'quiz', 'project', 'lab', 'worksheet', 'other'].map((type) {
-                        return DropdownMenuItem(
-                          value: type,
-                          child: Text(type.toUpperCase()),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedType = value!;
-                        });
-                      },
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedType,
+                        decoration: const InputDecoration(
+                          labelText: 'Assignment Type',
+                          prefixIcon: Icon(Icons.category),
+                        ),
+                        items:
+                            [
+                              'essay',
+                              'quiz',
+                              'project',
+                              'lab',
+                              'worksheet',
+                              'other',
+                            ].map((type) {
+                              return DropdownMenuItem(
+                                value: type,
+                                child: Text(type.toUpperCase()),
+                              );
+                            }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedType = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Instructions',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _instructionsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Detailed Instructions',
-                        hintText: 'Provide clear instructions for students...',
-                        prefixIcon: Icon(Icons.article),
-                        alignLabelWithHint: true,
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Instructions', style: theme.textTheme.titleLarge),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _instructionsController,
+                        decoration: const InputDecoration(
+                          labelText: 'Detailed Instructions',
+                          hintText:
+                              'Provide clear instructions for students...',
+                          prefixIcon: Icon(Icons.article),
+                          alignLabelWithHint: true,
+                        ),
+                        maxLines: 5,
+                        textInputAction: TextInputAction.next,
+                        textCapitalization: TextCapitalization.sentences,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please provide instructions';
+                          }
+                          return null;
+                        },
                       ),
-                      maxLines: 5,
-                      textInputAction: TextInputAction.next,
-                      textCapitalization: TextCapitalization.sentences,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please provide instructions';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Grading & Submission',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _maxPointsController,
-                      decoration: const InputDecoration(
-                        labelText: 'Maximum Points',
-                        prefixIcon: Icon(Icons.score),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Grading & Submission',
+                        style: theme.textTheme.titleLarge,
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                      textInputAction: TextInputAction.done,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Enter points';
-                        }
-                        final points = int.tryParse(value);
-                        if (points == null || points <= 0) {
-                          return 'Invalid points';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: _selectDueDate,
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Due Date',
-                                prefixIcon: Icon(Icons.calendar_today),
-                              ),
-                              child: Text(
-                                '${_dueDate.month}/${_dueDate.day}/${_dueDate.year}',
-                              ),
-                            ),
-                          ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _maxPointsController,
+                        decoration: const InputDecoration(
+                          labelText: 'Maximum Points',
+                          prefixIcon: Icon(Icons.score),
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: InkWell(
-                            onTap: _selectDueTime,
-                            child: InputDecorator(
-                              decoration: const InputDecoration(
-                                labelText: 'Due Time',
-                                prefixIcon: Icon(Icons.access_time),
-                              ),
-                              child: Text(
-                                _dueTime.format(context),
-                              ),
-                            ),
-                          ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: false,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    SwitchListTile(
-                      title: const Text('Allow Late Submissions'),
-                      subtitle: const Text(
-                          'Students can submit after due date with penalty'),
-                      value: _allowLateSubmissions,
-                      onChanged: (value) {
-                        setState(() {
-                          _allowLateSubmissions = value;
-                        });
-                      },
-                    ),
-                    if (_allowLateSubmissions)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16.0),
-                        child: Row(
-                          children: [
-                            const Text('Late Penalty: '),
-                            SizedBox(
-                              width: 100,
-                              child: Slider(
-                                value: _latePenaltyPercentage.toDouble(),
-                                min: 0,
-                                max: 50,
-                                divisions: 10,
-                                label: '$_latePenaltyPercentage%',
-                                onChanged: (value) {
-                                  setState(() {
-                                    _latePenaltyPercentage = value.round();
-                                  });
-                                },
-                              ),
-                            ),
-                            Text('$_latePenaltyPercentage% per day'),
-                          ],
-                        ),
+                        textInputAction: TextInputAction.done,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter points';
+                          }
+                          final points = int.tryParse(value);
+                          if (points == null || points <= 0) {
+                            return 'Invalid points';
+                          }
+                          return null;
+                        },
                       ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Publishing Options',
-                      style: theme.textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    CustomRadioListTile<int>(
-                      title: const Text('Save as Draft'),
-                      subtitle: const Text(
-                          'Assignment will not be visible to students'),
-                      value: 0,
-                      groupValue: _publishOption,
-                      onChanged: (value) {
-                        setState(() {
-                          _publishOption = value!;
-                          _isPublished = false;
-                          _selectedStatus = 'draft';
-                        });
-                      },
-                    ),
-                    CustomRadioListTile<int>(
-                      title: const Text('Publish Immediately'),
-                      subtitle: const Text(
-                          'Students can see and submit the assignment'),
-                      value: 1,
-                      groupValue: _publishOption,
-                      onChanged: (value) {
-                        setState(() {
-                          _publishOption = value!;
-                          _isPublished = true;
-                          _selectedStatus = 'active';
-                        });
-                      },
-                    ),
-                    CustomRadioListTile<int>(
-                      title: const Text('Schedule for Later'),
-                      subtitle: const Text(
-                          'Assignment will become visible at a future date'),
-                      value: 2,
-                      groupValue: _publishOption,
-                      onChanged: (value) {
-                        setState(() {
-                          _publishOption = value!;
-                          _isPublished = false;
-                          _selectedStatus = 'draft';
-                        });
-                      },
-                    ),
-                    if (_publishOption == 2) ...[
                       const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
                             child: InkWell(
-                              onTap: () async {
-                                final DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: _publishDate,
-                                  firstDate: DateTime.now(),
-                                  lastDate: _dueDate,
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _publishDate = picked;
-                                  });
-                                }
-                              },
+                              onTap: _selectDueDate,
                               child: InputDecorator(
                                 decoration: const InputDecoration(
-                                  labelText: 'Publish Date',
+                                  labelText: 'Due Date',
                                   prefixIcon: Icon(Icons.calendar_today),
                                 ),
                                 child: Text(
-                                  '${_publishDate.month}/${_publishDate.day}/${_publishDate.year}',
+                                  '${_dueDate.month}/${_dueDate.day}/${_dueDate.year}',
                                 ),
                               ),
                             ),
@@ -500,39 +364,182 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                           const SizedBox(width: 16),
                           Expanded(
                             child: InkWell(
-                              onTap: () async {
-                                final TimeOfDay? picked = await showTimePicker(
-                                  context: context,
-                                  initialTime: _publishTime,
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _publishTime = picked;
-                                  });
-                                }
-                              },
+                              onTap: _selectDueTime,
                               child: InputDecorator(
                                 decoration: const InputDecoration(
-                                  labelText: 'Publish Time',
+                                  labelText: 'Due Time',
                                   prefixIcon: Icon(Icons.access_time),
                                 ),
-                                child: Text(
-                                  _publishTime.format(context),
-                                ),
+                                child: Text(_dueTime.format(context)),
                               ),
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      SwitchListTile(
+                        title: const Text('Allow Late Submissions'),
+                        subtitle: const Text(
+                          'Students can submit after due date with penalty',
+                        ),
+                        value: _allowLateSubmissions,
+                        onChanged: (value) {
+                          setState(() {
+                            _allowLateSubmissions = value;
+                          });
+                        },
+                      ),
+                      if (_allowLateSubmissions)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: Row(
+                            children: [
+                              const Text('Late Penalty: '),
+                              SizedBox(
+                                width: 100,
+                                child: Slider(
+                                  value: _latePenaltyPercentage.toDouble(),
+                                  min: 0,
+                                  max: 50,
+                                  divisions: 10,
+                                  label: '$_latePenaltyPercentage%',
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _latePenaltyPercentage = value.round();
+                                    });
+                                  },
+                                ),
+                              ),
+                              Text('$_latePenaltyPercentage% per day'),
+                            ],
+                          ),
+                        ),
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-          ],
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Publishing Options',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 16),
+                      CustomRadioListTile<int>(
+                        title: const Text('Save as Draft'),
+                        subtitle: const Text(
+                          'Assignment will not be visible to students',
+                        ),
+                        value: 0,
+                        groupValue: _publishOption,
+                        onChanged: (value) {
+                          setState(() {
+                            _publishOption = value!;
+                            _isPublished = false;
+                            _selectedStatus = 'draft';
+                          });
+                        },
+                      ),
+                      CustomRadioListTile<int>(
+                        title: const Text('Publish Immediately'),
+                        subtitle: const Text(
+                          'Students can see and submit the assignment',
+                        ),
+                        value: 1,
+                        groupValue: _publishOption,
+                        onChanged: (value) {
+                          setState(() {
+                            _publishOption = value!;
+                            _isPublished = true;
+                            _selectedStatus = 'active';
+                          });
+                        },
+                      ),
+                      CustomRadioListTile<int>(
+                        title: const Text('Schedule for Later'),
+                        subtitle: const Text(
+                          'Assignment will become visible at a future date',
+                        ),
+                        value: 2,
+                        groupValue: _publishOption,
+                        onChanged: (value) {
+                          setState(() {
+                            _publishOption = value!;
+                            _isPublished = false;
+                            _selectedStatus = 'draft';
+                          });
+                        },
+                      ),
+                      if (_publishOption == 2) ...[
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _publishDate,
+                                    firstDate: DateTime.now(),
+                                    lastDate: _dueDate,
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _publishDate = picked;
+                                    });
+                                  }
+                                },
+                                child: InputDecorator(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Publish Date',
+                                    prefixIcon: Icon(Icons.calendar_today),
+                                  ),
+                                  child: Text(
+                                    '${_publishDate.month}/${_publishDate.day}/${_publishDate.year}',
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final TimeOfDay? picked =
+                                      await showTimePicker(
+                                        context: context,
+                                        initialTime: _publishTime,
+                                      );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _publishTime = picked;
+                                    });
+                                  }
+                                },
+                                child: InputDecorator(
+                                  decoration: const InputDecoration(
+                                    labelText: 'Publish Time',
+                                    prefixIcon: Icon(Icons.access_time),
+                                  ),
+                                  child: Text(_publishTime.format(context)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }

@@ -25,17 +25,11 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
         return windows;
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return linux;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -49,7 +43,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
     authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
     measurementId: 'G-VWHGE5G997',
   );
@@ -59,7 +54,8 @@ class DefaultFirebaseOptions {
     appId: '1:218352465432:android:a7d591b9db6bef6038b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
   );
 
@@ -68,10 +64,13 @@ class DefaultFirebaseOptions {
     appId: '1:218352465432:ios:33fe51117562f8d938b56d',
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
-    androidClientId: '218352465432-2kmehjp1b5g8r4n5t2ul09t5gqiuajop.apps.googleusercontent.com',
-    iosClientId: '218352465432-g06upomjmavqesl9tf51fnn7crga6jgk.apps.googleusercontent.com',
+    androidClientId:
+        '218352465432-2kmehjp1b5g8r4n5t2ul09t5gqiuajop.apps.googleusercontent.com',
+    iosClientId:
+        '218352465432-g06upomjmavqesl9tf51fnn7crga6jgk.apps.googleusercontent.com',
     iosBundleId: 'com.academic-tools.fermi',
   );
 
@@ -81,9 +80,36 @@ class DefaultFirebaseOptions {
     messagingSenderId: '218352465432',
     projectId: 'teacher-dashboard-flutterfire',
     authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
-    databaseURL: 'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
     storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
     measurementId: 'G-ZE9KXELPFY',
   );
 
+  // Added for desktop support parity. Using iOS configuration for macOS by default.
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyD52btw4TrLb1G6otPJTSr2FXRukwDhB-k',
+    appId: '1:218352465432:ios:33fe51117562f8d938b56d',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
+    iosClientId:
+        '218352465432-g06upomjmavqesl9tf51fnn7crga6jgk.apps.googleusercontent.com',
+    iosBundleId: 'com.academic-tools.fermi',
+  );
+
+  // Added for Linux desktop development; mirrors Web defaults.
+  static const FirebaseOptions linux = FirebaseOptions(
+    apiKey: 'AIzaSyBl_36NLwN3O9POk5SMD86jX_LGY1IDFrM',
+    appId: '1:218352465432:web:05826e2607e681cd38b56d',
+    messagingSenderId: '218352465432',
+    projectId: 'teacher-dashboard-flutterfire',
+    authDomain: 'teacher-dashboard-flutterfire.firebaseapp.com',
+    databaseURL:
+        'https://teacher-dashboard-flutterfire-default-rtdb.firebaseio.com',
+    storageBucket: 'teacher-dashboard-flutterfire.firebasestorage.app',
+    measurementId: 'G-ZE9KXELPFY',
+  );
 }

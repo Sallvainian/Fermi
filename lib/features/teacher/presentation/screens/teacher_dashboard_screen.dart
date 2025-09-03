@@ -78,9 +78,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         !callProvider.isNavigationInProgress) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         callProvider.setNavigationInProgress(true);
-        context
-            .push('/incoming-call', extra: callProvider.incomingCall)
-            .then((_) {
+        context.push('/incoming-call', extra: callProvider.incomingCall).then((
+          _,
+        ) {
           // Reset navigation state after call screen is popped
           callProvider.setNavigationInProgress(false);
           // Optional: Add any post-call logic here
@@ -159,8 +159,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               const SizedBox(height: 8),
 
               // Quick Stats - Smaller section
-              _buildQuickStats(context, classProvider, dashboardProvider,
-                  assignmentProvider),
+              _buildQuickStats(
+                context,
+                classProvider,
+                dashboardProvider,
+                assignmentProvider,
+              ),
               const SizedBox(height: 24),
 
               // My Classes
@@ -213,13 +217,16 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Widget _buildQuickStats(
-      BuildContext context,
-      ClassProvider classProvider,
-      DashboardProvider dashboardProvider,
-      SimpleAssignmentProvider assignmentProvider) {
+    BuildContext context,
+    ClassProvider classProvider,
+    DashboardProvider dashboardProvider,
+    SimpleAssignmentProvider assignmentProvider,
+  ) {
     final teacherClasses = classProvider.teacherClasses;
     final totalStudents = teacherClasses.fold<int>(
-        0, (sum, classModel) => sum + classModel.studentCount);
+      0,
+      (sum, classModel) => sum + classModel.studentCount,
+    );
 
     return SizedBox(
       height: 80,
@@ -267,11 +274,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Widget _buildClassesSection(
-      BuildContext context, ClassProvider classProvider) {
+    BuildContext context,
+    ClassProvider classProvider,
+  ) {
     // Check if we have a valid teacher ID
     final authProvider = context.read<AuthProvider>();
-    final teacherId = authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
-    
+    final teacherId =
+        authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
+
     if (teacherId == null) {
       return Card(
         child: Padding(
@@ -280,8 +290,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline,
-                    size: 48, color: Colors.orange),
+                const Icon(Icons.error_outline, size: 48, color: Colors.orange),
                 const SizedBox(height: 16),
                 const Text('Unable to load classes'),
                 const SizedBox(height: 8),
@@ -303,24 +312,21 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         ),
       );
     }
-    
+
     // If not initialized or stream is null, show loading
     if (!_isInitialized || _classesStream == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return StreamBuilder<List<ClassModel>>(
       stream: _classesStream,
       builder: (context, snapshot) {
         // Handle connection state
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
         }
-        
+
         // Handle errors
         if (snapshot.hasError) {
           return Card(
@@ -330,15 +336,22 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline,
-                        size: 48, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
-                    Text('Error loading classes',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Error loading classes',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
-                    Text('${snapshot.error}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center),
+                    Text(
+                      '${snapshot.error}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
@@ -384,9 +397,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     Text(
                       'Create your first class to get started',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
@@ -405,10 +417,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
         return Column(
           children: [
-            ...displayClasses.map((course) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildClassCard(context, course),
-                )),
+            ...displayClasses.map(
+              (course) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildClassCard(context, course),
+              ),
+            ),
             if (teacherClasses.length > 4) ...[
               const SizedBox(height: 4),
               SizedBox(
@@ -474,7 +488,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     if (course.schedule != null)
                       _buildInfoChip(Icons.schedule, course.schedule!),
                     _buildInfoChip(
-                        Icons.people, '${course.studentCount} students'),
+                      Icons.people,
+                      '${course.studentCount} students',
+                    ),
                   ],
                 ),
               ],
@@ -523,11 +539,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      icon,
-                      size: 20,
-                      color: color,
-                    ),
+                    Icon(icon, size: 20, color: color),
                     const SizedBox(width: 8),
                     Text(
                       value,
@@ -566,11 +578,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 14,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             text,
@@ -584,7 +592,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Widget _buildRecentActivityCard(
-      BuildContext context, DashboardProvider dashboardProvider) {
+    BuildContext context,
+    DashboardProvider dashboardProvider,
+  ) {
     final activities = dashboardProvider.recentActivities;
 
     return Card(
@@ -598,53 +608,49 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ),
               )
             : activities.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.history_outlined,
-                            size: 48,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No Recent Activity',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Activity from your classes will appear here',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : Column(
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
                     children: [
-                      for (int i = 0; i < activities.take(3).length; i++) ...[
-                        _buildActivityItemFromModel(context, activities[i]),
-                        if (i < activities.take(3).length - 1) const Divider(),
-                      ],
+                      Icon(
+                        Icons.history_outlined,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No Recent Activity',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Activity from your classes will appear here',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ],
                   ),
+                ),
+              )
+            : Column(
+                children: [
+                  for (int i = 0; i < activities.take(3).length; i++) ...[
+                    _buildActivityItemFromModel(context, activities[i]),
+                    if (i < activities.take(3).length - 1) const Divider(),
+                  ],
+                ],
+              ),
       ),
     );
   }
 
   Widget _buildActivityItemFromModel(
-      BuildContext context, ActivityModel activity) {
+    BuildContext context,
+    ActivityModel activity,
+  ) {
     IconData icon;
     Color color;
 
@@ -803,11 +809,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 32,
-                color: theme.colorScheme.primary,
-              ),
+              Icon(icon, size: 32, color: theme.colorScheme.primary),
               const SizedBox(height: 8),
               Text(
                 title,

@@ -5,11 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AppPasswordScreen extends StatefulWidget {
   final VoidCallback onSuccess;
-  
-  const AppPasswordScreen({
-    super.key,
-    required this.onSuccess,
-  });
+
+  const AppPasswordScreen({super.key, required this.onSuccess});
 
   @override
   State<AppPasswordScreen> createState() => _AppPasswordScreenState();
@@ -20,44 +17,44 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _obscurePassword = true;
-  
+
   // Hash of "kineticenergy" - storing hash instead of plaintext
-  static const String _passwordHash = '6fbb3c863f859bc84312360da2a98d13d4d0d891be0bde892223000cbb70d04c';
-  
-  
+  static const String _passwordHash =
+      '6fbb3c863f859bc84312360da2a98d13d4d0d891be0bde892223000cbb70d04c';
+
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
     var digest = sha256.convert(bytes);
     return digest.toString();
   }
-  
+
   Future<void> _verifyPassword() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     final enteredPassword = _passwordController.text;
     final enteredHash = _hashPassword(enteredPassword);
-    
+
     // Simple hash comparison for now - in production, use Firebase Remote Config
     final correctHash = _passwordHash;
-    
+
     if (enteredHash == correctHash) {
       // Success - save session
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('app_unlocked', true);
       await prefs.setInt('unlock_time', DateTime.now().millisecondsSinceEpoch);
-      
+
       widget.onSuccess();
     } else {
       // Failed attempt - just show error and clear field
       _showError('Incorrect password');
       _passwordController.clear();
     }
-    
+
     setState(() => _isLoading = false);
   }
-  
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -67,13 +64,13 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
       ),
     );
   }
-  
+
   @override
   void dispose() {
     _passwordController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,26 +94,27 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Title
                     Text(
                       'Fermi+',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    
+
                     Text(
                       'Enter password to access',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
-                    
+
                     // Password Field
                     TextFormField(
                       controller: _passwordController,
@@ -128,7 +126,9 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                         prefixIcon: const Icon(Icons.key),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                           ),
                           onPressed: () {
                             setState(() {
@@ -152,7 +152,7 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                       autofocus: true,
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Submit Button
                     ElevatedButton(
                       onPressed: _isLoading ? null : _verifyPassword,
@@ -170,7 +170,10 @@ class _AppPasswordScreenState extends State<AppPasswordScreen> {
                             )
                           : const Text(
                               'Unlock App',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                   ],

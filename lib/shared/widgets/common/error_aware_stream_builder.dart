@@ -79,10 +79,7 @@ class ErrorAwareStreamBuilder<T> extends StatelessWidget {
   }
 
   Widget _buildLoadingState(BuildContext context) {
-    return loadingWidget ??
-        const Center(
-          child: CircularProgressIndicator(),
-        );
+    return loadingWidget ?? const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildErrorState(BuildContext context, Object error) {
@@ -155,17 +152,16 @@ class ErrorAwareStreamBuilder<T> extends StatelessWidget {
               Icon(
                 Icons.inbox_outlined,
                 size: 64,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurfaceVariant
-                    .withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
               ),
               const SizedBox(height: 16),
               Text(
                 'No data available',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -228,10 +224,7 @@ class ErrorAwareFutureBuilder<T> extends StatelessWidget {
   }
 
   Widget _buildLoadingState(BuildContext context) {
-    return loadingWidget ??
-        const Center(
-          child: CircularProgressIndicator(),
-        );
+    return loadingWidget ?? const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildErrorState(BuildContext context, Object error) {

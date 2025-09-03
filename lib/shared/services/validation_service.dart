@@ -250,23 +250,35 @@ class ValidationService {
 
     // Remove script tags and their content
     sanitized = sanitized.replaceAll(
-        RegExp(r'<script[^>]*>.*?</script>',
-            multiLine: true, caseSensitive: false),
-        '');
+      RegExp(
+        r'<script[^>]*>.*?</script>',
+        multiLine: true,
+        caseSensitive: false,
+      ),
+      '',
+    );
 
     // Remove iframe tags
     sanitized = sanitized.replaceAll(
-        RegExp(r'<iframe[^>]*>.*?</iframe>',
-            multiLine: true, caseSensitive: false),
-        '');
+      RegExp(
+        r'<iframe[^>]*>.*?</iframe>',
+        multiLine: true,
+        caseSensitive: false,
+      ),
+      '',
+    );
 
     // Remove event handlers (simplified)
-    sanitized =
-        sanitized.replaceAll(RegExp(r'on\w+\s*=', caseSensitive: false), '');
+    sanitized = sanitized.replaceAll(
+      RegExp(r'on\w+\s*=', caseSensitive: false),
+      '',
+    );
 
     // Remove javascript: URLs
-    sanitized =
-        sanitized.replaceAll(RegExp(r'javascript:', caseSensitive: false), '');
+    sanitized = sanitized.replaceAll(
+      RegExp(r'javascript:', caseSensitive: false),
+      '',
+    );
 
     return sanitized.trim();
   }
@@ -314,8 +326,10 @@ class ValidationService {
   /// Check if string contains SQL injection patterns
   static bool containsSqlInjection(String input) {
     final sqlPatterns = [
-      RegExp(r'\b(union|select|insert|update|delete|drop|create)\b',
-          caseSensitive: false),
+      RegExp(
+        r'\b(union|select|insert|update|delete|drop|create)\b',
+        caseSensitive: false,
+      ),
       RegExp(r'(--|;)', caseSensitive: false),
       RegExp(r"['`]", caseSensitive: false),
     ];
@@ -334,13 +348,14 @@ class ValidationService {
       '.gif',
       '.pdf',
       '.doc',
-      '.docx'
+      '.docx',
     ],
     int maxSizeMB = 10,
   }) {
     // Check file extension
-    final extension =
-        fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+    final extension = fileName.toLowerCase().substring(
+      fileName.lastIndexOf('.'),
+    );
     if (!allowedExtensions.contains(extension)) {
       return 'File type not allowed. Allowed types: ${allowedExtensions.join(', ')}';
     }

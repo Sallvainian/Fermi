@@ -16,7 +16,7 @@ class SimpleGradeProvider with ChangeNotifier {
   Map<String, dynamic>? get currentGrade => _currentGrade;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  
+
   // Additional getters for compatibility
   List<Map<String, dynamic>> get studentGrades => _grades;
   List<Map<String, dynamic>> get classGrades => _grades;
@@ -32,7 +32,7 @@ class SimpleGradeProvider with ChangeNotifier {
   Future<void> loadTeacherGrades() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -46,8 +46,10 @@ class SimpleGradeProvider with ChangeNotifier {
           .where('teacherId', isEqualTo: user.uid)
           .get();
 
-      final assignmentIds = assignmentsSnapshot.docs.map((doc) => doc.id).toList();
-      
+      final assignmentIds = assignmentsSnapshot.docs
+          .map((doc) => doc.id)
+          .toList();
+
       if (assignmentIds.isEmpty) {
         _grades = [];
         _error = null;
@@ -65,7 +67,7 @@ class SimpleGradeProvider with ChangeNotifier {
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -80,7 +82,7 @@ class SimpleGradeProvider with ChangeNotifier {
   Future<void> loadStudentGrades(String studentId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Query submissions for this student
       final snapshot = await _firestore
@@ -94,7 +96,7 @@ class SimpleGradeProvider with ChangeNotifier {
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -125,7 +127,7 @@ class SimpleGradeProvider with ChangeNotifier {
           'feedback': feedback,
           'gradedAt': FieldValue.serverTimestamp(),
           'gradedBy': _auth.currentUser?.uid,
-        }
+        },
       });
 
       await loadTeacherGrades(); // Reload grades
@@ -146,8 +148,10 @@ class SimpleGradeProvider with ChangeNotifier {
           .where('classId', isEqualTo: classId)
           .get();
 
-      final assignmentIds = assignmentsSnapshot.docs.map((doc) => doc.id).toList();
-      
+      final assignmentIds = assignmentsSnapshot.docs
+          .map((doc) => doc.id)
+          .toList();
+
       if (assignmentIds.isEmpty) return [];
 
       // Get submissions for these assignments
@@ -171,16 +175,18 @@ class SimpleGradeProvider with ChangeNotifier {
   Stream<List<Map<String, dynamic>>> get gradesStream {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
-    
+
     return _firestore
         .collection('submissions')
         .where('grade', isNotEqualTo: null)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          }).toList(),
+        );
   }
 
   /// Helper to calculate letter grade
@@ -203,17 +209,17 @@ class SimpleGradeProvider with ChangeNotifier {
   Future<void> loadGrades() async {
     final user = _auth.currentUser;
     if (user == null) return;
-    
+
     // Determine if teacher or student based on role
     // For now, assume teacher
     await loadTeacherGrades();
   }
-  
+
   /// Load grades for a specific class
   Future<void> loadClassGrades(String classId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       // Stub implementation - would filter by classId
       await loadTeacherGrades();
@@ -224,18 +230,18 @@ class SimpleGradeProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Load student grades for a specific class
   Future<void> loadStudentClassGrades(String studentId, String classId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final submissionsSnapshot = await _firestore
           .collection('submissions')
           .where('studentId', isEqualTo: studentId)
           .get();
-      
+
       _grades = submissionsSnapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;

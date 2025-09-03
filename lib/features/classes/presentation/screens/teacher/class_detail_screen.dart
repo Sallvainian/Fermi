@@ -17,10 +17,7 @@ import '../../../../../features/assignments/presentation/providers/assignment_pr
 class ClassDetailScreen extends StatefulWidget {
   final String classId;
 
-  const ClassDetailScreen({
-    super.key,
-    required this.classId,
-  });
+  const ClassDetailScreen({super.key, required this.classId});
 
   @override
   State<ClassDetailScreen> createState() => _ClassDetailScreenState();
@@ -70,7 +67,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
           // Load assignments for this class AND teacher's assignments
           // This ensures we have all assignments available immediately
           await assignmentProvider.loadAssignmentsForClass(widget.classId);
-          
+
           // Also load teacher assignments if not already loaded
           if (authProvider.userModel != null) {
             await assignmentProvider.loadAssignmentsForTeacher();
@@ -78,20 +75,23 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
         } else {
           // Class not found - navigate back
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Class not found')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Class not found')));
             context.pop();
           }
         }
       }
     } catch (e) {
-      LoggerService.error('Error loading class data',
-          tag: 'ClassDetailScreen', error: e);
+      LoggerService.error(
+        'Error loading class data',
+        tag: 'ClassDetailScreen',
+        error: e,
+      );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading class: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading class: $e')));
       }
     }
   }
@@ -157,9 +157,7 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
             onPressed: () => context.go('/teacher/classes'),
           ),
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -212,9 +210,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                           size: 20,
                         ),
                         const SizedBox(width: 12),
-                        Text(_classModel!.isActive
-                            ? 'Archive Class'
-                            : 'Restore Class'),
+                        Text(
+                          _classModel!.isActive
+                              ? 'Archive Class'
+                              : 'Restore Class',
+                        ),
                       ],
                     ),
                   ),
@@ -271,23 +271,19 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                         children: [
                           Text(
                             'Class Information',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
                             _classModel!.isActive ? 'Active' : 'Archived',
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: _classModel!.isActive
-                                          ? Colors.green
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                    ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: _classModel!.isActive
+                                      ? Colors.green
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                         ],
                       ),
@@ -298,19 +294,28 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                 _buildInfoRow(Icons.subject, 'Subject', _classModel!.subject),
                 const SizedBox(height: 12),
                 _buildInfoRow(
-                    Icons.grade, 'Grade Level', _classModel!.gradeLevel),
+                  Icons.grade,
+                  'Grade Level',
+                  _classModel!.gradeLevel,
+                ),
                 if (_classModel!.room != null) ...[
                   const SizedBox(height: 12),
                   _buildInfoRow(Icons.room, 'Room', _classModel!.room!),
                 ],
                 if (_classModel!.schedule != null) ...[
                   const SizedBox(height: 12),
-                  _buildInfoRow(Icons.schedule, 'Period',
-                      _formatPeriodNumber(_classModel!.schedule!)),
+                  _buildInfoRow(
+                    Icons.schedule,
+                    'Period',
+                    _formatPeriodNumber(_classModel!.schedule!),
+                  ),
                 ],
                 const SizedBox(height: 12),
-                _buildInfoRow(Icons.calendar_today, 'Academic Year',
-                    _classModel!.academicYear),
+                _buildInfoRow(
+                  Icons.calendar_today,
+                  'Academic Year',
+                  _classModel!.academicYear,
+                ),
                 if (_classModel!.description != null) ...[
                   const SizedBox(height: 16),
                   const Divider(),
@@ -318,8 +323,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                   Text(
                     'Description',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -343,8 +348,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                     Text(
                       'Enrollment Code',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.refresh),
@@ -371,15 +376,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                       const SizedBox(width: 16),
                       Text(
                         _classModel!.enrollmentCode ?? 'No Code',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
+                        style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
                             ),
                       ),
                       const SizedBox(width: 16),
@@ -396,8 +399,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                 Text(
                   'Share this code with students to allow them to enroll',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -412,9 +415,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
               children: [
                 Text(
                   'Class Statistics',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -485,14 +488,17 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                     hintText: 'Search students...',
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
-                    fillColor:
-                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    fillColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -516,22 +522,22 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
           child: classProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : students.isEmpty
-                  ? _searchQuery.isNotEmpty
-                      ? EmptyState.noSearchResults(searchTerm: _searchQuery)
-                      : const EmptyState(
-                          icon: Icons.people_outline,
-                          title: 'No Students Yet',
-                          message:
-                              'Add students to this class using the enrollment code or the Add Students button',
-                        )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: students.length,
-                      itemBuilder: (context, index) {
-                        final student = students[index];
-                        return _buildStudentCard(student, classProvider);
-                      },
-                    ),
+              ? _searchQuery.isNotEmpty
+                    ? EmptyState.noSearchResults(searchTerm: _searchQuery)
+                    : const EmptyState(
+                        icon: Icons.people_outline,
+                        title: 'No Students Yet',
+                        message:
+                            'Add students to this class using the enrollment code or the Add Students button',
+                      )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: students.length,
+                  itemBuilder: (context, index) {
+                    final student = students[index];
+                    return _buildStudentCard(student, classProvider);
+                  },
+                ),
         ),
       ],
     );
@@ -564,14 +570,14 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                   Text(
                     student.displayName,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     student.email ?? student.username,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -605,12 +611,12 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
     return Consumer<SimpleAssignmentProvider>(
       builder: (context, assignmentProvider, _) {
         // Use the optimized method from the provider to get deduplicated assignments
-        final classAssignments = assignmentProvider.getAssignmentsForClass(widget.classId);
+        final classAssignments = assignmentProvider.getAssignmentsForClass(
+          widget.classId,
+        );
 
         if (assignmentProvider.isLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (classAssignments.isEmpty) {
@@ -632,15 +638,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                 Text(
                   'Create your first assignment for this class',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton.icon(
                   onPressed: () {
                     // Navigate to create assignment with this class pre-selected
                     context.push(
-                        '/teacher/assignments/create?classId=${widget.classId}');
+                      '/teacher/assignments/create?classId=${widget.classId}',
+                    );
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Create Assignment'),
@@ -665,7 +672,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                   ElevatedButton.icon(
                     onPressed: () {
                       context.push(
-                          '/teacher/assignments/create?classId=${widget.classId}');
+                        '/teacher/assignments/create?classId=${widget.classId}',
+                      );
                     },
                     icon: const Icon(Icons.add, size: 20),
                     label: const Text('New Assignment'),
@@ -685,8 +693,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                     margin: const EdgeInsets.only(bottom: 8),
                     child: ListTile(
                       leading: CircleAvatar(
-                        backgroundColor:
-                            _getAssignmentTypeColor(assignment['type'] ?? 'essay'),
+                        backgroundColor: _getAssignmentTypeColor(
+                          assignment['type'] ?? 'essay',
+                        ),
                         child: Icon(
                           _getAssignmentTypeIcon(assignment['type'] ?? 'essay'),
                           color: Colors.white,
@@ -701,7 +710,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                           Text(
                             'Due: ${_formatDate(_getAssignmentDueDate(assignment))}',
                             style: TextStyle(
-                              color: _getAssignmentDueDate(assignment).isBefore(DateTime.now())
+                              color:
+                                  _getAssignmentDueDate(
+                                    assignment,
+                                  ).isBefore(DateTime.now())
                                   ? Colors.red
                                   : null,
                             ),
@@ -724,7 +736,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                       ),
                       onTap: () {
                         // Navigate to assignment detail
-                        context.push('/teacher/assignments/${assignment['id']}');
+                        context.push(
+                          '/teacher/assignments/${assignment['id']}',
+                        );
                       },
                     ),
                   );
@@ -839,16 +853,16 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
         Text(
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             value,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
             textAlign: TextAlign.end,
           ),
         ),
@@ -865,25 +879,21 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
       ),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 32,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          Icon(icon, size: 32, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 8),
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -905,8 +915,9 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
 
   Future<void> _regenerateEnrollmentCode() async {
     final classProvider = context.read<ClassProvider>();
-    final newCode =
-        await classProvider.regenerateEnrollmentCode(widget.classId);
+    final newCode = await classProvider.regenerateEnrollmentCode(
+      widget.classId,
+    );
 
     if (newCode != null) {
       setState(() {
@@ -953,14 +964,17 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   }
 
   Future<void> _removeStudent(
-      String? studentId, ClassProvider classProvider) async {
+    String? studentId,
+    ClassProvider classProvider,
+  ) async {
     if (studentId == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Student'),
         content: const Text(
-            'Are you sure you want to remove this student from the class?'),
+          'Are you sure you want to remove this student from the class?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -978,8 +992,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
     );
 
     if (confirmed == true) {
-      final success =
-          await classProvider.unenrollStudent(widget.classId, studentId);
+      final success = await classProvider.unenrollStudent(
+        widget.classId,
+        studentId,
+      );
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1009,7 +1025,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
           builder: (dialogContext) => AlertDialog(
             title: const Text('Archive Class'),
             content: const Text(
-                'Archived classes will be read-only. Students won\'t be able to submit new work. You can restore the class later.'),
+              'Archived classes will be read-only. Students won\'t be able to submit new work. You can restore the class later.',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(false),

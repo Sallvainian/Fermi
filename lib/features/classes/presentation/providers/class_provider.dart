@@ -63,36 +63,36 @@ class ClassProvider with ChangeNotifier {
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
         .listen(
-      (snapshot) {
-        final List<ClassModel> classes = [];
-        for (var doc in snapshot.docs) {
-          try {
-            final classModel = ClassModel.fromFirestore(doc);
-            classes.add(classModel);
-          } catch (e) {
-            // ERROR: Failed to parse class document ${doc.id}: $e
-            // Continue processing other documents
-          }
-        }
+          (snapshot) {
+            final List<ClassModel> classes = [];
+            for (var doc in snapshot.docs) {
+              try {
+                final classModel = ClassModel.fromFirestore(doc);
+                classes.add(classModel);
+              } catch (e) {
+                // ERROR: Failed to parse class document ${doc.id}: $e
+                // Continue processing other documents
+              }
+            }
 
-        _teacherClasses = classes;
-        _setLoading(false);
-        // Defer notification to next frame to avoid setState during build
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          notifyListeners();
-        });
-      },
-      onError: (error) {
-        // ERROR: Failed to load teacher classes: $error
-        _teacherClasses = [];
-        _setError('Failed to load classes: $error');
-        _setLoading(false);
-        // Defer notification to next frame to avoid setState during build
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          notifyListeners();
-        });
-      },
-    );
+            _teacherClasses = classes;
+            _setLoading(false);
+            // Defer notification to next frame to avoid setState during build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              notifyListeners();
+            });
+          },
+          onError: (error) {
+            // ERROR: Failed to load teacher classes: $error
+            _teacherClasses = [];
+            _setError('Failed to load classes: $error');
+            _setLoading(false);
+            // Defer notification to next frame to avoid setState during build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              notifyListeners();
+            });
+          },
+        );
 
     // Return the stream for UI if needed
     return _firestore
@@ -100,8 +100,10 @@ class ClassProvider with ChangeNotifier {
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => ClassModel.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => ClassModel.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Loads student's enrolled classes from Firestore.
@@ -117,36 +119,36 @@ class ClassProvider with ChangeNotifier {
         .where('studentIds', arrayContains: studentId)
         .snapshots()
         .listen(
-      (snapshot) {
-        final List<ClassModel> classes = [];
-        for (var doc in snapshot.docs) {
-          try {
-            final classModel = ClassModel.fromFirestore(doc);
-            classes.add(classModel);
-          } catch (e) {
-            // ERROR: Failed to parse class document ${doc.id}: $e
-            // Continue processing other documents
-          }
-        }
+          (snapshot) {
+            final List<ClassModel> classes = [];
+            for (var doc in snapshot.docs) {
+              try {
+                final classModel = ClassModel.fromFirestore(doc);
+                classes.add(classModel);
+              } catch (e) {
+                // ERROR: Failed to parse class document ${doc.id}: $e
+                // Continue processing other documents
+              }
+            }
 
-        _studentClasses = classes;
-        _setLoading(false);
-        // Defer notification to next frame to avoid setState during build
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          notifyListeners();
-        });
-      },
-      onError: (error) {
-        // ERROR: Failed to load student classes: $error
-        _studentClasses = [];
-        _setError('Failed to load classes: $error');
-        _setLoading(false);
-        // Defer notification to next frame to avoid setState during build
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          notifyListeners();
-        });
-      },
-    );
+            _studentClasses = classes;
+            _setLoading(false);
+            // Defer notification to next frame to avoid setState during build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              notifyListeners();
+            });
+          },
+          onError: (error) {
+            // ERROR: Failed to load student classes: $error
+            _studentClasses = [];
+            _setError('Failed to load classes: $error');
+            _setLoading(false);
+            // Defer notification to next frame to avoid setState during build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              notifyListeners();
+            });
+          },
+        );
   }
 
   /// Creates a new class.
@@ -200,8 +202,11 @@ class ClassProvider with ChangeNotifier {
       }
       return null;
     } catch (e) {
-      LoggerService.error('Error getting class by ID',
-          tag: 'ClassProvider', error: e);
+      LoggerService.error(
+        'Error getting class by ID',
+        tag: 'ClassProvider',
+        error: e,
+      );
       return null;
     }
   }
@@ -217,11 +222,14 @@ class ClassProvider with ChangeNotifier {
     _setLoading(true);
 
     try {
-      final classDoc =
-          await _firestore.collection('classes').doc(classId).get();
+      final classDoc = await _firestore
+          .collection('classes')
+          .doc(classId)
+          .get();
       if (classDoc.exists) {
-        final studentIds =
-            List<String>.from(classDoc.data()?['studentIds'] ?? []);
+        final studentIds = List<String>.from(
+          classDoc.data()?['studentIds'] ?? [],
+        );
         if (studentIds.isNotEmpty) {
           final studentsSnapshot = await _firestore
               .collection('users')
@@ -305,14 +313,14 @@ class ClassProvider with ChangeNotifier {
     // Add retry logic for ERR_BLOCKED_BY_CLIENT errors
     int retryCount = 0;
     const maxRetries = 3;
-    
+
     while (retryCount < maxRetries) {
       try {
         // Small delay to avoid hitting rate limits
         if (retryCount > 0) {
           await Future.delayed(Duration(seconds: retryCount * 2));
         }
-        
+
         final classQuery = await _firestore
             .collection('classes')
             .where('enrollmentCode', isEqualTo: enrollmentCode.toUpperCase())
@@ -326,7 +334,7 @@ class ClassProvider with ChangeNotifier {
         }
 
         final classDoc = classQuery.docs.first;
-        
+
         // Check if student is already enrolled
         final classData = classDoc.data();
         final studentIds = List<String>.from(classData['studentIds'] ?? []);
@@ -334,7 +342,7 @@ class ClassProvider with ChangeNotifier {
           _setError('You are already enrolled in this class');
           return false;
         }
-        
+
         await classDoc.reference.update({
           'studentIds': FieldValue.arrayUnion([studentId]),
           'updatedAt': FieldValue.serverTimestamp(),
@@ -344,7 +352,7 @@ class ClassProvider with ChangeNotifier {
       } catch (e) {
         retryCount++;
         LoggerService.warning('Enrollment attempt $retryCount failed: $e');
-        
+
         if (retryCount >= maxRetries) {
           _setError('Unable to join class. Please try again in a moment.');
           return false;
@@ -352,7 +360,7 @@ class ClassProvider with ChangeNotifier {
         // Continue to retry
       }
     }
-    
+
     return false;
   }
 
@@ -403,9 +411,11 @@ class ClassProvider with ChangeNotifier {
 
       return usersSnapshot.docs
           .map((doc) => Student.fromFirestore(doc))
-          .where((student) =>
-              student.displayName.toLowerCase().contains(queryLower) ||
-              (student.email?.toLowerCase().contains(queryLower) ?? false))
+          .where(
+            (student) =>
+                student.displayName.toLowerCase().contains(queryLower) ||
+                (student.email?.toLowerCase().contains(queryLower) ?? false),
+          )
           .toList();
     } catch (e) {
       _setError(e.toString());
@@ -415,7 +425,9 @@ class ClassProvider with ChangeNotifier {
 
   /// Enrolls multiple students in a class.
   Future<bool> enrollMultipleStudents(
-      String classId, List<String> studentIds) async {
+    String classId,
+    List<String> studentIds,
+  ) async {
     try {
       await _firestore.collection('classes').doc(classId).update({
         'studentIds': FieldValue.arrayUnion(studentIds),
@@ -449,7 +461,9 @@ class ClassProvider with ChangeNotifier {
     final random = Random();
     return String.fromCharCodes(
       Iterable.generate(
-          6, (_) => chars.codeUnitAt(random.nextInt(chars.length))),
+        6,
+        (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+      ),
     );
   }
 

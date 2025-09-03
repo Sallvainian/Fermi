@@ -317,8 +317,11 @@ class CalendarEvent {
   /// if the event should appear on the given date.
   bool occursOn(DateTime date) {
     final dateOnly = DateTime(date.year, date.month, date.day);
-    final eventDateOnly =
-        DateTime(startTime.year, startTime.month, startTime.day);
+    final eventDateOnly = DateTime(
+      startTime.year,
+      startTime.month,
+      startTime.day,
+    );
 
     // Check if it's the original event date
     if (dateOnly == eventDateOnly) return true;
