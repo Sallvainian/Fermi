@@ -237,6 +237,62 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Sign up with username and password for teachers
+  Future<void> signUpWithUsername({
+    required String username,
+    required String password,
+    required String role,
+  }) async {
+    if (_authOperationInProgress) {
+      LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
+      return;
+    }
+
+    _authOperationInProgress = true;
+    _startLoading();
+
+    try {
+      // Validate input
+      if (username.isEmpty || password.isEmpty) {
+        throw Exception('Username and password are required');
+      }
+
+      // For teachers, create with temporary first/last names
+      // They will complete their profile after initial auth
+      final user = await _usernameAuthService.createTeacherAccount(
+        username: username,
+        password: password,
+        firstName: '', // Will be updated in profile completion
+        lastName: '', // Will be updated in profile completion
+      );
+
+      if (user == null) {
+        throw Exception('Account creation failed');
+      }
+
+      // Load user model from Firestore
+      final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+
+      if (loadedUserModel == null || loadedUserModel.role == null) {
+        LoggerService.error('Failed to load user model after signup', tag: 'AuthProvider');
+        await _authService.signOut();
+        throw Exception('Failed to create user profile. Please try again.');
+      }
+
+      // SUCCESS: Update state - teacher needs to complete profile
+      _userModel = loadedUserModel;
+      _setAuthState(AuthStatus.authenticated);
+      _startNotificationsIfNeeded();
+      _updatePresenceOnline();
+    } catch (e) {
+      LoggerService.error('Username sign-up error', tag: 'AuthProvider', error: e);
+      _handleSignUpError(e);
+    } finally {
+      _authOperationInProgress = false;
+      _stopLoading();
+    }
+  }
+
   /// Sign in with email and password
   Future<void> signInWithEmail(String email, String password) async {
     if (_authOperationInProgress) {
@@ -534,6 +590,22 @@ class AuthProvider extends ChangeNotifier {
     } finally {
       _authOperationInProgress = false;
       _stopLoading();
+    }
+  }
+
+  /// Reload user model from Firestore
+  Future<void> reloadUserModel() async {
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return;
+
+    try {
+      final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+      if (loadedUserModel != null) {
+        _userModel = loadedUserModel;
+        notifyListeners();
+      }
+    } catch (e) {
+      LoggerService.error('Failed to reload user model', tag: 'AuthProvider', error: e);
     }
   }
 

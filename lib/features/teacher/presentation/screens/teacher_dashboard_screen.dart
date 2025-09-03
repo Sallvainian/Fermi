@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/widgets/profile_completion_dialog.dart';
 import '../../../classes/presentation/providers/class_provider.dart';
 import '../../../chat/presentation/providers/call_provider.dart';
 import '../../../../shared/models/user_model.dart';
@@ -35,8 +36,32 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_isInitialized) {
         _initializeDashboard();
+        _checkProfileCompletion();
       }
     });
+  }
+
+  void _checkProfileCompletion() {
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.userModel;
+    
+    // Check if teacher needs to complete profile
+    if (user != null && user.role?.name == 'teacher') {
+      final needsProfileCompletion = 
+          (user.firstName == null || user.firstName!.isEmpty) ||
+          (user.lastName == null || user.lastName!.isEmpty);
+      
+      if (needsProfileCompletion) {
+        // Show profile completion dialog
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => const ProfileCompletionDialog(isTeacher: true),
+          );
+        });
+      }
+    }
   }
 
   void _initializeDashboard() {

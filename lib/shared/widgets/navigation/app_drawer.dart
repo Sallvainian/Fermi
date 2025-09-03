@@ -52,7 +52,7 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    user?.email ?? '',
+                    user?.realEmail ?? user?.email ?? '',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

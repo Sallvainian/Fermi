@@ -21,6 +21,23 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
   bool _isUpdating = false;
   bool _showSkipConfirmation = false;
 
+  // Email validation regex
+  final _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+
+  bool get _isValidEmail {
+    final text = _emailController.text.trim();
+    return text.isNotEmpty && _emailRegex.hasMatch(text);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to text changes to enable/disable the button
+    _emailController.addListener(() {
+      setState(() {}); // Trigger rebuild when text changes
+    });
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -40,24 +57,30 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
 
       final newEmail = _emailController.text.trim();
 
-      // Update Firebase Auth email
-      await user.verifyBeforeUpdateEmail(newEmail);
+      // For Firebase Auth 6.0+, we need to use the credential approach for email updates
+      // Since we're using synthetic emails, we'll just update Firestore
+      // The actual Firebase Auth email stays as the synthetic one for username login
+      
+      // Update Firestore document with the real email for notifications/recovery
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'realEmail': newEmail,  // Store the real email for notifications
+        'email': user.email,    // Keep synthetic email for auth
+        'emailLinkedAt': FieldValue.serverTimestamp(),
+        'hasLinkedEmail': true,
+      });
 
-      // Update Firestore document
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
-        {'email': newEmail, 'emailLinkedAt': FieldValue.serverTimestamp()},
-      );
-
-      // User model will be refreshed via auth state listener
+      // Refresh the auth provider's user model
+      final authProvider = context.read<AuthProvider>();
+      await authProvider.reloadUser();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Verification email sent to $newEmail. Please check your inbox.',
+              'Email successfully linked to $newEmail',
             ),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 5),
+            duration: const Duration(seconds: 3),
           ),
         );
 
@@ -66,9 +89,19 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Failed to link email';
+        
+        if (e.toString().contains('email-already-in-use')) {
+          errorMessage = 'This email is already in use by another account';
+        } else if (e.toString().contains('invalid-email')) {
+          errorMessage = 'Please enter a valid email address';
+        } else if (e.toString().contains('requires-recent-login')) {
+          errorMessage = 'Please sign out and sign in again to link your email';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to link email: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -227,17 +260,21 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
               // Email Field
               AuthTextField(
                 controller: _emailController,
-                label: 'Email Address (Optional)',
+                label: 'Email Address',
                 prefixIcon: Icons.email,
                 enabled: !_isUpdating,
                 keyboardType: TextInputType.emailAddress,
+                suffixIcon: _emailController.text.isNotEmpty
+                    ? Icon(
+                        _isValidEmail ? Icons.check_circle : Icons.error,
+                        color: _isValidEmail ? Colors.green : Colors.red,
+                      )
+                    : null,
                 validator: (value) {
                   if (value != null && value.isNotEmpty) {
                     // Only validate if user entered something
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Please enter a valid email address';
+                    if (!_emailRegex.hasMatch(value)) {
+                      return 'Please enter a valid email address (e.g., user@example.com)';
                     }
                   }
                   return null; // Email is optional
@@ -247,7 +284,7 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
 
               // Link Email Button
               ElevatedButton(
-                onPressed: _isUpdating || _emailController.text.isEmpty
+                onPressed: _isUpdating || !_isValidEmail
                     ? null
                     : _linkEmail,
                 style: ElevatedButton.styleFrom(

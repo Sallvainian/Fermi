@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/services/logger_service.dart';
@@ -23,7 +22,7 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
@@ -58,7 +57,7 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -66,13 +65,20 @@ class LoginScreenState extends State<LoginScreen> {
   Future<void> _signIn() async {
     if (_formKey.currentState?.validate() ?? false) {
       final authProvider = context.read<AuthProvider>();
-      final email = _emailController.text.trim();
+      final username = _usernameController.text.trim();
       final password = _passwordController.text;
 
       try {
-        LoggerService.info('Attempting sign in for email: $email', tag: 'LoginScreen');
-        await authProvider.signInWithEmail(email, password);
-        LoggerService.info('Sign in successful for email: $email', tag: 'LoginScreen');
+        if (_isTeacherRole) {
+          LoggerService.info('Attempting teacher sign in for username: $username', tag: 'LoginScreen');
+          await authProvider.signInWithUsername(username, password);
+          LoggerService.info('Teacher sign in successful for username: $username', tag: 'LoginScreen');
+        } else {
+          // Students still use email for now
+          LoggerService.info('Attempting student sign in for email: $username', tag: 'LoginScreen');
+          await authProvider.signInWithEmail(username, password);
+          LoggerService.info('Student sign in successful for email: $username', tag: 'LoginScreen');
+        }
 
         if (!mounted) return;
 
@@ -81,17 +87,9 @@ class LoginScreenState extends State<LoginScreen> {
           final roleName = authProvider.userModel!.role?.name;
           LoggerService.info('User role detected: $roleName', tag: 'LoginScreen');
 
-          // Navigate based on role
-          if (roleName == 'teacher') {
-            LoggerService.info('Navigating to teacher dashboard', tag: 'LoginScreen');
-            context.go('/teacher/dashboard');
-          } else if (roleName == 'student') {
-            LoggerService.info('Navigating to student dashboard', tag: 'LoginScreen');
-            context.go('/student/dashboard');
-          } else {
-            LoggerService.info('Unknown role, navigating to role selection', tag: 'LoginScreen');
-            context.go('/auth/role-selection');
-          }
+          // Navigate to dashboard - the router will handle role-based rendering
+          LoggerService.info('Navigating to dashboard with role: $roleName', tag: 'LoginScreen');
+          context.go('/dashboard');
         }
       } catch (e) {
         LoggerService.error('Sign in error: $e', tag: 'LoginScreen', error: e);
@@ -121,47 +119,10 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    final authProvider = context.read<AuthProvider>();
 
-    try {
-      LoggerService.info('Attempting Google sign in', tag: 'LoginScreen');
-      await authProvider.signInWithGoogle();
-      LoggerService.info('Google sign in successful', tag: 'LoginScreen');
-
-      if (!mounted) return;
-
-      // Navigate after successful Google sign-in
-      if (authProvider.userModel != null) {
-        final roleName = authProvider.userModel!.role?.name;
-        LoggerService.info('User role from Google sign-in: $roleName', tag: 'LoginScreen');
-
-        if (roleName == 'teacher') {
-          context.go('/teacher/dashboard');
-        } else if (roleName == 'student') {
-          context.go('/student/dashboard');
-        } else {
-          context.go('/auth/role-selection');
-        }
-      }
-    } catch (e) {
-      LoggerService.error('Google sign in error: $e', tag: 'LoginScreen', error: e);
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Google sign-in failed: ${e.toString()}',
-          ),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-    }
-  }
-
-  String? _validateEmail(String? value) {
+  String? _validateInput(String? value) {
     if (value?.isEmpty ?? true) {
-      return 'Please enter your email';
+      return _isTeacherRole ? 'Please enter your username' : 'Please enter your email';
     }
     return null;
   }
@@ -173,9 +134,7 @@ class LoginScreenState extends State<LoginScreen> {
     final isLoading = authProvider.status == AuthStatus.authenticating;
 
     return Scaffold(
-      backgroundColor: _isTeacherRole
-          ? theme.colorScheme.secondary.withValues(alpha: 0.05)
-          : theme.colorScheme.surface,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -228,15 +187,17 @@ class LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Email Field
+                            // Username/Email Field
                             AuthTextField(
-                              controller: _emailController,
+                              controller: _usernameController,
                               label: _isTeacherRole
-                                  ? 'Teacher Email'
+                                  ? 'Username'
                                   : 'Student Email',
-                              prefixIcon: Icons.email,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: _validateEmail,
+                              prefixIcon: _isTeacherRole ? Icons.person : Icons.email,
+                              keyboardType: _isTeacherRole 
+                                  ? TextInputType.text 
+                                  : TextInputType.emailAddress,
+                              validator: _validateInput,
                               enabled: !isLoading,
                             ),
 
@@ -245,9 +206,7 @@ class LoginScreenState extends State<LoginScreen> {
                             // Password Field
                             AuthTextField(
                               controller: _passwordController,
-                              label: _isTeacherRole
-                                  ? 'Password or Teacher Code'
-                                  : 'Password',
+                              label: 'Password',
                               prefixIcon: Icons.lock,
                               obscureText: _obscurePassword,
                               enabled: !isLoading,
@@ -405,51 +364,6 @@ class LoginScreenState extends State<LoginScreen> {
                     }
                     if (!showGoogle) return <Widget>[];
                     return <Widget>[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Divider(
-                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'OR',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color:
-                                  theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Divider(
-                            color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    OutlinedButton.icon(
-                      onPressed: isLoading ? null : _signInWithGoogle,
-                      icon: Image.asset(
-                        'assets/images/google_logo.png',
-                        height: 20,
-                      ),
-                      label: const Text('Sign in with Google'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12,
-                          horizontal: 24,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        side: BorderSide(
-                          color: theme.colorScheme.outline.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
                     ];
                   }(),
                 ],

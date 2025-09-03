@@ -379,6 +379,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: 'Account',
               icon: Icons.account_circle,
               children: [
+                // Show email linking option if user hasn't linked a real email yet
+                // Check if they only have a synthetic email and no realEmail field
+                if ((authProvider.userModel?.email?.contains('@fermi.example') ?? false) &&
+                    !(authProvider.userModel?.hasLinkedEmail ?? false))
+                  _buildActionTile(
+                    title: 'Link Email Address',
+                    subtitle: 'Add an email for password recovery',
+                    icon: Icons.email,
+                    onTap: () {
+                      final userType = authProvider.userModel?.role?.name ?? 'student';
+                      // Use the correct route path from app_router.dart
+                      if (userType == 'teacher') {
+                        context.go('/auth/teacher-setup/email');
+                      } else {
+                        context.go('/auth/student-setup/email');
+                      }
+                    },
+                    isDestructive: false,
+                  ),
                 _buildActionTile(
                   title: 'Sign Out',
                   subtitle: 'Sign out of your account',

@@ -186,17 +186,12 @@ class UsernameAuthService {
     required String lastName,
   }) async {
     try {
-      // Validate username availability
-      final isAvailable = await isUsernameAvailable(username);
-      if (!isAvailable) {
-        throw Exception('Username "$username" is already taken');
-      }
-
       // Generate synthetic email
       final email = generateSyntheticEmail(username);
       final displayName = '$firstName $lastName';
 
-      // Create Firebase Auth account
+      // Try to create Firebase Auth account
+      // If username already exists, Firebase will throw an error
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -224,9 +219,21 @@ class UsernameAuthService {
       }
 
       return null;
+    } on FirebaseAuthException catch (e) {
+      LoggerService.error('Firebase Auth error during account creation', tag: 'UsernameAuthService', error: e);
+      
+      if (e.code == 'email-already-in-use') {
+        throw Exception('Username "$username" is already taken');
+      } else if (e.code == 'weak-password') {
+        throw Exception('Password is too weak. Please use at least 6 characters');
+      } else if (e.code == 'invalid-email') {
+        throw Exception('Invalid username format');
+      } else {
+        throw Exception('Failed to create account: ${e.message}');
+      }
     } catch (e) {
-      LoggerService.error('Create teacher account error', tag: 'UsernameAuthService', error: e);
-      rethrow;
+      LoggerService.error('Unexpected error during account creation', tag: 'UsernameAuthService', error: e);
+      throw Exception('Failed to create account. Please try again.');
     }
   }
 

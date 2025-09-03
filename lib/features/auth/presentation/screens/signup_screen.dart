@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
@@ -15,36 +14,28 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  final _usernameOrEmailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController(); // For optional email
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isTeacherRole = false;
-  bool _hasUserPreferences = false;
 
   @override
   void initState() {
     super.initState();
     // Clear error when user starts typing
-    _emailController.addListener(_clearError);
+    _usernameOrEmailController.addListener(_clearError);
     _passwordController.addListener(_clearError);
     _confirmPasswordController.addListener(_clearError);
     _firstNameController.addListener(_clearError);
     _lastNameController.addListener(_clearError);
+    _emailController.addListener(_clearError);
     
-    // Check for saved user preferences
-    SharedPreferences.getInstance().then((prefs) {
-      final hasColorTheme = prefs.getString('color_theme') != null;
-      if (mounted) {
-        setState(() {
-          _hasUserPreferences = hasColorTheme;
-        });
-      }
-    });
     
     // Check for role parameter
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -74,6 +65,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   void dispose() {
+    _usernameOrEmailController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -93,18 +85,27 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
-    final firstName = _firstNameController.text.trim();
-    final lastName = _lastNameController.text.trim();
-    final displayName = '$firstName $lastName'.trim();
-
-    // Sign up with email, password, and display name
-    // Role is based on signup flow
-    await authProvider.signUpWithEmail(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-      role: _isTeacherRole ? 'teacher' : 'student',
-      displayName: displayName,
-    );
+    
+    if (_isTeacherRole) {
+      // Teachers sign up with username
+      await authProvider.signUpWithUsername(
+        username: _usernameOrEmailController.text.trim(),
+        password: _passwordController.text,
+        role: 'teacher',
+      );
+    } else {
+      // Students sign up with email
+      final firstName = _firstNameController.text.trim();
+      final lastName = _lastNameController.text.trim();
+      final displayName = '$firstName $lastName'.trim();
+      
+      await authProvider.signUpWithEmail(
+        email: _usernameOrEmailController.text.trim(),
+        password: _passwordController.text,
+        role: 'student',
+        displayName: displayName,
+      );
+    }
 
     if (authProvider.isAuthenticated && mounted) {
       // Router will automatically redirect to student dashboard
@@ -163,52 +164,64 @@ class _SignupScreenState extends State<SignupScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: AuthTextField(
-                                controller: _firstNameController,
-                                label: 'First Name',
-                                prefixIcon: Icons.person_outline,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your first name';
-                                  }
-                                  return null;
-                                },
+                        // Only show name fields for students
+                        if (!_isTeacherRole) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: AuthTextField(
+                                  controller: _firstNameController,
+                                  label: 'First Name',
+                                  prefixIcon: Icons.person_outline,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your first name';
+                                    }
+                                    return null;
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: AuthTextField(
-                                controller: _lastNameController,
-                                label: 'Last Name',
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your last name';
-                                  }
-                                  return null;
-                                },
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: AuthTextField(
+                                  controller: _lastNameController,
+                                  label: 'Last Name',
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your last name';
+                                    }
+                                    return null;
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+                        // Username for teachers, Email for students
                         AuthTextField(
-                          controller: _emailController,
-                          label: 'Email',
-                          keyboardType: TextInputType.emailAddress,
-                          prefixIcon: Icons.email_outlined,
+                          controller: _usernameOrEmailController,
+                          label: _isTeacherRole ? 'Username' : 'Email',
+                          keyboardType: _isTeacherRole 
+                              ? TextInputType.text
+                              : TextInputType.emailAddress,
+                          prefixIcon: _isTeacherRole 
+                              ? Icons.person
+                              : Icons.email_outlined,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
+                              return _isTeacherRole 
+                                  ? 'Please enter your username'
+                                  : 'Please enter your email';
                             }
-                            // Enhanced email validation using regex
-                            final emailRegex = RegExp(
-                              r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                            );
-                            if (!emailRegex.hasMatch(value.trim())) {
-                              return 'Please enter a valid email address';
+                            if (!_isTeacherRole) {
+                              // Email validation for students
+                              final emailRegex = RegExp(
+                                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                              );
+                              if (!emailRegex.hasMatch(value.trim())) {
+                                return 'Please enter a valid email address';
+                              }
                             }
                             return null;
                           },

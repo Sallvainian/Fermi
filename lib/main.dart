@@ -72,23 +72,19 @@ Future<void> main() async {
         return true; // prevent the default "Uncaught" spam
       };
 
-      // Load environment variables from .env file
-      try {
-        await dotenv.load(fileName: ".env");
-        if (kDebugMode) {
-          LoggerService.debug(
-            '.env file loaded successfully',
-            tag: 'Bootstrap',
-          );
+      // Load environment variables from .env file (skip on web to avoid 404)
+      if (!kIsWeb) {
+        try {
+          await dotenv.load(fileName: ".env");
+          if (kDebugMode) {
+            LoggerService.debug(
+              '.env file loaded successfully',
+              tag: 'Bootstrap',
+            );
+          }
+        } catch (e) {
+          // .env is optional - silently continue
         }
-      } catch (e) {
-        if (e.toString().contains('FileSystemException')) {
-          LoggerService.info(
-            'No .env file found. Using defaults.',
-            tag: 'Bootstrap',
-          );
-        }
-        // .env is optional
       }
 
       runApp(const AppPasswordWrapper(child: InitializationWrapper()));
@@ -236,9 +232,8 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
   Future<void> _initializeApp() async {
     try {
       // Check if user was already authenticated (from AppPasswordWrapper)
-      final wasAuthenticated = context.mounted
-          ? AuthenticatedWrapper.of(context)
-          : false;
+      // Note: We can't access inherited widgets in initState, so we'll skip this optimization
+      final wasAuthenticated = false;
 
       // Check if Firebase is already initialized (handles hot restart)
       if (AppInitializer.isFirebaseInitialized && wasAuthenticated) {

@@ -63,6 +63,12 @@ class UserModel {
   /// Whether the user needs to reset their password (for new teacher accounts).
   final bool? needsPasswordReset;
 
+  /// The real email address for notifications (different from synthetic email).
+  final String? realEmail;
+
+  /// Whether the user has linked a real email address.
+  final bool? hasLinkedEmail;
+
   /// Constructs a new [UserModel]. All fields other than [uid] are optional.
   const UserModel({
     required this.uid,
@@ -81,6 +87,8 @@ class UserModel {
     this.lastActive,
     this.role,
     this.needsPasswordReset,
+    this.realEmail,
+    this.hasLinkedEmail,
   });
 
   /// Creates a new [UserModel] from Firestore data or snapshot.
@@ -139,6 +147,10 @@ class UserModel {
       needsPasswordReset: data['needsPasswordReset'] is bool
           ? data['needsPasswordReset'] as bool?
           : null,
+      realEmail: asString(data['realEmail']),
+      hasLinkedEmail: data['hasLinkedEmail'] is bool
+          ? data['hasLinkedEmail'] as bool?
+          : null,
     );
   }
 
@@ -161,6 +173,8 @@ class UserModel {
       if (createdAt != null) 'createdAt': createdAt,
       if (lastActive != null) 'lastActive': lastActive,
       if (role != null) 'role': role.toString().split('.').last,
+      if (realEmail != null) 'realEmail': realEmail,
+      if (hasLinkedEmail != null) 'hasLinkedEmail': hasLinkedEmail,
     };
   }
 
@@ -182,6 +196,8 @@ class UserModel {
     DateTime? lastActive,
     UserRole? role,
     bool? needsPasswordReset,
+    String? realEmail,
+    bool? hasLinkedEmail,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -200,6 +216,8 @@ class UserModel {
       lastActive: lastActive ?? this.lastActive,
       role: role ?? this.role,
       needsPasswordReset: needsPasswordReset ?? this.needsPasswordReset,
+      realEmail: realEmail ?? this.realEmail,
+      hasLinkedEmail: hasLinkedEmail ?? this.hasLinkedEmail,
     );
   }
 
