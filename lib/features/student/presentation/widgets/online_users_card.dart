@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../data/services/presence_service.dart';
 
 class OnlineUsersCard extends StatefulWidget {
@@ -65,9 +66,10 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
           StreamBuilder<List<OnlineUser>>(
             stream: _onlineUsersStream,
             builder: (context, snapshot) {
-              // Debug output
-              debugPrint(
-                'OnlineUsersCard: StreamBuilder rebuild - connectionState: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data length: ${snapshot.data?.length ?? 0}',
+              // Debug output (only in debug builds due to LoggerService level)
+              LoggerService.debug(
+                'StreamBuilder rebuild - state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, len: ${snapshot.data?.length ?? 0}',
+                tag: 'OnlineUsersCard',
               );
 
               if (snapshot.hasError) {
@@ -291,8 +293,9 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
         errorBuilder: (context, error, stackTrace) {
           // Log error for debugging but don't show it to user
           if (error.toString().contains('CORS')) {
-            debugPrint(
+            LoggerService.warning(
               'CORS error loading profile image. Run apply_cors.sh to fix.',
+              tag: 'OnlineUsersCard',
             );
           }
           return buildInitialsAvatar();

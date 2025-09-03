@@ -322,3 +322,7 @@ If any aspect of the task is unclear:
 
 Remember: The codebase is substantial with 30 collections and extensive features - always check existing patterns first!
 - DO NOT EVER MAKE TEMPORARY SCRIPTS OR PYTHON FILES FOR IMPLEMENTING FIXES. THE ONLY TIME YOU CAN DO THIS IS WHEN THE USER EXPLICITY ASKS YOU TO. ALL THIS DOES IT MAKE CLUTTER. THE SAME GOES FOR DOCUMENTATION. THERE IS ONLY 1 DEVELOPER ON THIS PROJECT AND SUCH MD FILES ARE FUCKING USLESS.
+
+## Task Master AI Instructions
+**Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
+@./.taskmaster/CLAUDE.md

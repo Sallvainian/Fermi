@@ -28,7 +28,10 @@ class PresenceService {
   Future<void> updateUserPresence(bool isOnline, {String? userRole}) async {
     // If presence updates are disabled due to errors, skip
     if (_presenceDisabled) {
-      debugPrint('PresenceService: Presence updates disabled due to errors');
+      LoggerService.warning(
+        'Presence updates disabled due to errors',
+        tag: 'PresenceService',
+      );
       return;
     }
 
@@ -36,8 +39,9 @@ class PresenceService {
     if (_lastUpdateTime != null) {
       final timeSinceLastUpdate = DateTime.now().difference(_lastUpdateTime!);
       if (timeSinceLastUpdate.inSeconds < 30) {
-        debugPrint(
-          'PresenceService: Skipping update, too soon since last update (${timeSinceLastUpdate.inSeconds}s)',
+        LoggerService.debug(
+          'Skipping update, too soon (${timeSinceLastUpdate.inSeconds}s)',
+          tag: 'PresenceService',
         );
         return;
       }
@@ -46,12 +50,16 @@ class PresenceService {
     try {
       final user = _auth.currentUser;
       if (user == null) {
-        debugPrint('PresenceService: No current user, cannot update presence');
+        LoggerService.warning(
+          'No current user, cannot update presence',
+          tag: 'PresenceService',
+        );
         return;
       }
 
-      debugPrint(
-        'PresenceService: Updating presence for ${user.email} - online: $isOnline, role: $userRole',
+      LoggerService.info(
+        'Updating presence for ${user.email} - online: $isOnline, role: $userRole',
+        tag: 'PresenceService',
       );
 
       final userStatusDoc = _firestore.collection('presence').doc(user.uid);
@@ -59,22 +67,25 @@ class PresenceService {
       if (isOnline) {
         // User is online - store only necessary public information
         final presenceData = _buildPresenceData(user, true, userRole);
-        debugPrint(
-          'PresenceService: Setting online presence data: $presenceData',
+        LoggerService.debug(
+          'Setting online presence data: $presenceData',
+          tag: 'PresenceService',
         );
         await userStatusDoc.set(presenceData, SetOptions(merge: true));
-        debugPrint(
-          'PresenceService: Successfully set online presence for ${user.email}',
+        LoggerService.info(
+          'Successfully set online presence for ${user.email}',
+          tag: 'PresenceService',
         );
       } else {
         // User is offline
-        debugPrint('PresenceService: Setting user offline');
+        LoggerService.info('Setting user offline', tag: 'PresenceService');
         await userStatusDoc.update({
           'online': false,
           'lastSeen': FieldValue.serverTimestamp(),
         });
-        debugPrint(
-          'PresenceService: Successfully set offline presence for ${user.email}',
+        LoggerService.info(
+          'Successfully set offline presence for ${user.email}',
+          tag: 'PresenceService',
         );
       }
 
@@ -83,23 +94,25 @@ class PresenceService {
       _lastUpdateTime = DateTime.now();
     } catch (error) {
       _updateAttempts++;
-      debugPrint(
-        'PresenceService: ERROR updating presence (attempt $_updateAttempts): $error',
+      LoggerService.error(
+        'Error updating user presence (attempt $_updateAttempts)',
+        tag: 'PresenceService',
+        error: error,
       );
-      LoggerService.error('Error updating user presence', error: error);
 
       // Disable presence updates after consecutive failures
       if (_updateAttempts >= _maxFailureAttempts) {
         _presenceDisabled = true;
-        debugPrint(
-          'PresenceService: Disabling presence updates after $_maxFailureAttempts failures',
+        LoggerService.warning(
+          'Disabling presence updates after $_maxFailureAttempts failures',
+          tag: 'PresenceService',
         );
 
         // Re-enable after 2 minutes (reduced from 5)
         Future.delayed(const Duration(minutes: 2), () {
           _presenceDisabled = false;
           _updateAttempts = 0;
-          debugPrint('PresenceService: Re-enabling presence updates');
+          LoggerService.info('Re-enabling presence updates', tag: 'PresenceService');
         });
       }
     }
@@ -145,21 +158,25 @@ class PresenceService {
     // Check if user is authenticated before accessing database
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
-      debugPrint('PresenceService: No current user, returning empty stream');
+      LoggerService.warning(
+        'No current user, returning empty stream',
+        tag: 'PresenceService',
+      );
       // Return an empty list if no user is logged in
       return Stream.value([]);
     }
 
-    debugPrint(
-      'PresenceService: Setting up stream for online users, excludeSelf: $excludeSelf',
+    LoggerService.debug(
+      'Setting up stream for online users, excludeSelf: $excludeSelf',
+      tag: 'PresenceService',
     );
 
     // Platform-specific implementation due to Windows Firebase limitations
     if (!kIsWeb && Platform.isWindows) {
-      debugPrint('PresenceService: Using polling fallback for Windows');
+      LoggerService.warning('Using polling fallback for Windows', tag: 'PresenceService');
       return _getOnlineUsersPolling(excludeSelf: excludeSelf);
     } else {
-      debugPrint('PresenceService: Using real-time listeners for web/mobile');
+      LoggerService.debug('Using real-time listeners for web/mobile', tag: 'PresenceService');
       return _getOnlineUsersRealtime(excludeSelf: excludeSelf);
     }
   }
@@ -173,8 +190,9 @@ class PresenceService {
         .where('online', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
-          debugPrint(
-            'PresenceService: Real-time update - received ${snapshot.docs.length} online users',
+          LoggerService.debug(
+            'Real-time update - ${snapshot.docs.length} online users',
+            tag: 'PresenceService',
           );
           final allUsers = _processOnlineUsersData(
             snapshot.docs,
@@ -183,14 +201,15 @@ class PresenceService {
           );
           // Filter to only show users who are actually active (last seen within 5 minutes)
           final activeUsers = allUsers.where((user) => user.isActive).toList();
-          debugPrint(
-            'PresenceService: Filtered to ${activeUsers.length} active users (last 5 min)',
+          LoggerService.debug(
+            'Filtered to ${activeUsers.length} active users (5m)',
+            tag: 'PresenceService',
           );
           return activeUsers;
         })
         .handleError((error) {
           // Log the error but return empty list to keep UI functional
-          debugPrint('PresenceService: Real-time stream error: $error');
+          LoggerService.error('Real-time stream error', tag: 'PresenceService', error: error);
           LoggerService.error('Error fetching online users', error: error);
           return <OnlineUser>[];
         });
@@ -204,15 +223,16 @@ class PresenceService {
 
     while (true) {
       try {
-        debugPrint('PresenceService: Polling for online users...');
+        LoggerService.debug('Polling for online users...', tag: 'PresenceService');
 
         final snapshot = await _firestore
             .collection('presence')
             .where('online', isEqualTo: true)
             .get();
 
-        debugPrint(
-          'PresenceService: Polling update - received ${snapshot.docs.length} online users',
+        LoggerService.debug(
+          'Polling update - ${snapshot.docs.length} online users',
+          tag: 'PresenceService',
         );
         final allUsers = _processOnlineUsersData(
           snapshot.docs,
@@ -221,15 +241,16 @@ class PresenceService {
         );
         // Filter to only show users who are actually active (last seen within 5 minutes)
         final activeUsers = allUsers.where((user) => user.isActive).toList();
-        debugPrint(
-          'PresenceService: Filtered to ${activeUsers.length} active users (last 5 min)',
+        LoggerService.debug(
+          'Filtered to ${activeUsers.length} active users (5m)',
+          tag: 'PresenceService',
         );
         yield activeUsers;
 
         // Poll every 10 seconds for Windows to reduce Firestore reads
         await Future.delayed(const Duration(seconds: 10));
       } catch (error) {
-        debugPrint('PresenceService: Polling error: $error');
+        LoggerService.error('Polling error', tag: 'PresenceService', error: error);
         LoggerService.error('Error polling online users', error: error);
         yield <OnlineUser>[];
         // Continue polling even on error, but with longer delay
@@ -250,8 +271,9 @@ class PresenceService {
       final data = doc.data() as Map<String, dynamic>;
       final uid = data['uid'] ?? '';
 
-      debugPrint(
-        'PresenceService: Processing user ${data['displayName']} (${data['role']}) - UID: $uid',
+      LoggerService.debug(
+        'Processing user ${data['displayName']} (${data['role']}) - UID: $uid',
+        tag: 'PresenceService',
       );
 
       // Filter out self if requested
@@ -278,12 +300,14 @@ class PresenceService {
           ),
         );
 
-        debugPrint(
-          'PresenceService: Added ${data['displayName']} to online users list',
+        LoggerService.debug(
+          'Added ${data['displayName']} to online users list',
+          tag: 'PresenceService',
         );
       } else {
-        debugPrint(
-          'PresenceService: Excluded self (${data['displayName']}) from list',
+        LoggerService.debug(
+          'Excluded self (${data['displayName']}) from list',
+          tag: 'PresenceService',
         );
       }
     }
@@ -291,8 +315,9 @@ class PresenceService {
     // Sort by last seen (most recent first)
     onlineUsers.sort((a, b) => b.lastSeen.compareTo(a.lastSeen));
 
-    debugPrint(
-      'PresenceService: Returning ${onlineUsers.length} users after filtering and sorting',
+    LoggerService.debug(
+      'Returning ${onlineUsers.length} users after filtering and sorting',
+      tag: 'PresenceService',
     );
     return onlineUsers;
   }
@@ -406,7 +431,7 @@ class PresenceService {
   // Clean up stale presence records (users who appear online but haven't updated in >5 minutes)
   Future<void> cleanupStalePresence() async {
     try {
-      debugPrint('PresenceService: Cleaning up stale presence data...');
+      LoggerService.info('Cleaning up stale presence data...', tag: 'PresenceService');
       final snapshot = await _firestore
           .collection('presence')
           .where('online', isEqualTo: true)
@@ -427,8 +452,9 @@ class PresenceService {
               'lastSeen': FieldValue.serverTimestamp(),
             });
             staleCount++;
-            debugPrint(
-              'PresenceService: Marking ${data['displayName']} as offline (stale)',
+            LoggerService.warning(
+              'Marking ${data['displayName']} as offline (stale)',
+              tag: 'PresenceService',
             );
           }
         }
@@ -436,12 +462,13 @@ class PresenceService {
 
       if (staleCount > 0) {
         await batch.commit();
-        debugPrint(
-          'PresenceService: Cleaned up $staleCount stale presence records',
+        LoggerService.info(
+          'Cleaned up $staleCount stale presence records',
+          tag: 'PresenceService',
         );
       }
     } catch (error) {
-      debugPrint('PresenceService: Error cleaning stale presence: $error');
+      LoggerService.error('Error cleaning stale presence', tag: 'PresenceService', error: error);
       LoggerService.error('Error cleaning stale presence', error: error);
     }
   }
@@ -456,19 +483,20 @@ class PresenceService {
   // Force clear all presence data (for debugging/cleanup)
   Future<void> clearAllPresenceData() async {
     try {
-      debugPrint('PresenceService: Clearing all presence data...');
+      LoggerService.info('Clearing all presence data...', tag: 'PresenceService');
       final snapshot = await _firestore.collection('presence').get();
 
       for (var doc in snapshot.docs) {
         await doc.reference.delete();
-        debugPrint('PresenceService: Deleted presence for ${doc.id}');
+        LoggerService.debug('Deleted presence for ${doc.id}', tag: 'PresenceService');
       }
 
-      debugPrint(
-        'PresenceService: Cleared ${snapshot.docs.length} presence documents',
+      LoggerService.info(
+        'Cleared ${snapshot.docs.length} presence documents',
+        tag: 'PresenceService',
       );
     } catch (error) {
-      debugPrint('PresenceService: Error clearing presence data: $error');
+      LoggerService.error('Error clearing presence data', tag: 'PresenceService', error: error);
       LoggerService.error('Error clearing presence data', error: error);
     }
   }
