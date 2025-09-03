@@ -1164,7 +1164,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             await compressedFile.delete();
           }
         } catch (e) {
-          logWarning('Failed to delete compressed video');
+          this.logWarning('Failed to delete compressed video');
         }
       }
     } catch (e) {

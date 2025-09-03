@@ -713,7 +713,7 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
           }
         });
       } catch (e) {
-        logError('Error loading classes', error: e);
+        this.logError('Error loading classes', error: e);
         if (mounted) {
           setState(() {
             _isLoading = false;
