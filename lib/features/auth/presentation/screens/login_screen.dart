@@ -32,8 +32,28 @@ class LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    // Prefer widget param if provided
     _isTeacherRole = widget.role == 'teacher';
     LoggerService.info('LoginScreen initialized with role: ${widget.role}', tag: 'LoginScreen');
+
+    // Also support role via query parameter (e.g., /auth/login?role=teacher)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final goState = GoRouterState.of(context);
+        String? role = goState.uri.queryParameters['role'];
+        if (role == null) {
+          final location = goState.fullPath ?? goState.matchedLocation;
+          if (location.contains('role=teacher')) role = 'teacher';
+        }
+        if (role != null) {
+          setState(() {
+            _isTeacherRole = role == 'teacher';
+          });
+        }
+      } catch (e) {
+        LoggerService.warning('Error parsing role parameter', tag: 'LoginScreen');
+      }
+    });
   }
 
   @override
@@ -376,8 +396,15 @@ class LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                  // Google Sign In
-                  if (!kIsWeb || (kIsWeb && !Platform.isWindows)) ...[
+                  // Google Sign In (avoid Platform on web)
+                  ...(){
+                    bool showGoogle = true;
+                    if (!kIsWeb) {
+                      // Only check Platform on non-web targets
+                      showGoogle = !Platform.isWindows;
+                    }
+                    if (!showGoogle) return <Widget>[];
+                    return <Widget>[
                     Row(
                       children: [
                         Expanded(
@@ -423,7 +450,8 @@ class LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                  ],
+                    ];
+                  }(),
                 ],
               ),
             ),
