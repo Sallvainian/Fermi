@@ -92,7 +92,8 @@ void main(List<String> args) async {
     groups.putIfAbsent(groupOf(f), () => <String>{}).add(f);
   }
 
-  String mdEscape(String s) => s.replaceAll('_', '\\_');
+  // reserved for future improvements (escaping not needed in current template)
+  // String mdEscape(String s) => s.replaceAll('_', '\\_');
 
   final buf = StringBuffer();
   buf.writeln('# Code Dependency Map');
