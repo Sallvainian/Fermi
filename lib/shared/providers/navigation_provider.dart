@@ -52,9 +52,9 @@ class NavigationProvider extends ChangeNotifier {
         _favoriteIds = NavigationService.getDefaultFavorites(_currentRole);
       } else {
         // Filter saved favorites to only include items available for current role
-        final availableIds = NavigationService.getItemsForRole(_currentRole)
-            .map((item) => item.id)
-            .toSet();
+        final availableIds = NavigationService.getItemsForRole(
+          _currentRole,
+        ).map((item) => item.id).toSet();
         _favoriteIds = savedFavorites
             .where((id) => availableIds.contains(id))
             .take(NavigationService.maxFavorites)
@@ -72,8 +72,11 @@ class NavigationProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      LoggerService.error('Error loading favorites',
-          tag: 'NavigationProvider', error: e);
+      LoggerService.error(
+        'Error loading favorites',
+        tag: 'NavigationProvider',
+        error: e,
+      );
       _favoriteIds = NavigationService.getDefaultFavorites(_currentRole);
     }
 

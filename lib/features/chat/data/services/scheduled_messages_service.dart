@@ -38,11 +38,9 @@ class ScheduledMessagesService {
   /// Accepts optional dependencies for testing:
   /// @param firestore Optional Firestore instance
   /// @param auth Optional Firebase Auth instance
-  ScheduledMessagesService({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  ScheduledMessagesService({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
 
   /// Gets the current authenticated user's ID.
   ///
@@ -95,8 +93,10 @@ class ScheduledMessagesService {
       // Attempt to determine role from user profile document
       String resolvedRole = 'student';
       try {
-        final userDoc =
-            await _firestore.collection('users').doc(_currentUserId).get();
+        final userDoc = await _firestore
+            .collection('users')
+            .doc(_currentUserId)
+            .get();
         if (userDoc.exists) {
           final data = userDoc.data();
           final role = data?['role'];
@@ -147,27 +147,28 @@ class ScheduledMessagesService {
         .where('message.senderId', isEqualTo: _currentUserId)
         .snapshots()
         .map((snapshot) {
-      final now = DateTime.now();
-      return snapshot.docs
-          .map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            final scheduledFor = (data['scheduledFor'] as Timestamp?)?.toDate();
-            data['scheduledFor'] = scheduledFor;
-            return data;
-          })
-          .where((msg) {
-            final scheduledFor = msg['scheduledFor'] as DateTime?;
-            return scheduledFor?.isAfter(now) ?? false;
-          })
-          .toList()
-        ..sort((a, b) {
-            final aDate = a['scheduledFor'] as DateTime?;
-            final bDate = b['scheduledFor'] as DateTime?;
-            if (aDate == null || bDate == null) return 0;
-            return aDate.compareTo(bDate);
-          });
-    });
+          final now = DateTime.now();
+          return snapshot.docs
+              .map((doc) {
+                final data = doc.data();
+                data['id'] = doc.id;
+                final scheduledFor = (data['scheduledFor'] as Timestamp?)
+                    ?.toDate();
+                data['scheduledFor'] = scheduledFor;
+                return data;
+              })
+              .where((msg) {
+                final scheduledFor = msg['scheduledFor'] as DateTime?;
+                return scheduledFor?.isAfter(now) ?? false;
+              })
+              .toList()
+            ..sort((a, b) {
+              final aDate = a['scheduledFor'] as DateTime?;
+              final bDate = b['scheduledFor'] as DateTime?;
+              if (aDate == null || bDate == null) return 0;
+              return aDate.compareTo(bDate);
+            });
+        });
   }
 
   /// Cancels a scheduled message before delivery.
@@ -190,8 +191,11 @@ class ScheduledMessagesService {
         tag: _tag,
       );
     } catch (e) {
-      LoggerService.error('Failed to cancel scheduled message',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Failed to cancel scheduled message',
+        tag: _tag,
+        error: e,
+      );
       rethrow;
     }
   }
@@ -234,8 +238,11 @@ class ScheduledMessagesService {
         tag: _tag,
       );
     } catch (e) {
-      LoggerService.error('Failed to update scheduled message',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Failed to update scheduled message',
+        tag: _tag,
+        error: e,
+      );
       rethrow;
     }
   }
@@ -257,14 +264,16 @@ class ScheduledMessagesService {
         .where('message.senderId', isEqualTo: _currentUserId)
         .snapshots()
         .map((snapshot) {
-      final now = DateTime.now();
-      return snapshot.docs
-          .map((doc) => ScheduledMessage.fromFirestore(doc))
-          .where((msg) => msg.message.scheduledFor?.isAfter(now) ?? false)
-          .toList()
-        ..sort((a, b) =>
-            a.message.scheduledFor!.compareTo(b.message.scheduledFor!));
-    });
+          final now = DateTime.now();
+          return snapshot.docs
+              .map((doc) => ScheduledMessage.fromFirestore(doc))
+              .where((msg) => msg.message.scheduledFor?.isAfter(now) ?? false)
+              .toList()
+            ..sort(
+              (a, b) =>
+                  a.message.scheduledFor!.compareTo(b.message.scheduledFor!),
+            );
+        });
   }
 }
 

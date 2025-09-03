@@ -33,21 +33,23 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
     final classProvider = context.read<ClassProvider>();
     final studentId = authProvider.userModel?.uid;
 
-    LoggerService.debug('Loading courses for student: $studentId',
-        tag: 'StudentCoursesScreen');
+    LoggerService.debug(
+      'Loading courses for student: $studentId',
+      tag: 'StudentCoursesScreen',
+    );
     if (studentId != null) {
       classProvider.loadStudentClasses(studentId);
     } else {
-      LoggerService.warning('No student ID found!',
-          tag: 'StudentCoursesScreen');
+      LoggerService.warning(
+        'No student ID found!',
+        tag: 'StudentCoursesScreen',
+      );
     }
   }
 
   void _showSearchDialog() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Search functionality coming soon!'),
-      ),
+      const SnackBar(content: Text('Search functionality coming soon!')),
     );
   }
 
@@ -55,10 +57,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Schedule view coming soon!'),
-        action: SnackBarAction(
-          label: 'OK',
-          onPressed: () {},
-        ),
+        action: SnackBarAction(label: 'OK', onPressed: () {}),
       ),
     );
   }
@@ -132,9 +131,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
               _buildSearchAndFilterBar(),
 
               // Courses list
-              Expanded(
-                child: _buildCoursesListFirebase(enrolledClasses),
-              ),
+              Expanded(child: _buildCoursesListFirebase(enrolledClasses)),
             ],
           );
         },
@@ -281,7 +278,9 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
                 _buildInfoChip(Icons.schedule, course.schedule!),
               _buildInfoChip(Icons.school, 'Grade ${course.gradeLevel}'),
               _buildInfoChip(
-                  Icons.people, '${course.studentIds.length} students'),
+                Icons.people,
+                '${course.studentIds.length} students',
+              ),
             ],
           ),
 
@@ -349,9 +348,9 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
@@ -362,16 +361,16 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: valueColor,
-                ),
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+            ),
             textAlign: TextAlign.center,
           ),
           Text(
             subtitle,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
           ),
@@ -403,10 +402,10 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
           DropdownButton<String>(
             value: _selectedFilter,
             items: ['All', 'Active', 'Completed', 'Dropped']
-                .map((filter) => DropdownMenuItem(
-                      value: filter,
-                      child: Text(filter),
-                    ))
+                .map(
+                  (filter) =>
+                      DropdownMenuItem(value: filter, child: Text(filter)),
+                )
                 .toList(),
             onChanged: (value) {
               setState(() {
@@ -438,8 +437,8 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -531,74 +530,76 @@ class CourseDetailSheetFirebase extends StatelessWidget {
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: [
-                    _buildDetailSection(
-                      context,
-                      'Course Information',
-                      [
-                        if (course.room != null)
-                          _buildDetailRow(context, 'Room', course.room!),
-                        if (course.schedule != null)
-                          _buildDetailRow(
-                              context, 'Schedule', course.schedule!),
-                        _buildDetailRow(
-                            context, 'Grade Level', course.gradeLevel),
-                        _buildDetailRow(
-                            context, 'Academic Year', course.academicYear),
-                        _buildDetailRow(context, 'Semester', course.semester),
-                        _buildDetailRow(context, 'Students Enrolled',
-                            '${course.studentIds.length}${course.maxStudents != null ? ' / ${course.maxStudents}' : ''}'),
-                      ],
-                    ),
+                    _buildDetailSection(context, 'Course Information', [
+                      if (course.room != null)
+                        _buildDetailRow(context, 'Room', course.room!),
+                      if (course.schedule != null)
+                        _buildDetailRow(context, 'Schedule', course.schedule!),
+                      _buildDetailRow(
+                        context,
+                        'Grade Level',
+                        course.gradeLevel,
+                      ),
+                      _buildDetailRow(
+                        context,
+                        'Academic Year',
+                        course.academicYear,
+                      ),
+                      _buildDetailRow(context, 'Semester', course.semester),
+                      _buildDetailRow(
+                        context,
+                        'Students Enrolled',
+                        '${course.studentIds.length}${course.maxStudents != null ? ' / ${course.maxStudents}' : ''}',
+                      ),
+                    ]),
                     if (course.description != null) ...[
                       const SizedBox(height: 24),
-                      _buildDetailSection(
-                        context,
-                        'Description',
-                        [
-                          Text(
-                            course.description!,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
+                      _buildDetailSection(context, 'Description', [
+                        Text(
+                          course.description!,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ]),
                     ],
                     const SizedBox(height: 24),
-                    _buildDetailSection(
-                      context,
-                      'Quick Actions',
-                      [
-                        ListTile(
-                          leading: const Icon(Icons.assignment),
-                          title: const Text('View Assignments'),
-                          contentPadding: EdgeInsets.zero,
-                          onTap: () {
-                            Navigator.pop(context);
-                            context.push('/student/assignments',
-                                extra: {'courseId': course.id});
-                          },
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.grade),
-                          title: const Text('View Grades'),
-                          contentPadding: EdgeInsets.zero,
-                          onTap: () {
-                            Navigator.pop(context);
-                            context.push('/grades',
-                                extra: {'courseId': course.id});
-                          },
-                        ),
-                        ListTile(
-                          leading: const Icon(Icons.chat),
-                          title: const Text('Class Discussion'),
-                          contentPadding: EdgeInsets.zero,
-                          onTap: () {
-                            Navigator.pop(context);
-                            context.push('/discussions',
-                                extra: {'courseId': course.id});
-                          },
-                        ),
-                      ],
-                    ),
+                    _buildDetailSection(context, 'Quick Actions', [
+                      ListTile(
+                        leading: const Icon(Icons.assignment),
+                        title: const Text('View Assignments'),
+                        contentPadding: EdgeInsets.zero,
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push(
+                            '/student/assignments',
+                            extra: {'courseId': course.id},
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.grade),
+                        title: const Text('View Grades'),
+                        contentPadding: EdgeInsets.zero,
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push(
+                            '/grades',
+                            extra: {'courseId': course.id},
+                          );
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.chat),
+                        title: const Text('Class Discussion'),
+                        contentPadding: EdgeInsets.zero,
+                        onTap: () {
+                          Navigator.pop(context);
+                          context.push(
+                            '/discussions',
+                            extra: {'courseId': course.id},
+                          );
+                        },
+                      ),
+                    ]),
                   ],
                 ),
               ),
@@ -625,15 +626,18 @@ class CourseDetailSheetFirebase extends StatelessWidget {
   }
 
   Widget _buildDetailSection(
-      BuildContext context, String title, List<Widget> children) {
+    BuildContext context,
+    String title,
+    List<Widget> children,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         ...children,
@@ -651,16 +655,16 @@ class CourseDetailSheetFirebase extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
             ),
           ),
         ],

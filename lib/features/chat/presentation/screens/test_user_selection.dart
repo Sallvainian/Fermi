@@ -8,9 +8,7 @@ class TestUserSelectionNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Test Navigation'),
-      ),
+      appBar: AppBar(title: const Text('Test Navigation')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

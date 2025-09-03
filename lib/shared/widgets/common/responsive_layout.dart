@@ -55,10 +55,7 @@ class ResponsiveLayoutBuilder extends StatelessWidget {
   /// Creates a responsive layout builder.
   ///
   /// @param builder Function to build widget based on screen size
-  const ResponsiveLayoutBuilder({
-    super.key,
-    required this.builder,
-  });
+  const ResponsiveLayoutBuilder({super.key, required this.builder});
 
   @override
   Widget build(BuildContext context) {
@@ -204,14 +201,16 @@ class ResponsivePadding extends StatelessWidget {
 
         switch (screenSize) {
           case ScreenSize.largeDesktop:
-            padding = largeDesktop ??
+            padding =
+                largeDesktop ??
                 desktop ??
                 tablet ??
                 mobile ??
                 const EdgeInsets.all(AppSpacing.xl);
             break;
           case ScreenSize.desktop:
-            padding = desktop ??
+            padding =
+                desktop ??
                 tablet ??
                 mobile ??
                 const EdgeInsets.all(AppSpacing.lg);
@@ -224,10 +223,7 @@ class ResponsivePadding extends StatelessWidget {
             break;
         }
 
-        return Padding(
-          padding: padding,
-          child: child,
-        );
+        return Padding(padding: padding, child: child);
       },
     );
   }
@@ -313,7 +309,8 @@ class ResponsiveGrid extends StatelessWidget {
 
         switch (screenSize) {
           case ScreenSize.largeDesktop:
-            columns = largeDesktopColumns ??
+            columns =
+                largeDesktopColumns ??
                 desktopColumns ??
                 tabletColumns ??
                 mobileColumns ??
@@ -465,8 +462,9 @@ class ResponsiveColumns extends StatelessWidget {
             mainAxisAlignment: mainAxisAlignment,
             crossAxisAlignment: crossAxisAlignment,
             children: children
-                .expand((child) =>
-                    [Expanded(child: child), SizedBox(width: spacing)])
+                .expand(
+                  (child) => [Expanded(child: child), SizedBox(width: spacing)],
+                )
                 .take(children.length * 2 - 1)
                 .toList(),
           );
@@ -545,7 +543,8 @@ class ResponsiveCard extends StatelessWidget {
             break;
           case ScreenSize.mobile:
             cardPadding = padding ?? const EdgeInsets.all(AppSpacing.md);
-            cardMargin = margin ??
+            cardMargin =
+                margin ??
                 const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
                   vertical: AppSpacing.xs,
@@ -557,10 +556,7 @@ class ResponsiveCard extends StatelessWidget {
           elevation: elevation,
           color: color,
           margin: cardMargin,
-          child: Padding(
-            padding: cardPadding,
-            child: child,
-          ),
+          child: Padding(padding: cardPadding, child: child),
         );
 
         if (!fullWidth && screenSize != ScreenSize.mobile) {

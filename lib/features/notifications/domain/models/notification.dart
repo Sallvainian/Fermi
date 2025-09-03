@@ -44,9 +44,10 @@ enum NotificationType {
         .asMap()
         .entries
         .map((entry) {
-      if (entry.key == 0) return entry.value;
-      return entry.value[0].toUpperCase() + entry.value.substring(1);
-    }).join('');
+          if (entry.key == 0) return entry.value;
+          return entry.value[0].toUpperCase() + entry.value.substring(1);
+        })
+        .join('');
 
     return NotificationType.values.firstWhere(
       (type) => type.name == camelCase,
@@ -191,10 +192,7 @@ class Notification {
 
   /// Marks the notification as read with current timestamp.
   Notification markAsRead() {
-    return copyWith(
-      read: true,
-      readAt: DateTime.now(),
-    );
+    return copyWith(read: true, readAt: DateTime.now());
   }
 
   /// Gets notification type enum from string type.

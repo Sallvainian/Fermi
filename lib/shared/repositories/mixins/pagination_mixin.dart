@@ -60,8 +60,9 @@ mixin PaginationMixin {
     final effectivePageSize = pageSize.clamp(1, maxPageSize);
 
     // Apply pagination cursor if provided
-    Query paginatedQuery =
-        query.limit(effectivePageSize + 1); // +1 to check hasMore
+    Query paginatedQuery = query.limit(
+      effectivePageSize + 1,
+    ); // +1 to check hasMore
     if (startAfter != null) {
       paginatedQuery = paginatedQuery.startAfterDocument(startAfter);
     }
@@ -124,36 +125,41 @@ mixin PaginationMixin {
       paginatedQuery = paginatedQuery.startAfterDocument(startAfter);
     }
 
-    return paginatedQuery.snapshots().map((snapshot) {
-      final docs = snapshot.docs;
+    return paginatedQuery
+        .snapshots()
+        .map((snapshot) {
+          final docs = snapshot.docs;
 
-      // Check if there are more pages
-      final hasMore = docs.length > effectivePageSize;
+          // Check if there are more pages
+          final hasMore = docs.length > effectivePageSize;
 
-      // Remove the extra document
-      final resultDocs = hasMore ? docs.sublist(0, effectivePageSize) : docs;
+          // Remove the extra document
+          final resultDocs = hasMore
+              ? docs.sublist(0, effectivePageSize)
+              : docs;
 
-      // Map to models
-      final items = resultDocs.map((doc) => fromFirestore(doc)).toList();
+          // Map to models
+          final items = resultDocs.map((doc) => fromFirestore(doc)).toList();
 
-      return PaginatedResult<T>(
-        items: items,
-        hasMore: hasMore,
-        lastDocument: resultDocs.isNotEmpty ? resultDocs.last : null,
-        pageSize: effectivePageSize,
-        totalFetched: items.length,
-      );
-    }).handleError((error) {
-      // Emit error result
-      return PaginatedResult<T>(
-        items: [],
-        hasMore: false,
-        lastDocument: null,
-        pageSize: effectivePageSize,
-        totalFetched: 0,
-        error: error.toString(),
-      );
-    });
+          return PaginatedResult<T>(
+            items: items,
+            hasMore: hasMore,
+            lastDocument: resultDocs.isNotEmpty ? resultDocs.last : null,
+            pageSize: effectivePageSize,
+            totalFetched: items.length,
+          );
+        })
+        .handleError((error) {
+          // Emit error result
+          return PaginatedResult<T>(
+            items: [],
+            hasMore: false,
+            lastDocument: null,
+            pageSize: effectivePageSize,
+            totalFetched: 0,
+            error: error.toString(),
+          );
+        });
   }
 
   /// Load all pages of data sequentially.
@@ -264,10 +270,7 @@ class PaginatedResult<T> {
 /// Extension methods for Query to support pagination
 extension QueryPaginationExtension on Query {
   /// Apply pagination parameters to a query
-  Query paginate({
-    required int pageSize,
-    DocumentSnapshot? startAfter,
-  }) {
+  Query paginate({required int pageSize, DocumentSnapshot? startAfter}) {
     Query query = limit(pageSize);
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);

@@ -40,11 +40,7 @@ class StatCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (icon != null)
-                Icon(
-                  icon,
-                  color: iconColor ?? colorScheme.primary,
-                  size: 18,
-                ),
+                Icon(icon, color: iconColor ?? colorScheme.primary, size: 18),
               if (trailing != null) trailing!,
             ],
           ),

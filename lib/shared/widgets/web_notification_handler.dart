@@ -6,10 +6,7 @@ import '../../features/notifications/data/services/web_in_app_notification_servi
 class WebNotificationHandler extends StatefulWidget {
   final Widget child;
 
-  const WebNotificationHandler({
-    super.key,
-    required this.child,
-  });
+  const WebNotificationHandler({super.key, required this.child});
 
   @override
   State<WebNotificationHandler> createState() => _WebNotificationHandlerState();
@@ -45,10 +42,7 @@ class _WebNotificationHandlerState extends State<WebNotificationHandler> {
                     fontSize: 16,
                   ),
                 ),
-                if (body.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(body),
-                ],
+                if (body.isNotEmpty) ...[const SizedBox(height: 4), Text(body)],
               ],
             ),
             duration: const Duration(seconds: 4),

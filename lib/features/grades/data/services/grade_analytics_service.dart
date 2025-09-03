@@ -12,8 +12,10 @@ class GradeAnalyticsService {
   Future<GradeAnalytics> generateClassAnalytics(String classId) async {
     try {
       // Get class info
-      final classDoc =
-          await _firestore.collection('classes').doc(classId).get();
+      final classDoc = await _firestore
+          .collection('classes')
+          .doc(classId)
+          .get();
       if (!classDoc.exists) {
         throw Exception('Class not found');
       }
@@ -34,8 +36,10 @@ class GradeAnalyticsService {
       final students = <Student>[];
 
       for (final studentId in studentIds) {
-        final studentDoc =
-            await _firestore.collection('users').doc(studentId).get();
+        final studentDoc = await _firestore
+            .collection('users')
+            .doc(studentId)
+            .get();
         if (studentDoc.exists) {
           students.add(Student.fromFirestore(studentDoc));
         }
@@ -135,9 +139,11 @@ class GradeAnalyticsService {
     int pendingSubmissions = 0;
     for (final submissions in submissionsByStudent.values) {
       pendingSubmissions += submissions
-          .where((s) =>
-              s.status == SubmissionStatus.submitted &&
-              !gradesByStudent.containsKey(s.studentId))
+          .where(
+            (s) =>
+                s.status == SubmissionStatus.submitted &&
+                !gradesByStudent.containsKey(s.studentId),
+          )
           .length;
     }
 
@@ -262,12 +268,15 @@ class GradeAnalyticsService {
           : gradeValues.reduce((a, b) => a + b) / gradeValues.length;
 
       // Count missing assignments
-      final submittedAssignmentIds =
-          studentSubmissions.map((s) => s.assignmentId).toSet();
+      final submittedAssignmentIds = studentSubmissions
+          .map((s) => s.assignmentId)
+          .toSet();
       final missingAssignments = assignments
-          .where((a) =>
-              !submittedAssignmentIds.contains(a.id) &&
-              a.dueDate.isBefore(DateTime.now()))
+          .where(
+            (a) =>
+                !submittedAssignmentIds.contains(a.id) &&
+                a.dueDate.isBefore(DateTime.now()),
+          )
           .length;
 
       // Count late submissions
@@ -288,17 +297,19 @@ class GradeAnalyticsService {
       // Calculate trend (simplified - comparing last 3 grades to overall average)
       final trend = _calculateStudentTrend(studentGrades);
 
-      performances.add(StudentPerformance(
-        studentId: student.id,
-        studentName: student.displayName,
-        averageGrade: averageGrade,
-        completedAssignments: studentGrades.length,
-        missingAssignments: missingAssignments,
-        lateSubmissions: lateSubmissions,
-        categoryScores: categoryScores,
-        trend: trend,
-        letterGrade: _getLetterGrade(averageGrade),
-      ));
+      performances.add(
+        StudentPerformance(
+          studentId: student.id,
+          studentName: student.displayName,
+          averageGrade: averageGrade,
+          completedAssignments: studentGrades.length,
+          missingAssignments: missingAssignments,
+          lateSubmissions: lateSubmissions,
+          categoryScores: categoryScores,
+          trend: trend,
+          letterGrade: _getLetterGrade(averageGrade),
+        ),
+      );
     }
 
     return performances;
@@ -337,21 +348,23 @@ class GradeAnalyticsService {
     if (grades.length < 2) return 0;
 
     // Sort by date, filtering out grades without gradedAt
-    final sortedGrades =
-        List<Grade>.from(grades.where((g) => g.gradedAt != null))
-          ..sort((a, b) => a.gradedAt!.compareTo(b.gradedAt!));
+    final sortedGrades = List<Grade>.from(
+      grades.where((g) => g.gradedAt != null),
+    )..sort((a, b) => a.gradedAt!.compareTo(b.gradedAt!));
 
     // Compare last 3 grades to first 3 grades
     final recentCount = sortedGrades.length < 3 ? sortedGrades.length : 3;
     final earlyCount = sortedGrades.length < 3 ? sortedGrades.length : 3;
 
-    final recentAvg = sortedGrades
+    final recentAvg =
+        sortedGrades
             .skip(sortedGrades.length - recentCount)
             .map((g) => g.percentage)
             .reduce((a, b) => a + b) /
         recentCount;
 
-    final earlyAvg = sortedGrades
+    final earlyAvg =
+        sortedGrades
             .take(earlyCount)
             .map((g) => g.percentage)
             .reduce((a, b) => a + b) /
@@ -369,8 +382,9 @@ class GradeAnalyticsService {
     final stats = <AssignmentStats>[];
 
     for (final assignment in assignments) {
-      final assignmentGrades =
-          allGrades.where((g) => g.assignmentId == assignment.id).toList();
+      final assignmentGrades = allGrades
+          .where((g) => g.assignmentId == assignment.id)
+          .toList();
 
       if (assignmentGrades.isEmpty) continue;
 
@@ -383,26 +397,29 @@ class GradeAnalyticsService {
       // Count total submissions for this assignment
       int totalSubmissions = 0;
       for (final submissions in submissionsByStudent.values) {
-        totalSubmissions +=
-            submissions.where((s) => s.assignmentId == assignment.id).length;
+        totalSubmissions += submissions
+            .where((s) => s.assignmentId == assignment.id)
+            .length;
       }
 
       // Calculate score distribution
       final scoreDistribution = _calculateScoreDistribution(scores);
 
-      stats.add(AssignmentStats(
-        assignmentId: assignment.id,
-        assignmentTitle: assignment.title,
-        category: assignment.category,
-        averageScore: averageScore,
-        medianScore: medianScore,
-        maxScore: maxScore,
-        minScore: minScore,
-        totalSubmissions: totalSubmissions,
-        gradedSubmissions: assignmentGrades.length,
-        dueDate: assignment.dueDate,
-        scoreDistribution: scoreDistribution,
-      ));
+      stats.add(
+        AssignmentStats(
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.title,
+          category: assignment.category,
+          averageScore: averageScore,
+          medianScore: medianScore,
+          maxScore: maxScore,
+          minScore: minScore,
+          totalSubmissions: totalSubmissions,
+          gradedSubmissions: assignmentGrades.length,
+          dueDate: assignment.dueDate,
+          scoreDistribution: scoreDistribution,
+        ),
+      );
     }
 
     return stats;
@@ -436,8 +453,10 @@ class GradeAnalyticsService {
   }
 
   /// Get grade trends over time for a class
-  Future<List<GradeTrend>> getGradeTrends(String classId,
-      {int days = 30}) async {
+  Future<List<GradeTrend>> getGradeTrends(
+    String classId, {
+    int days = 30,
+  }) async {
     final endDate = DateTime.now();
     final startDate = endDate.subtract(Duration(days: days));
 
@@ -467,11 +486,13 @@ class GradeAnalyticsService {
     final trends = <GradeTrend>[];
     gradesByDate.forEach((date, grades) {
       final average = grades.reduce((a, b) => a + b) / grades.length;
-      trends.add(GradeTrend(
-        date: date,
-        averageGrade: average,
-        assignmentCount: grades.length,
-      ));
+      trends.add(
+        GradeTrend(
+          date: date,
+          averageGrade: average,
+          assignmentCount: grades.length,
+        ),
+      );
     });
 
     return trends;

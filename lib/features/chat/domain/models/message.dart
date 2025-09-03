@@ -182,8 +182,9 @@ class Message {
       'isRead': isRead,
       'attachmentUrl': attachmentUrl,
       'attachmentType': attachmentType,
-      'scheduledFor':
-          scheduledFor != null ? Timestamp.fromDate(scheduledFor!) : null,
+      'scheduledFor': scheduledFor != null
+          ? Timestamp.fromDate(scheduledFor!)
+          : null,
       'isScheduled': isScheduled,
       'status': status.name,
       'isEdited': isEdited,
@@ -248,9 +249,4 @@ class Message {
 ///
 /// Status tracking enables delivery confirmation and
 /// read receipts for better communication awareness.
-enum MessageStatus {
-  sent,
-  delivered,
-  read,
-  failed,
-}
+enum MessageStatus { sent, delivered, read, failed }

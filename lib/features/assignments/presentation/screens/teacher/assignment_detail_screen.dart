@@ -10,10 +10,7 @@ import '../../../../../shared/widgets/common/responsive_layout.dart';
 class AssignmentDetailScreen extends StatefulWidget {
   final String assignmentId;
 
-  const AssignmentDetailScreen({
-    super.key,
-    required this.assignmentId,
-  });
+  const AssignmentDetailScreen({super.key, required this.assignmentId});
 
   @override
   State<AssignmentDetailScreen> createState() => _AssignmentDetailScreenState();
@@ -33,8 +30,9 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     final assignmentProvider = context.read<SimpleAssignmentProvider>();
 
     try {
-      final assignment =
-          await assignmentProvider.getAssignmentById(widget.assignmentId);
+      final assignment = await assignmentProvider.getAssignmentById(
+        widget.assignmentId,
+      );
       if (mounted) {
         setState(() {
           _assignment = assignment;
@@ -59,9 +57,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_assignment == null) {
@@ -260,14 +256,34 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildDetailRow('Type', (_assignment!['type'] ?? 'homework').toString().toUpperCase()),
+            _buildDetailRow(
+              'Type',
+              (_assignment!['type'] ?? 'homework').toString().toUpperCase(),
+            ),
             _buildDetailRow('Category', _assignment!['category'] ?? 'N/A'),
-            _buildDetailRow('Due Date', _formatDateTime(_parseDateTime(_assignment!['dueDate']) ?? DateTime.now())),
-            _buildDetailRow('Points', '${(_assignment!['maxPoints'] ?? 0).toInt()}'),
-            _buildDetailRow('Created', _formatDate(_parseDateTime(_assignment!['createdAt']) ?? DateTime.now())),
+            _buildDetailRow(
+              'Due Date',
+              _formatDateTime(
+                _parseDateTime(_assignment!['dueDate']) ?? DateTime.now(),
+              ),
+            ),
+            _buildDetailRow(
+              'Points',
+              '${(_assignment!['maxPoints'] ?? 0).toInt()}',
+            ),
+            _buildDetailRow(
+              'Created',
+              _formatDate(
+                _parseDateTime(_assignment!['createdAt']) ?? DateTime.now(),
+              ),
+            ),
             if (_assignment!['updatedAt'] != null)
               _buildDetailRow(
-                  'Last Updated', _formatDate(_parseDateTime(_assignment!['updatedAt']) ?? DateTime.now())),
+                'Last Updated',
+                _formatDate(
+                  _parseDateTime(_assignment!['updatedAt']) ?? DateTime.now(),
+                ),
+              ),
           ],
         ),
       ),
@@ -416,7 +432,11 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
   }
 
   Widget _buildStatItem(
-      String label, String value, Color color, IconData icon) {
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -436,13 +456,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
               color: color,
             ),
           ),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-            ),
-          ),
+          Text(label, style: TextStyle(color: color, fontSize: 12)),
         ],
       ),
     );
@@ -454,8 +468,9 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: () {
-              context
-                  .go('/teacher/gradebook?assignmentId=${widget.assignmentId}');
+              context.go(
+                '/teacher/gradebook?assignmentId=${widget.assignmentId}',
+              );
             },
             icon: const Icon(Icons.grading),
             label: const Text('Grade Submissions'),
@@ -470,7 +485,8 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
             onPressed: () {
               // Navigate to submissions view
               context.go(
-                  '/teacher/assignments/${widget.assignmentId}/submissions');
+                '/teacher/assignments/${widget.assignmentId}/submissions',
+              );
             },
             icon: const Icon(Icons.folder_open),
             label: const Text('View Submissions'),
@@ -531,7 +547,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -595,8 +611,9 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
         'publishAt': null,
       };
 
-      final success =
-          await assignmentProvider.createAssignment(duplicatedAssignment);
+      final success = await assignmentProvider.createAssignment(
+        duplicatedAssignment,
+      );
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -665,9 +682,7 @@ class _AssignmentDetailScreenState extends State<AssignmentDetailScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

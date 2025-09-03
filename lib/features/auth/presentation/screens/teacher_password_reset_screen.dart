@@ -10,10 +10,12 @@ class TeacherPasswordResetScreen extends StatefulWidget {
   const TeacherPasswordResetScreen({super.key});
 
   @override
-  State<TeacherPasswordResetScreen> createState() => _TeacherPasswordResetScreenState();
+  State<TeacherPasswordResetScreen> createState() =>
+      _TeacherPasswordResetScreenState();
 }
 
-class _TeacherPasswordResetScreenState extends State<TeacherPasswordResetScreen> {
+class _TeacherPasswordResetScreenState
+    extends State<TeacherPasswordResetScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -47,12 +49,10 @@ class _TeacherPasswordResetScreenState extends State<TeacherPasswordResetScreen>
           .collection('users')
           .doc(user.uid)
           .update({
-        'needsPasswordReset': false,
-        'lastPasswordChange': FieldValue.serverTimestamp(),
-      });
+            'needsPasswordReset': false,
+            'lastPasswordChange': FieldValue.serverTimestamp(),
+          });
 
-      // Reload user model to reflect changes
-      final authProvider = context.read<AuthProvider>();
       // User model will be automatically updated through auth state listener
 
       if (mounted) {
@@ -133,18 +133,19 @@ class _TeacherPasswordResetScreenState extends State<TeacherPasswordResetScreen>
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary.withValues(alpha: 0.05),
+                      color: theme.colorScheme.secondary.withValues(
+                        alpha: 0.05,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                        color: theme.colorScheme.secondary.withValues(
+                          alpha: 0.2,
+                        ),
                       ),
                     ),
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.person,
-                          color: theme.colorScheme.secondary,
-                        ),
+                        Icon(Icons.person, color: theme.colorScheme.secondary),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +201,9 @@ class _TeacherPasswordResetScreenState extends State<TeacherPasswordResetScreen>
                             if (value.length < 8) {
                               return 'Password must be at least 8 characters';
                             }
-                            if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
+                            if (!RegExp(
+                              r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)',
+                            ).hasMatch(value)) {
                               return 'Password must contain uppercase, lowercase, and numbers';
                             }
                             return null;
@@ -223,7 +226,8 @@ class _TeacherPasswordResetScreenState extends State<TeacherPasswordResetScreen>
                             ),
                             onPressed: () {
                               setState(() {
-                                _obscureConfirmPassword = !_obscureConfirmPassword;
+                                _obscureConfirmPassword =
+                                    !_obscureConfirmPassword;
                               });
                             },
                           ),
@@ -275,10 +279,14 @@ class _TeacherPasswordResetScreenState extends State<TeacherPasswordResetScreen>
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                           ),
                           child: Column(

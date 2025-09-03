@@ -28,25 +28,25 @@ extension AssignmentStatusTransition on AssignmentStatus {
   /// Checks if this status can transition to the target status.
   ///
   /// Validates transitions based on the assignment lifecycle rules.
-  /// 
+  ///
   /// @param target The desired status to transition to
   /// @return true if the transition is valid, false otherwise
   bool canTransitionTo(AssignmentStatus target) {
     switch (this) {
       case AssignmentStatus.draft:
         // Draft can go to active (publish) or archived (cancel)
-        return target == AssignmentStatus.active || 
-               target == AssignmentStatus.archived;
-      
+        return target == AssignmentStatus.active ||
+            target == AssignmentStatus.archived;
+
       case AssignmentStatus.active:
         // Active can go to completed (due date passed) or archived
-        return target == AssignmentStatus.completed || 
-               target == AssignmentStatus.archived;
-      
+        return target == AssignmentStatus.completed ||
+            target == AssignmentStatus.archived;
+
       case AssignmentStatus.completed:
         // Completed can only be archived
         return target == AssignmentStatus.archived;
-      
+
       case AssignmentStatus.archived:
         // Archived is final, no transitions allowed
         return false;
@@ -57,7 +57,7 @@ extension AssignmentStatusTransition on AssignmentStatus {
   ///
   /// Returns the target status if the transition is valid,
   /// otherwise returns the current status unchanged.
-  /// 
+  ///
   /// @param target The desired status to transition to
   /// @return The resulting status after transition attempt
   AssignmentStatus transitionTo(AssignmentStatus target) {
@@ -70,19 +70,19 @@ extension AssignmentStatusTransition on AssignmentStatus {
   /// Gets a list of valid target statuses from the current status.
   ///
   /// Useful for UI elements that need to show available actions.
-  /// 
+  ///
   /// @return List of statuses this status can transition to
   List<AssignmentStatus> get validTransitions {
     switch (this) {
       case AssignmentStatus.draft:
         return [AssignmentStatus.active, AssignmentStatus.archived];
-      
+
       case AssignmentStatus.active:
         return [AssignmentStatus.completed, AssignmentStatus.archived];
-      
+
       case AssignmentStatus.completed:
         return [AssignmentStatus.archived];
-      
+
       case AssignmentStatus.archived:
         return [];
     }
@@ -91,24 +91,24 @@ extension AssignmentStatusTransition on AssignmentStatus {
   /// Gets a human-readable description of invalid transition attempts.
   ///
   /// Useful for providing feedback when a transition is not allowed.
-  /// 
+  ///
   /// @param target The attempted target status
   /// @return Error message explaining why the transition is invalid
   String getTransitionError(AssignmentStatus target) {
     if (canTransitionTo(target)) {
       return '';
     }
-    
+
     switch (this) {
       case AssignmentStatus.draft:
         return 'Draft assignments can only be published (active) or cancelled (archived)';
-      
+
       case AssignmentStatus.active:
         return 'Active assignments can only be completed or archived';
-      
+
       case AssignmentStatus.completed:
         return 'Completed assignments can only be archived';
-      
+
       case AssignmentStatus.archived:
         return 'Archived assignments cannot be modified';
     }
@@ -221,7 +221,7 @@ class Assignment {
   /// @return Parsed Assignment instance
   factory Assignment.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    
+
     // Helper function to convert either Timestamp or DateTime to DateTime
     DateTime? parseDateTime(dynamic value) {
       if (value == null) return null;
@@ -229,7 +229,7 @@ class Assignment {
       if (value is DateTime) return value;
       return null;
     }
-    
+
     return Assignment(
       id: doc.id,
       teacherId: data['teacherId'] ?? '',
@@ -243,26 +243,20 @@ class Assignment {
       attachmentUrl: data['attachmentUrl'],
       createdAt: parseDateTime(data['createdAt']) ?? DateTime.now(),
       updatedAt: parseDateTime(data['updatedAt']),
-      type: AssignmentType.values.firstWhere(
-        (e) {
-          final typeValue = data['type']?.toString() ?? '';
-          // Handle both 'homework' and 'AssignmentType.homework' formats
-          return e.name == typeValue || 
-                 e.toString() == typeValue ||
-                 typeValue.endsWith('.${e.name}');
-        },
-        orElse: () => AssignmentType.homework,
-      ),
-      status: AssignmentStatus.values.firstWhere(
-        (e) {
-          final statusValue = data['status']?.toString() ?? '';
-          // Handle both 'draft' and 'AssignmentStatus.draft' formats
-          return e.name == statusValue || 
-                 e.toString() == statusValue ||
-                 statusValue.endsWith('.${e.name}');
-        },
-        orElse: () => AssignmentStatus.draft,
-      ),
+      type: AssignmentType.values.firstWhere((e) {
+        final typeValue = data['type']?.toString() ?? '';
+        // Handle both 'homework' and 'AssignmentType.homework' formats
+        return e.name == typeValue ||
+            e.toString() == typeValue ||
+            typeValue.endsWith('.${e.name}');
+      }, orElse: () => AssignmentType.homework),
+      status: AssignmentStatus.values.firstWhere((e) {
+        final statusValue = data['status']?.toString() ?? '';
+        // Handle both 'draft' and 'AssignmentStatus.draft' formats
+        return e.name == statusValue ||
+            e.toString() == statusValue ||
+            statusValue.endsWith('.${e.name}');
+      }, orElse: () => AssignmentStatus.draft),
       category: data['category'] ?? 'Other',
       teacherName: data['teacherName'] ?? '',
       isPublished: data['isPublished'] ?? false,
@@ -392,5 +386,5 @@ enum AssignmentType {
   essay,
   lab,
   presentation,
-  other
+  other,
 }

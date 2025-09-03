@@ -25,14 +25,16 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
   void _checkPlatform() {
     final userAgent = web.window.navigator.userAgent.toLowerCase();
     final isIOS = userAgent.contains('iphone') || userAgent.contains('ipad');
-    final isSafari = userAgent.contains('safari') &&
+    final isSafari =
+        userAgent.contains('safari') &&
         !userAgent.contains('chrome') &&
         !userAgent.contains('crios');
 
     // Check if app is already installed (running in standalone mode)
     // For iOS, we can only check via matchMedia since navigator.standalone requires JS interop
-    final isStandalone =
-        web.window.matchMedia('(display-mode: standalone)').matches;
+    final isStandalone = web.window
+        .matchMedia('(display-mode: standalone)')
+        .matches;
 
     setState(() {
       _isIOSSafari = kIsWeb && isIOS && isSafari;
@@ -200,10 +202,7 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 14),
           ),
         ),
       ],
@@ -287,7 +286,11 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
   }
 
   Widget _buildDetailedStep(
-      String number, String title, String description, IconData icon) {
+    String number,
+    String title,
+    String description,
+    IconData icon,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -331,10 +334,7 @@ class _PWAInstallPromptState extends State<PWAInstallPrompt> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                 ),
               ],
             ),

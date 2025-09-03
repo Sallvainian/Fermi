@@ -19,7 +19,7 @@ class SimpleAssignmentProvider with ChangeNotifier {
   Future<void> loadAssignments() async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -39,7 +39,7 @@ class SimpleAssignmentProvider with ChangeNotifier {
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -58,7 +58,7 @@ class SimpleAssignmentProvider with ChangeNotifier {
 
       data['teacherId'] = user.uid;
       data['createdAt'] = FieldValue.serverTimestamp();
-      
+
       await _firestore.collection('assignments').add(data);
       await loadAssignments(); // Reload to show new assignment
       return true;
@@ -73,7 +73,7 @@ class SimpleAssignmentProvider with ChangeNotifier {
   Future<void> loadClassAssignments(String classId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
       final snapshot = await _firestore
           .collection('assignments')
@@ -86,7 +86,7 @@ class SimpleAssignmentProvider with ChangeNotifier {
         data['id'] = doc.id;
         return data;
       }).toList();
-      
+
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -101,17 +101,19 @@ class SimpleAssignmentProvider with ChangeNotifier {
   Stream<List<Map<String, dynamic>>> get assignmentsStream {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
-    
+
     return _firestore
         .collection('assignments')
         .where('teacherId', isEqualTo: user.uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList());
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+            return data;
+          }).toList(),
+        );
   }
 
   /// Get teacher assignments - for compatibility
@@ -129,7 +131,7 @@ class SimpleAssignmentProvider with ChangeNotifier {
           .collection('assignments')
           .doc(assignmentId)
           .get();
-      
+
       if (doc.exists) {
         final data = doc.data()!;
         data['id'] = doc.id;
@@ -154,21 +156,24 @@ class SimpleAssignmentProvider with ChangeNotifier {
   }
 
   /// Update assignment
-  Future<bool> updateAssignment(String assignmentId, Map<String, dynamic> updates) async {
+  Future<bool> updateAssignment(
+    String assignmentId,
+    Map<String, dynamic> updates,
+  ) async {
     try {
       updates['updatedAt'] = FieldValue.serverTimestamp();
       await _firestore
           .collection('assignments')
           .doc(assignmentId)
           .update(updates);
-      
+
       // Update local list
       final index = _assignments.indexWhere((a) => a['id'] == assignmentId);
       if (index != -1) {
         _assignments[index] = {..._assignments[index], ...updates};
         notifyListeners();
       }
-      
+
       return true;
     } catch (e) {
       _error = e.toString();
@@ -180,15 +185,12 @@ class SimpleAssignmentProvider with ChangeNotifier {
   /// Delete assignment
   Future<bool> deleteAssignment(String assignmentId) async {
     try {
-      await _firestore
-          .collection('assignments')
-          .doc(assignmentId)
-          .delete();
-      
+      await _firestore.collection('assignments').doc(assignmentId).delete();
+
       // Update local list
       _assignments.removeWhere((a) => a['id'] == assignmentId);
       notifyListeners();
-      
+
       return true;
     } catch (e) {
       _error = e.toString();
@@ -204,7 +206,7 @@ class SimpleAssignmentProvider with ChangeNotifier {
           .collection('assignments')
           .doc(assignmentId)
           .get();
-      
+
       if (doc.exists) {
         final isPublished = doc.data()?['isPublished'] ?? false;
         await updateAssignment(assignmentId, {'isPublished': !isPublished});
@@ -219,7 +221,10 @@ class SimpleAssignmentProvider with ChangeNotifier {
   }
 
   /// Update assignment status
-  Future<bool> updateAssignmentStatus(String assignmentId, String status) async {
+  Future<bool> updateAssignmentStatus(
+    String assignmentId,
+    String status,
+  ) async {
     return await updateAssignment(assignmentId, {'status': status});
   }
 

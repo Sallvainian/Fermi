@@ -13,7 +13,7 @@ import '../../../../shared/models/user_model.dart';
 class SimpleChatScreen extends StatefulWidget {
   final String chatRoomId;
   final String chatTitle;
-  final String? recipientId;  // For new chats
+  final String? recipientId; // For new chats
   final String? recipientName; // For new chats
 
   const SimpleChatScreen({
@@ -64,9 +64,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           // Messages list
           Expanded(
             child: _isNewChat && _actualChatRoomId == null
-                ? const Center(
-                    child: Text('No messages yet. Start chatting!'),
-                  )
+                ? const Center(child: Text('No messages yet. Start chatting!'))
                 : StreamBuilder<QuerySnapshot>(
                     stream: _firestore
                         .collection('chatRooms')
@@ -208,14 +206,12 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
               style: TextStyle(
                 fontSize: 11,
                 color: isMe
-                    ? Theme.of(context)
-                        .colorScheme
-                        .onPrimary
-                        .withValues(alpha: 0.7)
-                    : Theme.of(context)
-                        .colorScheme
-                        .onSecondaryContainer
-                        .withValues(alpha: 0.7),
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.onPrimary.withValues(alpha: 0.7)
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -228,10 +224,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     // For web, use a simple approach that works
     if (kIsWeb) {
       return Container(
-        constraints: const BoxConstraints(
-          maxHeight: 200,
-          maxWidth: 200,
-        ),
+        constraints: const BoxConstraints(maxHeight: 200, maxWidth: 200),
         child: Image.network(
           imageUrl,
           fit: BoxFit.cover,
@@ -245,7 +238,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                 child: CircularProgressIndicator(
                   value: loadingProgress.expectedTotalBytes != null
                       ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
+                            loadingProgress.expectedTotalBytes!
                       : null,
                 ),
               ),
@@ -276,12 +269,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
     }
 
     // For mobile platforms
-    return Image.network(
-      imageUrl,
-      fit: BoxFit.cover,
-      height: 200,
-      width: 200,
-    );
+    return Image.network(imageUrl, fit: BoxFit.cover, height: 200, width: 200);
   }
 
   Widget _buildVideoThumbnail(String videoUrl) {
@@ -292,11 +280,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          const Icon(
-            Icons.play_circle_filled,
-            color: Colors.white,
-            size: 60,
-          ),
+          const Icon(Icons.play_circle_filled, color: Colors.white, size: 60),
           Positioned(
             bottom: 8,
             left: 8,
@@ -352,7 +336,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
     try {
       String chatRoomIdToUse = _actualChatRoomId ?? widget.chatRoomId;
-      
+
       // If this is a new chat, create the chatRoom first
       if (_isNewChat && _actualChatRoomId == null) {
         chatRoomIdToUse = await _createChatRoom();
@@ -363,30 +347,30 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
           _actualChatRoomId = chatRoomIdToUse;
         });
       }
-      
+
       // Now send the message
       final currentUser = _auth.currentUser;
-      final userModel = currentUser != null 
+      final userModel = currentUser != null
           ? UserModel(
               uid: currentUser.uid,
               email: currentUser.email,
               displayName: currentUser.displayName,
             )
           : null;
-      
+
       await _firestore
           .collection('chatRooms')
           .doc(chatRoomIdToUse)
           .collection('messages')
           .add({
-        'text': text,
-        'senderId': currentUser?.uid,
-        'senderName': userModel.displayNameOrFallback,
-        'timestamp': FieldValue.serverTimestamp(),
-        'imageUrl': null,
-        'videoUrl': null,
-      });
-      
+            'text': text,
+            'senderId': currentUser?.uid,
+            'senderName': userModel.displayNameOrFallback,
+            'timestamp': FieldValue.serverTimestamp(),
+            'imageUrl': null,
+            'videoUrl': null,
+          });
+
       // Update last message and activity in chatRoom
       await _firestore.collection('chatRooms').doc(chatRoomIdToUse).update({
         'lastMessage': text,
@@ -395,49 +379,55 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send message: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
       }
     }
   }
-  
+
   Future<String> _createChatRoom() async {
     if (!_isNewChat || widget.recipientId == null) return '';
-    
+
     try {
       final currentUser = _auth.currentUser!;
       final currentUserData = await _firestore
           .collection('users')
           .doc(currentUser.uid)
           .get();
-      
-      final currentUserName = currentUserData.data()?['displayName'] ?? 
-                             currentUserData.data()?['email'] ?? 
-                             'User ${currentUser.uid}';
-      
+
+      final currentUserName =
+          currentUserData.data()?['displayName'] ??
+          currentUserData.data()?['email'] ??
+          'User ${currentUser.uid}';
+
       // Create the chat room document
       final chatRoomRef = await _firestore.collection('chatRooms').add({
         'type': 'direct',
         'participantIds': [currentUser.uid, widget.recipientId],
         'participantNames': {
           currentUser.uid: currentUserName,
-          widget.recipientId!: widget.recipientName ?? 'User ${widget.recipientId}',
+          widget.recipientId!:
+              widget.recipientName ?? 'User ${widget.recipientId}',
         },
         'createdAt': FieldValue.serverTimestamp(),
         'lastActivity': FieldValue.serverTimestamp(),
         'lastMessage': '',
         'lastMessageTime': FieldValue.serverTimestamp(),
       });
-      
+
       debugPrint('Created new chat room: ${chatRoomRef.id}');
-      
+
       // Navigate to the actual chat room URL
       if (mounted) {
-        final title = Uri.encodeComponent(widget.recipientName ?? widget.chatTitle);
-        GoRouter.of(context).replace('/simple-chat/${chatRoomRef.id}?title=$title');
+        final title = Uri.encodeComponent(
+          widget.recipientName ?? widget.chatTitle,
+        );
+        GoRouter.of(
+          context,
+        ).replace('/simple-chat/${chatRoomRef.id}?title=$title');
       }
-      
+
       return chatRoomRef.id;
     } catch (e) {
       debugPrint('Error creating chat room: $e');
@@ -447,7 +437,6 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
   Future<void> _pickAndSendImage() async {
     try {
-
       final XFile? image = await _picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 70,
@@ -459,9 +448,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         _isUploading = true;
         _uploadProgress = 0.0;
       });
-      
+
       String chatRoomIdToUse = _actualChatRoomId ?? widget.chatRoomId;
-      
+
       // If this is a new chat, create the chatRoom first
       if (_isNewChat && _actualChatRoomId == null) {
         chatRoomIdToUse = await _createChatRoom();
@@ -477,7 +466,8 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       final String fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
       debugPrint(
-          'DEBUG: Uploading to path: chat_images/$chatRoomIdToUse/$fileName');
+        'DEBUG: Uploading to path: chat_images/$chatRoomIdToUse/$fileName',
+      );
       final Reference ref = _storage
           .ref()
           .child('chat_images')
@@ -509,27 +499,27 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       // Send message with image URL
       final currentUser = _auth.currentUser;
-      final userModel = currentUser != null 
+      final userModel = currentUser != null
           ? UserModel(
               uid: currentUser.uid,
               email: currentUser.email,
               displayName: currentUser.displayName,
             )
           : null;
-      
+
       await _firestore
           .collection('chatRooms')
           .doc(chatRoomIdToUse)
           .collection('messages')
           .add({
-        'text': '',
-        'senderId': currentUser?.uid,
-        'senderName': userModel.displayNameOrFallback,
-        'timestamp': FieldValue.serverTimestamp(),
-        'imageUrl': downloadUrl,
-        'videoUrl': null,
-      });
-      
+            'text': '',
+            'senderId': currentUser?.uid,
+            'senderName': userModel.displayNameOrFallback,
+            'timestamp': FieldValue.serverTimestamp(),
+            'imageUrl': downloadUrl,
+            'videoUrl': null,
+          });
+
       // Update last message and activity in chatRoom
       await _firestore.collection('chatRooms').doc(chatRoomIdToUse).update({
         'lastMessage': '[Image]',
@@ -545,9 +535,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         _isUploading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload image: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to upload image: $e')));
       }
     }
   }
@@ -565,9 +555,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         _isUploading = true;
         _uploadProgress = 0.0;
       });
-      
+
       String chatRoomIdToUse = _actualChatRoomId ?? widget.chatRoomId;
-      
+
       // If this is a new chat, create the chatRoom first
       if (_isNewChat && _actualChatRoomId == null) {
         chatRoomIdToUse = await _createChatRoom();
@@ -613,27 +603,27 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       // Send message with video URL
       final currentUser = _auth.currentUser;
-      final userModel = currentUser != null 
+      final userModel = currentUser != null
           ? UserModel(
               uid: currentUser.uid,
               email: currentUser.email,
               displayName: currentUser.displayName,
             )
           : null;
-      
+
       await _firestore
           .collection('chatRooms')
           .doc(chatRoomIdToUse)
           .collection('messages')
           .add({
-        'text': '',
-        'senderId': currentUser?.uid,
-        'senderName': userModel.displayNameOrFallback,
-        'timestamp': FieldValue.serverTimestamp(),
-        'imageUrl': null,
-        'videoUrl': downloadUrl,
-      });
-      
+            'text': '',
+            'senderId': currentUser?.uid,
+            'senderName': userModel.displayNameOrFallback,
+            'timestamp': FieldValue.serverTimestamp(),
+            'imageUrl': null,
+            'videoUrl': downloadUrl,
+          });
+
       // Update last message and activity in chatRoom
       await _firestore.collection('chatRooms').doc(chatRoomIdToUse).update({
         'lastMessage': '[Video]',
@@ -649,9 +639,9 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         _isUploading = false;
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload video: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to upload video: $e')));
       }
     }
   }

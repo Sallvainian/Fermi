@@ -71,7 +71,9 @@ class DashboardProvider with ChangeNotifier {
 
   // Load student dashboard data
   Future<void> loadStudentDashboard(
-      String studentId, List<String> classIds) async {
+    String studentId,
+    List<String> classIds,
+  ) async {
     _setLoading(true);
     try {
       // Load all dashboard data in parallel
@@ -90,12 +92,14 @@ class DashboardProvider with ChangeNotifier {
       // Convert grades to GradeWithAssignment (for now, we'll need to fetch assignment titles)
       final grades = results[3] as List<Grade>;
       _recentGrades = grades
-          .map((g) => GradeWithAssignment(
-                grade: g,
-                assignmentTitle:
-                    'Assignment ${g.assignmentId}', // Assignment title will be fetched via join
-                category: 'General', // Category will be fetched via join
-              ))
+          .map(
+            (g) => GradeWithAssignment(
+              grade: g,
+              assignmentTitle:
+                  'Assignment ${g.assignmentId}', // Assignment title will be fetched via join
+              category: 'General', // Category will be fetched via join
+            ),
+          )
           .toList();
 
       _studentGPA = results[4] as double;
@@ -130,7 +134,9 @@ class DashboardProvider with ChangeNotifier {
   }
 
   Future<void> refreshStudentDashboard(
-      String studentId, List<String> classIds) async {
+    String studentId,
+    List<String> classIds,
+  ) async {
     await loadStudentDashboard(studentId, classIds);
   }
 

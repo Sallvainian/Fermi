@@ -63,9 +63,9 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
     } catch (e) {
       setState(() => _isSearching = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error searching users: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error searching users: $e')));
       }
     }
   }
@@ -88,7 +88,7 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
       // Prepare participants list
       final participantIds = [
         currentUser.uid,
-        ..._selectedUsers.map((u) => u.uid)
+        ..._selectedUsers.map((u) => u.uid),
       ];
       final participants = [
         {
@@ -97,12 +97,14 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
           'role': currentUser.role?.name ?? 'user',
           'photoUrl': currentUser.photoUrl,
         },
-        ..._selectedUsers.map((user) => {
-              'id': user.uid,
-              'name': user.name,
-              'role': user.role?.name ?? 'user',
-              'photoUrl': user.photoUrl,
-            }),
+        ..._selectedUsers.map(
+          (user) => {
+            'id': user.uid,
+            'name': user.name,
+            'role': user.role?.name ?? 'user',
+            'photoUrl': user.photoUrl,
+          },
+        ),
       ];
 
       final chatRoom = await chatProvider.createGroupChat(
@@ -118,9 +120,9 @@ class _GroupCreationScreenState extends State<GroupCreationScreen> {
     } catch (e) {
       setState(() => _isCreating = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error creating group: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error creating group: $e')));
       }
     }
   }

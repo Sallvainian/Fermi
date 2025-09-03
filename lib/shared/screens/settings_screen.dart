@@ -93,12 +93,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 ListTile(
                   title: const Text('Theme Color'),
-                  subtitle: Text('Current: ${AppColors.getTheme(themeProvider.colorThemeId).name}'),
+                  subtitle: Text(
+                    'Current: ${AppColors.getTheme(themeProvider.colorThemeId).name}',
+                  ),
                   leading: Container(
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: AppColors.getTheme(themeProvider.colorThemeId).primary,
+                      color: AppColors.getTheme(
+                        themeProvider.colorThemeId,
+                      ).primary,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -419,14 +423,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             backgroundColor: Theme.of(context).colorScheme.primary,
             backgroundImage:
                 user?.photoURL != null && user!.photoURL!.isNotEmpty
-                    ? CachedNetworkImageProvider(user.photoURL!)
-                    : null,
+                ? CachedNetworkImageProvider(user.photoURL!)
+                : null,
             child: user?.photoURL == null || user!.photoURL!.isEmpty
-                ? const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 30,
-                  )
+                ? const Icon(Icons.person, color: Colors.white, size: 30)
                 : null,
           ),
           const SizedBox(width: 16),
@@ -436,23 +436,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   user.displayNameOrFallback,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   user?.email ?? '',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   user?.role.toString().split('.').last.toUpperCase() ?? 'USER',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -493,9 +493,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ],
           ),
@@ -505,13 +505,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color:
-                  Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
       ],
     );
@@ -526,10 +525,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return ListTile(
       title: Text(title),
       subtitle: Text(subtitle),
-      trailing: Switch(
-        value: value,
-        onChanged: onChanged,
-      ),
+      trailing: Switch(value: value, onChanged: onChanged),
     );
   }
 
@@ -546,10 +542,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: DropdownButton<String>(
         value: value,
         items: items
-            .map((item) => DropdownMenuItem(
-                  value: item,
-                  child: Text(item),
-                ))
+            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
             .toList(),
         onChanged: onChanged,
         underline: const SizedBox(),
@@ -573,9 +566,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       title: Text(
         title,
-        style: TextStyle(
-          color: isDestructive ? Colors.red : null,
-        ),
+        style: TextStyle(color: isDestructive ? Colors.red : null),
       ),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right),
@@ -634,9 +625,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Password changed successfully'),
-                ),
+                const SnackBar(content: Text('Password changed successfully')),
               );
             },
             child: const Text('Change'),
@@ -664,9 +653,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               // Simulate clearing cache
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Cache cleared successfully'),
-                ),
+                const SnackBar(content: Text('Cache cleared successfully')),
               );
             },
             child: const Text('Clear'),
@@ -710,9 +697,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Feedback sent successfully'),
-                ),
+                const SnackBar(content: Text('Feedback sent successfully')),
               );
             },
             child: const Text('Send'),
@@ -733,15 +718,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           color: Theme.of(context).colorScheme.primary,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Icon(
-          Icons.school,
-          color: Colors.white,
-          size: 24,
-        ),
+        child: const Icon(Icons.school, color: Colors.white, size: 24),
       ),
       children: const [
         Text(
-            'A comprehensive educational management platform for students and teachers.'),
+          'A comprehensive educational management platform for students and teachers.',
+        ),
         SizedBox(height: 16),
         Text('Built with Flutter and Firebase.'),
       ],
@@ -765,9 +747,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final authProvider = context.read<AuthProvider>();
               await authProvider.signOut();
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Sign Out'),
           ),
         ],
@@ -812,9 +792,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               _confirmDeleteAccount();
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete Account'),
           ),
         ],
@@ -826,14 +804,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Show re-authentication dialog
     final authProvider = context.read<AuthProvider>();
     final user = authProvider.firebaseUser;
-    
+
     if (user == null) return;
-    
+
     // Check if user signed in with Apple or Google
     // TODO: Add provider info to AuthUser interface for Windows support
-    bool isAppleUser = user.providerData.any((info) => info.providerId == 'apple.com');
-    bool isGoogleUser = user.providerData.any((info) => info.providerId == 'google.com');
-    
+    bool isAppleUser = user.providerData.any(
+      (info) => info.providerId == 'apple.com',
+    );
+    bool isGoogleUser = user.providerData.any(
+      (info) => info.providerId == 'google.com',
+    );
+
     if (isAppleUser) {
       // Re-authenticate with Apple
       try {
@@ -873,7 +855,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showReauthenticationDialog() {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -881,7 +863,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Please enter your credentials to confirm account deletion.'),
+            const Text(
+              'Please enter your credentials to confirm account deletion.',
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: emailController,
@@ -912,7 +896,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               final authProvider = context.read<AuthProvider>();
               final messenger = ScaffoldMessenger.of(context);
-              
+
               try {
                 await authProvider.reauthenticateWithEmail(
                   emailController.text.trim(),
@@ -929,9 +913,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               }
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Confirm & Delete'),
           ),
         ],
@@ -942,7 +924,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _deleteAccount() async {
     try {
       final authProvider = context.read<AuthProvider>();
-      
+
       // Show loading
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -952,9 +934,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       }
-      
+
       await authProvider.deleteAccount();
-      
+
       // Account deleted successfully - the user will be automatically signed out
       // and redirected to login by the auth provider
     } catch (e) {
@@ -971,9 +953,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showFeatureComingSoon() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('This feature is coming soon!'),
-      ),
+      const SnackBar(content: Text('This feature is coming soon!')),
     );
   }
 
@@ -1023,11 +1003,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to pick image: $e'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
       }
     }
   }
@@ -1075,9 +1053,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload profile picture: $e'),
-          ),
+          SnackBar(content: Text('Failed to upload profile picture: $e')),
         );
       }
     }
@@ -1126,9 +1102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to remove profile picture: $e'),
-          ),
+          SnackBar(content: Text('Failed to remove profile picture: $e')),
         );
       }
     }
@@ -1242,8 +1216,9 @@ class _AdvancedNotificationSettingsSheetState
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1275,7 +1250,8 @@ class _AdvancedNotificationSettingsSheetState
                 SwitchListTile(
                   title: const Text('Quiet Hours'),
                   subtitle: const Text(
-                      'Disable notifications during specified hours'),
+                    'Disable notifications during specified hours',
+                  ),
                   value: _quietHours,
                   onChanged: (value) {
                     setState(() {
@@ -1396,24 +1372,20 @@ class _AdvancedNotificationSettingsSheetState
         title: const Text('Notification Sound'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            'Default',
-            'Bell',
-            'Chime',
-            'Ding',
-            'None',
-          ]
-              .map((sound) => CustomRadioListTile<String>(
-                    title: Text(sound),
-                    value: sound,
-                    groupValue: _notificationSound,
-                    onChanged: (value) {
-                      setState(() {
-                        _notificationSound = value!;
-                      });
-                      Navigator.pop(context);
-                    },
-                  ))
+          children: ['Default', 'Bell', 'Chime', 'Ding', 'None']
+              .map(
+                (sound) => CustomRadioListTile<String>(
+                  title: Text(sound),
+                  value: sound,
+                  groupValue: _notificationSound,
+                  onChanged: (value) {
+                    setState(() {
+                      _notificationSound = value!;
+                    });
+                    Navigator.pop(context);
+                  },
+                ),
+              )
               .toList(),
         ),
         actions: [

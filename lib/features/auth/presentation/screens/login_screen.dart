@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    
+
     // Clear error when user starts typing
     _usernameController.addListener(_clearError);
     _passwordController.addListener(_clearError);
@@ -33,18 +33,19 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         final goRouterState = GoRouterState.of(context);
         final uri = goRouterState.uri;
-        
+
         // First try standard query parameters
         String? role = uri.queryParameters['role'];
-        
+
         // If not found, check the full location for hash routing
         if (role == null) {
-          final fullLocation = goRouterState.fullPath ?? goRouterState.matchedLocation;
+          final fullLocation =
+              goRouterState.fullPath ?? goRouterState.matchedLocation;
           if (fullLocation.contains('role=teacher')) {
             role = 'teacher';
           }
         }
-        
+
         setState(() {
           _isTeacherRole = role == 'teacher';
         });
@@ -54,7 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Check for auth errors
       final authProvider = context.read<AuthProvider>();
-      if (authProvider.status == AuthStatus.error && authProvider.errorMessage != null) {
+      if (authProvider.status == AuthStatus.error &&
+          authProvider.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authProvider.errorMessage!),
@@ -97,7 +99,10 @@ class _LoginScreenState extends State<LoginScreen> {
     // Check if this is a teacher verification password
     if (_isTeacherRole && password == 'educator2024') {
       // This is a teacher verification - create/update user with teacher role
-      final success = await authProvider.verifyTeacherAndSignIn(username, password);
+      final success = await authProvider.verifyTeacherAndSignIn(
+        username,
+        password,
+      );
       if (success && mounted) {
         context.go('/dashboard');
       }
@@ -130,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final isLoading = authProvider.status == AuthStatus.authenticating;
 
     return Scaffold(
-      backgroundColor: _isTeacherRole 
+      backgroundColor: _isTeacherRole
           ? theme.colorScheme.secondary.withValues(alpha: 0.05)
           : theme.colorScheme.surface,
       body: SafeArea(
@@ -173,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isTeacherRole 
+                    _isTeacherRole
                         ? 'Enter your credentials or use teacher verification password'
                         : 'Enter your credentials to continue',
                     style: theme.textTheme.bodyLarge?.copyWith(
@@ -207,7 +212,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Password Field
                         AuthTextField(
                           controller: _passwordController,
-                          label: _isTeacherRole ? 'Password or Teacher Code' : 'Password',
+                          label: _isTeacherRole
+                              ? 'Password or Teacher Code'
+                              : 'Password',
                           prefixIcon: Icons.lock,
                           obscureText: _obscurePassword,
                           enabled: !isLoading,
@@ -235,92 +242,93 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // Submit Button
                         ElevatedButton(
-                          onPressed: isLoading 
-                              ? null 
-                              : _signIn,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: _isTeacherRole
-                                    ? theme.colorScheme.secondary
-                                    : theme.colorScheme.primary,
-                                foregroundColor: _isTeacherRole
-                                    ? theme.colorScheme.onSecondary
-                                    : theme.colorScheme.onPrimary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Sign In',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                          onPressed: isLoading ? null : _signIn,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            backgroundColor: _isTeacherRole
+                                ? theme.colorScheme.secondary
+                                : theme.colorScheme.primary,
+                            foregroundColor: _isTeacherRole
+                                ? theme.colorScheme.onSecondary
+                                : theme.colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-
-
-                            // Error Display
-                            if (authProvider.errorMessage != null) ...[
-                              const SizedBox(height: 16),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: theme.colorScheme.error.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: theme.colorScheme.error.withValues(alpha: 0.3),
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                )
+                              : const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.error_outline,
-                                      color: theme.colorScheme.error,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        authProvider.errorMessage!,
-                                        style: TextStyle(
-                                          color: theme.colorScheme.error,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        ),
 
-                            // Back to role selection
-                            const SizedBox(height: 24),
-                            TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () => context.go('/auth/role-selection'),
-                              child: Text(
-                                'Back to Role Selection',
-                                style: TextStyle(
-                                  color: _isTeacherRole
-                                      ? theme.colorScheme.secondary
-                                      : theme.colorScheme.primary,
+                        // Error Display
+                        if (authProvider.errorMessage != null) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.error.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: theme.colorScheme.error.withValues(
+                                  alpha: 0.3,
                                 ),
                               ),
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  color: theme.colorScheme.error,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    authProvider.errorMessage!,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.error,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        // Back to role selection
+                        const SizedBox(height: 24),
+                        TextButton(
+                          onPressed: isLoading
+                              ? null
+                              : () => context.go('/auth/role-selection'),
+                          child: Text(
+                            'Back to Role Selection',
+                            style: TextStyle(
+                              color: _isTeacherRole
+                                  ? theme.colorScheme.secondary
+                                  : theme.colorScheme.primary,
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -82,8 +82,10 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               right: 0,
               child: Center(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(24),
@@ -99,8 +101,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                     controller: _pageController,
                     count: 5,
                     effect: WormEffect(
-                      dotColor:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      dotColor: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.3,
+                      ),
                       activeDotColor: theme.colorScheme.primary,
                       dotHeight: 8,
                       dotWidth: 8,
@@ -120,7 +123,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 child: Center(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary,
                       borderRadius: BorderRadius.circular(24),
@@ -163,18 +168,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.filter_list), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
       ),
       body: Column(
@@ -225,10 +221,18 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                 _buildStatCard('Total', '156', Icons.people, Colors.blue),
                 const SizedBox(width: 12),
                 _buildStatCard(
-                    'Active', '142', Icons.check_circle, Colors.green),
+                  'Active',
+                  '142',
+                  Icons.check_circle,
+                  Colors.green,
+                ),
                 const SizedBox(width: 12),
                 _buildStatCard(
-                    'Avg Grade', '87%', Icons.trending_up, Colors.orange),
+                  'Avg Grade',
+                  '87%',
+                  Icons.trending_up,
+                  Colors.orange,
+                ),
               ],
             ),
           ),
@@ -310,11 +314,12 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                     const SizedBox(width: 4),
                                     Text(
                                       'Grade ${student.gradeLevel}',
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                     const SizedBox(width: 12),
                                     Icon(
@@ -326,11 +331,12 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                     Expanded(
                                       child: Text(
                                         student.email ?? '',
-                                        style:
-                                            theme.textTheme.bodySmall?.copyWith(
-                                          color: theme
-                                              .colorScheme.onSurfaceVariant,
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
@@ -344,7 +350,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.green.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
@@ -484,14 +492,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               ),
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Icons.more_vert),
-                onPressed: () {},
-              ),
+              IconButton(icon: const Icon(Icons.edit), onPressed: () {}),
+              IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
             ],
           ),
           SliverToBoxAdapter(
@@ -586,7 +588,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                   'Oct',
                                   'Nov',
                                   'Dec',
-                                  'Jan'
+                                  'Jan',
                                 ];
                                 if (value.toInt() < months.length) {
                                   return Text(
@@ -636,8 +638,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                             ),
                             belowBarData: BarAreaData(
                               show: true,
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.1),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.1,
+                              ),
                             ),
                           ),
                         ],
@@ -783,38 +786,42 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
             ),
             const SizedBox(height: 16),
 
-            ..._generateTopPerformers().map((student) => Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: theme.colorScheme.primaryContainer,
-                      child: Text(
-                        student['initials']!,
-                        style: TextStyle(
-                          color: theme.colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    title: Text(student['name']!),
-                    subtitle: Text('Grade ${student['grade']}'),
-                    trailing: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        student['average']!,
-                        style: TextStyle(
-                          color: Colors.green[700],
-                          fontWeight: FontWeight.bold,
-                        ),
+            ..._generateTopPerformers().map(
+              (student) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    child: Text(
+                      student['initials']!,
+                      style: TextStyle(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
-                )),
+                  title: Text(student['name']!),
+                  subtitle: Text('Grade ${student['grade']}'),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      student['average']!,
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1044,7 +1051,11 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
   }
 
   Widget _buildStatCard(
-      String label, String value, IconData icon, Color color) {
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     return Expanded(
       child: Container(
@@ -1078,7 +1089,11 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
   }
 
   Widget _buildQuickAction(
-      String title, String subtitle, IconData icon, Color color) {
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     return Card(
       child: InkWell(
@@ -1113,7 +1128,12 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
   }
 
   Widget _buildActivityItem(
-      String title, String subtitle, IconData icon, String time, Color color) {
+    String title,
+    String subtitle,
+    IconData icon,
+    String time,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1139,7 +1159,12 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
   }
 
   Widget _buildPerformanceCard(
-      String title, String value, String change, IconData icon, Color color) {
+    String title,
+    String value,
+    String change,
+    IconData icon,
+    Color color,
+  ) {
     final theme = Theme.of(context);
     final isPositive = change.startsWith('+');
 
@@ -1150,16 +1175,10 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            color.withValues(alpha: 0.2),
-            color.withValues(alpha: 0.1),
-          ],
+          colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.1)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1293,8 +1312,10 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               Row(
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
@@ -1315,8 +1336,9 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                       color: due.contains('Tomorrow')
                           ? Colors.orange
                           : theme.colorScheme.onSurfaceVariant,
-                      fontWeight:
-                          due.contains('Tomorrow') ? FontWeight.w600 : null,
+                      fontWeight: due.contains('Tomorrow')
+                          ? FontWeight.w600
+                          : null,
                     ),
                   ),
                 ],
@@ -1418,11 +1440,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
             fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-        subtitle: Text(
-          subtitle,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -1512,18 +1530,8 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         'average': '98%',
         'initials': 'SJ',
       },
-      {
-        'name': 'Mike Chen',
-        'grade': '10',
-        'average': '96%',
-        'initials': 'MC',
-      },
-      {
-        'name': 'Emma Davis',
-        'grade': '11',
-        'average': '95%',
-        'initials': 'ED',
-      },
+      {'name': 'Mike Chen', 'grade': '10', 'average': '96%', 'initials': 'MC'},
+      {'name': 'Emma Davis', 'grade': '11', 'average': '95%', 'initials': 'ED'},
     ];
   }
 

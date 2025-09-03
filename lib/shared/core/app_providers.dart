@@ -28,10 +28,7 @@ class AppProviders {
       ChangeNotifierProvider(create: (_) => NavigationProvider()),
 
       // LAZY: Dashboard provider - only create when dashboard is accessed
-      ChangeNotifierProvider(
-        create: (_) => DashboardProvider(),
-        lazy: true,
-      ),
+      ChangeNotifierProvider(create: (_) => DashboardProvider(), lazy: true),
 
       // LAZY: Feature-specific providers loaded on demand
       ChangeNotifierProvider(
@@ -46,38 +43,23 @@ class AppProviders {
         create: (_) => SimpleStudentAssignmentProvider(),
         lazy: true,
       ),
-      ChangeNotifierProvider(
-        create: (_) => SimpleChatProvider(),
-        lazy: true,
-      ),
+      ChangeNotifierProvider(create: (_) => SimpleChatProvider(), lazy: true),
       ChangeNotifierProvider(
         create: (_) => SimpleDiscussionProvider(),
         lazy: true,
       ),
-      ChangeNotifierProvider(
-        create: (_) => CalendarProvider(),
-        lazy: true,
-      ),
+      ChangeNotifierProvider(create: (_) => CalendarProvider(), lazy: true),
       ChangeNotifierProvider(
         create: (_) => GradeAnalyticsProvider(),
         lazy: true,
       ),
-      ChangeNotifierProvider(
-        create: (_) => CallProvider(),
-        lazy: true,
-      ),
-      ChangeNotifierProvider(
-        create: (_) => NotificationProvider(),
-        lazy: true,
-      ),
+      ChangeNotifierProvider(create: (_) => CallProvider(), lazy: true),
+      ChangeNotifierProvider(create: (_) => NotificationProvider(), lazy: true),
       ChangeNotifierProvider(
         create: (_) => SimpleStudentProvider(),
         lazy: true,
       ),
-      ChangeNotifierProvider(
-        create: (_) => SimpleGradeProvider(),
-        lazy: true,
-      ),
+      ChangeNotifierProvider(create: (_) => SimpleGradeProvider(), lazy: true),
 
       // Jeopardy game provider
       ChangeNotifierProvider(

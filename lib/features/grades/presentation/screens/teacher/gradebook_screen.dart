@@ -57,8 +57,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
     final studentProvider = context.read<SimpleStudentProvider>();
 
     if (classModel.studentIds.isNotEmpty) {
-      final students =
-          await studentProvider.loadStudentsByIds(classModel.studentIds);
+      final students = await studentProvider.loadStudentsByIds(
+        classModel.studentIds,
+      );
       setState(() {
         _students = students;
       });
@@ -74,7 +75,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
     return _students.where((student) {
       final fullName = '${student.firstName} ${student.lastName}';
       return fullName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
+          (student.email?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
+              false);
     }).toList();
   }
 
@@ -103,7 +105,11 @@ class _GradebookScreenState extends State<GradebookScreen> {
       body: gradeProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : _buildGradebookBody(
-              context, gradeProvider, assignmentProvider, classProvider),
+              context,
+              gradeProvider,
+              assignmentProvider,
+              classProvider,
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddAssignmentDialog,
         child: const Icon(Icons.assignment_add),
@@ -111,8 +117,12 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildGradebookBody(BuildContext context, SimpleGradeProvider gradeProvider,
-      SimpleAssignmentProvider assignmentProvider, ClassProvider classProvider) {
+  Widget _buildGradebookBody(
+    BuildContext context,
+    SimpleGradeProvider gradeProvider,
+    SimpleAssignmentProvider assignmentProvider,
+    ClassProvider classProvider,
+  ) {
     if (classProvider.teacherClasses.isEmpty) {
       return const EmptyState(
         icon: Icons.class_outlined,
@@ -133,31 +143,34 @@ class _GradebookScreenState extends State<GradebookScreen> {
         Expanded(
           child: _filteredStudents.isEmpty
               ? _searchQuery.isNotEmpty
-                  ? EmptyState.noSearchResults(searchTerm: _searchQuery)
-                  : const EmptyState(
-                      icon: Icons.people_outline,
-                      title: 'No Students',
-                      message:
-                          'Students will appear here when they join your class',
-                    )
+                    ? EmptyState.noSearchResults(searchTerm: _searchQuery)
+                    : const EmptyState(
+                        icon: Icons.people_outline,
+                        title: 'No Students',
+                        message:
+                            'Students will appear here when they join your class',
+                      )
               : _buildStudentsList(context, gradeProvider, assignmentProvider),
         ),
       ],
     );
   }
 
-  Widget _buildStatsHeader(BuildContext context, SimpleGradeProvider gradeProvider) {
+  Widget _buildStatsHeader(
+    BuildContext context,
+    SimpleGradeProvider gradeProvider,
+  ) {
     final stats = gradeProvider.classStatistics;
 
     final classAverage = (stats['average'] as double?) ?? 0.0;
     // Calculate completion rate from grades
     final totalGrades = gradeProvider.classGrades.length;
     final completedGrades = gradeProvider.classGrades
-        .where((g) =>
-            g['status'] == 'graded' || g['status'] == 'returned')
+        .where((g) => g['status'] == 'graded' || g['status'] == 'returned')
         .length;
-    final completionRate =
-        totalGrades > 0 ? (completedGrades / totalGrades) * 100 : 0.0;
+    final completionRate = totalGrades > 0
+        ? (completedGrades / totalGrades) * 100
+        : 0.0;
     final studentCount = _students.length;
 
     return Padding(
@@ -228,9 +241,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
                 child: Text(
                   title,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -241,9 +254,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
           Text(
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: valueColor,
-                ),
+              fontWeight: FontWeight.bold,
+              color: valueColor,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -251,8 +264,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -263,7 +276,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
   }
 
   Widget _buildControlsSection(
-      BuildContext context, ClassProvider classProvider) {
+    BuildContext context,
+    ClassProvider classProvider,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
@@ -274,8 +289,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                border:
-                    Border.all(color: Theme.of(context).colorScheme.outline),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: DropdownButton<String>(
@@ -283,10 +299,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: classProvider.teacherClasses.map((cls) {
-                  return DropdownMenuItem(
-                    value: cls.id,
-                    child: Text(cls.name),
-                  );
+                  return DropdownMenuItem(value: cls.id, child: Text(cls.name));
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
@@ -347,8 +360,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
             .toList(),
         onGradeUpdate: (assignmentId, newPoints, newStatus) {
           // Find the grade and update it
-          final grade = gradeProvider.studentGrades
-              .firstWhere((g) => g['assignmentId'] == assignmentId);
+          final grade = gradeProvider.studentGrades.firstWhere(
+            (g) => g['assignmentId'] == assignmentId,
+          );
           gradeProvider.gradeSubmission(
             submissionId: grade['id'],
             points: newPoints ?? 0,
@@ -360,8 +374,11 @@ class _GradebookScreenState extends State<GradebookScreen> {
     );
   }
 
-  Widget _buildStudentsList(BuildContext context, SimpleGradeProvider gradeProvider,
-      SimpleAssignmentProvider assignmentProvider) {
+  Widget _buildStudentsList(
+    BuildContext context,
+    SimpleGradeProvider gradeProvider,
+    SimpleAssignmentProvider assignmentProvider,
+  ) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: _filteredStudents.length,
@@ -379,8 +396,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
         .toList();
 
     final overallGrade = _calculateStudentOverallGrade(studentGrades);
-    final completedAssignments =
-        studentGrades.where((g) => g['status'] == 'graded').length;
+    final completedAssignments = studentGrades
+        .where((g) => g['status'] == 'graded')
+        .length;
     final totalAssignments = studentGrades.length;
 
     return AppCard(
@@ -411,15 +429,14 @@ class _GradebookScreenState extends State<GradebookScreen> {
                     Text(
                       '${student.firstName} ${student.lastName}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       student.email ?? student.username,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -432,8 +449,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
                   Text(
                     '${overallGrade.toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -452,9 +469,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
                     Text(
                       'Assignments Completed',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -464,9 +480,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
                             value: totalAssignments > 0
                                 ? completedAssignments / totalAssignments
                                 : 0.0,
-                            backgroundColor: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               Theme.of(context).colorScheme.primary,
                             ),
@@ -475,10 +491,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
                         const SizedBox(width: 8),
                         Text(
                           '$completedAssignments/$totalAssignments',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -505,8 +519,8 @@ class _GradebookScreenState extends State<GradebookScreen> {
               Text(
                 'Tap to view detailed grades',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ],
           ),
@@ -516,10 +530,12 @@ class _GradebookScreenState extends State<GradebookScreen> {
   }
 
   Widget _buildQuickStatusChips(List<Map<String, dynamic>> studentGrades) {
-    final missingCount =
-        studentGrades.where((g) => g['status'] == 'notSubmitted').length;
-    final lateCount =
-        studentGrades.where((g) => g['status'] == 'revised').length;
+    final missingCount = studentGrades
+        .where((g) => g['status'] == 'notSubmitted')
+        .length;
+    final lateCount = studentGrades
+        .where((g) => g['status'] == 'revised')
+        .length;
 
     return Row(
       children: [
@@ -533,9 +549,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
             child: Text(
               '$missingCount Missing',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: Theme.of(context).colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 4),
@@ -550,9 +566,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
             child: Text(
               '$lateCount Late',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.warningColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: AppTheme.warningColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -602,8 +618,9 @@ class _GradebookScreenState extends State<GradebookScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Export Grades'),
-        content:
-            const Text('Export options would appear here (CSV, PDF, etc.).'),
+        content: const Text(
+          'Export options would appear here (CSV, PDF, etc.).',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -671,17 +688,14 @@ class StudentGradeDetailSheet extends StatelessWidget {
                   children: [
                     Text(
                       '${student.firstName} ${student.lastName}',
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     Text(
                       student.email ?? student.username,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -711,16 +725,13 @@ class StudentGradeDetailSheet extends StatelessWidget {
                       Row(
                         children: [
                           StatusBadge.grade(
-                              grade: _getLetterGrade(overallGrade)),
+                            grade: _getLetterGrade(overallGrade),
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             '${overallGrade.toStringAsFixed(1)}%',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -733,15 +744,14 @@ class StudentGradeDetailSheet extends StatelessWidget {
                     Text(
                       'Completed',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     Text(
                       '${studentGrades.where((g) => g['status'] == 'graded').length}/${assignments.length}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -753,9 +763,9 @@ class StudentGradeDetailSheet extends StatelessWidget {
 
           Text(
             'Assignment Breakdown',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 12),
@@ -775,7 +785,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
                     'assignmentId': assignment['id'],
                     'classId': assignment['classId'],
                     'teacherId': assignment['teacherId'],
-                    'pointsPossible': (assignment['totalPoints'] as num?)?.toDouble() ?? 0.0,
+                    'pointsPossible':
+                        (assignment['totalPoints'] as num?)?.toDouble() ?? 0.0,
                     'pointsEarned': 0.0,
                     'percentage': 0.0,
                     'status': 'pending',
@@ -792,11 +803,16 @@ class StudentGradeDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildAssignmentGradeCard(BuildContext context,
-      Map<String, dynamic> assignment, Map<String, dynamic> grade) {
+  Widget _buildAssignmentGradeCard(
+    BuildContext context,
+    Map<String, dynamic> assignment,
+    Map<String, dynamic> grade,
+  ) {
     final dueDate = assignment['dueDate'];
-    final isOverdue = dueDate != null && 
-        (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime).isBefore(DateTime.now());
+    final isOverdue =
+        dueDate != null &&
+        (dueDate is Timestamp ? dueDate.toDate() : dueDate as DateTime)
+            .isBefore(DateTime.now());
 
     Color statusColor;
     String statusText;
@@ -807,7 +823,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
       case 'graded':
       case 'returned':
         final pointsEarned = (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
-        final pointsPossible = (grade['pointsPossible'] as num?)?.toDouble() ?? 1.0;
+        final pointsPossible =
+            (grade['pointsPossible'] as num?)?.toDouble() ?? 1.0;
         final percentage = (pointsEarned / pointsPossible) * 100;
         statusColor = AppTheme.getGradeColor(_getLetterGrade(percentage));
         statusText = _getLetterGrade(percentage);
@@ -824,7 +841,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
         statusColor = AppTheme.warningColor;
         statusText = 'Revised';
         final pointsEarned = (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
-        final pointsPossible = (grade['pointsPossible'] as num?)?.toDouble() ?? 0.0;
+        final pointsPossible =
+            (grade['pointsPossible'] as num?)?.toDouble() ?? 0.0;
         scoreText = pointsEarned > 0
             ? '${pointsEarned.toInt()}/${pointsPossible.toInt()}'
             : 'Not graded';
@@ -857,22 +875,24 @@ class StudentGradeDetailSheet extends StatelessWidget {
                     Text(
                       assignment['title'] ?? '',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        StatusBadge.assignmentType(type: assignment['type'] ?? 'assignment'),
+                        StatusBadge.assignmentType(
+                          type: assignment['type'] ?? 'assignment',
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Due: ${(assignment['dueDate'] as DateTime?)?.month ?? ''}/${(assignment['dueDate'] as DateTime?)?.day ?? ''}/${(assignment['dueDate'] as DateTime?)?.year ?? ''}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: isOverdue
-                                        ? Theme.of(context).colorScheme.error
-                                        : null,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: isOverdue
+                                    ? Theme.of(context).colorScheme.error
+                                    : null,
+                              ),
                         ),
                       ],
                     ),
@@ -891,8 +911,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
                   Text(
                     scoreText,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -902,12 +922,14 @@ class StudentGradeDetailSheet extends StatelessWidget {
           const SizedBox(height: 8),
 
           // Progress Bar for graded assignments
-          if (grade['status'] == 'graded' ||
-              grade['status'] == 'returned') ...[
+          if (grade['status'] == 'graded' || grade['status'] == 'returned') ...[
             LinearProgressIndicator(
-              value: ((grade['pointsEarned'] as num?)?.toDouble() ?? 0.0) / ((grade['pointsPossible'] as num?)?.toDouble() ?? 1.0),
-              backgroundColor:
-                  Theme.of(context).colorScheme.surfaceContainerHighest,
+              value:
+                  ((grade['pointsEarned'] as num?)?.toDouble() ?? 0.0) /
+                  ((grade['pointsPossible'] as num?)?.toDouble() ?? 1.0),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
             ),
             const SizedBox(height: 8),
@@ -926,8 +948,8 @@ class StudentGradeDetailSheet extends StatelessWidget {
               Text(
                 'Tap to edit grade',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ],
           ),
@@ -936,8 +958,11 @@ class StudentGradeDetailSheet extends StatelessWidget {
     );
   }
 
-  void _showGradeEntryDialog(BuildContext context,
-      Map<String, dynamic> assignment, Map<String, dynamic> grade) {
+  void _showGradeEntryDialog(
+    BuildContext context,
+    Map<String, dynamic> assignment,
+    Map<String, dynamic> grade,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -965,8 +990,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
     double maxPoints = 0;
 
     for (final grade in grades) {
-      if (grade['status'] == 'graded' ||
-          grade['status'] == 'returned') {
+      if (grade['status'] == 'graded' || grade['status'] == 'returned') {
         totalPoints += (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
         maxPoints += (grade['pointsPossible'] as num?)?.toDouble() ?? 0.0;
       }
@@ -1038,10 +1062,13 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
     super.initState();
     _pointsController = TextEditingController(
       text: ((widget.grade['pointsEarned'] as num?)?.toDouble() ?? 0.0) > 0
-          ? ((widget.grade['pointsEarned'] as num?)?.toDouble() ?? 0.0).toString()
+          ? ((widget.grade['pointsEarned'] as num?)?.toDouble() ?? 0.0)
+                .toString()
           : '',
     );
-    _selectedStatus = _getGradeStatusFromString(widget.grade['status'] ?? 'pending');
+    _selectedStatus = _getGradeStatusFromString(
+      widget.grade['status'] ?? 'pending',
+    );
   }
 
   @override
@@ -1054,8 +1081,8 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
   Widget build(BuildContext context) {
     final percentage = _pointsController.text.isNotEmpty
         ? (double.tryParse(_pointsController.text) ?? 0) /
-            ((widget.assignment['totalPoints'] as num?)?.toDouble() ?? 1.0) *
-            100
+              ((widget.assignment['totalPoints'] as num?)?.toDouble() ?? 1.0) *
+              100
         : 0.0;
 
     return Container(
@@ -1099,7 +1126,8 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
                 Row(
                   children: [
                     StatusBadge.assignmentType(
-                        type: widget.assignment['type'] ?? 'assignment'),
+                      type: widget.assignment['type'] ?? 'assignment',
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Due: ${(widget.assignment['dueDate'] as DateTime?)?.month ?? ''}/${(widget.assignment['dueDate'] as DateTime?)?.day ?? ''}/${(widget.assignment['dueDate'] as DateTime?)?.year ?? ''}',
@@ -1118,7 +1146,8 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
               labelText: 'Points Earned',
-              hintText: 'Enter points (0-${widget.assignment['totalPoints'] ?? 0})',
+              hintText:
+                  'Enter points (0-${widget.assignment['totalPoints'] ?? 0})',
               border: const OutlineInputBorder(),
               suffix: Text('/ ${widget.assignment['totalPoints'] ?? 0}'),
             ),
@@ -1143,10 +1172,7 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
           ],
 
           // Status Selection
-          Text(
-            'Status',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Status', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -1184,7 +1210,8 @@ class _GradeEntrySheetState extends State<GradeEntrySheet> {
       final points = double.tryParse(_pointsController.text);
       return points != null &&
           points >= 0 &&
-          points <= ((widget.assignment['totalPoints'] as num?)?.toDouble() ?? 0.0);
+          points <=
+              ((widget.assignment['totalPoints'] as num?)?.toDouble() ?? 0.0);
     }
     return true;
   }

@@ -10,7 +10,7 @@ class AppColors {
       icon: Icons.water_drop,
     ),
     'blue': ColorThemeData(
-      name: 'Blue', 
+      name: 'Blue',
       primary: Color(0xFF2196F3),
       secondary: Color(0xFF00BCD4),
       icon: Icons.water,

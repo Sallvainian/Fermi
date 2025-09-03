@@ -15,59 +15,73 @@ class AuthService {
   GoogleSignIn get _googleSignIn => GoogleSignIn.instance;
   // Desktop OAuth handler for Windows/Mac/Linux
   // Direct OAuth handler that works without Firebase Functions
-  final DirectDesktopOAuthHandler _directOAuthHandler = DirectDesktopOAuthHandler();
+  final DirectDesktopOAuthHandler _directOAuthHandler =
+      DirectDesktopOAuthHandler();
 
   AuthService() {
     _auth = FirebaseAuth.instance;
     _firestore = FirebaseFirestore.instance;
-    
+
     // Initialize Google Sign-In based on platform
     _initializeGoogleSignIn();
-    
+
     // Web persistence
     if (kIsWeb) {
       _auth!.setPersistence(Persistence.LOCAL);
     }
   }
-  
+
   void _initializeGoogleSignIn() async {
     String clientId = '';
     String clientSecret = '';
-    
+
     // Safely try to access dotenv - it might not be initialized yet
     try {
       // Try both naming conventions for backwards compatibility
-      clientId = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ?? 
-                       dotenv.env['GOOGLE_CLIENT_ID'] ?? '';
-      clientSecret = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ?? 
-                            dotenv.env['GOOGLE_CLIENT_SECRET'] ?? '';
+      clientId =
+          dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ??
+          dotenv.env['GOOGLE_CLIENT_ID'] ??
+          '';
+      clientSecret =
+          dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ??
+          dotenv.env['GOOGLE_CLIENT_SECRET'] ??
+          '';
     } catch (e) {
       // dotenv not initialized yet - this is fine, we'll use empty strings
       debugPrint('Note: .env not loaded yet, OAuth will use defaults');
     }
-    
+
     // Debug output to verify .env is loading
     debugPrint('=== OAuth Credentials Debug ===');
     debugPrint('Platform: ${kIsWeb ? "Web" : Platform.operatingSystem}');
-    debugPrint('Client ID loaded: ${clientId.isNotEmpty ? "Yes (${clientId.substring(0, 10)}...)" : "No"}');
-    debugPrint('Client Secret loaded: ${clientSecret.isNotEmpty ? "Yes" : "No"}');
-    
+    debugPrint(
+      'Client ID loaded: ${clientId.isNotEmpty ? "Yes (${clientId.substring(0, 10)}...)" : "No"}',
+    );
+    debugPrint(
+      'Client Secret loaded: ${clientSecret.isNotEmpty ? "Yes" : "No"}',
+    );
+
     // Don't initialize all_platforms for desktop - we'll use DesktopOAuthHandler
-    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    if (!kIsWeb &&
+        (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
       debugPrint('Using DesktopOAuthHandler for desktop platform');
       if (clientId.isEmpty || clientSecret.isEmpty) {
         debugPrint('ERROR: Google OAuth credentials not found in .env file');
         debugPrint('Windows Google Sign-In will not work without credentials');
       }
       // Desktop platforms don't use GoogleSignIn.instance
-      debugPrint('Desktop platforms use secure OAuth handler - GoogleSignIn.instance not configured');
+      debugPrint(
+        'Desktop platforms use secure OAuth handler - GoogleSignIn.instance not configured',
+      );
     } else if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
       // Mobile platforms: Configure GoogleSignIn.instance
       debugPrint('Configuring GoogleSignIn.instance for mobile platforms');
       await _configureGoogleSignInForMobile();
     } else if (kIsWeb) {
       // Web doesn't need GoogleSignIn.instance configuration (uses Firebase Auth popup)
-      debugPrint('Using Firebase Auth popup for web - GoogleSignIn.instance not used');
+      debugPrint(
+        'Using Firebase Auth popup for web - GoogleSignIn.instance not used',
+      );
     }
   }
 
@@ -76,7 +90,9 @@ class AuthService {
     try {
       // In v7+, GoogleSignIn.instance must be initialized before use
       await _googleSignIn.initialize();
-      debugPrint('GoogleSignIn.instance initialized successfully for mobile platforms');
+      debugPrint(
+        'GoogleSignIn.instance initialized successfully for mobile platforms',
+      );
     } catch (e) {
       debugPrint('Failed to initialize GoogleSignIn.instance: $e');
     }
@@ -84,7 +100,8 @@ class AuthService {
 
   // Current user
   User? get currentUser => _auth?.currentUser;
-  Stream<User?> get authStateChanges => _auth?.authStateChanges() ?? Stream.value(null);
+  Stream<User?> get authStateChanges =>
+      _auth?.authStateChanges() ?? Stream.value(null);
 
   // Sign up with username support
   Future<User?> signUp({
@@ -93,7 +110,6 @@ class AuthService {
     String? displayName,
     String? username,
   }) async {
-    
     final cred = await _auth!.createUserWithEmailAndPassword(
       email: email,
       password: password,
@@ -105,8 +121,9 @@ class AuthService {
       // Parse name parts
       final nameParts = displayName?.split(' ') ?? [];
       final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-      final lastName =
-          nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+      final lastName = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : '';
 
       // Extract username from synthetic email if not provided
       String? finalUsername = username;
@@ -138,9 +155,11 @@ class AuthService {
     required String password,
   }) async {
     if (_auth == null || _firestore == null) {
-      throw UnsupportedError('Firebase not available on Windows. Use mock authentication.');
+      throw UnsupportedError(
+        'Firebase not available on Windows. Use mock authentication.',
+      );
     }
-    
+
     final cred = await _auth!.signInWithEmailAndPassword(
       email: email,
       password: password,
@@ -148,9 +167,11 @@ class AuthService {
 
     // Update last active
     if (cred.user != null) {
-      await _firestore!.collection('users').doc(cred.user!.uid).update({
-        'lastActive': FieldValue.serverTimestamp(),
-      }).catchError((_) {});
+      await _firestore!
+          .collection('users')
+          .doc(cred.user!.uid)
+          .update({'lastActive': FieldValue.serverTimestamp()})
+          .catchError((_) {});
     }
 
     return cred.user;
@@ -159,9 +180,11 @@ class AuthService {
   // Sign in with Google
   Future<User?> signInWithGoogle() async {
     if (_auth == null || _firestore == null) {
-      throw UnsupportedError('Firebase not available. Check Firebase initialization.');
+      throw UnsupportedError(
+        'Firebase not available. Check Firebase initialization.',
+      );
     }
-    
+
     User? user;
 
     if (kIsWeb) {
@@ -171,35 +194,39 @@ class AuthService {
         final provider = GoogleAuthProvider();
         provider.addScope('email');
         provider.addScope('profile');
-        
+
         // Remove the prompt parameter as it's causing issues with some Google OAuth configurations
         // provider.setCustomParameters({
         //   'prompt': 'select_account', // This can cause "Sign-in failed" errors
         // });
-        
+
         debugPrint('Google Sign-In: Attempting signInWithPopup...');
-        
+
         try {
           // Try popup first
           final cred = await _auth!.signInWithPopup(provider);
           user = cred.user;
-          debugPrint('Google Sign-In: Successfully signed in user: ${user?.email}');
+          debugPrint(
+            'Google Sign-In: Successfully signed in user: ${user?.email}',
+          );
         } catch (popupError) {
           debugPrint('Popup failed: $popupError');
-          
+
           // If popup fails, try redirect method
-          if (popupError.toString().contains('popup-blocked') || 
+          if (popupError.toString().contains('popup-blocked') ||
               popupError.toString().contains('popup-closed-by-user')) {
             debugPrint('Popup blocked/closed, trying redirect method...');
-            
+
             // Use redirect method as fallback
             await _auth!.signInWithRedirect(provider);
-            
+
             // After redirect, this will be handled by getRedirectResult
             final result = await _auth!.getRedirectResult();
             if (result.user != null) {
               user = result.user;
-              debugPrint('Google Sign-In via redirect: Successfully signed in user: ${user?.email}');
+              debugPrint(
+                'Google Sign-In via redirect: Successfully signed in user: ${user?.email}',
+              );
             } else {
               debugPrint('Redirect sign-in completed but no user returned');
               return null;
@@ -211,64 +238,85 @@ class AuthService {
         }
       } catch (e) {
         debugPrint('Google Sign-In Web Error: $e');
-        
+
         final errorString = e.toString();
         if (errorString.contains('popup-closed-by-user')) {
           debugPrint('User closed the popup window');
           return null;
         } else if (errorString.contains('unauthorized-domain')) {
-          debugPrint('ERROR: Unauthorized domain - check Firebase Console OAuth redirect URIs');
+          debugPrint(
+            'ERROR: Unauthorized domain - check Firebase Console OAuth redirect URIs',
+          );
           debugPrint('Current domain: ${Uri.base.host}');
-          throw Exception('This domain is not authorized for Google Sign-In. Please contact support.');
+          throw Exception(
+            'This domain is not authorized for Google Sign-In. Please contact support.',
+          );
         } else if (errorString.contains('invalid-credential')) {
-          debugPrint('ERROR: Invalid OAuth credentials - check Firebase project configuration');
-          throw Exception('Authentication configuration error. Please contact support.');
+          debugPrint(
+            'ERROR: Invalid OAuth credentials - check Firebase project configuration',
+          );
+          throw Exception(
+            'Authentication configuration error. Please contact support.',
+          );
         } else if (errorString.contains('auth/popup-blocked')) {
           debugPrint('ERROR: Popup was blocked by browser');
-          throw Exception('Sign-in popup was blocked. Please allow popups for this site and try again.');
+          throw Exception(
+            'Sign-in popup was blocked. Please allow popups for this site and try again.',
+          );
         }
         rethrow;
       }
-    } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+    } else if (!kIsWeb &&
+        (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
       // Desktop platforms: Use secure OAuth flow via Firebase Functions
-      debugPrint('Google Sign-In: Using secure OAuth flow via Firebase Functions for desktop');
-      
+      debugPrint(
+        'Google Sign-In: Using secure OAuth flow via Firebase Functions for desktop',
+      );
+
       try {
         // Perform secure OAuth flow - no secrets exposed in client
         final credential = await _directOAuthHandler.performDirectOAuthFlow();
-        
+
         if (credential == null) {
           debugPrint('Google Sign-In: User cancelled or flow failed');
           return null;
         }
-        
+
         user = credential.user;
-        debugPrint('Google Sign-In: Successfully signed in user ${user?.email}');
+        debugPrint(
+          'Google Sign-In: Successfully signed in user ${user?.email}',
+        );
       } catch (e) {
         debugPrint('Google Sign-In error: $e');
         rethrow;
       }
     } else if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       // Mobile: Use Firebase Auth with Google provider directly
-      debugPrint('Google Sign-In: Using Firebase Auth Google provider for mobile');
-      
+      debugPrint(
+        'Google Sign-In: Using Firebase Auth Google provider for mobile',
+      );
+
       try {
         // For v7+ compatibility, use Firebase Auth directly with Google provider
         // This avoids the complex google_sign_in package API changes
         final provider = GoogleAuthProvider();
         provider.addScope('email');
         provider.addScope('profile');
-        
+
         // Use signInWithProvider for mobile platforms (requires proper setup)
         final cred = await _auth!.signInWithProvider(provider);
         user = cred.user;
-        
-        debugPrint('Google Sign-In: Successfully authenticated via Firebase Auth provider');
+
+        debugPrint(
+          'Google Sign-In: Successfully authenticated via Firebase Auth provider',
+        );
       } catch (e) {
         debugPrint('Google Sign-In mobile authentication failed: $e');
-        
-        debugPrint('Firebase Google provider failed, no fallback available in v7+ environment');
-        
+
+        debugPrint(
+          'Firebase Google provider failed, no fallback available in v7+ environment',
+        );
+
         // If all methods fail, throw the original error
         rethrow;
       }
@@ -283,8 +331,9 @@ class AuthService {
         // Parse name from Google account
         final nameParts = (user.displayName ?? '').split(' ');
         final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-        final lastName =
-            nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+        final lastName = nameParts.length > 1
+            ? nameParts.sublist(1).join(' ')
+            : '';
 
         // Create user document
         await _firestore!.collection('users').doc(user.uid).set({
@@ -354,7 +403,8 @@ class AuthService {
           String displayName = user.displayName ?? 'User';
 
           // Apple provides name data during first sign-in only
-          if (appleCredential.givenName != null || appleCredential.familyName != null) {
+          if (appleCredential.givenName != null ||
+              appleCredential.familyName != null) {
             firstName = appleCredential.givenName ?? '';
             lastName = appleCredential.familyName ?? '';
             displayName = '$firstName $lastName'.trim();
@@ -408,7 +458,9 @@ class AuthService {
           await _googleSignIn.signOut();
           debugPrint('Sign Out: Signed out from GoogleSignIn.instance');
         } catch (e) {
-          debugPrint('Sign Out: Failed to sign out from GoogleSignIn.instance: $e');
+          debugPrint(
+            'Sign Out: Failed to sign out from GoogleSignIn.instance: $e',
+          );
         }
       }
     }
@@ -445,15 +497,15 @@ class AuthService {
       final userData = userDoc.data();
       if (userData != null) {
         await _firestore!.collection('students').doc(uid).set({
-          'id': uid,  // Document ID
-          'userId': uid,  // This is what getStudentByUserId looks for
+          'id': uid, // Document ID
+          'userId': uid, // This is what getStudentByUserId looks for
           'email': userData['email'] ?? '',
           'displayName': userData['displayName'] ?? 'Student',
           'firstName': userData['firstName'] ?? '',
           'lastName': userData['lastName'] ?? '',
           'isActive': true,
           'classIds': [],
-          'gradeLevel': 9,  // Default grade level, can be updated later
+          'gradeLevel': 9, // Default grade level, can be updated later
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -475,7 +527,7 @@ class AuthService {
     if (finalUsername == null && email.endsWith('@fermi.local')) {
       finalUsername = email.substring(0, email.indexOf('@'));
     }
-    
+
     await _firestore!.collection('users').doc(uid).set({
       'uid': uid,
       'role': role,
@@ -514,7 +566,7 @@ class AuthService {
 
     try {
       final uid = user.uid;
-      
+
       // Get user data to check role for additional cleanup
       final userData = await getUserData(uid);
       final userRole = userData?['role'] as String?;
@@ -526,7 +578,9 @@ class AuthService {
 
       // If user is a student, also delete from students collection
       if (userRole == 'student') {
-        await _firestore!.collection('students').doc(uid).delete().catchError((_) {
+        await _firestore!.collection('students').doc(uid).delete().catchError((
+          _,
+        ) {
           // Continue even if student document doesn't exist
         });
       }
@@ -534,22 +588,22 @@ class AuthService {
       // Delete from any other collections that might contain user data
       // Note: In a production app, you'd want to implement a more comprehensive
       // cleanup that removes user data from all relevant collections
-      
+
       // Delete Firebase Auth account (this must be done last)
       await user.delete();
-      
+
       debugPrint('User account deleted successfully');
     } catch (e) {
       debugPrint('Error deleting account: $e');
-      
+
       // Handle common deletion errors
       if (e.toString().contains('requires-recent-login')) {
         throw Exception(
-          'For security reasons, please sign in again before deleting your account.'
+          'For security reasons, please sign in again before deleting your account.',
         );
       } else if (e.toString().contains('network-request-failed')) {
         throw Exception(
-          'Network error. Please check your connection and try again.'
+          'Network error. Please check your connection and try again.',
         );
       } else {
         throw Exception('Failed to delete account. Please try again.');
@@ -596,16 +650,19 @@ class AuthService {
         provider.addScope('email');
         provider.addScope('profile');
         await user.reauthenticateWithPopup(provider);
-      } else if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+      } else if (!kIsWeb &&
+          (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
         // Desktop: Use secure OAuth flow for re-authentication
-        debugPrint('Re-authentication: Using secure OAuth flow via Firebase Functions');
-        
+        debugPrint(
+          'Re-authentication: Using secure OAuth flow via Firebase Functions',
+        );
+
         final credential = await _directOAuthHandler.performDirectOAuthFlow();
-        
+
         if (credential == null) {
           throw Exception('Google re-authentication was cancelled');
         }
-        
+
         // User is already re-authenticated through the secure flow
         debugPrint('Re-authentication: Successfully re-authenticated user');
       } else if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
@@ -614,19 +671,29 @@ class AuthService {
           final provider = GoogleAuthProvider();
           provider.addScope('email');
           provider.addScope('profile');
-          
+
           // Use reauthenticateWithProvider for mobile platforms
           await user.reauthenticateWithProvider(provider);
-          
-          debugPrint('Google re-authentication: Successfully re-authenticated via Firebase Auth provider');
+
+          debugPrint(
+            'Google re-authentication: Successfully re-authenticated via Firebase Auth provider',
+          );
         } catch (providerError) {
-          debugPrint('Firebase provider re-authentication failed: $providerError');
-          
-          debugPrint('No fallback re-authentication available in v7+ environment');
-          throw Exception('Google re-authentication failed via Firebase provider');
+          debugPrint(
+            'Firebase provider re-authentication failed: $providerError',
+          );
+
+          debugPrint(
+            'No fallback re-authentication available in v7+ environment',
+          );
+          throw Exception(
+            'Google re-authentication failed via Firebase provider',
+          );
         }
       } else {
-        throw Exception('Google re-authentication not available on this platform');
+        throw Exception(
+          'Google re-authentication not available on this platform',
+        );
       }
     } catch (e) {
       debugPrint('Google re-authentication failed: $e');

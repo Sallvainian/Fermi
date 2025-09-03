@@ -99,7 +99,8 @@ class ChatRoom {
       name: data['name'] ?? '',
       type: data['type'] ?? 'direct',
       participantIds: List<String>.from(data['participantIds'] ?? []),
-      participants: (data['participants'] as List<dynamic>?)
+      participants:
+          (data['participants'] as List<dynamic>?)
               ?.map((p) => ParticipantInfo.fromMap(p))
               .toList() ??
           [],
@@ -139,8 +140,9 @@ class ChatRoom {
       'participantIds': participantIds,
       'participants': participants.map((p) => p.toMap()).toList(),
       'lastMessage': lastMessage,
-      'lastMessageTime':
-          lastMessageTime != null ? Timestamp.fromDate(lastMessageTime!) : null,
+      'lastMessageTime': lastMessageTime != null
+          ? Timestamp.fromDate(lastMessageTime!)
+          : null,
       'lastMessageSenderId': lastMessageSenderId,
       'unreadCount': unreadCount,
       'unreadCounts': unreadCounts,
@@ -292,11 +294,6 @@ class ParticipantInfo {
   ///
   /// @return Map containing all participant information
   Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'role': role,
-      'photoUrl': photoUrl,
-    };
+    return {'id': id, 'name': name, 'role': role, 'photoUrl': photoUrl};
   }
 }

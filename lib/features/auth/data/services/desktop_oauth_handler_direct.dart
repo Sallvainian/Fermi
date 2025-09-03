@@ -18,41 +18,41 @@ class DirectDesktopOAuthHandler {
     'GOOGLE_OAUTH_CLIENT_ID',
     defaultValue: '',
   );
-  
+
   static const String _compiledClientSecret = String.fromEnvironment(
-    'GOOGLE_OAUTH_CLIENT_SECRET', 
+    'GOOGLE_OAUTH_CLIENT_SECRET',
     defaultValue: '',
   );
-  
+
   static String get _clientId {
     // First try compile-time constant (for production builds)
     if (_compiledClientId.isNotEmpty) {
       return _compiledClientId;
     }
-    
+
     // Fall back to .env file (for local development)
     try {
       final envValue = dotenv.env['GOOGLE_OAUTH_CLIENT_ID'];
-      return envValue ?? '';  // Return empty string if not configured
+      return envValue ?? ''; // Return empty string if not configured
     } catch (e) {
       // If dotenv isn't loaded
-      return '';  // Return empty string instead of throwing
+      return ''; // Return empty string instead of throwing
     }
   }
-  
+
   static String get _clientSecret {
     // First try compile-time constant (for production builds)
     if (_compiledClientSecret.isNotEmpty) {
       return _compiledClientSecret;
     }
-    
+
     // Fall back to .env file (for local development)
     try {
       final envValue = dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'];
-      return envValue ?? '';  // Return empty string if not configured
+      return envValue ?? ''; // Return empty string if not configured
     } catch (e) {
       // If dotenv isn't loaded
-      return '';  // Return empty string instead of throwing
+      return ''; // Return empty string instead of throwing
     }
   }
 
@@ -64,29 +64,41 @@ class DirectDesktopOAuthHandler {
     try {
       debugPrint('DirectOAuth: Starting direct OAuth flow');
       debugPrint('DirectOAuth: Platform: ${Platform.operatingSystem}');
-      
+
       // Debug: Check how credentials are loaded
-      debugPrint('DirectOAuth: Compiled Client ID present: ${_compiledClientId.isNotEmpty}');
-      debugPrint('DirectOAuth: Compiled Secret present: ${_compiledClientSecret.isNotEmpty}');
-      
+      debugPrint(
+        'DirectOAuth: Compiled Client ID present: ${_compiledClientId.isNotEmpty}',
+      );
+      debugPrint(
+        'DirectOAuth: Compiled Secret present: ${_compiledClientSecret.isNotEmpty}',
+      );
+
       // Check if credentials are configured
       if (_clientId.isEmpty || _clientSecret.isEmpty) {
         debugPrint('DirectOAuth ERROR: Missing credentials');
         debugPrint('DirectOAuth: Client ID empty: ${_clientId.isEmpty}');
-        debugPrint('DirectOAuth: Client Secret empty: ${_clientSecret.isEmpty}');
-        debugPrint('DirectOAuth: Checking compile-time: ClientID=${_compiledClientId.isNotEmpty}, Secret=${_compiledClientSecret.isNotEmpty}');
-        debugPrint('DirectOAuth: Checking .env: ${dotenv.env.containsKey('GOOGLE_OAUTH_CLIENT_ID')}');
-        
+        debugPrint(
+          'DirectOAuth: Client Secret empty: ${_clientSecret.isEmpty}',
+        );
+        debugPrint(
+          'DirectOAuth: Checking compile-time: ClientID=${_compiledClientId.isNotEmpty}, Secret=${_compiledClientSecret.isNotEmpty}',
+        );
+        debugPrint(
+          'DirectOAuth: Checking .env: ${dotenv.env.containsKey('GOOGLE_OAUTH_CLIENT_ID')}',
+        );
+
         // More helpful error message
         throw Exception(
           'Google Sign-In is not available. The application was not built with OAuth credentials.\n\n'
           'For developers: Build with --dart-define flags or add .env file.\n'
-          'For users: Please use email/password sign-in or contact support for an updated version.'
+          'For users: Please use email/password sign-in or contact support for an updated version.',
         );
       }
-      
+
       debugPrint('DirectOAuth: Client ID: ${_clientId.substring(0, 20)}...');
-      debugPrint('DirectOAuth: Client Secret present: ${_clientSecret.isNotEmpty}');
+      debugPrint(
+        'DirectOAuth: Client Secret present: ${_clientSecret.isNotEmpty}',
+      );
 
       // Close any existing redirect server
       await _redirectServer?.close();
@@ -124,7 +136,7 @@ class DirectDesktopOAuthHandler {
 
       // Listen for redirect
       final code = await _listenForAuthCode();
-      
+
       if (code == null) {
         throw Exception('No authorization code received');
       }
@@ -150,24 +162,25 @@ class DirectDesktopOAuthHandler {
         accessToken: tokens['access_token'],
       );
 
-      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(
+        credential,
+      );
+
       debugPrint('DirectOAuth: Successfully signed in to Firebase');
       debugPrint('DirectOAuth: User Email: ${userCredential.user?.email}');
 
       return userCredential;
-      
     } catch (e) {
       debugPrint('DirectOAuth Error: $e');
       await _redirectServer?.close();
       _redirectServer = null;
-      
+
       if (e.toString().contains('Could not launch')) {
         throw Exception('Failed to open browser for authentication');
       } else if (e.toString().contains('authorization code')) {
         throw Exception('Authorization was cancelled or failed');
       }
-      
+
       rethrow;
     }
   }
@@ -195,7 +208,9 @@ class DirectDesktopOAuthHandler {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        debugPrint('DirectOAuth: Token exchange failed - ${response.statusCode}: ${response.body}');
+        debugPrint(
+          'DirectOAuth: Token exchange failed - ${response.statusCode}: ${response.body}',
+        );
         return null;
       }
     } catch (e) {
@@ -208,7 +223,7 @@ class DirectDesktopOAuthHandler {
   Future<String?> _listenForAuthCode() async {
     try {
       debugPrint('DirectOAuth: Waiting for redirect...');
-      
+
       final request = await _redirectServer!.first;
       debugPrint('DirectOAuth: Received request to ${request.uri}');
 
@@ -219,16 +234,22 @@ class DirectDesktopOAuthHandler {
       if (error != null) {
         debugPrint('DirectOAuth: Authorization error: $error');
         debugPrint('DirectOAuth: Error description: $errorDescription');
-        
+
         // Provide user-friendly error messages
         if (error == 'invalid_client') {
-          throw Exception('OAuth client configuration error. The client ID may not be configured for desktop apps.');
+          throw Exception(
+            'OAuth client configuration error. The client ID may not be configured for desktop apps.',
+          );
         } else if (error == 'redirect_uri_mismatch') {
-          throw Exception('Redirect URI mismatch. Add http://localhost to authorized redirect URIs in Google Cloud Console.');
+          throw Exception(
+            'Redirect URI mismatch. Add http://localhost to authorized redirect URIs in Google Cloud Console.',
+          );
         } else if (error == 'access_denied') {
           throw Exception('Authorization was cancelled by the user.');
         } else {
-          throw Exception('OAuth authorization failed: ${errorDescription ?? error}');
+          throw Exception(
+            'OAuth authorization failed: ${errorDescription ?? error}',
+          );
         }
       }
 
@@ -295,7 +316,7 @@ class DirectDesktopOAuthHandler {
         </body>
         </html>
       ''');
-      
+
       await request.response.close();
       await _redirectServer!.close();
       _redirectServer = null;
@@ -311,9 +332,13 @@ class DirectDesktopOAuthHandler {
 
   /// Generate PKCE code verifier
   String _generateCodeVerifier() {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~';
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~';
     final random = Random.secure();
-    return List.generate(128, (_) => chars[random.nextInt(chars.length)]).join();
+    return List.generate(
+      128,
+      (_) => chars[random.nextInt(chars.length)],
+    ).join();
   }
 
   /// Generate PKCE code challenge using SHA256

@@ -204,8 +204,10 @@ class AppDrawer extends StatelessWidget {
                     leading: const Icon(Icons.tune),
                     title: const Text('Customize Navigation'),
                     subtitle: const Text('Choose your favorite shortcuts'),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -243,10 +245,7 @@ class AppDrawer extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: ListTile(
-                leading: Icon(
-                  Icons.logout,
-                  color: theme.colorScheme.error,
-                ),
+                leading: Icon(Icons.logout, color: theme.colorScheme.error),
                 title: Text(
                   'Sign Out',
                   style: TextStyle(
@@ -295,11 +294,10 @@ class AppDrawer extends StatelessWidget {
         ),
       ),
       selected: isSelected,
-      selectedTileColor:
-          theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+      selectedTileColor: theme.colorScheme.primaryContainer.withValues(
+        alpha: 0.3,
       ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       onTap: () {
         // Close drawer using Scaffold
@@ -339,11 +337,7 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
-                Icons.star,
-                size: 16,
-                color: theme.colorScheme.primary,
-              ),
+              Icon(Icons.star, size: 16, color: theme.colorScheme.primary),
             ],
           ),
         ),
@@ -384,8 +378,10 @@ class AppDrawer extends StatelessWidget {
                   },
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: Row(
                       children: [
                         Icon(

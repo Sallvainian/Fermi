@@ -38,9 +38,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
       // Load students after classes are loaded
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (classProvider.teacherClasses.isNotEmpty) {
-          context
-              .read<SimpleStudentProvider>()
-              .loadTeacherStudents(classProvider.teacherClasses);
+          context.read<SimpleStudentProvider>().loadTeacherStudents(
+            classProvider.teacherClasses,
+          );
         }
       });
     }
@@ -55,16 +55,18 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
 
   List<Student> _filterStudents(List<Student> students) {
     return students.where((s) {
-      final matchesSearch = _searchController.text.isEmpty ||
-          '${s.firstName} ${s.lastName}'
-              .toLowerCase()
-              .contains(_searchController.text.toLowerCase()) ||
-          (s.email
-                  ?.toLowerCase()
-                  .contains(_searchController.text.toLowerCase()) ??
+      final matchesSearch =
+          _searchController.text.isEmpty ||
+          '${s.firstName} ${s.lastName}'.toLowerCase().contains(
+            _searchController.text.toLowerCase(),
+          ) ||
+          (s.email?.toLowerCase().contains(
+                _searchController.text.toLowerCase(),
+              ) ??
               false);
 
-      final matchesGrade = _selectedGrade == 'All' ||
+      final matchesGrade =
+          _selectedGrade == 'All' ||
           s.gradeLevel == int.tryParse(_selectedGrade);
 
       return matchesSearch && matchesGrade;
@@ -134,8 +136,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                       )
                     : null,
                 border: const OutlineInputBorder(),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -150,15 +154,20 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
               initialValue: _selectedGrade,
               onSelected: (value) => setState(() => _selectedGrade = value),
               itemBuilder: (context) => ['All', '9', '10', '11', '12']
-                  .map((grade) => PopupMenuItem(
-                        value: grade,
-                        child: Text(
-                            grade == 'All' ? 'All Grades' : 'Grade $grade'),
-                      ))
+                  .map(
+                    (grade) => PopupMenuItem(
+                      value: grade,
+                      child: Text(
+                        grade == 'All' ? 'All Grades' : 'Grade $grade',
+                      ),
+                    ),
+                  )
                   .toList(),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Row(
                   children: [
                     Text(
@@ -255,8 +264,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
 
   Widget _buildStudentCard(Student student) {
     final fullName = '${student.firstName} ${student.lastName}';
-    final initials =
-        '${student.firstName[0]}${student.lastName[0]}'.toUpperCase();
+    final initials = '${student.firstName[0]}${student.lastName[0]}'
+        .toUpperCase();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -314,9 +323,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
             )
           else
             FutureBuilder<List<Student>>(
-              future: context
-                  .read<SimpleStudentProvider>()
-                  .loadStudentsByIds(classModel.studentIds),
+              future: context.read<SimpleStudentProvider>().loadStudentsByIds(
+                classModel.studentIds,
+              ),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Padding(
@@ -334,9 +343,9 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
 
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
                         child: Text(initials),
                       ),
                       title: Text(fullName),
@@ -358,7 +367,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
       builder: (context) => AlertDialog(
         title: const Text('Add Student'),
         content: const Text(
-            'Student creation functionality will be implemented here.'),
+          'Student creation functionality will be implemented here.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -375,8 +385,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
 
   void _showStudentDetails(BuildContext context, Student student) {
     final fullName = '${student.firstName} ${student.lastName}';
-    final initials =
-        '${student.firstName[0]}${student.lastName[0]}'.toUpperCase();
+    final initials = '${student.firstName[0]}${student.lastName[0]}'
+        .toUpperCase();
 
     showModalBottomSheet(
       context: context,
@@ -395,21 +405,28 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                   CircleAvatar(
                     radius: 30,
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    child: Text(initials,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 20)),
+                    child: Text(
+                      initials,
+                      style: const TextStyle(color: Colors.white, fontSize: 20),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(fullName,
-                            style: Theme.of(context).textTheme.titleLarge),
-                        Text(student.email ?? student.username,
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        Text('Grade ${student.gradeLevel}',
-                            style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          fullName,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        Text(
+                          student.email ?? student.username,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Text(
+                          'Grade ${student.gradeLevel}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                       ],
                     ),
                   ),
@@ -430,15 +447,23 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                   _buildDetailRow('Username', student.username),
                   _buildDetailRow('Email', student.email ?? 'Not provided'),
                   _buildDetailRow(
-                      'Parent Email', student.parentEmail ?? 'Not provided'),
-                  _buildDetailRow('Account Status',
-                      student.accountClaimed ? 'Claimed' : 'Pending'),
-                  _buildDetailRow('Password Changed',
-                      student.passwordChanged ? 'Yes' : 'No'),
+                    'Parent Email',
+                    student.parentEmail ?? 'Not provided',
+                  ),
+                  _buildDetailRow(
+                    'Account Status',
+                    student.accountClaimed ? 'Claimed' : 'Pending',
+                  ),
+                  _buildDetailRow(
+                    'Password Changed',
+                    student.passwordChanged ? 'Yes' : 'No',
+                  ),
                   if (student.backupEmail != null)
                     _buildDetailRow('Backup Email', student.backupEmail!),
-                  _buildDetailRow('Created',
-                      '${student.createdAt.month}/${student.createdAt.day}/${student.createdAt.year}'),
+                  _buildDetailRow(
+                    'Created',
+                    '${student.createdAt.month}/${student.createdAt.day}/${student.createdAt.year}',
+                  ),
                 ],
               ),
             ),
@@ -456,8 +481,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
         children: [
           SizedBox(
             width: 120,
-            child: Text(label,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           Expanded(child: Text(value)),
         ],
@@ -488,8 +515,10 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
           ),
           ListTile(
             leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text('Remove Student',
-                style: TextStyle(color: Colors.red)),
+            title: const Text(
+              'Remove Student',
+              style: TextStyle(color: Colors.red),
+            ),
             onTap: () => Navigator.of(context).pop(),
           ),
         ],

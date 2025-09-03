@@ -180,11 +180,7 @@ class ErrorHandlerService {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        icon: const Icon(
-          Icons.error_outline,
-          color: Colors.red,
-          size: 48,
-        ),
+        icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
         title: const Text('Error'),
         content: Text(message),
         actions: [
@@ -298,10 +294,7 @@ extension ErrorHandlingExtension on BuildContext {
   }
 
   /// Show a permission denied error.
-  void showPermissionError({
-    required String resource,
-    String? additionalInfo,
-  }) {
+  void showPermissionError({required String resource, String? additionalInfo}) {
     ErrorHandlerService.showPermissionDeniedDialog(
       this,
       resource: resource,

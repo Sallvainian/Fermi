@@ -193,24 +193,24 @@ class _HelpScreenState extends State<HelpScreen>
     final filteredFAQs = _searchQuery.isEmpty
         ? faqs
         : faqs
-            .map((category) {
-              final filteredQuestions = category['questions'] as List;
-              final matchingQuestions = filteredQuestions.where((q) {
-                final question = q['question'] as String;
-                final answer = q['answer'] as String;
-                return question
-                        .toLowerCase()
-                        .contains(_searchQuery.toLowerCase()) ||
-                    answer.toLowerCase().contains(_searchQuery.toLowerCase());
-              }).toList();
+              .map((category) {
+                final filteredQuestions = category['questions'] as List;
+                final matchingQuestions = filteredQuestions.where((q) {
+                  final question = q['question'] as String;
+                  final answer = q['answer'] as String;
+                  return question.toLowerCase().contains(
+                        _searchQuery.toLowerCase(),
+                      ) ||
+                      answer.toLowerCase().contains(_searchQuery.toLowerCase());
+                }).toList();
 
-              return {
-                'category': category['category'],
-                'questions': matchingQuestions,
-              };
-            })
-            .where((category) => (category['questions'] as List).isNotEmpty)
-            .toList();
+                return {
+                  'category': category['category'],
+                  'questions': matchingQuestions,
+                };
+              })
+              .where((category) => (category['questions'] as List).isNotEmpty)
+              .toList();
 
     return ResponsiveContainer(
       child: ListView.builder(
@@ -233,9 +233,9 @@ class _HelpScreenState extends State<HelpScreen>
           child: Text(
             category['category'] as String,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ),
         ...((category['questions'] as List)
@@ -252,9 +252,9 @@ class _HelpScreenState extends State<HelpScreen>
       child: ExpansionTile(
         title: Text(
           faq['question']!,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         children: [
           Padding(
@@ -262,8 +262,8 @@ class _HelpScreenState extends State<HelpScreen>
             child: Text(
               faq['answer']!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
         ],
@@ -391,16 +391,15 @@ class _HelpScreenState extends State<HelpScreen>
                     Text(
                       guide['title'] as String,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       guide['description'] as String,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Row(
@@ -413,9 +412,7 @@ class _HelpScreenState extends State<HelpScreen>
                         const SizedBox(width: 4),
                         Text(
                           guide['duration'] as String,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.w500,
@@ -509,8 +506,9 @@ class _HelpScreenState extends State<HelpScreen>
               height: 180,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
               ),
               child: Stack(
                 children: [
@@ -526,7 +524,9 @@ class _HelpScreenState extends State<HelpScreen>
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(4),
@@ -551,8 +551,10 @@ class _HelpScreenState extends State<HelpScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(12),
@@ -560,26 +562,26 @@ class _HelpScreenState extends State<HelpScreen>
                     child: Text(
                       video['category']!,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSecondaryContainer,
-                            fontWeight: FontWeight.w600,
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     video['title']!,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     video['description']!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -607,16 +609,15 @@ class _HelpScreenState extends State<HelpScreen>
                     Text(
                       'Share Your Feedback',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Help us improve the Teacher Dashboard by sharing your thoughts and suggestions.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 24),
                     // Feedback Type
@@ -627,14 +628,21 @@ class _HelpScreenState extends State<HelpScreen>
                       ),
                       items: const [
                         DropdownMenuItem(
-                            value: 'bug', child: Text('Bug Report')),
+                          value: 'bug',
+                          child: Text('Bug Report'),
+                        ),
                         DropdownMenuItem(
-                            value: 'feature', child: Text('Feature Request')),
+                          value: 'feature',
+                          child: Text('Feature Request'),
+                        ),
                         DropdownMenuItem(
-                            value: 'improvement',
-                            child: Text('Improvement Suggestion')),
+                          value: 'improvement',
+                          child: Text('Improvement Suggestion'),
+                        ),
                         DropdownMenuItem(
-                            value: 'general', child: Text('General Feedback')),
+                          value: 'general',
+                          child: Text('General Feedback'),
+                        ),
                       ],
                       onChanged: (value) {},
                     ),
@@ -681,9 +689,9 @@ class _HelpScreenState extends State<HelpScreen>
             // Quick Feedback Options
             Text(
               'Quick Feedback',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
 
@@ -721,8 +729,8 @@ class _HelpScreenState extends State<HelpScreen>
                     Text(
                       'Need Immediate Help?',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     ListTile(
@@ -736,7 +744,8 @@ class _HelpScreenState extends State<HelpScreen>
                       leading: const Icon(Icons.phone),
                       title: const Text('Phone Support'),
                       subtitle: const Text(
-                          '1-800-TEACHER (Available 9 AM - 5 PM EST)'),
+                        '1-800-TEACHER (Available 9 AM - 5 PM EST)',
+                      ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => _contactSupport('phone'),
                     ),
@@ -779,17 +788,17 @@ class _HelpScreenState extends State<HelpScreen>
               const SizedBox(height: 8),
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -891,9 +900,9 @@ class _HelpScreenState extends State<HelpScreen>
         message = 'Contacting support...';
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showContactSupport(BuildContext context) {
@@ -906,9 +915,9 @@ class _HelpScreenState extends State<HelpScreen>
           children: [
             Text(
               'Contact Support',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -970,8 +979,9 @@ class GuideDetailSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1090,9 +1100,7 @@ class GuideDetailSheet extends StatelessWidget {
                 onPressed: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Opening full guide...'),
-                    ),
+                    const SnackBar(content: Text('Opening full guide...')),
                   );
                 },
                 icon: const Icon(Icons.menu_book),

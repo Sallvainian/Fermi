@@ -40,23 +40,35 @@ Future<void> main() async {
           // Check if we're in a valid Zone context
           if (Zone.current != Zone.root) {
             Zone.current.handleUncaughtError(
-                details.exception, details.stack ?? StackTrace.current);
+              details.exception,
+              details.stack ?? StackTrace.current,
+            );
           } else {
             // Fallback to simple logging if Zone is not available
-            LoggerService.error('Flutter framework error',
-                error: details.exception, stackTrace: details.stack);
+            LoggerService.error(
+              'Flutter framework error',
+              error: details.exception,
+              stackTrace: details.stack,
+            );
           }
         } catch (e) {
           // Last resort fallback - just log the error
           LoggerService.error('Error while handling FlutterError', error: e);
-          LoggerService.error('Original framework error',
-              error: details.exception, stackTrace: details.stack);
+          LoggerService.error(
+            'Original framework error',
+            error: details.exception,
+            stackTrace: details.stack,
+          );
         }
       };
 
       // Catch uncaught engine/platform errors
       PlatformDispatcher.instance.onError = (error, stack) {
-        LoggerService.error('UNCAUGHT (platform)', error: error, stackTrace: stack);
+        LoggerService.error(
+          'UNCAUGHT (platform)',
+          error: error,
+          stackTrace: stack,
+        );
         return true; // prevent the default "Uncaught" spam
       };
 
@@ -64,18 +76,22 @@ Future<void> main() async {
       try {
         await dotenv.load(fileName: ".env");
         if (kDebugMode) {
-          LoggerService.debug('.env file loaded successfully', tag: 'Bootstrap');
+          LoggerService.debug(
+            '.env file loaded successfully',
+            tag: 'Bootstrap',
+          );
         }
       } catch (e) {
         if (e.toString().contains('FileSystemException')) {
-          LoggerService.info('No .env file found. Using defaults.', tag: 'Bootstrap');
+          LoggerService.info(
+            'No .env file found. Using defaults.',
+            tag: 'Bootstrap',
+          );
         }
         // .env is optional
       }
 
-      runApp(const AppPasswordWrapper(
-        child: InitializationWrapper(),
-      ));
+      runApp(const AppPasswordWrapper(child: InitializationWrapper()));
     },
     (error, stack) {
       // Zone error handler - catches errors not caught elsewhere
@@ -83,7 +99,10 @@ Future<void> main() async {
       try {
         AppInitializer.handleError(error, stack);
       } catch (e) {
-        LoggerService.error('Failed to handle error in AppInitializer', error: e);
+        LoggerService.error(
+          'Failed to handle error in AppInitializer',
+          error: e,
+        );
       }
     },
   );
@@ -116,12 +135,16 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
 
           // Show loading screen while auth is initializing
           // This prevents login screen flash and route errors
-          if (authProvider.status == AuthStatus.uninitialized || 
+          if (authProvider.status == AuthStatus.uninitialized ||
               authProvider.status == AuthStatus.authenticating) {
             return MaterialApp(
               title: 'Teacher Dashboard',
-              theme: AppTheme.lightTheme(colorThemeId: themeProvider.colorThemeId),
-              darkTheme: AppTheme.darkTheme(colorThemeId: themeProvider.colorThemeId),
+              theme: AppTheme.lightTheme(
+                colorThemeId: themeProvider.colorThemeId,
+              ),
+              darkTheme: AppTheme.darkTheme(
+                colorThemeId: themeProvider.colorThemeId,
+              ),
               themeMode: themeProvider.themeMode,
               debugShowCheckedModeBanner: false,
               home: Builder(
@@ -135,8 +158,8 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          authProvider.status == AuthStatus.authenticating 
-                              ? 'Loading your profile...' 
+                          authProvider.status == AuthStatus.authenticating
+                              ? 'Loading your profile...'
                               : 'Initializing...',
                           style: Theme.of(innerContext).textTheme.bodyLarge,
                         ),
@@ -158,16 +181,26 @@ class _TeacherDashboardAppState extends State<TeacherDashboardApp> {
               child: MaterialApp.router(
                 title: 'Teacher Dashboard',
                 scaffoldMessengerKey: scaffoldMessengerKey,
-                theme: AppTheme.lightTheme(colorThemeId: themeProvider.colorThemeId).copyWith(
-                  textTheme: AppTypography.createTextTheme(
-                    AppTheme.lightTheme(colorThemeId: themeProvider.colorThemeId).colorScheme,
-                  ),
-                ),
-                darkTheme: AppTheme.darkTheme(colorThemeId: themeProvider.colorThemeId).copyWith(
-                  textTheme: AppTypography.createTextTheme(
-                    AppTheme.darkTheme(colorThemeId: themeProvider.colorThemeId).colorScheme,
-                  ),
-                ),
+                theme:
+                    AppTheme.lightTheme(
+                      colorThemeId: themeProvider.colorThemeId,
+                    ).copyWith(
+                      textTheme: AppTypography.createTextTheme(
+                        AppTheme.lightTheme(
+                          colorThemeId: themeProvider.colorThemeId,
+                        ).colorScheme,
+                      ),
+                    ),
+                darkTheme:
+                    AppTheme.darkTheme(
+                      colorThemeId: themeProvider.colorThemeId,
+                    ).copyWith(
+                      textTheme: AppTypography.createTextTheme(
+                        AppTheme.darkTheme(
+                          colorThemeId: themeProvider.colorThemeId,
+                        ).colorScheme,
+                      ),
+                    ),
                 themeMode: themeProvider.themeMode,
                 debugShowCheckedModeBanner: false,
                 routerConfig: _router!,
@@ -203,14 +236,17 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
   Future<void> _initializeApp() async {
     try {
       // Check if user was already authenticated (from AppPasswordWrapper)
-      final wasAuthenticated = context.mounted ? AuthenticatedWrapper.of(context) : false;
-      
+      final wasAuthenticated = context.mounted
+          ? AuthenticatedWrapper.of(context)
+          : false;
+
       // Check if Firebase is already initialized (handles hot restart)
       if (AppInitializer.isFirebaseInitialized && wasAuthenticated) {
         // Fast path - Firebase already initialized and user authenticated
         LoggerService.info(
-            'Fast initialization - Firebase initialized and user authenticated',
-            tag: 'Bootstrap');
+          'Fast initialization - Firebase initialized and user authenticated',
+          tag: 'Bootstrap',
+        );
         setState(() {
           _quickInit = true;
           _isInitialized = true;
@@ -228,7 +264,8 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
 
       // Initialize services with progress updates
       await Future.delayed(
-          const Duration(milliseconds: 100)); // Allow UI to update
+        const Duration(milliseconds: 100),
+      ); // Allow UI to update
 
       if (!mounted) return;
       setState(() {
@@ -258,8 +295,10 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       LoggerService.error('Initialization error', error: e);
       // If it's a duplicate app error, try to proceed anyway
       if (e.toString().contains('duplicate-app')) {
-        LoggerService.warning('Ignoring duplicate app error and proceeding...',
-            tag: 'Bootstrap');
+        LoggerService.warning(
+          'Ignoring duplicate app error and proceeding...',
+          tag: 'Bootstrap',
+        );
         if (!mounted) return;
         setState(() {
           _isInitialized = true;
@@ -287,9 +326,6 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
       return const TeacherDashboardApp();
     }
 
-    return SplashScreen(
-      message: _currentStatus,
-      progress: _progress,
-    );
+    return SplashScreen(message: _currentStatus, progress: _progress);
   }
 }

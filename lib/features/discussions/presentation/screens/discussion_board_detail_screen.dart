@@ -33,7 +33,9 @@ class _DiscussionBoardDetailScreenState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(
+          widget.boardId,
+        );
       }
     });
   }
@@ -55,18 +57,9 @@ class _DiscussionBoardDetailScreenState
             });
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'recent',
-              child: Text('Most Recent'),
-            ),
-            const PopupMenuItem(
-              value: 'popular',
-              child: Text('Most Popular'),
-            ),
-            const PopupMenuItem(
-              value: 'active',
-              child: Text('Most Active'),
-            ),
+            const PopupMenuItem(value: 'recent', child: Text('Most Recent')),
+            const PopupMenuItem(value: 'popular', child: Text('Most Popular')),
+            const PopupMenuItem(value: 'active', child: Text('Most Active')),
           ],
           icon: const Icon(Icons.sort),
         ),
@@ -88,9 +81,7 @@ class _DiscussionBoardDetailScreenState
               ),
             ),
           ),
-          Expanded(
-            child: _buildThreadsList(),
-          ),
+          Expanded(child: _buildThreadsList()),
         ],
       ),
     );
@@ -121,7 +112,8 @@ class _DiscussionBoardDetailScreenState
         }
 
         return ListView.builder(
-          physics: const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
+          physics:
+              const ClampingScrollPhysics(), // Use Android-style physics for iOS compatibility with Dismissible
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: sortedThreads.length,
           itemBuilder: (context, index) {
@@ -139,16 +131,18 @@ class _DiscussionBoardDetailScreenState
     final currentUserId = authProvider.firebaseUser?.uid ?? '';
     final isTeacher = authProvider.userModel?.role == UserRole.teacher;
     final canDelete = isTeacher || thread.authorId == currentUserId;
-    
+
     final cardContent = Card(
       child: InkWell(
         onTap: () {
           // Use GoRouter for consistent navigation
           context.go('/discussions/${widget.boardId}/thread/${thread.id}');
         },
-        onLongPress: canDelete ? () {
-          _showDeleteThreadDialog(thread);
-        } : null,
+        onLongPress: canDelete
+            ? () {
+                _showDeleteThreadDialog(thread);
+              }
+            : null,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -162,10 +156,10 @@ class _DiscussionBoardDetailScreenState
                     radius: 20,
                     backgroundColor: theme.colorScheme.secondary,
                     child: Text(
-                      thread.authorName.isNotEmpty ? thread.authorName[0].toUpperCase() : '?',
-                      style: TextStyle(
-                        color: theme.colorScheme.onSecondary,
-                      ),
+                      thread.authorName.isNotEmpty
+                          ? thread.authorName[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(color: theme.colorScheme.onSecondary),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -186,7 +180,7 @@ class _DiscussionBoardDetailScreenState
                         Text(
                           _formatTime(thread.createdAt),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.brightness == Brightness.dark 
+                            color: theme.brightness == Brightness.dark
                                 ? Colors.white
                                 : theme.colorScheme.onSurfaceVariant,
                           ),
@@ -260,7 +254,7 @@ class _DiscussionBoardDetailScreenState
                   Icon(
                     Icons.comment_outlined,
                     size: 16,
-                    color: theme.brightness == Brightness.dark 
+                    color: theme.brightness == Brightness.dark
                         ? Colors.white
                         : theme.colorScheme.onSurfaceVariant,
                   ),
@@ -268,7 +262,7 @@ class _DiscussionBoardDetailScreenState
                   Text(
                     '${thread.replyCount} replies',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.brightness == Brightness.dark 
+                      color: theme.brightness == Brightness.dark
                           ? Colors.white70
                           : theme.colorScheme.onSurfaceVariant,
                     ),
@@ -278,19 +272,23 @@ class _DiscussionBoardDetailScreenState
                     onTap: () async {
                       // Toggle like for this user
                       try {
-                        final currentUserId = context.read<AuthProvider>().firebaseUser?.uid ?? '';
+                        final currentUserId =
+                            context.read<AuthProvider>().firebaseUser?.uid ??
+                            '';
                         if (currentUserId.isEmpty) return;
-                        
+
                         final threadRef = FirebaseFirestore.instance
                             .collection('discussion_boards')
                             .doc(widget.boardId)
                             .collection('threads')
                             .doc(thread.id);
-                            
+
                         // Check if user has already liked
-                        final likeRef = threadRef.collection('likes').doc(currentUserId);
+                        final likeRef = threadRef
+                            .collection('likes')
+                            .doc(currentUserId);
                         final likeDoc = await likeRef.get();
-                        
+
                         if (likeDoc.exists) {
                           // User has liked, so remove the like
                           await likeRef.delete();
@@ -307,10 +305,12 @@ class _DiscussionBoardDetailScreenState
                             'likeCount': FieldValue.increment(1),
                           });
                         }
-                        
+
                         // Reload threads to show updated count
                         if (!mounted) return;
-                        context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                        context
+                            .read<SimpleDiscussionProvider>()
+                            .loadThreadsForBoard(widget.boardId);
                       } catch (e) {
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -323,19 +323,22 @@ class _DiscussionBoardDetailScreenState
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
                       child: Row(
                         children: [
                           Icon(
-                            thread.isLikedByCurrentUser 
-                                ? Icons.thumb_up 
+                            thread.isLikedByCurrentUser
+                                ? Icons.thumb_up
                                 : Icons.thumb_up_outlined,
                             size: 16,
                             color: thread.isLikedByCurrentUser
                                 ? theme.colorScheme.primary
-                                : (theme.brightness == Brightness.dark 
-                                    ? Colors.white
-                                    : theme.colorScheme.onSurfaceVariant),
+                                : (theme.brightness == Brightness.dark
+                                      ? Colors.white
+                                      : theme.colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -343,9 +346,9 @@ class _DiscussionBoardDetailScreenState
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: thread.isLikedByCurrentUser
                                   ? theme.colorScheme.primary
-                                  : (theme.brightness == Brightness.dark 
-                                      ? Colors.white70
-                                      : theme.colorScheme.onSurfaceVariant),
+                                  : (theme.brightness == Brightness.dark
+                                        ? Colors.white70
+                                        : theme.colorScheme.onSurfaceVariant),
                             ),
                           ),
                         ],
@@ -359,7 +362,7 @@ class _DiscussionBoardDetailScreenState
         ),
       ),
     );
-    
+
     // Wrap with Dismissible if user can delete
     if (canDelete) {
       return Dismissible(
@@ -372,10 +375,7 @@ class _DiscussionBoardDetailScreenState
             color: Colors.red,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.delete,
-            color: Colors.white,
-          ),
+          child: const Icon(Icons.delete, color: Colors.white),
         ),
         confirmDismiss: (direction) async {
           return await _showDeleteThreadDialog(thread);
@@ -386,7 +386,7 @@ class _DiscussionBoardDetailScreenState
         child: cardContent,
       );
     }
-    
+
     return cardContent;
   }
 
@@ -411,7 +411,7 @@ class _DiscussionBoardDetailScreenState
       builder: (context) => CreateThreadDialog(boardId: widget.boardId),
     );
   }
-  
+
   Future<bool> _showDeleteThreadDialog(SimpleDiscussionThread thread) async {
     final result = await showDialog<bool>(
       context: context,
@@ -436,22 +436,20 @@ class _DiscussionBoardDetailScreenState
                     .collection('threads')
                     .doc(thread.id)
                     .delete();
-                
+
                 // Decrement the thread count
                 await FirebaseFirestore.instance
                     .collection('discussion_boards')
                     .doc(widget.boardId)
-                    .update({
-                  'threadCount': FieldValue.increment(-1),
-                });
-                    
+                    .update({'threadCount': FieldValue.increment(-1)});
+
                 // Refresh the threads list
                 if (!mounted) return;
-                context.read<SimpleDiscussionProvider>().loadThreadsForBoard(widget.boardId);
+                context.read<SimpleDiscussionProvider>().loadThreadsForBoard(
+                  widget.boardId,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Thread "${thread.title}" deleted'),
-                  ),
+                  SnackBar(content: Text('Thread "${thread.title}" deleted')),
                 );
               } catch (e) {
                 if (!mounted) return;
@@ -463,9 +461,7 @@ class _DiscussionBoardDetailScreenState
                 );
               }
             },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

@@ -50,6 +50,7 @@ import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
 import '../screens/settings_screen.dart';
 import '../models/user_model.dart';
+import '../services/logger_service.dart';
 
 /// Simplified router following Flutter best practices for auth handling.
 ///
@@ -72,14 +73,16 @@ class AppRouter {
       refreshListenable: authProvider,
       redirect: (context, state) {
         final isAuth = authProvider.status == AuthStatus.authenticated;
-        final isAuthenticating = authProvider.status == AuthStatus.authenticating;
+        final isAuthenticating =
+            authProvider.status == AuthStatus.authenticating;
         final isAuthRoute = state.matchedLocation.startsWith('/auth');
         final hasError = authProvider.status == AuthStatus.error;
         final isStudentRoute = state.matchedLocation.startsWith('/student');
 
         // During initialization or authenticating, don't redirect
         // The app shows a loading screen before router is created
-        if (authProvider.status == AuthStatus.uninitialized || isAuthenticating) {
+        if (authProvider.status == AuthStatus.uninitialized ||
+            isAuthenticating) {
           // Allow staying on current route during auth verification
           // This prevents the login screen flash
           return null;
@@ -108,13 +111,15 @@ class AppRouter {
 
         if (isAuth && isAuthRoute) {
           // Skip redirect for setup routes
-          if (state.matchedLocation.startsWith('/auth/teacher-setup') || 
+          if (state.matchedLocation.startsWith('/auth/teacher-setup') ||
               state.matchedLocation.startsWith('/auth/student-setup')) {
             return null;
           }
           // Authenticated but on auth route - go to dashboard
           // Mark user as active when they successfully authenticate
-          PresenceService().markUserActive(userRole: authProvider.userModel?.role?.name);
+          PresenceService().markUserActive(
+            userRole: authProvider.userModel?.role?.name,
+          );
           return '/dashboard';
         }
 
@@ -137,28 +142,28 @@ class AppRouter {
           path: '/',
           redirect: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
-            
+
             // Don't redirect during initialization
-            if (auth.status == AuthStatus.uninitialized || 
+            if (auth.status == AuthStatus.uninitialized ||
                 auth.status == AuthStatus.authenticating) {
               // Show loading state - handled by the builder
               return null;
             }
-            
+
             // Mark user active when accessing root and redirect to dashboard
             if (auth.isAuthenticated) {
-              PresenceService().markUserActive(userRole: auth.userModel?.role?.name);
+              PresenceService().markUserActive(
+                userRole: auth.userModel?.role?.name,
+              );
               return '/dashboard';
             }
-            
+
             return '/auth/login';
           },
           builder: (context, state) {
             // This builder is only used during initialization
             return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(),
-              ),
+              body: Center(child: CircularProgressIndicator()),
             );
           },
         ),
@@ -188,7 +193,7 @@ class AppRouter {
           path: '/auth/verify-email',
           builder: (context, state) => const VerifyEmailScreen(),
         ),
-        
+
         // Post-signup setup routes
         GoRoute(
           path: '/auth/teacher-setup/password',
@@ -196,11 +201,13 @@ class AppRouter {
         ),
         GoRoute(
           path: '/auth/teacher-setup/email',
-          builder: (context, state) => const EmailLinkingScreen(userType: 'teacher'),
+          builder: (context, state) =>
+              const EmailLinkingScreen(userType: 'teacher'),
         ),
         GoRoute(
           path: '/auth/student-setup/email',
-          builder: (context, state) => const EmailLinkingScreen(userType: 'student'),
+          builder: (context, state) =>
+              const EmailLinkingScreen(userType: 'student'),
         ),
 
         // Main app routes
@@ -210,7 +217,7 @@ class AppRouter {
             final auth = Provider.of<AuthProvider>(context, listen: true);
             // CRITICAL: Get fresh userModel every time, not cached
             final user = auth.userModel;
-            
+
             // Mark user active when accessing dashboard
             PresenceService().markUserActive(userRole: user?.role?.name);
 
@@ -228,7 +235,11 @@ class AppRouter {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         auth.errorMessage ?? 'Authentication error occurred',
@@ -262,34 +273,55 @@ class AppRouter {
             // Fallback - check if we're truly authenticated but missing user data
             // This should NEVER happen, but if it does, we need to handle it
             if (auth.status == AuthStatus.authenticated && user == null) {
-              LoggerService.error('Dashboard authenticated but userModel is null', tag: 'AppRouter');
-              LoggerService.info('Auth status: ${auth.status}', tag: 'AppRouter');
-              LoggerService.info('User model: ${auth.userModel}', tag: 'AppRouter');
-              LoggerService.info('Firebase user: ${auth.firebaseUser?.uid}', tag: 'AppRouter');
-              
+              LoggerService.error(
+                'Dashboard authenticated but userModel is null',
+                tag: 'AppRouter',
+              );
+              LoggerService.info(
+                'Auth status: ${auth.status}',
+                tag: 'AppRouter',
+              );
+              LoggerService.info(
+                'User model: ${auth.userModel}',
+                tag: 'AppRouter',
+              );
+              LoggerService.info(
+                'Firebase user: ${auth.firebaseUser?.uid}',
+                tag: 'AppRouter',
+              );
+
               // Immediately try to reload user data
               Future.microtask(() async {
-                LoggerService.warning('Emergency reload of user data...', tag: 'AppRouter');
+                LoggerService.warning(
+                  'Emergency reload of user data...',
+                  tag: 'AppRouter',
+                );
                 await auth.reloadUser();
-                
+
                 // If we still don't have a user model, sign out and restart
                 if (auth.userModel == null && context.mounted) {
-                  LoggerService.error('Cannot load user model, signing out...', tag: 'AppRouter');
+                  LoggerService.error(
+                    'Cannot load user model, signing out...',
+                    tag: 'AppRouter',
+                  );
                   await auth.signOut();
                   if (context.mounted) {
                     GoRouter.of(context).go('/auth/login');
                   }
                 }
               });
-              
+
               // Show loading for max 3 seconds then redirect to login
               Future.delayed(const Duration(seconds: 3), () {
                 if (context.mounted && auth.userModel == null) {
-                  LoggerService.warning('Timeout waiting for user model, redirecting to login...', tag: 'AppRouter');
+                  LoggerService.warning(
+                    'Timeout waiting for user model, redirecting to login...',
+                    tag: 'AppRouter',
+                  );
                   GoRouter.of(context).go('/auth/login');
                 }
               });
-              
+
               return Scaffold(
                 body: Center(
                   child: Column(
@@ -344,7 +376,9 @@ class AppRouter {
           path: '/messages',
           builder: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
-            PresenceService().markUserActive(userRole: auth.userModel?.role?.name);
+            PresenceService().markUserActive(
+              userRole: auth.userModel?.role?.name,
+            );
             return const ChatListScreen();
           },
         ),
@@ -358,7 +392,9 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             final auth = Provider.of<AuthProvider>(context, listen: false);
-            PresenceService().markUserActive(userRole: auth.userModel?.role?.name);
+            PresenceService().markUserActive(
+              userRole: auth.userModel?.role?.name,
+            );
             return ChatDetailScreen(chatRoomId: chatRoomId);
           },
         ),
@@ -376,7 +412,7 @@ class AppRouter {
             final title = state.uri.queryParameters['title'] ?? 'Chat';
             final recipientId = state.uri.queryParameters['recipientId'];
             final recipientName = state.uri.queryParameters['recipientName'];
-            
+
             return SimpleChatScreen(
               chatRoomId: chatRoomId,
               chatTitle: title,
@@ -400,7 +436,8 @@ class AppRouter {
         // Chat creation routes (keeping old one for compatibility)
         GoRoute(
           path: '/chat/user-selection',
-          builder: (context, state) => const SimpleUserList(), // USING SIMPLE VERSION
+          builder: (context, state) =>
+              const SimpleUserList(), // USING SIMPLE VERSION
         ),
         GoRoute(
           path: '/chat/group-creation',
@@ -508,7 +545,8 @@ class AppRouter {
         ),
         GoRoute(
           path: '/student/assignments',
-          builder: (context, state) => const student_assignments.StudentAssignmentsScreen(),
+          builder: (context, state) =>
+              const student_assignments.StudentAssignmentsScreen(),
         ),
         GoRoute(
           path: '/student/assignments/:assignmentId/submit',
@@ -562,7 +600,8 @@ class AppRouter {
           path: '/discussions/:boardId',
           builder: (context, state) {
             final boardId = state.pathParameters['boardId']!;
-            final boardTitle = state.uri.queryParameters['title'] ?? 'Discussion Board';
+            final boardTitle =
+                state.uri.queryParameters['title'] ?? 'Discussion Board';
             return DiscussionBoardDetailScreen(
               boardId: boardId,
               boardTitle: boardTitle,
@@ -574,10 +613,7 @@ class AppRouter {
               builder: (context, state) {
                 final boardId = state.pathParameters['boardId']!;
                 final threadId = state.pathParameters['threadId']!;
-                return ThreadDetailScreen(
-                  boardId: boardId,
-                  threadId: threadId,
-                );
+                return ThreadDetailScreen(boardId: boardId, threadId: threadId);
               },
             ),
           ],
@@ -626,4 +662,3 @@ class AppRouter {
     );
   }
 }
-import '../services/logger_service.dart';

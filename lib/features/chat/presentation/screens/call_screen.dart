@@ -83,7 +83,8 @@ class _CallScreenState extends State<CallScreen> {
                       shape: BoxShape.circle,
                       color: Colors.grey[800],
                     ),
-                    child: widget.receiverPhotoUrl != null &&
+                    child:
+                        widget.receiverPhotoUrl != null &&
                             widget.receiverPhotoUrl!.isNotEmpty
                         ? ClipOval(
                             child: CachedNetworkImage(
@@ -118,10 +119,7 @@ class _CallScreenState extends State<CallScreen> {
                     _isConnecting
                         ? 'Connecting...'
                         : 'Video calling coming soon',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                   if (_isConnecting)
                     const Padding(
@@ -162,15 +160,17 @@ class _CallScreenState extends State<CallScreen> {
                   // Video toggle button (for video calls)
                   if (widget.isVideoCall)
                     _buildControlButton(
-                      icon:
-                          _isVideoEnabled ? Icons.videocam : Icons.videocam_off,
+                      icon: _isVideoEnabled
+                          ? Icons.videocam
+                          : Icons.videocam_off,
                       onPressed: () {
                         setState(() {
                           _isVideoEnabled = !_isVideoEnabled;
                         });
                       },
-                      backgroundColor:
-                          _isVideoEnabled ? Colors.white12 : Colors.white24,
+                      backgroundColor: _isVideoEnabled
+                          ? Colors.white12
+                          : Colors.white24,
                     )
                   else
                     // Speaker button (for voice calls)
@@ -181,8 +181,9 @@ class _CallScreenState extends State<CallScreen> {
                           _isSpeakerOn = !_isSpeakerOn;
                         });
                       },
-                      backgroundColor:
-                          _isSpeakerOn ? Colors.white24 : Colors.white12,
+                      backgroundColor: _isSpeakerOn
+                          ? Colors.white24
+                          : Colors.white12,
                     ),
                 ],
               ),
@@ -203,10 +204,7 @@ class _CallScreenState extends State<CallScreen> {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: backgroundColor,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: backgroundColor),
       child: IconButton(
         icon: Icon(icon, color: iconColor, size: size * 0.5),
         onPressed: onPressed,

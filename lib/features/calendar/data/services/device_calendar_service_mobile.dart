@@ -29,45 +29,60 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
   Future<bool> requestPermissions() async {
     try {
       if (kIsWeb) {
-        LoggerService.warning('Calendar permissions not available on web',
-            tag: 'DeviceCalendarService');
+        LoggerService.warning(
+          'Calendar permissions not available on web',
+          tag: 'DeviceCalendarService',
+        );
         return false;
       }
 
       // Request calendar permissions explicitly using device_calendar plugin
-      LoggerService.info('Requesting calendar permissions',
-          tag: 'DeviceCalendarService');
+      LoggerService.info(
+        'Requesting calendar permissions',
+        tag: 'DeviceCalendarService',
+      );
 
       // First request permission explicitly
       var permissionsResult = await _deviceCalendarPlugin.requestPermissions();
-      
+
       if (!permissionsResult.isSuccess) {
-        LoggerService.warning('Calendar permission request failed: ${permissionsResult.errors}',
-            tag: 'DeviceCalendarService');
+        LoggerService.warning(
+          'Calendar permission request failed: ${permissionsResult.errors}',
+          tag: 'DeviceCalendarService',
+        );
         return false;
       }
 
       // Check if permission was granted
       if (permissionsResult.data == false) {
-        LoggerService.warning('Calendar permission denied by user',
-            tag: 'DeviceCalendarService');
+        LoggerService.warning(
+          'Calendar permission denied by user',
+          tag: 'DeviceCalendarService',
+        );
         return false;
       }
 
       // Now try to retrieve calendars to confirm access
       final calendarsResult = await _deviceCalendarPlugin.retrieveCalendars();
       if (calendarsResult.isSuccess) {
-        LoggerService.info('Calendar access granted and verified',
-            tag: 'DeviceCalendarService');
+        LoggerService.info(
+          'Calendar access granted and verified',
+          tag: 'DeviceCalendarService',
+        );
         return true;
       }
 
-      LoggerService.warning('Calendar access issue after permission grant',
-          tag: 'DeviceCalendarService');
+      LoggerService.warning(
+        'Calendar access issue after permission grant',
+        tag: 'DeviceCalendarService',
+      );
       return false;
     } catch (e) {
-      LoggerService.error('Error requesting calendar permissions',
-          tag: 'DeviceCalendarService', error: e);
+      LoggerService.error(
+        'Error requesting calendar permissions',
+        tag: 'DeviceCalendarService',
+        error: e,
+      );
       return false;
     }
   }
@@ -85,8 +100,11 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
 
       return [];
     } catch (e) {
-      LoggerService.error('Error retrieving calendars',
-          tag: 'DeviceCalendarService', error: e);
+      LoggerService.error(
+        'Error retrieving calendars',
+        tag: 'DeviceCalendarService',
+        error: e,
+      );
       return [];
     }
   }
@@ -142,8 +160,11 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
 
       return null;
     } catch (e) {
-      LoggerService.error('Error getting/creating default calendar',
-          tag: 'DeviceCalendarService', error: e);
+      LoggerService.error(
+        'Error getting/creating default calendar',
+        tag: 'DeviceCalendarService',
+        error: e,
+      );
       return null;
     }
   }
@@ -156,8 +177,10 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
     try {
       final finalCalendarId = calendarId ?? await _getOrCreateDefaultCalendar();
       if (finalCalendarId == null) {
-        LoggerService.warning('No calendar available for sync',
-            tag: 'DeviceCalendarService');
+        LoggerService.warning(
+          'No calendar available for sync',
+          tag: 'DeviceCalendarService',
+        );
         return null;
       }
 
@@ -171,7 +194,9 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
         end: event.endTime != null
             ? tz.TZDateTime.from(event.endTime!, tz.local)
             : tz.TZDateTime.from(
-                event.startTime.add(const Duration(hours: 1)), tz.local),
+                event.startTime.add(const Duration(hours: 1)),
+                tz.local,
+              ),
         allDay: event.isAllDay,
       );
 
@@ -182,9 +207,7 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
 
       // Add reminder if enabled
       if (event.hasReminder && event.reminderMinutes != null) {
-        deviceEvent.reminders = [
-          Reminder(minutes: event.reminderMinutes!),
-        ];
+        deviceEvent.reminders = [Reminder(minutes: event.reminderMinutes!)];
       }
 
       // Add recurrence if applicable
@@ -193,21 +216,29 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
       }
 
       // Create or update event
-      final result =
-          await _deviceCalendarPlugin.createOrUpdateEvent(deviceEvent);
+      final result = await _deviceCalendarPlugin.createOrUpdateEvent(
+        deviceEvent,
+      );
 
       if (result?.isSuccess == true) {
-        LoggerService.info('Event synced to device calendar: ${event.title}',
-            tag: 'DeviceCalendarService');
+        LoggerService.info(
+          'Event synced to device calendar: ${event.title}',
+          tag: 'DeviceCalendarService',
+        );
         return result!.data;
       }
 
-      LoggerService.warning('Failed to sync event to device calendar',
-          tag: 'DeviceCalendarService');
+      LoggerService.warning(
+        'Failed to sync event to device calendar',
+        tag: 'DeviceCalendarService',
+      );
       return null;
     } catch (e) {
-      LoggerService.error('Error syncing event to device calendar',
-          tag: 'DeviceCalendarService', error: e);
+      LoggerService.error(
+        'Error syncing event to device calendar',
+        tag: 'DeviceCalendarService',
+        error: e,
+      );
       return null;
     }
   }
@@ -220,8 +251,10 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
     try {
       final finalCalendarId = calendarId ?? await _getOrCreateDefaultCalendar();
       if (finalCalendarId == null) {
-        LoggerService.warning('No calendar available for sync',
-            tag: 'DeviceCalendarService');
+        LoggerService.warning(
+          'No calendar available for sync',
+          tag: 'DeviceCalendarService',
+        );
         return null;
       }
 
@@ -241,22 +274,29 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
       ];
 
       // Create or update event
-      final result =
-          await _deviceCalendarPlugin.createOrUpdateEvent(deviceEvent);
+      final result = await _deviceCalendarPlugin.createOrUpdateEvent(
+        deviceEvent,
+      );
 
       if (result?.isSuccess == true) {
         LoggerService.info(
-            'Assignment synced to device calendar: ${assignment.title}',
-            tag: 'DeviceCalendarService');
+          'Assignment synced to device calendar: ${assignment.title}',
+          tag: 'DeviceCalendarService',
+        );
         return result!.data;
       }
 
-      LoggerService.warning('Failed to sync assignment to device calendar',
-          tag: 'DeviceCalendarService');
+      LoggerService.warning(
+        'Failed to sync assignment to device calendar',
+        tag: 'DeviceCalendarService',
+      );
       return null;
     } catch (e) {
-      LoggerService.error('Error syncing assignment to device calendar',
-          tag: 'DeviceCalendarService', error: e);
+      LoggerService.error(
+        'Error syncing assignment to device calendar',
+        tag: 'DeviceCalendarService',
+        error: e,
+      );
       return null;
     }
   }
@@ -281,7 +321,9 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
         end: event.endTime != null
             ? tz.TZDateTime.from(event.endTime!, tz.local)
             : tz.TZDateTime.from(
-                event.startTime.add(const Duration(hours: 1)), tz.local),
+                event.startTime.add(const Duration(hours: 1)),
+                tz.local,
+              ),
         allDay: event.isAllDay,
       );
 
@@ -292,9 +334,7 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
 
       // Add reminder if enabled
       if (event.hasReminder && event.reminderMinutes != null) {
-        deviceEvent.reminders = [
-          Reminder(minutes: event.reminderMinutes!),
-        ];
+        deviceEvent.reminders = [Reminder(minutes: event.reminderMinutes!)];
       }
 
       // Add recurrence if applicable
@@ -303,19 +343,25 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
       }
 
       // Update event
-      final result =
-          await _deviceCalendarPlugin.createOrUpdateEvent(deviceEvent);
+      final result = await _deviceCalendarPlugin.createOrUpdateEvent(
+        deviceEvent,
+      );
 
       if (result?.isSuccess == true) {
-        LoggerService.info('Event updated in device calendar: ${event.title}',
-            tag: 'DeviceCalendarService');
+        LoggerService.info(
+          'Event updated in device calendar: ${event.title}',
+          tag: 'DeviceCalendarService',
+        );
         return true;
       }
 
       return false;
     } catch (e) {
-      LoggerService.error('Error updating event in device calendar',
-          tag: 'DeviceCalendarService', error: e);
+      LoggerService.error(
+        'Error updating event in device calendar',
+        tag: 'DeviceCalendarService',
+        error: e,
+      );
       return false;
     }
   }
@@ -329,19 +375,26 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
       final finalCalendarId = calendarId ?? await _getOrCreateDefaultCalendar();
       if (finalCalendarId == null) return false;
 
-      final result =
-          await _deviceCalendarPlugin.deleteEvent(finalCalendarId, eventId);
+      final result = await _deviceCalendarPlugin.deleteEvent(
+        finalCalendarId,
+        eventId,
+      );
 
       if (result.isSuccess) {
-        LoggerService.info('Event removed from device calendar: $eventId',
-            tag: 'DeviceCalendarService');
+        LoggerService.info(
+          'Event removed from device calendar: $eventId',
+          tag: 'DeviceCalendarService',
+        );
         return true;
       }
 
       return false;
     } catch (e) {
-      LoggerService.error('Error removing event from device calendar',
-          tag: 'DeviceCalendarService', error: e);
+      LoggerService.error(
+        'Error removing event from device calendar',
+        tag: 'DeviceCalendarService',
+        error: e,
+      );
       return false;
     }
   }
@@ -368,9 +421,6 @@ class DeviceCalendarServiceMobile implements DeviceCalendarServiceInterface {
         return null;
     }
 
-    return RecurrenceRule(
-      frequency,
-      endDate: event.recurrenceEndDate,
-    );
+    return RecurrenceRule(frequency, endDate: event.recurrenceEndDate);
   }
 }

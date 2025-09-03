@@ -11,7 +11,7 @@ class SimpleUserList extends StatelessWidget {
     debugPrint('DEBUG: SimpleUserList build() called');
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     debugPrint('DEBUG: Current user ID: $currentUserId');
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select a User'),
@@ -27,9 +27,7 @@ class SimpleUserList extends StatelessWidget {
         stream: FirebaseFirestore.instance.collection('users').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(
-              child: Text('Error: ${snapshot.error}'),
-            );
+            return Center(child: Text('Error: ${snapshot.error}'));
           }
 
           if (!snapshot.hasData) {
@@ -37,13 +35,13 @@ class SimpleUserList extends StatelessWidget {
           }
 
           final users = snapshot.data!.docs
-              .where((doc) => doc.id != currentUserId) // Don't show current user
+              .where(
+                (doc) => doc.id != currentUserId,
+              ) // Don't show current user
               .toList();
 
           if (users.isEmpty) {
-            return const Center(
-              child: Text('No users found'),
-            );
+            return const Center(child: Text('No users found'));
           }
 
           return ListView.builder(
@@ -51,8 +49,9 @@ class SimpleUserList extends StatelessWidget {
             itemBuilder: (context, index) {
               final user = users[index].data() as Map<String, dynamic>;
               final userId = users[index].id;
-              final displayName = user['displayName'] ?? user['email'] ?? 'User $userId';
-              
+              final displayName =
+                  user['displayName'] ?? user['email'] ?? 'User $userId';
+
               return ListTile(
                 leading: CircleAvatar(
                   child: Text(displayName[0].toUpperCase()),
@@ -62,27 +61,32 @@ class SimpleUserList extends StatelessWidget {
                 onTap: () async {
                   // Check if chat exists
                   final currentUser = FirebaseAuth.instance.currentUser!;
-                  
+
                   // Look for existing chat
                   final existingChats = await FirebaseFirestore.instance
                       .collection('chatRooms')
                       .where('type', isEqualTo: 'direct')
                       .where('participantIds', arrayContains: currentUser.uid)
                       .get();
-                  
+
                   String? existingChatId;
                   for (var chat in existingChats.docs) {
-                    final participants = List<String>.from(chat.data()['participantIds']);
-                    if (participants.contains(userId) && participants.length == 2) {
+                    final participants = List<String>.from(
+                      chat.data()['participantIds'],
+                    );
+                    if (participants.contains(userId) &&
+                        participants.length == 2) {
                       existingChatId = chat.id;
                       break;
                     }
                   }
-                  
+
                   if (existingChatId != null) {
                     // Go to existing chat
                     if (context.mounted) {
-                      context.go('/simple-chat/$existingChatId?title=${Uri.encodeComponent(displayName)}');
+                      context.go(
+                        '/simple-chat/$existingChatId?title=${Uri.encodeComponent(displayName)}',
+                      );
                     }
                   } else {
                     // Don't create chat yet - just navigate with recipient info
@@ -95,7 +99,9 @@ class SimpleUserList extends StatelessWidget {
                         'recipientName': displayName,
                       };
                       final queryString = params.entries
-                          .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
+                          .map(
+                            (e) => '${e.key}=${Uri.encodeComponent(e.value)}',
+                          )
                           .join('&');
                       context.go('/simple-chat/new?$queryString');
                     }

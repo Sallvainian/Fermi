@@ -20,8 +20,10 @@ class WebRTCSignalingService {
 
   /// Initialize signaling service - placeholder
   Future<void> initialize() async {
-    LoggerService.info('Initializing signaling service (placeholder)',
-        tag: _tag);
+    LoggerService.info(
+      'Initializing signaling service (placeholder)',
+      tag: _tag,
+    );
     // Actual implementation will be added when WebRTC is enabled
   }
 

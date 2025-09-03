@@ -59,8 +59,9 @@ class WebRTCService {
   final _iceConnectionStateController = BehaviorSubject<String>();
   final _signalingStateController = BehaviorSubject<String>();
   final _remoteVideoEnabledController = BehaviorSubject<bool>.seeded(true);
-  final _callDurationController =
-      BehaviorSubject<Duration>.seeded(Duration.zero);
+  final _callDurationController = BehaviorSubject<Duration>.seeded(
+    Duration.zero,
+  );
 
   // Public streams
   Stream<CallState> get callStateStream => _callStateController.stream;
@@ -126,8 +127,9 @@ class WebRTCService {
   }) async {
     try {
       LoggerService.info(
-          'WebRTC makeCall placeholder - video calling coming soon',
-          tag: _tag);
+        'WebRTC makeCall placeholder - video calling coming soon',
+        tag: _tag,
+      );
       _updateCallState(CallState.calling);
 
       // Simulate call setup
@@ -157,8 +159,11 @@ class WebRTCService {
       await Future.delayed(const Duration(seconds: 2));
       _updateCallState(CallState.connected);
     } catch (e) {
-      LoggerService.error('Error in answerCall placeholder',
-          tag: _tag, error: e);
+      LoggerService.error(
+        'Error in answerCall placeholder',
+        tag: _tag,
+        error: e,
+      );
       _updateCallState(CallState.error);
       rethrow;
     }
@@ -179,15 +184,19 @@ class WebRTCService {
   /// Toggle video - placeholder
   Future<void> toggleVideo() async {
     _isVideoEnabled = !_isVideoEnabled;
-    LoggerService.info('Video toggled: $_isVideoEnabled (placeholder)',
-        tag: _tag);
+    LoggerService.info(
+      'Video toggled: $_isVideoEnabled (placeholder)',
+      tag: _tag,
+    );
   }
 
   /// Toggle audio - placeholder
   Future<void> toggleAudio() async {
     _isAudioEnabled = !_isAudioEnabled;
-    LoggerService.info('Audio toggled: $_isAudioEnabled (placeholder)',
-        tag: _tag);
+    LoggerService.info(
+      'Audio toggled: $_isAudioEnabled (placeholder)',
+      tag: _tag,
+    );
   }
 
   /// Switch camera - placeholder
@@ -198,8 +207,9 @@ class WebRTCService {
   /// Enable speaker - placeholder
   Future<void> enableSpeaker(bool enable) async {
     LoggerService.info(
-        'Speaker ${enable ? "enabled" : "disabled"} (placeholder)',
-        tag: _tag);
+      'Speaker ${enable ? "enabled" : "disabled"} (placeholder)',
+      tag: _tag,
+    );
   }
 
   // Private helper methods

@@ -61,15 +61,15 @@ class _ClassesScreenState extends State<ClassesScreen> {
   List<ClassModel> _getFilteredClasses(List<ClassModel> classes) {
     if (_searchQuery.isEmpty) return classes;
     return classes.where((classModel) {
-      return classModel.name
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase()) ||
-          classModel.subject
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase()) ||
-          classModel.gradeLevel
-              .toLowerCase()
-              .contains(_searchQuery.toLowerCase());
+      return classModel.name.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
+          classModel.subject.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
+          classModel.gradeLevel.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          );
     }).toList();
   }
 
@@ -77,8 +77,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
   Widget build(BuildContext context) {
     return Consumer<ClassProvider>(
       builder: (context, classProvider, _) {
-        final filteredClasses =
-            _getFilteredClasses(classProvider.teacherClasses);
+        final filteredClasses = _getFilteredClasses(
+          classProvider.teacherClasses,
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -114,11 +115,10 @@ class _ClassesScreenState extends State<ClassesScreen> {
                         isLoading: true,
                       )
                     : filteredClasses.isEmpty
-                        ? _searchQuery.isNotEmpty
-                            ? EmptyState.noSearchResults(
-                                searchTerm: _searchQuery)
-                            : const EmptyState.noClasses()
-                        : _buildClassesList(filteredClasses),
+                    ? _searchQuery.isNotEmpty
+                          ? EmptyState.noSearchResults(searchTerm: _searchQuery)
+                          : const EmptyState.noClasses()
+                    : _buildClassesList(filteredClasses),
               ),
             ],
           ),
@@ -134,7 +134,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
   Widget _buildStatsHeader(ClassProvider classProvider) {
     final classes = classProvider.teacherClasses;
     final totalStudents = classes.fold<int>(
-        0, (sum, classModel) => sum + classModel.studentCount);
+      0,
+      (sum, classModel) => sum + classModel.studentCount,
+    );
     // For now, we'll use a placeholder for average grade since we don't have grade data yet
     const avgGrade = 'B+';
 
@@ -199,8 +201,10 @@ class _ClassesScreenState extends State<ClassesScreen> {
               width: 1,
             ),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
         ),
         style: Theme.of(context).textTheme.bodyMedium,
         onChanged: (value) {
@@ -248,15 +252,14 @@ class _ClassesScreenState extends State<ClassesScreen> {
                     Text(
                       classModel.name,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       '${classModel.subject} • ${classModel.gradeLevel}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -280,11 +283,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
                     Text(
                       classModel.enrollmentCode ?? 'No Code',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -300,7 +301,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
             runSpacing: 8,
             children: [
               _buildInfoChip(
-                  Icons.people, '${classModel.studentCount} students'),
+                Icons.people,
+                '${classModel.studentCount} students',
+              ),
               if (classModel.room != null)
                 _buildInfoChip(Icons.room, classModel.room!),
               if (classModel.schedule != null)
@@ -338,13 +341,19 @@ class _ClassesScreenState extends State<ClassesScreen> {
                 label: const Text('Copy Code'),
                 style: TextButton.styleFrom(
                   foregroundColor: Theme.of(context).colorScheme.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               FilledButton.tonal(
                 onPressed: () => _navigateToClassDetail(classModel),
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                 ),
                 child: const Text('View Details'),
               ),
@@ -374,8 +383,8 @@ class _ClassesScreenState extends State<ClassesScreen> {
           Text(
             text,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -428,7 +437,8 @@ class _ClassesScreenState extends State<ClassesScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Class'),
         content: Text(
-            'Are you sure you want to delete "${classModel.name}"?\n\nThis action cannot be undone and will remove all associated data.'),
+          'Are you sure you want to delete "${classModel.name}"?\n\nThis action cannot be undone and will remove all associated data.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

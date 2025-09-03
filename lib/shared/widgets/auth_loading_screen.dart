@@ -16,10 +16,7 @@ class AuthLoadingScreen extends StatelessWidget {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 24),
-            Text(
-              'Loading...',
-              style: TextStyle(fontSize: 16),
-            ),
+            Text('Loading...', style: TextStyle(fontSize: 16)),
           ],
         ),
       ),

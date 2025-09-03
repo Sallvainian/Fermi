@@ -75,10 +75,7 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              Text(
-                'Tags',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+              Text('Tags', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -121,10 +118,7 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: _createBoard,
-          child: const Text('Create'),
-        ),
+        FilledButton(onPressed: _createBoard, child: const Text('Create')),
       ],
     );
   }
@@ -136,9 +130,7 @@ class _CreateBoardDialogState extends State<CreateBoardDialog> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
       await provider.createBoard(

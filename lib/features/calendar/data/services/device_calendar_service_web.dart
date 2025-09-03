@@ -18,16 +18,20 @@ class DeviceCalendarServiceWeb implements DeviceCalendarServiceInterface {
   @override
   Future<bool> requestPermissions() async {
     // Calendar permissions are not applicable on web
-    LoggerService.info('Calendar permissions not required on web',
-        tag: 'DeviceCalendarService');
+    LoggerService.info(
+      'Calendar permissions not required on web',
+      tag: 'DeviceCalendarService',
+    );
     return false;
   }
 
   @override
   Future<List<dynamic>> getDeviceCalendars() async {
     // No device calendars available on web
-    LoggerService.info('Device calendars not available on web',
-        tag: 'DeviceCalendarService');
+    LoggerService.info(
+      'Device calendars not available on web',
+      tag: 'DeviceCalendarService',
+    );
     return [];
   }
 
@@ -37,8 +41,10 @@ class DeviceCalendarServiceWeb implements DeviceCalendarServiceInterface {
     String? calendarId,
   }) async {
     // Calendar sync not available on web
-    LoggerService.info('Calendar sync not available on web: ${event.title}',
-        tag: 'DeviceCalendarService');
+    LoggerService.info(
+      'Calendar sync not available on web: ${event.title}',
+      tag: 'DeviceCalendarService',
+    );
     // Could potentially open Google Calendar web or create an .ics file
     // For now, just return null
     return null;
@@ -51,8 +57,9 @@ class DeviceCalendarServiceWeb implements DeviceCalendarServiceInterface {
   }) async {
     // Calendar sync not available on web
     LoggerService.info(
-        'Assignment calendar sync not available on web: ${assignment.title}',
-        tag: 'DeviceCalendarService');
+      'Assignment calendar sync not available on web: ${assignment.title}',
+      tag: 'DeviceCalendarService',
+    );
     // Could potentially open Google Calendar web or create an .ics file
     // For now, just return null
     return null;
@@ -66,8 +73,9 @@ class DeviceCalendarServiceWeb implements DeviceCalendarServiceInterface {
   }) async {
     // Calendar sync not available on web
     LoggerService.info(
-        'Calendar event update not available on web: ${event.title}',
-        tag: 'DeviceCalendarService');
+      'Calendar event update not available on web: ${event.title}',
+      tag: 'DeviceCalendarService',
+    );
     return false;
   }
 
@@ -77,8 +85,10 @@ class DeviceCalendarServiceWeb implements DeviceCalendarServiceInterface {
     String? calendarId,
   }) async {
     // Calendar sync not available on web
-    LoggerService.info('Calendar event deletion not available on web: $eventId',
-        tag: 'DeviceCalendarService');
+    LoggerService.info(
+      'Calendar event deletion not available on web: $eventId',
+      tag: 'DeviceCalendarService',
+    );
     return false;
   }
 }

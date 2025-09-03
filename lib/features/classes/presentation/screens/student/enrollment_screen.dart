@@ -89,8 +89,9 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       hintText: 'XXXXXX',
                       hintStyle: theme.textTheme.headlineMedium?.copyWith(
                         letterSpacing: 8,
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.3),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                       errorText: _errorMessage,
                       filled: true,
@@ -102,8 +103,9 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSpacing.md),
                         borderSide: BorderSide(
-                          color:
-                              theme.colorScheme.outline.withValues(alpha: 0.2),
+                          color: theme.colorScheme.outline.withValues(
+                            alpha: 0.2,
+                          ),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -115,9 +117,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppSpacing.md),
-                        borderSide: BorderSide(
-                          color: theme.colorScheme.error,
-                        ),
+                        borderSide: BorderSide(color: theme.colorScheme.error),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.lg,
@@ -154,19 +154,22 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       }
                     },
                     maxLength: 6,
-                    buildCounter: (context,
-                        {required currentLength,
-                        required isFocused,
-                        required maxLength}) {
-                      return Text(
-                        '$currentLength / $maxLength',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: currentLength == maxLength
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurfaceVariant,
-                        ),
-                      );
-                    },
+                    buildCounter:
+                        (
+                          context, {
+                          required currentLength,
+                          required isFocused,
+                          required maxLength,
+                        }) {
+                          return Text(
+                            '$currentLength / $maxLength',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: currentLength == maxLength
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                          );
+                        },
                   ),
                   const SizedBox(height: AppSpacing.xl),
 
@@ -198,8 +201,9 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.3),
+                      color: theme.colorScheme.primaryContainer.withValues(
+                        alpha: 0.3,
+                      ),
                       borderRadius: BorderRadius.circular(AppSpacing.sm),
                       border: Border.all(
                         color: theme.colorScheme.primary.withValues(alpha: 0.2),
@@ -264,11 +268,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            icon: const Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 48,
-            ),
+            icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
             title: const Text('Successfully Enrolled!'),
             content: const Text(
               'You have been enrolled in the class. You can now access all class materials and assignments.',
@@ -297,10 +297,10 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
         _errorMessage = e.toString().contains('not found')
             ? 'Invalid enrollment code. Please check and try again.'
             : e.toString().contains('already enrolled')
-                ? 'You are already enrolled in this class.'
-                : e.toString().contains('capacity')
-                    ? 'This class is full and cannot accept new enrollments.'
-                    : 'An error occurred. Please try again.';
+            ? 'You are already enrolled in this class.'
+            : e.toString().contains('capacity')
+            ? 'This class is full and cannot accept new enrollments.'
+            : 'An error occurred. Please try again.';
       });
     } finally {
       if (mounted) {

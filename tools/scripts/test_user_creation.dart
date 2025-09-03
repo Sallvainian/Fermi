@@ -1,16 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../lib/firebase_options.dart';
+import 'package:fermi_plus/firebase_options.dart';
 
 /// Quick script to add test users to Firestore for testing user search
 Future<void> main() async {
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final firestore = FirebaseFirestore.instance;
-  
+
   // Test users data
   final testUsers = [
     {
@@ -51,7 +49,7 @@ Future<void> main() async {
   ];
 
   debugPrint('Adding test users to Firestore...');
-  
+
   for (final user in testUsers) {
     try {
       await firestore.collection('users').doc(user['uid'] as String).set(user);
@@ -60,7 +58,7 @@ Future<void> main() async {
       debugPrint('Error adding user ${user['displayName']}: $e');
     }
   }
-  
+
   debugPrint('\nTest users added successfully!');
   debugPrint('You can now test the user search functionality.');
 }

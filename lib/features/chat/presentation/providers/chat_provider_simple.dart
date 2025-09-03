@@ -37,21 +37,21 @@ class SimpleChatProvider with ChangeNotifier {
         .orderBy('lastMessageTime', descending: true)
         .snapshots()
         .listen(
-      (snapshot) {
-        _chatRooms = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
-        _error = null;
-        notifyListeners();
-      },
-      onError: (error) {
-        LoggerService.error('Failed to load chat rooms', error: error);
-        _error = error.toString();
-        notifyListeners();
-      },
-    );
+          (snapshot) {
+            _chatRooms = snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList();
+            _error = null;
+            notifyListeners();
+          },
+          onError: (error) {
+            LoggerService.error('Failed to load chat rooms', error: error);
+            _error = error.toString();
+            notifyListeners();
+          },
+        );
   }
 
   /// Load messages for a specific chat room
@@ -65,21 +65,21 @@ class SimpleChatProvider with ChangeNotifier {
         .limit(100)
         .snapshots()
         .listen(
-      (snapshot) {
-        _currentMessages = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
-        _error = null;
-        notifyListeners();
-      },
-      onError: (error) {
-        LoggerService.error('Failed to load messages', error: error);
-        _error = error.toString();
-        notifyListeners();
-      },
-    );
+          (snapshot) {
+            _currentMessages = snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList();
+            _error = null;
+            notifyListeners();
+          },
+          onError: (error) {
+            LoggerService.error('Failed to load messages', error: error);
+            _error = error.toString();
+            notifyListeners();
+          },
+        );
   }
 
   /// Create or get direct chat with another user
@@ -174,10 +174,10 @@ class SimpleChatProvider with ChangeNotifier {
           .collection('chatRooms')
           .doc(_currentChatRoom!['id'])
           .update({
-        'lastMessage': content,
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'lastMessageSenderId': userId,
-      });
+            'lastMessage': content,
+            'lastMessageTime': FieldValue.serverTimestamp(),
+            'lastMessageSenderId': userId,
+          });
     } catch (e) {
       _error = e.toString();
       notifyListeners();
@@ -189,10 +189,7 @@ class SimpleChatProvider with ChangeNotifier {
   Future<void> markMessagesAsRead(String chatRoomId) async {
     // Simple implementation - could be enhanced with read receipts
     try {
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .update({
+      await _firestore.collection('chatRooms').doc(chatRoomId).update({
         'lastReadTime': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -210,7 +207,10 @@ class SimpleChatProvider with ChangeNotifier {
   /// Get a specific chat room by ID
   Future<Map<String, dynamic>?> getChatRoom(String chatRoomId) async {
     try {
-      final doc = await _firestore.collection('chatRooms').doc(chatRoomId).get();
+      final doc = await _firestore
+          .collection('chatRooms')
+          .doc(chatRoomId)
+          .get();
       if (doc.exists) {
         final data = doc.data()!;
         data['id'] = doc.id;
@@ -234,7 +234,7 @@ class SimpleChatProvider with ChangeNotifier {
       await _firestore.collection('chatRooms').doc(chatRoomId).update({
         'participantIds': FieldValue.arrayRemove([userId]),
       });
-      
+
       // Clear current room if it's the one being left
       if (_currentChatRoom?['id'] == chatRoomId) {
         _currentChatRoom = null;
@@ -258,29 +258,26 @@ class SimpleChatProvider with ChangeNotifier {
           .doc(chatRoomId)
           .collection('messages')
           .get();
-      
+
       // Batch delete messages for better performance
       final batch = _firestore.batch();
       for (var doc in messagesSnapshot.docs) {
         batch.delete(doc.reference);
       }
       await batch.commit();
-      
+
       // Now delete the chat room document itself
-      await _firestore
-          .collection('chatRooms')
-          .doc(chatRoomId)
-          .delete();
-      
+      await _firestore.collection('chatRooms').doc(chatRoomId).delete();
+
       // Remove from local state immediately
       _chatRooms.removeWhere((chat) => chat['id'] == chatRoomId);
-      
+
       // Clear current room if it's the one being deleted
       if (_currentChatRoom?['id'] == chatRoomId) {
         _currentChatRoom = null;
         _currentMessages = [];
       }
-      
+
       notifyListeners();
       LoggerService.info('Chat room $chatRoomId deleted successfully');
     } catch (e) {
@@ -320,11 +317,11 @@ class SimpleChatProvider with ChangeNotifier {
 
       final docRef = await _firestore.collection('chatRooms').add(chatData);
       chatData['id'] = docRef.id;
-      
+
       // Set as current chat room
       _currentChatRoom = chatData;
       loadChatMessages(docRef.id);
-      
+
       return chatData;
     } catch (e) {
       LoggerService.error('Failed to create group chat', error: e);

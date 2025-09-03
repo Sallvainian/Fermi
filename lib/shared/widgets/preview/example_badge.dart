@@ -235,7 +235,8 @@ class ExampleInfoDialog extends StatelessWidget {
       context: context,
       builder: (context) => ExampleInfoDialog(
         title: title ?? 'Example Content',
-        message: message ??
+        message:
+            message ??
             'This is preview content to show you how the app works. Create your own content to replace these examples.',
         actionText: actionText,
         onAction: onAction,

@@ -55,10 +55,13 @@ final GetIt getIt = GetIt.instance;
 /// @throws Exception if Firebase is not initialized before calling this
 Future<void> setupServiceLocator() async {
   // Setting up service locator...
-  
+
   // Prevent double registration
   if (getIt.isRegistered<FirebaseAuth>()) {
-    LoggerService.info('Service locator already initialized - skipping', tag: 'ServiceLocator');
+    LoggerService.info(
+      'Service locator already initialized - skipping',
+      tag: 'ServiceLocator',
+    );
     return;
   }
 
@@ -66,25 +69,33 @@ Future<void> setupServiceLocator() async {
   if (!AppInitializer.isFirebaseInitialized) {
     LoggerService.warning(
       'Firebase not initialized - skipping Firebase service registration',
-      tag: 'ServiceLocator'
+      tag: 'ServiceLocator',
     );
     return;
   }
-  
+
   // Firebase is initialized (either regular Firebase or firebase_dart)
   LoggerService.info(
     'Firebase is initialized - registering all services',
-    tag: 'ServiceLocator'
+    tag: 'ServiceLocator',
   );
 
   // Register Firebase instances
   try {
     getIt.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
-    getIt.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
-    getIt.registerLazySingleton<FirebaseStorage>(() => FirebaseStorage.instance);
+    getIt.registerLazySingleton<FirebaseFirestore>(
+      () => FirebaseFirestore.instance,
+    );
+    getIt.registerLazySingleton<FirebaseStorage>(
+      () => FirebaseStorage.instance,
+    );
     LoggerService.info('Registered Firebase instances', tag: 'ServiceLocator');
   } catch (e) {
-    LoggerService.error('Failed to register Firebase instances', tag: 'ServiceLocator', error: e);
+    LoggerService.error(
+      'Failed to register Firebase instances',
+      tag: 'ServiceLocator',
+      error: e,
+    );
   }
 
   // Register services

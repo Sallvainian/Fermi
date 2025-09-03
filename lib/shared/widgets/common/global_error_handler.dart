@@ -11,10 +11,7 @@ import '../../services/error_handler_service.dart';
 class GlobalErrorHandler extends StatefulWidget {
   final Widget child;
 
-  const GlobalErrorHandler({
-    super.key,
-    required this.child,
-  });
+  const GlobalErrorHandler({super.key, required this.child});
 
   @override
   State<GlobalErrorHandler> createState() => _GlobalErrorHandlerState();
@@ -45,9 +42,7 @@ mixin GlobalErrorHandlerMixin<T extends StatefulWidget> on State<T> {
               color: Colors.white,
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: Text(message),
-            ),
+            Expanded(child: Text(message)),
           ],
         ),
         backgroundColor: Theme.of(context).colorScheme.error,
@@ -68,10 +63,7 @@ mixin GlobalErrorHandlerMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// Show permission error dialog.
-  void showPermissionError({
-    required String resource,
-    String? additionalInfo,
-  }) {
+  void showPermissionError({required String resource, String? additionalInfo}) {
     if (!mounted) return;
 
     ErrorHandlerService.showPermissionDeniedDialog(
@@ -100,9 +92,7 @@ extension GlobalErrorContext on BuildContext {
                 color: Colors.white,
               ),
               const SizedBox(width: 12),
-              Expanded(
-                child: Text(message),
-              ),
+              Expanded(child: Text(message)),
             ],
           ),
           backgroundColor: Theme.of(this).colorScheme.error,

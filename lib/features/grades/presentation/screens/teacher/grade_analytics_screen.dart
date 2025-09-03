@@ -229,14 +229,15 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-              'Select a class from the dropdown to view detailed analytics'),
+            'Select a class from the dropdown to view detailed analytics',
+          ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
               // For testing, load analytics for a hardcoded class
-              context
-                  .read<GradeAnalyticsProvider>()
-                  .loadClassAnalytics('test-class-1');
+              context.read<GradeAnalyticsProvider>().loadClassAnalytics(
+                'test-class-1',
+              );
             },
             child: const Text('Load Test Analytics'),
           ),
@@ -248,9 +249,9 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 
@@ -330,15 +331,15 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
           Text(
             value,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
           Text(
             subtitle,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -417,7 +418,8 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
   }
 
   List<BarChartGroupData> _createGradeDistributionBars(
-      Map<String, double> distribution) {
+    Map<String, double> distribution,
+  ) {
     final grades = ['A', 'B', 'C', 'D', 'F'];
     final colors = [
       Colors.green,
@@ -637,8 +639,9 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                   toY: entry.value.value,
                   color: _getCategoryColor(entry.value.value),
                   width: 30,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(6)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(6),
+                  ),
                 ),
               ],
             );
@@ -649,9 +652,9 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
   }
 
   Widget _buildStudentPerformanceTable(GradeAnalytics analytics) {
-    final students =
-        List<StudentPerformance>.from(analytics.studentPerformances)
-          ..sort((a, b) => b.averageGrade.compareTo(a.averageGrade));
+    final students = List<StudentPerformance>.from(
+      analytics.studentPerformances,
+    )..sort((a, b) => b.averageGrade.compareTo(a.averageGrade));
 
     return Container(
       decoration: BoxDecoration(
@@ -680,8 +683,10 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                 DataCell(Text('${student.averageGrade.toStringAsFixed(1)}%')),
                 DataCell(
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: _getGradeColor(student.letterGrade).withAlpha(51),
                       borderRadius: BorderRadius.circular(4),
@@ -697,9 +702,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                 ),
                 DataCell(Text(student.completedAssignments.toString())),
                 DataCell(Text(student.missingAssignments.toString())),
-                DataCell(
-                  _buildRiskBadge(student.riskLevel),
-                ),
+                DataCell(_buildRiskBadge(student.riskLevel)),
                 DataCell(
                   Row(
                     children: [
@@ -707,13 +710,13 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                         student.trend > 0
                             ? Icons.trending_up
                             : student.trend < 0
-                                ? Icons.trending_down
-                                : Icons.trending_flat,
+                            ? Icons.trending_down
+                            : Icons.trending_flat,
                         color: student.trend > 0
                             ? Colors.green
                             : student.trend < 0
-                                ? Colors.red
-                                : Colors.grey,
+                            ? Colors.red
+                            : Colors.grey,
                         size: 16,
                       ),
                       const SizedBox(width: 4),
@@ -723,8 +726,8 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                           color: student.trend > 0
                               ? Colors.green
                               : student.trend < 0
-                                  ? Colors.red
-                                  : Colors.grey,
+                              ? Colors.red
+                              : Colors.grey,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -777,19 +780,29 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                 ),
                 DataCell(Text(assignment.category)),
                 DataCell(
-                    Text('${assignment.averageScore.toStringAsFixed(1)}%')),
+                  Text('${assignment.averageScore.toStringAsFixed(1)}%'),
+                ),
                 DataCell(Text('${assignment.medianScore.toStringAsFixed(1)}%')),
-                DataCell(Text(
-                    '${assignment.minScore.toStringAsFixed(0)}-${assignment.maxScore.toStringAsFixed(0)}%')),
-                DataCell(Text(
-                    '${assignment.gradedSubmissions}/${assignment.totalSubmissions}')),
+                DataCell(
+                  Text(
+                    '${assignment.minScore.toStringAsFixed(0)}-${assignment.maxScore.toStringAsFixed(0)}%',
+                  ),
+                ),
+                DataCell(
+                  Text(
+                    '${assignment.gradedSubmissions}/${assignment.totalSubmissions}',
+                  ),
+                ),
                 DataCell(
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getDifficultyColor(assignment.difficultyLevel)
-                          .withAlpha(51),
+                      color: _getDifficultyColor(
+                        assignment.difficultyLevel,
+                      ).withAlpha(51),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

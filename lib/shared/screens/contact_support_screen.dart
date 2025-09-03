@@ -96,10 +96,7 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
                         value: 'ui_ux',
                         child: Text('UI/UX Problem'),
                       ),
-                      DropdownMenuItem(
-                        value: 'other',
-                        child: Text('Other'),
-                      ),
+                      DropdownMenuItem(value: 'other', child: Text('Other')),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -341,7 +338,8 @@ class _ContactSupportScreenState extends State<ContactSupportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Bug report submitted successfully! Thank you for your feedback.'),
+            'Bug report submitted successfully! Thank you for your feedback.',
+          ),
           backgroundColor: Colors.green,
         ),
       );

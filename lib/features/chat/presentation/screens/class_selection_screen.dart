@@ -102,8 +102,10 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
         // Get user details for all participants
         final userIds = [teacherId, ...studentIds];
         final userDocs = await Future.wait(
-          userIds.map((id) =>
-              FirebaseFirestore.instance.collection('users').doc(id).get()),
+          userIds.map(
+            (id) =>
+                FirebaseFirestore.instance.collection('users').doc(id).get(),
+          ),
         );
 
         final participants = userDocs.where((doc) => doc.exists).map((doc) {
@@ -164,90 +166,87 @@ class _ClassSelectionScreenState extends State<ClassSelectionScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error_outline,
-                          size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text('Error: $_error'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _loadClasses,
-                        child: const Text('Retry'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text('Error: $_error'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _loadClasses,
+                    child: const Text('Retry'),
                   ),
-                )
-              : _classes.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.school_outlined,
-                            size: 64,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            isTeacher
-                                ? 'No classes created yet'
-                                : 'Not enrolled in any classes',
-                            style: theme.textTheme.titleMedium,
-                          ),
-                          if (isTeacher) ...[
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () => context.go('/teacher/classes'),
-                              child: const Text('Create a Class'),
-                            ),
-                          ],
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(8),
-                      itemCount: _classes.length,
-                      itemBuilder: (context, index) {
-                        final classData = _classes[index];
-                        final hasChatRoom = classData['hasChatRoom'] as bool;
-
-                        return Card(
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor:
-                                  theme.colorScheme.primaryContainer,
-                              child: Icon(
-                                Icons.school,
-                                color: theme.colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                            title: Text(classData['name']),
-                            subtitle: Text(
-                              isTeacher
-                                  ? '${classData['studentCount']} students'
-                                  : 'Teacher: ${classData['teacherName']}',
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (hasChatRoom)
-                                  Chip(
-                                    label: const Text('Active Chat'),
-                                    backgroundColor:
-                                        theme.colorScheme.primaryContainer,
-                                  ),
-                                const SizedBox(width: 8),
-                                const Icon(Icons.arrow_forward_ios),
-                              ],
-                            ),
-                            onTap: () => _createOrJoinClassChat(classData),
-                          ),
-                        );
-                      },
+                ],
+              ),
+            )
+          : _classes.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.school_outlined,
+                    size: 64,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    isTeacher
+                        ? 'No classes created yet'
+                        : 'Not enrolled in any classes',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  if (isTeacher) ...[
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => context.go('/teacher/classes'),
+                      child: const Text('Create a Class'),
                     ),
+                  ],
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(8),
+              itemCount: _classes.length,
+              itemBuilder: (context, index) {
+                final classData = _classes[index];
+                final hasChatRoom = classData['hasChatRoom'] as bool;
+
+                return Card(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      child: Icon(
+                        Icons.school,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    title: Text(classData['name']),
+                    subtitle: Text(
+                      isTeacher
+                          ? '${classData['studentCount']} students'
+                          : 'Teacher: ${classData['teacherName']}',
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (hasChatRoom)
+                          Chip(
+                            label: const Text('Active Chat'),
+                            backgroundColor: theme.colorScheme.primaryContainer,
+                          ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_ios),
+                      ],
+                    ),
+                    onTap: () => _createOrJoinClassChat(classData),
+                  ),
+                );
+              },
+            ),
     );
   }
 }

@@ -8,11 +8,8 @@ import '../widgets/auth_text_field.dart';
 
 class EmailLinkingScreen extends StatefulWidget {
   final String userType; // 'teacher' or 'student'
-  
-  const EmailLinkingScreen({
-    super.key,
-    required this.userType,
-  });
+
+  const EmailLinkingScreen({super.key, required this.userType});
 
   @override
   State<EmailLinkingScreen> createState() => _EmailLinkingScreenState();
@@ -47,22 +44,18 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
       await user.verifyBeforeUpdateEmail(newEmail);
 
       // Update Firestore document
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
-        'email': newEmail,
-        'emailLinkedAt': FieldValue.serverTimestamp(),
-      });
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'email': newEmail, 'emailLinkedAt': FieldValue.serverTimestamp()},
+      );
 
-      // Reload user model
-      final authProvider = context.read<AuthProvider>();
-      // User model will be automatically updated through auth state listener
+      // User model will be refreshed via auth state listener
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Verification email sent to $newEmail. Please check your inbox.'),
+            content: Text(
+              'Verification email sent to $newEmail. Please check your inbox.',
+            ),
             backgroundColor: Colors.green,
             duration: const Duration(seconds: 5),
           ),
@@ -134,14 +127,19 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: (isTeacher ? theme.colorScheme.secondary : theme.colorScheme.primary)
-                .withValues(alpha: 0.1),
+            color:
+                (isTeacher
+                        ? theme.colorScheme.secondary
+                        : theme.colorScheme.primary)
+                    .withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.email,
             size: 60,
-            color: isTeacher ? theme.colorScheme.secondary : theme.colorScheme.primary,
+            color: isTeacher
+                ? theme.colorScheme.secondary
+                : theme.colorScheme.primary,
           ),
         ),
         const SizedBox(height: 24),
@@ -151,7 +149,9 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
           'Link Your Email',
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: isTeacher ? theme.colorScheme.secondary : theme.colorScheme.primary,
+            color: isTeacher
+                ? theme.colorScheme.secondary
+                : theme.colorScheme.primary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -171,19 +171,27 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: (isTeacher ? theme.colorScheme.secondary : theme.colorScheme.primary)
-                .withValues(alpha: 0.05),
+            color:
+                (isTeacher
+                        ? theme.colorScheme.secondary
+                        : theme.colorScheme.primary)
+                    .withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: (isTeacher ? theme.colorScheme.secondary : theme.colorScheme.primary)
-                  .withValues(alpha: 0.2),
+              color:
+                  (isTeacher
+                          ? theme.colorScheme.secondary
+                          : theme.colorScheme.primary)
+                      .withValues(alpha: 0.2),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.person,
-                color: isTeacher ? theme.colorScheme.secondary : theme.colorScheme.primary,
+                color: isTeacher
+                    ? theme.colorScheme.secondary
+                    : theme.colorScheme.primary,
               ),
               const SizedBox(width: 12),
               Column(
@@ -192,7 +200,9 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
                   Text(
                     'Username',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isTeacher ? theme.colorScheme.secondary : theme.colorScheme.primary,
+                      color: isTeacher
+                          ? theme.colorScheme.secondary
+                          : theme.colorScheme.primary,
                     ),
                   ),
                   Text(
@@ -224,7 +234,9 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
                 validator: (value) {
                   if (value != null && value.isNotEmpty) {
                     // Only validate if user entered something
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return 'Please enter a valid email address';
                     }
                   }
@@ -235,16 +247,16 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
 
               // Link Email Button
               ElevatedButton(
-                onPressed: _isUpdating || _emailController.text.isEmpty 
-                    ? null 
+                onPressed: _isUpdating || _emailController.text.isEmpty
+                    ? null
                     : _linkEmail,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: isTeacher 
-                      ? theme.colorScheme.secondary 
+                  backgroundColor: isTeacher
+                      ? theme.colorScheme.secondary
                       : theme.colorScheme.primary,
-                  foregroundColor: isTeacher 
-                      ? theme.colorScheme.onSecondary 
+                  foregroundColor: isTeacher
+                      ? theme.colorScheme.onSecondary
                       : theme.colorScheme.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -277,8 +289,8 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
                 child: Text(
                   'Skip for Now',
                   style: TextStyle(
-                    color: isTeacher 
-                        ? theme.colorScheme.secondary 
+                    color: isTeacher
+                        ? theme.colorScheme.secondary
                         : theme.colorScheme.primary,
                     fontSize: 16,
                   ),
@@ -292,9 +304,7 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
                 decoration: BoxDecoration(
                   color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.blue.withValues(alpha: 0.3),
-                  ),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,10 +332,7 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
                       '• Reset your password if forgotten\n'
                       '• Recover your username\n'
                       '• Enhanced account security',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.blue, fontSize: 13),
                     ),
                   ],
                 ),
@@ -349,11 +356,7 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
             color: Colors.orange.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.warning,
-            size: 60,
-            color: Colors.orange,
-          ),
+          child: const Icon(Icons.warning, size: 60, color: Colors.orange),
         ),
         const SizedBox(height: 24),
 
@@ -373,19 +376,14 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
           decoration: BoxDecoration(
             color: Colors.orange.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.orange.withValues(alpha: 0.3),
-            ),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
           ),
           child: const Text(
             'Are you sure you don\'t want to link an email? Linking an email enables '
             'email notifications and enhanced account security as well as the ability '
             'to recover your password or username if you lose it. You can always link '
             'it later in the settings menu of your account.',
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-            ),
+            style: TextStyle(fontSize: 14, height: 1.5),
             textAlign: TextAlign.center,
           ),
         ),
@@ -404,22 +402,16 @@ class _EmailLinkingScreenState extends State<EmailLinkingScreen> {
           ),
           child: const Text(
             'Go Back & Add Email',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
         const SizedBox(height: 12),
-        
+
         TextButton(
           onPressed: _confirmSkip,
           child: Text(
             'Continue Without Email',
-            style: TextStyle(
-              color: Colors.orange.shade700,
-              fontSize: 16,
-            ),
+            style: TextStyle(color: Colors.orange.shade700, fontSize: 16),
           ),
         ),
       ],

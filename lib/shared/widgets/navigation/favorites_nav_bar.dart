@@ -22,9 +22,7 @@ class FavoritesNavBar extends StatelessWidget {
       return Container(
         height: 60,
         color: Theme.of(context).colorScheme.surface,
-        child: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        child: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -34,8 +32,9 @@ class FavoritesNavBar extends StatelessWidget {
     }
 
     // Find current index
-    int currentIndex =
-        favoriteItems.indexWhere((item) => item.route == currentRoute);
+    int currentIndex = favoriteItems.indexWhere(
+      (item) => item.route == currentRoute,
+    );
     if (currentIndex == -1) currentIndex = 0;
 
     return GestureDetector(
@@ -57,12 +56,14 @@ class FavoritesNavBar extends StatelessWidget {
             _HintBar(),
             BottomNavigationBar(
               items: favoriteItems
-                  .map((item) => BottomNavigationBarItem(
-                        icon: Icon(item.icon),
-                        activeIcon: Icon(item.activeIcon),
-                        label: item.title,
-                        tooltip: item.title,
-                      ))
+                  .map(
+                    (item) => BottomNavigationBarItem(
+                      icon: Icon(item.icon),
+                      activeIcon: Icon(item.activeIcon),
+                      label: item.title,
+                      tooltip: item.title,
+                    ),
+                  )
                   .toList(),
               currentIndex: currentIndex,
               type: BottomNavigationBarType.fixed,
@@ -72,8 +73,9 @@ class FavoritesNavBar extends StatelessWidget {
                 }
               },
               selectedItemColor: Theme.of(context).colorScheme.primary,
-              unselectedItemColor:
-                  Theme.of(context).colorScheme.onSurfaceVariant,
+              unselectedItemColor: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant,
               showUnselectedLabels: true,
               selectedFontSize: 12,
               unselectedFontSize: 12,
@@ -156,8 +158,8 @@ class _NavigationCustomizationSheetState
     final filteredItems = _selectedCategory == 'all'
         ? availableItems
         : availableItems
-            .where((item) => item.category == _selectedCategory)
-            .toList();
+              .where((item) => item.category == _selectedCategory)
+              .toList();
 
     return Container(
       constraints: BoxConstraints(
@@ -230,9 +232,7 @@ class _NavigationCustomizationSheetState
                     ),
                   );
                 } else {
-                  return Expanded(
-                    child: _EmptySlot(index: index),
-                  );
+                  return Expanded(child: _EmptySlot(index: index));
                 }
               }),
             ),
@@ -403,10 +403,7 @@ class _FavoriteSlot extends StatelessWidget {
   final NavItem item;
   final VoidCallback onRemove;
 
-  const _FavoriteSlot({
-    required this.item,
-    required this.onRemove,
-  });
+  const _FavoriteSlot({required this.item, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
@@ -478,10 +475,7 @@ class _EmptySlot extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
-        child: Icon(
-          Icons.add,
-          color: theme.colorScheme.outline.withAlpha(128),
-        ),
+        child: Icon(Icons.add, color: theme.colorScheme.outline.withAlpha(128)),
       ),
     );
   }
@@ -510,10 +504,7 @@ class _HintBarState extends State<_HintBar>
     _animation = Tween<double>(
       begin: 0.1,
       end: 0.3,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     // Check if hint has been shown before
     _loadHintStatus();
@@ -556,8 +547,9 @@ class _HintBarState extends State<_HintBar>
         return Container(
           width: double.infinity,
           height: 3,
-          color: theme.colorScheme.primary
-              .withAlpha((255 * _animation.value).round()),
+          color: theme.colorScheme.primary.withAlpha(
+            (255 * _animation.value).round(),
+          ),
         );
       },
     );

@@ -65,10 +65,7 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -84,9 +81,7 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
     final user = authProvider.userModel;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Update Display Name'),
-      ),
+      appBar: AppBar(title: const Text('Update Display Name')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -103,10 +98,8 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
                     children: [
                       Text(
                         'Current Information',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text('Email: ${user?.email ?? 'N/A'}'),
@@ -114,7 +107,8 @@ class _UpdateDisplayNameScreenState extends State<UpdateDisplayNameScreen> {
                       Text('First Name: "${user?.firstName ?? ''}"'),
                       Text('Last Name: "${user?.lastName ?? ''}"'),
                       Text(
-                          'Role: ${user?.role?.toString().split('.').last ?? 'N/A'}'),
+                        'Role: ${user?.role?.toString().split('.').last ?? 'N/A'}',
+                      ),
                     ],
                   ),
                 ),

@@ -13,12 +13,7 @@ import 'package:flutter/foundation.dart';
 /// - info: General informational messages
 /// - warning: Potentially problematic situations
 /// - error: Error events requiring attention
-enum LogLevel {
-  debug,
-  info,
-  warning,
-  error,
-}
+enum LogLevel { debug, info, warning, error }
 
 /// Singleton service for centralized application logging.
 ///
@@ -40,8 +35,9 @@ class LoggerService {
   LoggerService._internal();
 
   /// Minimum log level to display (can be configured via environment)
-  static LogLevel minimumLogLevel =
-      kDebugMode ? LogLevel.warning : LogLevel.warning;
+  static LogLevel minimumLogLevel = kDebugMode
+      ? LogLevel.warning
+      : LogLevel.warning;
 
   /// Logs a debug message (only in debug mode).
   ///
@@ -89,10 +85,19 @@ class LoggerService {
   /// @param tag Optional tag for categorizing the error
   /// @param error Optional error object (Exception, Error, etc.)
   /// @param stackTrace Optional stack trace for debugging
-  static void error(String message,
-      {String? tag, dynamic error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message,
-        tag: tag, error: error, stackTrace: stackTrace);
+  static void error(
+    String message, {
+    String? tag,
+    dynamic error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.error,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   /// Internal logging method handling all log levels.
@@ -200,6 +205,10 @@ extension LoggerExtension on Object {
   /// @param error Optional error object
   /// @param stackTrace Optional stack trace
   void logError(String message, {dynamic error, StackTrace? stackTrace}) =>
-      LoggerService.error(message,
-          tag: runtimeType.toString(), error: error, stackTrace: stackTrace);
+      LoggerService.error(
+        message,
+        tag: runtimeType.toString(),
+        error: error,
+        stackTrace: stackTrace,
+      );
 }

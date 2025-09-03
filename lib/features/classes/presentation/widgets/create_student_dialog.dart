@@ -7,10 +7,7 @@ import '../../domain/models/class_model.dart';
 class CreateStudentDialog extends StatefulWidget {
   final ClassModel classModel;
 
-  const CreateStudentDialog({
-    super.key,
-    required this.classModel,
-  });
+  const CreateStudentDialog({super.key, required this.classModel});
 
   @override
   State<CreateStudentDialog> createState() => _CreateStudentDialogState();
@@ -95,8 +92,10 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
       final displayName = '$firstName $lastName';
 
       // Generate a unique student ID
-      final studentId =
-          FirebaseFirestore.instance.collection('students').doc().id;
+      final studentId = FirebaseFirestore.instance
+          .collection('students')
+          .doc()
+          .id;
 
       // Create student document directly in Firestore
       final student = Student(
@@ -132,10 +131,10 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
           .collection('classes')
           .doc(widget.classModel.id)
           .update({
-        'studentIds': FieldValue.arrayUnion([studentId]),
-        'studentCount': FieldValue.increment(1),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'studentIds': FieldValue.arrayUnion([studentId]),
+            'studentCount': FieldValue.increment(1),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       if (mounted) {
         // Show success dialog with credentials
@@ -150,8 +149,10 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
               children: [
                 Text('Student: $displayName'),
                 const SizedBox(height: 16),
-                const Text('Login Credentials:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Login Credentials:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
                 SelectableText('Username: $_generatedUsername'),
                 SelectableText('Temporary Password: $_generatedPassword'),
@@ -299,8 +300,9 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                         'Generated Username',
                         style: TextStyle(
                           fontSize: 12,
-                          color:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -309,8 +311,9 @@ class _CreateStudentDialogState extends State<CreateStudentDialog> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color:
-                              Theme.of(context).colorScheme.onPrimaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ],

@@ -8,7 +8,7 @@ enum NotificationType {
   calendar,
   announcement,
   discussion,
-  submission
+  submission,
 }
 
 enum NotificationPriority { low, normal, medium, high, urgent }
@@ -85,8 +85,9 @@ class NotificationModel {
       'actionData': actionData,
       'imageUrl': imageUrl,
       'category': category,
-      'scheduledFor':
-          scheduledFor != null ? Timestamp.fromDate(scheduledFor!) : null,
+      'scheduledFor': scheduledFor != null
+          ? Timestamp.fromDate(scheduledFor!)
+          : null,
       'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
     };
   }

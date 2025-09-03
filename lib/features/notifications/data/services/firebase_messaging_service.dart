@@ -26,7 +26,7 @@ class FirebaseMessagingService {
 
   /// Navigation callback for handling navigation from notifications
   void Function(String route, {Map<String, dynamic>? params})?
-      _navigationCallback;
+  _navigationCallback;
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -48,23 +48,28 @@ class FirebaseMessagingService {
     try {
       // Force token refresh to drop old queues
       await _messaging.deleteToken();
-      LoggerService.info('Deleted old FCM token',
-          tag: 'FirebaseMessagingService');
+      LoggerService.info(
+        'Deleted old FCM token',
+        tag: 'FirebaseMessagingService',
+      );
 
       // Request permissions
       await _requestPermissions();
 
       // Configure message handlers
       FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
+        _firebaseMessagingBackgroundHandler,
+      );
 
       // Handle foreground messages
-      _foregroundMessageSubscription =
-          FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      _foregroundMessageSubscription = FirebaseMessaging.onMessage.listen(
+        _handleForegroundMessage,
+      );
 
       // Handle when app is opened from notification
-      _messageOpenedSubscription =
-          FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+      _messageOpenedSubscription = FirebaseMessaging.onMessageOpenedApp.listen(
+        _handleMessageOpenedApp,
+      );
 
       // Get initial message if app was launched from notification
       final initialMessage = await _messaging.getInitialMessage();
@@ -86,17 +91,23 @@ class FirebaseMessagingService {
       _messaging.onTokenRefresh.listen(_saveFCMToken);
 
       _isInitialized = true;
-      LoggerService.info('Firebase Messaging initialized',
-          tag: 'FirebaseMessagingService');
+      LoggerService.info(
+        'Firebase Messaging initialized',
+        tag: 'FirebaseMessagingService',
+      );
     } catch (e) {
-      LoggerService.error('Failed to initialize Firebase Messaging',
-          error: e, tag: 'FirebaseMessagingService');
+      LoggerService.error(
+        'Failed to initialize Firebase Messaging',
+        error: e,
+        tag: 'FirebaseMessagingService',
+      );
     }
   }
 
   /// Set navigation callback for handling navigation from notifications
   void setNavigationCallback(
-      void Function(String route, {Map<String, dynamic>? params}) callback) {
+    void Function(String route, {Map<String, dynamic>? params}) callback,
+  ) {
     _navigationCallback = callback;
   }
 
@@ -104,11 +115,7 @@ class FirebaseMessagingService {
   Future<void> _requestPermissions() async {
     if (kIsWeb) {
       // Web doesn't support all permission types
-      await _messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      await _messaging.requestPermission(alert: true, badge: true, sound: true);
     } else if (!kIsWeb && (Platform.isIOS || Platform.isMacOS)) {
       // iOS/macOS require explicit permission
       final settings = await _messaging.requestPermission(
@@ -122,8 +129,9 @@ class FirebaseMessagingService {
       );
 
       LoggerService.info(
-          'User granted permission: ${settings.authorizationStatus}',
-          tag: 'FirebaseMessagingService');
+        'User granted permission: ${settings.authorizationStatus}',
+        tag: 'FirebaseMessagingService',
+      );
     }
     // Android permissions are handled at runtime when showing notifications
   }
@@ -145,23 +153,29 @@ class FirebaseMessagingService {
 
         if (vapidKey.isEmpty || vapidKey == 'your_vapid_key_here') {
           LoggerService.warning(
-              'FIREBASE_VAPID_KEY not configured - attempting fallback',
-              tag: 'FirebaseMessagingService');
+            'FIREBASE_VAPID_KEY not configured - attempting fallback',
+            tag: 'FirebaseMessagingService',
+          );
           LoggerService.info(
-              'To fix: Add your VAPID key to .env file or set FIREBASE_VAPID_KEY environment variable',
-              tag: 'FirebaseMessagingService');
+            'To fix: Add your VAPID key to .env file or set FIREBASE_VAPID_KEY environment variable',
+            tag: 'FirebaseMessagingService',
+          );
           LoggerService.info(
-              'Get key from: Firebase Console > Project Settings > Cloud Messaging > Web Push certificates',
-              tag: 'FirebaseMessagingService');
+            'Get key from: Firebase Console > Project Settings > Cloud Messaging > Web Push certificates',
+            tag: 'FirebaseMessagingService',
+          );
           // Try without VAPID key for development
           try {
             token = await _messaging.getToken();
             LoggerService.info(
-                'FCM token generated without VAPID key (development mode)',
-                tag: 'FirebaseMessagingService');
+              'FCM token generated without VAPID key (development mode)',
+              tag: 'FirebaseMessagingService',
+            );
           } catch (e) {
-            LoggerService.error('Failed to get FCM token without VAPID key: $e',
-                tag: 'FirebaseMessagingService');
+            LoggerService.error(
+              'Failed to get FCM token without VAPID key: $e',
+              tag: 'FirebaseMessagingService',
+            );
             return;
           }
         } else {
@@ -169,21 +183,26 @@ class FirebaseMessagingService {
             // Use VAPID key for web FCM token generation
             token = await _messaging.getToken(vapidKey: vapidKey);
             LoggerService.info(
-                'FCM token generated successfully with VAPID key',
-                tag: 'FirebaseMessagingService');
+              'FCM token generated successfully with VAPID key',
+              tag: 'FirebaseMessagingService',
+            );
           } catch (e) {
-            LoggerService.error('Failed to get FCM token with VAPID key: $e',
-                tag: 'FirebaseMessagingService');
+            LoggerService.error(
+              'Failed to get FCM token with VAPID key: $e',
+              tag: 'FirebaseMessagingService',
+            );
             // Fallback: try without VAPID key for development
             try {
               token = await _messaging.getToken();
               LoggerService.warning(
-                  'Using FCM token without VAPID key (fallback)',
-                  tag: 'FirebaseMessagingService');
+                'Using FCM token without VAPID key (fallback)',
+                tag: 'FirebaseMessagingService',
+              );
             } catch (fallbackError) {
               LoggerService.error(
-                  'Failed to get FCM token completely: $fallbackError',
-                  tag: 'FirebaseMessagingService');
+                'Failed to get FCM token completely: $fallbackError',
+                tag: 'FirebaseMessagingService',
+              );
             }
           }
         }
@@ -195,8 +214,11 @@ class FirebaseMessagingService {
         await _saveFCMToken(token);
       }
     } catch (e) {
-      LoggerService.error('Failed to get FCM token',
-          error: e, tag: 'FirebaseMessagingService');
+      LoggerService.error(
+        'Failed to get FCM token',
+        error: e,
+        tag: 'FirebaseMessagingService',
+      );
     }
   }
 
@@ -223,8 +245,11 @@ class FirebaseMessagingService {
 
       LoggerService.debug('FCM token saved', tag: 'FirebaseMessagingService');
     } catch (e) {
-      LoggerService.error('Failed to save FCM token',
-          error: e, tag: 'FirebaseMessagingService');
+      LoggerService.error(
+        'Failed to save FCM token',
+        error: e,
+        tag: 'FirebaseMessagingService',
+      );
     }
   }
 
@@ -241,8 +266,10 @@ class FirebaseMessagingService {
 
   /// Handle foreground messages
   void _handleForegroundMessage(RemoteMessage message) {
-    LoggerService.info('Received foreground message: ${message.messageId}',
-        tag: 'FirebaseMessagingService');
+    LoggerService.info(
+      'Received foreground message: ${message.messageId}',
+      tag: 'FirebaseMessagingService',
+    );
 
     // Handle standard message types
     onMessage?.call(message);
@@ -260,18 +287,24 @@ class FirebaseMessagingService {
 
   /// Handle when app is opened from notification
   void _handleMessageOpenedApp(RemoteMessage message) {
-    LoggerService.info('App opened from notification: ${message.messageId}',
-        tag: 'FirebaseMessagingService');
+    LoggerService.info(
+      'App opened from notification: ${message.messageId}',
+      tag: 'FirebaseMessagingService',
+    );
 
     // Navigate based on notification type
     if (message.data['type'] == 'chat') {
       // Navigate to chat screen
       final chatRoomId = message.data['chatRoomId'];
       if (chatRoomId != null && _navigationCallback != null) {
-        LoggerService.info('Navigate to chat: $chatRoomId',
-            tag: 'FirebaseMessagingService');
-        _navigationCallback!('/messages/chat/$chatRoomId',
-            params: {'chatRoomId': chatRoomId});
+        LoggerService.info(
+          'Navigate to chat: $chatRoomId',
+          tag: 'FirebaseMessagingService',
+        );
+        _navigationCallback!(
+          '/messages/chat/$chatRoomId',
+          params: {'chatRoomId': chatRoomId},
+        );
       }
     }
   }
@@ -288,8 +321,9 @@ class FirebaseMessagingService {
             return await _messaging.getToken(vapidKey: vapidKey);
           } catch (e) {
             LoggerService.warning(
-                'Failed to get current token with VAPID key: $e',
-                tag: 'FirebaseMessagingService');
+              'Failed to get current token with VAPID key: $e',
+              tag: 'FirebaseMessagingService',
+            );
             // Fallback without VAPID key
           }
         }
@@ -298,16 +332,20 @@ class FirebaseMessagingService {
           return await _messaging.getToken();
         } catch (fallbackError) {
           LoggerService.error(
-              'Failed to get current token completely: $fallbackError',
-              tag: 'FirebaseMessagingService');
+            'Failed to get current token completely: $fallbackError',
+            tag: 'FirebaseMessagingService',
+          );
           return null;
         }
       } else {
         return await _messaging.getToken();
       }
     } catch (e) {
-      LoggerService.error('Failed to get current token',
-          error: e, tag: 'FirebaseMessagingService');
+      LoggerService.error(
+        'Failed to get current token',
+        error: e,
+        tag: 'FirebaseMessagingService',
+      );
       return null;
     }
   }
@@ -330,8 +368,11 @@ class FirebaseMessagingService {
 
       LoggerService.debug('FCM token deleted', tag: 'FirebaseMessagingService');
     } catch (e) {
-      LoggerService.error('Failed to delete token',
-          error: e, tag: 'FirebaseMessagingService');
+      LoggerService.error(
+        'Failed to delete token',
+        error: e,
+        tag: 'FirebaseMessagingService',
+      );
     }
   }
 

@@ -127,8 +127,11 @@ class AdaptiveLayout extends StatelessWidget {
 
     // Schedule role update after build completes
     if (authProvider.userModel != null) {
-      final role =
-          authProvider.userModel!.role.toString().split('.').last.toLowerCase();
+      final role = authProvider.userModel!.role
+          .toString()
+          .split('.')
+          .last
+          .toLowerCase();
       // Use a microtask to ensure this happens after the current build
       Future.microtask(() {
         if (context.mounted) {
@@ -147,7 +150,8 @@ class AdaptiveLayout extends StatelessWidget {
               leading: showBackButton
                   ? IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: onBackPressed ??
+                      onPressed:
+                          onBackPressed ??
                           () {
                             // Use GoRouter instead of Navigator for better navigation control
                             if (context.canPop()) {
@@ -175,8 +179,9 @@ class AdaptiveLayout extends StatelessWidget {
               ),
             ),
             // Bottom navigation for mobile-first navigation pattern
-            bottomNavigationBar:
-                showBottomNavigation ? const FavoritesNavBar() : null,
+            bottomNavigationBar: showBottomNavigation
+                ? const FavoritesNavBar()
+                : null,
             floatingActionButton: floatingActionButton,
           );
         } else {
@@ -198,7 +203,8 @@ class AdaptiveLayout extends StatelessWidget {
                       leading: showBackButton
                           ? IconButton(
                               icon: const Icon(Icons.arrow_back),
-                              onPressed: onBackPressed ??
+                              onPressed:
+                                  onBackPressed ??
                                   () {
                                     if (context.canPop()) {
                                       context.pop();

@@ -36,20 +36,21 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     _notificationSubscription?.cancel();
-    _notificationSubscription =
-        _notificationService.getUserNotifications().listen(
-      (notifications) {
-        _notifications = notifications;
-        _applyFilters();
-        _isLoading = false;
-        notifyListeners();
-      },
-      onError: (error) {
-        _error = error.toString();
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+    _notificationSubscription = _notificationService
+        .getUserNotifications()
+        .listen(
+          (notifications) {
+            _notifications = notifications;
+            _applyFilters();
+            _isLoading = false;
+            notifyListeners();
+          },
+          onError: (error) {
+            _error = error.toString();
+            _isLoading = false;
+            notifyListeners();
+          },
+        );
   }
 
   // Apply search and filter
@@ -109,10 +110,12 @@ class NotificationProvider extends ChangeNotifier {
         return filteredNotifications.where((n) => !n.isRead).toList();
       case 'academic':
         return filteredNotifications
-            .where((n) =>
-                n.type == NotificationType.grade ||
-                n.type == NotificationType.assignment ||
-                n.type == NotificationType.submission)
+            .where(
+              (n) =>
+                  n.type == NotificationType.grade ||
+                  n.type == NotificationType.assignment ||
+                  n.type == NotificationType.submission,
+            )
             .toList();
       default:
         return filteredNotifications;
@@ -158,8 +161,9 @@ class NotificationProvider extends ChangeNotifier {
     try {
       await _notificationService.markAllAsRead();
       // Update local state
-      _notifications =
-          _notifications.map((n) => n.copyWith(isRead: true)).toList();
+      _notifications = _notifications
+          .map((n) => n.copyWith(isRead: true))
+          .toList();
       _applyFilters();
       notifyListeners();
     } catch (e) {

@@ -10,10 +10,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 class JeopardyCreateScreen extends StatefulWidget {
   final String? gameId;
 
-  const JeopardyCreateScreen({
-    super.key,
-    this.gameId,
-  });
+  const JeopardyCreateScreen({super.key, this.gameId});
 
   @override
   State<JeopardyCreateScreen> createState() => _JeopardyCreateScreenState();
@@ -25,7 +22,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   JeopardyGame? _game;
   bool _isEditing = false;
   bool _isLoading = true;
-  bool _enableDailyDoubles = true;  // Whether to use Daily Doubles
+  bool _enableDailyDoubles = true; // Whether to use Daily Doubles
 
   @override
   void initState() {
@@ -44,7 +41,9 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
 
     if (_isEditing) {
       // Load existing game from Firebase without notifying listeners during build
-      final loadedGame = await jeopardyProvider.loadGameWithoutNotify(widget.gameId!);
+      final loadedGame = await jeopardyProvider.loadGameWithoutNotify(
+        widget.gameId!,
+      );
       if (loadedGame != null && mounted) {
         setState(() {
           _game = loadedGame;
@@ -54,9 +53,9 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       } else {
         // Handle error - game not found
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Game not found')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Game not found')));
           // Use go instead of pop to avoid navigation errors
           context.go('/teacher/games/jeopardy');
         }
@@ -105,9 +104,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
         title: 'Loading...',
         showBackButton: true,
         onBackPressed: () => context.go('/teacher/games/jeopardy'),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -153,10 +150,7 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Categories',
-                  style: theme.textTheme.titleLarge,
-                ),
+                Text('Categories', style: theme.textTheme.titleLarge),
                 FilledButton.icon(
                   onPressed: _addCategory,
                   icon: const Icon(Icons.add),
@@ -173,11 +167,13 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
               return _buildCategorySection(index, category);
             }),
             const SizedBox(height: 24),
-            
+
             // Daily Doubles toggle
             SwitchListTile(
               title: const Text('Enable Daily Doubles'),
-              subtitle: const Text('Add 3 hidden Daily Double questions with wagering'),
+              subtitle: const Text(
+                'Add 3 hidden Daily Double questions with wagering',
+              ),
               value: _enableDailyDoubles,
               onChanged: (value) {
                 setState(() {
@@ -217,7 +213,9 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
                     ),
                     onChanged: (value) {
                       setState(() {
-                        final updatedCategories = List<JeopardyCategory>.from(_game!.categories);
+                        final updatedCategories = List<JeopardyCategory>.from(
+                          _game!.categories,
+                        );
                         updatedCategories[categoryIndex] = JeopardyCategory(
                           name: value,
                           questions: category.questions,
@@ -244,7 +242,10 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   }
 
   Widget _buildQuestionRow(
-      int categoryIndex, int questionIndex, JeopardyQuestion question) {
+    int categoryIndex,
+    int questionIndex,
+    JeopardyQuestion question,
+  ) {
     final theme = Theme.of(context);
 
     return Container(
@@ -311,7 +312,10 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
   }
 
   void _updateQuestion(
-      int categoryIndex, int questionIndex, JeopardyQuestion newQuestion) {
+    int categoryIndex,
+    int questionIndex,
+    JeopardyQuestion newQuestion,
+  ) {
     setState(() {
       final updatedCategories = List<JeopardyCategory>.from(_game!.categories);
       final category = updatedCategories[categoryIndex];
@@ -380,8 +384,9 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       if (hasEmptyQuestions) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content:
-                Text('Please fill in all categories, questions, and answers'),
+            content: Text(
+              'Please fill in all categories, questions, and answers',
+            ),
           ),
         );
         return;
@@ -398,9 +403,14 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       if (_enableDailyDoubles && _game!.categories.isNotEmpty) {
         // Add 3 Daily Doubles in regular Jeopardy (not in first row)
         const int standardJeopardyDailyDoublesCount = 3;
-        dailyDoubles.addAll(_generateDailyDoubles(_game!.categories, standardJeopardyDailyDoublesCount));
+        dailyDoubles.addAll(
+          _generateDailyDoubles(
+            _game!.categories,
+            standardJeopardyDailyDoublesCount,
+          ),
+        );
       }
-      
+
       _game = _game!.copyWith(
         title: _titleController.text,
         updatedAt: DateTime.now(),
@@ -442,29 +452,35 @@ class _JeopardyCreateScreenState extends State<JeopardyCreateScreen> {
       }
     }
   }
-  
+
   // Generate random Daily Double positions
-  List<DailyDouble> _generateDailyDoubles(List<JeopardyCategory> categories, int count, {String round = 'jeopardy'}) {
+  List<DailyDouble> _generateDailyDoubles(
+    List<JeopardyCategory> categories,
+    int count, {
+    String round = 'jeopardy',
+  }) {
     final dailyDoubles = <DailyDouble>[];
     final random = Random();
     final usedPositions = <String>{};
-    
+
     while (dailyDoubles.length < count && categories.isNotEmpty) {
       final categoryIndex = random.nextInt(categories.length);
       // Never place Daily Doubles in the first row (lowest value questions)
-      final questionIndex = random.nextInt(4) + 1;  // Indices 1-4 (skip index 0)
-      
+      final questionIndex = random.nextInt(4) + 1; // Indices 1-4 (skip index 0)
+
       final positionKey = '$categoryIndex-$questionIndex';
       if (!usedPositions.contains(positionKey)) {
         usedPositions.add(positionKey);
-        dailyDoubles.add(DailyDouble(
-          round: round,
-          categoryIndex: categoryIndex,
-          questionIndex: questionIndex,
-        ));
+        dailyDoubles.add(
+          DailyDouble(
+            round: round,
+            categoryIndex: categoryIndex,
+            questionIndex: questionIndex,
+          ),
+        );
       }
     }
-    
+
     return dailyDoubles;
   }
 }

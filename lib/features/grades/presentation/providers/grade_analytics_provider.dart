@@ -44,8 +44,10 @@ class GradeAnalyticsProvider with ChangeNotifier {
   int get trendDays => _trendDays;
 
   /// Load analytics for a specific class
-  Future<void> loadClassAnalytics(String classId,
-      {bool forceRefresh = false}) async {
+  Future<void> loadClassAnalytics(
+    String classId, {
+    bool forceRefresh = false,
+  }) async {
     // Check cache
     if (!forceRefresh && _analyticsCache.containsKey(classId)) {
       return;
@@ -62,8 +64,10 @@ class GradeAnalyticsProvider with ChangeNotifier {
       _analyticsCache[classId] = analytics;
 
       // Load trends
-      final trends =
-          await _analyticsService.getGradeTrends(classId, days: _trendDays);
+      final trends = await _analyticsService.getGradeTrends(
+        classId,
+        days: _trendDays,
+      );
       _trendsCache[classId] = trends;
 
       _loadingStates[classId] = false;
@@ -101,8 +105,10 @@ class GradeAnalyticsProvider with ChangeNotifier {
   /// Load trends for a class
   Future<void> _loadTrends(String classId) async {
     try {
-      final trends =
-          await _analyticsService.getGradeTrends(classId, days: _trendDays);
+      final trends = await _analyticsService.getGradeTrends(
+        classId,
+        days: _trendDays,
+      );
       _trendsCache[classId] = trends;
       notifyListeners();
     } catch (e) {
@@ -119,7 +125,8 @@ class GradeAnalyticsProvider with ChangeNotifier {
 
     for (final analytics in _analyticsCache.values) {
       atRiskStudents.addAll(
-          analytics.studentPerformances.where((s) => s.riskLevel == 'at-risk'));
+        analytics.studentPerformances.where((s) => s.riskLevel == 'at-risk'),
+      );
     }
 
     return atRiskStudents;
@@ -149,8 +156,9 @@ class GradeAnalyticsProvider with ChangeNotifier {
       'totalGraded': totalGraded,
       'totalPending': totalPending,
       'totalStudents': totalStudents,
-      'completionRate':
-          totalAssignments > 0 ? (totalGraded / totalAssignments) * 100 : 0,
+      'completionRate': totalAssignments > 0
+          ? (totalGraded / totalAssignments) * 100
+          : 0,
     };
   }
 
@@ -216,11 +224,13 @@ class GradeAnalyticsProvider with ChangeNotifier {
       final trendValue =
           baseGrade + variation + (29 - i) * 0.1; // Slight upward trend
 
-      trends.add(GradeTrend(
-        date: date,
-        averageGrade: trendValue.clamp(60, 95),
-        assignmentCount: random.nextInt(3) + 1,
-      ));
+      trends.add(
+        GradeTrend(
+          date: date,
+          averageGrade: trendValue.clamp(60, 95),
+          assignmentCount: random.nextInt(3) + 1,
+        ),
+      );
     }
 
     return trends;

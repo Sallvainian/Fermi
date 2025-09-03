@@ -32,9 +32,9 @@ class StudentService {
   /// defaulting to the singleton instance if not provided.
   /// This pattern supports both production use and unit testing.
   StudentService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _studentsCollection =
-            (firestore ?? FirebaseFirestore.instance).collection('students');
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _studentsCollection = (firestore ?? FirebaseFirestore.instance)
+          .collection('students');
 
   // --- Student CRUD Operations ---
 
@@ -109,9 +109,13 @@ class StudentService {
   ///
   /// @return Stream of student lists
   Stream<List<Student>> getAllStudents() {
-    return _studentsCollection.orderBy('displayName').snapshots().map(
-        (snapshot) =>
-            snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList());
+    return _studentsCollection
+        .orderBy('displayName')
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Streams active students only.
@@ -127,12 +131,13 @@ class StudentService {
         .where('isActive', isEqualTo: true)
         .snapshots()
         .map((snapshot) {
-      final students =
-          snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList();
-      // Sort in memory temporarily until index is created
-      students.sort((a, b) => a.displayName.compareTo(b.displayName));
-      return students;
-    });
+          final students = snapshot.docs
+              .map((doc) => Student.fromFirestore(doc))
+              .toList();
+          // Sort in memory temporarily until index is created
+          students.sort((a, b) => a.displayName.compareTo(b.displayName));
+          return students;
+        });
   }
 
   /// Streams students enrolled in a specific class.
@@ -149,8 +154,10 @@ class StudentService {
         .where('classIds', arrayContains: classId)
         .orderBy('displayName')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Streams students filtered by grade level.
@@ -167,8 +174,10 @@ class StudentService {
         .where('gradeLevel', isEqualTo: gradeLevel)
         .orderBy('displayName')
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList(),
+        );
   }
 
   /// Searches students by name or email.
@@ -188,8 +197,9 @@ class StudentService {
       // Get all students and filter on client side
       // TODO: Implement server-side search for better performance
       final snapshot = await _studentsCollection.get();
-      final allStudents =
-          snapshot.docs.map((doc) => Student.fromFirestore(doc)).toList();
+      final allStudents = snapshot.docs
+          .map((doc) => Student.fromFirestore(doc))
+          .toList();
 
       return allStudents.where((student) {
         return student.displayName.toLowerCase().contains(queryLower) ||
@@ -330,7 +340,9 @@ class StudentService {
   /// @param classId ID of the class to enroll in
   /// @throws Exception if batch enrollment fails
   Future<void> bulkEnrollInClass(
-      List<String> studentIds, String classId) async {
+    List<String> studentIds,
+    String classId,
+  ) async {
     try {
       final batch = _firestore.batch();
 
@@ -357,7 +369,9 @@ class StudentService {
   /// @param classId ID of the class to unenroll from
   /// @throws Exception if batch unenrollment fails
   Future<void> bulkUnenrollFromClass(
-      List<String> studentIds, String classId) async {
+    List<String> studentIds,
+    String classId,
+  ) async {
     try {
       final batch = _firestore.batch();
 
@@ -496,8 +510,9 @@ class StudentService {
   /// @throws Exception if statistics retrieval fails
   Future<Map<int, int>> getGradeLevelStatistics() async {
     try {
-      final snapshot =
-          await _studentsCollection.where('isActive', isEqualTo: true).get();
+      final snapshot = await _studentsCollection
+          .where('isActive', isEqualTo: true)
+          .get();
 
       final stats = <int, int>{};
       for (final doc in snapshot.docs) {
@@ -524,23 +539,23 @@ class StudentService {
     try {
       final firestore = FirebaseFirestore.instance;
       final studentsCollection = firestore.collection('students');
-      
+
       // Check if a student document already exists for this user
       final query = await studentsCollection
           .where('uid', isEqualTo: user.uid)
           .limit(1)
           .get();
-      
+
       if (query.docs.isNotEmpty) {
         // Student document already exists
         return false;
       }
-      
+
       // Parse display name for first and last name
       String firstName = '';
       String lastName = '';
       String displayName = user.displayName ?? '';
-      
+
       if (displayName.isNotEmpty) {
         final nameParts = displayName.split(' ');
         firstName = nameParts.isNotEmpty ? nameParts.first : '';
@@ -550,7 +565,7 @@ class StudentService {
         firstName = user.email!.split('@').first;
         displayName = firstName;
       }
-      
+
       // Generate a username from email or uid
       String username = '';
       if (user.email != null) {
@@ -558,7 +573,7 @@ class StudentService {
       } else {
         username = 'student_${user.uid.substring(0, 8)}';
       }
-      
+
       // Create the student document
       final now = DateTime.now();
       final studentData = {
@@ -578,15 +593,15 @@ class StudentService {
         'passwordChanged': true, // They're using their own auth
         'metadata': {
           'createdFrom': 'auto_creation',
-          'authProvider': user.providerData.isNotEmpty 
-              ? user.providerData.first.providerId 
+          'authProvider': user.providerData.isNotEmpty
+              ? user.providerData.first.providerId
               : 'unknown',
         },
       };
-      
+
       // Add the student document to Firestore
       await studentsCollection.add(studentData);
-      
+
       return true;
     } catch (e) {
       // Error creating student document: $e

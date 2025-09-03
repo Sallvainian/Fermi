@@ -8,10 +8,7 @@ import 'create_student_dialog.dart';
 class EnrollStudentsDialog extends StatefulWidget {
   final ClassModel classModel;
 
-  const EnrollStudentsDialog({
-    super.key,
-    required this.classModel,
-  });
+  const EnrollStudentsDialog({super.key, required this.classModel});
 
   @override
   State<EnrollStudentsDialog> createState() => _EnrollStudentsDialogState();
@@ -69,9 +66,7 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(),
-      ),
+      builder: (context) => const Center(child: CircularProgressIndicator()),
     );
 
     try {
@@ -88,7 +83,8 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Successfully enrolled ${_selectedStudentIds.length} student(s)'),
+                'Successfully enrolled ${_selectedStudentIds.length} student(s)',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -157,8 +153,9 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
                       )
                     : null,
                 filled: true,
-                fillColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -171,8 +168,10 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
             // Selected count
             if (_selectedStudentIds.isNotEmpty)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(8),
@@ -188,9 +187,7 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
             const SizedBox(height: 8),
 
             // Results list
-            Expanded(
-              child: _buildResultsList(),
-            ),
+            Expanded(child: _buildResultsList()),
           ],
         ),
       ),
@@ -206,8 +203,9 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
-          onPressed:
-              _selectedStudentIds.isEmpty ? null : _enrollSelectedStudents,
+          onPressed: _selectedStudentIds.isEmpty
+              ? null
+              : _enrollSelectedStudents,
           child: Text('Add ${_selectedStudentIds.length} Student(s)'),
         ),
       ],
@@ -264,8 +262,8 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
             Text(
               'Type a student name or email above',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -291,8 +289,8 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
             Text(
               'Try a different search term',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

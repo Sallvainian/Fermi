@@ -20,9 +20,11 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
     super.initState();
     _presenceService = PresenceService();
     // Create broadcast stream to allow multiple listeners
-    _onlineUsersStream = _presenceService.getOnlineUsers(excludeSelf: widget.excludeSelf).asBroadcastStream();
+    _onlineUsersStream = _presenceService
+        .getOnlineUsers(excludeSelf: widget.excludeSelf)
+        .asBroadcastStream();
   }
-  
+
   @override
   void dispose() {
     // Clean up stream subscription
@@ -64,8 +66,10 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
             stream: _onlineUsersStream,
             builder: (context, snapshot) {
               // Debug output
-              debugPrint('OnlineUsersCard: StreamBuilder rebuild - connectionState: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data length: ${snapshot.data?.length ?? 0}');
-              
+              debugPrint(
+                'OnlineUsersCard: StreamBuilder rebuild - connectionState: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, data length: ${snapshot.data?.length ?? 0}',
+              );
+
               if (snapshot.hasError) {
                 // Handle error state
                 return Padding(
@@ -111,8 +115,9 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
                         Icon(
                           Icons.people_outline,
                           size: 48,
-                          color: theme.colorScheme.onSurfaceVariant
-                              .withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -163,19 +168,13 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
               decoration: BoxDecoration(
                 color: Colors.green,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: theme.colorScheme.surface,
-                  width: 2,
-                ),
+                border: Border.all(color: theme.colorScheme.surface, width: 2),
               ),
             ),
           ),
         ],
       ),
-      title: Text(
-        user.displayName,
-        style: theme.textTheme.titleSmall,
-      ),
+      title: Text(user.displayName, style: theme.textTheme.titleSmall),
       subtitle: _buildUserSubtitle(context, user),
       onTap: () {
         // Navigate to messages to start a chat with this user
@@ -188,18 +187,19 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
   Widget _buildUserSubtitle(BuildContext context, OnlineUser user) {
     final theme = Theme.of(context);
     final rawRole = user.role ?? 'user';
-    
+
     // Clean the role text (remove "user role " prefix if present)
     String cleanRole = rawRole;
     if (rawRole.contains('user role ')) {
       cleanRole = rawRole.replaceFirst('user role ', '');
     }
-    
-    final roleText = cleanRole.substring(0, 1).toUpperCase() + cleanRole.substring(1);
-    
+
+    final roleText =
+        cleanRole.substring(0, 1).toUpperCase() + cleanRole.substring(1);
+
     // Get activity status
     final activityText = user.isActive ? 'Active now' : user.relativeTime;
-    
+
     return Row(
       children: [
         _buildRoleChip(context, roleText),
@@ -216,11 +216,11 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
 
   Widget _buildRoleChip(BuildContext context, String role) {
     final theme = Theme.of(context);
-    
+
     // Define role colors
     Color backgroundColor;
     Color textColor = Colors.white;
-    
+
     switch (role.toLowerCase()) {
       case 'teacher':
         backgroundColor = Colors.red.shade700;
@@ -232,7 +232,7 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
         backgroundColor = theme.colorScheme.primary;
         textColor = theme.colorScheme.onPrimary;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
@@ -292,7 +292,8 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
           // Log error for debugging but don't show it to user
           if (error.toString().contains('CORS')) {
             debugPrint(
-                'CORS error loading profile image. Run apply_cors.sh to fix.');
+              'CORS error loading profile image. Run apply_cors.sh to fix.',
+            );
           }
           return buildInitialsAvatar();
         },

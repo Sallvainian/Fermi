@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+// Note: no direct Flutter foundation usage; using LoggerService for logs
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/calendar_event.dart';
 
@@ -52,13 +52,19 @@ class SimpleCalendarService {
           hasReminder: data['hasReminder'] ?? false,
           reminderMinutes: data['reminderMinutes'],
           metadata: data['metadata'],
-          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          createdAt:
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          updatedAt:
+              (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
           isActive: data['isActive'] ?? true,
         );
       }).toList();
     } catch (e) {
-      LoggerService.error('Error loading events', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error loading events',
+        error: e,
+        tag: 'CalendarService',
+      );
       return [];
     }
   }
@@ -74,56 +80,60 @@ class SimpleCalendarService {
         .orderBy('startTime')
         .snapshots()
         .map((snapshot) {
-      final events = snapshot.docs.map((doc) {
-        final data = doc.data();
-        return CalendarEvent(
-          id: doc.id,
-          title: data['title'] ?? '',
-          description: data['description'],
-          type: EventType.fromString(data['type'] ?? 'other'),
-          startTime: (data['startTime'] as Timestamp).toDate(),
-          endTime: data['endTime'] != null
-              ? (data['endTime'] as Timestamp).toDate()
-              : null,
-          isAllDay: data['isAllDay'] ?? false,
-          location: data['location'],
-          createdBy: data['createdBy'] ?? '',
-          createdByName: data['createdByName'] ?? '',
-          classId: data['classId'],
-          assignmentId: data['assignmentId'],
-          participantIds: data['participantIds'] != null
-              ? List<String>.from(data['participantIds'])
-              : null,
-          participantEmails: data['participantEmails'] != null
-              ? List<String>.from(data['participantEmails'])
-              : null,
-          colorHex: data['colorHex'],
-          recurrence: RecurrenceType.fromString(data['recurrence'] ?? 'none'),
-          recurrenceEndDate: data['recurrenceEndDate'] != null
-              ? (data['recurrenceEndDate'] as Timestamp).toDate()
-              : null,
-          recurrenceDetails: data['recurrenceDetails'],
-          hasReminder: data['hasReminder'] ?? false,
-          reminderMinutes: data['reminderMinutes'],
-          metadata: data['metadata'],
-          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          isActive: data['isActive'] ?? true,
-        );
-      }).toList();
+          final events = snapshot.docs.map((doc) {
+            final data = doc.data();
+            return CalendarEvent(
+              id: doc.id,
+              title: data['title'] ?? '',
+              description: data['description'],
+              type: EventType.fromString(data['type'] ?? 'other'),
+              startTime: (data['startTime'] as Timestamp).toDate(),
+              endTime: data['endTime'] != null
+                  ? (data['endTime'] as Timestamp).toDate()
+                  : null,
+              isAllDay: data['isAllDay'] ?? false,
+              location: data['location'],
+              createdBy: data['createdBy'] ?? '',
+              createdByName: data['createdByName'] ?? '',
+              classId: data['classId'],
+              assignmentId: data['assignmentId'],
+              participantIds: data['participantIds'] != null
+                  ? List<String>.from(data['participantIds'])
+                  : null,
+              participantEmails: data['participantEmails'] != null
+                  ? List<String>.from(data['participantEmails'])
+                  : null,
+              colorHex: data['colorHex'],
+              recurrence: RecurrenceType.fromString(
+                data['recurrence'] ?? 'none',
+              ),
+              recurrenceEndDate: data['recurrenceEndDate'] != null
+                  ? (data['recurrenceEndDate'] as Timestamp).toDate()
+                  : null,
+              recurrenceDetails: data['recurrenceDetails'],
+              hasReminder: data['hasReminder'] ?? false,
+              reminderMinutes: data['reminderMinutes'],
+              metadata: data['metadata'],
+              createdAt:
+                  (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              updatedAt:
+                  (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              isActive: data['isActive'] ?? true,
+            );
+          }).toList();
 
-      // Group by date
-      final grouped = <DateTime, List<CalendarEvent>>{};
-      for (final event in events) {
-        final date = DateTime(
-          event.startTime.year,
-          event.startTime.month,
-          event.startTime.day,
-        );
-        grouped[date] = (grouped[date] ?? [])..add(event);
-      }
-      return grouped;
-    });
+          // Group by date
+          final grouped = <DateTime, List<CalendarEvent>>{};
+          for (final event in events) {
+            final date = DateTime(
+              event.startTime.year,
+              event.startTime.month,
+              event.startTime.day,
+            );
+            grouped[date] = (grouped[date] ?? [])..add(event);
+          }
+          return grouped;
+        });
   }
 
   /// Create calendar event with proper parameters
@@ -183,7 +193,11 @@ class SimpleCalendarService {
 
       return docRef.id;
     } catch (e) {
-      LoggerService.error('Error creating event', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error creating event',
+        error: e,
+        tag: 'CalendarService',
+      );
       rethrow;
     }
   }
@@ -192,9 +206,16 @@ class SimpleCalendarService {
   Future<void> updateEvent(String eventId, Map<String, dynamic> updates) async {
     try {
       updates['updatedAt'] = FieldValue.serverTimestamp();
-      await _firestore.collection('calendar_events').doc(eventId).update(updates);
+      await _firestore
+          .collection('calendar_events')
+          .doc(eventId)
+          .update(updates);
     } catch (e) {
-      LoggerService.error('Error updating event', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error updating event',
+        error: e,
+        tag: 'CalendarService',
+      );
       rethrow;
     }
   }
@@ -204,13 +225,20 @@ class SimpleCalendarService {
     try {
       await _firestore.collection('calendar_events').doc(eventId).delete();
     } catch (e) {
-      LoggerService.error('Error deleting event', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error deleting event',
+        error: e,
+        tag: 'CalendarService',
+      );
       rethrow;
     }
   }
 
   /// Get events for a specific date range
-  Future<List<CalendarEvent>> getEventsInRange(DateTime start, DateTime end) async {
+  Future<List<CalendarEvent>> getEventsInRange(
+    DateTime start,
+    DateTime end,
+  ) async {
     try {
       final user = _auth.currentUser;
       if (user == null) return [];
@@ -263,13 +291,19 @@ class SimpleCalendarService {
           hasReminder: data['hasReminder'] ?? false,
           reminderMinutes: data['reminderMinutes'],
           metadata: data['metadata'],
-          createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          createdAt:
+              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          updatedAt:
+              (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
           isActive: data['isActive'] ?? true,
         );
       }).toList();
     } catch (e) {
-      LoggerService.error('Error loading events in range', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error loading events in range',
+        error: e,
+        tag: 'CalendarService',
+      );
       return [];
     }
   }
@@ -317,44 +351,54 @@ class SimpleCalendarService {
 
         // Check for overlap
         if (startTime.isBefore(eventEnd) && endTime.isAfter(eventStart)) {
-          conflicts.add(CalendarEvent(
-            id: doc.id,
-            title: data['title'] ?? '',
-            description: data['description'],
-            type: EventType.fromString(data['type'] ?? 'other'),
-            startTime: eventStart,
-            endTime: eventEnd,
-            isAllDay: data['isAllDay'] ?? false,
-            location: data['location'],
-            createdBy: data['createdBy'] ?? '',
-            createdByName: data['createdByName'] ?? '',
-            classId: data['classId'],
-            assignmentId: data['assignmentId'],
-            participantIds: data['participantIds'] != null
-                ? List<String>.from(data['participantIds'])
-                : null,
-            participantEmails: data['participantEmails'] != null
-                ? List<String>.from(data['participantEmails'])
-                : null,
-            colorHex: data['colorHex'],
-            recurrence: RecurrenceType.fromString(data['recurrence'] ?? 'none'),
-            recurrenceEndDate: data['recurrenceEndDate'] != null
-                ? (data['recurrenceEndDate'] as Timestamp).toDate()
-                : null,
-            recurrenceDetails: data['recurrenceDetails'],
-            hasReminder: data['hasReminder'] ?? false,
-            reminderMinutes: data['reminderMinutes'],
-            metadata: data['metadata'],
-            createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-            updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-            isActive: data['isActive'] ?? true,
-          ));
+          conflicts.add(
+            CalendarEvent(
+              id: doc.id,
+              title: data['title'] ?? '',
+              description: data['description'],
+              type: EventType.fromString(data['type'] ?? 'other'),
+              startTime: eventStart,
+              endTime: eventEnd,
+              isAllDay: data['isAllDay'] ?? false,
+              location: data['location'],
+              createdBy: data['createdBy'] ?? '',
+              createdByName: data['createdByName'] ?? '',
+              classId: data['classId'],
+              assignmentId: data['assignmentId'],
+              participantIds: data['participantIds'] != null
+                  ? List<String>.from(data['participantIds'])
+                  : null,
+              participantEmails: data['participantEmails'] != null
+                  ? List<String>.from(data['participantEmails'])
+                  : null,
+              colorHex: data['colorHex'],
+              recurrence: RecurrenceType.fromString(
+                data['recurrence'] ?? 'none',
+              ),
+              recurrenceEndDate: data['recurrenceEndDate'] != null
+                  ? (data['recurrenceEndDate'] as Timestamp).toDate()
+                  : null,
+              recurrenceDetails: data['recurrenceDetails'],
+              hasReminder: data['hasReminder'] ?? false,
+              reminderMinutes: data['reminderMinutes'],
+              metadata: data['metadata'],
+              createdAt:
+                  (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              updatedAt:
+                  (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+              isActive: data['isActive'] ?? true,
+            ),
+          );
         }
       }
 
       return conflicts;
     } catch (e) {
-      LoggerService.error('Error checking conflicts', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error checking conflicts',
+        error: e,
+        tag: 'CalendarService',
+      );
       return [];
     }
   }
@@ -367,7 +411,11 @@ class SimpleCalendarService {
           .doc(event.id)
           .update(event.toFirestore());
     } catch (e) {
-      LoggerService.error('Error updating calendar event', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error updating calendar event',
+        error: e,
+        tag: 'CalendarService',
+      );
       rethrow;
     }
   }
@@ -377,7 +425,11 @@ class SimpleCalendarService {
     try {
       await _firestore.collection('calendar_events').doc(eventId).delete();
     } catch (e) {
-      LoggerService.error('Error deleting calendar event', error: e, tag: 'CalendarService');
+      LoggerService.error(
+        'Error deleting calendar event',
+        error: e,
+        tag: 'CalendarService',
+      );
       rethrow;
     }
   }

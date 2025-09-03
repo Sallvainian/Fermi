@@ -11,7 +11,7 @@ enum CallState {
   connecting,
   connected,
   reconnecting,
-  error
+  error,
 }
 
 class Call {

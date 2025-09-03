@@ -57,9 +57,9 @@ Future<void> runUserRoleMigration(BuildContext context) async {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(data['success'] == true
-              ? 'Migration Complete'
-              : 'Migration Failed'),
+          title: Text(
+            data['success'] == true ? 'Migration Complete' : 'Migration Failed',
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,8 +71,10 @@ Future<void> runUserRoleMigration(BuildContext context) async {
               Text('Errors: ${data['errorCount']}'),
               if (data['errors'] != null) ...[
                 const SizedBox(height: 8),
-                const Text('Errors:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Errors:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 ...((data['errors'] as List).map((e) => Text('• $e'))),
               ],
             ],
