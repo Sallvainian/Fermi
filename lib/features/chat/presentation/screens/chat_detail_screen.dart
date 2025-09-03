@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -8,7 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_compress/video_compress.dart';
-import '../../../../shared/services/logger_service.dart';
+// (removed duplicate logger_service import)
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -1089,7 +1090,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           }
         } catch (compressionError) {
           // If compression fails, use original file
-          debugPrint('Video compression failed: $compressionError');
+          LoggerService.warning('Video compression failed', tag: 'ChatDetailScreen');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -1159,7 +1160,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             await compressedFile.delete();
           }
         } catch (e) {
-          debugPrint('Failed to delete compressed video: $e');
+          LoggerService.warning('Failed to delete compressed video', tag: 'ChatDetailScreen');
         }
       }
     } catch (e) {

@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/chat_provider_simple.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -440,16 +441,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
               leading: const Icon(Icons.person),
               title: const Text('Direct Message'),
               onTap: () {
-                debugPrint('DEBUG: Direct Message clicked');
+                LoggerService.debug('Direct Message clicked', tag: 'ChatListScreen');
                 // Close dialog FIRST
                 Navigator.of(dialogContext).pop();
 
                 // Navigate directly without delay - just GO there!
-                debugPrint('DEBUG: About to navigate to user selection');
+                LoggerService.debug('About to navigate to user selection', tag: 'ChatListScreen');
                 parentContext.go(
                   '/messages/select-user',
                 ); // Try a different route
-                debugPrint('DEBUG: Navigation command sent');
+                LoggerService.debug('Navigation command sent', tag: 'ChatListScreen');
               },
             ),
             ListTile(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -416,7 +417,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         'lastMessageTime': FieldValue.serverTimestamp(),
       });
 
-      debugPrint('Created new chat room: ${chatRoomRef.id}');
+      LoggerService.info('Created new chat room: ${chatRoomRef.id}', tag: 'SimpleChatScreen');
 
       // Navigate to the actual chat room URL
       if (mounted) {
@@ -430,7 +431,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       return chatRoomRef.id;
     } catch (e) {
-      debugPrint('Error creating chat room: $e');
+      LoggerService.error('Error creating chat room', tag: 'SimpleChatScreen', error: e);
       return '';
     }
   }
@@ -465,9 +466,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
       // Upload to Firebase Storage
       final String fileName =
           '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
-      debugPrint(
-        'DEBUG: Uploading to path: chat_images/$chatRoomIdToUse/$fileName',
-      );
+      LoggerService.debug('Uploading to chat_images/$chatRoomIdToUse/$fileName', tag: 'SimpleChatScreen');
       final Reference ref = _storage
           .ref()
           .child('chat_images')

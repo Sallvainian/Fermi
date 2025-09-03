@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class SimpleUserList extends StatelessWidget {
   const SimpleUserList({super.key});
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('DEBUG: SimpleUserList build() called');
+    LoggerService.debug('build() called', tag: 'SimpleUserList');
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    debugPrint('DEBUG: Current user ID: $currentUserId');
+    LoggerService.debug('Current user ID: $currentUserId', tag: 'SimpleUserList');
 
     return Scaffold(
       appBar: AppBar(
