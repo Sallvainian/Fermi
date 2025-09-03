@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../utils/auth_error_mapper.dart';
 
 import '../../../shared/models/user_model.dart';
 import '../data/services/auth_service.dart';
@@ -638,114 +639,20 @@ class AuthProvider extends ChangeNotifier {
 
   /// Handle sign-in specific errors
   void _handleSignInError(dynamic error) {
-    String message = 'Sign in failed';
-
-    if (error is firebase_auth.FirebaseAuthException) {
-      switch (error.code) {
-        case 'user-not-found':
-          message = 'No account found with this email';
-          break;
-        case 'wrong-password':
-          message = 'Incorrect password';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled';
-          break;
-        case 'invalid-credential':
-          message = 'Invalid email or password';
-          break;
-        default:
-          message = error.message ?? 'Authentication failed';
-      }
-    } else {
-      message = error.toString();
-    }
-
+    final message = AuthErrorMapper.signInMessage(error);
     _handleAuthError(message);
   }
 
   /// Handle OAuth specific errors
   void _handleOAuthError(dynamic error, String provider) {
-    String message = '$provider sign-in failed';
-
-    // Structured error logging
-    LoggerService.error('OAuth error', tag: 'AuthProvider', error: error);
-    LoggerService.debug('Provider: $provider | Platform: ${kIsWeb ? "Web" : "Desktop"}', tag: 'AuthProvider');
-
-    final errorString = error.toString();
-
-    if (error is firebase_auth.FirebaseAuthException) {
-      switch (error.code) {
-        case 'account-exists-with-different-credential':
-          message = 'An account already exists with the same email address';
-          break;
-        case 'invalid-credential':
-          message = 'Invalid $provider credentials';
-          break;
-        case 'operation-not-allowed':
-          message = '$provider sign-in is not enabled';
-          break;
-        case 'user-disabled':
-          message = 'This account has been disabled';
-          break;
-        default:
-          message = error.message ?? '$provider authentication failed';
-      }
-    } else if (errorString.contains('not available') ||
-        errorString.contains('not built with OAuth')) {
-      // OAuth credentials missing - common in dev builds
-      message =
-          'Google Sign-In is not available in this version. Please use email/password sign-in.';
-    } else if (errorString.contains('OAuth') ||
-        errorString.contains('authentication server')) {
-      // Better error message that actually helps users
-      message =
-          'Sign-in service temporarily unavailable. Please try again or use email/password sign-in';
-    } else if (errorString.contains('network') ||
-        errorString.contains('connection')) {
-      message = 'Network error. Please check your connection';
-    } else if (errorString.contains('Failed to open browser')) {
-      message =
-          'Could not open browser for sign-in. Please check your default browser settings.';
-    } else if (errorString.contains('Authorization was cancelled')) {
-      message = 'Sign-in was cancelled';
-    } else {
-      // Generic error - concise but actionable
-      LoggerService.error('Unhandled OAuth error', tag: 'AuthProvider', error: error);
-      message = 'Sign-in failed. Please use email/password sign-in instead.';
-    }
-
+    AuthErrorMapper.logOAuthError(error, provider);
+    final message = AuthErrorMapper.oAuthMessage(error, provider);
     _handleAuthError(message);
   }
 
   /// Handle sign-up specific errors
   void _handleSignUpError(dynamic error) {
-    String message = 'Sign up failed';
-
-    if (error is firebase_auth.FirebaseAuthException) {
-      switch (error.code) {
-        case 'email-already-in-use':
-          message = 'An account already exists with this email';
-          break;
-        case 'invalid-email':
-          message = 'Invalid email address';
-          break;
-        case 'weak-password':
-          message = 'Password is too weak';
-          break;
-        case 'operation-not-allowed':
-          message = 'Email/password accounts are not enabled';
-          break;
-        default:
-          message = error.message ?? 'Account creation failed';
-      }
-    } else {
-      message = error.toString();
-    }
-
+    final message = AuthErrorMapper.signUpMessage(error);
     _handleAuthError(message);
   }
 

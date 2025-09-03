@@ -51,3 +51,4 @@ Future<void> main() async {
 
   print('Done.');
 }
+// ignore_for_file: avoid_print

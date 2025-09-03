@@ -36,8 +36,31 @@ class LoggerService {
 
   /// Minimum log level to display (can be configured via environment)
   static LogLevel minimumLogLevel = kDebugMode
-      ? LogLevel.warning
+      ? LogLevel.info
       : LogLevel.warning;
+
+  /// Optional external sinks for log forwarding (e.g., remote logging)
+  ///
+  /// A sink receives the formatted components and can decide how to handle them.
+  static final List<void Function(DateTime, LogLevel, String?, String, dynamic, StackTrace?)>
+      _sinks = [];
+
+  /// Programmatically adjust minimum log level (e.g., per flavor or env)
+  static void setMinimumLogLevel(LogLevel level) {
+    minimumLogLevel = level;
+  }
+
+  /// Register an external sink to receive logs
+  static void addSink(
+    void Function(DateTime, LogLevel, String?, String, dynamic, StackTrace?) sink,
+  ) {
+    _sinks.add(sink);
+  }
+
+  /// Remove all registered sinks
+  static void clearSinks() {
+    _sinks.clear();
+  }
 
   /// Logs a debug message (only in debug mode).
   ///
@@ -154,6 +177,22 @@ class LoggerService {
       // In production, just print warnings and errors
       if (level == LogLevel.warning || level == LogLevel.error) {
         debugPrint(logMessage);
+      }
+    }
+
+    // Forward to external sinks if any
+    for (final sink in _sinks) {
+      try {
+        sink(
+          DateTime.now(),
+          level,
+          tag,
+          message,
+          error,
+          stackTrace,
+        );
+      } catch (_) {
+        // Never let sinks break logging
       }
     }
   }
