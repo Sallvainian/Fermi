@@ -145,3 +145,8 @@ fastlane/*.pkg
 .trae/rules/
 rebuild_ios.sh
 node_modules/
+## Fastlane artifacts
+fastlane/report.xml
+fastlane/report.html
+fastlane/screenshots/
+fastlane/test_output/
