@@ -9,9 +9,7 @@ class SimpleUserList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    this.logDebug('build() called');
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    this.logDebug('Current user ID: $currentUserId');
 
     return Scaffold(
       appBar: AppBar(

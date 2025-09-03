@@ -66,7 +66,7 @@ class _SignupScreenState extends State<SignupScreen> {
           _isTeacherRole = role == 'teacher';
         });
       } catch (e) {
-        debugPrint('Error parsing role parameter: $e');
+        LoggerService.error('Error parsing role parameter: $e', tag: 'SignupScreen');
       }
     });
   }
