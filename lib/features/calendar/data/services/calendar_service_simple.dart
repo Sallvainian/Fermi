@@ -20,45 +20,9 @@ class SimpleCalendarService {
           .where('participantIds', arrayContains: user.uid)
           .get();
 
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return CalendarEvent(
-          id: doc.id,
-          title: data['title'] ?? '',
-          description: data['description'],
-          type: EventType.fromString(data['type'] ?? 'other'),
-          startTime: (data['startTime'] as Timestamp).toDate(),
-          endTime: data['endTime'] != null
-              ? (data['endTime'] as Timestamp).toDate()
-              : null,
-          isAllDay: data['isAllDay'] ?? false,
-          location: data['location'],
-          createdBy: data['createdBy'] ?? '',
-          createdByName: data['createdByName'] ?? '',
-          classId: data['classId'],
-          assignmentId: data['assignmentId'],
-          participantIds: data['participantIds'] != null
-              ? List<String>.from(data['participantIds'])
-              : null,
-          participantEmails: data['participantEmails'] != null
-              ? List<String>.from(data['participantEmails'])
-              : null,
-          colorHex: data['colorHex'],
-          recurrence: RecurrenceType.fromString(data['recurrence'] ?? 'none'),
-          recurrenceEndDate: data['recurrenceEndDate'] != null
-              ? (data['recurrenceEndDate'] as Timestamp).toDate()
-              : null,
-          recurrenceDetails: data['recurrenceDetails'],
-          hasReminder: data['hasReminder'] ?? false,
-          reminderMinutes: data['reminderMinutes'],
-          metadata: data['metadata'],
-          createdAt:
-              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt:
-              (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          isActive: data['isActive'] ?? true,
-        );
-      }).toList();
+      return snapshot.docs
+          .map((doc) => CalendarEvent.fromFirestore(doc))
+          .toList();
     } catch (e) {
       LoggerService.error(
         'Error loading events',
@@ -80,47 +44,9 @@ class SimpleCalendarService {
         .orderBy('startTime')
         .snapshots()
         .map((snapshot) {
-          final events = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return CalendarEvent(
-              id: doc.id,
-              title: data['title'] ?? '',
-              description: data['description'],
-              type: EventType.fromString(data['type'] ?? 'other'),
-              startTime: (data['startTime'] as Timestamp).toDate(),
-              endTime: data['endTime'] != null
-                  ? (data['endTime'] as Timestamp).toDate()
-                  : null,
-              isAllDay: data['isAllDay'] ?? false,
-              location: data['location'],
-              createdBy: data['createdBy'] ?? '',
-              createdByName: data['createdByName'] ?? '',
-              classId: data['classId'],
-              assignmentId: data['assignmentId'],
-              participantIds: data['participantIds'] != null
-                  ? List<String>.from(data['participantIds'])
-                  : null,
-              participantEmails: data['participantEmails'] != null
-                  ? List<String>.from(data['participantEmails'])
-                  : null,
-              colorHex: data['colorHex'],
-              recurrence: RecurrenceType.fromString(
-                data['recurrence'] ?? 'none',
-              ),
-              recurrenceEndDate: data['recurrenceEndDate'] != null
-                  ? (data['recurrenceEndDate'] as Timestamp).toDate()
-                  : null,
-              recurrenceDetails: data['recurrenceDetails'],
-              hasReminder: data['hasReminder'] ?? false,
-              reminderMinutes: data['reminderMinutes'],
-              metadata: data['metadata'],
-              createdAt:
-                  (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-              updatedAt:
-                  (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-              isActive: data['isActive'] ?? true,
-            );
-          }).toList();
+          final events = snapshot.docs
+              .map((doc) => CalendarEvent.fromFirestore(doc))
+              .toList();
 
           // Group by date
           final grouped = <DateTime, List<CalendarEvent>>{};
@@ -259,45 +185,9 @@ class SimpleCalendarService {
         return startTime.compareTo(endTimestamp) <= 0;
       }).toList();
 
-      return filteredDocs.map((doc) {
-        final data = doc.data();
-        return CalendarEvent(
-          id: doc.id,
-          title: data['title'] ?? '',
-          description: data['description'],
-          type: EventType.fromString(data['type'] ?? 'other'),
-          startTime: (data['startTime'] as Timestamp).toDate(),
-          endTime: data['endTime'] != null
-              ? (data['endTime'] as Timestamp).toDate()
-              : null,
-          isAllDay: data['isAllDay'] ?? false,
-          location: data['location'],
-          createdBy: data['createdBy'] ?? '',
-          createdByName: data['createdByName'] ?? '',
-          classId: data['classId'],
-          assignmentId: data['assignmentId'],
-          participantIds: data['participantIds'] != null
-              ? List<String>.from(data['participantIds'])
-              : null,
-          participantEmails: data['participantEmails'] != null
-              ? List<String>.from(data['participantEmails'])
-              : null,
-          colorHex: data['colorHex'],
-          recurrence: RecurrenceType.fromString(data['recurrence'] ?? 'none'),
-          recurrenceEndDate: data['recurrenceEndDate'] != null
-              ? (data['recurrenceEndDate'] as Timestamp).toDate()
-              : null,
-          recurrenceDetails: data['recurrenceDetails'],
-          hasReminder: data['hasReminder'] ?? false,
-          reminderMinutes: data['reminderMinutes'],
-          metadata: data['metadata'],
-          createdAt:
-              (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          updatedAt:
-              (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          isActive: data['isActive'] ?? true,
-        );
-      }).toList();
+      return filteredDocs
+          .map((doc) => CalendarEvent.fromFirestore(doc))
+          .toList();
     } catch (e) {
       LoggerService.error(
         'Error loading events in range',
@@ -351,44 +241,7 @@ class SimpleCalendarService {
 
         // Check for overlap
         if (startTime.isBefore(eventEnd) && endTime.isAfter(eventStart)) {
-          conflicts.add(
-            CalendarEvent(
-              id: doc.id,
-              title: data['title'] ?? '',
-              description: data['description'],
-              type: EventType.fromString(data['type'] ?? 'other'),
-              startTime: eventStart,
-              endTime: eventEnd,
-              isAllDay: data['isAllDay'] ?? false,
-              location: data['location'],
-              createdBy: data['createdBy'] ?? '',
-              createdByName: data['createdByName'] ?? '',
-              classId: data['classId'],
-              assignmentId: data['assignmentId'],
-              participantIds: data['participantIds'] != null
-                  ? List<String>.from(data['participantIds'])
-                  : null,
-              participantEmails: data['participantEmails'] != null
-                  ? List<String>.from(data['participantEmails'])
-                  : null,
-              colorHex: data['colorHex'],
-              recurrence: RecurrenceType.fromString(
-                data['recurrence'] ?? 'none',
-              ),
-              recurrenceEndDate: data['recurrenceEndDate'] != null
-                  ? (data['recurrenceEndDate'] as Timestamp).toDate()
-                  : null,
-              recurrenceDetails: data['recurrenceDetails'],
-              hasReminder: data['hasReminder'] ?? false,
-              reminderMinutes: data['reminderMinutes'],
-              metadata: data['metadata'],
-              createdAt:
-                  (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-              updatedAt:
-                  (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-              isActive: data['isActive'] ?? true,
-            ),
-          );
+          conflicts.add(CalendarEvent.fromFirestore(doc));
         }
       }
 

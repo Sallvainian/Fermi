@@ -59,6 +59,7 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper>
         if (difference.inMinutes >= 15) {
           // Been away for 15+ minutes, require password
           await prefs.setBool('app_unlocked', false);
+          if (!mounted) return;
           setState(() {
             _isUnlocked = false;
           });
@@ -141,6 +142,7 @@ class _AppPasswordWrapperState extends State<AppPasswordWrapper>
       _hasAuthenticatedUser = false;
     }
 
+    if (!mounted) return;
     setState(() {
       _isUnlocked = false;
       _isChecking = false;

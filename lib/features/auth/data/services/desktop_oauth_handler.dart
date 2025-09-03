@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
@@ -40,8 +41,9 @@ class DesktopOAuthHandler {
         throw ArgumentError('OAuth client ID and secret are required');
       }
 
-      debugPrint(
+      LoggerService.info(
         'OAuth: Starting flow with client ID: ${clientId.substring(0, 10)}...',
+        tag: 'DesktopOAuth',
       );
 
       // Close any existing redirect server
@@ -53,16 +55,34 @@ class DesktopOAuthHandler {
       final port = _redirectServer!.port;
       final redirectUrl = 'http://localhost:$port';
 
-      debugPrint('OAuth: Started local server on port $port');
-      debugPrint('OAuth: Redirect URI: $redirectUrl');
-      debugPrint('');
-      debugPrint('=== IMPORTANT: Google Cloud Console Configuration ===');
-      debugPrint('1. OAuth 2.0 Client Type: Web application (NOT Desktop!)');
-      debugPrint('2. Authorized JavaScript origins: http://localhost');
-      debugPrint('3. Authorized redirect URIs: http://localhost');
-      debugPrint('   (Both should be WITHOUT port number)');
-      debugPrint('=====================================================');
-      debugPrint('');
+      LoggerService.info(
+        'OAuth: Started local server on port $port',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.info(
+        'OAuth: Redirect URI: $redirectUrl',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        '=== IMPORTANT: Google Cloud Console Configuration ===',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        '1. OAuth 2.0 Client Type: Web application (NOT Desktop!)',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        '2. Authorized JavaScript origins: http://localhost',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        '3. Authorized redirect URIs: http://localhost',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        '   (Both should be WITHOUT port number)',
+        tag: 'DesktopOAuth',
+      );
 
       // Create OAuth2 client
       final client = await _getOauthClient(
@@ -76,7 +96,7 @@ class DesktopOAuthHandler {
 
       return client.credentials;
     } catch (e) {
-      debugPrint('OAuth flow error: $e');
+      LoggerService.error('OAuth flow error', error: e, tag: 'DesktopOAuth');
       await _redirectServer?.close();
       _redirectServer = null;
 
@@ -122,7 +142,10 @@ class DesktopOAuthHandler {
       scopes: [_emailScope, _profileScope, _openIdScope],
     );
 
-    debugPrint('OAuth: Opening browser for authorization');
+    LoggerService.info(
+      'OAuth: Opening browser for authorization',
+      tag: 'DesktopOAuth',
+    );
 
     // Open browser for user authorization
     await _redirect(authorizationUrl);
@@ -131,25 +154,38 @@ class DesktopOAuthHandler {
     final responseParams = await _listen();
 
     // Exchange authorization code for access token
-    debugPrint('OAuth: Exchanging authorization code for tokens...');
+    LoggerService.info(
+      'OAuth: Exchanging authorization code for tokens...',
+      tag: 'DesktopOAuth',
+    );
 
     try {
       final client = await grant.handleAuthorizationResponse(responseParams);
 
-      debugPrint('OAuth: Successfully obtained access token');
-      debugPrint(
+      LoggerService.info(
+        'OAuth: Successfully obtained access token',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
         'OAuth: ID Token present: ${client.credentials.idToken != null}',
+        tag: 'DesktopOAuth',
       );
-      debugPrint(
+      LoggerService.debug(
         'OAuth: Access Token present: ${client.credentials.accessToken.isNotEmpty}',
+        tag: 'DesktopOAuth',
       );
-      debugPrint(
+      LoggerService.debug(
         'OAuth: Refresh Token present: ${client.credentials.refreshToken != null}',
+        tag: 'DesktopOAuth',
       );
 
       return client;
     } catch (e) {
-      debugPrint('OAuth: Token exchange failed: $e');
+      LoggerService.error(
+        'OAuth: Token exchange failed',
+        error: e,
+        tag: 'DesktopOAuth',
+      );
       if (e.toString().contains('invalid_grant')) {
         throw Exception(
           'Invalid authorization code. Please try signing in again.',
@@ -172,17 +208,26 @@ class DesktopOAuthHandler {
         return;
       }
     } catch (e) {
-      debugPrint('url_launcher failed: $e, trying fallback...');
+      LoggerService.warning(
+        'url_launcher failed: $e, trying fallback...',
+        tag: 'DesktopOAuth',
+      );
     }
 
     // Fallback for Windows - directly open URL using system command
     if (Platform.isWindows) {
       try {
         await Process.run('cmd', ['/c', 'start', authorizationUri.toString()]);
-        debugPrint('OAuth: Opened browser using Windows fallback');
+        LoggerService.info(
+          'OAuth: Opened browser using Windows fallback',
+          tag: 'DesktopOAuth',
+        );
         return;
       } catch (e) {
-        debugPrint('Windows fallback failed: $e');
+        LoggerService.warning(
+          'Windows fallback failed: $e',
+          tag: 'DesktopOAuth',
+        );
       }
     }
 
@@ -190,10 +235,13 @@ class DesktopOAuthHandler {
     if (Platform.isMacOS) {
       try {
         await Process.run('open', [authorizationUri.toString()]);
-        debugPrint('OAuth: Opened browser using macOS fallback');
+        LoggerService.info(
+          'OAuth: Opened browser using macOS fallback',
+          tag: 'DesktopOAuth',
+        );
         return;
       } catch (e) {
-        debugPrint('macOS fallback failed: $e');
+        LoggerService.warning('macOS fallback failed: $e', tag: 'DesktopOAuth');
       }
     }
 
@@ -201,10 +249,13 @@ class DesktopOAuthHandler {
     if (Platform.isLinux) {
       try {
         await Process.run('xdg-open', [authorizationUri.toString()]);
-        debugPrint('OAuth: Opened browser using Linux fallback');
+        LoggerService.info(
+          'OAuth: Opened browser using Linux fallback',
+          tag: 'DesktopOAuth',
+        );
         return;
       } catch (e) {
-        debugPrint('Linux fallback failed: $e');
+        LoggerService.warning('Linux fallback failed: $e', tag: 'DesktopOAuth');
       }
     }
 
@@ -214,39 +265,60 @@ class DesktopOAuthHandler {
   /// Listens for the OAuth redirect and extracts query parameters
   Future<Map<String, String>> _listen() async {
     try {
-      debugPrint('OAuth: Waiting for redirect...');
+      LoggerService.info('OAuth: Waiting for redirect...', tag: 'DesktopOAuth');
 
       // Wait for the first HTTP request to our local server
       final request = await _redirectServer!.first;
 
-      debugPrint('OAuth: Received request to ${request.uri}');
-      debugPrint('OAuth: Request method: ${request.method}');
-      debugPrint('OAuth: Request path: ${request.uri.path}');
-      debugPrint('OAuth: Query string: ${request.uri.query}');
+      LoggerService.debug(
+        'OAuth: Received request to ${request.uri}',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        'OAuth: Request method: ${request.method}',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        'OAuth: Request path: ${request.uri.path}',
+        tag: 'DesktopOAuth',
+      );
+      LoggerService.debug(
+        'OAuth: Query string: ${request.uri.query}',
+        tag: 'DesktopOAuth',
+      );
 
       // Extract query parameters (includes authorization code)
       final params = request.uri.queryParameters;
 
-      debugPrint('OAuth: Extracted parameters:');
+      LoggerService.debug('OAuth: Extracted parameters:', tag: 'DesktopOAuth');
       params.forEach((key, value) {
         // Don't log sensitive values in full
         final displayValue = (key == 'code' || key == 'access_token')
             ? '${value.substring(0, 10)}...'
             : value;
-        debugPrint('  $key: $displayValue');
+        LoggerService.debug('  $key: $displayValue', tag: 'DesktopOAuth');
       });
 
       // Check if we have an authorization code
       if (!params.containsKey('code')) {
-        debugPrint('OAuth: ERROR - No authorization code in response');
-        debugPrint('OAuth: Available parameters: ${params.keys.join(', ')}');
+        LoggerService.error(
+          'OAuth: No authorization code in response',
+          tag: 'DesktopOAuth',
+        );
+        LoggerService.info(
+          'OAuth: Available parameters: ${params.keys.join(', ')}',
+          tag: 'DesktopOAuth',
+        );
 
         // Check for error parameter
         if (params.containsKey('error')) {
           final error = params['error'];
           final errorDescription =
               params['error_description'] ?? 'No description';
-          debugPrint('OAuth: Authorization error: $error - $errorDescription');
+          LoggerService.error(
+            'OAuth: Authorization error: $error - $errorDescription',
+            tag: 'DesktopOAuth',
+          );
           throw Exception(
             'OAuth authorization failed: $error - $errorDescription',
           );
@@ -258,7 +330,10 @@ class DesktopOAuthHandler {
         try {
           await WindowToFront.activate();
         } catch (e) {
-          debugPrint('OAuth: Could not bring window to front: $e');
+          LoggerService.warning(
+            'OAuth: Could not bring window to front: $e',
+            tag: 'DesktopOAuth',
+          );
         }
       }
 
@@ -273,7 +348,10 @@ class DesktopOAuthHandler {
         // Close the response properly
         await request.response.close();
       } catch (e) {
-        debugPrint('OAuth: Error sending response to browser: $e');
+        LoggerService.warning(
+          'OAuth: Error sending response to browser: $e',
+          tag: 'DesktopOAuth',
+        );
         // Continue anyway - we have the auth code
       }
 
@@ -286,10 +364,13 @@ class DesktopOAuthHandler {
         throw Exception('No authorization code received from OAuth provider');
       }
 
-      debugPrint('OAuth: Successfully received authorization code');
+      LoggerService.info(
+        'OAuth: Successfully received authorization code',
+        tag: 'DesktopOAuth',
+      );
       return params;
     } catch (e) {
-      debugPrint('OAuth listen error: $e');
+      LoggerService.error('OAuth listen error', error: e, tag: 'DesktopOAuth');
       await _redirectServer?.close();
       _redirectServer = null;
       rethrow;
@@ -299,7 +380,10 @@ class DesktopOAuthHandler {
   /// Signs out from Google by revoking the access token
   Future<bool> signOutFromGoogle() async {
     if (_lastAccessToken == null) {
-      debugPrint('OAuth: No access token to revoke');
+      LoggerService.debug(
+        'OAuth: No access token to revoke',
+        tag: 'DesktopOAuth',
+      );
       return true;
     }
 
@@ -311,17 +395,25 @@ class DesktopOAuthHandler {
       final response = await http.post(uri);
 
       if (response.statusCode == 200) {
-        debugPrint('OAuth: Successfully revoked access token');
+        LoggerService.info(
+          'OAuth: Successfully revoked access token',
+          tag: 'DesktopOAuth',
+        );
         _lastAccessToken = null;
         return true;
       } else {
-        debugPrint(
+        LoggerService.warning(
           'OAuth: Failed to revoke token - status ${response.statusCode}',
+          tag: 'DesktopOAuth',
         );
         return false;
       }
     } catch (e) {
-      debugPrint('OAuth: Error revoking token: $e');
+      LoggerService.error(
+        'OAuth: Error revoking token',
+        error: e,
+        tag: 'DesktopOAuth',
+      );
       return false;
     }
   }
