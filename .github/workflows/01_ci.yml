@@ -1,7 +1,6 @@
 name: CI - Code Quality & Dead Code Detection
 on:
   pull_request:
-  push:
     branches: [ main, master ]
     
 concurrency:
