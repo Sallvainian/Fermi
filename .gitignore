@@ -140,6 +140,8 @@ temp.pem
 # Unwanted files
 *.exe
 firestore_rules_fix.txt
+# Fastlane
+fastlane/
 fastlane/*.pkg
 
 .taskmaster/
