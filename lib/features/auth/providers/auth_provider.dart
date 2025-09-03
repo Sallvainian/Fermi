@@ -380,7 +380,7 @@ class AuthProvider extends ChangeNotifier {
         _setAuthState(AuthStatus.authenticating);
       }
     } catch (e) {
-      debugPrint('Apple sign-in error: $e');
+      LoggerService.error('Apple sign-in error', tag: 'AuthProvider', error: e);
       _handleOAuthError(e, 'Apple');
     } finally {
       _authOperationInProgress = false;
@@ -398,7 +398,7 @@ class AuthProvider extends ChangeNotifier {
   /// 4. Transitions to authenticated state
   Future<void> completeOAuthSignIn(String role) async {
     if (_authOperationInProgress) {
-      debugPrint('Auth operation already in progress');
+      LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return;
     }
 
@@ -433,7 +433,7 @@ class AuthProvider extends ChangeNotifier {
 
         loadedUserModel = await _loadUserModelWithRetry(user.uid);
         if (loadedUserModel != null && loadedUserModel.role != null) {
-          debugPrint('OAuth completion successful on attempt ${attempt + 1}');
+          LoggerService.info('OAuth completion successful on attempt ${attempt + 1}', tag: 'AuthProvider');
           break;
         }
       }
@@ -453,7 +453,7 @@ class AuthProvider extends ChangeNotifier {
       // Extra delay to ensure state propagates to UI
       await Future.delayed(const Duration(milliseconds: 100));
     } catch (e) {
-      debugPrint('OAuth completion error: $e');
+      LoggerService.error('OAuth completion error', tag: 'AuthProvider', error: e);
       _handleAuthError(e.toString());
       await signOut();
     } finally {
@@ -528,7 +528,7 @@ class AuthProvider extends ChangeNotifier {
       _startNotificationsIfNeeded();
       _updatePresenceOnline();
     } catch (e) {
-      debugPrint('Sign-up error: $e');
+      LoggerService.error('Sign-up error', tag: 'AuthProvider', error: e);
       _handleSignUpError(e);
     } finally {
       _authOperationInProgress = false;
@@ -834,7 +834,7 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('Failed to update display name: $e');
+      LoggerService.error('Failed to update display name', tag: 'AuthProvider', error: e);
       rethrow;
     }
   }
@@ -856,7 +856,7 @@ class AuthProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('Failed to update photo URL: $e');
+      LoggerService.error('Failed to update photo URL', tag: 'AuthProvider', error: e);
       rethrow;
     }
   }
@@ -875,7 +875,7 @@ class AuthProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('Failed to reload user: $e');
+      LoggerService.error('Failed to reload user', tag: 'AuthProvider', error: e);
     }
   }
 
@@ -892,7 +892,7 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       // Silently fail - not critical
-      debugPrint('Failed to refresh custom claims: $e');
+      LoggerService.warning('Failed to refresh custom claims', tag: 'AuthProvider');
     }
   }
 
@@ -1006,7 +1006,7 @@ class AuthProvider extends ChangeNotifier {
 
       return false;
     } catch (e) {
-      debugPrint('Teacher verification error: $e');
+      LoggerService.error('Teacher verification error', tag: 'AuthProvider', error: e);
       _errorMessage = e.toString();
       notifyListeners();
       return false;
@@ -1047,9 +1047,9 @@ class AuthProvider extends ChangeNotifier {
 
       // Don't change the current auth state - teacher remains logged in
       // Just show success
-      debugPrint('Successfully created student account: $username');
+      LoggerService.info('Successfully created student account: $username', tag: 'AuthProvider');
     } catch (e) {
-      debugPrint('Create student account error: $e');
+      LoggerService.error('Create student account error', tag: 'AuthProvider', error: e);
       _errorMessage = e.toString();
       notifyListeners();
       rethrow;
@@ -1121,7 +1121,7 @@ class AuthProvider extends ChangeNotifier {
       _userModel = null;
       _setAuthState(AuthStatus.unauthenticated);
     } catch (e) {
-      debugPrint('Failed to delete account: $e');
+      LoggerService.error('Failed to delete account', tag: 'AuthProvider', error: e);
       _handleAuthError(e.toString());
     } finally {
       _stopLoading();

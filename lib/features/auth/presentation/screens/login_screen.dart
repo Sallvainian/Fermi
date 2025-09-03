@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../widgets/auth_text_field.dart';
 import '../../../../shared/models/user_model.dart';
 
@@ -50,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _isTeacherRole = role == 'teacher';
         });
       } catch (e) {
-        debugPrint('Error parsing role parameter: $e');
+        LoggerService.warning('Error parsing role parameter', tag: 'LoginScreen');
       }
 
       // Check for auth errors

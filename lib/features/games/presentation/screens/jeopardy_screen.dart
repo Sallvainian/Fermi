@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
@@ -712,7 +713,7 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
           }
         });
       } catch (e) {
-        debugPrint('Error loading classes: $e');
+        LoggerService.error('Error loading classes', tag: 'JeopardyScreen', error: e);
         if (mounted) {
           setState(() {
             _isLoading = false;

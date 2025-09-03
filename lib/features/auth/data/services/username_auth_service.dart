@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+// Removed unused foundation import
+import '../../../../shared/services/logger_service.dart';
 
 /// Service for handling username-based authentication.
 ///
@@ -40,7 +41,7 @@ class UsernameAuthService {
 
       return querySnapshot.docs.isEmpty;
     } catch (e) {
-      debugPrint('Error checking username availability: $e');
+      LoggerService.error('Error checking username availability', tag: 'UsernameAuthService', error: e);
       return false;
     }
   }
@@ -59,7 +60,7 @@ class UsernameAuthService {
       }
       return null;
     } catch (e) {
-      debugPrint('Error getting UID by username: $e');
+      LoggerService.error('Error getting UID by username', tag: 'UsernameAuthService', error: e);
       return null;
     }
   }
@@ -107,7 +108,7 @@ class UsernameAuthService {
           throw Exception(e.message ?? 'Authentication failed');
       }
     } catch (e) {
-      debugPrint('Username sign-in error: $e');
+      LoggerService.error('Username sign-in error', tag: 'UsernameAuthService', error: e);
       rethrow;
     }
   }
@@ -172,7 +173,7 @@ class UsernameAuthService {
           throw Exception(e.message ?? 'Failed to create account');
       }
     } catch (e) {
-      debugPrint('Create student account error: $e');
+      LoggerService.error('Create student account error', tag: 'UsernameAuthService', error: e);
       rethrow;
     }
   }
@@ -224,7 +225,7 @@ class UsernameAuthService {
 
       return null;
     } catch (e) {
-      debugPrint('Create teacher account error: $e');
+      LoggerService.error('Create teacher account error', tag: 'UsernameAuthService', error: e);
       rethrow;
     }
   }
@@ -242,7 +243,7 @@ class UsernameAuthService {
         'Please implement a Cloud Function for this feature.',
       );
     } catch (e) {
-      debugPrint('Update password error: $e');
+      LoggerService.error('Update password error', tag: 'UsernameAuthService', error: e);
       rethrow;
     }
   }

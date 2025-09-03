@@ -345,9 +345,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
       // Use the provider's delete method which properly updates local state
       final chatProvider = context.read<SimpleChatProvider>();
       await chatProvider.deleteChatRoom(chatRoomId);
-      debugPrint('Chat room $chatRoomId deleted successfully');
+      LoggerService.info('Deleted chat room $chatRoomId', tag: 'ChatListScreen');
     } catch (e) {
-      debugPrint('Error deleting chat: $e');
+      LoggerService.error('Error deleting chat', tag: 'ChatListScreen', error: e);
       rethrow;
     }
   }

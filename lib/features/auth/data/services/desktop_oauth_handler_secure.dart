@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:window_to_front/window_to_front.dart';
 
 /// Secure OAuth handler for desktop platforms using Firebase Functions backend
@@ -46,9 +47,7 @@ class SecureDesktopOAuthHandler {
   /// Performs secure OAuth flow using Firebase Functions backend
   Future<UserCredential?> performSecureOAuthFlow() async {
     try {
-      debugPrint(
-        'SecureOAuth: Starting secure OAuth flow with Firebase Functions',
-      );
+      LoggerService.info('Starting secure OAuth flow with Firebase Functions', tag: 'SecureOAuth');
 
       // Close any existing redirect server
       await _redirectServer?.close();
@@ -59,7 +58,7 @@ class SecureDesktopOAuthHandler {
       final port = _redirectServer!.port;
       final redirectUri = 'http://localhost:$port';
 
-      debugPrint('SecureOAuth: Started local server on port $port');
+      LoggerService.info('Started local server on port $port', tag: 'SecureOAuth');
 
       // Step 1: Get OAuth URL from Firebase Function
       final oauthUrlResponse = await _getOAuthUrl(redirectUri);
@@ -68,9 +67,7 @@ class SecureDesktopOAuthHandler {
         throw Exception('Failed to get OAuth URL from server');
       }
 
-      debugPrint(
-        'SecureOAuth: Received OAuth URL: ${oauthUrlResponse['authUrl']}',
-      );
+      LoggerService.debug('Received OAuth URL from server', tag: 'SecureOAuth');
 
       if (!oauthUrlResponse.containsKey('authUrl')) {
         throw Exception('OAuth response missing authUrl field');
@@ -85,7 +82,7 @@ class SecureDesktopOAuthHandler {
       _state = oauthUrlResponse['state'];
       _codeVerifier = oauthUrlResponse['codeVerifier'];
 
-      debugPrint('SecureOAuth: Opening browser for authorization');
+      LoggerService.info('Opening browser for authorization', tag: 'SecureOAuth');
 
       // Step 2: Open browser for user authorization
       await _openBrowser(authUrl);
@@ -97,9 +94,7 @@ class SecureDesktopOAuthHandler {
         throw Exception('No authorization code received');
       }
 
-      debugPrint(
-        'SecureOAuth: Received authorization code, exchanging for tokens',
-      );
+      LoggerService.info('Received authorization code; exchanging for tokens', tag: 'SecureOAuth');
 
       // Step 4: Exchange code for tokens via Firebase Function
       final tokenResponse = await _exchangeAuthCode(
@@ -113,20 +108,20 @@ class SecureDesktopOAuthHandler {
         throw Exception('Failed to exchange authorization code');
       }
 
-      debugPrint('SecureOAuth: Successfully received Firebase custom token');
+      LoggerService.info('Successfully received Firebase custom token', tag: 'SecureOAuth');
 
       // Step 5: Sign in to Firebase with custom token
       final credential = await FirebaseAuth.instance.signInWithCustomToken(
         tokenResponse['firebaseToken'],
       );
 
-      debugPrint('SecureOAuth: Successfully signed in to Firebase');
-      debugPrint('SecureOAuth: User UID: ${credential.user?.uid}');
-      debugPrint('SecureOAuth: User Email: ${credential.user?.email}');
+      LoggerService.info('Signed in to Firebase', tag: 'SecureOAuth');
+      LoggerService.debug('User UID: ${credential.user?.uid}', tag: 'SecureOAuth');
+      LoggerService.debug('User Email: ${credential.user?.email}', tag: 'SecureOAuth');
 
       return credential;
     } catch (e) {
-      debugPrint('SecureOAuth Error: $e');
+      LoggerService.error('SecureOAuth error', tag: 'SecureOAuth', error: e);
       await _redirectServer?.close();
       _redirectServer = null;
 
@@ -151,10 +146,8 @@ class SecureDesktopOAuthHandler {
   /// Gets OAuth URL from Firebase Function
   Future<Map<String, dynamic>?> _getOAuthUrl(String redirectUri) async {
     try {
-      debugPrint(
-        'SecureOAuth: Requesting OAuth URL from: $_getOAuthUrlEndpoint',
-      );
-      debugPrint('SecureOAuth: Redirect URI: $redirectUri');
+      LoggerService.debug('Requesting OAuth URL from: $_getOAuthUrlEndpoint', tag: 'SecureOAuth');
+      LoggerService.debug('Redirect URI: $redirectUri', tag: 'SecureOAuth');
 
       final response = await http
           .get(
@@ -166,32 +159,29 @@ class SecureDesktopOAuthHandler {
           .timeout(
             const Duration(seconds: 10),
             onTimeout: () {
-              debugPrint('SecureOAuth: Request timed out after 10 seconds');
+              LoggerService.warning('OAuth URL request timed out after 10 seconds', tag: 'SecureOAuth');
               throw Exception('Request to OAuth server timed out');
             },
           );
 
-      debugPrint('SecureOAuth: Response status: ${response.statusCode}');
+      LoggerService.debug('OAuth URL response status: ${response.statusCode}', tag: 'SecureOAuth');
       // SecureOAuth: Response body logging removed to avoid exposing sensitive data.
 
       if (response.statusCode == 200) {
         try {
           final decoded = json.decode(response.body);
-          debugPrint('SecureOAuth: Successfully decoded response');
+          LoggerService.debug('Successfully decoded OAuth URL response', tag: 'SecureOAuth');
           return decoded;
         } catch (e) {
-          debugPrint('SecureOAuth: Failed to decode JSON response: $e');
+          LoggerService.warning('Failed to decode OAuth URL JSON response', tag: 'SecureOAuth');
           return null;
         }
       } else {
-        debugPrint(
-          'SecureOAuth: Failed to get OAuth URL - ${response.statusCode}: ${response.body}',
-        );
+        LoggerService.error('Failed to get OAuth URL - ${response.statusCode}', tag: 'SecureOAuth');
         return null;
       }
     } catch (e) {
-      debugPrint('SecureOAuth: Error getting OAuth URL: $e');
-      debugPrint('SecureOAuth: Error type: ${e.runtimeType}');
+      LoggerService.error('Error getting OAuth URL', tag: 'SecureOAuth', error: e);
       return null;
     }
   }
@@ -218,13 +208,11 @@ class SecureDesktopOAuthHandler {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        debugPrint(
-          'SecureOAuth: Failed to exchange code - ${response.statusCode}: ${response.body}',
-        );
+        LoggerService.error('Failed to exchange code - ${response.statusCode}', tag: 'SecureOAuth');
         return null;
       }
     } catch (e) {
-      debugPrint('SecureOAuth: Error exchanging auth code: $e');
+      LoggerService.error('Error exchanging auth code', tag: 'SecureOAuth', error: e);
       return null;
     }
   }
@@ -243,7 +231,7 @@ class SecureDesktopOAuthHandler {
         return;
       }
     } catch (e) {
-      debugPrint('url_launcher failed: $e, trying fallback...');
+      LoggerService.warning('url_launcher failed; trying fallback...', tag: 'SecureOAuth');
     }
 
     // Platform-specific fallbacks with validated URI
@@ -252,30 +240,30 @@ class SecureDesktopOAuthHandler {
     if (Platform.isWindows) {
       try {
         await Process.run('cmd', ['/c', 'start', '', sanitizedUrl]);
-        debugPrint('SecureOAuth: Opened browser using Windows fallback');
+        LoggerService.info('Opened browser using Windows fallback', tag: 'SecureOAuth');
         return;
       } catch (e) {
-        debugPrint('Windows fallback failed: $e');
+        LoggerService.warning('Windows fallback failed', tag: 'SecureOAuth');
       }
     }
 
     if (Platform.isMacOS) {
       try {
         await Process.run('open', [sanitizedUrl]);
-        debugPrint('SecureOAuth: Opened browser using macOS fallback');
+        LoggerService.info('Opened browser using macOS fallback', tag: 'SecureOAuth');
         return;
       } catch (e) {
-        debugPrint('macOS fallback failed: $e');
+        LoggerService.warning('macOS fallback failed', tag: 'SecureOAuth');
       }
     }
 
     if (Platform.isLinux) {
       try {
         await Process.run('xdg-open', [sanitizedUrl]);
-        debugPrint('SecureOAuth: Opened browser using Linux fallback');
+        LoggerService.info('Opened browser using Linux fallback', tag: 'SecureOAuth');
         return;
       } catch (e) {
-        debugPrint('Linux fallback failed: $e');
+        LoggerService.warning('Linux fallback failed', tag: 'SecureOAuth');
       }
     }
 
@@ -284,14 +272,14 @@ class SecureDesktopOAuthHandler {
 
   /// Validates that the authorization URI is safe to pass to shell commands
   bool _isValidAuthorizationUri(Uri uri) {
-    debugPrint('SecureOAuth: Validating URI: $uri');
-    debugPrint('SecureOAuth: URI scheme: ${uri.scheme}');
-    debugPrint('SecureOAuth: URI host: ${uri.host}');
+    LoggerService.debug('Validating URI: $uri', tag: 'SecureOAuth');
+    LoggerService.debug('URI scheme: ${uri.scheme}', tag: 'SecureOAuth');
+    LoggerService.debug('URI host: ${uri.host}', tag: 'SecureOAuth');
 
     // Must be HTTPS (or HTTP for localhost during development)
     if (uri.scheme != 'https' &&
         !(uri.scheme == 'http' && uri.host == 'localhost')) {
-      debugPrint('SecureOAuth: Invalid URI scheme: ${uri.scheme}');
+      LoggerService.warning('Invalid URI scheme: ${uri.scheme}', tag: 'SecureOAuth');
       return false;
     }
 
@@ -300,7 +288,7 @@ class SecureDesktopOAuthHandler {
         !uri.host.endsWith('googleapis.com') &&
         uri.host != 'localhost' &&
         uri.host != 'accounts.google.com') {
-      debugPrint('SecureOAuth: Invalid URI host: ${uri.host}');
+      LoggerService.warning('Invalid URI host: ${uri.host}', tag: 'SecureOAuth');
       return false;
     }
 
@@ -311,24 +299,24 @@ class SecureDesktopOAuthHandler {
     // Only check for truly dangerous shell metacharacters
     final dangerousChars = RegExp('[;|`\$<>"\'\\n\\r]');
     if (dangerousChars.hasMatch(uriString)) {
-      debugPrint('SecureOAuth: URI contains dangerous characters');
-      debugPrint('SecureOAuth: Matched character in URI: $uriString');
+      LoggerService.warning('URI contains dangerous characters', tag: 'SecureOAuth');
+      LoggerService.debug('Matched URI: $uriString', tag: 'SecureOAuth');
       return false;
     }
 
-    debugPrint('SecureOAuth: URI validation passed');
+    LoggerService.debug('URI validation passed', tag: 'SecureOAuth');
     return true;
   }
 
   /// Listens for the OAuth redirect and extracts the authorization code
   Future<String?> _listenForAuthCode() async {
     try {
-      debugPrint('SecureOAuth: Waiting for redirect...');
+      LoggerService.info('Waiting for redirect...', tag: 'SecureOAuth');
 
       // Wait for the first HTTP request to our local server
       final request = await _redirectServer!.first;
 
-      debugPrint('SecureOAuth: Received request to ${request.uri}');
+      LoggerService.debug('Received request to ${request.uri}', tag: 'SecureOAuth');
 
       // Extract query parameters
       final params = request.uri.queryParameters;
@@ -339,21 +327,19 @@ class SecureDesktopOAuthHandler {
 
       // Verify state for CSRF protection
       if (returnedState != _state) {
-        debugPrint('SecureOAuth: State mismatch - possible CSRF attack');
+        LoggerService.warning('State mismatch - possible CSRF attack', tag: 'SecureOAuth');
         throw Exception('State mismatch - possible security issue');
       }
 
       if (code == null) {
-        debugPrint('SecureOAuth: No authorization code in response');
+        LoggerService.warning('No authorization code in response', tag: 'SecureOAuth');
 
         // Check for error
         if (params.containsKey('error')) {
           final error = params['error'];
           final errorDescription =
               params['error_description'] ?? 'No description';
-          debugPrint(
-            'SecureOAuth: Authorization error: $error - $errorDescription',
-          );
+          LoggerService.warning('Authorization error: $error - $errorDescription', tag: 'SecureOAuth');
           throw Exception(
             'OAuth authorization failed: $error - $errorDescription',
           );
@@ -367,7 +353,7 @@ class SecureDesktopOAuthHandler {
         try {
           await WindowToFront.activate();
         } catch (e) {
-          debugPrint('SecureOAuth: Could not bring window to front: $e');
+          LoggerService.warning('Could not bring window to front', tag: 'SecureOAuth');
         }
       }
 
@@ -429,17 +415,17 @@ class SecureDesktopOAuthHandler {
 
         await request.response.close();
       } catch (e) {
-        debugPrint('SecureOAuth: Error sending response to browser: $e');
+        LoggerService.warning('Error sending response to browser', tag: 'SecureOAuth');
       }
 
       // Close the server
       await _redirectServer!.close();
       _redirectServer = null;
 
-      debugPrint('SecureOAuth: Successfully received authorization code');
+      LoggerService.info('Successfully received authorization code', tag: 'SecureOAuth');
       return code;
     } catch (e) {
-      debugPrint('SecureOAuth listen error: $e');
+      LoggerService.error('Listen error', tag: 'SecureOAuth', error: e);
       await _redirectServer?.close();
       _redirectServer = null;
       rethrow;
@@ -458,13 +444,11 @@ class SecureDesktopOAuthHandler {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        debugPrint(
-          'SecureOAuth: Failed to refresh token - ${response.statusCode}: ${response.body}',
-        );
+        LoggerService.error('Failed to refresh token - ${response.statusCode}', tag: 'SecureOAuth');
         return null;
       }
     } catch (e) {
-      debugPrint('SecureOAuth: Error refreshing token: $e');
+      LoggerService.error('Error refreshing token', tag: 'SecureOAuth', error: e);
       return null;
     }
   }
