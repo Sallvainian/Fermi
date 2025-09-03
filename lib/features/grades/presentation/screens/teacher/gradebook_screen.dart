@@ -299,7 +299,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
                 isExpanded: true,
                 underline: const SizedBox(),
                 items: classProvider.teacherClasses.map((cls) {
-                  return DropdownMenuItem(value: cls.id, child: Text(cls.name));
+                  return DropdownMenuItem(
+                    value: cls.id,
+                    child: Text(cls.name),
+                  );
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
