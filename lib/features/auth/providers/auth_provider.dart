@@ -349,7 +349,7 @@ class AuthProvider extends ChangeNotifier {
   /// Any errors during the sign-in process are handled and the appropriate error state is set.
   Future<void> signInWithApple() async {
     if (_authOperationInProgress) {
-      debugPrint('Auth operation already in progress');
+      LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return;
     }
 
@@ -470,7 +470,7 @@ class AuthProvider extends ChangeNotifier {
     String? displayName,
   }) async {
     if (_authOperationInProgress) {
-      debugPrint('Auth operation already in progress');
+      LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return;
     }
 
@@ -903,7 +903,7 @@ class AuthProvider extends ChangeNotifier {
     String verificationPassword,
   ) async {
     if (_authOperationInProgress) {
-      debugPrint('Auth operation already in progress');
+      LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return false;
     }
 

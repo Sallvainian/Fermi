@@ -1087,8 +1087,9 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
   void _scoreDailyDouble(bool correct) {
     if (_selectedQuestion == null ||
         _dailyDoublePlayer == null ||
-        _selectedCategory == null)
+        _selectedCategory == null) {
       return;
+    }
 
     setState(() {
       // Update score
