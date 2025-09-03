@@ -9,7 +9,9 @@ Fermi uses Firebase as its backend-as-a-service, providing:
 - **Firebase Auth**: User authentication and authorization
 - **Cloud Storage**: File and media storage
 - **Cloud Functions**: Serverless backend logic
-- **Real-time Database**: For presence and real-time features
+- **Firestore**: Also used for presence ("presence" collection with lastSeen/online)
+  - Note: We currently use Firestore snapshots for presence across platforms.
+  - Real-time Database is optional and not used for presence in the current build.
 
 ## Architecture
 
