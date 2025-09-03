@@ -1,15 +1,13 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:logging/logging.dart';
+import '../../../../shared/services/logger_service.dart';
+import 'dart:io' show Platform;
 
 import '../widgets/auth_text_field.dart';
-import '../widgets/forgot_password_button.dart';
-import '../../../providers/auth_provider.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   final String? role;
@@ -24,7 +22,6 @@ class LoginScreen extends StatefulWidget {
 }
 
 class LoginScreenState extends State<LoginScreen> {
-  static final _logger = Logger('LoginScreen');
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -36,7 +33,7 @@ class LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _isTeacherRole = widget.role == 'teacher';
-    _logger.info('LoginScreen initialized with role: ${widget.role}');
+    LoggerService.info('LoginScreen initialized with role: ${widget.role}', tag: 'LoginScreen');
   }
 
   @override
@@ -53,31 +50,31 @@ class LoginScreenState extends State<LoginScreen> {
       final password = _passwordController.text;
 
       try {
-        _logger.info('Attempting sign in for email: $email');
-        await authProvider.signIn(email, password);
-        _logger.info('Sign in successful for email: $email');
+        LoggerService.info('Attempting sign in for email: $email', tag: 'LoginScreen');
+        await authProvider.signInWithEmail(email, password);
+        LoggerService.info('Sign in successful for email: $email', tag: 'LoginScreen');
 
         if (!mounted) return;
 
         // Navigate based on auth state
-        if (authProvider.currentUser != null) {
-          final String userRole = authProvider.currentUser!.role;
-          _logger.info('User role detected: $userRole');
+        if (authProvider.userModel != null) {
+          final roleName = authProvider.userModel!.role?.name;
+          LoggerService.info('User role detected: $roleName', tag: 'LoginScreen');
 
           // Navigate based on role
-          if (userRole == 'teacher') {
-            _logger.info('Navigating to teacher dashboard');
+          if (roleName == 'teacher') {
+            LoggerService.info('Navigating to teacher dashboard', tag: 'LoginScreen');
             context.go('/teacher/dashboard');
-          } else if (userRole == 'student') {
-            _logger.info('Navigating to student dashboard');
+          } else if (roleName == 'student') {
+            LoggerService.info('Navigating to student dashboard', tag: 'LoginScreen');
             context.go('/student/dashboard');
           } else {
-            _logger.info('Unknown role, navigating to role selection');
+            LoggerService.info('Unknown role, navigating to role selection', tag: 'LoginScreen');
             context.go('/auth/role-selection');
           }
         }
       } catch (e) {
-        _logger.severe('Sign in error: $e', e);
+        LoggerService.error('Sign in error: $e', tag: 'LoginScreen', error: e);
         if (!mounted) return;
 
         String errorMessage;
@@ -108,27 +105,27 @@ class LoginScreenState extends State<LoginScreen> {
     final authProvider = context.read<AuthProvider>();
 
     try {
-      _logger.info('Attempting Google sign in');
+      LoggerService.info('Attempting Google sign in', tag: 'LoginScreen');
       await authProvider.signInWithGoogle();
-      _logger.info('Google sign in successful');
+      LoggerService.info('Google sign in successful', tag: 'LoginScreen');
 
       if (!mounted) return;
 
       // Navigate after successful Google sign-in
-      if (authProvider.currentUser != null) {
-        final String userRole = authProvider.currentUser!.role;
-        _logger.info('User role from Google sign-in: $userRole');
+      if (authProvider.userModel != null) {
+        final roleName = authProvider.userModel!.role?.name;
+        LoggerService.info('User role from Google sign-in: $roleName', tag: 'LoginScreen');
 
-        if (userRole == 'teacher') {
+        if (roleName == 'teacher') {
           context.go('/teacher/dashboard');
-        } else if (userRole == 'student') {
+        } else if (roleName == 'student') {
           context.go('/student/dashboard');
         } else {
           context.go('/auth/role-selection');
         }
       }
     } catch (e) {
-      _logger.severe('Google sign in error: $e', e);
+      LoggerService.error('Google sign in error: $e', tag: 'LoginScreen', error: e);
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -259,8 +256,14 @@ class LoginScreenState extends State<LoginScreen> {
                             // Forgot Password
                             Align(
                               alignment: Alignment.centerRight,
-                              child: ForgotPasswordButton(
-                                isTeacherRole: _isTeacherRole,
+                              child: TextButton(
+                                onPressed: () => context.go('/auth/forgot-password'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: _isTeacherRole
+                                      ? theme.colorScheme.secondary
+                                      : theme.colorScheme.primary,
+                                ),
+                                child: const Text('Forgot Password?'),
                               ),
                             ),
 

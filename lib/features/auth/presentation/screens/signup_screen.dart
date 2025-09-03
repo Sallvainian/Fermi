@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 
