@@ -67,10 +67,7 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
             stream: _onlineUsersStream,
             builder: (context, snapshot) {
               // Debug output (only in debug builds due to LoggerService level)
-              LoggerService.debug(
-                'StreamBuilder rebuild - state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, len: ${snapshot.data?.length ?? 0}',
-                tag: 'OnlineUsersCard',
-              );
+              logDebug('StreamBuilder rebuild - state: ${snapshot.connectionState}, hasData: ${snapshot.hasData}, len: ${snapshot.data?.length ?? 0}');
 
               if (snapshot.hasError) {
                 // Handle error state
@@ -293,10 +290,7 @@ class _OnlineUsersCardState extends State<OnlineUsersCard> {
         errorBuilder: (context, error, stackTrace) {
           // Log error for debugging but don't show it to user
           if (error.toString().contains('CORS')) {
-            LoggerService.warning(
-              'CORS error loading profile image. Run apply_cors.sh to fix.',
-              tag: 'OnlineUsersCard',
-            );
+            logWarning('CORS error loading profile image. Run apply_cors.sh to fix.');
           }
           return buildInitialsAvatar();
         },

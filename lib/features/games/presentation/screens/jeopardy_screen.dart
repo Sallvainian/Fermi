@@ -713,7 +713,7 @@ class _ClassAssignmentDialogState extends State<_ClassAssignmentDialog> {
           }
         });
       } catch (e) {
-        LoggerService.error('Error loading classes', tag: 'JeopardyScreen', error: e);
+        logError('Error loading classes', error: e);
         if (mounted) {
           setState(() {
             _isLoading = false;

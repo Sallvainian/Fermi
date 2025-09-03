@@ -944,6 +944,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        if (!mounted) return;
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
@@ -972,10 +973,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ).showSnackBar(SnackBar(content: Text('Failed to upload image: $e')));
       }
     } finally {
-      setState(() {
-        _isUploading = false;
-        _uploadProgress = 0.0;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadProgress = 0.0;
+        });
+      }
     }
   }
 
@@ -1130,6 +1133,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        if (!mounted) return;
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
@@ -1160,7 +1164,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             await compressedFile.delete();
           }
         } catch (e) {
-          LoggerService.warning('Failed to delete compressed video', tag: 'ChatDetailScreen');
+          logWarning('Failed to delete compressed video');
         }
       }
     } catch (e) {
@@ -1170,10 +1174,12 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         ).showSnackBar(SnackBar(content: Text('Failed to upload video: $e')));
       }
     } finally {
-      setState(() {
-        _isUploading = false;
-        _uploadProgress = 0.0;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadProgress = 0.0;
+        });
+      }
 
       // Cancel any ongoing compression
       await VideoCompress.cancelCompression();

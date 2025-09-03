@@ -445,6 +445,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       if (image == null) return;
 
+      if (!mounted) return;
       setState(() {
         _isUploading = true;
         _uploadProgress = 0.0;
@@ -458,9 +459,11 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         if (chatRoomIdToUse.isEmpty) {
           throw Exception('Failed to create chat room');
         }
-        setState(() {
-          _actualChatRoomId = chatRoomIdToUse;
-        });
+        if (mounted) {
+          setState(() {
+            _actualChatRoomId = chatRoomIdToUse;
+          });
+        }
       }
 
       // Upload to Firebase Storage
@@ -487,6 +490,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        if (!mounted) return;
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
@@ -526,13 +530,17 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         'lastActivity': FieldValue.serverTimestamp(),
       });
 
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -550,6 +558,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       if (video == null) return;
 
+      if (!mounted) return;
       setState(() {
         _isUploading = true;
         _uploadProgress = 0.0;
@@ -563,9 +572,11 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         if (chatRoomIdToUse.isEmpty) {
           throw Exception('Failed to create chat room');
         }
-        setState(() {
-          _actualChatRoomId = chatRoomIdToUse;
-        });
+        if (mounted) {
+          setState(() {
+            _actualChatRoomId = chatRoomIdToUse;
+          });
+        }
       }
 
       // Upload to Firebase Storage
@@ -591,6 +602,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
 
       // Monitor upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        if (!mounted) return;
         setState(() {
           _uploadProgress = snapshot.bytesTransferred / snapshot.totalBytes;
         });
@@ -630,13 +642,17 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
         'lastActivity': FieldValue.serverTimestamp(),
       });
 
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isUploading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(
           context,

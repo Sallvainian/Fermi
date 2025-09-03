@@ -9,9 +9,9 @@ class SimpleUserList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    LoggerService.debug('build() called', tag: 'SimpleUserList');
+    logDebug('build() called');
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    LoggerService.debug('Current user ID: $currentUserId', tag: 'SimpleUserList');
+    logDebug('Current user ID: $currentUserId');
 
     return Scaffold(
       appBar: AppBar(

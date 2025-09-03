@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _isTeacherRole = role == 'teacher';
         });
       } catch (e) {
-        LoggerService.warning('Error parsing role parameter', tag: 'LoginScreen');
+        logWarning('Error parsing role parameter');
       }
 
       // Check for auth errors
