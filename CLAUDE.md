@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Routing: GoRouter 16.1.0+
 - Additional: fl_chart, video_player, image_picker, flutter_local_notifications
 
-**Architecture**: Client-side Flutter app with Firebase backend; no separate server, using Provider for state management and Clean Architecture principles
+**Architecture**: Client-side Flutter app with Firebase backend; no separate server, using Provider for state management. Clean Architecture principles inform layout, but the repository layer has been simplified: we use a thin generic `FirestoreRepository<T>` wrapper over direct Firebase access rather than heavy repository hierarchies.
 
 **Version**: 0.9.3
 
@@ -201,7 +201,7 @@ GoRouter-based routing with authentication guards in `lib/shared/routing/app_rou
 - Core: users, pending_users, presence
 - Classes: classes, students, teachers
 - Assignments: assignments, submissions, grades
-- Communication: chat_rooms, messages, conversations, notifications
+- Communication: chat_rooms, messages, conversations, notifications, presence (online status)
 - Discussion: discussion_boards, threads, replies, likes, comments
 - Calendar: calendar_events, scheduled_messages
 - Games: games, jeopardy_games, jeopardy_sessions, scores
@@ -214,9 +214,9 @@ GoRouter-based routing with authentication guards in `lib/shared/routing/app_rou
 ## Critical Context
 
 ### Current Branch & Status
-- **Branch**: `windows-development`
-- **Main Branch**: `main`
-- **Recent Work**: iOS swipe-to-delete fixes for discussion boards, like functionality
+- **Default Branch**: `master`
+- **Active Refactor Branch**: `refactor/codebase-quality-optimization`
+- **Recent Work**: logging standardization, presence real-time listeners, mounted guards, docs normalization
 
 ### Platform Support
 - **Web**: Full support with PWA capabilities
@@ -234,6 +234,12 @@ GoRouter-based routing with authentication guards in `lib/shared/routing/app_rou
 6. PWA with auto-update system
 7. Notification system with push support
 8. Presence/online status tracking
+
+### Presence Architecture (Updated)
+- Presence is stored in Firestore under the `presence` collection.
+- UI consumes presence via real-time Firestore snapshots on all platforms.
+- Windows polling fallback exists but is disabled by default; enable only if a specific environment requires it (`PresenceService.enableWindowsPollingFallback = true`).
+- See `docs/developer/features/presence.md` for details.
 
 ### Known Issues & Limitations
 1. **iOS Gesture Conflict**: Fixed with ClampingScrollPhysics for Dismissible widgets

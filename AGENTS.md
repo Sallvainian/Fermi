@@ -1,5 +1,7 @@
 # Task Master AI - Agent Integration Guide
 
+Note: Presence in this project uses Firestore snapshots (see `docs/developer/features/presence.md`). Legacy references to Realtime Database presence in older docs are not active.
+
 ## Essential Commands
 
 ### Core Workflow Commands
@@ -218,10 +220,20 @@ Add to `.claude/settings.json`:
     "Bash(git commit:*)",
     "Bash(git add:*)",
     "Bash(npm run *)",
-    "mcp__task_master_ai__*"
+    "mcp__task_master_ai__*",
+    "mcp__process__*",
+    "mcp__sourcegraph__*",
+    "mcp__semgrep__*"
   ]
 }
 ```
+
+## Code Intelligence Utilities
+
+- Internal code dependency map generator:
+  - Script: `tools/dev/generate_dependency_map.dart`
+  - Output: `docs/developer/architecture/code-dependency-map.md`
+  - Run: `dart run tools/dev/generate_dependency_map.dart --output docs/developer/architecture/code-dependency-map.md`
 
 ## Configuration & Setup
 
