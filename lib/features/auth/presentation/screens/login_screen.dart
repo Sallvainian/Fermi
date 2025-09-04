@@ -69,16 +69,10 @@ class LoginScreenState extends State<LoginScreen> {
       final password = _passwordController.text;
 
       try {
-        if (_isTeacherRole) {
-          LoggerService.info('Attempting teacher sign in for username: $username', tag: 'LoginScreen');
-          await authProvider.signInWithUsername(username, password);
-          LoggerService.info('Teacher sign in successful for username: $username', tag: 'LoginScreen');
-        } else {
-          // Students still use email for now
-          LoggerService.info('Attempting student sign in for email: $username', tag: 'LoginScreen');
-          await authProvider.signInWithEmail(username, password);
-          LoggerService.info('Student sign in successful for email: $username', tag: 'LoginScreen');
-        }
+        // Both teachers and students use username login
+        LoggerService.info('Attempting sign in for username: $username', tag: 'LoginScreen');
+        await authProvider.signInWithUsername(username, password);
+        LoggerService.info('Sign in successful for username: $username', tag: 'LoginScreen');
 
         if (!mounted) return;
 
@@ -122,7 +116,7 @@ class LoginScreenState extends State<LoginScreen> {
 
   String? _validateInput(String? value) {
     if (value?.isEmpty ?? true) {
-      return _isTeacherRole ? 'Please enter your username' : 'Please enter your email';
+      return 'Please enter your username';
     }
     return null;
   }
@@ -190,13 +184,9 @@ class LoginScreenState extends State<LoginScreen> {
                             // Username/Email Field
                             AuthTextField(
                               controller: _usernameController,
-                              label: _isTeacherRole
-                                  ? 'Username'
-                                  : 'Student Email',
-                              prefixIcon: _isTeacherRole ? Icons.person : Icons.email,
-                              keyboardType: _isTeacherRole 
-                                  ? TextInputType.text 
-                                  : TextInputType.emailAddress,
+                              label: 'Username',
+                              prefixIcon: Icons.person,
+                              keyboardType: TextInputType.text,
                               validator: _validateInput,
                               enabled: !isLoading,
                             ),
@@ -210,6 +200,7 @@ class LoginScreenState extends State<LoginScreen> {
                               prefixIcon: Icons.lock,
                               obscureText: _obscurePassword,
                               enabled: !isLoading,
+                              showCapsLockIndicator: true, // Enable caps lock indicator
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _obscurePassword

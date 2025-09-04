@@ -232,6 +232,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           label: 'Password',
                           obscureText: _obscurePassword,
                           prefixIcon: Icons.lock_outline,
+                          showCapsLockIndicator: true, // Enable caps lock indicator
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -260,6 +261,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           label: 'Confirm Password',
                           obscureText: _obscureConfirmPassword,
                           prefixIcon: Icons.lock_outline,
+                          showCapsLockIndicator: true, // Enable caps lock indicator
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
