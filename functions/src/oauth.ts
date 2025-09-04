@@ -1,4 +1,5 @@
 import {onRequest, HttpsError} from "firebase-functions/v2/https";
+import {defineSecret} from "firebase-functions/params";
 import * as admin from "firebase-admin";
 import * as crypto from "crypto";
 import {
@@ -16,14 +17,11 @@ import {
   OAuthTokenRefreshRequest,
 } from "./types/oauth.types";
 
-// OAuth configuration - using Firebase config or environment variables
-// For local development: create functions/.env file with GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET
-// For production: GitHub Secrets are set via firebase functions:config during deployment
-// The secrets are accessed via functions.config() in production
-import * as functions from "firebase-functions";
-const config = functions.config();
-const GOOGLE_CLIENT_ID = config.oauth?.client_id || process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = config.oauth?.client_secret || process.env.GOOGLE_CLIENT_SECRET;
+// Define secrets for v2 functions
+const googleClientId = defineSecret("GOOGLE_CLIENT_ID");
+const googleClientSecret = defineSecret("GOOGLE_CLIENT_SECRET");
+
+// OAuth URLs
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
@@ -70,10 +68,16 @@ const getPKCECollection = () =>
  * Desktop clients call this to get the authorization URL
  */
 export const getOAuthUrl = onRequest(
-  {cors: true},
+  {
+    cors: true,
+    secrets: [googleClientId, googleClientSecret],
+  },
   async (req, res) => {
     try {
       // Validate OAuth configuration at runtime
+      const GOOGLE_CLIENT_ID = googleClientId.value();
+      const GOOGLE_CLIENT_SECRET = googleClientSecret.value();
+      
       if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
         console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
         throw new HttpsError(
@@ -164,10 +168,16 @@ export const getOAuthUrl = onRequest(
  * Desktop clients call this after user authorizes
  */
 export const exchangeOAuthCode = onRequest(
-  {cors: true},
+  {
+    cors: true,
+    secrets: [googleClientId, googleClientSecret],
+  },
   async (req, res) => {
     try {
       // Validate OAuth configuration at runtime
+      const GOOGLE_CLIENT_ID = googleClientId.value();
+      const GOOGLE_CLIENT_SECRET = googleClientSecret.value();
+      
       if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
         console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
         throw new HttpsError(
@@ -338,10 +348,16 @@ export const exchangeOAuthCode = onRequest(
  * Refresh access token using refresh token
  */
 export const refreshOAuthToken = onRequest(
-  {cors: true},
+  {
+    cors: true,
+    secrets: [googleClientId, googleClientSecret],
+  },
   async (req, res) => {
     try {
       // Validate OAuth configuration at runtime
+      const GOOGLE_CLIENT_ID = googleClientId.value();
+      const GOOGLE_CLIENT_SECRET = googleClientSecret.value();
+      
       if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
         console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
         throw new HttpsError(

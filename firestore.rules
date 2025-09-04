@@ -50,6 +50,28 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
     
+    // Email verifications - temporary verification codes
+    match /email_verifications/{verificationId} {
+      // Users can only read their own verification records
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Users can create verification records for themselves
+      allow create: if isAuthenticated() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['userId', 'email', 'code', 'createdAt', 'expiresAt', 'attempts', 'verified']) &&
+                       request.resource.data.attempts == 0 &&
+                       request.resource.data.verified == false;
+      
+      // Users can update their own verification records (for attempts and verification)
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Allow deletion of old records by the owner or cloud functions
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+    
     // Classes - secured access with enrollment validation
     match /classes/{classId} {
       // Allow read if:
