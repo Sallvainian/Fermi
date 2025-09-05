@@ -2,9 +2,9 @@
   "metadata": {
     "version": 1,
     "root": "C:\\Users\\frank\\Projects\\Fermi",
-    "createdAt": "2025-09-05T01:46:11.760Z",
-    "updatedAt": "2025-09-05T02:11:18.883Z",
-    "totalFiles": 26
+    "createdAt": "2025-09-05T02:25:01.471Z",
+    "updatedAt": "2025-09-05T02:25:27.929Z",
+    "totalFiles": 21
   },
   "tree": {
     "name": "Fermi",
@@ -38,14 +38,6 @@
               },
               {
                 "name": "customClaims.js",
-                "type": "file"
-              },
-              {
-                "name": "emailVerification.js",
-                "type": "file"
-              },
-              {
-                "name": "emailVerificationCloudflare.js",
                 "type": "file"
               },
               {
@@ -93,15 +85,7 @@
                 "type": "file"
               },
               {
-                "name": "createTestStudent.ts",
-                "type": "file"
-              },
-              {
                 "name": "customClaims.ts",
-                "type": "file"
-              },
-              {
-                "name": "emailVerification.ts",
                 "type": "file"
               },
               {
@@ -137,16 +121,6 @@
         ]
       },
       {
-        "name": "scripts",
-        "type": "dir",
-        "children": [
-          {
-            "name": "createTestStudent.js",
-            "type": "file"
-          }
-        ]
-      },
-      {
         "name": "src",
         "type": "dir",
         "children": [
@@ -163,8 +137,6 @@
     "functions/lib/cleanup.js",
     "functions/lib/createTestStudent.js",
     "functions/lib/customClaims.js",
-    "functions/lib/emailVerification.js",
-    "functions/lib/emailVerificationCloudflare.js",
     "functions/lib/index.js",
     "functions/lib/migrate-user-roles-cloud.js",
     "functions/lib/migrate-user-roles.js",
@@ -173,9 +145,7 @@
     "functions/lib/security.js",
     "functions/lib/types/oauth.types.js",
     "functions/src/cleanup.ts",
-    "functions/src/createTestStudent.ts",
     "functions/src/customClaims.ts",
-    "functions/src/emailVerification.ts",
     "functions/src/index.ts",
     "functions/src/migrate-user-roles-cloud.ts",
     "functions/src/migrate-user-roles.ts",
@@ -183,7 +153,6 @@
     "functions/src/rate-limiter.ts",
     "functions/src/security.ts",
     "functions/src/types/oauth.types.ts",
-    "scripts/createTestStudent.js",
     "src/index.js"
   ],
   "edges": [
@@ -201,10 +170,6 @@
     },
     {
       "from": "functions/lib/index.js",
-      "to": "functions/lib/emailVerification.js"
-    },
-    {
-      "from": "functions/lib/index.js",
       "to": "functions/lib/migrate-user-roles-cloud.js"
     },
     {
@@ -217,15 +182,7 @@
     },
     {
       "from": "functions/src/index.ts",
-      "to": "functions/src/createTestStudent.ts"
-    },
-    {
-      "from": "functions/src/index.ts",
       "to": "functions/src/customClaims.ts"
-    },
-    {
-      "from": "functions/src/index.ts",
-      "to": "functions/src/emailVerification.ts"
     },
     {
       "from": "functions/src/index.ts",
@@ -242,46 +199,6 @@
     {
       "from": "functions/src/security.ts",
       "to": "functions/src/rate-limiter.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/cleanup.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/createTestStudent.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/customClaims.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/migrate-user-roles-cloud.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/oauth.ts"
-    },
-    {
-      "from": "functions\\lib\\index.js",
-      "to": "functions/lib/cleanup.js"
-    },
-    {
-      "from": "functions\\lib\\index.js",
-      "to": "functions/lib/createTestStudent.js"
-    },
-    {
-      "from": "functions\\lib\\index.js",
-      "to": "functions/lib/customClaims.js"
-    },
-    {
-      "from": "functions\\lib\\index.js",
-      "to": "functions/lib/migrate-user-roles-cloud.js"
-    },
-    {
-      "from": "functions\\lib\\index.js",
-      "to": "functions/lib/oauth.js"
     }
   ],
   "files": {
@@ -366,190 +283,6 @@
         }
       ]
     },
-    "functions/lib/emailVerification.js": {
-      "imports": [],
-      "dependencies": [],
-      "functions": [
-        {
-          "name": "sendEmailViaCloudflare",
-          "params": [
-            {
-              "name": "to"
-            },
-            {
-              "name": "subject"
-            },
-            {
-              "name": "html"
-            },
-            {
-              "name": "text"
-            },
-            {
-              "name": "workerUrl"
-            },
-            {
-              "name": "apiKey"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false
-        },
-        {
-          "name": "generateVerificationCode",
-          "params": [],
-          "isAsync": false,
-          "isExported": false
-        },
-        {
-          "name": "isEmailAlreadyUsed",
-          "params": [
-            {
-              "name": "email"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false
-        },
-        {
-          "name": "checkRateLimit",
-          "params": [
-            {
-              "name": "email"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false
-        }
-      ],
-      "classes": [],
-      "constants": [
-        {
-          "name": "admin",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "https_1",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "scheduler_1",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "params_1",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "cloudflareWorkerUrl",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "cloudflareApiKey",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "db",
-          "initKind": "unknown",
-          "isExported": false
-        }
-      ]
-    },
-    "functions/lib/emailVerificationCloudflare.js": {
-      "imports": [],
-      "dependencies": [],
-      "functions": [
-        {
-          "name": "sendEmailViaCloudflare",
-          "params": [
-            {
-              "name": "to"
-            },
-            {
-              "name": "subject"
-            },
-            {
-              "name": "html"
-            },
-            {
-              "name": "text"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false
-        },
-        {
-          "name": "generateVerificationCode",
-          "params": [],
-          "isAsync": false,
-          "isExported": false
-        },
-        {
-          "name": "isEmailAlreadyUsed",
-          "params": [
-            {
-              "name": "email"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false
-        },
-        {
-          "name": "checkRateLimit",
-          "params": [
-            {
-              "name": "email"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false
-        }
-      ],
-      "classes": [],
-      "constants": [
-        {
-          "name": "functions",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "admin",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "https_1",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "scheduler_1",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "db",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "CLOUDFLARE_WORKER_URL",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "CLOUDFLARE_API_KEY",
-          "initKind": "unknown",
-          "isExported": false
-        }
-      ]
-    },
     "functions/lib/index.js": {
       "imports": [
         {
@@ -569,10 +302,6 @@
           "kind": "require"
         },
         {
-          "from": "./emailVerification",
-          "kind": "require"
-        },
-        {
           "from": "./createTestStudent",
           "kind": "require"
         }
@@ -581,7 +310,6 @@
         "functions/lib/cleanup.js",
         "functions/lib/createTestStudent.js",
         "functions/lib/customClaims.js",
-        "functions/lib/emailVerification.js",
         "functions/lib/migrate-user-roles-cloud.js",
         "functions/lib/oauth.js"
       ],
@@ -861,37 +589,6 @@
         }
       ]
     },
-    "functions/src/createTestStudent.ts": {
-      "imports": [
-        {
-          "from": "firebase-admin",
-          "kind": "import",
-          "isNamespace": true
-        },
-        {
-          "from": "firebase-functions/v2/https",
-          "kind": "import",
-          "imported": [
-            "onCall"
-          ]
-        }
-      ],
-      "dependencies": [],
-      "functions": [],
-      "classes": [],
-      "constants": [
-        {
-          "name": "db",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "createTestStudent",
-          "initKind": "unknown",
-          "isExported": true
-        }
-      ]
-    },
     "functions/src/customClaims.ts": {
       "imports": [
         {
@@ -938,136 +635,6 @@
         }
       ]
     },
-    "functions/src/emailVerification.ts": {
-      "imports": [
-        {
-          "from": "firebase-admin",
-          "kind": "import",
-          "isNamespace": true
-        },
-        {
-          "from": "firebase-functions/v2/https",
-          "kind": "import",
-          "imported": [
-            "onCall",
-            "HttpsError"
-          ]
-        },
-        {
-          "from": "firebase-functions/v2/scheduler",
-          "kind": "import",
-          "imported": [
-            "onSchedule"
-          ]
-        },
-        {
-          "from": "firebase-functions/params",
-          "kind": "import",
-          "imported": [
-            "defineSecret"
-          ]
-        }
-      ],
-      "dependencies": [],
-      "functions": [
-        {
-          "name": "sendEmailViaCloudflare",
-          "params": [
-            {
-              "name": "to",
-              "type": "string"
-            },
-            {
-              "name": "subject",
-              "type": "string"
-            },
-            {
-              "name": "html",
-              "type": "string"
-            },
-            {
-              "name": "text",
-              "type": "string"
-            },
-            {
-              "name": "workerUrl",
-              "type": "string"
-            },
-            {
-              "name": "apiKey",
-              "type": "string"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false,
-          "returnType": "Promise<void>"
-        },
-        {
-          "name": "generateVerificationCode",
-          "params": [],
-          "isAsync": false,
-          "isExported": false,
-          "returnType": "string"
-        },
-        {
-          "name": "isEmailAlreadyUsed",
-          "params": [
-            {
-              "name": "email",
-              "type": "string"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false,
-          "returnType": "Promise<boolean>"
-        },
-        {
-          "name": "checkRateLimit",
-          "params": [
-            {
-              "name": "email",
-              "type": "string"
-            }
-          ],
-          "isAsync": true,
-          "isExported": false,
-          "returnType": "Promise<boolean>"
-        }
-      ],
-      "classes": [],
-      "constants": [
-        {
-          "name": "cloudflareWorkerUrl",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "cloudflareApiKey",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "db",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "sendEmailVerificationCode",
-          "initKind": "unknown",
-          "isExported": true
-        },
-        {
-          "name": "verifyEmailCode",
-          "initKind": "unknown",
-          "isExported": true
-        },
-        {
-          "name": "cleanupExpiredVerifications",
-          "initKind": "unknown",
-          "isExported": true
-        }
-      ]
-    },
     "functions/src/index.ts": {
       "imports": [
         {
@@ -1099,19 +666,13 @@
           "kind": "export"
         },
         {
-          "from": "./emailVerification",
-          "kind": "export"
-        },
-        {
           "from": "./createTestStudent",
           "kind": "export"
         }
       ],
       "dependencies": [
         "functions/src/cleanup.ts",
-        "functions/src/createTestStudent.ts",
         "functions/src/customClaims.ts",
-        "functions/src/emailVerification.ts",
         "functions/src/migrate-user-roles-cloud.ts",
         "functions/src/oauth.ts"
       ],
@@ -1461,41 +1022,6 @@
       "classes": [],
       "constants": []
     },
-    "scripts/createTestStudent.js": {
-      "imports": [],
-      "dependencies": [],
-      "functions": [
-        {
-          "name": "createTestStudent",
-          "params": [],
-          "isAsync": true,
-          "isExported": false
-        }
-      ],
-      "classes": [],
-      "constants": [
-        {
-          "name": "admin",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "serviceAccount",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "auth",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "db",
-          "initKind": "unknown",
-          "isExported": false
-        }
-      ]
-    },
     "src/index.js": {
       "imports": [],
       "dependencies": [],
@@ -1503,96 +1029,12 @@
       "classes": [],
       "constants": []
     },
-    "functions\\src\\index.ts": {
-      "imports": [
-        {
-          "from": "firebase-functions",
-          "kind": "import",
-          "imported": [
-            "setGlobalOptions"
-          ]
-        },
-        {
-          "from": "firebase-admin",
-          "kind": "import",
-          "isNamespace": true
-        },
-        {
-          "from": "./customClaims",
-          "kind": "export"
-        },
-        {
-          "from": "./oauth",
-          "kind": "export"
-        },
-        {
-          "from": "./cleanup",
-          "kind": "export"
-        },
-        {
-          "from": "./migrate-user-roles-cloud",
-          "kind": "export"
-        },
-        {
-          "from": "./createTestStudent",
-          "kind": "export"
-        }
-      ],
-      "dependencies": [
-        "functions/src/cleanup.ts",
-        "functions/src/createTestStudent.ts",
-        "functions/src/customClaims.ts",
-        "functions/src/migrate-user-roles-cloud.ts",
-        "functions/src/oauth.ts"
-      ],
+    "functions\\cloudflare-email-worker.js": {
+      "imports": [],
+      "dependencies": [],
       "functions": [],
       "classes": [],
       "constants": []
-    },
-    "functions\\lib\\index.js": {
-      "imports": [
-        {
-          "from": "./customClaims",
-          "kind": "require"
-        },
-        {
-          "from": "./oauth",
-          "kind": "require"
-        },
-        {
-          "from": "./cleanup",
-          "kind": "require"
-        },
-        {
-          "from": "./migrate-user-roles-cloud",
-          "kind": "require"
-        },
-        {
-          "from": "./createTestStudent",
-          "kind": "require"
-        }
-      ],
-      "dependencies": [
-        "functions/lib/cleanup.js",
-        "functions/lib/createTestStudent.js",
-        "functions/lib/customClaims.js",
-        "functions/lib/migrate-user-roles-cloud.js",
-        "functions/lib/oauth.js"
-      ],
-      "functions": [],
-      "classes": [],
-      "constants": [
-        {
-          "name": "firebase_functions_1",
-          "initKind": "unknown",
-          "isExported": false
-        },
-        {
-          "name": "admin",
-          "initKind": "unknown",
-          "isExported": false
-        }
-      ]
     }
   }
 }

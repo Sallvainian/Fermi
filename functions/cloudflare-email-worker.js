@@ -1,5 +1,7 @@
 // Cloudflare Worker for sending emails via MailChannels (FREE)
 // Deploy this as a Cloudflare Worker and call it from Firebase Functions
+// Used for: password resets, notifications, and other transactional emails
+// Note: Email verification feature was removed - this is kept for other email needs
 
 export default {
   async fetch(request, env) {
