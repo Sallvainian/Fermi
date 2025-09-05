@@ -2,8 +2,8 @@
   "metadata": {
     "version": 1,
     "root": "C:\\Users\\frank\\Projects\\Fermi",
-    "createdAt": "2025-09-05T02:25:01.471Z",
-    "updatedAt": "2025-09-05T02:25:27.929Z",
+    "createdAt": "2025-09-05T04:40:53.957Z",
+    "updatedAt": "2025-09-05T04:53:00.187Z",
     "totalFiles": 21
   },
   "tree": {
@@ -199,6 +199,22 @@
     {
       "from": "functions/src/security.ts",
       "to": "functions/src/rate-limiter.ts"
+    },
+    {
+      "from": "functions\\src\\index.ts",
+      "to": "functions/src/cleanup.ts"
+    },
+    {
+      "from": "functions\\src\\index.ts",
+      "to": "functions/src/customClaims.ts"
+    },
+    {
+      "from": "functions\\src\\index.ts",
+      "to": "functions/src/migrate-user-roles-cloud.ts"
+    },
+    {
+      "from": "functions\\src\\index.ts",
+      "to": "functions/src/oauth.ts"
     }
   ],
   "files": {
@@ -1029,9 +1045,43 @@
       "classes": [],
       "constants": []
     },
-    "functions\\cloudflare-email-worker.js": {
-      "imports": [],
-      "dependencies": [],
+    "functions\\src\\index.ts": {
+      "imports": [
+        {
+          "from": "firebase-functions",
+          "kind": "import",
+          "imported": [
+            "setGlobalOptions"
+          ]
+        },
+        {
+          "from": "firebase-admin",
+          "kind": "import",
+          "isNamespace": true
+        },
+        {
+          "from": "./customClaims",
+          "kind": "export"
+        },
+        {
+          "from": "./oauth",
+          "kind": "export"
+        },
+        {
+          "from": "./cleanup",
+          "kind": "export"
+        },
+        {
+          "from": "./migrate-user-roles-cloud",
+          "kind": "export"
+        }
+      ],
+      "dependencies": [
+        "functions/src/cleanup.ts",
+        "functions/src/customClaims.ts",
+        "functions/src/migrate-user-roles-cloud.ts",
+        "functions/src/oauth.ts"
+      ],
       "functions": [],
       "classes": [],
       "constants": []

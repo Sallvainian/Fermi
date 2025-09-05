@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 // Removed unused foundation import
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/models/user_role.dart';
 
 /// Service for handling username-based authentication.
 ///
@@ -20,8 +21,8 @@ class UsernameAuthService {
   static const int _maxUsernameSuffixAttempts = 100;
 
   /// Generate a synthetic email from a username based on role
-  String generateSyntheticEmail(String username, {String role = 'student'}) {
-    final domain = role == 'teacher' ? _teacherEmailDomain : _studentEmailDomain;
+  String generateSyntheticEmail(String username, {UserRole role = UserRole.student}) {
+    final domain = role == UserRole.teacher ? _teacherEmailDomain : _studentEmailDomain;
     return '${username.toLowerCase()}$domain';
   }
 
@@ -122,7 +123,7 @@ class UsernameAuthService {
         case 'wrong-password':
           throw Exception('Invalid username or password');
         case 'invalid-email':
-          throw Exception('Account configuration error. Please contact support.');
+          throw Exception('Invalid account format detected. Please contact support if this persists.');
         case 'user-disabled':
           throw Exception('This account has been disabled');
         case 'invalid-credential':
@@ -160,7 +161,7 @@ class UsernameAuthService {
       }
 
       // Generate synthetic email with student domain
-      final email = generateSyntheticEmail(username, role: 'student');
+      final email = generateSyntheticEmail(username, role: UserRole.student);
       final displayName = '$firstName $lastName';
 
       // Create Firebase Auth account
@@ -230,7 +231,7 @@ class UsernameAuthService {
       }
 
       // Generate synthetic email with teacher domain
-      final email = generateSyntheticEmail(username, role: 'teacher');
+      final email = generateSyntheticEmail(username, role: UserRole.teacher);
       final displayName = '$firstName $lastName';
 
       // Create Firebase Auth account
