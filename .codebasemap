@@ -2,8 +2,8 @@
   "metadata": {
     "version": 1,
     "root": "C:\\Users\\frank\\Projects\\Fermi",
-    "createdAt": "2025-09-05T04:40:53.957Z",
-    "updatedAt": "2025-09-05T04:53:00.187Z",
+    "createdAt": "2025-09-05T05:09:19.363Z",
+    "updatedAt": "2025-09-05T05:09:19.363Z",
     "totalFiles": 21
   },
   "tree": {
@@ -162,10 +162,6 @@
     },
     {
       "from": "functions/lib/index.js",
-      "to": "functions/lib/createTestStudent.js"
-    },
-    {
-      "from": "functions/lib/index.js",
       "to": "functions/lib/customClaims.js"
     },
     {
@@ -199,22 +195,6 @@
     {
       "from": "functions/src/security.ts",
       "to": "functions/src/rate-limiter.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/cleanup.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/customClaims.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/migrate-user-roles-cloud.ts"
-    },
-    {
-      "from": "functions\\src\\index.ts",
-      "to": "functions/src/oauth.ts"
     }
   ],
   "files": {
@@ -316,15 +296,10 @@
         {
           "from": "./migrate-user-roles-cloud",
           "kind": "require"
-        },
-        {
-          "from": "./createTestStudent",
-          "kind": "require"
         }
       ],
       "dependencies": [
         "functions/lib/cleanup.js",
-        "functions/lib/createTestStudent.js",
         "functions/lib/customClaims.js",
         "functions/lib/migrate-user-roles-cloud.js",
         "functions/lib/oauth.js"
@@ -679,10 +654,6 @@
         },
         {
           "from": "./migrate-user-roles-cloud",
-          "kind": "export"
-        },
-        {
-          "from": "./createTestStudent",
           "kind": "export"
         }
       ],
@@ -1041,47 +1012,6 @@
     "src/index.js": {
       "imports": [],
       "dependencies": [],
-      "functions": [],
-      "classes": [],
-      "constants": []
-    },
-    "functions\\src\\index.ts": {
-      "imports": [
-        {
-          "from": "firebase-functions",
-          "kind": "import",
-          "imported": [
-            "setGlobalOptions"
-          ]
-        },
-        {
-          "from": "firebase-admin",
-          "kind": "import",
-          "isNamespace": true
-        },
-        {
-          "from": "./customClaims",
-          "kind": "export"
-        },
-        {
-          "from": "./oauth",
-          "kind": "export"
-        },
-        {
-          "from": "./cleanup",
-          "kind": "export"
-        },
-        {
-          "from": "./migrate-user-roles-cloud",
-          "kind": "export"
-        }
-      ],
-      "dependencies": [
-        "functions/src/cleanup.ts",
-        "functions/src/customClaims.ts",
-        "functions/src/migrate-user-roles-cloud.ts",
-        "functions/src/oauth.ts"
-      ],
       "functions": [],
       "classes": [],
       "constants": []

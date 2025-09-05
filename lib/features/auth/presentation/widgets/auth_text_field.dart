@@ -55,11 +55,11 @@ class _AuthTextFieldState extends State<AuthTextField> {
   void _checkCapsLock() {
     // ONLY use HardwareKeyboard API - no text pattern analysis
     // Text pattern analysis is unreliable for passwords
-    if (_focusNode.hasFocus) {
+    if (_focusNode.hasFocus && widget.showCapsLockIndicator && widget.obscureText) {
       try {
         // HardwareKeyboard API may not be available on all platforms
         final capsLockOn = HardwareKeyboard.instance.lockModesEnabled.contains(KeyboardLockMode.capsLock);
-        if (capsLockOn != _capsLockOn) {
+        if (capsLockOn != _capsLockOn && mounted) {
           setState(() {
             _capsLockOn = capsLockOn;
           });
@@ -67,12 +67,17 @@ class _AuthTextFieldState extends State<AuthTextField> {
       } catch (e) {
         // Platform doesn't support HardwareKeyboard API (e.g., some web/mobile environments)
         // Silently ignore - caps lock indicator simply won't show
-        if (_capsLockOn) {
+        if (_capsLockOn && mounted) {
           setState(() {
             _capsLockOn = false;
           });
         }
       }
+    } else if (_capsLockOn && mounted) {
+      // Clear caps lock state when unfocused or when not applicable
+      setState(() {
+        _capsLockOn = false;
+      });
     }
   }
 

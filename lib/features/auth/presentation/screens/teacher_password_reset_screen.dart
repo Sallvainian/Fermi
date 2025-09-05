@@ -182,6 +182,7 @@ class _TeacherPasswordResetScreenState
                           prefixIcon: Icons.lock,
                           obscureText: _obscurePassword,
                           enabled: !_isUpdating,
+                          showCapsLockIndicator: true,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -218,6 +219,7 @@ class _TeacherPasswordResetScreenState
                           prefixIcon: Icons.lock_outline,
                           obscureText: _obscureConfirmPassword,
                           enabled: !_isUpdating,
+                          showCapsLockIndicator: true,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
