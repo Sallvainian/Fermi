@@ -56,8 +56,8 @@ class _TeacherPasswordResetScreenState
       // User model will be automatically updated through auth state listener
 
       if (mounted) {
-        // Navigate to email linking screen
-        context.go('/auth/teacher-setup/email');
+        // Navigate directly to dashboard
+        context.go('/dashboard');
       }
     } catch (e) {
       if (mounted) {

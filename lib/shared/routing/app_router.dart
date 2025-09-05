@@ -7,11 +7,9 @@ import '../../features/student/data/services/presence_service.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
-import '../../features/auth/presentation/screens/verify_email_screen.dart';
 import '../../features/auth/presentation/screens/role_selection_screen.dart';
 import '../../features/auth/presentation/screens/teacher_password_screen.dart';
 import '../../features/auth/presentation/screens/teacher_password_reset_screen.dart';
-import '../../features/auth/presentation/screens/email_linking_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
@@ -57,7 +55,7 @@ import '../services/logger_service.dart';
 /// Key principles:
 /// 1. Simple redirect logic - only handle auth vs unauth
 /// 2. No initialLocation - preserves browser URL on refresh
-/// 3. Let UI components handle complex state (role selection, email verification)
+/// 3. Let UI components handle complex state (role selection)
 /// 4. Router just routes - doesn't enforce business logic
 class AppRouter {
   /// Creates the app router with auth-aware navigation.
@@ -192,25 +190,10 @@ class AppRouter {
           path: '/auth/forgot-password',
           builder: (context, state) => const ForgotPasswordScreen(),
         ),
-        GoRoute(
-          path: '/auth/verify-email',
-          builder: (context, state) => const VerifyEmailScreen(),
-        ),
-
         // Post-signup setup routes
         GoRoute(
           path: '/auth/teacher-setup/password',
           builder: (context, state) => const TeacherPasswordResetScreen(),
-        ),
-        GoRoute(
-          path: '/auth/teacher-setup/email',
-          builder: (context, state) =>
-              const EmailLinkingScreen(userType: 'teacher'),
-        ),
-        GoRoute(
-          path: '/auth/student-setup/email',
-          builder: (context, state) =>
-              const EmailLinkingScreen(userType: 'student'),
         ),
 
         // Main app routes

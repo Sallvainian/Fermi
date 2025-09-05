@@ -11,21 +11,26 @@ class UsernameAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  /// Domain suffix for synthetic emails (using .example to avoid mDNS conflicts)
-  static const String _emailDomain = '@fermi.example';
+  /// Domain suffix for synthetic emails (using .local as per RFC 2606 for private use)
+  /// Format: {username}@students.fermi-app.local for students
+  static const String _studentEmailDomain = '@students.fermi-app.local';
+  static const String _teacherEmailDomain = '@teachers.fermi-app.local';
 
   /// Maximum number of username suffix attempts
   static const int _maxUsernameSuffixAttempts = 100;
 
-  /// Generate a synthetic email from a username
-  String generateSyntheticEmail(String username) {
-    return '${username.toLowerCase()}$_emailDomain';
+  /// Generate a synthetic email from a username based on role
+  String generateSyntheticEmail(String username, {String role = 'student'}) {
+    final domain = role == 'teacher' ? _teacherEmailDomain : _studentEmailDomain;
+    return '${username.toLowerCase()}$domain';
   }
 
   /// Extract username from a synthetic email
   String? extractUsernameFromEmail(String email) {
-    if (email.endsWith(_emailDomain)) {
-      return email.substring(0, email.length - _emailDomain.length);
+    if (email.endsWith(_studentEmailDomain)) {
+      return email.substring(0, email.length - _studentEmailDomain.length);
+    } else if (email.endsWith(_teacherEmailDomain)) {
+      return email.substring(0, email.length - _teacherEmailDomain.length);
     }
     return null;
   }
@@ -71,10 +76,27 @@ class UsernameAuthService {
     required String password,
   }) async {
     try {
-      // Convert username to synthetic email
-      final email = generateSyntheticEmail(username);
+      // Always lookup username in Firestore first to get the associated email
+      final userQuery = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: username.toLowerCase())
+          .limit(1)
+          .get();
 
-      // Sign in with Firebase Auth
+      if (userQuery.docs.isEmpty) {
+        throw Exception('Username not found');
+      }
+
+      // Get the user's data and extract the email
+      final userData = userQuery.docs.first.data();
+      final email = userData['email'];
+      
+      if (email == null) {
+        LoggerService.error('User document missing email field', tag: 'UsernameAuthService');
+        throw Exception('Invalid user profile. Please contact support.');
+      }
+
+      // Sign in with Firebase Auth using the email from Firestore
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -86,7 +108,9 @@ class UsernameAuthService {
             .collection('users')
             .doc(credential.user!.uid)
             .update({'lastActive': FieldValue.serverTimestamp()})
-            .catchError((_) {});
+            .catchError((e) {
+              LoggerService.warning('Failed to update lastActive', tag: 'UsernameAuthService');
+            });
       }
 
       return credential.user;
@@ -94,12 +118,11 @@ class UsernameAuthService {
       // Convert Firebase Auth errors to user-friendly messages
       switch (e.code) {
         case 'user-not-found':
-          throw Exception('Username not found');
+          throw Exception('Invalid username or password');
         case 'wrong-password':
-          throw Exception('Incorrect password');
+          throw Exception('Invalid username or password');
         case 'invalid-email':
-          // This shouldn't happen with our synthetic emails
-          throw Exception('Invalid username format');
+          throw Exception('Account configuration error. Please contact support.');
         case 'user-disabled':
           throw Exception('This account has been disabled');
         case 'invalid-credential':
@@ -108,6 +131,9 @@ class UsernameAuthService {
           throw Exception(e.message ?? 'Authentication failed');
       }
     } catch (e) {
+      if (e.toString().contains('Username not found')) {
+        rethrow;
+      }
       LoggerService.error('Username sign-in error', tag: 'UsernameAuthService', error: e);
       rethrow;
     }
@@ -122,14 +148,19 @@ class UsernameAuthService {
     String? teacherId,
   }) async {
     try {
+      // Validate username format
+      if (!isValidUsername(username)) {
+        throw Exception('Username must be 3-20 characters, start with a letter, and contain only letters, numbers, and underscores');
+      }
+
       // Validate username availability
       final isAvailable = await isUsernameAvailable(username);
       if (!isAvailable) {
         throw Exception('Username "$username" is already taken');
       }
 
-      // Generate synthetic email
-      final email = generateSyntheticEmail(username);
+      // Generate synthetic email with student domain
+      final email = generateSyntheticEmail(username, role: 'student');
       final displayName = '$firstName $lastName';
 
       // Create Firebase Auth account
@@ -142,11 +173,11 @@ class UsernameAuthService {
         // Update display name
         await credential.user!.updateDisplayName(displayName);
 
-        // Create user document in Firestore
+        // Create user document in Firestore with consistent structure
         await _firestore.collection('users').doc(credential.user!.uid).set({
           'uid': credential.user!.uid,
           'username': username.toLowerCase(),
-          'email': email,
+          'email': email,  // Store the synthetic email
           'displayName': displayName,
           'firstName': firstName,
           'lastName': lastName,
@@ -157,6 +188,7 @@ class UsernameAuthService {
           'lastActive': FieldValue.serverTimestamp(),
         });
 
+        LoggerService.info('Created student account: $username', tag: 'UsernameAuthService');
         return credential.user;
       }
 
@@ -186,12 +218,22 @@ class UsernameAuthService {
     required String lastName,
   }) async {
     try {
-      // Generate synthetic email
-      final email = generateSyntheticEmail(username);
+      // Validate username format
+      if (!isValidUsername(username)) {
+        throw Exception('Username must be 3-20 characters, start with a letter, and contain only letters, numbers, and underscores');
+      }
+
+      // Validate username availability
+      final isAvailable = await isUsernameAvailable(username);
+      if (!isAvailable) {
+        throw Exception('Username "$username" is already taken');
+      }
+
+      // Generate synthetic email with teacher domain
+      final email = generateSyntheticEmail(username, role: 'teacher');
       final displayName = '$firstName $lastName';
 
-      // Try to create Firebase Auth account
-      // If username already exists, Firebase will throw an error
+      // Create Firebase Auth account
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -201,11 +243,11 @@ class UsernameAuthService {
         // Update display name
         await credential.user!.updateDisplayName(displayName);
 
-        // Create user document in Firestore
+        // Create user document in Firestore with consistent structure
         await _firestore.collection('users').doc(credential.user!.uid).set({
           'uid': credential.user!.uid,
           'username': username.toLowerCase(),
-          'email': email,
+          'email': email,  // Store the synthetic email
           'displayName': displayName,
           'firstName': firstName,
           'lastName': lastName,
@@ -215,6 +257,7 @@ class UsernameAuthService {
           'lastActive': FieldValue.serverTimestamp(),
         });
 
+        LoggerService.info('Created teacher account: $username', tag: 'UsernameAuthService');
         return credential.user;
       }
 

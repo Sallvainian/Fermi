@@ -7,6 +7,7 @@
     "deploy": "echo 'Deploy handled by Cloudflare Pages'"
   },
   "devDependencies": {
+    "codebase-map": "^0.6.0",
     "wrangler": "^4.33.1"
   }
 }

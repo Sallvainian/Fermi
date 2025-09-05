@@ -43,5 +43,5 @@ export * from "./cleanup";
 // Export migration function (remove after migration is complete)
 export * from "./migrate-user-roles-cloud";
 
-// Export email verification functions
-export * from "./emailVerification";
+// Export test student creator (remove after testing)
+export * from "./createTestStudent";
