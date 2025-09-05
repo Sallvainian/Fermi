@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -34,6 +35,7 @@ class AuthTextField extends StatefulWidget {
 class _AuthTextFieldState extends State<AuthTextField> {
   bool _capsLockOn = false;
   final FocusNode _focusNode = FocusNode();
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -41,15 +43,25 @@ class _AuthTextFieldState extends State<AuthTextField> {
     // Only check caps lock if indicator is requested
     if (widget.showCapsLockIndicator) {
       // Check caps lock state when focus changes
-      _focusNode.addListener(_checkCapsLock);
+      _focusNode.addListener(_onFocusChange);
     }
   }
 
   @override
   void dispose() {
-    _focusNode.removeListener(_checkCapsLock);
+    _debounceTimer?.cancel();
+    _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onFocusChange() {
+    // Cancel any existing timer to prevent rapid updates
+    _debounceTimer?.cancel();
+    
+    // Debounce the caps lock check with a 150ms delay
+    // This prevents excessive rebuilds from rapid focus changes
+    _debounceTimer = Timer(const Duration(milliseconds: 150), _checkCapsLock);
   }
 
   void _checkCapsLock() {
@@ -59,14 +71,18 @@ class _AuthTextFieldState extends State<AuthTextField> {
       try {
         // HardwareKeyboard API may not be available on all platforms
         final capsLockOn = HardwareKeyboard.instance.lockModesEnabled.contains(KeyboardLockMode.capsLock);
-        if (capsLockOn != _capsLockOn && mounted) {
+        
+        // Only update state if:
+        // 1. The caps lock state has actually changed
+        // 2. The widget is still mounted
+        if (mounted && capsLockOn != _capsLockOn) {
           setState(() {
             _capsLockOn = capsLockOn;
           });
         }
       } catch (e) {
         // Platform doesn't support HardwareKeyboard API (e.g., some web/mobile environments)
-        // Silently ignore - caps lock indicator simply won't show
+        // Only clear if currently showing and mounted
         if (_capsLockOn && mounted) {
           setState(() {
             _capsLockOn = false;
