@@ -38,8 +38,8 @@ class _AuthTextFieldState extends State<AuthTextField> {
   @override
   void initState() {
     super.initState();
-    // Only check caps lock for password fields
-    if (widget.showCapsLockIndicator && widget.obscureText) {
+    // Only check caps lock if indicator is requested
+    if (widget.showCapsLockIndicator) {
       // Check caps lock state when focus changes
       _focusNode.addListener(_checkCapsLock);
     }
