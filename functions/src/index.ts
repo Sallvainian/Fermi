@@ -40,5 +40,5 @@ export * from "./oauth";
 // Export cleanup jobs for security and maintenance
 export * from "./cleanup";
 
-// Export migration function (remove after migration is complete)
+// Export migration function (keep for new deployments and future user migrations)
 export * from "./migrate-user-roles-cloud";

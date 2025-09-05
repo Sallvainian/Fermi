@@ -56,8 +56,8 @@ class _TeacherPasswordResetScreenState
       // User model will be automatically updated through auth state listener
 
       if (mounted) {
-        // Navigate to email linking screen
-        context.go('/auth/teacher-setup/email');
+        // Navigate directly to dashboard
+        context.go('/dashboard');
       }
     } catch (e) {
       if (mounted) {
@@ -182,6 +182,7 @@ class _TeacherPasswordResetScreenState
                           prefixIcon: Icons.lock,
                           obscureText: _obscurePassword,
                           enabled: !_isUpdating,
+                          showCapsLockIndicator: true,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -218,6 +219,7 @@ class _TeacherPasswordResetScreenState
                           prefixIcon: Icons.lock_outline,
                           obscureText: _obscureConfirmPassword,
                           enabled: !_isUpdating,
+                          showCapsLockIndicator: true,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword

@@ -6,29 +6,26 @@ import '../models/user_model.dart';
 /// Compute the appropriate redirect based on authentication state.
 ///
 /// This top‑level function encapsulates the routing rules for handling
-/// unauthenticated users and users who must verify their email address.
+/// unauthenticated users and role-based access control.
 /// It can be unit tested in isolation without pulling in UI dependencies
 /// or `go_router` types.
 ///
 /// * [isAuthenticated] indicates whether the user is fully authenticated
 ///   (i.e. `AuthStatus.authenticated`).
 /// * [status] is the full `AuthStatus` from the provider.
-/// * [emailVerified] reflects whether the currently signed‑in user's
-///   email has been verified via Firebase.
 /// * [matchedLocation] is the current route path being requested.
+/// * [role] is the user's role for role-based access control.
 ///
 /// Returns a string path to redirect to, or `null` if no redirect is
 /// necessary.
 String? computeAuthRedirect({
   required bool isAuthenticated,
   required AuthStatus status,
-  required bool emailVerified,
   required String matchedLocation,
   UserRole? role,
 }) {
   final bool isAuthRoute = matchedLocation.startsWith('/auth');
   final bool unauthenticated = !isAuthenticated;
-  final bool needsEmailVerification = isAuthenticated && !emailVerified;
 
   if (unauthenticated) {
     if (!isAuthRoute) {
@@ -37,15 +34,8 @@ String? computeAuthRedirect({
     return null;
   }
 
-  if (needsEmailVerification) {
-    if (matchedLocation != '/auth/verify-email') {
-      return '/auth/verify-email';
-    }
-    return null;
-  }
-
-  // Role‑based route protection. Once the user is fully authenticated and
-  // email verified, restrict access to routes based on their assigned role.
+  // Role‑based route protection. Once the user is authenticated, restrict
+  // access to routes based on their assigned role.
   // Teacher routes start with `/teacher`; student routes start with `/student`.
   if (matchedLocation.startsWith('/teacher') &&
       role != null &&

@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Codebase Map
+The project structure is automatically indexed. Run `codebase-map scan && codebase-map format` to update.
+@.codebasemap.dsl
+
 ## Project Overview
 
 **Fermi** - A comprehensive Flutter education management platform with Firebase backend for teachers and students.

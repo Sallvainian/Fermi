@@ -1155,14 +1155,6 @@ class AuthProvider extends ChangeNotifier {
 
   // ============= Additional Methods (Stubs for compatibility) =============
 
-  /// Send email verification
-  Future<void> sendEmailVerification() async {
-    final user = _firebaseAuth.currentUser;
-    if (user != null && !user.emailVerified) {
-      await user.sendEmailVerification();
-    }
-  }
-
   /// Re-authenticate with Apple
   Future<void> reauthenticateWithApple() async {
     // TODO: Implement Apple re-authentication

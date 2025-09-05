@@ -456,11 +456,6 @@ class AuthService {
     await _auth!.sendPasswordResetEmail(email: email);
   }
 
-  // Email verification
-  Future<void> sendEmailVerification() async {
-    await currentUser?.sendEmailVerification();
-  }
-
   // Update user role (for role selection after Google sign-in)
   Future<void> updateUserRole(String uid, String role) async {
     // Parse role properly
