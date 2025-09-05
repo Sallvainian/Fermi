@@ -130,19 +130,16 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-functions-compat.js"></script>
 
+  <!-- Load Firebase config from external file (should define window.firebaseConfig) -->
+  <script src="firebase-config.js"></script>
   <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyBl_36NLwN3O9POk5SMD86jX_LGY1IDFrM",
-      authDomain: "teacher-dashboard-flutterfire.firebaseapp.com",
-      projectId: "teacher-dashboard-flutterfire",
-      storageBucket: "teacher-dashboard-flutterfire.firebasestorage.app",
-      messagingSenderId: "218352465432",
-      appId: "1:218352465432:web:4254a98138547b7138b56d"
-    };
+    // Ensure firebaseConfig is loaded from external file
+    if (!window.firebaseConfig) {
+      throw new Error('Firebase configuration not found. Please provide firebase-config.js with window.firebaseConfig.');
+    }
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(window.firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
     const functions = firebase.functions();
