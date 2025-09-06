@@ -460,7 +460,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  user?.email ?? '',
+                  user?.realEmail ?? user?.email ?? '',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
