@@ -11,6 +11,10 @@ import '../../../../shared/models/user_role.dart';
 class UsernameAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  // Cache for username lookups with 5-minute TTL
+  static final Map<String, _CachedUsername> _usernameCache = {};
+  static const Duration _cacheTTL = Duration(minutes: 5);
 
   /// Domain suffix for synthetic emails (using .local as per RFC 2606 for private use)
   /// Format: {username}@students.fermi-app.local for students
@@ -39,13 +43,13 @@ class UsernameAuthService {
   /// Check if a username is already taken
   Future<bool> isUsernameAvailable(String username) async {
     try {
-      final querySnapshot = await _firestore
-          .collection('users')
-          .where('username', isEqualTo: username.toLowerCase())
-          .limit(1)
+      // Check in public_usernames collection (safe for unauthenticated access)
+      final publicUsernameDoc = await _firestore
+          .collection('public_usernames')
+          .doc(username.toLowerCase())
           .get();
 
-      return querySnapshot.docs.isEmpty;
+      return !publicUsernameDoc.exists;
     } catch (e) {
       LoggerService.error('Error checking username availability', tag: 'UsernameAuthService', error: e);
       return false;
@@ -77,19 +81,53 @@ class UsernameAuthService {
     required String password,
   }) async {
     try {
-      // Always lookup username in Firestore first to get the associated email
-      final userQuery = await _firestore
-          .collection('users')
-          .where('username', isEqualTo: username.toLowerCase())
-          .limit(1)
-          .get();
+      final lowerUsername = username.toLowerCase();
+      String? uid;
+      
+      // Check cache first
+      final cached = _usernameCache[lowerUsername];
+      if (cached != null && !cached.isExpired) {
+        uid = cached.uid;
+        LoggerService.info('Using cached username lookup for: $lowerUsername', tag: 'UsernameAuthService');
+      } else {
+        // Cache miss or expired, lookup in public collection
+        final publicUsernameDoc = await _firestore
+            .collection('public_usernames')
+            .doc(lowerUsername)
+            .get();
 
-      if (userQuery.docs.isEmpty) {
-        throw Exception('Username not found');
+        if (!publicUsernameDoc.exists) {
+          throw Exception('Username not found');
+        }
+
+        // Get the uid from the public collection
+        final publicData = publicUsernameDoc.data()!;
+        uid = publicData['uid'];
+        
+        if (uid == null) {
+          LoggerService.error('Public username document missing uid field', tag: 'UsernameAuthService');
+          throw Exception('Invalid username mapping. Please contact support.');
+        }
+        
+        // Cache the result
+        _usernameCache[lowerUsername] = _CachedUsername(
+          uid: uid,
+          timestamp: DateTime.now(),
+        );
+        LoggerService.info('Cached username lookup for: $lowerUsername', tag: 'UsernameAuthService');
       }
-
-      // Get the user's data and extract the email
-      final userData = userQuery.docs.first.data();
+      
+      // Now fetch the actual user document using the uid (requires authentication after this)
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .get();
+          
+      if (!userDoc.exists) {
+        throw Exception('User profile not found');
+      }
+      
+      final userData = userDoc.data()!;
       final email = userData['email'];
       
       if (email == null) {
@@ -188,6 +226,12 @@ class UsernameAuthService {
           'createdAt': FieldValue.serverTimestamp(),
           'lastActive': FieldValue.serverTimestamp(),
         });
+        
+        // Also create entry in public_usernames collection for login lookups
+        await _firestore.collection('public_usernames').doc(username.toLowerCase()).set({
+          'uid': credential.user!.uid,
+          'role': 'student',
+        });
 
         LoggerService.info('Created student account: $username', tag: 'UsernameAuthService');
         return credential.user;
@@ -256,6 +300,12 @@ class UsernameAuthService {
           'photoURL': null,
           'createdAt': FieldValue.serverTimestamp(),
           'lastActive': FieldValue.serverTimestamp(),
+        });
+        
+        // Also create entry in public_usernames collection for login lookups
+        await _firestore.collection('public_usernames').doc(username.toLowerCase()).set({
+          'uid': credential.user!.uid,
+          'role': 'teacher',
         });
 
         LoggerService.info('Created teacher account: $username', tag: 'UsernameAuthService');
@@ -352,4 +402,24 @@ class UsernameAuthService {
     // If all 99 are taken, throw error
     throw Exception('Could not generate unique username');
   }
+  
+  /// Clear the username cache (useful for testing or when users are updated)
+  static void clearCache() {
+    _usernameCache.clear();
+    LoggerService.info('Username cache cleared', tag: 'UsernameAuthService');
+  }
+}
+
+/// Cache entry for username lookups
+class _CachedUsername {
+  final String uid;
+  final DateTime timestamp;
+  
+  _CachedUsername({
+    required this.uid,
+    required this.timestamp,
+  });
+  
+  bool get isExpired => 
+      DateTime.now().difference(timestamp) > UsernameAuthService._cacheTTL;
 }

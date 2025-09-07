@@ -39,13 +39,19 @@ service cloud.firestore {
     
     // Users collection
     match /users/{userId} {
-      // Allow unauthenticated queries for username lookups during login
-      // This is needed because login happens before authentication
-      allow list: if request.query.limit <= 1;
       // Allow authenticated users to read any user (for messaging, etc.)
       allow read: if isAuthenticated();
       // Users can only write their own document (including initial creation)
       allow write: if isOwner(userId);
+    }
+    
+    // Public usernames collection - safe for unauthenticated access
+    // Only contains username -> uid mapping, no sensitive data
+    match /public_usernames/{username} {
+      // Allow anyone to read for username lookups during login
+      allow read: if true;
+      // Only allow admins or cloud functions to write
+      allow write: if false;
     }
     
     // Pending users - temporary data during signup
