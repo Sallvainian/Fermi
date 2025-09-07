@@ -43,5 +43,5 @@ export * from "./cleanup";
 // Export migration function (keep for new deployments and future user migrations)
 export * from "./migrate-user-roles-cloud";
 
-// Export username migration function for public_usernames collection
-export * from "./migrate-usernames";
+// Export admin functions for Firebase Administrator role
+export * from "./adminFunctions";

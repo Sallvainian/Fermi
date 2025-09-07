@@ -32,6 +32,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         if (role == 'teacher') {
           // Teachers need additional password verification
           context.go('/auth/teacher-password');
+        } else if (role == 'admin') {
+          // Admins need additional password verification
+          context.go('/auth/admin-password');
         } else {
           // Students go directly to login
           context.go('/auth/login');
@@ -115,7 +118,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             color: theme.colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(width: 24),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: _buildRoleCard(
                             context: context,
@@ -125,6 +128,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                 'Manage classes, create assignments, and track progress',
                             icon: Icons.school,
                             color: theme.colorScheme.secondary,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildRoleCard(
+                            context: context,
+                            role: 'admin',
+                            title: "I'm an Administrator",
+                            subtitle:
+                                'Manage users, system settings, and platform administration',
+                            icon: Icons.admin_panel_settings,
+                            color: Colors.deepPurple,
                           ),
                         ),
                       ],
@@ -149,6 +164,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                           'Manage classes, create assignments, and track progress',
                       icon: Icons.school,
                       color: theme.colorScheme.secondary,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildRoleCard(
+                      context: context,
+                      role: 'admin',
+                      title: "I'm an Administrator",
+                      subtitle:
+                          'Manage users, system settings, and platform administration',
+                      icon: Icons.admin_panel_settings,
+                      color: Colors.deepPurple,
                     ),
                   ],
                 ],

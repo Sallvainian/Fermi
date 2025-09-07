@@ -9,9 +9,11 @@ import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/role_selection_screen.dart';
 import '../../features/auth/presentation/screens/teacher_password_screen.dart';
+import '../../features/auth/presentation/screens/admin_password_screen.dart';
 import '../../features/auth/presentation/screens/teacher_password_reset_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
+import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/simple_chat_screen.dart';
@@ -179,6 +181,10 @@ class AppRouter {
           builder: (context, state) => const TeacherPasswordScreen(),
         ),
         GoRoute(
+          path: '/auth/admin-password',
+          builder: (context, state) => const AdminPasswordScreen(),
+        ),
+        GoRoute(
           path: '/auth/login',
           builder: (context, state) => const LoginScreen(),
         ),
@@ -254,6 +260,8 @@ class AppRouter {
               return const TeacherDashboardScreen();
             } else if (user?.role == UserRole.student) {
               return const StudentDashboardScreen();
+            } else if (user?.role == UserRole.admin) {
+              return const AdminDashboardScreen();
             }
 
             // Fallback - check if we're truly authenticated but missing user data
