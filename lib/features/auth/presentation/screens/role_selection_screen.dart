@@ -69,7 +69,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 600),
+              constraints: const BoxConstraints(maxWidth: 900),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -118,7 +118,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             color: theme.colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 24),
                         Expanded(
                           child: _buildRoleCard(
                             context: context,
@@ -130,7 +130,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                             color: theme.colorScheme.secondary,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 24),
                         Expanded(
                           child: _buildRoleCard(
                             context: context,

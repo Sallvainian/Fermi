@@ -6,6 +6,7 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback onCreateTeacher;
   final VoidCallback onViewReports;
   final VoidCallback onSystemSettings;
+  final VoidCallback onBulkImport;
 
   const QuickActionsGrid({
     super.key,
@@ -13,6 +14,7 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onCreateTeacher,
     required this.onViewReports,
     required this.onSystemSettings,
+    required this.onBulkImport,
   });
 
   @override
@@ -33,8 +35,8 @@ class QuickActionsGrid extends StatelessWidget {
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 1.2,
+            crossAxisCount: 3,
+            childAspectRatio: 1.1,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
             children: [
@@ -49,6 +51,12 @@ class QuickActionsGrid extends StatelessWidget {
                 label: 'Create Teacher',
                 color: Colors.orange,
                 onTap: onCreateTeacher,
+              ),
+              _QuickActionButton(
+                icon: Icons.upload_file,
+                label: 'Bulk Import',
+                color: Colors.teal,
+                onTap: onBulkImport,
               ),
               _QuickActionButton(
                 icon: Icons.analytics,

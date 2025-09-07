@@ -4,10 +4,12 @@ import 'package:cloud_functions/cloud_functions.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/system_stats.dart';
 import '../../domain/models/admin_user.dart';
+import '../../data/services/bulk_import_service.dart';
 
 class AdminProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  final BulkImportService _bulkImportService = BulkImportService();
 
   // State
   SystemStats? _systemStats;
@@ -245,6 +247,129 @@ class AdminProvider extends ChangeNotifier {
       _error = 'Failed to reset password';
       notifyListeners();
       return null;
+    }
+  }
+
+  // Bulk create student accounts
+  Future<Map<String, dynamic>?> bulkCreateStudent({
+    required String username,
+    required String displayName,
+    required int gradeLevel,
+    String? parentEmail,
+    List<String>? classIds,
+  }) async {
+    try {
+      final callable = _functions.httpsCallable('createStudentAccount');
+      final result = await callable.call({
+        'username': username,
+        'displayName': displayName,
+        'gradeLevel': gradeLevel.toString(),
+        'parentEmail': parentEmail,
+        'classIds': classIds ?? [],
+      });
+
+      return result.data as Map<String, dynamic>;
+    } catch (e) {
+      LoggerService.error('Error in bulk create student: $e', tag: 'AdminProvider');
+      rethrow;
+    }
+  }
+
+  // Bulk create teacher accounts
+  Future<Map<String, dynamic>?> bulkCreateTeacher({
+    required String email,
+    required String password,
+    required String displayName,
+    List<String>? subjects,
+  }) async {
+    try {
+      final callable = _functions.httpsCallable('createTeacherAccount');
+      final result = await callable.call({
+        'email': email,
+        'password': password,
+        'displayName': displayName,
+        'subjects': subjects ?? [],
+      });
+
+      return result.data as Map<String, dynamic>;
+    } catch (e) {
+      LoggerService.error('Error in bulk create teacher: $e', tag: 'AdminProvider');
+      rethrow;
+    }
+  }
+
+  // Bulk import students from parsed data
+  Future<BulkImportResult> bulkImportStudents(List<Map<String, dynamic>> students) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      final result = await _bulkImportService.bulkImportStudents(students);
+      
+      // Refresh recent users after bulk import
+      await _loadRecentUsers();
+      
+      return result;
+    } catch (e) {
+      LoggerService.error('Error bulk importing students: $e', tag: 'AdminProvider');
+      _error = 'Failed to bulk import students';
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Bulk import teachers from parsed data
+  Future<BulkImportResult> bulkImportTeachers(List<Map<String, dynamic>> teachers) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      final result = await _bulkImportService.bulkImportTeachers(teachers);
+      
+      // Refresh recent users after bulk import
+      await _loadRecentUsers();
+      
+      return result;
+    } catch (e) {
+      LoggerService.error('Error bulk importing teachers: $e', tag: 'AdminProvider');
+      _error = 'Failed to bulk import teachers';
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Validate bulk import data
+  Future<Map<String, dynamic>> validateBulkData(
+    List<Map<String, dynamic>> data,
+    String type,
+  ) async {
+    try {
+      return await _bulkImportService.validateBulkData(data, type);
+    } catch (e) {
+      LoggerService.error('Error validating bulk data: $e', tag: 'AdminProvider');
+      _error = 'Failed to validate data';
+      rethrow;
+    }
+  }
+
+  // Bulk assign students to classes
+  Future<void> bulkAssignToClasses(List<String> studentIds, List<String> classIds) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      await _bulkImportService.bulkAssignToClasses(studentIds, classIds);
+    } catch (e) {
+      LoggerService.error('Error bulk assigning to classes: $e', tag: 'AdminProvider');
+      _error = 'Failed to assign students to classes';
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

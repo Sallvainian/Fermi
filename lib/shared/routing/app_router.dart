@@ -14,6 +14,7 @@ import '../../features/auth/presentation/screens/teacher_password_reset_screen.d
 import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/admin/presentation/screens/bulk_import_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/simple_chat_screen.dart';
@@ -530,6 +531,12 @@ class AppRouter {
         GoRoute(
           path: '/grades',
           builder: (context, state) => const GradebookScreen(),
+        ),
+
+        // Admin routes
+        GoRoute(
+          path: '/admin/bulk-import',
+          builder: (context, state) => const BulkImportScreen(),
         ),
 
         // Student routes with middleware role-based guards

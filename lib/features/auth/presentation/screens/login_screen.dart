@@ -26,13 +26,13 @@ class LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _isTeacherRole = false;
+  String? _userRole;
 
   @override
   void initState() {
     super.initState();
     // Prefer widget param if provided
-    _isTeacherRole = widget.role == 'teacher';
+    _userRole = widget.role;
     LoggerService.info('LoginScreen initialized with role: ${widget.role}', tag: 'LoginScreen');
 
     // Also support role via query parameter (e.g., /auth/login?role=teacher)
@@ -46,7 +46,7 @@ class LoginScreenState extends State<LoginScreen> {
         }
         if (role != null) {
           setState(() {
-            _isTeacherRole = role == 'teacher';
+            _userRole = role;
           });
         }
       } catch (e) {
@@ -69,10 +69,16 @@ class LoginScreenState extends State<LoginScreen> {
       final password = _passwordController.text;
 
       try {
-        // Both teachers and students use username login
-        LoggerService.info('Attempting sign in for username: $username', tag: 'LoginScreen');
-        await authProvider.signInWithUsername(username, password);
-        LoggerService.info('Sign in successful for username: $username', tag: 'LoginScreen');
+        // Admins use email login, teachers and students use username login
+        if (_userRole == 'admin') {
+          LoggerService.info('Attempting admin sign in with email: $username', tag: 'LoginScreen');
+          await authProvider.signInWithEmail(username, password);
+          LoggerService.info('Admin sign in successful for email: $username', tag: 'LoginScreen');
+        } else {
+          LoggerService.info('Attempting sign in for username: $username', tag: 'LoginScreen');
+          await authProvider.signInWithUsername(username, password);
+          LoggerService.info('Sign in successful for username: $username', tag: 'LoginScreen');
+        }
 
         if (!mounted) return;
 
@@ -140,15 +146,18 @@ class LoginScreenState extends State<LoginScreen> {
                 children: [
                   // Header
                   Icon(
-                    Icons.school,
+                    _userRole == 'admin' ? Icons.admin_panel_settings : Icons.school,
                     size: 72,
-                    color: _isTeacherRole
-                        ? theme.colorScheme.secondary
-                        : theme.colorScheme.primary,
+                    color: _userRole == 'admin'
+                        ? Colors.deepPurple
+                        : _userRole == 'teacher'
+                            ? theme.colorScheme.secondary
+                            : theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    _isTeacherRole ? 'Teacher Login' : 'Student Login',
+                    _userRole == 'admin' ? 'Administrator Login' :
+                    _userRole == 'teacher' ? 'Teacher Login' : 'Student Login',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onSurface,
@@ -184,9 +193,9 @@ class LoginScreenState extends State<LoginScreen> {
                             // Username/Email Field
                             AuthTextField(
                               controller: _usernameController,
-                              label: 'Username',
-                              prefixIcon: Icons.person,
-                              keyboardType: TextInputType.text,
+                              label: _userRole == 'admin' ? 'Email' : 'Username',
+                              prefixIcon: _userRole == 'admin' ? Icons.email : Icons.person,
+                              keyboardType: _userRole == 'admin' ? TextInputType.emailAddress : TextInputType.text,
                               validator: _validateInput,
                               enabled: !isLoading,
                             ),
@@ -229,9 +238,11 @@ class LoginScreenState extends State<LoginScreen> {
                               child: TextButton(
                                 onPressed: () => context.go('/auth/forgot-password'),
                                 style: TextButton.styleFrom(
-                                  foregroundColor: _isTeacherRole
-                                      ? theme.colorScheme.secondary
-                                      : theme.colorScheme.primary,
+                                  foregroundColor: _userRole == 'admin'
+                                      ? Colors.deepPurple
+                                      : _userRole == 'teacher'
+                                          ? theme.colorScheme.secondary
+                                          : theme.colorScheme.primary,
                                 ),
                                 child: const Text('Forgot Password?'),
                               ),
@@ -244,12 +255,16 @@ class LoginScreenState extends State<LoginScreen> {
                               onPressed: isLoading ? null : _signIn,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 16),
-                                backgroundColor: _isTeacherRole
-                                    ? theme.colorScheme.secondary
-                                    : theme.colorScheme.primary,
-                                foregroundColor: _isTeacherRole
-                                    ? theme.colorScheme.onSecondary
-                                    : theme.colorScheme.onPrimary,
+                                backgroundColor: _userRole == 'admin'
+                                    ? Colors.deepPurple
+                                    : _userRole == 'teacher'
+                                        ? theme.colorScheme.secondary
+                                        : theme.colorScheme.primary,
+                                foregroundColor: _userRole == 'admin'
+                                    ? Colors.white
+                                    : _userRole == 'teacher'
+                                        ? theme.colorScheme.onSecondary
+                                        : theme.colorScheme.onPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -313,7 +328,7 @@ class LoginScreenState extends State<LoginScreen> {
 
                             // Sign up and back to role selection
                             const SizedBox(height: 24),
-                            if (_isTeacherRole) ...[
+                            if (_userRole == 'teacher') ...[
                               TextButton(
                                 onPressed: isLoading
                                     ? null
