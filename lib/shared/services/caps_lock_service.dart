@@ -37,7 +37,14 @@ class CapsLockService {
     
     // Otherwise debounce the check
     _debounceTimer = Timer(debounce, () async {
-      await _performCapsLockCheck(onStateChanged);
+      try {
+        await _performCapsLockCheck(onStateChanged);
+      } catch (e, stack) {
+        LoggerService.debug(
+          'Unhandled exception in debounced caps lock check: $e\n$stack',
+          tag: 'CapsLockService',
+        );
+      }
     });
     
     return null; // Debounced, will callback later
