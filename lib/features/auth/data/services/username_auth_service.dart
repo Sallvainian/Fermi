@@ -12,9 +12,11 @@ class UsernameAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
-  // Cache for username lookups with 5-minute TTL
+  // Cache for username lookups with 5-minute TTL and size limit
   static final Map<String, _CachedUsername> _usernameCache = {};
   static const Duration _cacheTTL = Duration(minutes: 5);
+  static const int _maxCacheSize = 100; // Maximum number of cached usernames
+  static final List<String> _cacheAccessOrder = []; // Track access order for LRU
 
   /// Domain suffix for synthetic emails (using .local as per RFC 2606 for private use)
   /// Format: {username}@students.fermi-app.local for students
@@ -88,32 +90,61 @@ class UsernameAuthService {
       final cached = _usernameCache[lowerUsername];
       if (cached != null && !cached.isExpired) {
         uid = cached.uid;
+        _updateCacheAccess(lowerUsername); // Update LRU access order
         LoggerService.info('Using cached username lookup for: $lowerUsername', tag: 'UsernameAuthService');
       } else {
-        // Cache miss or expired, lookup in public collection
+        // Cache miss or expired, lookup in public collection first
         final publicUsernameDoc = await _firestore
             .collection('public_usernames')
             .doc(lowerUsername)
             .get();
 
-        if (!publicUsernameDoc.exists) {
-          throw Exception('Username not found');
+        if (publicUsernameDoc.exists) {
+          // Found in public collection
+          final publicData = publicUsernameDoc.data()!;
+          uid = publicData['uid'];
+          
+          if (uid == null) {
+            LoggerService.error('Public username document missing uid field', tag: 'UsernameAuthService');
+            throw Exception('Invalid username mapping. Please contact support.');
+          }
+        } else {
+          // FALLBACK: Not in public collection, try users collection (for existing users)
+          LoggerService.info('Username not in public collection, checking users collection for: $lowerUsername', tag: 'UsernameAuthService');
+          
+          final userQuery = await _firestore
+              .collection('users')
+              .where('username', isEqualTo: lowerUsername)
+              .limit(1)
+              .get();
+          
+          if (userQuery.docs.isEmpty) {
+            throw Exception('Username not found');
+          }
+          
+          // Found in users collection - migrate to public_usernames for next time
+          final userDoc = userQuery.docs.first;
+          final userData = userDoc.data();
+          uid = userDoc.id;
+          
+          // Create entry in public_usernames for future lookups
+          try {
+            await _firestore.collection('public_usernames')
+                .doc(lowerUsername)
+                .set({
+                  'uid': uid,
+                  'role': userData['role'] ?? 'student',
+                });
+            LoggerService.info('Migrated username to public collection: $lowerUsername', tag: 'UsernameAuthService');
+          } catch (e) {
+            // Log but don't fail login if migration fails
+            LoggerService.warning('Failed to migrate username to public collection: $e', tag: 'UsernameAuthService');
+          }
         }
-
-        // Get the uid from the public collection
-        final publicData = publicUsernameDoc.data()!;
-        uid = publicData['uid'];
         
-        if (uid == null) {
-          LoggerService.error('Public username document missing uid field', tag: 'UsernameAuthService');
-          throw Exception('Invalid username mapping. Please contact support.');
-        }
-        
-        // Cache the result
-        _usernameCache[lowerUsername] = _CachedUsername(
-          uid: uid,
-          timestamp: DateTime.now(),
-        );
+        // Cache the result with LRU eviction
+        // At this point uid is guaranteed to be non-null or an exception would have been thrown
+        _addToCache(lowerUsername, uid);
         LoggerService.info('Cached username lookup for: $lowerUsername', tag: 'UsernameAuthService');
       }
       
@@ -331,6 +362,34 @@ class UsernameAuthService {
     }
   }
 
+  /// Delete user and synchronize both collections
+  Future<void> deleteUser({
+    required String uid,
+    required String username,
+  }) async {
+    try {
+      // Use batch write to ensure atomicity
+      final batch = _firestore.batch();
+      
+      // Delete from users collection
+      batch.delete(_firestore.collection('users').doc(uid));
+      
+      // Delete from public_usernames collection
+      batch.delete(_firestore.collection('public_usernames').doc(username.toLowerCase()));
+      
+      // Commit the batch
+      await batch.commit();
+      
+      // Invalidate cache entry
+      invalidateCacheEntry(username);
+      
+      LoggerService.info('Deleted user $username (uid: $uid) from both collections', tag: 'UsernameAuthService');
+    } catch (e) {
+      LoggerService.error('Failed to delete user', tag: 'UsernameAuthService', error: e);
+      rethrow;
+    }
+  }
+  
   /// Update password for a user (teacher can reset student passwords)
   Future<void> updatePasswordForUser({
     required String username,
@@ -403,10 +462,50 @@ class UsernameAuthService {
     throw Exception('Could not generate unique username');
   }
   
+  /// Add item to cache with LRU eviction
+  static void _addToCache(String username, String uid) {
+    // Remove from access order if already exists
+    _cacheAccessOrder.remove(username);
+    
+    // Add to end of access order (most recently used)
+    _cacheAccessOrder.add(username);
+    
+    // Check if we need to evict
+    if (_usernameCache.length >= _maxCacheSize && !_usernameCache.containsKey(username)) {
+      // Remove least recently used items until we have space
+      while (_usernameCache.length >= _maxCacheSize && _cacheAccessOrder.isNotEmpty) {
+        final lru = _cacheAccessOrder.removeAt(0);
+        _usernameCache.remove(lru);
+        LoggerService.debug('Evicted $lru from cache (LRU)', tag: 'UsernameAuthService');
+      }
+    }
+    
+    // Add the new entry
+    _usernameCache[username] = _CachedUsername(
+      uid: uid,
+      timestamp: DateTime.now(),
+    );
+  }
+  
+  /// Update access order when retrieving from cache
+  static void _updateCacheAccess(String username) {
+    _cacheAccessOrder.remove(username);
+    _cacheAccessOrder.add(username);
+  }
+  
   /// Clear the username cache (useful for testing or when users are updated)
   static void clearCache() {
     _usernameCache.clear();
+    _cacheAccessOrder.clear();
     LoggerService.info('Username cache cleared', tag: 'UsernameAuthService');
+  }
+  
+  /// Remove specific username from cache (useful when user is deleted)
+  static void invalidateCacheEntry(String username) {
+    final lowerUsername = username.toLowerCase();
+    _usernameCache.remove(lowerUsername);
+    _cacheAccessOrder.remove(lowerUsername);
+    LoggerService.info('Invalidated cache entry for: $lowerUsername', tag: 'UsernameAuthService');
   }
 }
 
