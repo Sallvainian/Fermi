@@ -18,8 +18,13 @@ class CapsLockService {
   Timer? _debounceTimer;
   bool _lastKnownState = false;
   
-  /// Default debounce duration to prevent excessive checks
-  static const Duration defaultDebounceDuration = Duration(milliseconds: 150);
+  /// Default debounce duration to prevent excessive checks (configurable)
+  static Duration defaultDebounceDuration = Duration(milliseconds: 150);
+
+  /// Set the global default debounce duration for all future checks
+  static void setDefaultDebounceDuration(Duration duration) {
+    defaultDebounceDuration = duration;
+  }
   
   /// Check caps lock state with optional debouncing
   /// Returns null if platform doesn't support detection
