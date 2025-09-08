@@ -126,7 +126,6 @@ coverage/
 
 # Personal/project-specific (keep for your workflow; safe in personal repo)
 PROJECT_TODOS.md
-# CLAUDE.md - Now tracked for AI assistant context
 launch_app.sh
 .mcp.json
 .claude/
@@ -134,6 +133,12 @@ launch_app.sh
 .gemini/
 .codex/
 devtools_options.yaml
+
+# AI instruction files (keep local only)
+CLAUDE.md
+GEMINI.md
+GROK.MD
+*AI.md
 
 # Codebasemap auto-generated files
 .codebasemap
