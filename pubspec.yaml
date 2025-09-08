@@ -65,7 +65,7 @@ dependencies:
   provider: ^6.1.5+1
 
   # Charts and Data Visualization
-  fl_chart: ^1.0.0
+  fl_chart: ^0.69.0
 
   # UI & Navigation
   go_router: ^16.2.1
