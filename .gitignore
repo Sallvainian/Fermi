@@ -28,6 +28,8 @@ keys/
 **/AuthKey_*.p8
 service-account-key.json
 **/service-account*.json
+AGENTS.md
+**/AGENTS.md
 
 # Admin scripts (contain sensitive info)
 scripts/create_admin.js
