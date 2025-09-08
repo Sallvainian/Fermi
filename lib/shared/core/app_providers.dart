@@ -16,6 +16,7 @@ import '../../features/dashboard/presentation/providers/dashboard_provider.dart'
 import '../../features/student/presentation/providers/student_provider_simple.dart';
 import '../../features/grades/presentation/providers/grade_provider_simple.dart';
 import '../../features/games/presentation/providers/jeopardy_provider_simple.dart';
+import '../../features/admin/presentation/providers/admin_provider.dart';
 
 /// Centralized provider configuration
 class AppProviders {
@@ -64,6 +65,12 @@ class AppProviders {
       // Jeopardy game provider
       ChangeNotifierProvider(
         create: (_) => SimpleJeopardyProvider(),
+        lazy: true,
+      ),
+
+      // Admin provider for Firebase Administrator dashboard
+      ChangeNotifierProvider(
+        create: (_) => AdminProvider(),
         lazy: true,
       ),
     ];

@@ -31,6 +31,12 @@ service cloud.firestore {
       return isAuthenticated() && role != null && role == 'student';
     }
     
+    // Helper function to check if user is a Firebase Administrator
+    function isAdmin() {
+      let role = getUserRole(request.auth.uid);
+      return isAuthenticated() && role != null && role == 'admin';
+    }
+    
     // Helper function to check if student is enrolled in a class
     function isEnrolledInClass(classId) {
       return isStudent() && 
@@ -41,8 +47,8 @@ service cloud.firestore {
     match /users/{userId} {
       // Allow authenticated users to read any user (for messaging, etc.)
       allow read: if isAuthenticated();
-      // Users can only write their own document (including initial creation)
-      allow write: if isOwner(userId);
+      // Users can write their own document, admins can write any
+      allow write: if isOwner(userId) || isAdmin();
     }
     
     // Public usernames collection - safe for unauthenticated access
@@ -63,16 +69,18 @@ service cloud.firestore {
     match /classes/{classId} {
       // Allow read if:
       // - User is the teacher OR
+      // - User is admin OR
       // - Document doesn't exist (checking before creation) OR
       // - Any authenticated user (needed for enrollment code queries) OR
       // - User is enrolled in the class
       allow read: if isTheTeacher() || 
+                     isAdmin() ||
                      resource == null ||
                      isAuthenticated();
       
-      // Only THE teacher can create classes
-      allow create: if isTheTeacher() && 
-                       request.resource.data.teacherId == request.auth.uid;
+      // Teacher or admin can create classes
+      allow create: if (isTheTeacher() && request.resource.data.teacherId == request.auth.uid) ||
+                       isAdmin();
       
       // Updates allowed for teacher or any user self-enrollment
       allow update: if isTheTeacher() || 
@@ -85,8 +93,9 @@ service cloud.firestore {
                         // Only allow modifying the studentIds field
                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentIds']));
          
-      // Only THE teacher can delete classes
-      allow delete: if isTheTeacher() && resource.data.teacherId == request.auth.uid;
+      // Teacher or admin can delete classes
+      allow delete: if (isTheTeacher() && resource.data.teacherId == request.auth.uid) ||
+                        isAdmin();
       
       // Nested collections in classes
       match /{document=**} {
@@ -522,21 +531,24 @@ service cloud.firestore {
     
     // Activities collection - for dashboard recent activities
     match /activities/{activityId} {
+      // Admins can read all activities
       // Teachers can read activities where they are the teacher
       // Students can read activities for their classes
       allow read: if request.auth != null && 
-        (isTheTeacher() || 
+        (isAdmin() ||
+         isTheTeacher() || 
          resource == null ||
          (isStudent() && resource.data.classId != null && 
           request.auth.uid in get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.studentIds));
       
-      // System or teacher can create activities
+      // Admin, system or teacher can create activities
       allow create: if request.auth != null && 
-        (isTheTeacher() || 
+        (isAdmin() ||
+         isTheTeacher() || 
          request.resource.data.userId == request.auth.uid);
       
-      // Activities cannot be updated or deleted
-      allow update, delete: if false;
+      // Only admins can update or delete activities (for cleanup)
+      allow update, delete: if isAdmin();
     }
     
     // Notifications collection

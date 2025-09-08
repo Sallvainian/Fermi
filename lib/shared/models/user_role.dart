@@ -2,7 +2,7 @@
 enum UserRole {
   student,
   teacher,
-  admin, // For future use
+  admin, // Firebase Administrator role
 }
 
 /// Extension methods for UserRole
@@ -16,6 +16,18 @@ extension UserRoleExtension on UserRole {
         return 'teacher';
       case UserRole.admin:
         return 'admin';
+    }
+  }
+
+  /// Get the display name for UI
+  String get displayName {
+    switch (this) {
+      case UserRole.student:
+        return 'Student';
+      case UserRole.teacher:
+        return 'Teacher';
+      case UserRole.admin:
+        return 'Firebase Administrator';
     }
   }
 

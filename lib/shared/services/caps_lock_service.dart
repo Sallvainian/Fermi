@@ -29,19 +29,22 @@ class CapsLockService {
   /// Check caps lock state with optional debouncing
   /// Returns null if platform doesn't support detection
   Future<bool?> checkCapsLockState({
-    Duration debounce = defaultDebounceDuration,
+    Duration? debounce,
     required Function(bool) onStateChanged,
   }) async {
+    // Use default duration if not specified
+    final debounceDuration = debounce ?? defaultDebounceDuration;
+    
     // Cancel any existing timer
     _debounceTimer?.cancel();
     
     // If debounce is zero, check immediately
-    if (debounce == Duration.zero) {
+    if (debounceDuration == Duration.zero) {
       return _performCapsLockCheck(onStateChanged);
     }
     
     // Otherwise debounce the check
-    _debounceTimer = Timer(debounce, () async {
+    _debounceTimer = Timer(debounceDuration, () async {
       try {
         await _performCapsLockCheck(onStateChanged);
       } catch (e, stack) {

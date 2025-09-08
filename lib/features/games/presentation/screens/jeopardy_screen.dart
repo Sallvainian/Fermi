@@ -119,7 +119,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                   size: 64,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ).colorScheme.onSurfaceVariant.withOpacity(0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -134,7 +134,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -176,7 +176,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                   size: 64,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ).colorScheme.onSurfaceVariant.withOpacity(0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -191,7 +191,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -224,7 +224,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                   size: 64,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ).colorScheme.onSurfaceVariant.withOpacity(0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -239,7 +239,7 @@ class _JeopardyScreenState extends State<JeopardyScreen>
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
                 ),
               ],
