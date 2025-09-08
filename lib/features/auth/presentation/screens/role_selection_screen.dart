@@ -96,7 +96,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   Text(
                     'Please select your role to continue',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -205,7 +205,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
+            border: Border.all(color: color.withOpacity(0.3), width: 2),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -213,7 +213,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 48, color: color),
@@ -231,7 +231,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               Text(
                 subtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,

@@ -1,9 +1,36 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {logger} from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import * as crypto from "crypto";
 
 const db = admin.firestore();
 const auth = admin.auth();
+
+/**
+ * Generate a cryptographically secure password
+ */
+function generateSecurePassword(length: number = 12): string {
+  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+  const randomBytes = crypto.randomBytes(length);
+  let password = "";
+  
+  for (let i = 0; i < length; i++) {
+    password += charset[randomBytes[i] % charset.length];
+  }
+  
+  // Ensure password has at least one of each type
+  const hasUpper = /[A-Z]/.test(password);
+  const hasLower = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecial = /[!@#$%^&*]/.test(password);
+  
+  if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+    // Recursively generate until we get a password with all character types
+    return generateSecurePassword(length);
+  }
+  
+  return password;
+}
 
 /**
  * Create a new student account without email verification
@@ -291,8 +318,8 @@ export const resetUserPassword = onCall(
     }
 
     try {
-      // Generate a new random password
-      const newPassword = `Fermi${Math.random().toString(36).slice(-8)}${Date.now() % 1000}`;
+      // Generate a new cryptographically secure password
+      const newPassword = generateSecurePassword(12);
 
       // Update the user's password
       await auth.updateUser(userId, {

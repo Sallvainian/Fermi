@@ -60,11 +60,11 @@ class AppTheme {
       secondary: secondaryColor ?? AppTheme.secondaryColor,
       primaryContainer: brightness == Brightness.light
           ? Color.alphaBlend(
-              (seedColor ?? primaryColor).withValues(alpha: 0.3),
+              (seedColor ?? primaryColor).withOpacity(0.3),
               Colors.white,
             )
           : Color.alphaBlend(
-              (seedColor ?? primaryColor).withValues(alpha: 0.4),
+              (seedColor ?? primaryColor).withOpacity(0.4),
               Colors.black,
             ),
       secondaryContainer: brightness == Brightness.light
@@ -123,12 +123,12 @@ class AppTheme {
         color: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         elevation: 1,
-        shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
+        shadowColor: colorScheme.shadow.withOpacity(0.1),
         margin: const EdgeInsets.all(8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 0.2),
+            color: colorScheme.outline.withOpacity(0.2),
             width: 0.5,
           ),
         ),
@@ -170,7 +170,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -380,7 +380,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),

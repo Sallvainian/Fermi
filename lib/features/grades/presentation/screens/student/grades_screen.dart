@@ -157,7 +157,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
             size: 80,
             color: Theme.of(
               context,
-            ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ).colorScheme.onSurfaceVariant.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -185,10 +185,10 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        color: theme.colorScheme.primary.withOpacity(0.1),
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+            color: theme.colorScheme.primary.withOpacity(0.2),
           ),
         ),
       ),
@@ -370,7 +370,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
       selected: isSelected,
       onSelected: (_) => onTap(),
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
-      selectedColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+      selectedColor: theme.colorScheme.primary.withOpacity(0.2),
       checkmarkColor: theme.colorScheme.primary,
     );
   }
@@ -405,7 +405,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: courseColor.withValues(alpha: 0.1),
+              color: courseColor.withOpacity(0.1),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
                 topRight: Radius.circular(12),
@@ -515,7 +515,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+              color: theme.colorScheme.outlineVariant.withOpacity(0.5),
             ),
           ),
         ),
@@ -528,7 +528,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
               decoration: BoxDecoration(
                 color: _getAssignmentTypeColor(
                   assignment['type'],
-                ).withValues(alpha: 0.1),
+                ).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -614,7 +614,7 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
                     decoration: BoxDecoration(
                       color: _getStatusColor(
                         grade['status'],
-                      ).withValues(alpha: 0.1),
+                      ).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -956,7 +956,7 @@ class _GradeDetailsSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -995,7 +995,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                   // Grade Information
                   if (isGraded) ...[
                     Card(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withOpacity(0.1),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -1129,7 +1129,7 @@ class _GradeDetailsSheet extends StatelessWidget {
                     Card(
                       color: _getStatusColor(
                         grade['status'],
-                      ).withValues(alpha: 0.1),
+                      ).withOpacity(0.1),
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(

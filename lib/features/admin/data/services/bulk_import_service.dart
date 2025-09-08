@@ -1,16 +1,18 @@
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../constants/bulk_import_constants.dart';
 
 class BulkImportService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseFunctions _functions = FirebaseFunctions.instance;
   
-  static const int _batchSize = 500;
-  static const int _maxRetries = 3;
-  static const Duration _retryDelay = Duration(seconds: 2);
+  static const int _batchSize = BulkImportConstants.batchSize;
+  static const int _maxRetries = BulkImportConstants.maxRetries;
+  static const Duration _retryDelay = BulkImportConstants.retryDelay;
 
   Future<BulkImportResult> bulkImportStudents(List<Map<String, dynamic>> students) async {
     final result = BulkImportResult();
@@ -25,7 +27,7 @@ class BulkImportService {
           final username = studentData['username']?.toString() ?? '';
           
           if (await _checkUsernameExists(username)) {
-            result.addError(username, 'Username already exists');
+            result.addError(username, BulkImportConstants.usernameExistsError);
             continue;
           }
           
@@ -58,7 +60,7 @@ class BulkImportService {
       }
       
       if (batchIndex < batches.length - 1) {
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(BulkImportConstants.batchDelay);
       }
     }
     
@@ -79,7 +81,7 @@ class BulkImportService {
           final email = teacherData['email']?.toString() ?? '';
           
           if (await _checkEmailExists(email)) {
-            result.addError(email, 'Email already exists');
+            result.addError(email, BulkImportConstants.emailExistsError);
             continue;
           }
           
@@ -107,7 +109,7 @@ class BulkImportService {
       }
       
       if (batchIndex < batches.length - 1) {
-        await Future.delayed(const Duration(milliseconds: 500));
+        await Future.delayed(BulkImportConstants.batchDelay);
       }
     }
     
@@ -248,19 +250,38 @@ class BulkImportService {
 
   String _generateStudentPassword() {
     final random = Random.secure();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final randomNum = random.nextInt(9000) + 1000;
-    return 'Student\$${timestamp % 10000}\$$randomNum';
+    const charset = BulkImportConstants.passwordCharset;
+    const length = BulkImportConstants.passwordLength;
+    
+    // Generate random bytes for cryptographically secure randomness
+    final values = List<int>.generate(length, (i) => random.nextInt(256));
+    final bytes = Uint8List.fromList(values);
+    
+    String password = '';
+    for (int i = 0; i < length; i++) {
+      password += charset[bytes[i] % charset.length];
+    }
+    
+    // Ensure password has at least one of each required character type
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
+    final hasLower = RegExp(r'[a-z]').hasMatch(password);
+    final hasNumber = RegExp(r'[0-9]').hasMatch(password);
+    final hasSpecial = RegExp(r'[!@#\$%^&*]').hasMatch(password);
+    
+    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      // Recursively generate a new password if requirements aren't met
+      return _generateStudentPassword();
+    }
+    
+    return password;
   }
 
   bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+    return BulkImportConstants.emailPattern.hasMatch(email);
   }
 
   bool _isValidUsername(String username) {
-    return RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username) && 
-           username.length >= 3 && 
-           username.length <= 20;
+    return BulkImportConstants.usernamePattern.hasMatch(username);
   }
 
   List<List<T>> _createBatches<T>(List<T> items, int batchSize) {

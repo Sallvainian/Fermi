@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/providers/admin_provider.dart';
+import '../../constants/bulk_import_constants.dart';
 
 class BulkImportScreen extends StatefulWidget {
   const BulkImportScreen({super.key});
@@ -15,8 +16,8 @@ class BulkImportScreen extends StatefulWidget {
 }
 
 class _BulkImportScreenState extends State<BulkImportScreen> {
-  String _importType = 'student';
-  String _fileFormat = 'csv';
+  String _importType = BulkImportConstants.studentImportType;
+  String _fileFormat = BulkImportConstants.csvFormat;
   Uint8List? _fileBytes;
   String? _fileName;
   List<Map<String, dynamic>> _parsedData = [];
@@ -28,8 +29,8 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   final List<String> _importErrors = [];
   final List<String> _importSuccesses = [];
 
-  final List<String> _studentRequiredFields = ['username', 'displayName', 'gradeLevel'];
-  final List<String> _teacherRequiredFields = ['email', 'displayName', 'password'];
+  final List<String> _studentRequiredFields = BulkImportConstants.studentRequiredFields;
+  final List<String> _teacherRequiredFields = BulkImportConstants.teacherRequiredFields;
 
   @override
   Widget build(BuildContext context) {
@@ -93,12 +94,12 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                       SegmentedButton<String>(
                         segments: const [
                           ButtonSegment(
-                            value: 'student',
+                            value: BulkImportConstants.studentImportType,
                             label: Text('Students'),
                             icon: Icon(Icons.school),
                           ),
                           ButtonSegment(
-                            value: 'teacher',
+                            value: BulkImportConstants.teacherImportType,
                             label: Text('Teachers'),
                             icon: Icon(Icons.person),
                           ),
@@ -126,12 +127,12 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                       SegmentedButton<String>(
                         segments: const [
                           ButtonSegment(
-                            value: 'csv',
+                            value: BulkImportConstants.csvFormat,
                             label: Text('CSV'),
                             icon: Icon(Icons.table_chart),
                           ),
                           ButtonSegment(
-                            value: 'json',
+                            value: BulkImportConstants.jsonFormat,
                             label: Text('JSON'),
                             icon: Icon(Icons.code),
                           ),
@@ -184,9 +185,9 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _importType == 'student'
-                ? 'Students: ${_studentRequiredFields.join(', ')}\nOptional: parentEmail, classIds (comma-separated)'
-                : 'Teachers: ${_teacherRequiredFields.join(', ')}\nOptional: subjects (comma-separated)',
+            _importType == BulkImportConstants.studentImportType
+                ? 'Students: ${_studentRequiredFields.join(', ')}\nOptional: ${BulkImportConstants.studentOptionalFields.join(', ')} (comma-separated)'
+                : 'Teachers: ${_teacherRequiredFields.join(', ')}\nOptional: ${BulkImportConstants.teacherOptionalFields.join(', ')}',
             style: const TextStyle(fontSize: 12),
           ),
           const SizedBox(height: 12),
@@ -584,7 +585,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     });
 
     try {
-      if (_fileFormat == 'csv') {
+      if (_fileFormat == BulkImportConstants.csvFormat) {
         _parseCSV();
       } else {
         _parseJSON();
@@ -639,7 +640,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
         }
       }
       
-      if (_importType == 'teacher') {
+      if (_importType == BulkImportConstants.teacherImportType) {
         final email = row['email']?.toString() ?? '';
         if (email.isNotEmpty && !_isValidEmail(email)) {
           errors.add('Invalid email format');
@@ -651,7 +652,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
         }
       }
       
-      if (_importType == 'student') {
+      if (_importType == BulkImportConstants.studentImportType) {
         final username = row['username']?.toString() ?? '';
         if (username.isNotEmpty && !_isValidUsername(username)) {
           errors.add('Invalid username (use letters, numbers, underscore only)');
@@ -667,11 +668,11 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   }
 
   bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+    return BulkImportConstants.emailPattern.hasMatch(email);
   }
 
   bool _isValidUsername(String username) {
-    return RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(username);
+    return BulkImportConstants.usernamePattern.hasMatch(username);
   }
 
   bool _isRequiredField(String field) {
@@ -693,7 +694,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       }
       
       if (_importType == 'teacher' && (row['password'] == null || row['password'].toString().isEmpty)) {
-        row['password'] = 'TempPass123!';
+        row['password'] = BulkImportConstants.defaultTeacherPassword;
       }
     }
     
@@ -716,20 +717,20 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     String content;
     String fileName;
     
-    if (_fileFormat == 'csv') {
-      if (_importType == 'student') {
-        content = 'username,displayName,gradeLevel,parentEmail,classIds\n';
+    if (_fileFormat == BulkImportConstants.csvFormat) {
+      if (_importType == BulkImportConstants.studentImportType) {
+        content = '${BulkImportConstants.studentCsvHeader}\n';
         content += 'john_doe,John Doe,9,parent@example.com,"math101,science201"\n';
         content += 'jane_smith,Jane Smith,10,parent2@example.com,english301\n';
       } else {
-        content = 'email,displayName,password,subjects\n';
+        content = '${BulkImportConstants.teacherCsvHeader}\n';
         content += 'teacher1@school.edu,Mr. Smith,SecurePass123!,"Math,Science"\n';
         content += 'teacher2@school.edu,Ms. Johnson,SecurePass456!,English\n';
       }
       fileName = '${_importType}_import_template.csv';
     } else {
       final List<Map<String, dynamic>> jsonData = [];
-      if (_importType == 'student') {
+      if (_importType == BulkImportConstants.studentImportType) {
         jsonData.add({
           'username': 'john_doe',
           'displayName': 'John Doe',
@@ -803,7 +804,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       });
       
       try {
-        if (_importType == 'student') {
+        if (_importType == BulkImportConstants.studentImportType) {
           await adminProvider.bulkCreateStudent(
             username: row['username'].toString(),
             displayName: row['displayName'].toString(),

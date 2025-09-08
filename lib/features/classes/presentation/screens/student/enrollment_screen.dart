@@ -206,7 +206,7 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
                       ),
                       borderRadius: BorderRadius.circular(AppSpacing.sm),
                       border: Border.all(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                        color: theme.colorScheme.primary.withOpacity(0.2),
                       ),
                     ),
                     child: Row(
