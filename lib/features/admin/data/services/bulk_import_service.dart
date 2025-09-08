@@ -253,14 +253,8 @@ class BulkImportService {
     const charset = BulkImportConstants.passwordCharset;
     const length = BulkImportConstants.passwordLength;
     
-    // Generate random bytes for cryptographically secure randomness
-    final values = List<int>.generate(length, (i) => random.nextInt(256));
-    final bytes = Uint8List.fromList(values);
-    
-    String password = '';
-    for (int i = 0; i < length; i++) {
-      password += charset[bytes[i] % charset.length];
-    }
+    // Generate password using cryptographically secure random selection from charset
+    String password = List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
     
     // Ensure password has at least one of each required character type
     final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
