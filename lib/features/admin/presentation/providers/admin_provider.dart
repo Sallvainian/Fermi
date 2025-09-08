@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -5,6 +6,7 @@ import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/system_stats.dart';
 import '../../domain/models/admin_user.dart';
 import '../../data/services/bulk_import_service.dart';
+import '../../constants/bulk_import_constants.dart';
 
 class AdminProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -270,18 +272,26 @@ class AdminProvider extends ChangeNotifier {
     required int gradeLevel,
     String? parentEmail,
     List<String>? classIds,
+    String? password,
   }) async {
     try {
+      // Generate secure password if not provided
+      final studentPassword = password ?? _generateSecurePassword();
+      
       final callable = _functions.httpsCallable('createStudentAccount');
       final result = await callable.call({
         'username': username,
         'displayName': displayName,
         'gradeLevel': gradeLevel.toString(),
+        'password': studentPassword,
         'parentEmail': parentEmail,
         'classIds': classIds ?? [],
       });
 
-      return result.data as Map<String, dynamic>;
+      // Include the generated password in the return data
+      final responseData = result.data as Map<String, dynamic>;
+      responseData['temporaryPassword'] = studentPassword;
+      return responseData;
     } catch (e) {
       LoggerService.error('Error in bulk create student: $e', tag: 'AdminProvider');
       rethrow;
@@ -390,5 +400,28 @@ class AdminProvider extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  // Generate secure password for students
+  String _generateSecurePassword() {
+    final random = Random.secure();
+    const charset = BulkImportConstants.passwordCharset;
+    const length = BulkImportConstants.passwordLength;
+    
+    // Generate password using cryptographically secure random selection from charset
+    String password = List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+    
+    // Ensure password has at least one of each required character type
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
+    final hasLower = RegExp(r'[a-z]').hasMatch(password);
+    final hasNumber = RegExp(r'[0-9]').hasMatch(password);
+    final hasSpecial = RegExp(r'[!@#\$%^&*]').hasMatch(password);
+    
+    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+      // Recursively generate a new password if requirements aren't met
+      return _generateSecurePassword();
+    }
+    
+    return password;
   }
 }
