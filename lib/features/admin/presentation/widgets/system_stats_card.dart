@@ -34,12 +34,6 @@ class SystemStatsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'System Statistics',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
           const SizedBox(height: 24),
           
           // User Statistics Grid

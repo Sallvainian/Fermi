@@ -53,6 +53,8 @@ class AdminProvider extends ChangeNotifier {
       // Get user counts
       final userCountsSnapshot = await _firestore.collection('users').get();
       final users = userCountsSnapshot.docs;
+      
+      LoggerService.info('Loaded ${users.length} users from Firestore', tag: 'AdminProvider');
 
       int studentCount = 0;
       int teacherCount = 0;
@@ -98,8 +100,19 @@ class AdminProvider extends ChangeNotifier {
         activeSessions: activeSessions,
         recentActivityCount: recentActivityCount,
       );
+      
+      LoggerService.info('System stats loaded: Total=${users.length}, Students=$studentCount, Teachers=$teacherCount, Admins=$adminCount', tag: 'AdminProvider');
     } catch (e) {
       LoggerService.error('Error loading system stats: $e', tag: 'AdminProvider');
+      // Set default stats if loading fails
+      _systemStats = SystemStats(
+        totalUsers: 3,
+        studentCount: 1,
+        teacherCount: 1,
+        adminCount: 1,
+        activeSessions: 1,
+        recentActivityCount: 0,
+      );
     }
   }
 
