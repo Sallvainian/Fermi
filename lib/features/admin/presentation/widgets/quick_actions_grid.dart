@@ -7,6 +7,7 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback onViewReports;
   final VoidCallback onSystemSettings;
   final VoidCallback onBulkImport;
+  final VoidCallback onManageUsers;
 
   const QuickActionsGrid({
     super.key,
@@ -15,6 +16,7 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onViewReports,
     required this.onSystemSettings,
     required this.onBulkImport,
+    required this.onManageUsers,
   });
 
   @override
@@ -57,6 +59,12 @@ class QuickActionsGrid extends StatelessWidget {
                 label: 'Bulk Import',
                 color: Colors.teal,
                 onTap: onBulkImport,
+              ),
+              _QuickActionButton(
+                icon: Icons.people,
+                label: 'Manage Users',
+                color: Colors.indigo,
+                onTap: onManageUsers,
               ),
               _QuickActionButton(
                 icon: Icons.analytics,

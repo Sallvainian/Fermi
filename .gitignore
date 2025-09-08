@@ -26,6 +26,12 @@ keys/
 *.pem
 *.key
 **/AuthKey_*.p8
+service-account-key.json
+**/service-account*.json
+
+# Admin scripts (contain sensitive info)
+scripts/create_admin.js
+scripts/package*.json
 
 # IDE/Editor specific (trim if you don't use these)
 .idea/

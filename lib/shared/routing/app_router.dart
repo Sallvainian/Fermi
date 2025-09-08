@@ -15,6 +15,7 @@ import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dar
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/bulk_import_screen.dart';
+import '../../features/admin/presentation/screens/user_management_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../features/chat/presentation/screens/simple_chat_screen.dart';
@@ -537,6 +538,10 @@ class AppRouter {
         GoRoute(
           path: '/admin/bulk-import',
           builder: (context, state) => const BulkImportScreen(),
+        ),
+        GoRoute(
+          path: '/admin/users',
+          builder: (context, state) => const UserManagementScreen(),
         ),
 
         // Student routes with middleware role-based guards

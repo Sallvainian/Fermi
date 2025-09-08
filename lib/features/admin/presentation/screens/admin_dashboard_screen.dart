@@ -118,6 +118,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             onViewReports: () => context.go('/admin/reports'),
                             onSystemSettings: () => context.go('/admin/system-settings'),
                             onBulkImport: () => context.go('/admin/bulk-import'),
+                            onManageUsers: () => context.go('/admin/users'),
                           ),
                         ),
                       ],
@@ -131,6 +132,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       onViewReports: () => context.go('/admin/reports'),
                       onSystemSettings: () => context.go('/admin/system-settings'),
                       onBulkImport: () => context.go('/admin/bulk-import'),
+                      onManageUsers: () => context.go('/admin/users'),
                     ),
                   ] else ...[
                     SystemStatsCard(stats: adminProvider.systemStats),
@@ -141,6 +143,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       onViewReports: () => context.go('/admin/reports'),
                       onSystemSettings: () => context.go('/admin/system-settings'),
                       onBulkImport: () => context.go('/admin/bulk-import'),
+                      onManageUsers: () => context.go('/admin/users'),
                     ),
                   ],
                   const SizedBox(height: 32),
