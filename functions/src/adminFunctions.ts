@@ -14,8 +14,14 @@ function generateSecurePassword(length: number = 12): string {
   const randomBytes = crypto.randomBytes(length);
   let password = "";
   
-  for (let i = 0; i < length; i++) {
-    password += charset[randomBytes[i] % charset.length];
+  let i = 0;
+  while (i < length) {
+    const byte = crypto.randomBytes(1)[0];
+    // Accept only values that can be mapped uniformly to charset
+    if (byte < Math.floor(256 / charset.length) * charset.length) {
+      password += charset[byte % charset.length];
+      i++;
+    }
   }
   
   // Ensure password has at least one of each type
