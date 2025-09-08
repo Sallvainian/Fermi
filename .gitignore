@@ -99,6 +99,12 @@ migrate_working_dir/
 *.backup
 .~*
 
+# Temporary directories
+tmp/
+temp/
+.tmp/
+tools/
+
 # Sensitive/Environment files (critical for public repo—keep these!)
 .env*
 *.env
