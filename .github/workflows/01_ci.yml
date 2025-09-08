@@ -1,7 +1,7 @@
 name: CI - Code Quality & Dead Code Detection
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [ master ]
     
 concurrency:
   group: ci-${{ github.ref }}
@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master
 
       - uses: subosito/flutter-action@v2
         with:
