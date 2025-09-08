@@ -129,6 +129,12 @@ launch_app.sh
 .codex/
 devtools_options.yaml
 
+# Codebasemap auto-generated files
+.codebasemap
+.codebasemap.json
+.codebasemap.dsl
+*.codebasemap
+
 # Windows-specific (keep if on Windows)
 nul
 */nul
