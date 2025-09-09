@@ -10,9 +10,13 @@ import '../screens/behavior_points_screen.dart';
 /// - Tap gesture support for opening behavior assignment
 /// - Responsive design for different screen sizes
 /// - Hover effects and accessibility support
+/// - Ranking display with special effects for top performers
 class StudentPointCard extends StatelessWidget {
   /// Student data to display
   final StudentPointData student;
+  
+  /// Student's rank in the class (1 = first place)
+  final int? rank;
 
   /// Callback when the card is tapped
   final VoidCallback? onTap;
@@ -21,22 +25,51 @@ class StudentPointCard extends StatelessWidget {
   const StudentPointCard({
     super.key,
     required this.student,
+    this.rank,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isFirstPlace = rank == 1;
+    final isTopThree = rank != null && rank! <= 3;
     
     return Card(
-      elevation: 2,
-      shadowColor: theme.colorScheme.shadow.withOpacity(0.1),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+      elevation: isFirstPlace ? 8 : 2,
+      shadowColor: isFirstPlace 
+          ? Colors.amber.withOpacity(0.5) 
+          : theme.colorScheme.shadow.withOpacity(0.1),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: isTopThree ? Border.all(
+            color: rank == 1 
+                ? Colors.amber 
+                : rank == 2 
+                    ? Colors.grey[400]! 
+                    : Colors.orange[700]!,
+            width: 2,
+          ) : null,
+          boxShadow: isFirstPlace ? [
+            BoxShadow(
+              color: Colors.amber.withOpacity(0.4),
+              blurRadius: 12,
+              spreadRadius: 1,
+            ),
+            BoxShadow(
+              color: Colors.amber.withOpacity(0.2),
+              blurRadius: 20,
+              spreadRadius: 3,
+            ),
+          ] : null,
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Student Avatar with Points Badge
@@ -102,11 +135,12 @@ class StudentPointCard extends StatelessWidget {
               
               const SizedBox(height: 8),
               
-              // Progress Indicator
-              _buildProgressIndicator(theme),
+              // Ranking Display
+              if (rank != null) _buildRankingDisplay(theme),
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -137,54 +171,83 @@ class StudentPointCard extends StatelessWidget {
     );
   }
 
-  /// Builds a simple progress indicator bar based on points
-  Widget _buildProgressIndicator(ThemeData theme) {
-    // Calculate progress (assuming 100 is max for visualization)
-    final maxPoints = 100.0;
-    final progress = (student.totalPoints / maxPoints).clamp(0.0, 1.0);
+  /// Builds the ranking display widget
+  Widget _buildRankingDisplay(ThemeData theme) {
+    String rankText;
+    Color rankColor;
+    IconData? rankIcon;
     
-    return Column(
-      children: [
-        // Progress bar
-        Container(
-          width: double.infinity,
-          height: 4,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(2),
-          ),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: progress,
-            child: Container(
-              decoration: BoxDecoration(
-                color: student.pointsColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
+    switch (rank) {
+      case 1:
+        rankText = '1st';
+        rankColor = Colors.amber;
+        rankIcon = Icons.emoji_events; // Trophy icon
+        break;
+      case 2:
+        rankText = '2nd';
+        rankColor = Colors.grey[600]!;
+        rankIcon = Icons.workspace_premium;
+        break;
+      case 3:
+        rankText = '3rd';
+        rankColor = Colors.orange[700]!;
+        rankIcon = Icons.military_tech;
+        break;
+      default:
+        rankText = _getOrdinal(rank!);
+        rankColor = theme.colorScheme.onSurfaceVariant;
+        rankIcon = null;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: rank! <= 3 ? rankColor.withOpacity(0.1) : theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+        border: rank! <= 3 ? Border.all(
+          color: rankColor.withOpacity(0.3),
+          width: 1,
+        ) : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (rankIcon != null) ...[
+            Icon(
+              rankIcon,
+              size: 16,
+              color: rankColor,
+            ),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            rankText,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: rankColor,
+              fontWeight: rank! <= 3 ? FontWeight.bold : FontWeight.w500,
             ),
           ),
-        ),
-        
-        const SizedBox(height: 4),
-        
-        // Status text
-        Text(
-          _getStatusText(),
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontSize: 10,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
-
-  /// Gets status text based on points level
-  String _getStatusText() {
-    if (student.totalPoints >= 80) return 'Excellent';
-    if (student.totalPoints >= 60) return 'Good';
-    if (student.totalPoints >= 40) return 'Fair';
-    return 'Needs Support';
+  
+  /// Converts a number to ordinal format (1st, 2nd, 3rd, 4th, etc.)
+  String _getOrdinal(int number) {
+    if (number >= 11 && number <= 13) {
+      return '${number}th';
+    }
+    switch (number % 10) {
+      case 1:
+        return '${number}st';
+      case 2:
+        return '${number}nd';
+      case 3:
+        return '${number}rd';
+      default:
+        return '${number}th';
+    }
   }
 }
 

@@ -224,15 +224,29 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
+                    // Sort students by points (descending) for ranking
+                    final sortedStudents = List<StudentPointData>.from(_students)
+                      ..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
+                    
                     // First card is the class total
                     if (index == 0) {
                       return _buildClassTotalCard(theme);
                     }
                     // Adjust index for students
                     final studentIndex = index - 1;
-                    final student = _students[studentIndex];
+                    final student = sortedStudents[studentIndex];
+                    
+                    // Calculate rank (accounting for ties)
+                    int rank = 1;
+                    for (int i = 0; i < studentIndex; i++) {
+                      if (sortedStudents[i].totalPoints > student.totalPoints) {
+                        rank = i + 2;
+                      }
+                    }
+                    
                     return StudentPointCard(
                       student: student,
+                      rank: rank,
                       onTap: () => _showBehaviorAssignmentPopup(student),
                     );
                   },
