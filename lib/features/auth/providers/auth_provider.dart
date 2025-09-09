@@ -393,6 +393,104 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Sign in with Google OAuth - Teacher Only
+  /// This method enforces that only teachers can use Google Sign-In
+  Future<void> signInWithGoogleAsTeacher() async {
+    if (_authOperationInProgress) {
+      LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
+      return;
+    }
+
+    _authOperationInProgress = true;
+    _startLoading();
+    clearError(); // Clear any previous errors
+
+    try {
+      LoggerService.info('Starting Google Sign-In for teachers...', tag: 'AuthProvider');
+      final user = await _authService.signInWithGoogle();
+
+      if (user == null) {
+        // User cancelled sign-in
+        LoggerService.info('Google Sign-In: User cancelled', tag: 'AuthProvider');
+        _setAuthState(AuthStatus.unauthenticated);
+        clearError(); // Clear error state if user cancelled
+        return;
+      }
+
+      LoggerService.debug('Google Sign-In: Auth success, verifying teacher role...', tag: 'AuthProvider');
+
+      // Check if user has existing profile
+      final userData = await _getUserDataWithRetry(user.uid);
+
+      if (userData != null && userData['role'] != null) {
+        // Existing user - verify they are a teacher
+        final role = userData['role'];
+        
+        if (role != 'teacher') {
+          // User exists but is not a teacher - sign them out
+          LoggerService.warning('Google Sign-In rejected: User is not a teacher (role: $role)', tag: 'AuthProvider');
+          await _authService.signOut();
+          throw Exception('Google Sign-In is only available for teachers. Your account is registered as a $role.');
+        }
+        
+        // User is a teacher - complete sign in
+        LoggerService.info('Google Sign-In: Verified teacher account', tag: 'AuthProvider');
+        final loadedUserModel = UserModel.fromFirestore(userData);
+        _userModel = loadedUserModel;
+        _setAuthState(AuthStatus.authenticated);
+        _startNotificationsIfNeeded();
+        _updatePresenceOnline();
+        
+      } else {
+        // New user - create teacher account
+        LoggerService.info('Google Sign-In: Creating new teacher account', tag: 'AuthProvider');
+        
+        // Create user document with teacher role
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'email': user.email,
+          'username': user.email?.split('@')[0] ?? 'teacher_${DateTime.now().millisecondsSinceEpoch}',
+          'firstName': user.displayName?.split(' ').first ?? '',
+          'lastName': user.displayName?.split(' ').skip(1).join(' ') ?? '',
+          'role': 'teacher',
+          'photoURL': user.photoURL,
+          'createdAt': FieldValue.serverTimestamp(),
+          'lastActive': FieldValue.serverTimestamp(),
+          'emailVerified': user.emailVerified,
+          'isActive': true,
+        });
+        
+        // Create entry in public_usernames collection
+        final username = user.email?.split('@')[0] ?? 'teacher_${DateTime.now().millisecondsSinceEpoch}';
+        await _firestore.collection('public_usernames').doc(username.toLowerCase()).set({
+          'uid': user.uid,
+          'role': 'teacher',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        
+        // Load the newly created user model
+        final newUserData = await _getUserDataWithRetry(user.uid);
+        if (newUserData != null) {
+          final loadedUserModel = UserModel.fromFirestore(newUserData);
+          _userModel = loadedUserModel;
+          _setAuthState(AuthStatus.authenticated);
+          _startNotificationsIfNeeded();
+          _updatePresenceOnline();
+          
+          LoggerService.info('Google Sign-In: New teacher account created successfully', tag: 'AuthProvider');
+        } else {
+          throw Exception('Failed to create teacher profile. Please try again.');
+        }
+      }
+    } catch (e) {
+      LoggerService.error('Google sign-in error for teacher', tag: 'AuthProvider', error: e);
+      _handleOAuthError(e, 'Google');
+    } finally {
+      _authOperationInProgress = false;
+      _stopLoading();
+    }
+  }
+
   /// Signs in the user using Apple OAuth.
   ///
   /// **Flow for new vs existing users:**

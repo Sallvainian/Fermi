@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/services/logger_service.dart';
-import 'dart:io' show Platform;
 
 import '../widgets/auth_text_field.dart';
 import '../providers/auth_provider.dart';
@@ -60,6 +58,39 @@ class LoginScreenState extends State<LoginScreen> {
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _signInWithGoogle() async {
+    final authProvider = context.read<AuthProvider>();
+    
+    try {
+      LoggerService.info('Attempting Google sign-in for teacher', tag: 'LoginScreen');
+      
+      // Use the new teacher-only Google sign-in method
+      await authProvider.signInWithGoogleAsTeacher();
+      
+      if (!mounted) return;
+      
+      // Navigate based on auth state
+      if (authProvider.userModel != null) {
+        final roleName = authProvider.userModel!.role?.name;
+        LoggerService.info('Google sign-in successful for teacher: $roleName', tag: 'LoginScreen');
+        
+        // Navigate to dashboard
+        context.go('/dashboard');
+      }
+    } catch (e) {
+      LoggerService.error('Google sign-in error: $e', tag: 'LoginScreen', error: e);
+      if (!mounted) return;
+      
+      // Error is already set in authProvider, just show it via UI
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Google sign-in failed'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 
   Future<void> _signIn() async {
@@ -289,6 +320,64 @@ class LoginScreenState extends State<LoginScreen> {
                                     ),
                             ),
 
+                            // Google Sign In for Teachers
+                            if (_userRole == 'teacher') ...[
+                              const SizedBox(height: 16),
+                              const Row(
+                                children: [
+                                  Expanded(child: Divider()),
+                                  Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text(
+                                      'OR',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(child: Divider()),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              // Google Sign-In Button following Google's branding guidelines
+                              ElevatedButton(
+                                onPressed: isLoading ? null : _signInWithGoogle,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black87,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  elevation: 1,
+                                  side: const BorderSide(color: Color(0xFFDADCE0)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    // Google "G" logo
+                                    Container(
+                                      height: 24,
+                                      width: 24,
+                                      padding: const EdgeInsets.all(2),
+                                      child: const CustomPaint(
+                                        painter: GoogleLogoPainter(),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Continue with Google',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+
                             // Error Display
                             if (authProvider.errorMessage != null) ...[
                               const SizedBox(height: 16),
@@ -358,20 +447,6 @@ class LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Google Sign In (avoid Platform on web)
-                  ...(){
-                    bool showGoogle = true;
-                    if (!kIsWeb) {
-                      // Only check Platform on non-web targets
-                      showGoogle = !Platform.isWindows;
-                    }
-                    if (!showGoogle) return <Widget>[];
-                    return <Widget>[
-                    ];
-                  }(),
                 ],
               ),
             ),
@@ -380,4 +455,65 @@ class LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+// Google Logo Painter for the official Google "G" logo
+class GoogleLogoPainter extends CustomPainter {
+  const GoogleLogoPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    
+    // Blue
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      -45 * 3.14159 / 180,
+      -90 * 3.14159 / 180,
+      true,
+      paint,
+    );
+    
+    // Green
+    paint.color = const Color(0xFF34A853);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      225 * 3.14159 / 180,
+      -90 * 3.14159 / 180,
+      true,
+      paint,
+    );
+    
+    // Yellow
+    paint.color = const Color(0xFFFBBC04);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      135 * 3.14159 / 180,
+      -90 * 3.14159 / 180,
+      true,
+      paint,
+    );
+    
+    // Red
+    paint.color = const Color(0xFFEA4335);
+    canvas.drawArc(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      45 * 3.14159 / 180,
+      -90 * 3.14159 / 180,
+      true,
+      paint,
+    );
+    
+    // White center circle
+    paint.color = Colors.white;
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.width * 0.3,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
