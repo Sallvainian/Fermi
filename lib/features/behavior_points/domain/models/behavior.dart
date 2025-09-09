@@ -242,7 +242,7 @@ class Behavior {
           description: 'Student assists classmates and shows kindness',
           points: 3,
           type: BehaviorType.positive,
-          iconData: Icons.helping_hand_outlined,
+          iconData: Icons.people_outline,
           createdAt: DateTime.now(),
         ),
         Behavior(

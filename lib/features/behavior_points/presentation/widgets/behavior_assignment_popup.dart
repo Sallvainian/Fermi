@@ -410,7 +410,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
           crossAxisCount: _getCrossAxisCount(context),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 1.0,
+          childAspectRatio: 0.85, // Adjusted to prevent text overflow
         ),
         itemCount: totalItems,
         itemBuilder: (context, index) {
@@ -438,7 +438,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
         onTap: () => _awardBehaviorPoints(behavior),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8), // Reduced padding for more content space
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -511,7 +511,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
         onTap: _showAddCustomBehaviorDialog,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(8), // Reduced padding for consistency
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(

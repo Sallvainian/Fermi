@@ -152,18 +152,21 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return AdaptiveLayout(
-      title: 'Behavior Points',
-      actions: [
-        TextButton.icon(
-          onPressed: _viewReports,
-          icon: const Icon(Icons.analytics_outlined),
-          label: const Text('Reports'),
-        ),
-        const SizedBox(width: 8),
-      ],
-      body: ResponsiveContainer(
-        child: CustomScrollView(
+    // Use Consumer to listen to provider changes
+    return Consumer<BehaviorPointProvider>(
+      builder: (context, provider, child) {
+        return AdaptiveLayout(
+          title: 'Behavior Points',
+          actions: [
+            TextButton.icon(
+              onPressed: _viewReports,
+              icon: const Icon(Icons.analytics_outlined),
+              label: const Text('Reports'),
+            ),
+            const SizedBox(width: 8),
+          ],
+          body: ResponsiveContainer(
+            child: CustomScrollView(
           slivers: [
             // Class Summary Header
             SliverToBoxAdapter(
@@ -209,7 +212,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               child: SizedBox(height: 16),
             ),
 
-            // Student Grid
+            // Student Grid with Class Total Card
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverGrid(
@@ -221,13 +224,19 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    final student = _students[index];
+                    // First card is the class total
+                    if (index == 0) {
+                      return _buildClassTotalCard(theme);
+                    }
+                    // Adjust index for students
+                    final studentIndex = index - 1;
+                    final student = _students[studentIndex];
                     return StudentPointCard(
                       student: student,
                       onTap: () => _showBehaviorAssignmentPopup(student),
                     );
                   },
-                  childCount: _students.length,
+                  childCount: _students.length + 1, // Add 1 for class total card
                 ),
               ),
             ),
@@ -239,6 +248,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 
@@ -303,6 +314,93 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Builds the class total points card for the grid
+  Widget _buildClassTotalCard(ThemeData theme) {
+    final totalPoints = _classTotalPoints;
+    final avgPoints = _students.isNotEmpty ? (totalPoints / _students.length).round() : 0;
+    
+    return Card(
+      elevation: 4,
+      shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              theme.colorScheme.primaryContainer,
+              theme.colorScheme.primaryContainer.withOpacity(0.7),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Class icon
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.groups,
+                  size: 32,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Label
+              Text(
+                'Whole Class',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              // Total points
+              Text(
+                '$totalPoints',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              Text(
+                'points',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Average badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'Avg: $avgPoints',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
