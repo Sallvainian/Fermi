@@ -72,6 +72,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
       points: 8,
       icon: Icons.lightbulb,
       description: 'Creative thinking',
+      isCustom: true, // Mark as custom for testing delete functionality
     ),
     BehaviorOption(
       name: 'On Time',
@@ -136,8 +137,12 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
       points: -4,
       icon: Icons.backpack,
       description: 'Missing materials',
+      isCustom: true, // Mark as custom for testing delete functionality
     ),
   ];
+
+  // Edit mode state for managing behaviors
+  bool _isEditMode = false;
 
   @override
   void initState() {
@@ -343,6 +348,23 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
               ],
             ),
           ),
+          
+          // Edit/Done Button
+          TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _isEditMode = !_isEditMode;
+              });
+            },
+            icon: Icon(
+              _isEditMode ? Icons.check : Icons.edit,
+              size: 18,
+            ),
+            label: Text(_isEditMode ? 'Done' : 'Edit'),
+            style: TextButton.styleFrom(
+              foregroundColor: _isEditMode ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
         ],
       ),
     );
@@ -430,75 +452,107 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   Widget _buildBehaviorCard(BehaviorOption behavior, ThemeData theme) {
     final isPositive = behavior.points > 0;
     final cardColor = isPositive ? Colors.green : Colors.orange;
+    final isCustom = behavior.isCustom ?? false;
 
-    return Card(
-      elevation: 2,
-      shadowColor: cardColor.withOpacity(0.2),
-      child: InkWell(
-        onTap: () => _awardBehaviorPoints(behavior),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(8), // Reduced padding for more content space
-          decoration: BoxDecoration(
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Card(
+          elevation: 2,
+          shadowColor: cardColor.withOpacity(0.2),
+          child: InkWell(
+            onTap: _isEditMode ? null : () => _awardBehaviorPoints(behavior),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: cardColor.withOpacity(0.3),
-              width: 1,
+            child: Container(
+              padding: const EdgeInsets.all(8), // Reduced padding for more content space
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: cardColor.withOpacity(0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Icon
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cardColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      behavior.icon,
+                      color: cardColor,
+                      size: 24,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Behavior name
+                  Text(
+                    behavior.name,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 4),
+                  
+                  // Points
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${behavior.points > 0 ? '+' : ''}${behavior.points}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon
-              Container(
-                padding: const EdgeInsets.all(8),
+        ),
+        // Delete button (only shown in edit mode for custom behaviors)
+        if (_isEditMode && isCustom)
+          Positioned(
+            top: -4,
+            right: -4,
+            child: GestureDetector(
+              onTap: () => _confirmDeleteBehavior(behavior),
+              child: Container(
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
-                  color: cardColor.withOpacity(0.1),
+                  color: Colors.red,
                   shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  behavior.icon,
-                  color: cardColor,
-                  size: 24,
-                ),
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Behavior name
-              Text(
-                behavior.name,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ),
-              
-              const SizedBox(height: 4),
-              
-              // Points
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${behavior.points > 0 ? '+' : ''}${behavior.points}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                  border: Border.all(
+                    color: theme.colorScheme.surface,
+                    width: 2,
                   ),
                 ),
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 14,
+                ),
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 
@@ -577,6 +631,67 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
     return 3; // Mobile
   }
 
+  /// Show confirmation dialog before deleting a behavior
+  Future<void> _confirmDeleteBehavior(BehaviorOption behavior) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Behavior?'),
+        content: Text(
+          'Are you sure you want to delete "${behavior.name}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _deleteBehavior(behavior);
+    }
+  }
+
+  /// Delete a behavior
+  void _deleteBehavior(BehaviorOption behavior) async {
+    try {
+      final provider = context.read<BehaviorPointProvider>();
+      await provider.deleteBehavior(behavior.id);
+      
+      // Show success message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted "${behavior.name}"'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      
+      // Exit edit mode after deletion
+      setState(() {
+        _isEditMode = false;
+      });
+    } catch (e) {
+      // Show error message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete behavior: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
+
   /// Awards behavior points and provides feedback
   void _awardBehaviorPoints(BehaviorOption behavior) {
     // Award the points
@@ -637,17 +752,21 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
 
 /// Data model for behavior options
 class BehaviorOption {
+  final String id;
   final String name;
   final int points;
   final IconData icon;
   final String description;
+  final bool? isCustom;
 
-  const BehaviorOption({
+  BehaviorOption({
+    String? id,
     required this.name,
     required this.points,
     required this.icon,
     required this.description,
-  });
+    this.isCustom,
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString();
 }
 
 /// Animated widget for showing points feedback

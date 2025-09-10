@@ -569,6 +569,42 @@ class BehaviorPointProvider with ChangeNotifier {
     }
   }
 
+  /// Delete a custom behavior
+  Future<void> deleteBehavior(String behaviorId) async {
+    if (_currentClassId == null) return;
+
+    _setLoading(true);
+    _error = null;
+
+    try {
+      // Find the behavior
+      final behavior = _behaviors.firstWhere((b) => b.id == behaviorId);
+      
+      // Only allow deletion of custom behaviors
+      if (!behavior.isCustom) {
+        throw Exception('Cannot delete default behaviors');
+      }
+
+      if (_useMockData) {
+        // Remove from mock data
+        _behaviors.removeWhere((b) => b.id == behaviorId);
+      } else {
+        // Delete from Firestore
+        await _firestore.collection('behaviors').doc(behaviorId).delete();
+      }
+
+      LoggerService.info('Deleted behavior: ${behavior.name}', tag: _tag);
+      _setLoading(false);
+      notifyListeners();
+    } catch (e) {
+      LoggerService.error('Failed to delete behavior', tag: _tag, error: e);
+      _error = 'Failed to delete behavior';
+      _setLoading(false);
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   /// Calculate total points for the class
   int calculateClassTotalPoints() {
     return _behaviorPoints.fold(0, (sum, point) => sum + point.points);
