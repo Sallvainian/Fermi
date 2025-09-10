@@ -238,9 +238,9 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                     
                     // Calculate rank (accounting for ties)
                     int rank = 1;
-                    for (int i = 0; i < studentIndex; i++) {
+                    for (int i = 0; i < sortedStudents.length; i++) {
                       if (sortedStudents[i].totalPoints > student.totalPoints) {
-                        rank = i + 2;
+                        rank++;
                       }
                     }
                     
