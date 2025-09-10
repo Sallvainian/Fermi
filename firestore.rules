@@ -47,8 +47,14 @@ service cloud.firestore {
     match /users/{userId} {
       // Allow authenticated users to read any user (for messaging, etc.)
       allow read: if isAuthenticated();
-      // Users can write their own document, admins can write any
-      allow write: if isOwner(userId) || isAdmin();
+      // Allow users to create their own profile if it doesn't exist yet
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       request.resource.data.uid == userId;
+      // Users can update their own document, admins can write any
+      allow update: if isOwner(userId) || isAdmin();
+      // Only admins can delete user documents
+      allow delete: if isAdmin();
     }
     
     // Public usernames collection - safe for unauthenticated access
@@ -56,8 +62,11 @@ service cloud.firestore {
     match /public_usernames/{username} {
       // Allow anyone to read for username lookups during login
       allow read: if true;
-      // Only allow admins or cloud functions to write
-      allow write: if false;
+      // Allow authenticated users to create their own username mapping
+      allow create: if isAuthenticated() && 
+                       request.resource.data.uid == request.auth.uid;
+      // Only allow admins to update or delete
+      allow update, delete: if isAdmin();
     }
     
     // Pending users - temporary data during signup

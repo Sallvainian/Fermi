@@ -494,31 +494,68 @@ class AuthProvider extends ChangeNotifier {
         _updatePresenceOnline();
         
       } else {
-        // New user - create teacher account
+        // New user - create teacher account with retry logic
         LoggerService.info('Google Sign-In: Creating new teacher account', tag: 'AuthProvider');
         
-        // Create user document with teacher role
-        await _firestore.collection('users').doc(user.uid).set({
-          'uid': user.uid,
-          'email': user.email,
-          'username': user.email?.split('@')[0] ?? 'teacher_${DateTime.now().millisecondsSinceEpoch}',
-          'firstName': user.displayName?.split(' ').first ?? '',
-          'lastName': user.displayName?.split(' ').skip(1).join(' ') ?? '',
-          'role': 'teacher',
-          'photoURL': user.photoURL,
-          'createdAt': FieldValue.serverTimestamp(),
-          'lastActive': FieldValue.serverTimestamp(),
-          'emailVerified': user.emailVerified,
-          'isActive': true,
-        });
+        // Retry logic for profile creation
+        int retryCount = 0;
+        const maxRetries = 3;
+        bool profileCreated = false;
         
-        // Create entry in public_usernames collection
+        while (retryCount < maxRetries && !profileCreated) {
+          try {
+            // Create user document with teacher role
+            await _firestore.collection('users').doc(user.uid).set({
+              'uid': user.uid,
+              'email': user.email,
+              'username': user.email?.split('@')[0] ?? 'teacher_${DateTime.now().millisecondsSinceEpoch}',
+              'firstName': user.displayName?.split(' ').first ?? '',
+              'lastName': user.displayName?.split(' ').skip(1).join(' ') ?? '',
+              'displayName': user.displayName ?? '',
+              'role': 'teacher',
+              'photoURL': user.photoURL,
+              'createdAt': FieldValue.serverTimestamp(),
+              'lastActive': FieldValue.serverTimestamp(),
+              'emailVerified': user.emailVerified,
+              'isActive': true,
+            });
+            
+            profileCreated = true;
+            LoggerService.info('User profile created successfully', tag: 'AuthProvider');
+          } catch (e) {
+            retryCount++;
+            LoggerService.warning(
+              'Failed to create user profile (attempt $retryCount/$maxRetries): $e',
+              tag: 'AuthProvider',
+            );
+            
+            if (retryCount < maxRetries) {
+              // Wait before retrying with exponential backoff
+              await Future.delayed(Duration(milliseconds: 500 * retryCount));
+            } else {
+              // Check if the error is permission denied
+              if (e.toString().contains('permission-denied')) {
+                throw Exception('Permission denied. Please make sure you completed the teacher verification process.');
+              } else {
+                throw Exception('Unable to create teacher profile. Please try again.');
+              }
+            }
+          }
+        }
+        
+        // Create entry in public_usernames collection (with retry)
         final username = user.email?.split('@')[0] ?? 'teacher_${DateTime.now().millisecondsSinceEpoch}';
-        await _firestore.collection('public_usernames').doc(username.toLowerCase()).set({
-          'uid': user.uid,
-          'role': 'teacher',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        try {
+          await _firestore.collection('public_usernames').doc(username.toLowerCase()).set({
+            'uid': user.uid,
+            'role': 'teacher',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          LoggerService.info('Username mapping created', tag: 'AuthProvider');
+        } catch (e) {
+          // Don't fail the whole process if username mapping fails
+          LoggerService.warning('Failed to create username mapping: $e', tag: 'AuthProvider');
+        }
         
         // Load the newly created user model
         final newUserData = await _getUserDataWithRetry(user.uid);
@@ -531,7 +568,7 @@ class AuthProvider extends ChangeNotifier {
           
           LoggerService.info('Google Sign-In: New teacher account created successfully', tag: 'AuthProvider');
         } else {
-          throw Exception('Failed to create teacher profile. Please try again.');
+          throw Exception('Failed to load teacher profile. Please try signing in again.');
         }
       }
     } catch (e) {
