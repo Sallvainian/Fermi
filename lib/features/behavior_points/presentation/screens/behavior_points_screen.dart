@@ -65,6 +65,9 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
         // Load behaviors and points for the selected class
         behaviorProvider.loadBehaviorsForClass(firstClass.id);
         behaviorProvider.loadBehaviorPointsForClass(firstClass.id);
+        
+        // Load all students for the class
+        classProvider.loadClassStudents(firstClass.id);
       }
     }
   }
@@ -88,26 +91,54 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     // Load behaviors and points for the new class
     behaviorProvider.loadBehaviorsForClass(classId);
     behaviorProvider.loadBehaviorPointsForClass(classId);
+    
+    // Load all students for the class
+    classProvider.loadClassStudents(classId);
   }
 
   List<StudentPointData> get _students {
     try {
-      final provider = context.read<BehaviorPointProvider>();
-      final summaries = provider.studentSummaries;
+      final classProvider = context.read<ClassProvider>();
+      final behaviorProvider = context.read<BehaviorPointProvider>();
+      final summaries = behaviorProvider.studentSummaries;
       final colors = [
         Colors.purple, Colors.blue, Colors.green, Colors.orange, Colors.pink,
         Colors.teal, Colors.indigo, Colors.red, Colors.cyan, Colors.amber
       ];
       
-      return summaries.entries.map((entry) {
-        final index = entry.key.hashCode % colors.length;
-        return StudentPointData(
-          id: entry.key,
-          name: entry.value.studentName,
-          totalPoints: entry.value.totalPoints,
+      // Get all enrolled students from the class
+      final enrolledStudents = classProvider.classStudents;
+      
+      // Create a map of all students with their points (0 if no points)
+      final studentDataList = <StudentPointData>[];
+      
+      for (final student in enrolledStudents) {
+        final points = summaries[student.uid]?.totalPoints ?? 0;
+        final index = student.uid.hashCode % colors.length;
+        
+        studentDataList.add(StudentPointData(
+          id: student.uid,
+          name: student.displayName,
+          totalPoints: points,
           avatarColor: colors[index],
-        );
-      }).toList();
+        ));
+      }
+      
+      // Also add any students who have points but aren't in the enrolled list
+      // (in case of data inconsistency)
+      for (final entry in summaries.entries) {
+        if (!studentDataList.any((s) => s.id == entry.key)) {
+          final index = entry.key.hashCode % colors.length;
+          studentDataList.add(StudentPointData(
+            id: entry.key,
+            name: entry.value.studentName,
+            totalPoints: entry.value.totalPoints,
+            avatarColor: colors[index],
+          ));
+        }
+      }
+      
+      return studentDataList;
     } catch (e) {
       return [];
     }
