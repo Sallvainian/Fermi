@@ -363,10 +363,9 @@ class BehaviorPointProvider with ChangeNotifier {
   }) async {
     if (_currentClassId == null) return;
 
-    _setLoading(true);
-    _error = null;
-
     try {
+      _setLoading(true);
+      _error = null;
       final behavior = _behaviors.firstWhere((b) => b.id == behaviorId);
       final studentName = await _getStudentName(studentId);
       final teacherName = currentUserName;
