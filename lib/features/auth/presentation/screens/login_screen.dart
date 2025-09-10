@@ -103,11 +103,11 @@ class LoginScreenState extends State<LoginScreen> {
         // Admins use email login, teachers and students use username login
         if (_userRole == 'admin') {
           LoggerService.info('Attempting admin sign in with email: $username', tag: 'LoginScreen');
-          await authProvider.signInWithEmail(username, password);
+          await authProvider.signInWithEmail(username, password, expectedRole: 'admin');
           LoggerService.info('Admin sign in successful for email: $username', tag: 'LoginScreen');
         } else {
-          LoggerService.info('Attempting sign in for username: $username', tag: 'LoginScreen');
-          await authProvider.signInWithUsername(username, password);
+          LoggerService.info('Attempting sign in for username: $username as $_userRole', tag: 'LoginScreen');
+          await authProvider.signInWithUsername(username, password, expectedRole: _userRole);
           LoggerService.info('Sign in successful for username: $username', tag: 'LoginScreen');
         }
 
@@ -127,14 +127,42 @@ class LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
 
         String errorMessage;
-        if (e.toString().contains('invalid-email') ||
-            e.toString().contains('user-not-found')) {
-          errorMessage = 'Invalid email or password';
-        } else if (e.toString().contains('wrong-password')) {
+        final errorString = e.toString();
+        
+        // Check for role mismatch errors
+        if (errorString.contains('has teacher access') || 
+            errorString.contains('has admin access')) {
+          errorMessage = errorString.replaceAll('Exception: ', '');
+          // After showing error, redirect to role selection
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              context.go('/auth/role-selection');
+            }
+          });
+        } else if (errorString.contains('student account') && 
+                   errorString.contains('student login instead')) {
+          errorMessage = errorString.replaceAll('Exception: ', '');
+          // Suggest using student login
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              context.go('/auth/role-selection');
+            }
+          });
+        } else if (errorString.contains('role mismatch')) {
+          errorMessage = errorString.replaceAll('Exception: ', '');
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted) {
+              context.go('/auth/role-selection');
+            }
+          });
+        } else if (errorString.contains('invalid-email') ||
+                   errorString.contains('user-not-found')) {
+          errorMessage = 'Invalid username or password';
+        } else if (errorString.contains('wrong-password')) {
           errorMessage = 'Invalid password';
-        } else if (e.toString().contains('too-many-requests')) {
+        } else if (errorString.contains('too-many-requests')) {
           errorMessage = 'Too many attempts. Please try again later';
-        } else if (e.toString().contains('network')) {
+        } else if (errorString.contains('network')) {
           errorMessage = 'Network error. Please check your connection';
         } else {
           errorMessage = 'Login failed. Please try again';

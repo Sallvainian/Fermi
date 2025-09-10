@@ -188,7 +188,7 @@ class AuthProvider extends ChangeNotifier {
   // ============= Core Authentication Methods =============
 
   /// Sign in with username and password
-  Future<void> signInWithUsername(String username, String password) async {
+  Future<void> signInWithUsername(String username, String password, {String? expectedRole}) async {
     if (_authOperationInProgress) {
       LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return;
@@ -221,6 +221,32 @@ class AuthProvider extends ChangeNotifier {
         LoggerService.warning('User profile not found or incomplete', tag: 'AuthProvider');
         await _authService.signOut();
         throw Exception('User profile not found. Please contact support.');
+      }
+
+      // Check for role mismatch
+      final actualRole = loadedUserModel.role?.name;
+      if (expectedRole != null && actualRole != null && actualRole != expectedRole) {
+        // Role mismatch detected - prevent sign in
+        LoggerService.warning(
+          'Role mismatch: User has role $actualRole but tried to sign in as $expectedRole',
+          tag: 'AuthProvider',
+        );
+        await _authService.signOut();
+        
+        // Provide appropriate error message based on the scenario
+        if (expectedRole == 'student' && (actualRole == 'teacher' || actualRole == 'admin')) {
+          throw Exception(
+            'This account has $actualRole access. Please use the appropriate $actualRole login.',
+          );
+        } else if (expectedRole == 'teacher' && actualRole == 'student') {
+          throw Exception(
+            'This is a student account. Please use the student login instead.',
+          );
+        } else {
+          throw Exception(
+            'Account role mismatch. Please use the correct login for your account type.',
+          );
+        }
       }
 
       // SUCCESS: Update state atomically
@@ -294,7 +320,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Sign in with email and password
-  Future<void> signInWithEmail(String email, String password) async {
+  Future<void> signInWithEmail(String email, String password, {String? expectedRole}) async {
     if (_authOperationInProgress) {
       LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return;
@@ -326,6 +352,32 @@ class AuthProvider extends ChangeNotifier {
         throw Exception(
           'User profile not found. Please contact support if you just signed up.',
         );
+      }
+
+      // Check for role mismatch
+      final actualRole = loadedUserModel.role?.name;
+      if (expectedRole != null && actualRole != null && actualRole != expectedRole) {
+        // Role mismatch detected - prevent sign in
+        LoggerService.warning(
+          'Role mismatch: User has role $actualRole but tried to sign in as $expectedRole',
+          tag: 'AuthProvider',
+        );
+        await _authService.signOut();
+        
+        // Provide appropriate error message based on the scenario
+        if (expectedRole == 'student' && (actualRole == 'teacher' || actualRole == 'admin')) {
+          throw Exception(
+            'This account has $actualRole access. Please use the appropriate $actualRole login.',
+          );
+        } else if ((expectedRole == 'teacher' || expectedRole == 'admin') && actualRole == 'student') {
+          throw Exception(
+            'This is a student account. Please use the student login instead.',
+          );
+        } else {
+          throw Exception(
+            'Account role mismatch. Please use the correct login for your account type.',
+          );
+        }
       }
 
       // SUCCESS: Update state atomically

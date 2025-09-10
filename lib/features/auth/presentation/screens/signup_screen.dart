@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
@@ -37,28 +38,57 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.addListener(_clearError);
     
     
-    // Check for role parameter
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Check for verified role or role parameter
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
-        final goRouterState = GoRouterState.of(context);
-        final uri = goRouterState.uri;
+        // First check for verified role from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final verifiedRole = prefs.getString('verified_role');
+        final verificationTime = prefs.getInt('role_verification_time');
         
-        // Check query parameters
-        String? role = uri.queryParameters['role'];
-        
-        // If not found, check the full location for hash routing
-        if (role == null) {
-          final fullLocation = goRouterState.fullPath ?? goRouterState.matchedLocation;
-          if (fullLocation.contains('role=teacher')) {
-            role = 'teacher';
+        // Check if verified role exists and is not expired (30 minutes)
+        bool useVerifiedRole = false;
+        if (verifiedRole != null && verificationTime != null) {
+          final elapsed = DateTime.now().millisecondsSinceEpoch - verificationTime;
+          final thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+          
+          if (elapsed < thirtyMinutes) {
+            useVerifiedRole = true;
+            LoggerService.info('Using verified role: $verifiedRole', tag: 'SignupScreen');
+            setState(() {
+              _isTeacherRole = verifiedRole == 'teacher';
+              // Note: If we add admin role later, handle it here
+            });
+          } else {
+            // Expired - clear the verified role
+            await prefs.remove('verified_role');
+            await prefs.remove('role_verification_time');
+            LoggerService.info('Verified role expired, cleared from storage', tag: 'SignupScreen');
           }
         }
         
-        setState(() {
-          _isTeacherRole = role == 'teacher';
-        });
+        // If no valid verified role, check URL parameters
+        if (!useVerifiedRole) {
+          final goRouterState = GoRouterState.of(context);
+          final uri = goRouterState.uri;
+          
+          // Check query parameters
+          String? role = uri.queryParameters['role'];
+          
+          // If not found, check the full location for hash routing
+          if (role == null) {
+            final fullLocation = goRouterState.fullPath ?? goRouterState.matchedLocation;
+            if (fullLocation.contains('role=teacher')) {
+              role = 'teacher';
+            }
+          }
+          
+          setState(() {
+            _isTeacherRole = role == 'teacher';
+          });
+        }
       } catch (e) {
-        LoggerService.error('Error parsing role parameter: $e', tag: 'SignupScreen');
+        LoggerService.error('Error determining role: $e', tag: 'SignupScreen');
       }
     });
   }
@@ -86,12 +116,32 @@ class _SignupScreenState extends State<SignupScreen> {
 
     final authProvider = context.read<AuthProvider>();
     
-    if (_isTeacherRole) {
+    // Check for verified role one more time to ensure we use the correct role
+    final prefs = await SharedPreferences.getInstance();
+    final verifiedRole = prefs.getString('verified_role');
+    final verificationTime = prefs.getInt('role_verification_time');
+    
+    String roleToUse = 'student'; // Default to student
+    
+    // Use verified role if it exists and is not expired
+    if (verifiedRole != null && verificationTime != null) {
+      final elapsed = DateTime.now().millisecondsSinceEpoch - verificationTime;
+      final thirtyMinutes = 30 * 60 * 1000;
+      
+      if (elapsed < thirtyMinutes) {
+        roleToUse = verifiedRole;
+        LoggerService.info('Using verified role for signup: $roleToUse', tag: 'SignupScreen');
+      }
+    } else if (_isTeacherRole) {
+      roleToUse = 'teacher';
+    }
+    
+    if (roleToUse == 'teacher' || _isTeacherRole) {
       // Teachers sign up with username
       await authProvider.signUpWithUsername(
         username: _usernameOrEmailController.text.trim(),
         password: _passwordController.text,
-        role: 'teacher',
+        role: roleToUse,
       );
     } else {
       // Students sign up with email
@@ -102,13 +152,18 @@ class _SignupScreenState extends State<SignupScreen> {
       await authProvider.signUpWithEmail(
         email: _usernameOrEmailController.text.trim(),
         password: _passwordController.text,
-        role: 'student',
+        role: roleToUse,
         displayName: displayName,
       );
     }
 
+    // Clear the verified role after successful signup
     if (authProvider.isAuthenticated && mounted) {
-      // Router will automatically redirect to student dashboard
+      await prefs.remove('verified_role');
+      await prefs.remove('role_verification_time');
+      LoggerService.info('Cleared verified role after successful signup', tag: 'SignupScreen');
+      
+      // Router will automatically redirect to appropriate dashboard
       // No need to manually navigate - handled by main.dart redirect logic
     }
   }

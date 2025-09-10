@@ -41,12 +41,17 @@ class _TeacherPasswordScreenState extends State<TeacherPasswordScreen> {
 
     // Check if password is correct
     if (enteredHash == _teacherPasswordHash) {
-      // Success - save teacher verification status
+      // Success - save teacher verification status and role
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('teacher_verified', true);
+      await prefs.setString('verified_role', 'teacher'); // Store the verified role
       await prefs.setInt(
         'teacher_verify_time',
         DateTime.now().millisecondsSinceEpoch,
+      );
+      await prefs.setInt(
+        'role_verification_time',
+        DateTime.now().millisecondsSinceEpoch, // Store when role was verified
       );
 
       // Navigate to teacher login
