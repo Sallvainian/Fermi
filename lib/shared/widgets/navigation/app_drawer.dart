@@ -140,6 +140,13 @@ class AppDrawer extends StatelessWidget {
                       title: 'Students',
                       route: '/teacher/students',
                     ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.emoji_events_outlined,
+                      selectedIcon: Icons.emoji_events,
+                      title: 'Behavior Points',
+                      route: '/teacher/behavior-points',
+                    ),
                   ],
 
                   // Student-specific navigation

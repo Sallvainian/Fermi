@@ -188,7 +188,7 @@ class AuthProvider extends ChangeNotifier {
   // ============= Core Authentication Methods =============
 
   /// Sign in with username and password
-  Future<void> signInWithUsername(String username, String password) async {
+  Future<void> signInWithUsername(String username, String password, {String? expectedRole}) async {
     if (_authOperationInProgress) {
       LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return;
@@ -221,6 +221,32 @@ class AuthProvider extends ChangeNotifier {
         LoggerService.warning('User profile not found or incomplete', tag: 'AuthProvider');
         await _authService.signOut();
         throw Exception('User profile not found. Please contact support.');
+      }
+
+      // Check for role mismatch
+      final actualRole = loadedUserModel.role?.name;
+      if (expectedRole != null && actualRole != null && actualRole != expectedRole) {
+        // Role mismatch detected - prevent sign in
+        LoggerService.warning(
+          'Role mismatch: User has role $actualRole but tried to sign in as $expectedRole',
+          tag: 'AuthProvider',
+        );
+        await _authService.signOut();
+        
+        // Provide appropriate error message based on the scenario
+        if (expectedRole == 'student' && (actualRole == 'teacher' || actualRole == 'admin')) {
+          throw Exception(
+            'This account has $actualRole access. Please use the appropriate $actualRole login.',
+          );
+        } else if (expectedRole == 'teacher' && actualRole == 'student') {
+          throw Exception(
+            'This is a student account. Please use the student login instead.',
+          );
+        } else {
+          throw Exception(
+            'Account role mismatch. Please use the correct login for your account type.',
+          );
+        }
       }
 
       // SUCCESS: Update state atomically
@@ -294,7 +320,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Sign in with email and password
-  Future<void> signInWithEmail(String email, String password) async {
+  Future<void> signInWithEmail(String email, String password, {String? expectedRole}) async {
     if (_authOperationInProgress) {
       LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
       return;
@@ -326,6 +352,32 @@ class AuthProvider extends ChangeNotifier {
         throw Exception(
           'User profile not found. Please contact support if you just signed up.',
         );
+      }
+
+      // Check for role mismatch
+      final actualRole = loadedUserModel.role?.name;
+      if (expectedRole != null && actualRole != null && actualRole != expectedRole) {
+        // Role mismatch detected - prevent sign in
+        LoggerService.warning(
+          'Role mismatch: User has role $actualRole but tried to sign in as $expectedRole',
+          tag: 'AuthProvider',
+        );
+        await _authService.signOut();
+        
+        // Provide appropriate error message based on the scenario
+        if (expectedRole == 'student' && (actualRole == 'teacher' || actualRole == 'admin')) {
+          throw Exception(
+            'This account has $actualRole access. Please use the appropriate $actualRole login.',
+          );
+        } else if ((expectedRole == 'teacher' || expectedRole == 'admin') && actualRole == 'student') {
+          throw Exception(
+            'This is a student account. Please use the student login instead.',
+          );
+        } else {
+          throw Exception(
+            'Account role mismatch. Please use the correct login for your account type.',
+          );
+        }
       }
 
       // SUCCESS: Update state atomically
@@ -386,6 +438,141 @@ class AuthProvider extends ChangeNotifier {
       }
     } catch (e) {
       LoggerService.error('Google sign-in error', tag: 'AuthProvider', error: e);
+      _handleOAuthError(e, 'Google');
+    } finally {
+      _authOperationInProgress = false;
+      _stopLoading();
+    }
+  }
+
+  /// Sign in with Google OAuth - Teacher Only
+  /// This method enforces that only teachers can use Google Sign-In
+  Future<void> signInWithGoogleAsTeacher() async {
+    if (_authOperationInProgress) {
+      LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
+      return;
+    }
+
+    _authOperationInProgress = true;
+    _startLoading();
+    clearError(); // Clear any previous errors
+
+    try {
+      LoggerService.info('Starting Google Sign-In for teachers...', tag: 'AuthProvider');
+      final user = await _authService.signInWithGoogle();
+
+      if (user == null) {
+        // User cancelled sign-in
+        LoggerService.info('Google Sign-In: User cancelled', tag: 'AuthProvider');
+        _setAuthState(AuthStatus.unauthenticated);
+        clearError(); // Clear error state if user cancelled
+        return;
+      }
+
+      LoggerService.debug('Google Sign-In: Auth success, verifying teacher role...', tag: 'AuthProvider');
+
+      // Check if user has existing profile
+      final userData = await _getUserDataWithRetry(user.uid);
+
+      if (userData != null && userData['role'] != null) {
+        // Existing user - verify they are a teacher
+        final role = userData['role'];
+        
+        if (role != 'teacher') {
+          // User exists but is not a teacher - sign them out
+          LoggerService.warning('Google Sign-In rejected: User is not a teacher (role: $role)', tag: 'AuthProvider');
+          await _authService.signOut();
+          throw Exception('Google Sign-In is only available for teachers. Your account is registered as a $role.');
+        }
+        
+        // User is a teacher - complete sign in
+        LoggerService.info('Google Sign-In: Verified teacher account', tag: 'AuthProvider');
+        final loadedUserModel = UserModel.fromFirestore(userData);
+        _userModel = loadedUserModel;
+        _setAuthState(AuthStatus.authenticated);
+        _startNotificationsIfNeeded();
+        _updatePresenceOnline();
+        
+      } else {
+        // New user - create teacher account with retry logic
+        LoggerService.info('Google Sign-In: Creating new teacher account', tag: 'AuthProvider');
+        
+        // Retry logic for profile creation
+        int retryCount = 0;
+        const maxRetries = 3;
+        bool profileCreated = false;
+        
+        while (retryCount < maxRetries && !profileCreated) {
+          try {
+            // Create user document with teacher role
+            await _firestore.collection('users').doc(user.uid).set({
+              'uid': user.uid,
+              'email': user.email,
+              'username': user.email?.split('@')[0] ?? 'teacher_${DateTime.now().millisecondsSinceEpoch}',
+              'firstName': user.displayName?.split(' ').first ?? '',
+              'lastName': user.displayName?.split(' ').skip(1).join(' ') ?? '',
+              'displayName': user.displayName ?? '',
+              'role': 'teacher',
+              'photoURL': user.photoURL,
+              'createdAt': FieldValue.serverTimestamp(),
+              'lastActive': FieldValue.serverTimestamp(),
+              'emailVerified': user.emailVerified,
+              'isActive': true,
+            });
+            
+            profileCreated = true;
+            LoggerService.info('User profile created successfully', tag: 'AuthProvider');
+          } catch (e) {
+            retryCount++;
+            LoggerService.warning(
+              'Failed to create user profile (attempt $retryCount/$maxRetries): $e',
+              tag: 'AuthProvider',
+            );
+            
+            if (retryCount < maxRetries) {
+              // Wait before retrying with exponential backoff
+              await Future.delayed(Duration(milliseconds: 500 * retryCount));
+            } else {
+              // Check if the error is permission denied
+              if (e.toString().contains('permission-denied')) {
+                throw Exception('Permission denied. Please make sure you completed the teacher verification process.');
+              } else {
+                throw Exception('Unable to create teacher profile. Please try again.');
+              }
+            }
+          }
+        }
+        
+        // Create entry in public_usernames collection (with retry)
+        final username = user.email?.split('@')[0] ?? 'teacher_${DateTime.now().millisecondsSinceEpoch}';
+        try {
+          await _firestore.collection('public_usernames').doc(username.toLowerCase()).set({
+            'uid': user.uid,
+            'role': 'teacher',
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          LoggerService.info('Username mapping created', tag: 'AuthProvider');
+        } catch (e) {
+          // Don't fail the whole process if username mapping fails
+          LoggerService.warning('Failed to create username mapping: $e', tag: 'AuthProvider');
+        }
+        
+        // Load the newly created user model
+        final newUserData = await _getUserDataWithRetry(user.uid);
+        if (newUserData != null) {
+          final loadedUserModel = UserModel.fromFirestore(newUserData);
+          _userModel = loadedUserModel;
+          _setAuthState(AuthStatus.authenticated);
+          _startNotificationsIfNeeded();
+          _updatePresenceOnline();
+          
+          LoggerService.info('Google Sign-In: New teacher account created successfully', tag: 'AuthProvider');
+        } else {
+          throw Exception('Failed to load teacher profile. Please try signing in again.');
+        }
+      }
+    } catch (e) {
+      LoggerService.error('Google sign-in error for teacher', tag: 'AuthProvider', error: e);
       _handleOAuthError(e, 'Google');
     } finally {
       _authOperationInProgress = false;

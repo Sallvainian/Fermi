@@ -112,33 +112,39 @@ class UsernameAuthService {
           // FALLBACK: Not in public collection, try users collection (for existing users)
           LoggerService.info('Username not in public collection, checking users collection for: $lowerUsername', tag: 'UsernameAuthService');
           
-          final userQuery = await _firestore
-              .collection('users')
-              .where('username', isEqualTo: lowerUsername)
-              .limit(1)
-              .get();
-          
-          if (userQuery.docs.isEmpty) {
-            throw Exception('Username not found');
-          }
-          
-          // Found in users collection - migrate to public_usernames for next time
-          final userDoc = userQuery.docs.first;
-          final userData = userDoc.data();
-          uid = userDoc.id;
-          
-          // Create entry in public_usernames for future lookups
           try {
-            await _firestore.collection('public_usernames')
-                .doc(lowerUsername)
-                .set({
-                  'uid': uid,
-                  'role': userData['role'] ?? 'student',
-                });
-            LoggerService.info('Migrated username to public collection: $lowerUsername', tag: 'UsernameAuthService');
+            final userQuery = await _firestore
+                .collection('users')
+                .where('username', isEqualTo: lowerUsername)
+                .limit(1)
+                .get();
+            
+            if (userQuery.docs.isEmpty) {
+              throw Exception('Invalid username or password');
+            }
+            
+            // Found in users collection - migrate to public_usernames for next time
+            final userDoc = userQuery.docs.first;
+            final userData = userDoc.data();
+            uid = userDoc.id;
+            
+            // Create entry in public_usernames for future lookups
+            try {
+              await _firestore.collection('public_usernames')
+                  .doc(lowerUsername)
+                  .set({
+                    'uid': uid,
+                    'role': userData['role'] ?? 'student',
+                  });
+              LoggerService.info('Migrated username to public collection: $lowerUsername', tag: 'UsernameAuthService');
+            } catch (e) {
+              // Log but don't fail login if migration fails
+              LoggerService.warning('Failed to migrate username to public collection: $e', tag: 'UsernameAuthService');
+            }
           } catch (e) {
-            // Log but don't fail login if migration fails
-            LoggerService.warning('Failed to migrate username to public collection: $e', tag: 'UsernameAuthService');
+            // If we can't access the users collection (permission denied), username doesn't exist
+            LoggerService.info('Username lookup failed (likely does not exist): $lowerUsername', tag: 'UsernameAuthService');
+            throw Exception('Invalid username or password');
           }
         }
         
