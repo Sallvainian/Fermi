@@ -131,7 +131,7 @@ class BehaviorPointProvider with ChangeNotifier {
   // Getters
   List<Behavior> get behaviors => _behaviors;
   List<BehaviorPoint> get behaviorPoints => _behaviorPoints;
-  Map<String, StudentPointSummary> get studentSummaries => _studentSummaries;
+  Map<String, StudentPointSummary> get studentSummaries => Map.unmodifiable(_studentSummaries);
   String? get currentClassId => _currentClassId;
   bool get isLoading => _isLoading;
   String? get error => _error;
