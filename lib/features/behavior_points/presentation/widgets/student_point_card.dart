@@ -69,13 +69,16 @@ class StudentPointCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Padding(
             padding: const EdgeInsets.all(8), // Reduced from 16
-            child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Student Avatar with Points Badge
-              Stack(
-                clipBehavior: Clip.none,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Student Avatar with Points Badge
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
                   // Avatar Circle
                   Container(
                     width: 48,  // Reduced from 64
@@ -144,6 +147,7 @@ class StudentPointCard extends StatelessWidget {
           ),
         ),
       ),
+        ),
       ),
     );
   }
@@ -203,7 +207,7 @@ class StudentPointCard extends StatelessWidget {
     }
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // Reduced padding
       decoration: BoxDecoration(
         color: rank! <= 3 ? rankColor.withOpacity(0.1) : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
@@ -219,16 +223,17 @@ class StudentPointCard extends StatelessWidget {
           if (rankIcon != null) ...[
             Icon(
               rankIcon,
-              size: 16,
+              size: 14, // Reduced from 16
               color: rankColor,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 2), // Reduced from 4
           ],
           Text(
             rankText,
-            style: theme.textTheme.labelMedium?.copyWith(
+            style: theme.textTheme.labelSmall?.copyWith( // Changed to labelSmall
               color: rankColor,
               fontWeight: rank! <= 3 ? FontWeight.bold : FontWeight.w500,
+              fontSize: 11, // Explicit smaller size
             ),
           ),
         ],

@@ -220,7 +220,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                   crossAxisCount: _getCrossAxisCount(context),
                   crossAxisSpacing: 8,  // Reduced from 16
                   mainAxisSpacing: 8,   // Reduced from 16
-                  childAspectRatio: 1.0, // Square cards for more compact layout
+                  childAspectRatio: _getAspectRatio(context), // Responsive aspect ratio
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -353,68 +353,76 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+          padding: const EdgeInsets.all(8), // Reduced padding
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
               // Class icon
               Container(
-                width: 60,
-                height: 60,
+                width: 48,  // Reduced from 60 to match student cards
+                height: 48, // Reduced from 60 to match student cards
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.groups,
-                  size: 32,
+                  size: 24,  // Reduced from 32
                   color: theme.colorScheme.primary,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6), // Reduced from 8
               // Label
               Text(
                 'Whole Class',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: theme.textTheme.bodySmall?.copyWith( // Changed from titleMedium
+                  fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onPrimaryContainer,
+                  fontSize: 11, // Explicit smaller size
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2), // Reduced from 4
               // Total points
               Text(
                 '$totalPoints',
-                style: theme.textTheme.headlineMedium?.copyWith(
+                style: theme.textTheme.titleMedium?.copyWith( // Changed from headlineMedium
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
+                  fontSize: 16, // Explicit size
                 ),
               ),
               Text(
                 'points',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
+                  fontSize: 10, // Explicit smaller size
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4), // Reduced from 8
               // Average badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reduced padding
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondary.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   'Avg: $avgPoints',
-                  style: theme.textTheme.bodySmall?.copyWith(
+                  style: theme.textTheme.labelSmall?.copyWith( // Changed to labelSmall
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.secondary,
+                    fontSize: 11, // Explicit size
                   ),
                 ),
               ),
             ],
           ),
         ),
+      ),
       ),
     );
   }
@@ -480,6 +488,16 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     if (screenWidth > 600) return 4;  // Tablet portrait
     if (screenWidth > 400) return 3;  // Large mobile
     return 2; // Small mobile
+  }
+
+  /// Determines the aspect ratio for the student cards based on screen size
+  /// Provides more vertical space for card content on smaller screens
+  double _getAspectRatio(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    if (screenWidth > 1200) return 0.85; // Desktop - slightly taller than square
+    if (screenWidth > 800) return 0.8;   // Tablet - more vertical space
+    if (screenWidth > 600) return 0.75;  // Small tablet
+    return 0.7; // Mobile - maximum vertical space for all content
   }
 
   /// Shows the behavior assignment popup for the selected student
