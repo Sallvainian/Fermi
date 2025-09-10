@@ -4,7 +4,6 @@
 library;
 
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -116,9 +115,6 @@ class BehaviorPointProvider with ChangeNotifier {
   StreamSubscription<QuerySnapshot>? _behaviorsSubscription;
   StreamSubscription<QuerySnapshot>? _behaviorPointsSubscription;
 
-  // Mock data mode (for testing)
-  bool _useMockData = true;
-
   // Default constructor for Provider
   BehaviorPointProvider();
 
@@ -140,21 +136,11 @@ class BehaviorPointProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get currentUserId => _auth.currentUser?.uid ?? '';
-  bool get useMockData => _useMockData;
 
   /// Current user's role (teacher or student)
   String _userRole = 'teacher';
   String get userRole => _userRole;
 
-  /// Toggle mock data mode
-  void toggleMockData() {
-    _useMockData = !_useMockData;
-    if (_currentClassId != null) {
-      loadBehaviorsForClass(_currentClassId!);
-      loadBehaviorPointsForClass(_currentClassId!);
-    }
-    notifyListeners();
-  }
 
   /// Returns cached display name or fetches and caches it
   String get currentUserName {
@@ -265,13 +251,6 @@ class BehaviorPointProvider with ChangeNotifier {
     _error = null;
 
     try {
-      if (_useMockData) {
-        _behaviors = _generateMockBehaviors(classId);
-        _setLoading(false);
-        notifyListeners();
-        return;
-      }
-
       // Cancel existing subscription
       await _behaviorsSubscription?.cancel();
 
@@ -335,13 +314,6 @@ class BehaviorPointProvider with ChangeNotifier {
   /// Load behavior points for a specific class
   Future<void> loadBehaviorPointsForClass(String classId) async {
     try {
-      if (_useMockData) {
-        _behaviorPoints = _generateMockBehaviorPoints(classId);
-        _calculateStudentSummaries();
-        notifyListeners();
-        return;
-      }
-
       // Cancel existing subscription
       await _behaviorPointsSubscription?.cancel();
 
@@ -412,17 +384,14 @@ class BehaviorPointProvider with ChangeNotifier {
         awardedAt: DateTime.now(),
       );
 
-      if (_useMockData) {
-        // Add to mock data
-        _behaviorPoints.insert(0, behaviorPoint.copyWith(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-        ));
-        _calculateStudentSummaries();
-      } else {
-        await _firestore
-            .collection('behavior_points')
-            .add(behaviorPoint.toFirestore());
-      }
+      // Add to Firestore
+      await _firestore
+          .collection('behavior_points')
+          .add(behaviorPoint.toFirestore());
+      
+      // Update local state for immediate UI feedback
+      _behaviorPoints.insert(0, behaviorPoint);
+      _calculateStudentSummaries();
 
       LoggerService.info(
         'Awarded $points points to student $studentId for behavior ${behavior.name}',
@@ -486,21 +455,19 @@ class BehaviorPointProvider with ChangeNotifier {
         createdAt: DateTime.now(),
       );
 
-      if (_useMockData) {
-        // Add to mock data
-        _behaviors.add(behavior.copyWith(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-        ));
-        // Re-sort behaviors
-        _behaviors.sort((a, b) {
-          if (a.type != b.type) {
-            return a.type == BehaviorType.positive ? -1 : 1;
-          }
-          return a.name.compareTo(b.name);
-        });
-      } else {
-        await _firestore.collection('behaviors').add(behavior.toFirestore());
-      }
+      // Add to Firestore
+      final docRef = await _firestore.collection('behaviors').add(behavior.toFirestore());
+      
+      // Update local state with the new behavior including the generated ID
+      _behaviors.add(behavior.copyWith(id: docRef.id));
+      
+      // Re-sort behaviors
+      _behaviors.sort((a, b) {
+        if (a.type != b.type) {
+          return a.type == BehaviorType.positive ? -1 : 1;
+        }
+        return a.name.compareTo(b.name);
+      });
 
       LoggerService.info('Created custom behavior: $name', tag: _tag);
       _setLoading(false);
@@ -530,13 +497,11 @@ class BehaviorPointProvider with ChangeNotifier {
         throw Exception('Cannot delete default behaviors');
       }
 
-      if (_useMockData) {
-        // Remove from mock data
-        _behaviors.removeWhere((b) => b.id == behaviorId);
-      } else {
-        // Delete from Firestore
-        await _firestore.collection('behaviors').doc(behaviorId).delete();
-      }
+      // Delete from Firestore
+      await _firestore.collection('behaviors').doc(behaviorId).delete();
+      
+      // Update local state
+      _behaviors.removeWhere((b) => b.id == behaviorId);
 
       LoggerService.info('Deleted behavior: ${behavior.name}', tag: _tag);
       _setLoading(false);
@@ -613,12 +578,6 @@ class BehaviorPointProvider with ChangeNotifier {
         return _studentSummaries[studentId]!.studentName;
       }
 
-      if (_useMockData) {
-        final mockNames = ['Alice Johnson', 'Bob Smith', 'Charlie Brown', 'Diana Prince', 'Emma Watson'];
-        final index = int.parse(studentId.substring(studentId.length - 1)) % mockNames.length;
-        return mockNames[index];
-      }
-
       // Get from Firestore
       final userDoc = await _firestore.collection('users').doc(studentId).get();
       if (userDoc.exists) {
@@ -639,149 +598,13 @@ class BehaviorPointProvider with ChangeNotifier {
 
   /// Get student name (sync version for internal use)
   String _getStudentNameSync(String studentId) {
-    if (_useMockData) {
-      final mockNames = ['Alice Johnson', 'Bob Smith', 'Charlie Brown', 'Diana Prince', 'Emma Watson'];
-      final index = int.parse(studentId.substring(studentId.length - 1)) % mockNames.length;
-      return mockNames[index];
+    // Return from cache if available
+    if (_studentSummaries.containsKey(studentId)) {
+      return _studentSummaries[studentId]!.studentName;
     }
-    return 'Student $studentId';
+    return 'Loading...';
   }
 
-  /// Generate mock behaviors for testing
-  List<Behavior> _generateMockBehaviors(String classId) {
-    final now = DateTime.now();
-    final random = Random();
-
-    return [
-      // Positive behaviors
-      Behavior(
-        id: 'pos1',
-        name: 'Excellent Participation',
-        description: 'Active participation in class discussions',
-        points: 10,
-        type: BehaviorType.positive,
-        iconData: Icons.record_voice_over,
-        isCustom: true,  // ALL behaviors deletable for testing
-        teacherId: 'system',
-        createdAt: now.subtract(Duration(days: 30)),
-      ),
-      Behavior(
-        id: 'pos2',
-        name: 'Homework Completed',
-        description: 'Completed homework on time',
-        points: 5,
-        type: BehaviorType.positive,
-        iconData: Icons.assignment_turned_in,
-        isCustom: true,  // ALL behaviors deletable for testing
-        teacherId: 'system',
-        createdAt: now.subtract(Duration(days: 30)),
-      ),
-      Behavior(
-        id: 'pos3',
-        name: 'Helping Others',
-        description: 'Helped a classmate with their work',
-        points: 8,
-        type: BehaviorType.positive,
-        iconData: Icons.people_outline,
-        isCustom: true,  // Marked as custom for testing
-        teacherId: 'system',
-        createdAt: now.subtract(Duration(days: 30)),
-      ),
-      Behavior(
-        id: 'pos4',
-        name: 'Leadership',
-        description: 'Showed leadership during group activities',
-        points: 12,
-        type: BehaviorType.positive,
-        iconData: Icons.psychology,
-        isCustom: true,  // ALL behaviors deletable for testing
-        teacherId: 'system',
-        createdAt: now.subtract(Duration(days: 30)),
-      ),
-      
-      // Negative behaviors
-      Behavior(
-        id: 'neg1',
-        name: 'Late to Class',
-        description: 'Arrived late to class',
-        points: -3,
-        type: BehaviorType.negative,
-        iconData: Icons.schedule,
-        isCustom: true,  // ALL behaviors deletable for testing
-        teacherId: 'system',
-        createdAt: now.subtract(Duration(days: 30)),
-      ),
-      Behavior(
-        id: 'neg2',
-        name: 'Missing Homework',
-        description: 'Failed to submit homework',
-        points: -5,
-        type: BehaviorType.negative,
-        iconData: Icons.assignment_late,
-        isCustom: true,  // Marked as custom for testing
-        teacherId: 'system',
-        createdAt: now.subtract(Duration(days: 30)),
-      ),
-      Behavior(
-        id: 'neg3',
-        name: 'Disruptive Behavior',
-        description: 'Disrupted class or other students',
-        points: -8,
-        type: BehaviorType.negative,
-        iconData: Icons.do_not_disturb,
-        isCustom: true,  // ALL behaviors deletable for testing
-        teacherId: 'system',
-        createdAt: now.subtract(Duration(days: 30)),
-      ),
-
-      // Custom class behavior
-      Behavior(
-        id: 'custom1',
-        name: 'Extra Credit Project',
-        description: 'Completed optional extra credit assignment',
-        points: 15,
-        type: BehaviorType.positive,
-        iconData: Icons.star,
-        isCustom: true,
-        classId: classId,
-        teacherId: currentUserId,
-        createdAt: now.subtract(Duration(days: 5)),
-      ),
-    ];
-  }
-
-  /// Generate mock behavior points for testing
-  List<BehaviorPoint> _generateMockBehaviorPoints(String classId) {
-    final random = Random();
-    final studentIds = ['student1', 'student2', 'student3', 'student4', 'student5'];
-    final behaviorIds = ['pos1', 'pos2', 'pos3', 'pos4', 'neg1', 'neg2', 'neg3', 'custom1'];
-    final points = <BehaviorPoint>[];
-
-    // Generate 50 random behavior point records
-    for (int i = 0; i < 50; i++) {
-      final studentId = studentIds[random.nextInt(studentIds.length)];
-      final behaviorId = behaviorIds[random.nextInt(behaviorIds.length)];
-      final behavior = _behaviors.firstWhere((b) => b.id == behaviorId, 
-          orElse: () => _behaviors.first);
-
-      points.add(BehaviorPoint(
-        id: 'point_$i',
-        studentId: studentId,
-        classId: classId,
-        behaviorId: behaviorId,
-        behaviorName: behavior.name,
-        points: behavior.points + random.nextInt(5) - 2, // Add some variation
-        reason: behavior.description,
-        awardedBy: currentUserId,
-        awardedByName: currentUserName,
-        awardedAt: DateTime.now().subtract(Duration(days: random.nextInt(30))),
-      ));
-    }
-
-    // Sort by date descending
-    points.sort((a, b) => b.awardedAt.compareTo(a.awardedAt));
-    return points;
-  }
 
   /// Clean up resources
   @override

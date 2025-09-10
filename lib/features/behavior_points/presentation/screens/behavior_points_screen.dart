@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../../shared/widgets/common/adaptive_layout.dart';
-import '../../../../../shared/widgets/common/responsive_layout.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../shared/widgets/common/adaptive_layout.dart';
+import '../../../../shared/widgets/common/responsive_layout.dart';
 import '../widgets/student_point_card.dart';
 import '../widgets/behavior_assignment_popup.dart';
 import '../providers/behavior_point_provider.dart';
+import '../../../classes/presentation/providers/class_provider.dart';
+import '../../../classes/domain/models/class_model.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// Main screen for behavior points system showing class overview and student grid.
 ///
@@ -13,7 +17,7 @@ import '../providers/behavior_point_provider.dart';
 /// - Grid of student cards with names, avatars, and points
 /// - Tap student cards to open behavior assignment popup
 /// - View Reports button in app bar
-/// - Mock data for testing purposes
+/// - Class selector dropdown for switching between classes
 class BehaviorPointsScreen extends StatefulWidget {
   const BehaviorPointsScreen({super.key});
 
@@ -22,135 +26,110 @@ class BehaviorPointsScreen extends StatefulWidget {
 }
 
 class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
-  // Mock student data for testing (fallback when provider not available)
-  List<StudentPointData> _mockStudents = [
-    StudentPointData(
-      id: '1',
-      name: 'Emma Thompson',
-      totalPoints: 85,
-      avatarColor: Colors.purple,
-    ),
-    StudentPointData(
-      id: '2',
-      name: 'James Wilson',
-      totalPoints: 72,
-      avatarColor: Colors.blue,
-    ),
-    StudentPointData(
-      id: '3',
-      name: 'Sophia Garcia',
-      totalPoints: 94,
-      avatarColor: Colors.green,
-    ),
-    StudentPointData(
-      id: '4',
-      name: 'Michael Brown',
-      totalPoints: 67,
-      avatarColor: Colors.orange,
-    ),
-    StudentPointData(
-      id: '5',
-      name: 'Isabella Davis',
-      totalPoints: 88,
-      avatarColor: Colors.pink,
-    ),
-    StudentPointData(
-      id: '6',
-      name: 'William Johnson',
-      totalPoints: 79,
-      avatarColor: Colors.teal,
-    ),
-    StudentPointData(
-      id: '7',
-      name: 'Olivia Miller',
-      totalPoints: 91,
-      avatarColor: Colors.indigo,
-    ),
-    StudentPointData(
-      id: '8',
-      name: 'Alexander Lee',
-      totalPoints: 58,
-      avatarColor: Colors.red,
-    ),
-    StudentPointData(
-      id: '9',
-      name: 'Charlotte Wilson',
-      totalPoints: 83,
-      avatarColor: Colors.cyan,
-    ),
-    StudentPointData(
-      id: '10',
-      name: 'Benjamin Taylor',
-      totalPoints: 76,
-      avatarColor: Colors.amber,
-    ),
-  ];
-
-  // Mock class data
-  final String _className = 'Period 3 - Mathematics';
-  bool _useProvider = false;
+  String? _selectedClassId;
+  ClassModel? _selectedClass;
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    // Initialize provider if available
-    _initializeProvider();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isInitialized) {
+        _initializeProvider();
+      }
+    });
   }
 
   void _initializeProvider() {
-    try {
-      final provider = context.read<BehaviorPointProvider>();
-      _useProvider = true;
-      // Load mock data for demonstration
-      provider.loadBehaviorsForClass('demo_class_123');
-      provider.loadBehaviorPointsForClass('demo_class_123');
-    } catch (e) {
-      // Provider not available, use mock data
-      _useProvider = false;
+    if (_isInitialized) return;
+    
+    final authProvider = context.read<AuthProvider>();
+    final classProvider = context.read<ClassProvider>();
+    final behaviorProvider = context.read<BehaviorPointProvider>();
+    final teacherId = authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
+
+    if (teacherId != null) {
+      _isInitialized = true;
+      
+      // Load teacher's classes
+      classProvider.loadTeacherClasses(teacherId);
+      
+      // Set first class as selected if available
+      if (classProvider.teacherClasses.isNotEmpty) {
+        final firstClass = classProvider.teacherClasses.first;
+        setState(() {
+          _selectedClassId = firstClass.id;
+          _selectedClass = firstClass;
+        });
+        
+        // Load behaviors and points for the selected class
+        behaviorProvider.loadBehaviorsForClass(firstClass.id);
+        behaviorProvider.loadBehaviorPointsForClass(firstClass.id);
+      }
     }
+  }
+  
+  void _onClassChanged(String? classId) {
+    if (classId == null) return;
+    
+    final classProvider = context.read<ClassProvider>();
+    final behaviorProvider = context.read<BehaviorPointProvider>();
+    
+    final selectedClass = classProvider.teacherClasses.firstWhere(
+      (c) => c.id == classId,
+      orElse: () => classProvider.teacherClasses.first,
+    );
+    
+    setState(() {
+      _selectedClassId = classId;
+      _selectedClass = selectedClass;
+    });
+    
+    // Load behaviors and points for the new class
+    behaviorProvider.loadBehaviorsForClass(classId);
+    behaviorProvider.loadBehaviorPointsForClass(classId);
   }
 
   List<StudentPointData> get _students {
-    if (_useProvider) {
-      try {
-        final provider = context.read<BehaviorPointProvider>();
-        final summaries = provider.studentSummaries;
-        final colors = [
-          Colors.purple, Colors.blue, Colors.green, Colors.orange, Colors.pink,
-          Colors.teal, Colors.indigo, Colors.red, Colors.cyan, Colors.amber
-        ];
-        
-        return summaries.entries.map((entry) {
-          final index = entry.key.hashCode % colors.length;
-          return StudentPointData(
-            id: entry.key,
-            name: entry.value.studentName,
-            totalPoints: entry.value.totalPoints,
-            avatarColor: colors[index],
-          );
-        }).toList();
-      } catch (e) {
-        return _mockStudents;
-      }
+    try {
+      final provider = context.read<BehaviorPointProvider>();
+      final summaries = provider.studentSummaries;
+      final colors = [
+        Colors.purple, Colors.blue, Colors.green, Colors.orange, Colors.pink,
+        Colors.teal, Colors.indigo, Colors.red, Colors.cyan, Colors.amber
+      ];
+      
+      return summaries.entries.map((entry) {
+        final index = entry.key.hashCode % colors.length;
+        return StudentPointData(
+          id: entry.key,
+          name: entry.value.studentName,
+          totalPoints: entry.value.totalPoints,
+          avatarColor: colors[index],
+        );
+      }).toList();
+    } catch (e) {
+      return [];
     }
-    return _mockStudents;
   }
 
   int get _classTotalPoints {
-    if (_useProvider) {
-      try {
-        final provider = context.read<BehaviorPointProvider>();
-        return provider.calculateClassTotalPoints();
-      } catch (e) {
-        return _mockStudents.fold(0, (sum, student) => sum + student.totalPoints);
-      }
+    try {
+      final provider = context.read<BehaviorPointProvider>();
+      return provider.calculateClassTotalPoints();
+    } catch (e) {
+      return 0;
     }
-    return _mockStudents.fold(0, (sum, student) => sum + student.totalPoints);
+  }
+  
+  String get _className {
+    return _selectedClass?.name ?? 'Select a Class';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final classProvider = context.watch<ClassProvider>();
 
     // Use Consumer to listen to provider changes
     return Consumer<BehaviorPointProvider>(
@@ -168,6 +147,12 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
           body: ResponsiveContainer(
             child: CustomScrollView(
           slivers: [
+            // Class Selector
+            if (classProvider.teacherClasses.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _buildClassSelector(theme, classProvider),
+              ),
+            
             // Class Summary Header
             SliverToBoxAdapter(
               child: _buildClassSummary(theme),
@@ -267,6 +252,57 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     );
   }
 
+  /// Builds the class selector dropdown
+  Widget _buildClassSelector(ThemeData theme, ClassProvider classProvider) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.school_outlined,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Text(
+            'Class:',
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _selectedClassId,
+                hint: const Text('Select a class'),
+                items: classProvider.teacherClasses.map((classModel) {
+                  return DropdownMenuItem<String>(
+                    value: classModel.id,
+                    child: Text(
+                      classModel.name,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: _onClassChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
   /// Builds the class summary header with total points and class info
   Widget _buildClassSummary(ThemeData theme) {
     return Container(
@@ -320,7 +356,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 child: _buildSummaryCard(
                   icon: Icons.trending_up,
                   title: 'Average',
-                  value: (_classTotalPoints / _students.length).round().toString(),
+                  value: _students.isEmpty ? '0' : (_classTotalPoints / _students.length).round().toString(),
                   color: theme.colorScheme.secondary,
                   theme: theme,
                 ),
@@ -517,66 +553,29 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
 
   /// Awards points to a student and updates the UI
   void _awardPoints(String studentId, int points, String behaviorType) {
-    if (_useProvider) {
-      try {
-        final provider = context.read<BehaviorPointProvider>();
-        // Find matching behavior from the provider or create a custom one
-        final behavior = provider.behaviors.firstWhere(
-          (b) => b.name == behaviorType,
-          orElse: () => provider.behaviors.first, // Fallback to first behavior
-        );
-        
-        provider.awardPoints(
-          studentId: studentId,
-          behaviorId: behavior.id,
-          points: points,
-          customReason: behaviorType,
-        );
-      } catch (e) {
-        debugPrint('Error awarding points via provider: $e');
-        _awardPointsMock(studentId, points, behaviorType);
-      }
-    } else {
-      _awardPointsMock(studentId, points, behaviorType);
-    }
-  }
-
-  /// Mock version for when provider is not available
-  void _awardPointsMock(String studentId, int points, String behaviorType) {
-    setState(() {
-      final studentIndex = _mockStudents.indexWhere((s) => s.id == studentId);
-      if (studentIndex != -1) {
-        _mockStudents[studentIndex] = _mockStudents[studentIndex].copyWith(
-          totalPoints: _mockStudents[studentIndex].totalPoints + points,
-        );
-      }
-    });
-
-    // Show success message
-    if (mounted) {
-      final student = _students.firstWhere((s) => s.id == studentId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${points > 0 ? '+' : ''}$points points awarded to ${student.name} for $behaviorType',
-          ),
-          backgroundColor: points > 0 
-              ? Colors.green.withOpacity(0.9)
-              : Colors.orange.withOpacity(0.9),
-          duration: const Duration(seconds: 2),
-        ),
+    try {
+      final provider = context.read<BehaviorPointProvider>();
+      // Find matching behavior from the provider or create a custom one
+      final behavior = provider.behaviors.firstWhere(
+        (b) => b.name == behaviorType,
+        orElse: () => provider.behaviors.first, // Fallback to first behavior
       );
+      
+      provider.awardPoints(
+        studentId: studentId,
+        behaviorId: behavior.id,
+        points: points,
+        customReason: behaviorType,
+      );
+    } catch (e) {
+      debugPrint('Error awarding points: $e');
     }
   }
 
-  /// Navigates to reports screen (placeholder)
+
+  /// Navigates to reports screen
   void _viewReports() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Reports feature coming soon!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    context.push('/teacher/behavior-reports');
   }
 }
 

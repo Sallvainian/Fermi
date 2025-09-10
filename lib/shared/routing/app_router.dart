@@ -51,6 +51,7 @@ import '../../features/games/presentation/screens/jeopardy_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_create_screen.dart';
 import '../../features/games/presentation/screens/jeopardy_play_screen.dart';
 import '../../features/behavior_points/presentation/screens/behavior_points_screen.dart';
+import '../../features/behavior_points/presentation/screens/behavior_reports_screen.dart';
 import '../screens/settings_screen.dart';
 import '../models/user_model.dart';
 import '../services/logger_service.dart';
@@ -533,6 +534,10 @@ class AppRouter {
         GoRoute(
           path: '/teacher/behavior-points',
           builder: (context, state) => const BehaviorPointsScreen(),
+        ),
+        GoRoute(
+          path: '/teacher/behavior-reports',
+          builder: (context, state) => const BehaviorReportsScreen(),
         ),
         GoRoute(
           path: '/grades',
