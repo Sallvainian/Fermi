@@ -167,10 +167,12 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
       }
       
       return behaviors.map((behavior) => BehaviorOption(
+        id: behavior.id,
         name: behavior.name,
-        points: behavior.defaultPoints,
+        points: behavior.points,
         icon: _getBehaviorIcon(behavior.name),
         description: behavior.description,
+        isCustom: behavior.isCustom,
       )).toList();
     } catch (e) {
       return _mockPositiveBehaviors;
@@ -188,10 +190,12 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
       }
       
       return behaviors.map((behavior) => BehaviorOption(
+        id: behavior.id,
         name: behavior.name,
-        points: behavior.defaultPoints,
+        points: behavior.points,
         icon: _getBehaviorIcon(behavior.name),
         description: behavior.description,
+        isCustom: behavior.isCustom,
       )).toList();
     } catch (e) {
       return _mockNeedsWorkBehaviors;
@@ -472,56 +476,63 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                   width: 1,
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Icon
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: cardColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      behavior.icon,
-                      color: cardColor,
-                      size: 24,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  // Behavior name
-                  Text(
-                    behavior.name,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 4),
-                  
-                  // Points
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${behavior.points > 0 ? '+' : ''}${behavior.points}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+              child: SizedBox(
+                height: 120, // Fixed height for consistent card size
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Icon
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: cardColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        behavior.icon,
+                        color: cardColor,
+                        size: 24,
                       ),
                     ),
-                  ),
-                ],
+                    
+                    // Behavior name with flexible height
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Center(
+                          child: Text(
+                            behavior.name,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    // Points
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${behavior.points > 0 ? '+' : ''}${behavior.points}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -574,50 +585,52 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
               style: BorderStyle.solid,
             ),
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Plus icon
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.1),
-                  shape: BoxShape.circle,
+          child: SizedBox(
+            height: 120, // Fixed height matching regular cards
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Plus icon
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: theme.colorScheme.primary,
+                    size: 24,
+                  ),
                 ),
-                child: Icon(
-                  Icons.add,
-                  color: theme.colorScheme.primary,
-                  size: 24,
+                
+                // Add custom text with flexible height
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Center(
+                      child: Text(
+                        'Add Custom\nBehavior',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          height: 1.2,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Add custom text
-              Text(
-                'Add Custom',
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  color: theme.colorScheme.primary,
+                
+                // Empty container to match the height of points badge in regular cards
+                Container(
+                  height: 20,
                 ),
-              ),
-              
-              const SizedBox(height: 4),
-              
-              // Behavior label
-              Text(
-                'Behavior',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 10,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -10,63 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/models/user_model.dart';
-
-/// Behavior definition model
-class Behavior {
-  final String id;
-  final String name;
-  final String description;
-  final int defaultPoints;
-  final String type; // 'positive' or 'negative'
-  final String category;
-  final bool isDefault;
-  final String? classId;
-  final String createdBy;
-  final DateTime createdAt;
-
-  Behavior({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.defaultPoints,
-    required this.type,
-    required this.category,
-    this.isDefault = false,
-    this.classId,
-    required this.createdBy,
-    required this.createdAt,
-  });
-
-  factory Behavior.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Behavior(
-      id: doc.id,
-      name: data['name'] ?? '',
-      description: data['description'] ?? '',
-      defaultPoints: data['defaultPoints'] ?? 0,
-      type: data['type'] ?? 'positive',
-      category: data['category'] ?? 'general',
-      isDefault: data['isDefault'] ?? false,
-      classId: data['classId'],
-      createdBy: data['createdBy'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
-    return {
-      'name': name,
-      'description': description,
-      'defaultPoints': defaultPoints,
-      'type': type,
-      'category': category,
-      'isDefault': isDefault,
-      'classId': classId,
-      'createdBy': createdBy,
-      'createdAt': Timestamp.fromDate(createdAt),
-    };
-  }
-}
+import '../../domain/models/behavior.dart';
 
 /// Student behavior point record
 class BehaviorPoint {
@@ -334,7 +278,7 @@ class BehaviorPointProvider with ChangeNotifier {
       // Listen to behaviors for this class (default + class-specific)
       _behaviorsSubscription = _firestore
           .collection('behaviors')
-          .where('isDefault', isEqualTo: true)
+          .where('isCustom', isEqualTo: false)
           .snapshots()
           .listen(
             (defaultSnapshot) async {
@@ -352,7 +296,7 @@ class BehaviorPointProvider with ChangeNotifier {
               // Sort behaviors by type (positive first) and then by name
               _behaviors.sort((a, b) {
                 if (a.type != b.type) {
-                  return a.type == 'positive' ? -1 : 1;
+                  return a.type == BehaviorType.positive ? -1 : 1;
                 }
                 return a.name.compareTo(b.name);
               });
@@ -518,9 +462,9 @@ class BehaviorPointProvider with ChangeNotifier {
   Future<void> createCustomBehavior({
     required String name,
     required String description,
-    required int defaultPoints,
+    required int points,
     required String type,
-    String category = 'custom',
+    IconData? icon,
   }) async {
     if (_currentClassId == null) return;
 
@@ -528,16 +472,17 @@ class BehaviorPointProvider with ChangeNotifier {
     _error = null;
 
     try {
+      final behaviorType = type == 'positive' ? BehaviorType.positive : BehaviorType.negative;
       final behavior = Behavior(
         id: '', // Will be set by Firestore
         name: name,
         description: description,
-        defaultPoints: defaultPoints,
-        type: type,
-        category: category,
-        isDefault: false,
+        points: points,
+        type: behaviorType,
+        iconData: icon ?? Icons.star,
+        isCustom: true,
         classId: _currentClassId,
-        createdBy: currentUserId,
+        teacherId: currentUserId,
         createdAt: DateTime.now(),
       );
 
@@ -549,7 +494,7 @@ class BehaviorPointProvider with ChangeNotifier {
         // Re-sort behaviors
         _behaviors.sort((a, b) {
           if (a.type != b.type) {
-            return a.type == 'positive' ? -1 : 1;
+            return a.type == BehaviorType.positive ? -1 : 1;
           }
           return a.name.compareTo(b.name);
         });
@@ -617,11 +562,11 @@ class BehaviorPointProvider with ChangeNotifier {
 
   /// Get positive behaviors
   List<Behavior> get positiveBehaviors => 
-      _behaviors.where((b) => b.type == 'positive').toList();
+      _behaviors.where((b) => b.type == BehaviorType.positive).toList();
 
   /// Get negative behaviors
   List<Behavior> get negativeBehaviors => 
-      _behaviors.where((b) => b.type == 'negative').toList();
+      _behaviors.where((b) => b.type == BehaviorType.negative).toList();
 
   /// Calculate student summaries from behavior points
   void _calculateStudentSummaries() {
@@ -713,44 +658,44 @@ class BehaviorPointProvider with ChangeNotifier {
         id: 'pos1',
         name: 'Excellent Participation',
         description: 'Active participation in class discussions',
-        defaultPoints: 10,
-        type: 'positive',
-        category: 'participation',
-        isDefault: true,
-        createdBy: 'system',
+        points: 10,
+        type: BehaviorType.positive,
+        iconData: Icons.record_voice_over,
+        isCustom: true,  // ALL behaviors deletable for testing
+        teacherId: 'system',
         createdAt: now.subtract(Duration(days: 30)),
       ),
       Behavior(
         id: 'pos2',
         name: 'Homework Completed',
         description: 'Completed homework on time',
-        defaultPoints: 5,
-        type: 'positive',
-        category: 'academic',
-        isDefault: true,
-        createdBy: 'system',
+        points: 5,
+        type: BehaviorType.positive,
+        iconData: Icons.assignment_turned_in,
+        isCustom: true,  // ALL behaviors deletable for testing
+        teacherId: 'system',
         createdAt: now.subtract(Duration(days: 30)),
       ),
       Behavior(
         id: 'pos3',
         name: 'Helping Others',
         description: 'Helped a classmate with their work',
-        defaultPoints: 8,
-        type: 'positive',
-        category: 'social',
-        isDefault: true,
-        createdBy: 'system',
+        points: 8,
+        type: BehaviorType.positive,
+        iconData: Icons.people_outline,
+        isCustom: true,  // Marked as custom for testing
+        teacherId: 'system',
         createdAt: now.subtract(Duration(days: 30)),
       ),
       Behavior(
         id: 'pos4',
         name: 'Leadership',
         description: 'Showed leadership during group activities',
-        defaultPoints: 12,
-        type: 'positive',
-        category: 'leadership',
-        isDefault: true,
-        createdBy: 'system',
+        points: 12,
+        type: BehaviorType.positive,
+        iconData: Icons.psychology,
+        isCustom: true,  // ALL behaviors deletable for testing
+        teacherId: 'system',
         createdAt: now.subtract(Duration(days: 30)),
       ),
       
@@ -759,33 +704,33 @@ class BehaviorPointProvider with ChangeNotifier {
         id: 'neg1',
         name: 'Late to Class',
         description: 'Arrived late to class',
-        defaultPoints: -3,
-        type: 'negative',
-        category: 'attendance',
-        isDefault: true,
-        createdBy: 'system',
+        points: -3,
+        type: BehaviorType.negative,
+        iconData: Icons.schedule,
+        isCustom: true,  // ALL behaviors deletable for testing
+        teacherId: 'system',
         createdAt: now.subtract(Duration(days: 30)),
       ),
       Behavior(
         id: 'neg2',
         name: 'Missing Homework',
         description: 'Failed to submit homework',
-        defaultPoints: -5,
-        type: 'negative',
-        category: 'academic',
-        isDefault: true,
-        createdBy: 'system',
+        points: -5,
+        type: BehaviorType.negative,
+        iconData: Icons.assignment_late,
+        isCustom: true,  // Marked as custom for testing
+        teacherId: 'system',
         createdAt: now.subtract(Duration(days: 30)),
       ),
       Behavior(
         id: 'neg3',
         name: 'Disruptive Behavior',
         description: 'Disrupted class or other students',
-        defaultPoints: -8,
-        type: 'negative',
-        category: 'behavior',
-        isDefault: true,
-        createdBy: 'system',
+        points: -8,
+        type: BehaviorType.negative,
+        iconData: Icons.do_not_disturb,
+        isCustom: true,  // ALL behaviors deletable for testing
+        teacherId: 'system',
         createdAt: now.subtract(Duration(days: 30)),
       ),
 
@@ -794,12 +739,12 @@ class BehaviorPointProvider with ChangeNotifier {
         id: 'custom1',
         name: 'Extra Credit Project',
         description: 'Completed optional extra credit assignment',
-        defaultPoints: 15,
-        type: 'positive',
-        category: 'custom',
-        isDefault: false,
+        points: 15,
+        type: BehaviorType.positive,
+        iconData: Icons.star,
+        isCustom: true,
         classId: classId,
-        createdBy: currentUserId,
+        teacherId: currentUserId,
         createdAt: now.subtract(Duration(days: 5)),
       ),
     ];
@@ -825,7 +770,7 @@ class BehaviorPointProvider with ChangeNotifier {
         classId: classId,
         behaviorId: behaviorId,
         behaviorName: behavior.name,
-        points: behavior.defaultPoints + random.nextInt(5) - 2, // Add some variation
+        points: behavior.points + random.nextInt(5) - 2, // Add some variation
         reason: behavior.description,
         awardedBy: currentUserId,
         awardedByName: currentUserName,
@@ -878,31 +823,4 @@ extension BehaviorPointCopy on BehaviorPoint {
   }
 }
 
-/// Extension to help with copying Behavior with new ID
-extension BehaviorCopy on Behavior {
-  Behavior copyWith({
-    String? id,
-    String? name,
-    String? description,
-    int? defaultPoints,
-    String? type,
-    String? category,
-    bool? isDefault,
-    String? classId,
-    String? createdBy,
-    DateTime? createdAt,
-  }) {
-    return Behavior(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      defaultPoints: defaultPoints ?? this.defaultPoints,
-      type: type ?? this.type,
-      category: category ?? this.category,
-      isDefault: isDefault ?? this.isDefault,
-      classId: classId ?? this.classId,
-      createdBy: createdBy ?? this.createdBy,
-      createdAt: createdAt ?? this.createdAt,
-    );
-  }
-}
+// Extension removed - using copyWith from domain model

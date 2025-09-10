@@ -68,7 +68,7 @@ class StudentPointCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8), // Reduced from 16
             child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -78,8 +78,8 @@ class StudentPointCard extends StatelessWidget {
                 children: [
                   // Avatar Circle
                   Container(
-                    width: 64,
-                    height: 64,
+                    width: 48,  // Reduced from 64
+                    height: 48, // Reduced from 64
                     decoration: BoxDecoration(
                       color: student.avatarColor.withOpacity(0.2),
                       shape: BoxShape.circle,
@@ -91,9 +91,10 @@ class StudentPointCard extends StatelessWidget {
                     child: Center(
                       child: Text(
                         student.initials,
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith( // Changed from titleLarge
                           fontWeight: FontWeight.bold,
                           color: student.avatarColor,
+                          fontSize: 16, // Explicit smaller size
                         ),
                       ),
                     ),
@@ -101,39 +102,41 @@ class StudentPointCard extends StatelessWidget {
                   
                   // Points Badge
                   Positioned(
-                    top: -8,
-                    right: -8,
+                    top: -4,  // Reduced from -8
+                    right: -4, // Reduced from -8
                     child: _buildPointsBadge(theme),
                   ),
                 ],
               ),
               
-              const SizedBox(height: 12),
+              const SizedBox(height: 6), // Reduced from 12
               
               // Student Name
               Text(
                 student.name,
                 textAlign: TextAlign.center,
-                maxLines: 2,
+                maxLines: 1, // Reduced from 2
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
+                style: theme.textTheme.bodySmall?.copyWith( // Changed from titleSmall
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
+                  fontSize: 11, // Explicit smaller size
                 ),
               ),
               
-              const SizedBox(height: 4),
+              const SizedBox(height: 2), // Reduced from 4
               
               // Points Display
               Text(
-                '${student.totalPoints} points',
+                '${student.totalPoints} pts', // Shortened from 'points'
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: student.pointsColor,
                   fontWeight: FontWeight.w500,
+                  fontSize: 10, // Explicit smaller size
                 ),
               ),
               
-              const SizedBox(height: 8),
+              if (rank != null) const SizedBox(height: 4), // Conditional spacing
               
               // Ranking Display
               if (rank != null) _buildRankingDisplay(theme),
@@ -148,7 +151,7 @@ class StudentPointCard extends StatelessWidget {
   /// Builds the points badge displayed on top of the avatar
   Widget _buildPointsBadge(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reduced padding
       decoration: BoxDecoration(
         color: student.pointsColor,
         borderRadius: BorderRadius.circular(12),
@@ -165,7 +168,7 @@ class StudentPointCard extends StatelessWidget {
         style: theme.textTheme.labelSmall?.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.bold,
-          fontSize: 12,
+          fontSize: 10, // Reduced from 12
         ),
       ),
     );

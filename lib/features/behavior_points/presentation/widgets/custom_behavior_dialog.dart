@@ -583,7 +583,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
       await provider.createCustomBehavior(
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
-        defaultPoints: points,
+        points: points,
         type: _isPositive ? 'positive' : 'negative',
       );
 

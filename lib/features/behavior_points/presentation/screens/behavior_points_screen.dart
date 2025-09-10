@@ -218,9 +218,9 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               sliver: SliverGrid(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: _getCrossAxisCount(context),
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 0.85, // Slightly taller than wide
+                  crossAxisSpacing: 8,  // Reduced from 16
+                  mainAxisSpacing: 8,   // Reduced from 16
+                  childAspectRatio: 1.0, // Square cards for more compact layout
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -473,10 +473,13 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
   /// Determines the number of columns for the student grid based on screen size
   int _getCrossAxisCount(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth > 1200) return 5; // Desktop
-    if (screenWidth > 900) return 4;  // Tablet landscape
-    if (screenWidth > 600) return 3;  // Tablet portrait
-    return 2; // Mobile
+    if (screenWidth > 1400) return 8; // Large desktop - fit 30+ students
+    if (screenWidth > 1200) return 7; // Desktop
+    if (screenWidth > 1000) return 6; // Small desktop
+    if (screenWidth > 800) return 5;  // Tablet landscape
+    if (screenWidth > 600) return 4;  // Tablet portrait
+    if (screenWidth > 400) return 3;  // Large mobile
+    return 2; // Small mobile
   }
 
   /// Shows the behavior assignment popup for the selected student
