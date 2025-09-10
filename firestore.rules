@@ -62,9 +62,10 @@ service cloud.firestore {
     match /public_usernames/{username} {
       // Allow anyone to read for username lookups during login
       allow read: if true;
-      // Allow authenticated users to create their own username mapping
-      allow create: if isAuthenticated() && 
-                       request.resource.data.uid == request.auth.uid;
+      // Allow authenticated users to create their own username mapping, only for their own username
+      allow create: if isAuthenticated() &&
+                       request.resource.data.uid == request.auth.uid &&
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == username;
       // Only allow admins to update or delete
       allow update, delete: if isAdmin();
     }
