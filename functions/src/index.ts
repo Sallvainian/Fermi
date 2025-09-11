@@ -45,3 +45,6 @@ export * from "./migrate-user-roles-cloud";
 
 // Export admin functions for Firebase Administrator role
 export * from "./adminFunctions";
+
+// Export user profile management functions for automatic profile creation
+export * from "./userProfile";

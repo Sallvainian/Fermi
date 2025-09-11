@@ -11,7 +11,7 @@ const auth = admin.auth();
  */
 function generateSecurePassword(length: number = 12): string {
   const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-  const randomBytes = crypto.randomBytes(length);
+  // Use crypto.randomBytes directly in loop
   let password = "";
   
   let i = 0;
