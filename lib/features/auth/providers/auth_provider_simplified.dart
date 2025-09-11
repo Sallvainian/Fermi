@@ -38,7 +38,7 @@ typedef User = firebase_auth.User;
 /// 1. No role selection - roles are assigned automatically based on email domain
 /// 2. No separate role verification - handled by cloud functions
 /// 3. Streamlined sign-in flow
-class AuthProvider extends ChangeNotifier {
+class AuthProviderSimplified extends ChangeNotifier {
   // Dependencies
   final AuthService _authService;
   final firebase_auth.FirebaseAuth _firebaseAuth = firebase_auth.FirebaseAuth.instance;
@@ -59,7 +59,7 @@ class AuthProvider extends ChangeNotifier {
   // Prevent concurrent auth operations
   bool _authOperationInProgress = false;
 
-  AuthProvider({
+  AuthProviderSimplified({
     AuthService? authService,
     AuthStatus? initialStatus,
     UserModel? initialUserModel,
