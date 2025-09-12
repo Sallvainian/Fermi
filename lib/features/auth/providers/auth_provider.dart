@@ -502,20 +502,36 @@ class AuthProvider extends ChangeNotifier {
 
   /// Handle OAuth specific errors
   void _handleOAuthError(dynamic error, String provider) {
-    String baseMessage;
-    final errorString = error.toString();
+    // Log the full error for debugging
+    LoggerService.error('OAuth Error Details', tag: 'AuthProvider', error: error);
+    LoggerService.debug('Error type: ${error.runtimeType}', tag: 'AuthProvider');
+    LoggerService.debug('Error string: ${error.toString()}', tag: 'AuthProvider');
     
-    if (errorString.contains('account-exists-with-different-credential')) {
+    String baseMessage;
+    final errorString = error.toString().toLowerCase();
+    
+    // Check for various permission-denied formats
+    if (errorString.contains('permission-denied') || 
+        errorString.contains('permission_denied') ||
+        errorString.contains('authorized school') ||
+        errorString.contains('@roselleschools.org') ||
+        errorString.contains('@rosellestudent.org') ||
+        errorString.contains('@fermi-plus.com')) {
+      baseMessage = 'Error: You must use a valid @roselleschools.org email address';
+    } else if (errorString.contains('account-exists-with-different-credential')) {
       baseMessage = 'An account already exists with this email using a different sign-in method';
     } else if (errorString.contains('popup-closed-by-user') || errorString.contains('cancelled')) {
       baseMessage = 'Sign-in cancelled';
-    } else if (errorString.contains('permission-denied')) {
-      baseMessage = errorString.replaceAll('Exception: ', '');
     } else {
+      // Log unknown error format for debugging
+      LoggerService.warning('Unknown OAuth error format: $errorString', tag: 'AuthProvider');
       baseMessage = 'Authentication failed';
     }
     
-    final errorMessage = '$provider sign-in failed: $baseMessage';
+    // For error messages starting with "Error:", use as-is
+    final errorMessage = baseMessage.startsWith('Error:') 
+        ? baseMessage 
+        : '$provider sign-in failed: $baseMessage';
     _handleAuthError(errorMessage);
   }
 

@@ -240,10 +240,10 @@ class AuthService {
         provider.addScope('email');
         provider.addScope('profile');
 
-        // Remove the prompt parameter as it's causing issues with some Google OAuth configurations
-        // provider.setCustomParameters({
-        //   'prompt': 'select_account', // This can cause "Sign-in failed" errors
-        // });
+        // Force account selection to prevent auto-login with wrong account
+        provider.setCustomParameters({
+          'prompt': 'select_account', // Forces the account picker even if user is already signed in
+        });
 
         LoggerService.debug('Attempting signInWithPopup...', tag: 'AuthService');
 
