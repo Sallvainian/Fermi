@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../shared/services/logger_service.dart';
-import '../utils/auth_error_mapper.dart';
 
 import '../../../shared/models/user_model.dart';
 import '../data/services/auth_service.dart';
@@ -55,6 +54,7 @@ class AuthProvider extends ChangeNotifier {
   // Retry configuration for Firestore reads
   static const int _maxRetries = 5;
   static const Duration _baseRetryDelay = Duration(milliseconds: 500);
+  static const Duration _maxRetryDelay = Duration(seconds: 3);
 
   // Prevent concurrent auth operations
   bool _authOperationInProgress = false;
@@ -321,8 +321,13 @@ class AuthProvider extends ChangeNotifier {
   Future<void> resendEmailVerification() async {
     _startLoading();
     try {
-      await _authService.sendEmailVerification();
-      _errorMessage = null;
+      final user = _firebaseAuth.currentUser;
+      if (user != null) {
+        await user.sendEmailVerification();
+        _errorMessage = null;
+      } else {
+        throw Exception('No user signed in');
+      }
     } catch (e) {
       LoggerService.error('Email verification error', tag: 'AuthProvider', error: e);
       _handleAuthError(e.toString());
@@ -452,19 +457,63 @@ class AuthProvider extends ChangeNotifier {
 
   /// Handle sign-in specific errors
   void _handleSignInError(dynamic error) {
-    final errorMessage = AuthErrorMapper.getErrorMessage(error);
+    String errorMessage;
+    final errorString = error.toString();
+    
+    if (errorString.contains('user-not-found')) {
+      errorMessage = 'No user found with this email';
+    } else if (errorString.contains('wrong-password')) {
+      errorMessage = 'Incorrect password';
+    } else if (errorString.contains('invalid-email')) {
+      errorMessage = 'Invalid email address';
+    } else if (errorString.contains('user-disabled')) {
+      errorMessage = 'This account has been disabled';
+    } else if (errorString.contains('too-many-requests')) {
+      errorMessage = 'Too many failed attempts. Please try again later';
+    } else if (errorString.contains('permission-denied')) {
+      errorMessage = errorString.replaceAll('Exception: ', '');
+    } else {
+      errorMessage = 'Sign in failed. Please try again';
+    }
+    
     _handleAuthError(errorMessage);
   }
 
   /// Handle sign-up specific errors
   void _handleSignUpError(dynamic error) {
-    final errorMessage = AuthErrorMapper.getErrorMessage(error);
+    String errorMessage;
+    final errorString = error.toString();
+    
+    if (errorString.contains('email-already-in-use')) {
+      errorMessage = 'An account already exists with this email';
+    } else if (errorString.contains('weak-password')) {
+      errorMessage = 'Password is too weak';
+    } else if (errorString.contains('invalid-email')) {
+      errorMessage = 'Invalid email address';
+    } else if (errorString.contains('permission-denied')) {
+      errorMessage = errorString.replaceAll('Exception: ', '');
+    } else {
+      errorMessage = 'Sign up failed. Please try again';
+    }
+    
     _handleAuthError(errorMessage);
   }
 
   /// Handle OAuth specific errors
   void _handleOAuthError(dynamic error, String provider) {
-    final baseMessage = AuthErrorMapper.getErrorMessage(error);
+    String baseMessage;
+    final errorString = error.toString();
+    
+    if (errorString.contains('account-exists-with-different-credential')) {
+      baseMessage = 'An account already exists with this email using a different sign-in method';
+    } else if (errorString.contains('popup-closed-by-user') || errorString.contains('cancelled')) {
+      baseMessage = 'Sign-in cancelled';
+    } else if (errorString.contains('permission-denied')) {
+      baseMessage = errorString.replaceAll('Exception: ', '');
+    } else {
+      baseMessage = 'Authentication failed';
+    }
+    
     final errorMessage = '$provider sign-in failed: $baseMessage';
     _handleAuthError(errorMessage);
   }
@@ -496,6 +545,119 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('rememberMe', value);
     notifyListeners();
+  }
+
+  // ============= Additional Methods for Compatibility =============
+  
+  /// Clear current error message
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+  
+  /// Reload user model from Firestore
+  Future<void> reloadUserModel() async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+      if (loadedUserModel != null) {
+        _userModel = loadedUserModel;
+        notifyListeners();
+      }
+    }
+  }
+  
+  /// Reload current user
+  Future<void> reloadUser() async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      await user.reload();
+      await reloadUserModel();
+    }
+  }
+  
+  /// Set selected role (no longer needed but kept for compatibility)
+  void setSelectedRole(String role) {
+    // No-op - roles are now determined by email domain
+    LoggerService.info('setSelectedRole called but ignored - roles are domain-based', tag: 'AuthProvider');
+  }
+  
+  /// Create student account (admin only)
+  Future<void> createStudentAccount({
+    required String username,
+    required String password,
+    String? firstName,
+    String? lastName,
+  }) async {
+    throw Exception('Student account creation should be done through admin functions');
+  }
+  
+  /// Reauthenticate with Apple
+  Future<void> reauthenticateWithApple() async {
+    await signInWithApple();
+  }
+  
+  /// Reauthenticate with Google
+  Future<void> reauthenticateWithGoogle() async {
+    await signInWithGoogle();
+  }
+  
+  /// Reauthenticate with email and password
+  Future<void> reauthenticateWithEmail(String email, String password) async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null && user.email != null) {
+      final credential = firebase_auth.EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.reauthenticateWithCredential(credential);
+    }
+  }
+  
+  /// Delete user account
+  Future<void> deleteAccount() async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      await user.delete();
+      await signOut();
+    }
+  }
+  
+  /// Update user profile
+  Future<void> updateProfile({
+    String? displayName,
+    String? firstName,
+    String? lastName,
+  }) async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      if (displayName != null) {
+        await user.updateDisplayName(displayName);
+      }
+      
+      // Update Firestore document
+      final updates = <String, dynamic>{};
+      if (displayName != null) updates['displayName'] = displayName;
+      if (firstName != null) updates['firstName'] = firstName;
+      if (lastName != null) updates['lastName'] = lastName;
+      
+      if (updates.isNotEmpty) {
+        await _firestore.collection('users').doc(user.uid).update(updates);
+        await reloadUserModel();
+      }
+    }
+  }
+  
+  /// Update profile picture
+  Future<void> updateProfilePicture(String photoUrl) async {
+    final user = _firebaseAuth.currentUser;
+    if (user != null) {
+      await user.updatePhotoURL(photoUrl);
+      await _firestore.collection('users').doc(user.uid).update({
+        'photoURL': photoUrl,
+      });
+      await reloadUserModel();
+    }
   }
 
   @override

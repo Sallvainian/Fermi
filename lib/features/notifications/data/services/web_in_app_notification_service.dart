@@ -20,6 +20,11 @@ class WebInAppNotificationService {
   StreamSubscription? _notificationSubscription;
   Function(String title, String body, Map<String, dynamic>? data)?
   onNotificationReceived;
+  
+  /// Compatibility method for AuthProvider
+  void startListening(String userId) {
+    startWebInAppNotifications();
+  }
 
   /// Start listening for in-app notifications (web only)
   void startWebInAppNotifications() {
