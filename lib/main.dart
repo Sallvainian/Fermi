@@ -230,15 +230,11 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
 
   Future<void> _initializeApp() async {
     try {
-      // Check if user was already authenticated (from AppPasswordWrapper)
-      // Note: We can't access inherited widgets in initState, so we'll skip this optimization
-      final wasAuthenticated = false;
-
       // Check if Firebase is already initialized (handles hot restart)
-      if (AppInitializer.isFirebaseInitialized && wasAuthenticated) {
-        // Fast path - Firebase already initialized and user authenticated
+      if (AppInitializer.isFirebaseInitialized) {
+        // Fast path - Firebase already initialized
         LoggerService.info(
-          'Fast initialization - Firebase initialized and user authenticated',
+          'Fast initialization - Firebase already initialized',
           tag: 'Bootstrap',
         );
         setState(() {

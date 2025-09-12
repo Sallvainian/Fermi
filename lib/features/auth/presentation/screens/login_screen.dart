@@ -200,7 +200,7 @@ class LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Welcome back to Fermi',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 179),
                     ),
                   ),
 
@@ -213,7 +213,7 @@ class LoginScreenState extends State<LoginScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: theme.colorScheme.outline.withOpacity(0.2),
+                        color: theme.colorScheme.outline.withValues(alpha: 51),
                       ),
                     ),
                     child: Padding(

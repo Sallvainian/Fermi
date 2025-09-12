@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
@@ -46,31 +45,6 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDueDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _dueDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null && picked != _dueDate) {
-      setState(() {
-        _dueDate = picked;
-      });
-    }
-  }
-
-  Future<void> _selectDueTime() async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: _dueTime,
-    );
-    if (picked != null && picked != _dueTime) {
-      setState(() {
-        _dueTime = picked;
-      });
-    }
-  }
 
   DateTime _combineDateAndTime() {
     return DateTime(
@@ -247,7 +221,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _selectedType,
+                        initialValue: _selectedType,
                         decoration: const InputDecoration(
                           labelText: 'Assignment Type',
                           prefixIcon: Icon(Icons.category),
@@ -272,120 +246,12 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
                           });
                         },
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Instructions', style: theme.textTheme.titleLarge),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _instructionsController,
-                        decoration: const InputDecoration(
-                          labelText: 'Detailed Instructions',
-                          hintText:
-                              'Provide clear instructions for students...',
-                          prefixIcon: Icon(Icons.article),
-                          alignLabelWithHint: true,
-                        ),
-                        maxLines: 5,
-                        textInputAction: TextInputAction.next,
-                        textCapitalization: TextCapitalization.sentences,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please provide instructions';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Grading & Submission',
-                        style: theme.textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _maxPointsController,
-                        decoration: const InputDecoration(
-                          labelText: 'Maximum Points',
-                          prefixIcon: Icon(Icons.score),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: false,
-                        ),
-                        textInputAction: TextInputAction.done,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter points';
-                          }
-                          final points = int.tryParse(value);
-                          if (points == null || points <= 0) {
-                            return 'Invalid points';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: _selectDueDate,
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                  labelText: 'Due Date',
-                                  prefixIcon: Icon(Icons.calendar_today),
-                                ),
-                                child: Text(
-                                  '${_dueDate.month}/${_dueDate.day}/${_dueDate.year}',
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: InkWell(
-                              onTap: _selectDueTime,
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                  labelText: 'Due Time',
-                                  prefixIcon: Icon(Icons.access_time),
-                                ),
-                                child: Text(_dueTime.format(context)),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SwitchListTile(
+                      CheckboxListTile(
                         title: const Text('Allow Late Submissions'),
-                        subtitle: const Text(
-                          'Students can submit after due date with penalty',
-                        ),
                         value: _allowLateSubmissions,
                         onChanged: (value) {
                           setState(() {
-                            _allowLateSubmissions = value;
+                            _allowLateSubmissions = value ?? false;
                           });
                         },
                       ),

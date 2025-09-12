@@ -97,7 +97,8 @@ class AuthProvider extends ChangeNotifier {
             return;
           }
         } catch (e) {
-          LoggerService.warning('No redirect result or error checking', tag: 'AuthProvider');
+          // This is normal if there's no redirect result
+          LoggerService.debug('No redirect result available: $e', tag: 'AuthProvider');
         }
       }
 

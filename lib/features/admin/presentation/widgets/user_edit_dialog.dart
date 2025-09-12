@@ -181,7 +181,7 @@ class _UserEditDialogState extends State<UserEditDialog> {
                     children: [
                       // Role Selection
                       DropdownButtonFormField<String>(
-                        value: _selectedRole,
+                        initialValue: _selectedRole,
                         decoration: const InputDecoration(
                           labelText: 'Role',
                           border: OutlineInputBorder(),

@@ -491,7 +491,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 SizedBox(
                   width: 150,
                   child: DropdownButtonFormField<String>(
-                    value: _roleFilter,
+                    initialValue: _roleFilter,
                     decoration: InputDecoration(
                       labelText: 'Role',
                       border: OutlineInputBorder(

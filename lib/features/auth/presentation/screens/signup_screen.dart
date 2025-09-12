@@ -69,6 +69,7 @@ class _SignupScreenState extends State<SignupScreen> {
         
         // If no valid verified role, check URL parameters
         if (!useVerifiedRole) {
+          if (!mounted) return;
           final goRouterState = GoRouterState.of(context);
           final uri = goRouterState.uri;
           

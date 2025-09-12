@@ -81,5 +81,33 @@ class AuthErrorMapper {
       LoggerService.debug('Firebase message: ${error.message}', tag: 'Auth');
     }
   }
+
+  static String getErrorMessage(dynamic error) {
+    if (error is FirebaseAuthException) {
+      switch (error.code) {
+        case 'user-not-found':
+          return 'No account found with this email';
+        case 'wrong-password':
+          return 'Incorrect password';
+        case 'invalid-email':
+          return 'Invalid email address';
+        case 'user-disabled':
+          return 'This account has been disabled';
+        case 'invalid-credential':
+          return 'Invalid email or password';
+        case 'email-already-in-use':
+          return 'An account already exists with this email';
+        case 'weak-password':
+          return 'Password is too weak';
+        case 'operation-not-allowed':
+          return 'This operation is not allowed';
+        case 'account-exists-with-different-credential':
+          return 'An account already exists with the same email address';
+        default:
+          return error.message ?? 'Authentication failed';
+      }
+    }
+    return error.toString();
+  }
 }
 

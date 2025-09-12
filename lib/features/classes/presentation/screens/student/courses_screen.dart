@@ -329,7 +329,7 @@ class _StudentCoursesScreenState extends State<StudentCoursesScreen> {
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 51),
         ),
       ),
       child: Column(

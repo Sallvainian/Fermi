@@ -223,7 +223,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 51),
         ),
       ),
       child: Column(
@@ -546,7 +546,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.error.withOpacity(0.2),
+              color: Theme.of(context).colorScheme.error.withValues(alpha: 51),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -563,7 +563,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppTheme.warningColor.withOpacity(0.2),
+              color: AppTheme.warningColor.withValues(alpha: 51),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

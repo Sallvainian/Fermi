@@ -55,6 +55,7 @@ class AuthProviderSimplified extends ChangeNotifier {
   // Retry configuration for Firestore reads
   static const int _maxRetries = 5;
   static const Duration _baseRetryDelay = Duration(milliseconds: 500);
+  static const Duration _maxRetryDelay = Duration(seconds: 30);
 
   // Prevent concurrent auth operations
   bool _authOperationInProgress = false;

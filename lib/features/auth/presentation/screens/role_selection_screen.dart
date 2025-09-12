@@ -27,18 +27,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('selected_role', role);
 
-      // Navigate based on role
+      // Navigate to login for all roles with role parameter
       if (mounted) {
-        if (role == 'teacher') {
-          // Teachers need additional password verification
-          context.go('/auth/teacher-password');
-        } else if (role == 'admin') {
-          // Admins need additional password verification
-          context.go('/auth/admin-password');
-        } else {
-          // Students go directly to login
-          context.go('/auth/login');
-        }
+        context.go('/auth/login?role=$role');
       }
     } catch (e) {
       if (mounted) {
@@ -96,7 +87,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   Text(
                     'Please select your role to continue',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 179),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -205,7 +196,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withOpacity(0.3), width: 2),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -213,7 +204,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 48, color: color),
@@ -231,7 +222,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               Text(
                 subtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,

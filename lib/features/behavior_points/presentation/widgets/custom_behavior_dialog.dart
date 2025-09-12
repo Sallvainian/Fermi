@@ -141,7 +141,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withOpacity(0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 26),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -237,7 +237,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   Widget _buildTypeToggle(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -299,7 +299,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : null,
+          color: isSelected ? color.withValues(alpha: 26) : null,
           border: Border.all(
             color: isSelected ? color : theme.colorScheme.outline,
             width: isSelected ? 2 : 1,
@@ -324,7 +324,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             Text(
               subtitle,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 179),
               ),
             ),
           ],
@@ -339,7 +339,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
     
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -375,9 +375,9 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: color,
-                inactiveTrackColor: color.withOpacity(0.3),
+                inactiveTrackColor: color.withValues(alpha: 77),
                 thumbColor: color,
-                overlayColor: color.withOpacity(0.2),
+                overlayColor: color.withValues(alpha: 51),
                 valueIndicatorColor: color,
                 valueIndicatorTextStyle: const TextStyle(
                   color: Colors.white,
@@ -425,7 +425,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   Widget _buildIconPicker(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -462,9 +462,9 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected ? color.withOpacity(0.1) : null,
+                        color: isSelected ? color.withValues(alpha: 26) : null,
                         border: Border.all(
-                          color: isSelected ? color : theme.colorScheme.outline.withOpacity(0.3),
+                          color: isSelected ? color : theme.colorScheme.outline.withValues(alpha: 77),
                           width: isSelected ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
