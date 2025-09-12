@@ -11,14 +11,9 @@ export const DOMAIN_ROLE_MAPPINGS: DomainRoleMapping[] = [
     description: 'Teacher accounts for Roselle Schools'
   },
   {
-    domain: '@stu.roselleschools.org', 
+    domain: '@rosellestudent.org', 
     role: 'student',
     description: 'Student accounts for Roselle Schools'
-  },
-  {
-    domain: '@students.roselleschools.org',
-    role: 'student',
-    description: 'Alternative student domain'
   }
 ];
 
