@@ -19,8 +19,7 @@ service cloud.firestore {
              request.auth.token.email != null &&
              (request.auth.token.email.matches('.*@roselleschools[.]org$') ||
               request.auth.token.email.matches('.*@rosellestudent[.]org$') ||
-              request.auth.token.email == 'frank@admin.fermi.edu' ||
-              request.auth.token.email == 'admin@fermi.edu');
+              request.auth.token.email.matches('.*@fermi-plus[.]com$'));
     }
     
     // Helper function to check if user has valid teacher domain
@@ -35,6 +34,13 @@ service cloud.firestore {
       return isAuthenticated() && 
              request.auth.token.email != null &&
              request.auth.token.email.matches('.*@rosellestudent[.]org$');
+    }
+    
+    // Helper function to check if user has valid admin domain
+    function hasAdminDomain() {
+      return isAuthenticated() && 
+             request.auth.token.email != null &&
+             request.auth.token.email.matches('.*@fermi-plus[.]com$');
     }
     
     // Helper function to get user role from database (with caching)
@@ -64,7 +70,10 @@ service cloud.firestore {
     // Helper function to check if user is a Firebase Administrator
     function isAdmin() {
       let role = getUserRole(request.auth.uid);
-      return isAuthenticated() && role != null && role == 'admin';
+      return isAuthenticated() && 
+             role != null && 
+             role == 'admin' &&
+             hasAdminDomain();
     }
     
     // Helper function to check if student is enrolled in a class

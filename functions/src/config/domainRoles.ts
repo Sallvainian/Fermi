@@ -15,12 +15,15 @@ export const DOMAIN_ROLE_MAPPINGS: DomainRoleMapping[] = [
     role: "student",
     description: "Student accounts for Roselle Schools",
   },
+  {
+    domain: "@fermi-plus.com",
+    role: "admin",
+    description: "Administrator accounts for Fermi Plus",
+  },
 ];
 
-export const ADMIN_EMAILS = [
-  "frank@admin.fermi.edu",
-  "admin@fermi.edu",
-];
+// No hardcoded admin emails - use @fermi-plus.com domain instead
+export const ADMIN_EMAILS: string[] = [];
 
 /**
  * Get role from email domain

@@ -36,9 +36,16 @@ export const autoAssignRole = beforeUserCreated(
     // Check if email is from a valid school domain
     if (!isValidSchoolEmail(email)) {
       logger.warn(`Invalid email domain attempt: ${email}`);
+      
+      // Provide clearer error message based on provider
+      const provider = user.providerData?.[0]?.providerId;
+      const errorMessage = provider === "google.com" 
+        ? "Google Sign-In is only available for authorized school accounts. Please use an email ending in @roselleschools.org (teachers), @rosellestudent.org (students), or @fermi-plus.com (admins)."
+        : "Registration is restricted to authorized school email addresses (@roselleschools.org for teachers, @rosellestudent.org for students, @fermi-plus.com for admins)";
+      
       throw new HttpsError(
         "permission-denied",
-        "Registration is restricted to authorized school email addresses"
+        errorMessage
       );
     }
 

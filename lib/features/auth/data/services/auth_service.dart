@@ -36,20 +36,14 @@ class AuthService {
   bool _isValidSchoolEmail(String email) {
     final emailLower = email.toLowerCase();
     
-    // Admin emails
-    const adminEmails = [
-      'frank@admin.fermi.edu',
-      'admin@fermi.edu'
-    ];
-    
-    if (adminEmails.contains(emailLower)) {
-      return true;
-    }
+    // No hardcoded admin emails - use domain validation instead
+    // Admins must use @fermi-plus.com domain
     
     // School domain validation
     const validDomains = [
       '@roselleschools.org',  // Teachers
       '@rosellestudent.org',  // Students
+      '@fermi-plus.com',      // Admins
     ];
     
     for (final domain in validDomains) {
@@ -149,7 +143,7 @@ class AuthService {
     if (!_isValidSchoolEmail(email)) {
       throw FirebaseAuthException(
         code: 'invalid-email-domain',
-        message: 'Registration is restricted to authorized school email addresses (@roselleschools.org for teachers, @rosellestudent.org for students)',
+        message: 'Registration is restricted to authorized email addresses (@roselleschools.org for teachers, @rosellestudent.org for students, @fermi-plus.com for admins)',
       );
     }
     
@@ -207,7 +201,7 @@ class AuthService {
     if (!_isValidSchoolEmail(email)) {
       throw FirebaseAuthException(
         code: 'invalid-email-domain',
-        message: 'Sign in is restricted to authorized school email addresses (@roselleschools.org for teachers, @rosellestudent.org for students)',
+        message: 'Sign in is restricted to authorized email addresses (@roselleschools.org for teachers, @rosellestudent.org for students, @fermi-plus.com for admins)',
       );
     }
 
