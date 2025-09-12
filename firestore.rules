@@ -13,6 +13,30 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
+    // Helper function to check if email has valid school domain
+    function hasValidSchoolDomain() {
+      return isAuthenticated() && 
+             request.auth.token.email != null &&
+             (request.auth.token.email.matches('.*@roselleschools[.]org$') ||
+              request.auth.token.email.matches('.*@rosellestudent[.]org$') ||
+              request.auth.token.email == 'frank@admin.fermi.edu' ||
+              request.auth.token.email == 'admin@fermi.edu');
+    }
+    
+    // Helper function to check if user has valid teacher domain
+    function hasTeacherDomain() {
+      return isAuthenticated() && 
+             request.auth.token.email != null &&
+             request.auth.token.email.matches('.*@roselleschools[.]org$');
+    }
+    
+    // Helper function to check if user has valid student domain
+    function hasStudentDomain() {
+      return isAuthenticated() && 
+             request.auth.token.email != null &&
+             request.auth.token.email.matches('.*@rosellestudent[.]org$');
+    }
+    
     // Helper function to get user role from database (with caching)
     function getUserRole(userId) {
       let doc = get(/databases/$(database)/documents/users/$(userId));
@@ -22,13 +46,19 @@ service cloud.firestore {
     // Helper function to check if user is THE teacher
     function isTheTeacher() {
       let role = getUserRole(request.auth.uid);
-      return isAuthenticated() && role != null && role == 'teacher';
+      return isAuthenticated() && 
+             role != null && 
+             role == 'teacher' &&
+             (hasTeacherDomain() || isAdmin());
     }
     
     // Helper function to check if user is a student
     function isStudent() {
       let role = getUserRole(request.auth.uid);
-      return isAuthenticated() && role != null && role == 'student';
+      return isAuthenticated() && 
+             role != null && 
+             role == 'student' &&
+             (hasStudentDomain() || isAdmin());
     }
     
     // Helper function to check if user is a Firebase Administrator
@@ -47,10 +77,11 @@ service cloud.firestore {
     match /users/{userId} {
       // Allow authenticated users to read any user (for messaging, etc.)
       allow read: if isAuthenticated();
-      // Allow users to create their own profile if it doesn't exist yet
+      // Allow users to create their own profile if it doesn't exist yet AND they have valid school domain
       allow create: if isAuthenticated() && 
                        request.auth.uid == userId &&
-                       request.resource.data.uid == userId;
+                       request.resource.data.uid == userId &&
+                       hasValidSchoolDomain();
       // Users can update their own document, admins can write any
       allow update: if isOwner(userId) || isAdmin();
       // Only admins can delete user documents

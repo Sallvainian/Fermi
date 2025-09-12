@@ -12,7 +12,7 @@ const auth = admin.auth();
 function generateSecurePassword(length: number = 12): string {
   const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
   let password = "";
-  
+
   let i = 0;
   while (i < length) {
     const byte = crypto.randomBytes(1)[0];
@@ -22,18 +22,18 @@ function generateSecurePassword(length: number = 12): string {
       i++;
     }
   }
-  
+
   // Ensure password has at least one of each type
   const hasUpper = /[A-Z]/.test(password);
   const hasLower = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSpecial = /[!@#$%^&*]/.test(password);
-  
+
   if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
     // Recursively generate until we get a password with all character types
     return generateSecurePassword(length);
   }
-  
+
   return password;
 }
 
@@ -52,14 +52,14 @@ export const createStudentAccount = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
     const {username, password, displayName, grade} = request.data;
-    
+
     if (!username || !password) {
       throw new HttpsError("invalid-argument", "Username and password are required");
     }
@@ -124,11 +124,11 @@ export const createStudentAccount = onCall(
       };
     } catch (error) {
       logger.error("Error creating student account:", error);
-      
+
       if ((error as any).code === "auth/email-already-exists") {
         throw new HttpsError("already-exists", "Username already taken");
       }
-      
+
       throw new HttpsError("internal", "Failed to create student account");
     }
   }
@@ -149,14 +149,14 @@ export const createTeacherAccount = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
     const {email, password, displayName} = request.data;
-    
+
     if (!email || !password || !displayName) {
       throw new HttpsError("invalid-argument", "Email, password, and display name are required");
     }
@@ -216,11 +216,11 @@ export const createTeacherAccount = onCall(
       };
     } catch (error) {
       logger.error("Error creating teacher account:", error);
-      
+
       if ((error as any).code === "auth/email-already-exists") {
         throw new HttpsError("already-exists", "Email already in use");
       }
-      
+
       throw new HttpsError("internal", "Failed to create teacher account");
     }
   }
@@ -241,14 +241,14 @@ export const deleteUserAccount = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
     const {userId} = request.data;
-    
+
     if (!userId) {
       throw new HttpsError("invalid-argument", "User ID is required");
     }
@@ -310,14 +310,14 @@ export const resetUserPassword = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
     const {userId} = request.data;
-    
+
     if (!userId) {
       throw new HttpsError("invalid-argument", "User ID is required");
     }
@@ -375,7 +375,7 @@ export const getSystemStats = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
@@ -383,26 +383,26 @@ export const getSystemStats = onCall(
     try {
       // Get user statistics
       const usersSnapshot = await db.collection("users").get();
-      const users = usersSnapshot.docs.map(doc => doc.data());
-      
+      const users = usersSnapshot.docs.map((doc) => doc.data());
+
       const stats = {
         totalUsers: users.length,
-        studentCount: users.filter(u => u.role === "student").length,
-        teacherCount: users.filter(u => u.role === "teacher").length,
-        adminCount: users.filter(u => u.role === "admin").length,
-        activeUsers: users.filter(u => u.isOnline === true).length,
+        studentCount: users.filter((u) => u.role === "student").length,
+        teacherCount: users.filter((u) => u.role === "teacher").length,
+        adminCount: users.filter((u) => u.role === "admin").length,
+        activeUsers: users.filter((u) => u.isOnline === true).length,
         recentActivityCount: 0, // Initialize with 0
       };
 
       // Get recent activity count
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-      
+
       const recentActivitiesSnapshot = await db
         .collection("activities")
         .where("timestamp", ">", oneDayAgo)
         .get();
-      
+
       stats.recentActivityCount = recentActivitiesSnapshot.size;
 
       return stats;

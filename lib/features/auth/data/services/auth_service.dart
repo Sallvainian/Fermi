@@ -32,6 +32,35 @@ class AuthService {
     }
   }
 
+  // Helper method to validate school email domains
+  bool _isValidSchoolEmail(String email) {
+    final emailLower = email.toLowerCase();
+    
+    // Admin emails
+    const adminEmails = [
+      'frank@admin.fermi.edu',
+      'admin@fermi.edu'
+    ];
+    
+    if (adminEmails.contains(emailLower)) {
+      return true;
+    }
+    
+    // School domain validation
+    const validDomains = [
+      '@roselleschools.org',  // Teachers
+      '@rosellestudent.org',  // Students
+    ];
+    
+    for (final domain in validDomains) {
+      if (emailLower.endsWith(domain)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   void _initializeGoogleSignIn() async {
     String clientId = '';
     String clientSecret = '';
@@ -116,6 +145,14 @@ class AuthService {
     String? displayName,
     String? username,
   }) async {
+    // Validate email domain before attempting sign up
+    if (!_isValidSchoolEmail(email)) {
+      throw FirebaseAuthException(
+        code: 'invalid-email-domain',
+        message: 'Registration is restricted to authorized school email addresses (@roselleschools.org for teachers, @rosellestudent.org for students)',
+      );
+    }
+    
     final cred = await _auth!.createUserWithEmailAndPassword(
       email: email,
       password: password,
@@ -163,6 +200,14 @@ class AuthService {
     if (_auth == null || _firestore == null) {
       throw UnsupportedError(
         'Firebase not available on Windows. Use mock authentication.',
+      );
+    }
+
+    // Validate email domain before sign in
+    if (!_isValidSchoolEmail(email)) {
+      throw FirebaseAuthException(
+        code: 'invalid-email-domain',
+        message: 'Sign in is restricted to authorized school email addresses (@roselleschools.org for teachers, @rosellestudent.org for students)',
       );
     }
 

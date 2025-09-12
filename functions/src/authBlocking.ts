@@ -14,7 +14,7 @@ export const autoAssignRole = beforeUserCreated(
   {region: "us-east4"},
   async (event) => {
     const user = event.data;
-    
+
     if (!user) {
       logger.error("No user data in event");
       throw new HttpsError(
@@ -22,7 +22,7 @@ export const autoAssignRole = beforeUserCreated(
         "Invalid user data"
       );
     }
-    
+
     const email = user.email;
 
     if (!email) {
@@ -44,7 +44,7 @@ export const autoAssignRole = beforeUserCreated(
 
     // Get role based on email domain
     const role = getRoleFromEmail(email);
-    
+
     if (!role) {
       logger.error(`Could not determine role for email: ${email}`);
       throw new HttpsError(
@@ -58,14 +58,14 @@ export const autoAssignRole = beforeUserCreated(
     // Set custom claims for the user
     const customClaims = {
       role: role,
-      emailDomain: email.split('@')[1],
+      emailDomain: email.split("@")[1],
     };
 
     // Create user profile in Firestore
     try {
       await db.collection("users").doc(user.uid).set({
         email: email,
-        displayName: user.displayName || email.split('@')[0],
+        displayName: user.displayName || email.split("@")[0],
         role: role,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         emailVerified: false,
@@ -98,8 +98,8 @@ export const autoAssignRole = beforeUserCreated(
 
     return {
       customClaims: customClaims,
-      displayName: user.displayName || email.split('@')[0],
-      emailVerified: role === 'admin', // Auto-verify admin accounts
+      displayName: user.displayName || email.split("@")[0],
+      emailVerified: role === "admin", // Auto-verify admin accounts
     };
   }
 );
