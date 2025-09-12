@@ -20,7 +20,6 @@ import 'shared/theme/app_typography.dart';
 import 'shared/widgets/splash_screen.dart';
 import 'shared/widgets/pwa_update_notifier.dart';
 import 'shared/widgets/web_notification_handler.dart';
-import 'shared/widgets/app_password_wrapper.dart';
 import 'shared/services/logger_service.dart';
 
 /// Public getter for Firebase initialization status.
@@ -87,7 +86,7 @@ Future<void> main() async {
         }
       }
 
-      runApp(const AppPasswordWrapper(child: InitializationWrapper()));
+      runApp(const InitializationWrapper());
     },
     (error, stack) {
       // Zone error handler - catches errors not caught elsewhere
