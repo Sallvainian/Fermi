@@ -367,7 +367,7 @@ class BehaviorPointProvider with ChangeNotifier {
       _setLoading(true);
       _error = null;
       final behavior = _behaviors.firstWhere((b) => b.id == behaviorId);
-      await _getStudentName(studentId); // Pre-fetch for caching
+      final _ = await _getStudentName(studentId); // Pre-fetch for caching side effect
       final teacherName = currentUserName;
 
       final behaviorPoint = BehaviorPoint(
