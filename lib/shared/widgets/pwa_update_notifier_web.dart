@@ -267,7 +267,7 @@ class _PWAUpdateNotifierState extends State<PWAUpdateNotifier> {
                   color: Colors.blue.shade700,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 51),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
