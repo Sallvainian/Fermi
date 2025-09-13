@@ -53,7 +53,7 @@ export class FirestoreRateLimiter {
         }
 
         const data = doc.data() as RateLimitRecord;
-        
+
         // Check if the period has expired
         if (data.firstCall.toMillis() < cutoffTime.toMillis()) {
           // Period expired, reset counter

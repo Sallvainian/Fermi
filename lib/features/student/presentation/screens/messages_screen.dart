@@ -309,8 +309,8 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen>
                 children: [
                   CircleAvatar(
                     backgroundColor: isUnread
-                        ? senderTypeColor.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
+                        ? senderTypeColor.withValues(alpha: 51)
+                        : Colors.grey.withValues(alpha: 26),
                     child: Icon(
                       senderTypeIcon,
                       color: isUnread ? senderTypeColor : Colors.grey,
@@ -657,7 +657,7 @@ ${message['sender']}''', style: theme.textTheme.bodyLarge),
                   color: theme.colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 26),
                       blurRadius: 10,
                       offset: const Offset(0, -5),
                     ),
@@ -943,7 +943,7 @@ class _StudentComposeMessageSheetState
               color: theme.colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 26),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),

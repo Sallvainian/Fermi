@@ -339,7 +339,7 @@ class _ThreadDetailScreenState extends State<ThreadDetailScreen> {
                 color: theme.colorScheme.surface,
                 border: Border(
                   top: BorderSide(
-                    color: theme.colorScheme.outline.withOpacity(0.2),
+                    color: theme.colorScheme.outline.withValues(alpha: 51),
                   ),
                 ),
               ),

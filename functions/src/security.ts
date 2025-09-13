@@ -185,7 +185,7 @@ export const getClientIdentifier = (req: Request): string => {
   // Try various headers that might contain the real IP
   const xForwardedFor = req.headers["x-forwarded-for"];
   const xRealIp = req.headers["x-real-ip"];
-  
+
   // Handle both string and string[] types for headers
   const ip =
     (typeof xForwardedFor === "string" ? xForwardedFor.split(",")[0] : xForwardedFor?.[0]) ||

@@ -16,6 +16,9 @@ enum UserRole { teacher, student, admin }
 class UserModel {
   /// Unique identifier for the user.
   final String uid;
+  
+  /// Getter for id to maintain compatibility
+  String get id => uid;
 
   /// User's email address.
   final String? email;

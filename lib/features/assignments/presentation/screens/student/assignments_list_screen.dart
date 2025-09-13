@@ -342,7 +342,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
             Icon(
               emptyIcon,
               size: 64,
-              color: Theme.of(context).colorScheme.primary.withAlpha(102),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.4),
             ),
             const SizedBox(height: 16),
             Text(
@@ -443,7 +443,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: priorityColor.withAlpha(26),
+                      color: priorityColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -469,7 +469,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: statusColor.withAlpha(26),
+                      color: statusColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -606,7 +606,7 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withAlpha(26),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -844,7 +844,7 @@ class AssignmentDetailSheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Theme.of(
                         context,
-                      ).colorScheme.onSurfaceVariant.withAlpha(77),
+                      ).colorScheme.onSurfaceVariant.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -1015,7 +1015,7 @@ class AssignmentDetailSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withAlpha(26),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

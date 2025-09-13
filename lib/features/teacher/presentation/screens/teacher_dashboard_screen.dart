@@ -727,7 +727,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 26),
         child: Icon(icon, color: color),
       ),
       title: Text(

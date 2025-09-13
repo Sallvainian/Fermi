@@ -27,9 +27,9 @@ const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
 // Timeout for fetch operations (default: 30 seconds, configurable via OAUTH_FETCH_TIMEOUT_MS env variable)
-const FETCH_TIMEOUT_MS = process.env.OAUTH_FETCH_TIMEOUT_MS
-  ? parseInt(process.env.OAUTH_FETCH_TIMEOUT_MS, 10)
-  : 30000;
+const FETCH_TIMEOUT_MS = process.env.OAUTH_FETCH_TIMEOUT_MS ?
+  parseInt(process.env.OAUTH_FETCH_TIMEOUT_MS, 10) :
+  30000;
 
 /**
  * Utility function to perform fetch with timeout
@@ -42,7 +42,7 @@ async function fetchWithTimeout(
 ): Promise<Response> {
   const abortController = new AbortController();
   const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
-  
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -77,7 +77,7 @@ export const getOAuthUrl = onRequest(
       // Validate OAuth configuration at runtime
       const GOOGLE_CLIENT_ID = googleClientId.value();
       const GOOGLE_CLIENT_SECRET = googleClientSecret.value();
-      
+
       if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
         console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
         throw new HttpsError(
@@ -177,7 +177,7 @@ export const exchangeOAuthCode = onRequest(
       // Validate OAuth configuration at runtime
       const GOOGLE_CLIENT_ID = googleClientId.value();
       const GOOGLE_CLIENT_SECRET = googleClientSecret.value();
-      
+
       if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
         console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
         throw new HttpsError(
@@ -357,7 +357,7 @@ export const refreshOAuthToken = onRequest(
       // Validate OAuth configuration at runtime
       const GOOGLE_CLIENT_ID = googleClientId.value();
       const GOOGLE_CLIENT_SECRET = googleClientSecret.value();
-      
+
       if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
         console.error("OAuth configuration missing - ensure GitHub Secrets are properly configured in deployment");
         throw new HttpsError(

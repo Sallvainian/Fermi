@@ -154,7 +154,7 @@ class ErrorAwareStreamBuilder<T> extends StatelessWidget {
                 size: 64,
                 color: Theme.of(
                   context,
-                ).colorScheme.onSurfaceVariant.withOpacity(0.3),
+                ).colorScheme.onSurfaceVariant.withValues(alpha: 77),
               ),
               const SizedBox(height: 16),
               Text(

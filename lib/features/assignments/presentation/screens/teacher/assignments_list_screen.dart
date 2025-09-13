@@ -360,7 +360,7 @@ class _TeacherAssignmentsScreenState extends State<TeacherAssignmentsScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
+                      color: statusColor.withValues(alpha: 26),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -878,7 +878,7 @@ class AssignmentDetailSheet extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withValues(alpha: 26),
           child: Icon(icon, color: color),
         ),
         title: Text(label),
@@ -1002,7 +1002,7 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
 
                   // Type Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedType,
+                    initialValue: _selectedType,
                     decoration: const InputDecoration(
                       labelText: 'Assignment Type',
                       border: OutlineInputBorder(),
@@ -1031,7 +1031,7 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
 
                   // Class Dropdown
                   DropdownButtonFormField<String>(
-                    value: _selectedClass,
+                    initialValue: _selectedClass,
                     decoration: const InputDecoration(
                       labelText: 'Class',
                       border: OutlineInputBorder(),
@@ -1120,7 +1120,7 @@ class _CreateAssignmentSheetState extends State<CreateAssignmentSheet> {
               color: theme.colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 26),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),

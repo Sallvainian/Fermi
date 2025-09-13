@@ -114,7 +114,7 @@ class CustomListTile extends StatelessWidget {
         color:
             backgroundColor ??
             (isSelected
-                ? colorScheme.primaryContainer.withOpacity(0.1)
+                ? colorScheme.primaryContainer.withValues(alpha: 26)
                 : null),
         borderRadius: BorderRadius.circular(8),
         // Conditional border for enhanced definition

@@ -8,6 +8,11 @@ import '../../../../shared/services/logger_service.dart';
 class PresenceService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  // Simplified updatePresence method for compatibility
+  Future<void> updatePresence(String userId, bool isOnline) async {
+    await updateUserPresence(isOnline);
+  }
 
   // Privacy settings - can be extended to user preferences
   static const bool _showFullName = true;

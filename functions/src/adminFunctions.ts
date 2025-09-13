@@ -8,12 +8,14 @@ const auth = admin.auth();
 
 /**
  * Generate a cryptographically secure password
+ * @param {number} length - The length of the password to generate
+ * @return {string} A cryptographically secure password
  */
 function generateSecurePassword(length: number = 12): string {
-  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-  const randomBytes = crypto.randomBytes(length);
+  const charset = 
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
   let password = "";
-  
+
   let i = 0;
   while (i < length) {
     const byte = crypto.randomBytes(1)[0];
@@ -23,18 +25,18 @@ function generateSecurePassword(length: number = 12): string {
       i++;
     }
   }
-  
+
   // Ensure password has at least one of each type
   const hasUpper = /[A-Z]/.test(password);
   const hasLower = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   const hasSpecial = /[!@#$%^&*]/.test(password);
-  
+
   if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
     // Recursively generate until we get a password with all character types
     return generateSecurePassword(length);
   }
-  
+
   return password;
 }
 
@@ -53,20 +55,28 @@ export const createStudentAccount = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
-    const {username, password, displayName, grade} = request.data;
-    
-    if (!username || !password) {
-      throw new HttpsError("invalid-argument", "Username and password are required");
+    const {email, password, displayName, grade} = request.data;
+
+    if (!email || !password) {
+      throw new HttpsError("invalid-argument", "Email and password are required");
     }
 
-    if (username.length < 3) {
-      throw new HttpsError("invalid-argument", "Username must be at least 3 characters");
+    if (!email.includes("@")) {
+      throw new HttpsError("invalid-argument", "Invalid email address");
+    }
+
+    // ENFORCE DOMAIN VALIDATION FOR STUDENTS
+    if (!email.toLowerCase().endsWith("@rosellestudent.org")) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Student accounts must use @rosellestudent.org email addresses"
+      );
     }
 
     if (password.length < 6) {
@@ -74,14 +84,14 @@ export const createStudentAccount = onCall(
     }
 
     try {
-      // Create email from username (using a domain that won't conflict)
-      const email = `${username}@student.fermi.local`;
+      // Use the provided email directly (must be @rosellestudent.org)
+      const emailValidated = email.toLowerCase();
 
       // Create the user account in Firebase Auth
       const userRecord = await auth.createUser({
-        email: email,
+        email: emailValidated,
         password: password,
-        displayName: displayName || username,
+        displayName: displayName || emailValidated.split("@")[0],
         emailVerified: true, // Mark as verified since admin created it
       });
 
@@ -92,25 +102,25 @@ export const createStudentAccount = onCall(
 
       // Create user document in Firestore
       await db.collection("users").doc(userRecord.uid).set({
-        email: email,
-        displayName: displayName || username,
+        email: emailValidated,
+        displayName: displayName || emailValidated.split("@")[0],
         role: "student",
         grade: grade || null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: request.auth.uid,
-        isEmailUser: false, // Indicate this is a username-based account
-        username: username,
+        isEmailUser: true, // Now using real email domain
       });
 
       // Log the activity
       await db.collection("activities").add({
         type: "user_created",
-        userName: displayName || username,
+        userName: displayName || emailValidated.split("@")[0],
         userRole: "student",
         createdBy: request.auth.uid,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         details: {
           userId: userRecord.uid,
+          email: emailValidated,
           grade: grade || null,
         },
       });
@@ -120,16 +130,16 @@ export const createStudentAccount = onCall(
       return {
         success: true,
         userId: userRecord.uid,
-        email: email,
-        displayName: displayName || username,
+        email: emailValidated,
+        displayName: displayName || emailValidated.split("@")[0],
       };
     } catch (error) {
       logger.error("Error creating student account:", error);
-      
+
       if ((error as any).code === "auth/email-already-exists") {
-        throw new HttpsError("already-exists", "Username already taken");
+        throw new HttpsError("already-exists", "Email already in use");
       }
-      
+
       throw new HttpsError("internal", "Failed to create student account");
     }
   }
@@ -150,20 +160,28 @@ export const createTeacherAccount = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
     const {email, password, displayName} = request.data;
-    
+
     if (!email || !password || !displayName) {
       throw new HttpsError("invalid-argument", "Email, password, and display name are required");
     }
 
     if (!email.includes("@")) {
       throw new HttpsError("invalid-argument", "Invalid email address");
+    }
+
+    // ENFORCE DOMAIN VALIDATION FOR TEACHERS
+    if (!email.toLowerCase().endsWith("@roselleschools.org")) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Teacher accounts must use @roselleschools.org email addresses"
+      );
     }
 
     if (password.length < 6) {
@@ -217,12 +235,114 @@ export const createTeacherAccount = onCall(
       };
     } catch (error) {
       logger.error("Error creating teacher account:", error);
-      
+
       if ((error as any).code === "auth/email-already-exists") {
         throw new HttpsError("already-exists", "Email already in use");
       }
-      
+
       throw new HttpsError("internal", "Failed to create teacher account");
+    }
+  }
+);
+
+/**
+ * Create a new admin account
+ * Admin-only function (only existing admins can create new admins)
+ */
+export const createAdminAccount = onCall(
+  {region: "us-east4", maxInstances: 10},
+  async (request) => {
+    // 1. Authentication check
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication required");
+    }
+
+    // 2. Authorization check - must be admin
+    const userDoc = await db.collection("users").doc(request.auth.uid).get();
+    const userData = userDoc.data();
+
+    if (userData?.role !== "admin") {
+      throw new HttpsError("permission-denied", "Administrator access required");
+    }
+
+    // 3. Input validation
+    const {email, password, displayName} = request.data;
+
+    if (!email || !password || !displayName) {
+      throw new HttpsError("invalid-argument", 
+        "Email, password, and display name are required");
+    }
+
+    if (!email.includes("@")) {
+      throw new HttpsError("invalid-argument", "Invalid email address");
+    }
+
+    // ENFORCE DOMAIN VALIDATION FOR ADMINS
+    if (!email.toLowerCase().endsWith("@fermi-plus.com")) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Admin accounts must use @fermi-plus.com email addresses"
+      );
+    }
+
+    if (password.length < 8) {
+      throw new HttpsError("invalid-argument", 
+        "Password must be at least 8 characters for admin accounts");
+    }
+
+    try {
+      // Create the user account in Firebase Auth
+      const userRecord = await auth.createUser({
+        email: email,
+        password: password,
+        displayName: displayName,
+        emailVerified: true, // Mark as verified since admin created it
+      });
+
+      // Set custom claims for role
+      await auth.setCustomUserClaims(userRecord.uid, {
+        role: "admin",
+      });
+
+      // Create user document in Firestore
+      await db.collection("users").doc(userRecord.uid).set({
+        email: email,
+        displayName: displayName,
+        role: "admin",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: request.auth.uid,
+        isEmailUser: true,
+      });
+
+      // Log the activity
+      await db.collection("activities").add({
+        type: "user_created",
+        userName: displayName,
+        userRole: "admin",
+        createdBy: request.auth.uid,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        details: {
+          userId: userRecord.uid,
+          email: email,
+        },
+      });
+
+      logger.info(`Admin account created: ${userRecord.uid} by admin ${request.auth.uid}`);
+
+      return {
+        success: true,
+        userId: userRecord.uid,
+        email: email,
+        displayName: displayName,
+      };
+    } catch (error) {
+      logger.error("Error creating admin account:", error);
+
+      if ((error as any).code === "auth/email-already-exists") {
+        throw new HttpsError("already-exists", "Email already in use");
+      }
+
+      throw new HttpsError("internal", "Failed to create admin account");
     }
   }
 );
@@ -242,14 +362,14 @@ export const deleteUserAccount = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
     const {userId} = request.data;
-    
+
     if (!userId) {
       throw new HttpsError("invalid-argument", "User ID is required");
     }
@@ -311,14 +431,14 @@ export const resetUserPassword = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
 
     // 3. Input validation
     const {userId} = request.data;
-    
+
     if (!userId) {
       throw new HttpsError("invalid-argument", "User ID is required");
     }
@@ -376,7 +496,7 @@ export const getSystemStats = onCall(
     // 2. Authorization check - must be admin
     const userDoc = await db.collection("users").doc(request.auth.uid).get();
     const userData = userDoc.data();
-    
+
     if (userData?.role !== "admin") {
       throw new HttpsError("permission-denied", "Administrator access required");
     }
@@ -384,26 +504,26 @@ export const getSystemStats = onCall(
     try {
       // Get user statistics
       const usersSnapshot = await db.collection("users").get();
-      const users = usersSnapshot.docs.map(doc => doc.data());
-      
+      const users = usersSnapshot.docs.map((doc) => doc.data());
+
       const stats = {
         totalUsers: users.length,
-        studentCount: users.filter(u => u.role === "student").length,
-        teacherCount: users.filter(u => u.role === "teacher").length,
-        adminCount: users.filter(u => u.role === "admin").length,
-        activeUsers: users.filter(u => u.isOnline === true).length,
+        studentCount: users.filter((u) => u.role === "student").length,
+        teacherCount: users.filter((u) => u.role === "teacher").length,
+        adminCount: users.filter((u) => u.role === "admin").length,
+        activeUsers: users.filter((u) => u.isOnline === true).length,
         recentActivityCount: 0, // Initialize with 0
       };
 
       // Get recent activity count
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-      
+
       const recentActivitiesSnapshot = await db
         .collection("activities")
         .where("timestamp", ">", oneDayAgo)
         .get();
-      
+
       stats.recentActivityCount = recentActivitiesSnapshot.size;
 
       return stats;

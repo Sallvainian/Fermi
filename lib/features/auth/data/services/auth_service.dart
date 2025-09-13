@@ -32,6 +32,29 @@ class AuthService {
     }
   }
 
+  // Helper method to validate school email domains
+  bool _isValidSchoolEmail(String email) {
+    final emailLower = email.toLowerCase();
+    
+    // No hardcoded admin emails - use domain validation instead
+    // Admins must use @fermi-plus.com domain
+    
+    // School domain validation
+    const validDomains = [
+      '@roselleschools.org',  // Teachers
+      '@rosellestudent.org',  // Students
+      '@fermi-plus.com',      // Admins
+    ];
+    
+    for (final domain in validDomains) {
+      if (emailLower.endsWith(domain)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
   void _initializeGoogleSignIn() async {
     String clientId = '';
     String clientSecret = '';
@@ -116,6 +139,14 @@ class AuthService {
     String? displayName,
     String? username,
   }) async {
+    // Validate email domain before attempting sign up
+    if (!_isValidSchoolEmail(email)) {
+      throw FirebaseAuthException(
+        code: 'invalid-email-domain',
+        message: 'Registration is restricted to authorized email addresses (@roselleschools.org for teachers, @rosellestudent.org for students, @fermi-plus.com for admins)',
+      );
+    }
+    
     final cred = await _auth!.createUserWithEmailAndPassword(
       email: email,
       password: password,
@@ -166,6 +197,14 @@ class AuthService {
       );
     }
 
+    // Validate email domain before sign in
+    if (!_isValidSchoolEmail(email)) {
+      throw FirebaseAuthException(
+        code: 'invalid-email-domain',
+        message: 'Sign in is restricted to authorized email addresses (@roselleschools.org for teachers, @rosellestudent.org for students, @fermi-plus.com for admins)',
+      );
+    }
+
     final cred = await _auth!.signInWithEmailAndPassword(
       email: email,
       password: password,
@@ -201,10 +240,10 @@ class AuthService {
         provider.addScope('email');
         provider.addScope('profile');
 
-        // Remove the prompt parameter as it's causing issues with some Google OAuth configurations
-        // provider.setCustomParameters({
-        //   'prompt': 'select_account', // This can cause "Sign-in failed" errors
-        // });
+        // Force account selection to prevent auto-login with wrong account
+        provider.setCustomParameters({
+          'prompt': 'select_account', // Forces the account picker even if user is already signed in
+        });
 
         LoggerService.debug('Attempting signInWithPopup...', tag: 'AuthService');
 
@@ -704,6 +743,14 @@ class AuthService {
     } catch (e) {
       LoggerService.error('Apple re-authentication failed', tag: 'AuthService', error: e);
       throw Exception('Apple authentication failed. Please try again.');
+    }
+  }
+
+  // Send email verification
+  Future<void> sendEmailVerification() async {
+    final user = _auth?.currentUser;
+    if (user != null && !user.emailVerified) {
+      await user.sendEmailVerification();
     }
   }
 }

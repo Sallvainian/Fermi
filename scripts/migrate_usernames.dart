@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import '../lib/firebase_options.dart';
+import 'package:fermi_plus/firebase_options.dart';
 
 /// Script to migrate existing usernames to public_usernames collection
 /// Run with: dart run scripts/migrate_usernames.dart
 void main() async {
-  print('Starting username migration...');
+  stdout.writeln('Starting username migration...');
   
   try {
     // Initialize Firebase
@@ -19,7 +19,7 @@ void main() async {
     // Get all users
     final usersSnapshot = await firestore.collection('users').get();
     
-    print('Found ${usersSnapshot.docs.length} users to process');
+    stdout.writeln('Found ${usersSnapshot.docs.length} users to process');
     
     int migrated = 0;
     int skipped = 0;
@@ -30,7 +30,7 @@ void main() async {
       final username = userData['username'];
       
       if (username == null || username.isEmpty) {
-        print('Skipping user ${userDoc.id} - no username');
+        stdout.writeln('Skipping user ${userDoc.id} - no username');
         skipped++;
         continue;
       }
@@ -45,7 +45,7 @@ void main() async {
             .get();
             
         if (existingDoc.exists) {
-          print('Username $lowerUsername already migrated');
+          stdout.writeln('Username $lowerUsername already migrated');
           skipped++;
           continue;
         }
@@ -57,22 +57,22 @@ void main() async {
           'createdAt': FieldValue.serverTimestamp(),
         });
         
-        print('✓ Migrated username: $lowerUsername');
+        stdout.writeln('✓ Migrated username: $lowerUsername');
         migrated++;
         
       } catch (e) {
-        print('✗ Error migrating $lowerUsername: $e');
+        stderr.writeln('✗ Error migrating $lowerUsername: $e');
         errors++;
       }
     }
     
-    print('\n=== Migration Complete ===');
-    print('Migrated: $migrated');
-    print('Skipped: $skipped');
-    print('Errors: $errors');
+    stdout.writeln('\n=== Migration Complete ===');
+    stdout.writeln('Migrated: $migrated');
+    stdout.writeln('Skipped: $skipped');
+    stdout.writeln('Errors: $errors');
     
   } catch (e) {
-    print('Fatal error: $e');
+    stderr.writeln('Fatal error: $e');
     exit(1);
   }
   

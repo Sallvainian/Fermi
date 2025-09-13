@@ -205,7 +205,7 @@ class _PreviewDialogState extends State<PreviewDialog>
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.2),
+                            color: color.withValues(alpha: 51),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
@@ -356,7 +356,7 @@ class _PreviewDialogState extends State<PreviewDialog>
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.2),
+                color: Colors.blue.withValues(alpha: 51),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.assessment, color: Colors.blue),
@@ -375,7 +375,7 @@ class _PreviewDialogState extends State<PreviewDialog>
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.2),
+                color: Colors.green.withValues(alpha: 51),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.bar_chart, color: Colors.green),
@@ -394,7 +394,7 @@ class _PreviewDialogState extends State<PreviewDialog>
             leading: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.2),
+                color: Colors.purple.withValues(alpha: 51),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.analytics, color: Colors.purple),
@@ -415,7 +415,7 @@ class _PreviewDialogState extends State<PreviewDialog>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 51),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(

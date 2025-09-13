@@ -4,7 +4,7 @@ import {https} from "firebase-functions/v2";
 /**
  * Cloud Function to migrate existing usernames to the public_usernames collection.
  * This ensures existing users can still log in after the security update.
- * 
+ *
  * The public_usernames collection contains minimal data (uid and role only)
  * to prevent exposing sensitive user information.
  */
@@ -88,7 +88,7 @@ export const migrateUsernamesToPublic = https.onCall(
           const publicUsernameRef = firestore
             .collection("public_usernames")
             .doc(username.toLowerCase());
-          
+
           batch.set(publicUsernameRef, {
             uid: userId,
             role: role,
@@ -96,18 +96,17 @@ export const migrateUsernamesToPublic = https.onCall(
           });
 
           operationCount++;
-          
+
           // Commit batch if we've reached the limit
           if (operationCount >= batchSize) {
             await batch.commit();
             console.log(`Committed batch of ${operationCount} operations`);
             successCount += operationCount;
-            
+
             // Start new batch
             batch = firestore.batch();
             operationCount = 0;
           }
-
         } catch (error: any) {
           console.error(`Error processing user ${userId} (${username}):`, error);
           errorCount++;
@@ -158,14 +157,14 @@ export const migrateUsernamesHttp = https.onRequest(
       // Verify the token
       const token = authHeader.split("Bearer ")[1];
       const decodedToken = await admin.auth().verifyIdToken(token);
-      
+
       // Check if user is admin/teacher
       const userDoc = await admin
         .firestore()
         .collection("users")
         .doc(decodedToken.uid)
         .get();
-      
+
       const userData = userDoc.data();
       if (userData?.role !== "teacher" && userData?.role !== "admin") {
         res.status(403).send("Forbidden: Only teachers/admins can run migration");
@@ -190,7 +189,7 @@ export const migrateUsernamesHttp = https.onRequest(
  */
 async function runMigration() {
   const firestore = admin.firestore();
-  
+
   const usersSnapshot = await firestore
     .collection("users")
     .where("username", "!=", null)
@@ -205,15 +204,15 @@ async function runMigration() {
   for (const doc of usersSnapshot.docs) {
     const userData = doc.data();
     const username = userData.username;
-    
+
     if (!username) continue;
-    
+
     // Check if already migrated
     const exists = await firestore
       .collection("public_usernames")
       .doc(username.toLowerCase())
       .get();
-    
+
     if (exists.exists) {
       skipCount++;
       continue;
@@ -229,7 +228,7 @@ async function runMigration() {
     );
 
     operationCount++;
-    
+
     if (operationCount >= batchSize) {
       await batch.commit();
       successCount += operationCount;

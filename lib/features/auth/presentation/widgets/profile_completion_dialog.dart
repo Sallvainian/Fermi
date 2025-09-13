@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import '../../../../shared/services/logger_service.dart';
 import '../../providers/auth_provider.dart';
 
@@ -20,14 +21,12 @@ class _ProfileCompletionDialogState extends State<ProfileCompletionDialog> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
@@ -40,27 +39,31 @@ class _ProfileCompletionDialogState extends State<ProfileCompletionDialog> {
 
     try {
       final authProvider = context.read<AuthProvider>();
-      final user = authProvider.userModel;
       
-      if (user == null) {
-        throw Exception('User not found');
+      // Get the current user from Firebase Auth directly
+      final firebaseUser = FirebaseAuth.instance.currentUser;
+      if (firebaseUser == null) {
+        throw Exception('No authenticated user found');
+      }
+
+      final uid = firebaseUser.uid;
+      if (uid.isEmpty) {
+        throw Exception('User ID is empty');
       }
 
       // Update user profile in Firestore
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(uid)
           .update({
         'firstName': _firstNameController.text.trim(),
         'lastName': _lastNameController.text.trim(),
-        if (_emailController.text.trim().isNotEmpty)
-          'email': _emailController.text.trim(),
         'displayName': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
         'profileCompleted': true,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      LoggerService.info('Profile completed for user: ${user.uid}', tag: 'ProfileCompletion');
+      LoggerService.info('Profile completed for user: $uid', tag: 'ProfileCompletion');
 
       // Reload user model
       await authProvider.reloadUserModel();
@@ -88,38 +91,6 @@ class _ProfileCompletionDialogState extends State<ProfileCompletionDialog> {
     }
   }
 
-  void _showEmailWarning() {
-    if (_emailController.text.trim().isEmpty) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Email Recommended'),
-          content: const Text(
-            'Adding an email address allows you to:\n'
-            '• Recover your account if you forget your password\n'
-            '• Receive important notifications\n'
-            '• Enable additional security features\n\n'
-            'Are you sure you want to continue without an email?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Go Back'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _completeProfile();
-              },
-              child: const Text('Continue Without Email'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      _completeProfile();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,9 +125,7 @@ class _ProfileCompletionDialogState extends State<ProfileCompletionDialog> {
               ),
               const SizedBox(height: 8),
               Text(
-                widget.isTeacher 
-                    ? 'Please provide your name and optional email'
-                    : 'Please provide your information',
+                'Please provide your name',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -204,39 +173,11 @@ class _ProfileCompletionDialogState extends State<ProfileCompletionDialog> {
                 },
                 enabled: !_isLoading,
               ),
-              const SizedBox(height: 16),
-
-              // Email (Optional)
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email (Optional but Recommended)',
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  helperText: 'For account recovery and notifications',
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value != null && value.trim().isNotEmpty) {
-                    // Only validate if email is provided
-                    final emailRegex = RegExp(
-                      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                    );
-                    if (!emailRegex.hasMatch(value.trim())) {
-                      return 'Please enter a valid email address';
-                    }
-                  }
-                  return null;
-                },
-                enabled: !_isLoading,
-              ),
               const SizedBox(height: 24),
 
               // Submit Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _showEmailWarning,
+                onPressed: _isLoading ? null : _completeProfile,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

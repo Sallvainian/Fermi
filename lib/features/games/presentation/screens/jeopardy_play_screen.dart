@@ -351,7 +351,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 color: theme.colorScheme.surfaceContainerHighest,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 26),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -398,7 +398,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
                 color: theme.colorScheme.surfaceContainerHighest,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 26),
                     blurRadius: 4,
                     offset: const Offset(0, -2),
                   ),
@@ -538,7 +538,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: isAnswered
-                  ? theme.colorScheme.outline.withOpacity(0.3)
+                  ? theme.colorScheme.outline.withValues(alpha: 77)
                   : theme.colorScheme.primary,
               width: 2,
             ),
@@ -586,7 +586,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               border: Border.all(
                 color: isCurrentPlayer
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outline.withOpacity(0.3),
+                    : theme.colorScheme.outline.withValues(alpha: 77),
                 width: 2,
               ),
             ),
@@ -625,7 +625,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
     }
 
     return Container(
-      color: Colors.black.withOpacity(0.9),
+      color: Colors.black.withValues(alpha: 230),
       child: Center(
         child: Container(
           margin: const EdgeInsets.all(32),
@@ -995,7 +995,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
         : (_selectedQuestion?.points ?? 200);
 
     return Container(
-      color: Colors.black.withOpacity(0.9),
+      color: Colors.black.withValues(alpha: 230),
       child: Center(
         child: Container(
           margin: const EdgeInsets.all(32),
@@ -1031,7 +1031,7 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
               Text(
                 'Maximum wager: \$$maxWager',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 204),
                 ),
               ),
               const SizedBox(height: 24),

@@ -342,8 +342,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            theme.colorScheme.primaryContainer,
-            theme.colorScheme.primaryContainer.withOpacity(0.7),
+            theme.colorScheme.primary.withValues(alpha: 0.1),
+            theme.colorScheme.primary.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -351,7 +351,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withOpacity(0.1),
+            color: theme.colorScheme.shadow.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -406,13 +406,13 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     
     return Card(
       elevation: 4,
-      shadowColor: theme.colorScheme.primary.withOpacity(0.3),
+      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.5),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              theme.colorScheme.primaryContainer,
-              theme.colorScheme.primaryContainer.withOpacity(0.7),
+              theme.colorScheme.primary.withValues(alpha: 0.15),
+              theme.colorScheme.primary.withValues(alpha: 0.1),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -432,7 +432,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 width: 48,  // Reduced from 60 to match student cards
                 height: 48, // Reduced from 60 to match student cards
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withOpacity(0.2),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -465,7 +465,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               Text(
                 'points',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer.withOpacity(0.7),
+                  color: theme.colorScheme.onPrimaryContainer,
                   fontSize: 10, // Explicit smaller size
                 ),
               ),
@@ -474,7 +474,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reduced padding
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withOpacity(0.2),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -505,10 +505,10 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.8),
+        color: theme.colorScheme.surface.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

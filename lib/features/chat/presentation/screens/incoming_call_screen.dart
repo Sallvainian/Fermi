@@ -74,7 +74,7 @@ class _IncomingCallScreenState extends State<IncomingCallScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).primaryColor.withAlpha(204),
+              Theme.of(context).primaryColor.withOpacity(0.8),
               Theme.of(context).primaryColor,
             ],
           ),

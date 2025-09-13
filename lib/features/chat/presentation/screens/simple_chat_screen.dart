@@ -112,7 +112,7 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                 BoxShadow(
                   offset: const Offset(0, -2),
                   blurRadius: 4,
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 26),
                 ),
               ],
             ),
@@ -209,10 +209,10 @@ class _SimpleChatScreenState extends State<SimpleChatScreen> {
                 color: isMe
                     ? Theme.of(
                         context,
-                      ).colorScheme.onPrimary.withOpacity(0.7)
+                      ).colorScheme.onPrimary.withValues(alpha: 179)
                     : Theme.of(
                         context,
-                      ).colorScheme.onSecondaryContainer.withOpacity(0.7),
+                      ).colorScheme.onSecondaryContainer.withValues(alpha: 179),
               ),
             ),
           ],

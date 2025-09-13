@@ -367,7 +367,7 @@ class BehaviorPointProvider with ChangeNotifier {
       _setLoading(true);
       _error = null;
       final behavior = _behaviors.firstWhere((b) => b.id == behaviorId);
-      final studentName = await _getStudentName(studentId);
+      await _getStudentName(studentId); // Pre-fetch for caching
       final teacherName = currentUserName;
 
       final behaviorPoint = BehaviorPoint(
@@ -516,7 +516,7 @@ class BehaviorPointProvider with ChangeNotifier {
 
   /// Calculate total points for the class
   int calculateClassTotalPoints() {
-    return _behaviorPoints.fold(0, (sum, point) => sum + point.points);
+    return _behaviorPoints.fold(0, (total, point) => total + point.points);
   }
 
   /// Get behavior points for a specific student
@@ -547,9 +547,9 @@ class BehaviorPointProvider with ChangeNotifier {
       final studentId = entry.key;
       final points = entry.value;
 
-      final totalPoints = points.fold(0, (sum, p) => sum + p.points);
-      final positivePoints = points.where((p) => p.points > 0).fold(0, (sum, p) => sum + p.points);
-      final negativePoints = points.where((p) => p.points < 0).fold(0, (sum, p) => sum + p.points);
+      final totalPoints = points.fold(0, (total, p) => total + p.points);
+      final positivePoints = points.where((p) => p.points > 0).fold(0, (total, p) => total + p.points);
+      final negativePoints = points.where((p) => p.points < 0).fold(0, (total, p) => total + p.points);
       
       final lastActivity = points.isNotEmpty 
           ? points.reduce((a, b) => a.awardedAt.isAfter(b.awardedAt) ? a : b).awardedAt

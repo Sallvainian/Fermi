@@ -207,7 +207,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   size: 64,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 128),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -244,7 +244,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   size: 64,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 128),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -288,7 +288,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                   size: 64,
                   color: Theme.of(
                     context,
-                  ).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 128),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -391,7 +391,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
             borderRadius: BorderRadius.circular(12),
             border: isUnread
                 ? Border.all(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
+                    color: theme.colorScheme.primary.withValues(alpha: 77),
                     width: 1,
                   )
                 : null,
@@ -405,8 +405,8 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isUnread
-                          ? typeColor.withOpacity(0.2)
-                          : Colors.grey.withOpacity(0.1),
+                          ? typeColor.withValues(alpha: 51)
+                          : Colors.grey.withValues(alpha: 26),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -549,7 +549,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 26),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -969,7 +969,7 @@ class _NotificationSettingsSheetState extends State<NotificationSettingsSheet> {
               color: theme.colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 26),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
