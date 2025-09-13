@@ -140,7 +140,34 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _processUser(firebase_auth.User user) async {
     try {
       // Load user model from Firestore with retry logic
-      final loadedUserModel = await _loadUserModelWithRetry(user.uid);
+      var loadedUserModel = await _loadUserModelWithRetry(user.uid);
+
+      // If user document doesn't exist and it's an admin account, create it
+      // This handles manually created admin accounts in Firebase Auth
+      if (loadedUserModel == null && user.email != null) {
+        final email = user.email!.toLowerCase();
+        
+        // ONLY auto-create for @fermi-plus.com admin accounts
+        if (email.endsWith('@fermi-plus.com')) {
+          LoggerService.info('Creating Firestore document for manually created admin: ${user.email}', tag: 'AuthProvider');
+          
+          // Create the admin user document
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': user.email,
+            'displayName': user.displayName ?? user.email?.split('@').first ?? 'Admin',
+            'role': 'admin',
+            'createdAt': FieldValue.serverTimestamp(),
+            'lastActive': FieldValue.serverTimestamp(),
+            'emailVerified': user.emailVerified,
+            'isEmailUser': true,
+            'profileComplete': false,
+          });
+          
+          // Try loading again
+          loadedUserModel = await _loadUserModelWithRetry(user.uid);
+        }
+      }
 
       if (loadedUserModel != null && loadedUserModel.role != null) {
         // SUCCESS: We have both Firebase Auth user AND complete user model
@@ -150,7 +177,6 @@ class AuthProvider extends ChangeNotifier {
         _updatePresenceOnline();
       } else {
         // User profile not found or incomplete
-        // This shouldn't happen with the blocking function creating profiles
         LoggerService.error('User profile not found for uid: ${user.uid}', tag: 'AuthProvider');
         await _authService.signOut();
         _handleAuthError('User profile not found. Please contact support.');
@@ -465,6 +491,8 @@ class AuthProvider extends ChangeNotifier {
       errorMessage = 'No user found with this email';
     } else if (errorString.contains('wrong-password')) {
       errorMessage = 'Incorrect password';
+    } else if (errorString.contains('invalid-credential')) {
+      errorMessage = 'Invalid email or password. Please check your credentials and try again';
     } else if (errorString.contains('invalid-email')) {
       errorMessage = 'Invalid email address';
     } else if (errorString.contains('user-disabled')) {

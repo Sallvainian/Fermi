@@ -47,13 +47,13 @@ class ActivityFeedCard extends StatelessWidget {
                     Icon(
                       Icons.timeline,
                       size: 48,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 77),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'No recent activity',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 153),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -182,7 +182,7 @@ class _ActivityItem extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 26),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
@@ -206,7 +206,7 @@ class _ActivityItem extends StatelessWidget {
               Text(
                 timeString,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 128),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],

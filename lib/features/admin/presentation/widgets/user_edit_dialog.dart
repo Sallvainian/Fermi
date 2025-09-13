@@ -327,7 +327,7 @@ class _UserEditDialogState extends State<UserEditDialog> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest.withAlpha(51),
+                          color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
@@ -389,7 +389,7 @@ class _UserEditDialogState extends State<UserEditDialog> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withAlpha(26),
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.1),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),

@@ -49,13 +49,13 @@ class UserListCard extends StatelessWidget {
                     Icon(
                       Icons.people_outline,
                       size: 48,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 77),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'No users yet',
                       style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 153),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -113,7 +113,7 @@ class _UserListTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
-        backgroundColor: getRoleColor().withValues(alpha: 51),
+        backgroundColor: getRoleColor().withValues(alpha: 0.2),
         child: Text(
           user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : '?',
           style: TextStyle(
@@ -141,7 +141,7 @@ class _UserListTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: getRoleColor().withValues(alpha: 26),
+                  color: getRoleColor().withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -157,7 +157,7 @@ class _UserListTile extends StatelessWidget {
               Text(
                 'Joined ${dateFormat.format(user.createdAt)}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 128),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -188,14 +188,14 @@ class _UserListTile extends StatelessWidget {
             Text(
               'Offline',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 128),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
           ],
           const SizedBox(width: 8),
           Icon(
             Icons.chevron_right,
-            color: theme.colorScheme.onSurface.withValues(alpha: 77),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
           ),
         ],
       ),

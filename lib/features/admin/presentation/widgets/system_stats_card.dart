@@ -22,7 +22,7 @@ class SystemStatsCard extends StatelessWidget {
             child: Text(
               'No statistics available',
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 153),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -118,10 +118,10 @@ class SystemStatsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 26),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withValues(alpha: 77),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -141,7 +141,7 @@ class SystemStatsCard extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 179),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
@@ -162,7 +162,7 @@ class SystemStatsCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: theme.colorScheme.outline.withValues(alpha: 77),
+              color: theme.colorScheme.outline.withValues(alpha: 0.3),
             ),
           ),
           child: ClipRRect(
@@ -171,7 +171,7 @@ class SystemStatsCard extends StatelessWidget {
               children: [
                 if (stats!.studentPercentage > 0)
                   Expanded(
-                    flex: (stats!.studentPercentage * 100).round(),
+                    flex: stats!.studentPercentage.round(),
                     child: Container(
                       color: Colors.green,
                       child: Center(
@@ -190,7 +190,7 @@ class SystemStatsCard extends StatelessWidget {
                   ),
                 if (stats!.teacherPercentage > 0)
                   Expanded(
-                    flex: (stats!.teacherPercentage * 100).round(),
+                    flex: stats!.teacherPercentage.round(),
                     child: Container(
                       color: Colors.orange,
                       child: Center(
@@ -209,7 +209,7 @@ class SystemStatsCard extends StatelessWidget {
                   ),
                 if (stats!.adminPercentage > 0)
                   Expanded(
-                    flex: (stats!.adminPercentage * 100).round(),
+                    flex: stats!.adminPercentage.round(),
                     child: Container(
                       color: Colors.deepPurple,
                       child: Center(
