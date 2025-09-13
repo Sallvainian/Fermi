@@ -180,7 +180,7 @@ class StudentPoints {
       'recentBehaviors': recentBehaviors
           .map((behavior) => behavior.toFirestore())
           .toList(),
-      'avatarColorHex': '#${avatarColor.toARGB32().toRadixString(16).padLeft(8, '0')}',
+      'avatarColorHex': '#${avatarColor.value.toRadixString(16).padLeft(8, '0')}',
       'lastUpdated': Timestamp.fromDate(lastUpdated),
       'classId': classId,
       'classRank': classRank,
