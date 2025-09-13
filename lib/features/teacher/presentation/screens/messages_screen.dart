@@ -304,8 +304,8 @@ class _TeacherMessagesScreenState extends State<TeacherMessagesScreen>
               // Sender Avatar
               CircleAvatar(
                 backgroundColor: isUnread
-                    ? senderTypeColor.withValues(alpha: 51)
-                    : Colors.grey.withValues(alpha: 26),
+                    ? senderTypeColor.withValues(alpha: 0.2)
+                    : Colors.grey.withValues(alpha: 0.1),
                 child: Icon(
                   senderTypeIcon,
                   color: isUnread ? senderTypeColor : Colors.grey,
@@ -632,7 +632,7 @@ ${message['sender']}''', style: theme.textTheme.bodyLarge),
                   color: theme.colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 26),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                       offset: const Offset(0, -5),
                     ),
@@ -893,7 +893,7 @@ class _ComposeMessageSheetState extends State<ComposeMessageSheet> {
               color: theme.colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 26),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),

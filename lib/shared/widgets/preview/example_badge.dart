@@ -89,7 +89,7 @@ class ExampleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(sizeProps.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 26),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

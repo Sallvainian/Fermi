@@ -43,7 +43,7 @@ class FavoritesNavBar extends StatelessWidget {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, -2),
             ),
@@ -177,7 +177,7 @@ class _NavigationCustomizationSheetState
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -468,14 +468,14 @@ class _EmptySlot extends StatelessWidget {
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.3),
+          color: theme.colorScheme.outline.withValues(alpha: 0.3),
           width: 2,
           style: BorderStyle.solid,
         ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
-        child: Icon(Icons.add, color: theme.colorScheme.outline.withOpacity(0.5)),
+        child: Icon(Icons.add, color: theme.colorScheme.outline.withValues(alpha: 0.5)),
       ),
     );
   }
@@ -536,7 +536,7 @@ class _HintBarState extends State<_HintBar>
       return Container(
         width: double.infinity,
         height: 2,
-        color: theme.colorScheme.primary.withOpacity(0.1),
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
       );
     }
 
@@ -547,7 +547,7 @@ class _HintBarState extends State<_HintBar>
         return Container(
           width: double.infinity,
           height: 3,
-          color: theme.colorScheme.primary.withOpacity(
+          color: theme.colorScheme.primary.withValues(alpha:
             _animation.value,
           ),
         );

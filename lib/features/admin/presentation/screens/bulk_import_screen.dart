@@ -164,7 +164,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.2),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha:0.2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -225,7 +225,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                   style: BorderStyle.solid,
                 ),
                 borderRadius: BorderRadius.circular(8),
-                color: colorScheme.surfaceContainerHighest.withOpacity(0.1),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha:0.1),
               ),
               child: InkWell(
                 onTap: _pickFile,
@@ -311,7 +311,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                     return DataRow(
                       color: WidgetStateProperty.resolveWith<Color?>((states) {
                         if (hasError) {
-                          return colorScheme.errorContainer.withOpacity(0.2);
+                          return colorScheme.errorContainer.withValues(alpha:0.2);
                         }
                         return null;
                       }),
@@ -345,7 +345,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.errorContainer.withOpacity(0.2),
+                  color: colorScheme.errorContainer.withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -473,7 +473,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
+                  color: Colors.green.withValues(alpha:0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -511,7 +511,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.errorContainer.withOpacity(0.2),
+                  color: colorScheme.errorContainer.withValues(alpha:0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(

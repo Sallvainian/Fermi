@@ -528,7 +528,7 @@ class _HelpScreenState extends State<HelpScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 179),
+                        color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(

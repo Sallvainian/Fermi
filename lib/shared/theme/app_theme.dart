@@ -123,12 +123,12 @@ class AppTheme {
         color: colorScheme.surface,
         surfaceTintColor: colorScheme.surfaceTint,
         elevation: 1,
-        shadowColor: colorScheme.shadow.withValues(alpha: 26),
+        shadowColor: colorScheme.shadow.withValues(alpha: 0.1),
         margin: const EdgeInsets.all(8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(
-            color: colorScheme.outline.withValues(alpha: 51),
+            color: colorScheme.outline.withValues(alpha: 0.2),
             width: 0.5,
           ),
         ),
@@ -170,7 +170,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 128),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),
@@ -380,7 +380,7 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 128),
+        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colorScheme.outline),

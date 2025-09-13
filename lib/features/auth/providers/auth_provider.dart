@@ -425,14 +425,14 @@ class AuthProvider extends ChangeNotifier {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
-        return {'id': doc.id, ...doc.data()!};
+        return {'uid': doc.id, ...doc.data()!};
       }
     } catch (e) {
       LoggerService.warning('First attempt to get user data failed, retrying...', tag: 'AuthProvider');
       await Future.delayed(const Duration(milliseconds: 500));
       final doc = await _firestore.collection('users').doc(uid).get();
       if (doc.exists) {
-        return {'id': doc.id, ...doc.data()!};
+        return {'uid': doc.id, ...doc.data()!};
       }
     }
     return null;

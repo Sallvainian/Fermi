@@ -249,7 +249,7 @@ class _ClassAssignmentDialogState extends State<ClassAssignmentDialog> {
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: isSelected
-                                        ? theme.colorScheme.primary.withOpacity(0.1)
+                                        ? theme.colorScheme.primary.withValues(alpha:0.1)
                                         : theme.colorScheme.surfaceContainerHighest,
                                     shape: BoxShape.circle,
                                   ),
@@ -271,10 +271,10 @@ class _ClassAssignmentDialogState extends State<ClassAssignmentDialog> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withOpacity(0.2),
+                  color: theme.colorScheme.primaryContainer.withValues(alpha:0.2),
                   border: Border(
                     top: BorderSide(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
+                      color: theme.colorScheme.outline.withValues(alpha:0.2),
                     ),
                   ),
                 ),
@@ -301,7 +301,7 @@ class _ClassAssignmentDialogState extends State<ClassAssignmentDialog> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.1),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.1),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),

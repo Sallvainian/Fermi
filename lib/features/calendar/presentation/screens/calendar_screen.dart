@@ -302,7 +302,7 @@ class _CalendarScreenState extends State<CalendarScreen>
                     ? theme.colorScheme.onPrimaryContainer
                     : isCurrentMonth
                     ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurfaceVariant.withValues(alpha: 128),
+                    : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 fontWeight: isToday || isSelected
                     ? FontWeight.bold
                     : FontWeight.normal,
@@ -487,7 +487,7 @@ class _CalendarScreenState extends State<CalendarScreen>
       margin: const EdgeInsets.all(1),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 26),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color),
       ),
@@ -672,7 +672,7 @@ class _CalendarScreenState extends State<CalendarScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 26),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1002,7 +1002,7 @@ class DayEventsSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 26),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -1744,7 +1744,7 @@ class _CreateEventSheetState extends State<CreateEventSheet> {
               color: theme.colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 26),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
