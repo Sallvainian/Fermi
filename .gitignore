@@ -26,7 +26,6 @@ keys/
 *.pem
 *.key
 **/AuthKey_*.p8
-service-account-key.json
 **/service-account*.json
 AGENTS.md
 **/AGENTS.md

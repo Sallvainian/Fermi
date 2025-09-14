@@ -425,10 +425,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withAlpha(51),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha:0.2),
               border: Border(
                 bottom: BorderSide(
-                  color: theme.colorScheme.outline.withAlpha(51),
+                  color: theme.colorScheme.outline.withValues(alpha:0.2),
                 ),
               ),
             ),
@@ -491,7 +491,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                 SizedBox(
                   width: 150,
                   child: DropdownButtonFormField<String>(
-                    value: _roleFilter,
+                    initialValue: _roleFilter,
                     decoration: InputDecoration(
                       labelText: 'Role',
                       border: OutlineInputBorder(
@@ -625,7 +625,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getRoleColor(user.role?.name ?? 'student').withAlpha(51),
+                      color: _getRoleColor(user.role?.name ?? 'student').withValues(alpha:0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -790,7 +790,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: _getRoleColor(user.role?.name ?? 'student').withAlpha(51),
+                        color: _getRoleColor(user.role?.name ?? 'student').withValues(alpha:0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -883,9 +883,9 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withAlpha(26),
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withAlpha(51)),
+        border: Border.all(color: color.withValues(alpha:0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

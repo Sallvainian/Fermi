@@ -295,7 +295,7 @@ class _AssignmentEditScreenState extends State<AssignmentEditScreen> {
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
-                          value: _selectedType,
+                          initialValue: _selectedType,
                           decoration: const InputDecoration(
                             labelText: 'Assignment Type',
                             prefixIcon: Icon(Icons.category),

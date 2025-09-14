@@ -151,7 +151,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
         filled: true,
         fillColor: widget.enabled
             ? theme.colorScheme.surface
-            : theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       ),
     );
   }

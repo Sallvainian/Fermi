@@ -138,8 +138,23 @@ class BehaviorPointProvider with ChangeNotifier {
   String get currentUserId => _auth.currentUser?.uid ?? '';
 
   /// Current user's role (teacher or student)
-  String _userRole = 'teacher';
-  String get userRole => _userRole;
+  String get userRole {
+    // Get role from cached user model if available
+    if (_cachedUserModel != null && _cachedUserModel!.role != null) {
+      switch (_cachedUserModel!.role) {
+        case UserRole.teacher:
+          return 'teacher';
+        case UserRole.student:
+          return 'student';
+        case UserRole.admin:
+          return 'admin';
+        default:
+          return 'unknown';
+      }
+    }
+    // Fallback to 'unknown' if no user model is available
+    return 'unknown';
+  }
 
 
   /// Returns cached display name or fetches and caches it
@@ -367,7 +382,7 @@ class BehaviorPointProvider with ChangeNotifier {
       _setLoading(true);
       _error = null;
       final behavior = _behaviors.firstWhere((b) => b.id == behaviorId);
-      final studentName = await _getStudentName(studentId);
+      final _ = await _getStudentName(studentId); // Pre-fetch for caching side effect
       final teacherName = currentUserName;
 
       final behaviorPoint = BehaviorPoint(
@@ -516,7 +531,7 @@ class BehaviorPointProvider with ChangeNotifier {
 
   /// Calculate total points for the class
   int calculateClassTotalPoints() {
-    return _behaviorPoints.fold(0, (sum, point) => sum + point.points);
+    return _behaviorPoints.fold(0, (total, point) => total + point.points);
   }
 
   /// Get behavior points for a specific student
@@ -547,9 +562,9 @@ class BehaviorPointProvider with ChangeNotifier {
       final studentId = entry.key;
       final points = entry.value;
 
-      final totalPoints = points.fold(0, (sum, p) => sum + p.points);
-      final positivePoints = points.where((p) => p.points > 0).fold(0, (sum, p) => sum + p.points);
-      final negativePoints = points.where((p) => p.points < 0).fold(0, (sum, p) => sum + p.points);
+      final totalPoints = points.fold(0, (total, p) => total + p.points);
+      final positivePoints = points.where((p) => p.points > 0).fold(0, (total, p) => total + p.points);
+      final negativePoints = points.where((p) => p.points < 0).fold(0, (total, p) => total + p.points);
       
       final lastActivity = points.isNotEmpty 
           ? points.reduce((a, b) => a.awardedAt.isAfter(b.awardedAt) ? a : b).awardedAt

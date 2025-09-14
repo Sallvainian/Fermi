@@ -597,7 +597,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 26),
         child: Icon(Icons.assignment, color: color, size: 20),
       ),
       title: Text(
@@ -610,7 +610,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 26),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -712,7 +712,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withValues(alpha: 26),
         child: Text(
           grade,
           style: TextStyle(

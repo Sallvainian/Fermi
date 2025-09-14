@@ -413,7 +413,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -507,7 +507,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             border: Border.all(
               color: Theme.of(
                 context,
-              ).colorScheme.outline.withOpacity(0.2),
+              ).colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
           child: Column(children: children),

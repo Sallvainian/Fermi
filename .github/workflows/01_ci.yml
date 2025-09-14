@@ -53,3 +53,104 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat dead_code_report.txt | head -100 >> $GITHUB_STEP_SUMMARY || echo "No dead code report generated" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+  claude-architecture-analysis:
+    name: Claude Architecture Analysis
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.24.0'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Claude Architecture Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --system-prompt "You are a Flutter architecture expert analyzing codebases for technical debt, design patterns, and improvement opportunities."
+            --allowedTools "Bash(flutter analyze),Bash(dart analyze),Bash(grep)"
+            --focus architecture,patterns,technical-debt
+            --max-tokens 6000
+          settings: |
+            {
+              "mcpServers": {
+                "context7": {
+                  "command": "npx",
+                  "args": ["@context7/mcp-server", "start"],
+                  "includeTools": [
+                    "flutter_architecture",
+                    "dart_patterns",
+                    "clean_architecture",
+                    "domain_driven_design"
+                  ],
+                  "env": {
+                    "CONTEXT7_ANALYSIS_MODE": "architecture"
+                  }
+                },
+                "sequential-thinking": {
+                  "command": "npx",
+                  "args": ["@sequential-thinking/mcp-server", "start"],
+                  "env": {
+                    "MAX_THINKING_STEPS": "15",
+                    "FOCUS": "architecture_patterns"
+                  }
+                }
+              }
+            }
+          prompt: |
+            ## Architecture Analysis Task
+
+            Analyze the Flutter project architecture and provide insights on:
+
+            ### 1. Architecture Evaluation
+            - Current architecture pattern (Clean Architecture, DDD, MVC, etc.)
+            - Consistency in pattern implementation
+            - Separation of concerns assessment
+            - Dependency flow analysis
+
+            ### 2. Technical Debt Assessment
+            - Code duplication areas
+            - Overly complex components
+            - Tight coupling issues
+            - Missing abstractions
+
+            ### 3. Design Pattern Usage
+            - Repository pattern implementation
+            - Service/Provider patterns
+            - Factory patterns
+            - Singleton usage
+
+            ### 4. Improvement Opportunities
+            - Refactoring suggestions
+            - Module boundary improvements
+            - Testing structure enhancements
+            - Performance optimization areas
+
+            ### 5. Firebase & State Management
+            - Firebase service organization
+            - Provider usage patterns
+            - State management efficiency
+            - Data flow optimization
+
+            Focus on the lib/ directory structure:
+            - lib/features/* - Feature modules
+            - lib/shared/* - Shared components
+            - lib/core/* - Core utilities
+
+            Provide actionable recommendations with priority levels.

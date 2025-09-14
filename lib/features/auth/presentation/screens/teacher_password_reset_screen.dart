@@ -97,7 +97,7 @@ class _TeacherPasswordResetScreenState
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary.withOpacity(0.1),
+                      color: theme.colorScheme.secondary.withValues(alpha: 26),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -123,7 +123,7 @@ class _TeacherPasswordResetScreenState
                   Text(
                     'Welcome $username! Please create a secure password for your teacher account.',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 179),
                     ),
                     textAlign: TextAlign.center,
                   ),
