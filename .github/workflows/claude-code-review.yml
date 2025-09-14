@@ -1,0 +1,152 @@
+name: 'Claude Code Review'
+
+on:
+  pull_request:
+    branches: [ master ]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number to review'
+        required: false
+        type: string
+
+concurrency:
+  group: 'claude-review-${{ github.ref }}'
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+  issues: write
+
+jobs:
+  claude-review:
+    name: 'Claude Code Analysis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Setup Flutter'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: 'Install dependencies'
+        run: |
+          flutter pub get
+          flutter pub global activate dart_code_metrics
+
+      - name: 'Claude Code Review'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: |
+            --system-prompt "You are an expert Flutter/Dart code reviewer focusing on architecture, performance, and best practices for cross-platform educational applications."
+            --allowedTools "Bash(flutter analyze),Bash(dart format),Bash(dart fix)"
+            --focus security,performance,maintainability,architecture
+            --max-tokens 8192
+          settings: |
+            {
+              "env": {
+                "FLUTTER_VERSION": "3.24.0",
+                "DART_SDK": "stable",
+                "PROJECT_TYPE": "flutter_firebase_educational_app"
+              },
+              "mcpServers": {
+                "context7": {
+                  "command": "npx",
+                  "args": ["@context7/mcp-server", "start"],
+                  "includeTools": [
+                    "flutter_architecture",
+                    "dart_best_practices",
+                    "firebase_flutter",
+                    "provider_state_management",
+                    "go_router_navigation"
+                  ],
+                  "env": {
+                    "CONTEXT7_CACHE_SIZE": "100MB",
+                    "CONTEXT7_FLUTTER_VERSION": "3.24"
+                  }
+                },
+                "sequential-thinking": {
+                  "command": "npx",
+                  "args": ["@sequential-thinking/mcp-server", "start"],
+                  "env": {
+                    "MAX_THINKING_STEPS": "20",
+                    "ANALYSIS_DEPTH": "deep"
+                  }
+                }
+              }
+            }
+          prompt: |
+            ## Flutter Code Review Context
+
+            Repository: ${{ github.repository }}
+            PR #${{ github.event.number || inputs.pr_number }}: ${{ github.event.pull_request.title }}
+            Author: ${{ github.event.pull_request.user.login || github.actor }}
+
+            ## Project Context
+            This is a Flutter-based educational app called Fermi with:
+            - Cross-platform support (Web, Windows, macOS, iOS, Android)
+            - Firebase backend (Auth, Firestore, Storage)
+            - Provider for state management
+            - GoRouter for navigation
+            - Domain-driven design architecture
+
+            ## Review Focus Areas
+
+            ### 1. Architecture & Design Patterns
+            - Check adherence to clean architecture principles
+            - Validate proper separation of concerns (data/domain/presentation)
+            - Ensure consistent use of Provider patterns
+            - Review dependency injection and service locator usage
+
+            ### 2. Flutter Best Practices
+            - Widget composition and reusability
+            - State management correctness
+            - Performance optimizations (const constructors, keys, rebuilds)
+            - Null safety compliance and proper null handling
+            - Platform-specific code organization
+
+            ### 3. Firebase Integration
+            - Security rules implications
+            - Authentication flow integrity
+            - Firestore query optimization
+            - Error handling for network operations
+            - Offline capability considerations
+
+            ### 4. Code Quality
+            - Dart formatting and linting compliance
+            - Documentation completeness
+            - Test coverage for new features
+            - Error handling and logging
+            - Accessibility considerations
+
+            ### 5. Performance & Optimization
+            - Unnecessary widget rebuilds
+            - Memory leaks in streams/listeners
+            - Image and asset optimization
+            - Build method efficiency
+            - Animation performance
+
+            ### 6. Security Considerations
+            - Sensitive data handling
+            - API key management
+            - User input validation
+            - Authentication state management
+            - Cross-site scripting prevention (Web)
+
+            ## Additional Instructions
+            - Provide actionable suggestions with code examples
+            - Flag any breaking changes or migration requirements
+            - Suggest relevant Flutter packages if beneficial
+            - Consider cross-platform implications
+            - Review for Flutter 3.24 compatibility
