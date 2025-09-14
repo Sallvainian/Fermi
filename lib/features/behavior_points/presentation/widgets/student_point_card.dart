@@ -38,8 +38,8 @@ class StudentPointCard extends StatelessWidget {
     return Card(
       elevation: isFirstPlace ? 8 : 2,
       shadowColor: isFirstPlace 
-          ? Colors.amber.withOpacity(0.5) 
-          : theme.colorScheme.shadow.withOpacity(0.1),
+          ? Colors.amber.withValues(alpha: 128) 
+          : theme.colorScheme.shadow.withValues(alpha: 26),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
@@ -53,12 +53,12 @@ class StudentPointCard extends StatelessWidget {
           ) : null,
           boxShadow: isFirstPlace ? [
             BoxShadow(
-              color: Colors.amber.withOpacity(0.4),
+              color: Colors.amber.withValues(alpha: 102),
               blurRadius: 12,
               spreadRadius: 1,
             ),
             BoxShadow(
-              color: Colors.amber.withOpacity(0.2),
+              color: Colors.amber.withValues(alpha: 51),
               blurRadius: 20,
               spreadRadius: 3,
             ),
@@ -84,10 +84,10 @@ class StudentPointCard extends StatelessWidget {
                     width: 48,  // Reduced from 64
                     height: 48, // Reduced from 64
                     decoration: BoxDecoration(
-                      color: student.avatarColor.withOpacity(0.2),
+                      color: student.avatarColor.withValues(alpha: 51),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: student.avatarColor.withOpacity(0.5),
+                        color: student.avatarColor.withValues(alpha: 128),
                         width: 2,
                       ),
                     ),
@@ -161,7 +161,7 @@ class StudentPointCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: student.pointsColor.withOpacity(0.3),
+            color: student.pointsColor.withValues(alpha: 77),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -209,10 +209,10 @@ class StudentPointCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // Reduced padding
       decoration: BoxDecoration(
-        color: rank! <= 3 ? rankColor.withOpacity(0.1) : theme.colorScheme.surfaceContainerHighest,
+        color: rank! <= 3 ? rankColor.withValues(alpha: 26) : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
         border: rank! <= 3 ? Border.all(
-          color: rankColor.withOpacity(0.3),
+          color: rankColor.withValues(alpha: 77),
           width: 1,
         ) : null,
       ),
@@ -287,7 +287,7 @@ class StudentPointCardCompact extends StatelessWidget {
           children: [
             // Avatar
             CircleAvatar(
-              backgroundColor: student.avatarColor.withOpacity(0.2),
+              backgroundColor: student.avatarColor.withValues(alpha: 51),
               child: Text(
                 student.initials,
                 style: TextStyle(

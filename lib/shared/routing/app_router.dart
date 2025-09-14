@@ -8,8 +8,6 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/role_selection_screen.dart';
-import '../../features/auth/presentation/screens/teacher_password_screen.dart';
-import '../../features/auth/presentation/screens/admin_password_screen.dart';
 import '../../features/auth/presentation/screens/teacher_password_reset_screen.dart';
 import '../../features/teacher/presentation/screens/teacher_dashboard_screen.dart';
 import '../../features/student/presentation/screens/student_dashboard_screen.dart';
@@ -179,14 +177,6 @@ class AppRouter {
         GoRoute(
           path: '/auth/role-selection',
           builder: (context, state) => const RoleSelectionScreen(),
-        ),
-        GoRoute(
-          path: '/auth/teacher-password',
-          builder: (context, state) => const TeacherPasswordScreen(),
-        ),
-        GoRoute(
-          path: '/auth/admin-password',
-          builder: (context, state) => const AdminPasswordScreen(),
         ),
         GoRoute(
           path: '/auth/login',

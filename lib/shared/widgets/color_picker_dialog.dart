@@ -54,10 +54,10 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 decoration: BoxDecoration(
                   color: isDark
                       ? (isSelected
-                            ? colorTheme.primary.withOpacity(0.3)
+                            ? colorTheme.primary.withValues(alpha: 77 / 255.0)
                             : Colors.grey[900])
                       : (isSelected
-                            ? colorTheme.primary.withOpacity(0.2)
+                            ? colorTheme.primary.withValues(alpha: 51 / 255.0)
                             : Colors.grey[100]),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
@@ -76,7 +76,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: colorTheme.primary.withOpacity(0.4),
+                            color: colorTheme.primary.withValues(alpha: 102 / 255.0),
                             blurRadius: 8,
                             spreadRadius: 1,
                           ),

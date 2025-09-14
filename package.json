@@ -1,6 +1,6 @@
 {
   "name": "fermi",
-  "version": "0.9.3",
+  "version": "0.9.6",
   "description": "Flutter education management platform",
   "scripts": {
     "build": "echo 'Skipping Flutter build in Cloudflare environment'",

@@ -20,7 +20,6 @@ import 'shared/theme/app_typography.dart';
 import 'shared/widgets/splash_screen.dart';
 import 'shared/widgets/pwa_update_notifier.dart';
 import 'shared/widgets/web_notification_handler.dart';
-import 'shared/widgets/app_password_wrapper.dart';
 import 'shared/services/logger_service.dart';
 
 /// Public getter for Firebase initialization status.
@@ -87,7 +86,7 @@ Future<void> main() async {
         }
       }
 
-      runApp(const AppPasswordWrapper(child: InitializationWrapper()));
+      runApp(const InitializationWrapper());
     },
     (error, stack) {
       // Zone error handler - catches errors not caught elsewhere
@@ -231,15 +230,11 @@ class _InitializationWrapperState extends State<InitializationWrapper> {
 
   Future<void> _initializeApp() async {
     try {
-      // Check if user was already authenticated (from AppPasswordWrapper)
-      // Note: We can't access inherited widgets in initState, so we'll skip this optimization
-      final wasAuthenticated = false;
-
       // Check if Firebase is already initialized (handles hot restart)
-      if (AppInitializer.isFirebaseInitialized && wasAuthenticated) {
-        // Fast path - Firebase already initialized and user authenticated
+      if (AppInitializer.isFirebaseInitialized) {
+        // Fast path - Firebase already initialized
         LoggerService.info(
-          'Fast initialization - Firebase initialized and user authenticated',
+          'Fast initialization - Firebase already initialized',
           tag: 'Bootstrap',
         );
         setState(() {

@@ -76,7 +76,7 @@ class ExampleBadge extends StatelessWidget {
 
     // Determine colors
     final bgColor =
-        backgroundColor ?? colorScheme.tertiary.withOpacity(0.9);
+        backgroundColor ?? colorScheme.tertiary.withValues(alpha: 230 / 255.0);
     final fgColor = foregroundColor ?? colorScheme.onTertiary;
 
     // Get size-specific properties
@@ -89,7 +89,7 @@ class ExampleBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(sizeProps.borderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

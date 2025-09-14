@@ -52,18 +52,25 @@ class AdminProvider extends ChangeNotifier {
   // Load system statistics
   Future<void> _loadSystemStats() async {
     try {
-      // Get user counts
+      // Get user counts - fetch all users to count by role
       final userCountsSnapshot = await _firestore.collection('users').get();
       final users = userCountsSnapshot.docs;
       
-      LoggerService.info('Loaded ${users.length} users from Firestore', tag: 'AdminProvider');
+      LoggerService.info('Querying users collection...', tag: 'AdminProvider');
+      LoggerService.info('Found ${users.length} total users in Firestore', tag: 'AdminProvider');
 
       int studentCount = 0;
       int teacherCount = 0;
       int adminCount = 0;
+      int unknownRoleCount = 0;
 
       for (var doc in users) {
-        final role = doc.data()['role'] as String?;
+        final data = doc.data();
+        final role = data['role'] as String?;
+        
+        // Log each user for debugging
+        LoggerService.debug('User ${doc.id}: role=$role, email=${data['email']}', tag: 'AdminProvider');
+        
         switch (role) {
           case 'student':
             studentCount++;
@@ -74,25 +81,78 @@ class AdminProvider extends ChangeNotifier {
           case 'admin':
             adminCount++;
             break;
+          default:
+            unknownRoleCount++;
+            if (role != null) {
+              LoggerService.warning('Unknown role "$role" for user ${doc.id}', tag: 'AdminProvider');
+            } else {
+              LoggerService.warning('No role set for user ${doc.id}', tag: 'AdminProvider');
+            }
         }
       }
 
-      // Get active sessions from presence collection
-      final presenceSnapshot = await _firestore
-          .collection('presence')
-          .where('isOnline', isEqualTo: true)
-          .get();
-      final activeSessions = presenceSnapshot.docs.length;
+      if (unknownRoleCount > 0) {
+        LoggerService.warning('Found $unknownRoleCount users with unknown or missing roles', tag: 'AdminProvider');
+      }
 
-      // Get recent activity count
-      final now = DateTime.now();
-      final oneDayAgo = now.subtract(const Duration(days: 1));
-      final activitiesSnapshot = await _firestore
-          .collection('activities')
-          .where('timestamp', isGreaterThan: oneDayAgo)
-          .limit(100)
-          .get();
-      final recentActivityCount = activitiesSnapshot.docs.length;
+      // Get active sessions from presence collection
+      int activeSessions = 0;
+      try {
+        final presenceSnapshot = await _firestore
+            .collection('presence')
+            .where('online', isEqualTo: true)  // Changed from 'isOnline' to 'online' to match what PresenceService sets
+            .get();
+        
+        // Filter out stale sessions (older than 5 minutes)
+        final now = DateTime.now();
+        int actualActiveSessions = 0;
+        
+        for (var doc in presenceSnapshot.docs) {
+          final data = doc.data();
+          final lastSeen = data['lastSeen'];
+          
+          if (lastSeen != null && lastSeen is Timestamp) {
+            final lastSeenTime = lastSeen.toDate();
+            final minutesSinceLastSeen = now.difference(lastSeenTime).inMinutes;
+            
+            // Only count as active if seen within last 5 minutes
+            if (minutesSinceLastSeen < 5) {
+              actualActiveSessions++;
+              LoggerService.debug('Active session: ${data['displayName'] ?? data['uid']} (seen ${minutesSinceLastSeen}m ago)', tag: 'AdminProvider');
+            } else {
+              LoggerService.debug('Stale session: ${data['displayName'] ?? data['uid']} (seen ${minutesSinceLastSeen}m ago)', tag: 'AdminProvider');
+            }
+          } else {
+            // If no lastSeen timestamp, don't count as active
+            LoggerService.warning('Session without lastSeen timestamp: ${doc.id}', tag: 'AdminProvider');
+          }
+        }
+        
+        activeSessions = actualActiveSessions;
+        LoggerService.info('Found ${presenceSnapshot.docs.length} online records, but only $activeSessions are actually active (seen within 5 minutes)', tag: 'AdminProvider');
+      } catch (e) {
+        LoggerService.warning('Error loading presence data: $e', tag: 'AdminProvider');
+        activeSessions = 0;
+      }
+
+      // Get recent activity count - use Timestamp for proper Firestore query
+      int recentActivityCount = 0;
+      try {
+        final now = DateTime.now();
+        final oneDayAgo = now.subtract(const Duration(days: 1));
+        final oneDayAgoTimestamp = Timestamp.fromDate(oneDayAgo);
+        
+        final activitiesSnapshot = await _firestore
+            .collection('activities')
+            .where('timestamp', isGreaterThan: oneDayAgoTimestamp)
+            .limit(100)
+            .get();
+        recentActivityCount = activitiesSnapshot.docs.length;
+        LoggerService.info('Found $recentActivityCount recent activities', tag: 'AdminProvider');
+      } catch (e) {
+        LoggerService.warning('Error loading activities: $e', tag: 'AdminProvider');
+        recentActivityCount = 0;
+      }
 
       _systemStats = SystemStats(
         totalUsers: users.length,
@@ -103,18 +163,22 @@ class AdminProvider extends ChangeNotifier {
         recentActivityCount: recentActivityCount,
       );
       
-      LoggerService.info('System stats loaded: Total=${users.length}, Students=$studentCount, Teachers=$teacherCount, Admins=$adminCount', tag: 'AdminProvider');
+      LoggerService.info('System stats successfully loaded: Total=${users.length}, Students=$studentCount, Teachers=$teacherCount, Admins=$adminCount, Active=$activeSessions', tag: 'AdminProvider');
     } catch (e) {
-      LoggerService.error('Error loading system stats: $e', tag: 'AdminProvider');
-      // Set default stats if loading fails
+      LoggerService.error('Critical error loading system stats: $e', tag: 'AdminProvider');
+      
+      // Set zero values instead of fake data when loading fails
       _systemStats = SystemStats(
-        totalUsers: 3,
-        studentCount: 1,
-        teacherCount: 1,
-        adminCount: 1,
-        activeSessions: 1,
+        totalUsers: 0,
+        studentCount: 0,
+        teacherCount: 0,
+        adminCount: 0,
+        activeSessions: 0,
         recentActivityCount: 0,
       );
+      
+      // Rethrow to show error to user
+      throw Exception('Failed to load dashboard statistics. Please check your permissions and try again.');
     }
   }
 

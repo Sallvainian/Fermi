@@ -96,10 +96,10 @@ class _BehaviorReportsScreenState extends State<BehaviorReportsScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 128),
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.outline.withOpacity(0.2),
+            color: theme.colorScheme.outline.withValues(alpha: 51),
           ),
         ),
       ),
@@ -136,7 +136,7 @@ class _BehaviorReportsScreenState extends State<BehaviorReportsScreen>
                           });
                         }
                       },
-                      selectedColor: theme.colorScheme.primary.withOpacity(0.2),
+                      selectedColor: theme.colorScheme.primary.withValues(alpha: 51),
                       checkmarkColor: theme.colorScheme.primary,
                     ),
                   );
@@ -502,7 +502,7 @@ class _BehaviorReportsScreenState extends State<BehaviorReportsScreen>
     return AppCard(
       padding: const EdgeInsets.all(16),
       backgroundColor: position <= 3
-          ? rankColor.withOpacity(0.1)
+          ? rankColor.withValues(alpha: 26)
           : null,
       child: Row(
         children: [
@@ -511,7 +511,7 @@ class _BehaviorReportsScreenState extends State<BehaviorReportsScreen>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: rankColor.withOpacity(0.2),
+              color: rankColor.withValues(alpha: 51),
               shape: BoxShape.circle,
             ),
             child: Column(
@@ -641,7 +641,7 @@ class _BehaviorReportsScreenState extends State<BehaviorReportsScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 26),
               shape: BoxShape.circle,
             ),
             child: Icon(

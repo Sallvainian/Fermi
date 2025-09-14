@@ -45,3 +45,6 @@ export * from "./migrate-user-roles-cloud";
 
 // Export admin functions for Firebase Administrator role
 export * from "./adminFunctions";
+
+// Export auth blocking functions for automatic role assignment
+export * from "./authBlocking";

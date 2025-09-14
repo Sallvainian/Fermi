@@ -477,7 +477,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   child: Center(
                     child: Icon(
                       Icons.video_library,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 128),
                       size: 48,
                     ),
                   ),
@@ -486,7 +486,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
               // Play button
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 128),
                   shape: BoxShape.circle,
                 ),
                 padding: const EdgeInsets.all(8),
@@ -507,7 +507,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 51),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -541,7 +541,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           BoxShadow(
             offset: const Offset(0, -2),
             blurRadius: 4,
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 26),
           ),
         ],
       ),

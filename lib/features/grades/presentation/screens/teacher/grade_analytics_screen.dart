@@ -95,7 +95,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
               return Padding(
                 padding: const EdgeInsets.all(16),
                 child: DropdownButtonFormField<String>(
-                  value: _selectedClassId,
+                  initialValue: _selectedClassId,
                   decoration: const InputDecoration(
                     labelText: 'Select Class',
                     border: OutlineInputBorder(),
@@ -309,7 +309,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withAlpha(51),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
         ),
       ),
       child: Column(
@@ -356,7 +356,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withAlpha(51),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
         ),
       ),
       child: BarChart(
@@ -464,7 +464,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withAlpha(51),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
         ),
       ),
       child: LineChart(
@@ -475,13 +475,13 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
             horizontalInterval: 10,
             getDrawingHorizontalLine: (value) {
               return FlLine(
-                color: Theme.of(context).colorScheme.outline.withAlpha(26),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.1),
                 strokeWidth: 1,
               );
             },
             getDrawingVerticalLine: (value) {
               return FlLine(
-                color: Theme.of(context).colorScheme.outline.withAlpha(26),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha:0.1),
                 strokeWidth: 1,
               );
             },
@@ -527,7 +527,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
           borderData: FlBorderData(
             show: true,
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withAlpha(51),
+              color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
             ),
           ),
           minX: 0,
@@ -546,7 +546,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
               dotData: const FlDotData(show: true),
               belowBarData: BarAreaData(
                 show: true,
-                color: Theme.of(context).colorScheme.primary.withAlpha(51),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha:0.2),
               ),
             ),
           ],
@@ -569,7 +569,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withAlpha(51),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
         ),
       ),
       child: BarChart(
@@ -661,7 +661,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withAlpha(51),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
         ),
       ),
       child: SingleChildScrollView(
@@ -688,7 +688,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getGradeColor(student.letterGrade).withAlpha(51),
+                      color: _getGradeColor(student.letterGrade).withValues(alpha:0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -751,7 +751,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withAlpha(51),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha:0.2),
         ),
       ),
       child: SingleChildScrollView(
@@ -802,7 +802,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
                     decoration: BoxDecoration(
                       color: _getDifficultyColor(
                         assignment.difficultyLevel,
-                      ).withAlpha(51),
+                      ).withValues(alpha:0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -844,7 +844,7 @@ class _GradeAnalyticsScreenState extends State<GradeAnalyticsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withAlpha(51),
+        color: color.withValues(alpha:0.2),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(

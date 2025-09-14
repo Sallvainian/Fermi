@@ -1,0 +1,66 @@
+export interface DomainRoleMapping {
+  domain: string;
+  role: "teacher" | "student" | "admin";
+  description?: string;
+}
+
+export const DOMAIN_ROLE_MAPPINGS: DomainRoleMapping[] = [
+  {
+    domain: "@roselleschools.org",
+    role: "teacher",
+    description: "Teacher accounts for Roselle Schools",
+  },
+  {
+    domain: "@rosellestudent.org",
+    role: "student",
+    description: "Student accounts for Roselle Schools",
+  },
+  {
+    domain: "@fermi-plus.com",
+    role: "admin",
+    description: "Administrator accounts for Fermi Plus",
+  },
+];
+
+// No hardcoded admin emails - use @fermi-plus.com domain instead
+export const ADMIN_EMAILS: string[] = [];
+
+/**
+ * Get role from email domain
+ * @param {string} email - User email address
+ * @return {string|null} User role or null if not valid
+ */
+export function getRoleFromEmail(
+  email: string
+): "teacher" | "student" | "admin" | null {
+  const emailLower = email.toLowerCase();
+
+  if (ADMIN_EMAILS.includes(emailLower)) {
+    return "admin";
+  }
+
+  for (const mapping of DOMAIN_ROLE_MAPPINGS) {
+    if (emailLower.endsWith(mapping.domain.toLowerCase())) {
+      return mapping.role;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Check if email is from valid school domain
+ * @param {string} email - User email address
+ * @return {boolean} True if valid school email
+ */
+export function isValidSchoolEmail(email: string): boolean {
+  const emailLower = email.toLowerCase();
+
+  if (ADMIN_EMAILS.includes(emailLower)) {
+    return true;
+  }
+
+  return DOMAIN_ROLE_MAPPINGS.some((mapping) =>
+    emailLower.endsWith(mapping.domain.toLowerCase())
+  );
+}

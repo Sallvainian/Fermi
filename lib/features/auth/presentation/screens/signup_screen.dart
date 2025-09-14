@@ -69,6 +69,7 @@ class _SignupScreenState extends State<SignupScreen> {
         
         // If no valid verified role, check URL parameters
         if (!useVerifiedRole) {
+          if (!mounted) return;
           final goRouterState = GoRouterState.of(context);
           final uri = goRouterState.uri;
           
@@ -136,26 +137,16 @@ class _SignupScreenState extends State<SignupScreen> {
       roleToUse = 'teacher';
     }
     
-    if (roleToUse == 'teacher' || _isTeacherRole) {
-      // Teachers sign up with username
-      await authProvider.signUpWithUsername(
-        username: _usernameOrEmailController.text.trim(),
-        password: _passwordController.text,
-        role: roleToUse,
-      );
-    } else {
-      // Students sign up with email
-      final firstName = _firstNameController.text.trim();
-      final lastName = _lastNameController.text.trim();
-      final displayName = '$firstName $lastName'.trim();
-      
-      await authProvider.signUpWithEmail(
-        email: _usernameOrEmailController.text.trim(),
-        password: _passwordController.text,
-        role: roleToUse,
-        displayName: displayName,
-      );
-    }
+    // All users now sign up with email
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final displayName = '$firstName $lastName'.trim();
+    
+    await authProvider.signUp(
+      email: _usernameOrEmailController.text.trim(),
+      password: _passwordController.text,
+      displayName: displayName.isNotEmpty ? displayName : null,
+    );
 
     // Clear the verified role after successful signup
     if (authProvider.isAuthenticated && mounted) {

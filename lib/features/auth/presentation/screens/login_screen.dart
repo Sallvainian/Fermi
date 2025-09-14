@@ -20,7 +20,7 @@ class LoginScreen extends StatefulWidget {
 
 class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
@@ -55,7 +55,7 @@ class LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -66,8 +66,8 @@ class LoginScreenState extends State<LoginScreen> {
     try {
       LoggerService.info('Attempting Google sign-in for teacher', tag: 'LoginScreen');
       
-      // Use the new teacher-only Google sign-in method
-      await authProvider.signInWithGoogleAsTeacher();
+      // Use Google sign-in - role determined by email domain
+      await authProvider.signInWithGoogle();
       
       if (!mounted) return;
       
@@ -96,20 +96,14 @@ class LoginScreenState extends State<LoginScreen> {
   Future<void> _signIn() async {
     if (_formKey.currentState?.validate() ?? false) {
       final authProvider = context.read<AuthProvider>();
-      final username = _usernameController.text.trim();
+      final email = _emailController.text.trim();
       final password = _passwordController.text;
 
       try {
-        // Admins use email login, teachers and students use username login
-        if (_userRole == 'admin') {
-          LoggerService.info('Attempting admin sign in with email: $username', tag: 'LoginScreen');
-          await authProvider.signInWithEmail(username, password, expectedRole: 'admin');
-          LoggerService.info('Admin sign in successful for email: $username', tag: 'LoginScreen');
-        } else {
-          LoggerService.info('Attempting sign in for username: $username as $_userRole', tag: 'LoginScreen');
-          await authProvider.signInWithUsername(username, password, expectedRole: _userRole);
-          LoggerService.info('Sign in successful for username: $username', tag: 'LoginScreen');
-        }
+        // Sign in with email - role determined by domain
+        LoggerService.info('Attempting sign in with email: $email', tag: 'LoginScreen');
+        await authProvider.signIn(email, password);
+        LoggerService.info('Sign in successful for email: $email', tag: 'LoginScreen');
 
         if (!mounted) return;
 
@@ -129,35 +123,12 @@ class LoginScreenState extends State<LoginScreen> {
         String errorMessage;
         final errorString = e.toString();
         
-        // Check for role mismatch errors
-        if (errorString.contains('has teacher access') || 
-            errorString.contains('has admin access')) {
-          errorMessage = errorString.replaceAll('Exception: ', '');
-          // After showing error, redirect to role selection
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              context.go('/auth/role-selection');
-            }
-          });
-        } else if (errorString.contains('student account') && 
-                   errorString.contains('student login instead')) {
-          errorMessage = errorString.replaceAll('Exception: ', '');
-          // Suggest using student login
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              context.go('/auth/role-selection');
-            }
-          });
-        } else if (errorString.contains('role mismatch')) {
-          errorMessage = errorString.replaceAll('Exception: ', '');
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              context.go('/auth/role-selection');
-            }
-          });
+        // Check for domain-based errors
+        if (errorString.contains('restricted to authorized school email')) {
+          errorMessage = 'Please use your school email address';
         } else if (errorString.contains('invalid-email') ||
                    errorString.contains('user-not-found')) {
-          errorMessage = 'Invalid username or password';
+          errorMessage = 'Invalid email or password';
         } else if (errorString.contains('wrong-password')) {
           errorMessage = 'Invalid password';
         } else if (errorString.contains('too-many-requests')) {
@@ -181,7 +152,10 @@ class LoginScreenState extends State<LoginScreen> {
 
   String? _validateInput(String? value) {
     if (value?.isEmpty ?? true) {
-      return 'Please enter your username';
+      return 'Please enter your email';
+    }
+    if (!value!.contains('@')) {
+      return 'Please enter a valid email address';
     }
     return null;
   }
@@ -226,7 +200,7 @@ class LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Welcome back to Fermi',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 179),
                     ),
                   ),
 
@@ -239,7 +213,7 @@ class LoginScreenState extends State<LoginScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: theme.colorScheme.outline.withOpacity(0.2),
+                        color: theme.colorScheme.outline.withValues(alpha: 51),
                       ),
                     ),
                     child: Padding(
@@ -249,12 +223,12 @@ class LoginScreenState extends State<LoginScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // Username/Email Field
+                            // Email Field
                             AuthTextField(
-                              controller: _usernameController,
-                              label: _userRole == 'admin' ? 'Email' : 'Username',
-                              prefixIcon: _userRole == 'admin' ? Icons.email : Icons.person,
-                              keyboardType: _userRole == 'admin' ? TextInputType.emailAddress : TextInputType.text,
+                              controller: _emailController,
+                              label: 'Email',
+                              prefixIcon: Icons.email,
+                              keyboardType: TextInputType.emailAddress,
                               validator: _validateInput,
                               enabled: !isLoading,
                             ),
