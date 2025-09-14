@@ -22,8 +22,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> {
   final _instructionsController = TextEditingController();
   final _maxPointsController = TextEditingController();
 
-  DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
-  TimeOfDay _dueTime = const TimeOfDay(hour: 23, minute: 59);
+  final DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
+  final TimeOfDay _dueTime = const TimeOfDay(hour: 23, minute: 59);
   String _selectedType = 'essay';
   String _selectedStatus = 'draft';
   bool _isPublished = false;

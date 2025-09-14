@@ -138,7 +138,7 @@ class BehaviorPointProvider with ChangeNotifier {
   String get currentUserId => _auth.currentUser?.uid ?? '';
 
   /// Current user's role (teacher or student)
-  String _userRole = 'teacher';
+  final String _userRole = 'teacher';
   String get userRole => _userRole;
 
 
