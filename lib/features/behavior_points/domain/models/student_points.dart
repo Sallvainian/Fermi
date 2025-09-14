@@ -205,7 +205,7 @@ class StudentPoints {
       'recentBehaviors': recentBehaviors
           .map((behavior) => behavior.toJson())
           .toList(),
-      'avatarColorHex': '#${avatarColor.toARGB32().toRadixString(16).padLeft(8, '0')}',
+      'avatarColorHex': '#${avatarColor.value.toRadixString(16).padLeft(8, '0')}',
       'lastUpdated': lastUpdated.toIso8601String(),
       'classId': classId,
       'classRank': classRank,

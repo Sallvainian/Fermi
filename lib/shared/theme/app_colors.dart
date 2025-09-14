@@ -78,9 +78,7 @@ class AppColors {
   };
 
   static ColorThemeData getTheme(String? themeId) {
-    print('DEBUG: AppColors.getTheme called with themeId: $themeId');
     final theme = availableThemes[themeId] ?? availableThemes['indigo']!;
-    print('DEBUG: Returning theme with primary color: ${theme.primary}');
     return theme;
   }
 }

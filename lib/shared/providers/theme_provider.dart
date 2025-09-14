@@ -79,8 +79,6 @@ class ThemeProvider with ChangeNotifier {
     if (colorTheme != null) {
       _colorThemeId = colorTheme;
     }
-    
-    print('DEBUG: ThemeProvider loaded colorThemeId: $_colorThemeId');
 
     notifyListeners();
   }

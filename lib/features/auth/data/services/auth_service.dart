@@ -168,18 +168,16 @@ class AuthService {
         finalUsername = email.substring(0, email.indexOf('@'));
       }
 
-      // Create user document with proper structure
-      await _firestore!.collection('users').doc(cred.user!.uid).set({
+      // Update user document created by blocking function
+      // Only add/update client-side fields without overwriting backend fields
+      await _firestore!.collection('users').doc(cred.user!.uid).update({
         'uid': cred.user!.uid,
-        'email': email,
-        'displayName': displayName,
         'firstName': firstName,
         'lastName': lastName,
-        'photoURL': null,
         'username': finalUsername,
-        'role': null, // Will be set during role selection
-        'createdAt': FieldValue.serverTimestamp(),
         'lastActive': FieldValue.serverTimestamp(),
+        // Don't update: email, displayName, role, createdAt, emailVerified, isEmailUser, profileComplete
+        // These are already set by the blocking function
       });
     }
 
@@ -361,7 +359,7 @@ class AuthService {
             ? nameParts.sublist(1).join(' ')
             : '';
 
-        // Create user document
+        // Create user document with merge to preserve backend-assigned role
         await _firestore!.collection('users').doc(user.uid).set({
           'uid': user.uid,
           'email': user.email,
@@ -370,10 +368,10 @@ class AuthService {
           'firstName': firstName,
           'lastName': lastName,
           'photoURL': user.photoURL,
-          'role': null, // Will be set during role selection
+          // Don't set role - backend blocking function assigns based on email domain
           'createdAt': FieldValue.serverTimestamp(),
           'lastActive': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       } else {
         // Update last active
         await _firestore!.collection('users').doc(user.uid).update({
