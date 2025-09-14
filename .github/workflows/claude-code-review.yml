@@ -51,12 +51,11 @@ jobs:
           claude_args: |
             --system-prompt "You are an expert Flutter/Dart code reviewer focusing on architecture, performance, and best practices for cross-platform educational applications."
             --allowedTools "Bash(flutter analyze),Bash(dart format),Bash(dart fix)"
-            --focus security,performance,maintainability,architecture
             --max-tokens 8192
           settings: |
             {
               "env": {
-                "FLUTTER_VERSION": "3.24.0",
+                "FLUTTER_VERSION": "3.32.0",
                 "DART_SDK": "stable",
                 "PROJECT_TYPE": "flutter_firebase_educational_app"
               },
@@ -73,7 +72,7 @@ jobs:
                   ],
                   "env": {
                     "CONTEXT7_CACHE_SIZE": "100MB",
-                    "CONTEXT7_FLUTTER_VERSION": "3.24"
+                    "CONTEXT7_FLUTTER_VERSION": "3.32"
                   }
                 },
                 "sequential-thinking": {
@@ -149,4 +148,4 @@ jobs:
             - Flag any breaking changes or migration requirements
             - Suggest relevant Flutter packages if beneficial
             - Consider cross-platform implications
-            - Review for Flutter 3.24 compatibility
+            - Review for Flutter 3.32 compatibility

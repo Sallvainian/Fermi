@@ -71,7 +71,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.24.0'
+          flutter-version: '3.32.0'
           cache: true
 
       - name: Get dependencies
@@ -85,7 +85,6 @@ jobs:
           claude_args: |
             --system-prompt "You are a Flutter architecture expert analyzing codebases for technical debt, design patterns, and improvement opportunities."
             --allowedTools "Bash(flutter analyze),Bash(dart analyze),Bash(grep)"
-            --focus architecture,patterns,technical-debt
             --max-tokens 6000
           settings: |
             {
