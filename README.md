@@ -1,458 +1,573 @@
-# Fermi
+# Fermi Plus - Education Management Platform
 
-A comprehensive education management platform built with Flutter and Firebase, designed to streamline classroom management, student tracking, and educational workflows.
+![Flutter Version](https://img.shields.io/badge/Flutter-3.32.0-blue)
+![Dart Version](https://img.shields.io/badge/Dart-3.8.0-blue)
+![Firebase](https://img.shields.io/badge/Firebase-Enabled-orange)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20Android%20%7C%20iOS%20%7C%20Windows-lightgrey)
 
 🌐 **Live Demo**: [https://academic-tools.org](https://academic-tools.org)
 
-## 🚀 Overview
+## 📚 Overview
 
-Fermi is a modern, cross-platform educational management system that connects teachers, students, and parents. Built with Flutter for beautiful, responsive UIs and Firebase for real-time data synchronization and secure authentication.
+Fermi Plus is a comprehensive education management platform that revolutionizes classroom management and student engagement. Built with Flutter and Firebase, it provides real-time collaboration tools for teachers, students, and parents, creating a unified educational ecosystem.
 
-### Key Highlights
-- 📱 **Cross-Platform**: Web, Android, and iOS from a single codebase
-- 🔥 **Real-time Updates**: Instant synchronization across all devices
-- 🔐 **Secure**: Role-based access control with comprehensive Firestore rules
-- 🎨 **Modern UI**: Material 3 design with adaptive layouts
-- ⚡ **Fast**: Optimized performance with efficient state management
-- 🚀 **CI/CD**: Automated testing and deployment pipeline
+### 🎯 Mission
+Empowering educators with modern technology to create engaging, efficient, and data-driven learning environments that improve student outcomes and streamline administrative tasks.
+
+### 🌟 Key Differentiators
+- **Real-Time Collaboration**: Instant updates across all devices with Firebase real-time sync
+- **Behavior Point System**: Unique gamified approach to student behavior management
+- **Cross-Platform Native**: Single codebase for Web, iOS, Android, and Windows
+- **Role-Based Architecture**: Tailored experiences for teachers, students, and parents
+- **Privacy-First Design**: FERPA-compliant with granular access controls
+- **Progressive Web App**: Installable web app with offline capabilities
 
 ## ✨ Features
 
-### Core Functionality
-- ✅ **Authentication System**
-  - Email/password authentication
-  - Google Sign-In integration
-  - Email verification
-  - Password reset
-  - Role-based access (Teacher/Student/Parent)
+### 👨‍🏫 For Teachers
 
-- ✅ **Class Management**
-  - Create and manage classes
-  - Enrollment codes for easy student registration
-  - Class rosters and student tracking
-  - Subject and grade level organization
+#### Class Management
+- Create unlimited classes with custom subjects and grade levels
+- Generate unique enrollment codes for easy student registration
+- Manage class rosters with bulk operations
+- Archive and restore classes by academic year
+- Real-time student attendance tracking
 
-- ✅ **Student Management**
-  - Student profiles and enrollment
-  - Grade tracking and progress monitoring
-  - Parent contact information
-  - Account claim system for students
+#### Assignment System
+- Rich text assignment creation with file attachments
+- Customizable due dates and submission requirements
+- Auto-grading for objective questions
+- Rubric-based assessment tools
+- Assignment templates and reusability
+- Bulk assignment operations
 
-- ✅ **Assignments & Grading**
-  - Create and distribute assignments
-  - Due date tracking
-  - Grade submission and management
-  - Assignment status tracking
+#### Grading & Analytics
+- Comprehensive gradebook with weighted categories
+- Real-time grade calculations and progress tracking
+- Performance analytics and trend visualization
+- Custom grading scales and standards
+- Grade export to CSV/Excel
+- Parent-viewable progress reports
 
-- ✅ **Communication**
-  - Direct messaging between teachers and students
-  - Group chat for classes
-  - Discussion boards for collaborative learning
-  - Real-time chat with read receipts
+#### Behavior Management
+- **Behavior Points System** (Unique Feature)
+  - Award positive points for achievements
+  - Track negative points for infractions
+  - Visual performance indicators
+  - Weekly/monthly behavior reports
+  - Customizable behavior categories
+  - Class-wide behavior analytics
 
-- ✅ **Dashboard & Analytics**
-  - Teacher dashboard with key metrics
-  - Student dashboard with assignments and grades
-  - Recent activity tracking
-  - Performance analytics (in progress)
+#### Communication Hub
+- Direct messaging with students and parents
+- Class-wide announcements
+- Discussion boards for collaborative learning
+- Scheduled message delivery
+- Read receipts and typing indicators
+- File and media sharing
 
-### Additional Features
-- 📅 **Calendar Integration** - Schedule and event management
-- 🔔 **Notifications** - Assignment reminders and updates
-- 🎮 **Educational Games** - Interactive learning activities (Jeopardy)
-- 📊 **Reports** - Grade reports and progress tracking
-- 🌙 **Theme Support** - Light and dark modes
+### 👨‍🎓 For Students
 
-## 🛠️ Tech Stack
+#### Dashboard Experience
+- Personalized dashboard with upcoming assignments
+- Real-time grade visibility
+- Behavior point tracking and achievements
+- Calendar integration with due dates
+- Assignment submission portal
+- Resource library access
 
-### Frontend
-- **Flutter** (3.24+) - Cross-platform UI framework
-- **Dart** (3.5+) - Programming language
-- **Provider** - State management
-- **GoRouter** - Navigation and routing
-- **Material 3** - Design system
+#### Learning Tools
+- Interactive discussion participation
+- Peer collaboration spaces
+- Educational games (Jeopardy-style quizzes)
+- Study groups and chat rooms
+- Assignment clarification requests
+- Portfolio showcase
 
-### Backend
-- **Firebase Auth** - Authentication and user management
-- **Cloud Firestore** - NoSQL real-time database
-- **Firebase Storage** - File and media storage
-- **Firebase Hosting** - Web app hosting
-- **Firebase Functions** - Serverless backend logic
+#### Account Management
+- Account claim system for student ownership
+- Profile customization
+- Notification preferences
+- Parent account linking
+- Multi-device synchronization
 
-### DevOps
-- **GitHub Actions** - CI/CD pipeline
-- **Firebase CLI** - Deployment and management
-- **Flutter Web** - Progressive Web App (PWA) support
+### 👪 For Parents
 
-## 📱 Platform Support
-
-| Platform | Status | Notes |
-|----------|--------|-------|
-| **Web** | ✅ Production | Primary platform, PWA enabled |
-| **Android** | ✅ Production | Full feature support |
-| **iOS** | ✅ App Store Ready | v0.9.2 - Submitted for review |
-
+#### Monitoring & Engagement
+- Real-time access to student grades
+- Behavior point tracking
+- Assignment completion status
+- Teacher communication portal
+- Attendance records
+- Progress reports and analytics
 
 ## 🏗️ Architecture
 
-The project follows Clean Architecture principles with a feature-based structure:
+### Clean Architecture Implementation
 
 ```
 lib/
-├── features/                 # Feature modules
-│   ├── auth/                # Authentication
-│   │   ├── data/           # Services and Firebase integration
-│   │   ├── domain/         # Models and business logic
-│   │   └── presentation/   # Screens and providers
-│   ├── classes/             # Class management
-│   ├── students/            # Student management
-│   ├── assignments/         # Assignment system
-│   ├── grades/              # Grading system
-│   ├── chat/                # Messaging
-│   ├── discussions/         # Discussion boards
-│   └── calendar/            # Calendar feature
-├── shared/                   # Shared code
-│   ├── core/               # App initialization, DI
-│   ├── routing/            # Navigation configuration
-│   ├── theme/              # App theming
-│   ├── widgets/            # Reusable widgets
-│   ├── utils/              # Utilities
-│   └── services/           # Shared services
-└── main.dart                # App entry point
+├── features/                    # Feature-based modular architecture
+│   ├── admin/                  # Admin management features
+│   │   ├── data/               # Data sources and repositories
+│   │   ├── domain/             # Business logic and models
+│   │   └── presentation/       # UI screens and providers
+│   ├── assignments/            # Assignment management
+│   ├── auth/                   # Authentication system
+│   ├── behavior_points/        # Behavior tracking (Unique)
+│   ├── calendar/               # Calendar integration
+│   ├── chat/                   # Real-time messaging
+│   ├── classes/                # Class management
+│   ├── dashboard/              # Dashboard views
+│   ├── discussions/            # Discussion boards
+│   ├── games/                  # Educational games
+│   ├── grades/                 # Grading system
+│   ├── notifications/          # Push notifications
+│   ├── student/                # Student management
+│   └── teacher/                # Teacher features
+├── shared/                      # Shared components
+│   ├── core/                   # App initialization, DI
+│   ├── models/                 # Shared data models
+│   ├── providers/              # Global state providers
+│   ├── routing/                # Navigation configuration
+│   ├── screens/                # Common screens
+│   ├── services/               # Shared services layer
+│   ├── theme/                  # Theming and styling
+│   ├── utils/                  # Utility functions
+│   └── widgets/                # Reusable UI components
+└── main.dart                   # Application entry point
 ```
 
+### Technology Stack
+
+#### Frontend
+- **Flutter 3.32.0** - Cross-platform UI framework
+- **Dart 3.8.0** - Programming language
+- **Provider** - State management solution
+- **GoRouter 16.2** - Declarative navigation
+- **Material 3** - Modern design system
+
+#### Backend & Infrastructure
+- **Firebase Auth** - Multi-provider authentication
+- **Cloud Firestore** - NoSQL real-time database
+- **Firebase Storage** - Media and file storage
+- **Firebase Functions** - Serverless backend logic
+- **Firebase Hosting** - Web deployment
+- **Firebase Cloud Messaging** - Push notifications
+
+#### Key Dependencies
+- **fl_chart** - Data visualization
+- **cached_network_image** - Image optimization
+- **video_player** - Media playback
+- **flutter_local_notifications** - Local notifications
+- **sign_in_with_apple** - iOS authentication
+- **google_sign_in** - Google OAuth
+- **device_calendar** - Calendar sync
+- **file_picker** - File selection
+- **image_picker** - Camera/gallery access
+
 ### Design Patterns
-- **Provider Pattern** - State management
-- **Repository Pattern** (simplified) - Data access abstraction
-- **Service Layer** - Business logic encapsulation
-- **Feature-First Organization** - Modular architecture
+
+- **Provider Pattern**: Reactive state management
+- **Repository Pattern**: Data access abstraction
+- **Service Layer**: Business logic encapsulation
+- **Feature-First Architecture**: Modular organization
+- **Clean Architecture**: Separation of concerns
+- **SOLID Principles**: Maintainable code structure
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Flutter SDK (>=3.24.0)
-- Dart SDK (>=3.5.0)
+
+- Flutter SDK (>=3.32.0, <4.0.0)
+- Dart SDK (>=3.8.0)
 - Firebase CLI
+- Node.js (for Firebase Functions)
 - Git
-- IDE (VS Code or Android Studio recommended)
+- IDE (VS Code or Android Studio)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Sallvainian/Fermi.git
-   cd Fermi
+   git clone https://github.com/your-org/fermi-plus.git
+   cd fermi-plus
    ```
 
-2. **Install dependencies**
+2. **Install Flutter dependencies**
    ```bash
    flutter pub get
    ```
 
-3. **Firebase Setup**
+3. **Firebase Configuration**
    ```bash
-   # Install Firebase CLI (if not already installed)
+   # Install Firebase CLI
    npm install -g firebase-tools
-   
+
    # Login to Firebase
    firebase login
-   
-   # Configure Firebase for your project
-   # Note: Firebase project ID remains 'teacher-dashboard-flutterfire'
+
+   # Initialize Firebase (if needed)
    flutterfire configure --project=teacher-dashboard-flutterfire
    ```
 
-4. **Run the application**
-   ```bash
-   # Web (recommended for development)
-   flutter run -d chrome
-   
-   # Android
-   flutter run -d android
-   
-   # iOS (macOS only)
-   flutter run -d ios
+4. **Environment Setup**
+   Create a `.env` file in the root directory:
+   ```env
+   GOOGLE_OAUTH_CLIENT_ID=your_client_id
+   GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret
    ```
 
-### Development Commands
+5. **Platform-Specific Setup**
+
+   **Android**:
+   - Place `google-services.json` in `android/app/`
+
+   **iOS**:
+   - Place `GoogleService-Info.plist` in `ios/Runner/`
+   - Configure Sign in with Apple in Xcode
+
+   **Web**:
+   - Firebase config is embedded in `web/index.html`
+
+### Running the Application
 
 ```bash
-# Check code quality
-flutter analyze
+# Web (recommended for development)
+flutter run -d chrome
 
-# Run tests
-flutter test
+# Android
+flutter run -d android
 
-# Format code
-dart format .
+# iOS (macOS only)
+flutter run -d ios
 
-# Build for production
+# Windows
+flutter run -d windows
+
+# List all available devices
+flutter devices
+```
+
+### Building for Production
+
+```bash
+# Web
 flutter build web --release
+
+# Android APK
 flutter build apk --release
+
+# Android App Bundle
+flutter build appbundle --release
+
+# iOS
 flutter build ios --release
+
+# Windows
+flutter build windows --release
 ```
 
 ## 🔥 Firebase Configuration
 
-### Firestore Structure
-```
-users/{userId}
-├── email: string
-├── displayName: string
-├── role: string (teacher/student/parent)
-├── createdAt: timestamp
-└── emailVerified: boolean
+### Firestore Database Structure
 
-classes/{classId}
-├── teacherId: string
-├── name: string
-├── subject: string
-├── gradeLevel: string
-├── enrollmentCode: string
-├── studentIds: array
-└── createdAt: timestamp
+```javascript
+// Users Collection
+users/{userId} {
+  email: string,
+  displayName: string,
+  role: "teacher" | "student" | "parent" | "admin",
+  createdAt: timestamp,
+  emailVerified: boolean,
+  profileImageUrl?: string,
+  settings?: object
+}
 
-assignments/{assignmentId}
-├── classId: string
-├── teacherId: string
-├── title: string
-├── description: string
-├── dueDate: timestamp
-└── status: string
+// Classes Collection
+classes/{classId} {
+  teacherId: string,
+  name: string,
+  subject: string,
+  gradeLevel: string,
+  enrollmentCode: string,
+  studentIds: string[],
+  createdAt: timestamp,
+  academicYear: string,
+  isArchived: boolean
+}
 
-grades/{gradeId}
-├── studentId: string
-├── assignmentId: string
-├── classId: string
-├── score: number
-└── feedback: string
+// Assignments Collection
+assignments/{assignmentId} {
+  classId: string,
+  teacherId: string,
+  title: string,
+  description: string,
+  dueDate: timestamp,
+  points: number,
+  status: "draft" | "published" | "closed",
+  attachments?: string[],
+  rubric?: object
+}
 
-discussionBoards/{boardId}
-├── classId: string
-├── title: string
-├── posts/{postId}
-│   ├── authorId: string
-│   ├── content: string
-│   └── createdAt: timestamp
+// Behavior Points Collection
+behaviorPoints/{pointId} {
+  studentId: string,
+  teacherId: string,
+  classId: string,
+  points: number,
+  category: string,
+  description: string,
+  createdAt: timestamp,
+  isPositive: boolean
+}
+
+// Grades Collection
+grades/{gradeId} {
+  studentId: string,
+  assignmentId: string,
+  classId: string,
+  score: number,
+  maxScore: number,
+  feedback?: string,
+  submittedAt: timestamp,
+  gradedAt: timestamp
+}
+
+// Messages Collection
+messages/{messageId} {
+  senderId: string,
+  recipientIds: string[],
+  content: string,
+  timestamp: timestamp,
+  readBy: object,
+  attachments?: string[]
+}
+
+// Discussion Boards Collection
+discussionBoards/{boardId} {
+  classId: string,
+  title: string,
+  description: string,
+  createdBy: string,
+  createdAt: timestamp,
+  posts: subcollection
+}
 ```
 
 ### Security Rules
-Comprehensive Firestore security rules ensure:
-- Users can only access their own data
-- Teachers manage their classes and students
-- Students access only enrolled classes
-- Role-based permissions throughout
-- Email verification requirements for sensitive operations
 
-## 🚀 Deployment
+The application implements comprehensive Firestore security rules that ensure:
 
-### Automatic Deployment (CI/CD)
-The project uses GitHub Actions for automated deployment:
+- **Authentication Required**: All database access requires authentication
+- **Role-Based Access**: Teachers, students, and parents have different permissions
+- **Data Isolation**: Users can only access their authorized data
+- **Email Verification**: Sensitive operations require verified email
+- **Domain Validation**: School email domains are enforced
+- **Write Protection**: Only authorized users can modify data
 
-1. **Push to main branch** triggers the CI/CD pipeline
-2. **CI workflow** runs tests and builds the app
-3. **Deploy workflow** automatically deploys to Firebase
-
-### Manual Deployment
-
-```bash
-# Deploy everything
-firebase deploy
-
-# Deploy specific services
-firebase deploy --only hosting           # Web app
-firebase deploy --only firestore:rules   # Security rules
-firebase deploy --only storage:rules     # Storage rules
-firebase deploy --only functions         # Cloud Functions
+Example security rule pattern:
+```javascript
+match /classes/{classId} {
+  allow read: if request.auth != null &&
+    (isTeacher() || isStudentInClass(classId));
+  allow write: if request.auth != null &&
+    isTeacher() && request.auth.uid == resource.data.teacherId;
+}
 ```
 
 ## 🧪 Testing
 
-### Run Tests
+### Test Structure
+```
+test/
+├── unit/           # Unit tests for services and models
+├── widget/         # Widget tests for UI components
+├── integration/    # Integration tests
+└── fixtures/       # Test data and mocks
+```
+
+### Running Tests
 ```bash
-# All tests
+# Run all tests
 flutter test
 
-# With coverage
+# Run tests with coverage
 flutter test --coverage
 
-# Specific test file
-flutter test test/widget_test.dart
+# Run specific test file
+flutter test test/unit/auth_service_test.dart
+
+# Run integration tests
+flutter test integration_test/
 ```
 
-### Test Database Connection
+### Code Quality
 ```bash
-# Simple database test
-flutter run lib/test_db_simple.dart
+# Analyze code
+flutter analyze
 
-# Setup test data
-flutter run lib/setup_test_data.dart
+# Format code
+dart format .
+
+# Check for issues
+dart fix --dry-run
+
+# Apply fixes
+dart fix --apply
 ```
 
-## 📊 CI/CD Pipeline
+## 🚀 CI/CD Pipeline
 
-The project includes comprehensive GitHub Actions workflows:
+### GitHub Actions Workflows
 
-### Workflows
-- **CI** - Runs on every push and PR
-  - Code analysis
-  - Unit tests
-  - Build verification
-  
-- **Deploy Web** - Triggered on main branch
-  - Builds production app
-  - Deploys to Firebase Hosting
-  - Updates Firestore rules
+The project includes comprehensive CI/CD automation:
 
-- **Mobile Builds** - Creates APK/IPA artifacts
+1. **CI Workflow** (`01_ci.yml`)
+   - Code quality checks
+   - Dead code detection
+   - Linting and formatting
+   - Triggered on pull requests
 
-### Status Badges
-![CI](https://github.com/Sallvainian/Fermi/workflows/CI/badge.svg)
-![Deploy](https://github.com/Sallvainian/Fermi/workflows/Deploy%20Web/badge.svg)
+2. **Web Deployment** (`02_deploy_web.yml`)
+   - Builds production web app
+   - Deploys to Firebase Hosting
+   - Updates Firestore rules
+   - Triggered on main branch
 
-## 🔧 Environment Variables
+3. **Platform Releases**
+   - Windows release workflow
+   - macOS release workflow
+   - Mobile build workflows
 
-The project uses environment-specific configuration:
+4. **Code Review Automation**
+   - Claude Code review integration
+   - Gemini AI-powered issue triage
+   - Automated PR reviews
 
-### Required Secrets (GitHub Actions)
-- `FIREBASE_TOKEN` - Firebase CI token
-- `FIREBASE_API_KEY` - Web API key
-- `FIREBASE_PROJECT_ID` - Firebase project ID
-- `FIREBASE_APP_ID_*` - Platform-specific app IDs
+### Deployment Commands
 
-### Local Development
-Create platform-specific configuration files:
-- `android/app/google-services.json` - Android
-- `ios/Runner/GoogleService-Info.plist` - iOS
-- `web/index.html` - Web configuration
+```bash
+# Deploy everything to Firebase
+firebase deploy
+
+# Deploy specific services
+firebase deploy --only hosting
+firebase deploy --only firestore:rules
+firebase deploy --only storage:rules
+firebase deploy --only functions
+
+# Preview deployment
+firebase hosting:channel:deploy preview
+```
+
+## 📊 Performance & Optimization
+
+### Performance Features
+- **Lazy Loading**: Components load on demand
+- **Image Caching**: Cached network images for performance
+- **Pagination**: Large lists are paginated
+- **Debouncing**: Search and input optimization
+- **Code Splitting**: Web build optimization
+- **Tree Shaking**: Unused code elimination
+
+### Monitoring
+- Firebase Performance Monitoring
+- Custom performance metrics
+- Error tracking with stack traces
+- User session analytics
+
+## 🔐 Security & Privacy
+
+### Security Features
+- **OAuth 2.0**: Secure authentication
+- **Email Verification**: Required for sensitive operations
+- **Domain Validation**: School email enforcement
+- **Role-Based Access**: Granular permissions
+- **Data Encryption**: In-transit and at-rest
+- **Session Management**: Secure token handling
+
+### Privacy Compliance
+- **FERPA Compliant**: Educational privacy standards
+- **COPPA Considerations**: Child privacy protection
+- **Data Minimization**: Only essential data collected
+- **User Control**: Data export and deletion
+- **Transparent Policies**: Clear privacy documentation
 
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these guidelines:
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md).
 
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/amazing-feature
-   ```
-3. **Make your changes**
-   - Follow Dart style guide
-   - Add tests for new features
-   - Update documentation
-4. **Commit with conventional commits**
-   ```bash
-   git commit -m "feat: add amazing feature"
-   ```
-5. **Push and create PR**
-   ```bash
-   git push origin feature/amazing-feature
-   ```
+### Development Workflow
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
 
 ### Commit Convention
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `docs:` - Documentation
-- `style:` - Formatting, no code change
-- `refactor:` - Code restructuring
-- `test:` - Adding tests
-- `chore:` - Maintenance
-
-## 📱 Development Best Practices
-
-### Code Quality
-- Run `flutter analyze` before committing
-- Maintain >80% test coverage for critical features
-- Use meaningful variable and function names
-- Document complex logic with comments
-
-### State Management
-- Use Provider for global state
-- Keep state as local as possible
-- Implement proper loading and error states
-- Use `ChangeNotifier` with `notifyListeners()` carefully
-
-### Firebase Best Practices
-- Enable offline persistence for better UX
-- Use batch operations for multiple writes
-- Implement proper error handling
-- Optimize queries with composite indexes
-
-### Performance
-- Use `const` constructors where possible
-- Implement lazy loading for lists
-- Optimize images and assets
-- Monitor bundle size
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-**setState() during build**
-- Wrap state changes in `WidgetsBinding.instance.addPostFrameCallback()`
-
-**Firebase Permission Denied**
-- Check Firestore security rules
-- Ensure user is authenticated and email verified
-- Verify document paths
-
-**Web Package Compatibility**
-- Use conditional imports for web-specific code
-- Create stub files for platform-specific implementations
-
-**Build Failures**
-- Run `flutter clean` and `flutter pub get`
-- Check for dependency conflicts
-- Verify Firebase configuration files
+- `feat:` New features
+- `fix:` Bug fixes
+- `docs:` Documentation
+- `style:` Formatting
+- `refactor:` Code restructuring
+- `test:` Testing
+- `chore:` Maintenance
 
 ## 📈 Roadmap
 
-### Recently Completed (v0.9.2)
-- [x] Apple App Store compliance (removed VoIP/CallKit)
-- [x] Fixed class-specific assignment display
-- [x] Optimized assignment deduplication
-- [x] Updated all dependencies to latest stable versions
-- [x] Improved notification handling
+### Current Version (0.9.5)
+- ✅ Core platform features
+- ✅ Multi-platform support
+- ✅ Real-time collaboration
+- ✅ Behavior point system
+- ✅ Firebase integration
 
-### Current Sprint
-- [ ] Complete performance analytics dashboard
-- [ ] Add export functionality for grades
-- [ ] Implement attendance tracking
-- [ ] Add parent portal access
+### Version 1.0 (Q1 2025)
+- [ ] Parent portal enhancements
+- [ ] Advanced analytics dashboard
+- [ ] Attendance tracking system
+- [ ] Report card generation
+- [ ] Bulk import/export tools
+
+### Version 1.1 (Q2 2025)
+- [ ] AI-powered insights
+- [ ] Video conferencing integration
+- [ ] LMS integration (Canvas, Blackboard)
+- [ ] Multi-language support
+- [ ] Custom branding options
 
 ### Future Enhancements
-- [ ] AI-powered assignment suggestions
-- [ ] Video conferencing integration
-- [ ] Advanced reporting and analytics
-- [ ] Mobile offline support
-- [ ] Multi-language support
-- [ ] Integration with Google Classroom
-- [ ] Automated grading for objective questions
+- [ ] Offline mode with sync
+- [ ] Voice assistant integration
+- [ ] AR/VR learning experiences
+- [ ] Blockchain certificates
+- [ ] API for third-party integrations
+
+## 📞 Support
+
+- **Documentation**: [Wiki](https://github.com/your-org/fermi-plus/wiki)
+- **Issues**: [GitHub Issues](https://github.com/your-org/fermi-plus/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/fermi-plus/discussions)
+- **Email**: support@fermi-plus.com
+- **Discord**: [Join our community](https://discord.gg/fermi-plus)
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👥 Team
-
-- **Development**: Sallvainian
-- **Design**: Material Design 3 Guidelines
-- **Infrastructure**: Firebase Platform
-
 ## 🙏 Acknowledgments
 
 - Flutter team for the amazing framework
-- Firebase team for the backend platform
+- Firebase team for the robust backend platform
 - Material Design team for design guidelines
 - Open source community for invaluable packages
-
-## 📞 Support
-
-- 📧 **Issues**: [GitHub Issues](https://github.com/Sallvainian/Fermi/issues)
-- 📖 **Documentation**: [Wiki](https://github.com/Sallvainian/Fermi/wiki)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/Sallvainian/Fermi/discussions)
+- Our educators for feedback and insights
+- Students and parents for their patience and support
 
 ---
 
-**Built with ❤️ using Flutter and Firebase**
+**Built with ❤️ by the Fermi Plus Team**
 
-*Empowering educators with modern technology for better learning outcomes*
+*Transforming education through technology, one classroom at a time.*
