@@ -57,11 +57,11 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
               right: 16,
               child: Container(
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withValues(alpha: 230),
+                  color: theme.colorScheme.surface.withValues(alpha: 230 / 255.0),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 51),
+                      color: Colors.black.withValues(alpha: 51 / 255.0),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
@@ -87,11 +87,11 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surface.withValues(alpha: 230),
+                    color: theme.colorScheme.surface.withValues(alpha: 230 / 255.0),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 26),
+                        color: Colors.black.withValues(alpha: 26 / 255.0),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -354,7 +354,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.green.withValues(alpha: 51),
+                                  color: Colors.green.withValues(alpha: 51 / 255.0),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -413,7 +413,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                     end: Alignment.bottomRight,
                     colors: [
                       theme.colorScheme.primary,
-                      theme.colorScheme.primary.withValues(alpha: 204),
+                      theme.colorScheme.primary.withValues(alpha: 204 / 255.0),
                     ],
                   ),
                 ),
@@ -425,7 +425,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                       child: Icon(
                         Icons.calculate,
                         size: 300,
-                        color: Colors.white.withValues(alpha: 26),
+                        color: Colors.white.withValues(alpha: 26 / 255.0),
                       ),
                     ),
                     Padding(
@@ -438,14 +438,14 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                             children: [
                               Icon(
                                 Icons.schedule,
-                                color: Colors.white.withValues(alpha: 230),
+                                color: Colors.white.withValues(alpha: 230 / 255.0),
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Mon, Wed, Fri • 10:00 AM',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 230),
+                                  color: Colors.white.withValues(alpha: 230 / 255.0),
                                   fontSize: 16,
                                 ),
                               ),
@@ -456,28 +456,28 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                             children: [
                               Icon(
                                 Icons.room,
-                                color: Colors.white.withValues(alpha: 230),
+                                color: Colors.white.withValues(alpha: 230 / 255.0),
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Room 201',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 230),
+                                  color: Colors.white.withValues(alpha: 230 / 255.0),
                                   fontSize: 16,
                                 ),
                               ),
                               const SizedBox(width: 24),
                               Icon(
                                 Icons.people,
-                                color: Colors.white.withValues(alpha: 230),
+                                color: Colors.white.withValues(alpha: 230 / 255.0),
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 '28 Students',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 230),
+                                  color: Colors.white.withValues(alpha: 230 / 255.0),
                                   fontSize: 16,
                                 ),
                               ),
@@ -561,7 +561,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                           getDrawingHorizontalLine: (value) {
                             return FlLine(
                               color: theme.colorScheme.outlineVariant
-                                  .withValues(alpha: 77),
+                                  .withValues(alpha: 77 / 255.0),
                               strokeWidth: 1,
                             );
                           },
@@ -808,7 +808,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 51),
+                      color: Colors.green.withValues(alpha: 51 / 255.0),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -1061,7 +1061,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 26),
+          color: color.withValues(alpha: 26 / 255.0),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -1141,7 +1141,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 51),
+            color: color.withValues(alpha: 51 / 255.0),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color),
@@ -1175,10 +1175,10 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [color.withValues(alpha: 51), color.withValues(alpha: 26)],
+          colors: [color.withValues(alpha: 51 / 255.0), color.withValues(alpha: 26 / 255.0)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 77), width: 1),
+        border: Border.all(color: color.withValues(alpha: 77 / 255.0), width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1317,7 +1317,7 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 51),
+                      color: color.withValues(alpha: 51 / 255.0),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -1423,13 +1423,13 @@ class _PreviewShowcaseState extends State<PreviewShowcase> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       color: isUnread
-          ? theme.colorScheme.primaryContainer.withValues(alpha: 77)
+          ? theme.colorScheme.primaryContainer.withValues(alpha: 77 / 255.0)
           : null,
       child: ListTile(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 51),
+            color: color.withValues(alpha: 51 / 255.0),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color),

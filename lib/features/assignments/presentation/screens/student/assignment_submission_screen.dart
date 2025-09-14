@@ -608,7 +608,7 @@ class _AssignmentSubmissionScreenState
                     shape: BoxShape.circle,
                     color: _getGradeColor(
                       _studentAssignment!['letterGrade'] ?? 'N/A',
-                    ).withValues(alpha: 51),
+                    ).withValues(alpha: 51 / 255.0),
                   ),
                   child: Center(
                     child: Column(

@@ -138,8 +138,23 @@ class BehaviorPointProvider with ChangeNotifier {
   String get currentUserId => _auth.currentUser?.uid ?? '';
 
   /// Current user's role (teacher or student)
-  final String _userRole = 'teacher';
-  String get userRole => _userRole;
+  String get userRole {
+    // Get role from cached user model if available
+    if (_cachedUserModel != null && _cachedUserModel!.role != null) {
+      switch (_cachedUserModel!.role) {
+        case UserRole.teacher:
+          return 'teacher';
+        case UserRole.student:
+          return 'student';
+        case UserRole.admin:
+          return 'admin';
+        default:
+          return 'unknown';
+      }
+    }
+    // Fallback to 'unknown' if no user model is available
+    return 'unknown';
+  }
 
 
   /// Returns cached display name or fetches and caches it

@@ -23,7 +23,7 @@ class PreviewWithData extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 51),
+                    color: Colors.black.withValues(alpha: 51 / 255.0),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -53,7 +53,7 @@ class PreviewWithData extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 51),
+                      color: Colors.black.withValues(alpha: 51 / 255.0),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

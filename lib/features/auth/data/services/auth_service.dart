@@ -170,7 +170,7 @@ class AuthService {
 
       // Update user document created by blocking function
       // Only add/update client-side fields without overwriting backend fields
-      await _firestore!.collection('users').doc(cred.user!.uid).update({
+      await _firestore!.collection('users').doc(cred.user!.uid).set({
         'uid': cred.user!.uid,
         'firstName': firstName,
         'lastName': lastName,
@@ -178,7 +178,7 @@ class AuthService {
         'lastActive': FieldValue.serverTimestamp(),
         // Don't update: email, displayName, role, createdAt, emailVerified, isEmailUser, profileComplete
         // These are already set by the blocking function
-      });
+      }, SetOptions(merge: true));
     }
 
     return cred.user;
@@ -213,7 +213,7 @@ class AuthService {
       await _firestore!
           .collection('users')
           .doc(cred.user!.uid)
-          .update({'lastActive': FieldValue.serverTimestamp()})
+          .set({'lastActive': FieldValue.serverTimestamp()}, SetOptions(merge: true))
           .catchError((_) {});
     }
 
@@ -374,9 +374,9 @@ class AuthService {
         }, SetOptions(merge: true));
       } else {
         // Update last active
-        await _firestore!.collection('users').doc(user.uid).update({
+        await _firestore!.collection('users').doc(user.uid).set({
           'lastActive': FieldValue.serverTimestamp(),
-        });
+        }, SetOptions(merge: true));
       }
     }
 
