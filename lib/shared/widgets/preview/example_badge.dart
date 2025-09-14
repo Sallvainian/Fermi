@@ -76,7 +76,7 @@ class ExampleBadge extends StatelessWidget {
 
     // Determine colors
     final bgColor =
-        backgroundColor ?? colorScheme.tertiary.withValues(alpha: 230);
+        backgroundColor ?? colorScheme.tertiary.withValues(alpha: 230 / 255.0);
     final fgColor = foregroundColor ?? colorScheme.onTertiary;
 
     // Get size-specific properties

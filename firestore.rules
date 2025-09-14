@@ -15,32 +15,32 @@ service cloud.firestore {
     
     // Helper function to check if email has valid school domain
     function hasValidSchoolDomain() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
              request.auth.token.email != null &&
-             (request.auth.token.email.matches('.*@roselleschools[.]org$') ||
-              request.auth.token.email.matches('.*@rosellestudent[.]org$') ||
-              request.auth.token.email.matches('.*@fermi-plus[.]com$'));
+             (request.auth.token.email.matches('(?i).*@roselleschools[.]org$') ||
+              request.auth.token.email.matches('(?i).*@rosellestudent[.]org$') ||
+              request.auth.token.email.matches('(?i).*@fermi-plus[.]com$'));
     }
     
     // Helper function to check if user has valid teacher domain
     function hasTeacherDomain() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
              request.auth.token.email != null &&
-             request.auth.token.email.matches('.*@roselleschools[.]org$');
+             request.auth.token.email.matches('(?i).*@roselleschools[.]org$');
     }
     
     // Helper function to check if user has valid student domain
     function hasStudentDomain() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
              request.auth.token.email != null &&
-             request.auth.token.email.matches('.*@rosellestudent[.]org$');
+             request.auth.token.email.matches('(?i).*@rosellestudent[.]org$');
     }
     
     // Helper function to check if user has valid admin domain
     function hasAdminDomain() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
              request.auth.token.email != null &&
-             request.auth.token.email.matches('.*@fermi-plus[.]com$');
+             request.auth.token.email.matches('(?i).*@fermi-plus[.]com$');
     }
     
     // Helper function to get user role from database (with caching)
