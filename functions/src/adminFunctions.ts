@@ -61,10 +61,10 @@ export const createStudentAccount = onCall(
     }
 
     // 3. Input validation
-    const {email, password, displayName, grade} = request.data;
+    const {email, password, displayName, gradeLevel, parentEmail, classIds, isGoogleAuth} = request.data;
 
-    if (!email || !password) {
-      throw new HttpsError("invalid-argument", "Email and password are required");
+    if (!email) {
+      throw new HttpsError("invalid-argument", "Email is required");
     }
 
     if (!email.includes("@")) {
@@ -72,28 +72,56 @@ export const createStudentAccount = onCall(
     }
 
     // ENFORCE DOMAIN VALIDATION FOR STUDENTS
-    if (!email.toLowerCase().endsWith("@rosellestudent.org")) {
+    if (!email.toLowerCase().endsWith("@rosellestudent.org") &&
+        !email.toLowerCase().endsWith("@rosellestudent.com")) {
       throw new HttpsError(
         "invalid-argument",
-        "Student accounts must use @rosellestudent.org email addresses"
+        "Student accounts must use @rosellestudent.org or @rosellestudent.com email addresses"
       );
     }
 
-    if (password.length < 6) {
-      throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
+    // For Google OAuth accounts, we don't need a password
+    if (!isGoogleAuth) {
+      if (!password) {
+        throw new HttpsError("invalid-argument", "Password is required for non-Google accounts");
+      }
+      if (password.length < 6) {
+        throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
+      }
     }
 
     try {
-      // Use the provided email directly (must be @rosellestudent.org)
       const emailValidated = email.toLowerCase();
+      let userRecord;
 
-      // Create the user account in Firebase Auth
-      const userRecord = await auth.createUser({
-        email: emailValidated,
-        password: password,
-        displayName: displayName || emailValidated.split("@")[0],
-        emailVerified: true, // Mark as verified since admin created it
-      });
+      if (isGoogleAuth) {
+        // For Google OAuth accounts, just create the Firestore document
+        // The actual Firebase Auth account will be created when they first sign in with Google
+        
+        // Check if user already exists
+        const existingUser = await auth.getUserByEmail(emailValidated).catch(() => null);
+        
+        if (existingUser) {
+          // User already exists in Firebase Auth (likely from Google sign-in)
+          userRecord = existingUser;
+        } else {
+          // Create a placeholder user that will be linked when they sign in with Google
+          // We create without password for Google OAuth users
+          userRecord = await auth.createUser({
+            email: emailValidated,
+            displayName: displayName || emailValidated.split("@")[0],
+            emailVerified: true, // Mark as verified since admin created it
+          });
+        }
+      } else {
+        // Create regular email/password account
+        userRecord = await auth.createUser({
+          email: emailValidated,
+          password: password,
+          displayName: displayName || emailValidated.split("@")[0],
+          emailVerified: true, // Mark as verified since admin created it
+        });
+      }
 
       // Set custom claims for role
       await auth.setCustomUserClaims(userRecord.uid, {
@@ -105,11 +133,28 @@ export const createStudentAccount = onCall(
         email: emailValidated,
         displayName: displayName || emailValidated.split("@")[0],
         role: "student",
-        grade: grade || null,
+        gradeLevel: gradeLevel || null,
+        parentEmail: parentEmail || null,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: request.auth.uid,
-        isEmailUser: true, // Now using real email domain
+        isEmailUser: !isGoogleAuth, // true for email/password, false for Google OAuth
+        isGoogleAuth: isGoogleAuth || false,
       });
+
+      // Add to classes if provided
+      if (classIds && Array.isArray(classIds) && classIds.length > 0) {
+        const batch = db.batch();
+        
+        for (const classId of classIds) {
+          const classRef = db.collection("classes").doc(classId);
+          batch.update(classRef, {
+            studentIds: admin.firestore.FieldValue.arrayUnion(userRecord.uid),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+        
+        await batch.commit();
+      }
 
       // Log the activity
       await db.collection("activities").add({
@@ -121,17 +166,19 @@ export const createStudentAccount = onCall(
         details: {
           userId: userRecord.uid,
           email: emailValidated,
-          grade: grade || null,
+          gradeLevel: gradeLevel || null,
+          isGoogleAuth: isGoogleAuth || false,
         },
       });
 
-      logger.info(`Student account created: ${userRecord.uid} by admin ${request.auth.uid}`);
+      logger.info(`Student account created: ${userRecord.uid} by admin ${request.auth.uid}, isGoogleAuth: ${isGoogleAuth}`);
 
       return {
         success: true,
         userId: userRecord.uid,
         email: emailValidated,
         displayName: displayName || emailValidated.split("@")[0],
+        isGoogleAuth: isGoogleAuth || false,
       };
     } catch (error) {
       logger.error("Error creating student account:", error);

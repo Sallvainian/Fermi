@@ -9,7 +9,7 @@ class BulkImportConstants {
   
   // Field definitions
   static const List<String> studentRequiredFields = [
-    'username',
+    'email',  // Real email address (e.g., fcottone@rosellestudent.com)
     'displayName',
     'gradeLevel',
   ];
@@ -17,6 +17,7 @@ class BulkImportConstants {
   static const List<String> studentOptionalFields = [
     'parentEmail',
     'classIds',
+    'isGoogleAuth',  // true if student will use Google OAuth
   ];
   
   static const List<String> teacherRequiredFields = [
@@ -42,18 +43,19 @@ class BulkImportConstants {
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#\$%^&*';
   
   // CSV templates
-  static const String studentCsvHeader = 
-      'username,displayName,gradeLevel,parentEmail,classIds';
+  static const String studentCsvHeader =
+      'email,displayName,gradeLevel,parentEmail,classIds,isGoogleAuth';
   static const String teacherCsvHeader = 
       'email,displayName,subjects,password';
   
   // Sample data for templates
   static const Map<String, dynamic> studentSampleData = {
-    'username': 'johndoe2024',
+    'email': 'johndoe@rosellestudent.com',
     'displayName': 'John Doe',
     'gradeLevel': '10',
     'parentEmail': 'parent@example.com',
     'classIds': 'math101,science201',
+    'isGoogleAuth': 'false',  // 'true' for Google OAuth, 'false' for email/password
   };
   
   static const Map<String, dynamic> teacherSampleData = {

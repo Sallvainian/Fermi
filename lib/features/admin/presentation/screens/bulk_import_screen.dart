@@ -626,44 +626,57 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   }
 
   void _validateData() {
-    final requiredFields = _importType == 'student' 
-        ? _studentRequiredFields 
+    final requiredFields = _importType == 'student'
+        ? _studentRequiredFields
         : _teacherRequiredFields;
-    
+
     for (int i = 0; i < _parsedData.length; i++) {
       final row = _parsedData[i];
       final List<String> errors = [];
-      
+
       for (final field in requiredFields) {
         if (row[field] == null || row[field].toString().trim().isEmpty) {
           errors.add('Missing required field: $field');
         }
       }
-      
+
       if (_importType == BulkImportConstants.teacherImportType) {
         final email = row['email']?.toString() ?? '';
         if (email.isNotEmpty && !_isValidEmail(email)) {
           errors.add('Invalid email format');
         }
-        
+
         final password = row['password']?.toString() ?? '';
         if (password.isNotEmpty && password.length < 6) {
           errors.add('Password must be at least 6 characters');
         }
       }
-      
+
       if (_importType == BulkImportConstants.studentImportType) {
-        final username = row['username']?.toString() ?? '';
-        if (username.isNotEmpty && !_isValidUsername(username)) {
-          errors.add('Invalid username (use letters, numbers, underscore only)');
+        final email = row['email']?.toString() ?? '';
+        if (email.isNotEmpty) {
+          if (!_isValidEmail(email)) {
+            errors.add('Invalid email format');
+          } else if (!email.toLowerCase().endsWith('@rosellestudent.com') &&
+                     !email.toLowerCase().endsWith('@rosellestudent.org')) {
+            errors.add('Email must be from @rosellestudent.com or @rosellestudent.org domain');
+          }
+        }
+
+        final gradeLevel = row['gradeLevel'];
+        if (gradeLevel != null) {
+          final grade = int.tryParse(gradeLevel.toString());
+          if (grade == null || grade < 1 || grade > 12) {
+            errors.add('Grade level must be between 1-12');
+          }
         }
       }
-      
+
       if (errors.isNotEmpty) {
         _validationErrors[i] = errors.join(', ');
       }
     }
-    
+
     setState(() {});
   }
 
@@ -685,19 +698,25 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   void _fixValidationErrors() {
     for (final index in _validationErrors.keys) {
       final row = _parsedData[index];
-      
-      if (_importType == 'student' && (row['username'] == null || row['username'].toString().isEmpty)) {
-        final displayName = row['displayName']?.toString() ?? '';
-        if (displayName.isNotEmpty) {
-          row['username'] = displayName.toLowerCase().replaceAll(' ', '_').replaceAll(RegExp(r'[^a-z0-9_]'), '');
+
+      if (_importType == 'student') {
+        // Auto-generate email from display name if missing
+        if (row['email'] == null || row['email'].toString().isEmpty) {
+          final displayName = row['displayName']?.toString() ?? '';
+          if (displayName.isNotEmpty) {
+            final emailBase = displayName.toLowerCase()
+                .replaceAll(' ', '.')
+                .replaceAll(RegExp(r'[^a-z0-9.]'), '');
+            row['email'] = '$emailBase@rosellestudent.com';
+          }
         }
       }
-      
+
       if (_importType == 'teacher' && (row['password'] == null || row['password'].toString().isEmpty)) {
         row['password'] = BulkImportConstants.defaultTeacherPassword;
       }
     }
-    
+
     _validateData();
   }
 
@@ -716,47 +735,58 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   Future<void> _downloadTemplate() async {
     String content;
     String fileName;
-    
+
     if (_fileFormat == BulkImportConstants.csvFormat) {
       if (_importType == BulkImportConstants.studentImportType) {
         content = '${BulkImportConstants.studentCsvHeader}\n';
-        content += 'john_doe,John Doe,9,parent@example.com,"math101,science201"\n';
-        content += 'jane_smith,Jane Smith,10,parent2@example.com,english301\n';
+        content += 'johndoe@rosellestudent.com,John Doe,10,parent@example.com,"math101,science201",false\n';
+        content += 'janesmith@rosellestudent.com,Jane Smith,11,parent2@example.com,english301,false\n';
+        content += 'fcottone@rosellestudent.com,Frank Cottone,12,,"physics401,calculus501",true\n';
       } else {
         content = '${BulkImportConstants.teacherCsvHeader}\n';
-        content += 'teacher1@school.edu,Mr. Smith,SecurePass123!,"Math,Science"\n';
-        content += 'teacher2@school.edu,Ms. Johnson,SecurePass456!,English\n';
+        content += 'teacher1@school.edu,Mr. Smith,"Math,Science",SecurePass123!\n';
+        content += 'teacher2@school.edu,Ms. Johnson,English,SecurePass456!\n';
       }
       fileName = '${_importType}_import_template.csv';
     } else {
       final List<Map<String, dynamic>> jsonData = [];
       if (_importType == BulkImportConstants.studentImportType) {
         jsonData.add({
-          'username': 'john_doe',
+          'email': 'johndoe@rosellestudent.com',
           'displayName': 'John Doe',
-          'gradeLevel': 9,
+          'gradeLevel': 10,
           'parentEmail': 'parent@example.com',
           'classIds': ['math101', 'science201'],
+          'isGoogleAuth': false,
         });
         jsonData.add({
-          'username': 'jane_smith',
+          'email': 'janesmith@rosellestudent.com',
           'displayName': 'Jane Smith',
-          'gradeLevel': 10,
+          'gradeLevel': 11,
           'parentEmail': 'parent2@example.com',
           'classIds': ['english301'],
+          'isGoogleAuth': false,
+        });
+        jsonData.add({
+          'email': 'fcottone@rosellestudent.com',
+          'displayName': 'Frank Cottone',
+          'gradeLevel': 12,
+          'parentEmail': '',
+          'classIds': ['physics401', 'calculus501'],
+          'isGoogleAuth': true,
         });
       } else {
         jsonData.add({
           'email': 'teacher1@school.edu',
           'displayName': 'Mr. Smith',
-          'password': 'SecurePass123!',
           'subjects': ['Math', 'Science'],
+          'password': 'SecurePass123!',
         });
         jsonData.add({
           'email': 'teacher2@school.edu',
           'displayName': 'Ms. Johnson',
-          'password': 'SecurePass456!',
           'subjects': ['English'],
+          'password': 'SecurePass456!',
         });
       }
       content = const JsonEncoder.withIndent('  ').convert(jsonData);
@@ -805,14 +835,18 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       
       try {
         if (_importType == BulkImportConstants.studentImportType) {
+          // Parse isGoogleAuth flag
+          final isGoogleAuth = row['isGoogleAuth']?.toString().toLowerCase() == 'true';
+
           await adminProvider.bulkCreateStudent(
-            username: row['username'].toString(),
+            email: row['email'].toString(),
             displayName: row['displayName'].toString(),
             gradeLevel: int.tryParse(row['gradeLevel'].toString()) ?? 9,
             parentEmail: row['parentEmail']?.toString(),
             classIds: _parseClassIds(row['classIds']),
+            isGoogleAuth: isGoogleAuth,
           );
-          _importSuccesses.add('✓ Student: ${row['displayName']} (${row['username']})');
+          _importSuccesses.add('✓ Student: ${row['displayName']} (${row['email']})');
         } else {
           await adminProvider.bulkCreateTeacher(
             email: row['email'].toString(),
@@ -823,9 +857,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
           _importSuccesses.add('✓ Teacher: ${row['displayName']} (${row['email']})');
         }
       } catch (e) {
-        final identifier = _importType == 'student' 
-            ? row['username'] 
-            : row['email'];
+        final identifier = row['email'] ?? row['displayName'] ?? 'Unknown';
         _importErrors.add('✗ $identifier: ${e.toString()}');
       }
       

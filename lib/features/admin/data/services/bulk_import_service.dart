@@ -23,36 +23,40 @@ class BulkImportService {
       
       for (final studentData in batch) {
         try {
-          final username = studentData['username']?.toString() ?? '';
+          final email = studentData['email']?.toString() ?? '';
+          final isGoogleAuth = studentData['isGoogleAuth']?.toString().toLowerCase() == 'true';
           
-          if (await _checkUsernameExists(username)) {
-            result.addError(username, BulkImportConstants.usernameExistsError);
+          if (await _checkEmailExists(email)) {
+            result.addError(email, BulkImportConstants.emailExistsError);
             continue;
           }
           
-          final password = _generateStudentPassword();
+          // Only generate password for non-Google OAuth accounts
+          final password = isGoogleAuth ? null : _generateStudentPassword();
           
           final callable = _functions.httpsCallable('createStudentAccount');
           final response = await _retryOperation(() => callable.call({
-            'username': username,
+            'email': email,
             'displayName': studentData['displayName'],
             'gradeLevel': studentData['gradeLevel'],
-            'password': password,
+            'password': password,  // Will be null for Google OAuth
             'parentEmail': studentData['parentEmail'],
             'classIds': studentData['classIds'] ?? [],
+            'isGoogleAuth': isGoogleAuth,
           }));
           
           result.addSuccess({
             'uid': response.data['uid'],
-            'username': username,
+            'email': email,
             'displayName': studentData['displayName'],
-            'temporaryPassword': password,
+            'temporaryPassword': password,  // Will be null for Google OAuth
+            'isGoogleAuth': isGoogleAuth,
           });
           
         } catch (e) {
           LoggerService.error('Failed to create student: $e', tag: 'BulkImportService');
           result.addError(
-            studentData['username']?.toString() ?? 'Unknown',
+            studentData['email']?.toString() ?? 'Unknown',
             e.toString(),
           );
         }
@@ -159,13 +163,17 @@ class BulkImportService {
       final errors = <String>[];
       
       if (type == 'student') {
-        final username = row['username']?.toString() ?? '';
-        if (username.isEmpty) {
-          errors.add('Username is required');
-        } else if (!_isValidUsername(username)) {
-          errors.add('Invalid username format');
-        } else if (await _checkUsernameExists(username)) {
-          errors.add('Username already exists');
+        // Validate email field instead of username
+        final email = row['email']?.toString() ?? '';
+        if (email.isEmpty) {
+          errors.add('Email is required');
+        } else if (!_isValidEmail(email)) {
+          errors.add('Invalid email format');
+        } else if (!email.toLowerCase().endsWith('@rosellestudent.com') && 
+                   !email.toLowerCase().endsWith('@rosellestudent.org')) {
+          errors.add('Email must be from @rosellestudent.com or @rosellestudent.org domain');
+        } else if (await _checkEmailExists(email)) {
+          errors.add('Email already exists');
         }
         
         if (row['displayName']?.toString().isEmpty ?? true) {
@@ -182,6 +190,13 @@ class BulkImportService {
         final parentEmail = row['parentEmail']?.toString();
         if (parentEmail != null && parentEmail.isNotEmpty && !_isValidEmail(parentEmail)) {
           errors.add('Invalid parent email format');
+        }
+        
+        // Validate isGoogleAuth flag if present
+        final isGoogleAuth = row['isGoogleAuth']?.toString();
+        if (isGoogleAuth != null && isGoogleAuth.isNotEmpty &&
+            isGoogleAuth.toLowerCase() != 'true' && isGoogleAuth.toLowerCase() != 'false') {
+          errors.add('isGoogleAuth must be true or false');
         }
       } else if (type == 'teacher') {
         final email = row['email']?.toString() ?? '';
@@ -210,7 +225,7 @@ class BulkImportService {
       } else {
         (validationResult['invalid'] as List).add(row);
         final identifier = type == 'student' 
-            ? row['username']?.toString() ?? 'Row $i'
+            ? row['email']?.toString() ?? 'Row $i'
             : row['email']?.toString() ?? 'Row $i';
         (validationResult['errors'] as Map<String, String>)[identifier] = errors.join(', ');
       }
@@ -221,6 +236,8 @@ class BulkImportService {
 
   Future<bool> _checkUsernameExists(String username) async {
     try {
+      // This method is now deprecated - we use email instead
+      // Keeping for backward compatibility if needed
       final querySnapshot = await _firestore
           .collection('users')
           .where('username', isEqualTo: username)

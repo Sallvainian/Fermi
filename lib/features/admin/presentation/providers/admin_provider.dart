@@ -331,30 +331,33 @@ class AdminProvider extends ChangeNotifier {
 
   // Bulk create student accounts
   Future<Map<String, dynamic>?> bulkCreateStudent({
-    required String username,
+    required String email,
     required String displayName,
     required int gradeLevel,
     String? parentEmail,
     List<String>? classIds,
-    String? password,
+    bool isGoogleAuth = false,
   }) async {
     try {
-      // Generate secure password if not provided
-      final studentPassword = password ?? _generateSecurePassword();
-      
+      // Only generate password for non-Google OAuth accounts
+      final studentPassword = isGoogleAuth ? null : _generateSecurePassword();
+
       final callable = _functions.httpsCallable('createStudentAccount');
       final result = await callable.call({
-        'username': username,
+        'email': email,
         'displayName': displayName,
         'gradeLevel': gradeLevel.toString(),
-        'password': studentPassword,
+        'password': studentPassword,  // Will be null for Google OAuth
         'parentEmail': parentEmail,
         'classIds': classIds ?? [],
+        'isGoogleAuth': isGoogleAuth,
       });
 
-      // Include the generated password in the return data
+      // Include the generated password in the return data (if not OAuth)
       final responseData = result.data as Map<String, dynamic>;
-      responseData['temporaryPassword'] = studentPassword;
+      if (!isGoogleAuth && studentPassword != null) {
+        responseData['temporaryPassword'] = studentPassword;
+      }
       return responseData;
     } catch (e) {
       LoggerService.error('Error in bulk create student: $e', tag: 'AdminProvider');
