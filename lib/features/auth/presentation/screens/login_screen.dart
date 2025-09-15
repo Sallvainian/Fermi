@@ -62,27 +62,27 @@ class LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signInWithGoogle() async {
     final authProvider = context.read<AuthProvider>();
-    
+
     try {
-      LoggerService.info('Attempting Google sign-in for teacher', tag: 'LoginScreen');
-      
+      LoggerService.info('Attempting Google sign-in for $_userRole', tag: 'LoginScreen');
+
       // Use Google sign-in - role determined by email domain
       await authProvider.signInWithGoogle();
-      
+
       if (!mounted) return;
-      
+
       // Navigate based on auth state
       if (authProvider.userModel != null) {
         final roleName = authProvider.userModel!.role?.name;
-        LoggerService.info('Google sign-in successful for teacher: $roleName', tag: 'LoginScreen');
-        
+        LoggerService.info('Google sign-in successful for $roleName', tag: 'LoginScreen');
+
         // Navigate to dashboard
         context.go('/dashboard');
       }
     } catch (e) {
       LoggerService.error('Google sign-in error: $e', tag: 'LoginScreen', error: e);
       if (!mounted) return;
-      
+
       // Error is already set in authProvider, just show it via UI
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -322,8 +322,8 @@ class LoginScreenState extends State<LoginScreen> {
                                     ),
                             ),
 
-                            // Google Sign In for Teachers
-                            if (_userRole == 'teacher') ...[
+                            // Google Sign In for Teachers and Students
+                            if (_userRole == 'teacher' || _userRole == 'student') ...[
                               const SizedBox(height: 16),
                               const Row(
                                 children: [

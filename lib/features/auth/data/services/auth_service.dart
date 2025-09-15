@@ -19,9 +19,20 @@ class AuthService {
   final DirectDesktopOAuthHandler _directOAuthHandler =
       DirectDesktopOAuthHandler();
 
+  // Test student account credentials (for development/testing only)
+  // On web, dotenv doesn't work, so we need to hardcode for testing
+  // This is ONLY enabled in debug mode to prevent production access
+  static const String _testStudentEmail = 'fcottone@rosellestudent.com';
+  static const String _testStudentPassword = '123456';
+
   AuthService() {
     _auth = FirebaseAuth.instance;
     _firestore = FirebaseFirestore.instance;
+
+    // Log test account availability in debug mode
+    if (kDebugMode) {
+      LoggerService.debug('Test student account available in debug mode: $_testStudentEmail', tag: 'AuthService');
+    }
 
     // Initialize Google Sign-In based on platform
     _initializeGoogleSignIn();
@@ -35,23 +46,30 @@ class AuthService {
   // Helper method to validate school email domains
   bool _isValidSchoolEmail(String email) {
     final emailLower = email.toLowerCase();
-    
+
+    // Check if this is the test student account (development only)
+    // ONLY works in debug mode to prevent production bypass
+    if (kDebugMode && emailLower == _testStudentEmail.toLowerCase()) {
+      LoggerService.info('BYPASSING domain validation for test account: $email', tag: 'AuthService');
+      return true;
+    }
+
     // No hardcoded admin emails - use domain validation instead
     // Admins must use @fermi-plus.com domain
-    
+
     // School domain validation
     const validDomains = [
       '@roselleschools.org',  // Teachers
       '@rosellestudent.org',  // Students
       '@fermi-plus.com',      // Admins
     ];
-    
+
     for (final domain in validDomains) {
       if (emailLower.endsWith(domain)) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -195,13 +213,20 @@ class AuthService {
       );
     }
 
+    // Log the sign-in attempt
+    LoggerService.info('Sign-in attempt for email: $email', tag: 'AuthService');
+    LoggerService.info('Debug mode: $kDebugMode', tag: 'AuthService');
+
     // Validate email domain before sign in
     if (!_isValidSchoolEmail(email)) {
+      LoggerService.error('Email domain validation failed for: $email', tag: 'AuthService');
       throw FirebaseAuthException(
         code: 'invalid-email-domain',
         message: 'Sign in is restricted to authorized email addresses (@roselleschools.org for teachers, @rosellestudent.org for students, @fermi-plus.com for admins)',
       );
     }
+
+    LoggerService.info('Email domain validation passed for: $email', tag: 'AuthService');
 
     final cred = await _auth!.signInWithEmailAndPassword(
       email: email,

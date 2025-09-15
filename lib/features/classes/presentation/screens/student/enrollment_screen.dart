@@ -263,44 +263,53 @@ class _EnrollmentScreenState extends State<EnrollmentScreen> {
       if (!mounted) return;
 
       if (success) {
-        // Show success dialog
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
-            title: const Text('Successfully Enrolled!'),
-            content: const Text(
-              'You have been enrolled in the class. You can now access all class materials and assignments.',
+        // Navigate first, then show a snackbar instead of dialog to avoid disposal issues
+        if (mounted) {
+          // Show success snackbar
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Successfully enrolled in class!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  // Navigate to dashboard instead of popping
-                  if (mounted) {
-                    context.go('/dashboard');
-                  }
-                },
-                child: const Text('Go to Dashboard'),
-              ),
-            ],
-          ),
-        );
+          );
+
+          // Navigate to dashboard
+          context.go('/dashboard');
+        }
       } else {
         setState(() {
-          _errorMessage = classProvider.error ?? 'Failed to enroll in class';
+          // Parse the error message to provide better user feedback
+          final error = classProvider.error ?? 'Failed to enroll in class';
+          if (error.contains('Invalid enrollment code')) {
+            _errorMessage = 'Invalid code. Please check with your teacher.';
+          } else if (error.contains('already enrolled')) {
+            _errorMessage = 'You are already enrolled in this class.';
+          } else if (error.contains('permission-denied')) {
+            _errorMessage = 'Access denied. Please make sure you are logged in as a student.';
+          } else if (error.contains('blocked') || error.contains('ERR_BLOCKED')) {
+            _errorMessage = 'Connection blocked. Please try again in a moment.';
+          } else {
+            _errorMessage = 'Unable to join class. Please try again or contact support.';
+          }
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString().contains('not found')
-            ? 'Invalid enrollment code. Please check and try again.'
-            : e.toString().contains('already enrolled')
-            ? 'You are already enrolled in this class.'
-            : e.toString().contains('capacity')
-            ? 'This class is full and cannot accept new enrollments.'
-            : 'An error occurred. Please try again.';
+        final errorStr = e.toString();
+        if (errorStr.contains('not found') || errorStr.contains('Invalid')) {
+          _errorMessage = 'Invalid enrollment code. Please check and try again.';
+        } else if (errorStr.contains('already enrolled')) {
+          _errorMessage = 'You are already enrolled in this class.';
+        } else if (errorStr.contains('capacity')) {
+          _errorMessage = 'This class is full and cannot accept new enrollments.';
+        } else if (errorStr.contains('permission-denied')) {
+          _errorMessage = 'Access denied. Please make sure you are logged in as a student.';
+        } else if (errorStr.contains('No student ID')) {
+          _errorMessage = 'Please log in to enroll in a class.';
+        } else {
+          _errorMessage = 'An error occurred. Please try again later.';
+        }
       });
     } finally {
       if (mounted) {
