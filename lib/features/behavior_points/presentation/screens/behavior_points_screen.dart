@@ -113,11 +113,11 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       final studentDataList = <StudentPointData>[];
       
       for (final student in enrolledStudents) {
-        final points = summaries[student.uid]?.totalPoints ?? 0;
-        final index = student.uid.hashCode % colors.length;
-        
+        final points = summaries[student.id]?.totalPoints ?? 0;
+        final index = student.id.hashCode % colors.length;
+
         studentDataList.add(StudentPointData(
-          id: student.uid,
+          id: student.id,
           name: student.displayName,
           totalPoints: points,
           avatarColor: colors[index],

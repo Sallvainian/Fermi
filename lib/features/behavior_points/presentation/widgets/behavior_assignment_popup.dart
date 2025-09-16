@@ -143,6 +143,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
 
   // Edit mode state for managing behaviors
   bool _isEditMode = false;
+  bool _isProcessingAward = false;
 
   @override
   void initState() {
@@ -465,7 +466,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
           elevation: 2,
           shadowColor: cardColor.withValues(alpha: 51),
           child: InkWell(
-            onTap: _isEditMode ? null : () => _awardBehaviorPoints(behavior),
+            onTap: (_isEditMode || _isProcessingAward) ? null : () => _awardBehaviorPoints(behavior),
             borderRadius: BorderRadius.circular(12),
             child: Container(
               padding: const EdgeInsets.all(8), // Reduced padding for more content space
@@ -706,19 +707,37 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   }
 
   /// Awards behavior points and provides feedback
-  void _awardBehaviorPoints(BehaviorOption behavior) {
-    // Award the points
-    widget.onPointsAwarded(behavior.points, behavior.name);
+  void _awardBehaviorPoints(BehaviorOption behavior) async {
+    // Prevent duplicate operations
+    if (_isProcessingAward) {
+      debugPrint('Award already in progress, ignoring duplicate click');
+      return;
+    }
 
-    // Show visual feedback
-    _showPointsAnimation(behavior);
-
-    // Close popup after brief delay
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        Navigator.pop(context);
-      }
+    setState(() {
+      _isProcessingAward = true;
     });
+
+    try {
+      // Award the points
+      await widget.onPointsAwarded(behavior.points, behavior.name);
+
+      // Show visual feedback
+      _showPointsAnimation(behavior);
+
+      // Close popup after brief delay
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessingAward = false;
+        });
+      }
+    }
   }
 
   /// Shows animated feedback when points are awarded

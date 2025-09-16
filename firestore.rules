@@ -147,8 +147,39 @@ service cloud.firestore {
       // Teacher or admin can delete classes
       allow delete: if (isTheTeacher() && resource.data.teacherId == request.auth.uid) ||
                         isAdmin();
-      
-      // Nested collections in classes
+
+      // Student Points Aggregate subcollection (NEW behavior points system)
+      match /studentPoints/{studentId} {
+        // Teachers can read all, students can read their own
+        allow read: if isTheTeacher() ||
+                       isAdmin() ||
+                       (isStudent() && request.auth.uid == studentId);
+
+        // Only teachers can write (with atomic operations)
+        allow create, update: if isTheTeacher();
+
+        // Only admins can delete (for cleanup after migration)
+        allow delete: if isAdmin();
+
+        // History subcollection for audit trail
+        match /history/{historyId} {
+          // Teachers can read all, students can read their own
+          allow read: if isTheTeacher() ||
+                         isAdmin() ||
+                         (isStudent() && get(/databases/$(database)/documents/classes/$(classId)/studentPoints/$(studentId)).data.studentId == request.auth.uid);
+
+          // Only teachers can create history entries
+          allow create: if isTheTeacher();
+
+          // History is immutable - no updates allowed
+          allow update: if false;
+
+          // Only teachers can delete (for undo operations)
+          allow delete: if isTheTeacher();
+        }
+      }
+
+      // Other nested collections in classes
       match /{document=**} {
         allow read: if isTheTeacher() || isEnrolledInClass(classId);
         allow write: if isTheTeacher();
