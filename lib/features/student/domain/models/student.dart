@@ -119,6 +119,17 @@ class Student {
   /// @return Parsed Student instance
   factory Student.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
+    // Parse gradeLevel, handling both String and int types from Firestore
+    int parseGradeLevel(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is String) {
+        return int.tryParse(value) ?? 0;
+      }
+      return 0;
+    }
+
     return Student(
       id: doc.id,
       uid: data['uid'] ?? '',
@@ -131,7 +142,7 @@ class Student {
       firstName: data['firstName'] ?? '',
       lastName: data['lastName'] ?? '',
       displayName: data['displayName'] ?? '',
-      gradeLevel: data['gradeLevel'] ?? 0,
+      gradeLevel: parseGradeLevel(data['gradeLevel']),
       parentEmail: data['parentEmail'],
       classIds: List<String>.from(data['classIds'] ?? []),
       photoURL: data['photoURL'],

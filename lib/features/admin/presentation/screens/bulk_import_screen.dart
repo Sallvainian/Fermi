@@ -818,67 +818,118 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     setState(() {
       _isProcessing = true;
       _importProgress = 0.0;
-      _progressMessage = 'Starting import...';
+      _progressMessage = 'Preparing bulk import...';
       _importErrors.clear();
       _importSuccesses.clear();
     });
 
     final adminProvider = Provider.of<AdminProvider>(context, listen: false);
-    
-    for (int i = 0; i < _parsedData.length; i++) {
-      final row = _parsedData[i];
-      
-      setState(() {
-        _importProgress = (i + 1) / _parsedData.length;
-        _progressMessage = 'Processing ${i + 1} of ${_parsedData.length}...';
-      });
-      
-      try {
-        if (_importType == BulkImportConstants.studentImportType) {
-          // Parse isGoogleAuth flag
-          final isGoogleAuth = row['isGoogleAuth']?.toString().toLowerCase() == 'true';
 
-          await adminProvider.bulkCreateStudent(
-            email: row['email'].toString(),
-            displayName: row['displayName'].toString(),
-            gradeLevel: int.tryParse(row['gradeLevel'].toString()) ?? 9,
-            parentEmail: row['parentEmail']?.toString(),
-            classIds: _parseClassIds(row['classIds']),
-            isGoogleAuth: isGoogleAuth,
-          );
-          _importSuccesses.add('✓ Student: ${row['displayName']} (${row['email']})');
-        } else {
-          await adminProvider.bulkCreateTeacher(
-            email: row['email'].toString(),
-            password: row['password'].toString(),
-            displayName: row['displayName'].toString(),
-            subjects: _parseSubjects(row['subjects']),
-          );
-          _importSuccesses.add('✓ Teacher: ${row['displayName']} (${row['email']})');
+    try {
+      // Update progress message based on batch size
+      final batchSize = _parsedData.length;
+      setState(() {
+        _importProgress = 0.1;
+        _progressMessage = 'Processing ${batchSize} accounts in batch...';
+      });
+
+      // Use bulk import for efficient processing
+      if (_importType == BulkImportConstants.studentImportType) {
+        // Prepare student data for bulk import
+        final studentsData = _parsedData.map((row) => {
+          'email': row['email'].toString(),
+          'displayName': row['displayName'].toString(),
+          'gradeLevel': row['gradeLevel']?.toString(),
+          'parentEmail': row['parentEmail']?.toString(),
+          'classIds': _parseClassIds(row['classIds']),
+          'isGoogleAuth': row['isGoogleAuth']?.toString().toLowerCase() == 'true',
+          'className': row['className']?.toString(),
+        }).toList();
+
+        setState(() {
+          _importProgress = 0.3;
+          _progressMessage = 'Sending batch to server...';
+        });
+
+        // Call bulk import function
+        final result = await adminProvider.bulkImportStudents(studentsData);
+
+        setState(() {
+          _importProgress = 0.8;
+          _progressMessage = 'Processing results...';
+        });
+
+        // Process results
+        for (final success in result.successes) {
+          _importSuccesses.add('✓ Student: ${success['displayName']} (${success['email']})');
         }
-      } catch (e) {
-        final identifier = row['email'] ?? row['displayName'] ?? 'Unknown';
-        _importErrors.add('✗ $identifier: ${e.toString()}');
+
+        for (final error in result.errors) {
+          _importErrors.add('✗ ${error.identifier}: ${error.message}');
+        }
+
+      } else {
+        // Prepare teacher data for bulk import
+        final teachersData = _parsedData.map((row) => {
+          'email': row['email'].toString(),
+          'password': row['password'].toString(),
+          'displayName': row['displayName'].toString(),
+          'subjects': _parseSubjects(row['subjects']),
+        }).toList();
+
+        setState(() {
+          _importProgress = 0.3;
+          _progressMessage = 'Sending batch to server...';
+        });
+
+        // Call bulk import function
+        final result = await adminProvider.bulkImportTeachers(teachersData);
+
+        setState(() {
+          _importProgress = 0.8;
+          _progressMessage = 'Processing results...';
+        });
+
+        // Process results
+        for (final success in result.successes) {
+          _importSuccesses.add('✓ Teacher: ${success['displayName']} (${success['email']})');
+        }
+
+        for (final error in result.errors) {
+          _importErrors.add('✗ ${error.identifier}: ${error.message}');
+        }
       }
-      
-      await Future.delayed(const Duration(milliseconds: 100));
+
+      setState(() {
+        _importProgress = 1.0;
+        _progressMessage = 'Import completed!';
+      });
+
+      // Brief delay to show completion
+      await Future.delayed(const Duration(seconds: 1));
+
+    } catch (e) {
+      setState(() {
+        _importErrors.add('Bulk import failed: ${e.toString()}');
+      });
     }
-    
+
     setState(() {
       _isProcessing = false;
       _progressMessage = '';
     });
-    
+
     if (!mounted) return;
-    
+
     final message = _importErrors.isEmpty
-        ? 'Successfully imported ${_importSuccesses.length} accounts'
-        : 'Import completed with ${_importSuccesses.length} successes and ${_importErrors.length} failures';
-    
+        ? 'Successfully imported ${_importSuccesses.length} accounts in bulk!'
+        : 'Bulk import completed: ${_importSuccesses.length} successes, ${_importErrors.length} failures';
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         duration: const Duration(seconds: 5),
+        backgroundColor: _importErrors.isEmpty ? Colors.green : Colors.orange,
       ),
     );
   }

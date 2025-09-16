@@ -231,21 +231,32 @@ class ClassProvider with ChangeNotifier {
           classDoc.data()?['studentIds'] ?? [],
         );
         if (studentIds.isNotEmpty) {
+          // Query users collection with the UIDs (which are the document IDs)
           final studentsSnapshot = await _firestore
               .collection('users')
               .where(FieldPath.documentId, whereIn: studentIds)
+              .where('role', isEqualTo: 'student')
               .get();
 
           _classStudents = studentsSnapshot.docs
               .map((doc) => Student.fromFirestore(doc))
               .toList();
+
+          LoggerService.info(
+            'Loaded ${_classStudents.length} students for class $classId from ${studentIds.length} IDs',
+            tag: 'ClassProvider',
+          );
         } else {
           _classStudents = [];
         }
       }
       _setLoading(false);
     } catch (e) {
-      // Error loading class students: $e
+      LoggerService.error(
+        'Error loading class students',
+        tag: 'ClassProvider',
+        error: e,
+      );
       _setError(e.toString());
       _setLoading(false);
     }

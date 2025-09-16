@@ -28,6 +28,8 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   late TabController _tabController;
   ClassModel? _classModel;
   String _searchQuery = '';
+  final Set<String> _selectedStudentIds = {};
+  bool _selectAll = false;
 
   @override
   void initState() {
@@ -145,6 +147,90 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
     }
 
     return '$number$suffix';
+  }
+
+  void _toggleStudentSelection(String studentId) {
+    setState(() {
+      if (_selectedStudentIds.contains(studentId)) {
+        _selectedStudentIds.remove(studentId);
+      } else {
+        _selectedStudentIds.add(studentId);
+      }
+      _selectAll = _selectedStudentIds.length ==
+          context.read<ClassProvider>().classStudents.length;
+    });
+  }
+
+  void _toggleSelectAll(bool? value) {
+    setState(() {
+      _selectAll = value ?? false;
+      if (_selectAll) {
+        _selectedStudentIds.addAll(
+          context.read<ClassProvider>().classStudents.map((s) => s.id)
+        );
+      } else {
+        _selectedStudentIds.clear();
+      }
+    });
+  }
+
+  Future<void> _bulkRemoveStudents() async {
+    if (_selectedStudentIds.isEmpty) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Students'),
+        content: Text('Remove ${_selectedStudentIds.length} selected students from this class?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final classProvider = context.read<ClassProvider>();
+      for (final studentId in _selectedStudentIds) {
+        await classProvider.unenrollStudent(widget.classId, studentId);
+      }
+      setState(() => _selectedStudentIds.clear());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Students removed from class')),
+      );
+    }
+  }
+
+  Future<void> _exportSelectedStudents() async {
+    if (_selectedStudentIds.isEmpty) return;
+
+    final students = context.read<ClassProvider>().classStudents
+        .where((s) => _selectedStudentIds.contains(s.id))
+        .toList();
+
+    // Create CSV content
+    final csvContent = StringBuffer();
+    csvContent.writeln('Name,Email,Username,Grade Level');
+    for (final student in students) {
+      csvContent.writeln(
+        '"${student.displayName}","${student.email ?? student.username}","${student.username}","${student.gradeLevel}"'
+      );
+    }
+
+    // For now, just copy to clipboard
+    await Clipboard.setData(ClipboardData(text: csvContent.toString()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Student list copied to clipboard')),
+    );
   }
 
   @override
@@ -472,33 +558,39 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
       if (_searchQuery.isEmpty) return true;
       final query = _searchQuery.toLowerCase();
       return student.displayName.toLowerCase().contains(query) ||
-          (student.email?.toLowerCase().contains(query) ?? false);
+          (student.email?.toLowerCase().contains(query) ?? false) ||
+          student.username.toLowerCase().contains(query);
     }).toList();
+
+    final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
+    final isDesktop = size.width > 1200;
 
     return Column(
       children: [
-        // Search and Add Student Bar
-        Padding(
+        // Search and Actions Bar
+        Container(
           padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            border: Border(
+              bottom: BorderSide(
+                color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              ),
+            ),
+          ),
           child: Row(
             children: [
               Expanded(
+                flex: 2,
                 child: TextField(
                   decoration: InputDecoration(
-                    hintText: 'Search students...',
+                    hintText: 'Search by name, email, or username...',
                     prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -507,12 +599,29 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               FilledButton.icon(
                 onPressed: () => _showEnrollStudentsDialog(),
                 icon: const Icon(Icons.person_add),
                 label: const Text('Add Students'),
               ),
+              if (_selectedStudentIds.isNotEmpty) ...[
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: _exportSelectedStudents,
+                  icon: const Icon(Icons.download),
+                  label: Text('Export (${_selectedStudentIds.length})'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: _bulkRemoveStudents,
+                  icon: const Icon(Icons.remove_circle),
+                  label: const Text('Remove'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -522,87 +631,222 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
           child: classProvider.isLoading
               ? const Center(child: CircularProgressIndicator())
               : students.isEmpty
-              ? _searchQuery.isNotEmpty
-                    ? EmptyState.noSearchResults(searchTerm: _searchQuery)
-                    : const EmptyState(
-                        icon: Icons.people_outline,
-                        title: 'No Students Yet',
-                        message:
-                            'Add students to this class using the enrollment code or the Add Students button',
-                      )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: students.length,
-                  itemBuilder: (context, index) {
-                    final student = students[index];
-                    return _buildStudentCard(student, classProvider);
-                  },
-                ),
+                  ? _searchQuery.isNotEmpty
+                      ? EmptyState.noSearchResults(searchTerm: _searchQuery)
+                      : const EmptyState(
+                          icon: Icons.people_outline,
+                          title: 'No Students Yet',
+                          message:
+                              'Add students to this class using the enrollment code or the Add Students button',
+                        )
+                  : isDesktop
+                      ? _buildStudentDataTable(students, classProvider)
+                      : _buildStudentCardList(students, classProvider),
         ),
       ],
     );
   }
 
-  Widget _buildStudentCard(Student student, ClassProvider classProvider) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: AppCard(
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-              child: Text(
-                student.displayName.isNotEmpty
-                    ? student.displayName[0].toUpperCase()
-                    : 'S',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
+  Widget _buildStudentDataTable(List<Student> students, ClassProvider classProvider) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        child: DataTable(
+          columns: [
+            DataColumn(
+              label: Checkbox(
+                value: _selectAll,
+                onChanged: _toggleSelectAll,
+              ),
+            ),
+            const DataColumn(label: Text('Avatar')),
+            const DataColumn(label: Text('Name')),
+            const DataColumn(label: Text('Email/Username')),
+            const DataColumn(label: Text('Status')),
+            const DataColumn(label: Text('Enrolled')),
+            const DataColumn(label: Text('Actions')),
+          ],
+          rows: students.map((student) {
+            final isSelected = _selectedStudentIds.contains(student.id);
+
+            return DataRow(
+              selected: isSelected,
+              cells: [
+                DataCell(
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => _toggleStudentSelection(student.id),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    student.displayName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                DataCell(
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Colors.blue,
+                    child: Text(
+                      student.displayName.isNotEmpty
+                          ? student.displayName[0].toUpperCase()
+                          : 'S',
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
-                  Text(
-                    student.email ?? student.username,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'remove') {
-                  _removeStudent(student.id, classProvider);
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'remove',
-                  child: Row(
+                ),
+                DataCell(
+                  Text(student.displayName),
+                  onTap: () => _viewStudentDetails(student),
+                ),
+                DataCell(Text(student.email ?? student.username)),
+                DataCell(
+                  Row(
                     children: [
-                      Icon(Icons.remove_circle_outline, size: 20),
-                      SizedBox(width: 12),
-                      Text('Remove from Class'),
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey, // Default to offline since we don't have lastActive
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Offline', // We need to fetch UserModel.lastActive to show real status
+                        style: const TextStyle(fontSize: 12),
+                      ),
                     ],
                   ),
                 ),
+                DataCell(
+                  Text(
+                    '${student.createdAt.month}/${student.createdAt.day}/${student.createdAt.year}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                DataCell(
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 20),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'view',
+                        child: Row(
+                          children: [
+                            Icon(Icons.visibility, size: 18),
+                            SizedBox(width: 8),
+                            Text('View Details'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'remove',
+                        child: Row(
+                          children: [
+                            Icon(Icons.remove_circle, size: 18, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Remove from Class', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'view':
+                          _viewStudentDetails(student);
+                          break;
+                        case 'remove':
+                          _removeStudent(student.uid, classProvider);
+                          break;
+                      }
+                    },
+                  ),
+                ),
               ],
-            ),
-          ],
+            );
+          }).toList(),
         ),
+      ),
+    );
+  }
+
+  Widget _buildStudentCardList(List<Student> students, ClassProvider classProvider) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: students.length,
+      itemBuilder: (context, index) {
+        final student = students[index];
+        final isSelected = _selectedStudentIds.contains(student.id);
+
+        return AppCard(
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: Stack(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.blue,
+                    child: Text(
+                      student.displayName.isNotEmpty
+                          ? student.displayName[0].toUpperCase()
+                          : 'S',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  if (isSelected)
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              title: Text(student.displayName),
+              subtitle: Text(student.email ?? student.username),
+              trailing: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'view',
+                    child: Text('View Details'),
+                  ),
+                  const PopupMenuItem(
+                    value: 'remove',
+                    child: Text('Remove from Class'),
+                  ),
+                ],
+                onSelected: (value) {
+                  switch (value) {
+                    case 'view':
+                      _viewStudentDetails(student);
+                      break;
+                    case 'remove':
+                      _removeStudent(student.uid, classProvider);
+                      break;
+                  }
+                },
+              ),
+              onTap: () => _viewStudentDetails(student),
+              onLongPress: () => _toggleStudentSelection(student.id),
+              selected: isSelected,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _viewStudentDetails(Student student) {
+    // For now, just show a snackbar - this can be expanded to navigate to a detail screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Student: ${student.displayName} (${student.username})'),
       ),
     );
   }

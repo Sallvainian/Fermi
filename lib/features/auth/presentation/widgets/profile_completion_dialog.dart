@@ -59,7 +59,7 @@ class _ProfileCompletionDialogState extends State<ProfileCompletionDialog> {
         'firstName': _firstNameController.text.trim(),
         'lastName': _lastNameController.text.trim(),
         'displayName': '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
-        'profileCompleted': true,
+        'profileComplete': true,
         'updatedAt': FieldValue.serverTimestamp(),
       });
 

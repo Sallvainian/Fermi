@@ -301,16 +301,17 @@ class _EnrollStudentsDialogState extends State<EnrollStudentsDialog> {
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         final student = _searchResults[index];
-        final isSelected = _selectedStudentIds.contains(student.id);
+        // Use uid for enrollment (which matches the user document ID)
+        final isSelected = _selectedStudentIds.contains(student.uid);
 
         return CheckboxListTile(
           value: isSelected,
           onChanged: (bool? value) {
             setState(() {
               if (value == true) {
-                _selectedStudentIds.add(student.id);
+                _selectedStudentIds.add(student.uid);
               } else {
-                _selectedStudentIds.remove(student.id);
+                _selectedStudentIds.remove(student.uid);
               }
             });
           },

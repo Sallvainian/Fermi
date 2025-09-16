@@ -94,6 +94,13 @@ class Behavior {
       return null;
     }
 
+    // Create IconData separately to avoid non-constant invocation issues
+    final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
+    final iconData = IconData(
+      iconCodePoint,
+      fontFamily: 'MaterialIcons',
+    );
+
     return Behavior(
       id: doc.id,
       name: data['name'] ?? '',
@@ -103,10 +110,7 @@ class Behavior {
         (e) => e.name == data['type'],
         orElse: () => BehaviorType.positive,
       ),
-      iconData: IconData(
-        data['iconCodePoint'] ?? Icons.star.codePoint,
-        fontFamily: 'MaterialIcons',
-      ),
+      iconData: iconData,
       isCustom: data['isCustom'] ?? false,
       teacherId: data['teacherId'],
       classId: data['classId'],
@@ -128,6 +132,13 @@ class Behavior {
       return null;
     }
 
+    // Create IconData separately to avoid non-constant invocation issues
+    final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
+    final iconData = IconData(
+      iconCodePoint,
+      fontFamily: 'MaterialIcons',
+    );
+
     return Behavior(
       id: id,
       name: data['name'] ?? '',
@@ -137,10 +148,7 @@ class Behavior {
         (e) => e.name == data['type'],
         orElse: () => BehaviorType.positive,
       ),
-      iconData: IconData(
-        data['iconCodePoint'] ?? Icons.star.codePoint,
-        fontFamily: 'MaterialIcons',
-      ),
+      iconData: iconData,
       isCustom: data['isCustom'] ?? false,
       teacherId: data['teacherId'],
       classId: data['classId'],

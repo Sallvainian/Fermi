@@ -194,7 +194,7 @@ class AuthService {
         'lastName': lastName,
         'username': finalUsername,
         'lastActive': FieldValue.serverTimestamp(),
-        // Don't update: email, displayName, role, createdAt, emailVerified, isEmailUser, profileComplete
+        // Don't update: email, displayName, role, createdAt, isEmailUser, profileComplete
         // These are already set by the blocking function
       }, SetOptions(merge: true));
     }
@@ -766,14 +766,6 @@ class AuthService {
     } catch (e) {
       LoggerService.error('Apple re-authentication failed', tag: 'AuthService', error: e);
       throw Exception('Apple authentication failed. Please try again.');
-    }
-  }
-
-  // Send email verification
-  Future<void> sendEmailVerification() async {
-    final user = _auth?.currentUser;
-    if (user != null && !user.emailVerified) {
-      await user.sendEmailVerification();
     }
   }
 }

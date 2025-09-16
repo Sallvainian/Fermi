@@ -159,7 +159,6 @@ class AuthProvider extends ChangeNotifier {
             'role': 'admin',
             'createdAt': FieldValue.serverTimestamp(),
             'lastActive': FieldValue.serverTimestamp(),
-            'emailVerified': user.emailVerified,
             'isEmailUser': true,
             'profileComplete': false,
           });

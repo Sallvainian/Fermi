@@ -534,10 +534,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   void _navigateToClass(BuildContext context, ClassModel course) {
-    // Set the selected class in the provider
-    context.read<ClassProvider>().setSelectedClass(course);
-    // Navigate to classes screen with selected class
-    context.go('/teacher/classes');
+    // Navigate directly to the class detail screen
+    context.go('/class/${course.id}');
   }
 
   Widget _buildCompactStatCard(

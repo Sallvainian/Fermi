@@ -7,7 +7,7 @@ import '../../constants/bulk_import_constants.dart';
 
 class BulkImportService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseFunctions _functions = FirebaseFunctions.instance;
+  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(region: 'us-east4');
   
   static const int _batchSize = BulkImportConstants.batchSize;
   static const int _maxRetries = BulkImportConstants.maxRetries;
@@ -15,58 +15,122 @@ class BulkImportService {
 
   Future<BulkImportResult> bulkImportStudents(List<Map<String, dynamic>> students) async {
     final result = BulkImportResult();
-    final batches = _createBatches(students, _batchSize);
-    
+
+    if (students.isEmpty) {
+      LoggerService.info('No students to import', tag: 'BulkImportService');
+      return result;
+    }
+
+    // Process in batches using the new bulk import Cloud Function
+    // The Cloud Function can handle up to 1000 users per batch
+    const cloudFunctionBatchSize = 1000;
+    final batches = _createBatches(students, cloudFunctionBatchSize);
+
     for (int batchIndex = 0; batchIndex < batches.length; batchIndex++) {
       final batch = batches[batchIndex];
-      LoggerService.info('Processing student batch ${batchIndex + 1} of ${batches.length}', tag: 'BulkImportService');
-      
-      for (final studentData in batch) {
-        try {
-          final email = studentData['email']?.toString() ?? '';
-          final isGoogleAuth = studentData['isGoogleAuth']?.toString().toLowerCase() == 'true';
-          
-          if (await _checkEmailExists(email)) {
-            result.addError(email, BulkImportConstants.emailExistsError);
-            continue;
+      LoggerService.info('Processing student batch ${batchIndex + 1} of ${batches.length} (${batch.length} students)', tag: 'BulkImportService');
+
+      try {
+        // Prepare users for bulk import
+        final usersToImport = batch.map((studentData) {
+          final Map<String, dynamic> user = {
+            'email': studentData['email']?.toString() ?? '',
+            'displayName': studentData['displayName']?.toString() ?? '',
+            'gradeLevel': studentData['gradeLevel']?.toString(),
+            'parentEmail': studentData['parentEmail']?.toString(),
+            'isGoogleAuth': studentData['isGoogleAuth'] == true ||
+                           studentData['isGoogleAuth']?.toString().toLowerCase() == 'true',
+          };
+
+          // Add classIds if present (for JSON import)
+          if (studentData['classIds'] != null && studentData['classIds'] is List) {
+            user['classIds'] = studentData['classIds'];
           }
-          
-          // Only generate password for non-Google OAuth accounts
-          final password = isGoogleAuth ? null : _generateStudentPassword();
-          
-          final callable = _functions.httpsCallable('createStudentAccount');
-          final response = await _retryOperation(() => callable.call({
-            'email': email,
-            'displayName': studentData['displayName'],
-            'gradeLevel': studentData['gradeLevel'],
-            'password': password,  // Will be null for Google OAuth
-            'parentEmail': studentData['parentEmail'],
-            'classIds': studentData['classIds'] ?? [],
-            'isGoogleAuth': isGoogleAuth,
-          }));
-          
-          result.addSuccess({
-            'uid': response.data['uid'],
-            'email': email,
-            'displayName': studentData['displayName'],
-            'temporaryPassword': password,  // Will be null for Google OAuth
-            'isGoogleAuth': isGoogleAuth,
-          });
-          
-        } catch (e) {
-          LoggerService.error('Failed to create student: $e', tag: 'BulkImportService');
+          // Add enrollmentCode if present (for CSV import with enrollment codes)
+          else if (studentData['enrollmentCode'] != null) {
+            user['enrollmentCode'] = studentData['enrollmentCode'].toString();
+          }
+          // Legacy support for className field
+          else if (studentData['className'] != null) {
+            user['className'] = studentData['className'].toString();
+          }
+
+          // Add student ID if present
+          if (studentData['studentId'] != null) {
+            user['studentId'] = studentData['studentId'].toString();
+          }
+
+          return user;
+        }).toList();
+
+        // Call the new bulk import Cloud Function
+        final callable = _functions.httpsCallable('bulkImportStudents');
+        final response = await _retryOperation(() => callable.call({
+          'users': usersToImport,
+          'sendPasswordResetEmails': true,
+        }));
+
+        // Process the response
+        final data = response.data as Map<String, dynamic>;
+
+        // Add successful imports
+        if (data['imported'] != null) {
+          for (var imported in data['imported']) {
+            result.addSuccess({
+              'uid': imported['uid'],
+              'email': imported['email'],
+              'displayName': imported['displayName'] ?? '',
+              'temporaryPassword': null,  // Password reset emails are sent by Cloud Function
+              'isGoogleAuth': imported['isGoogleAuth'] ?? false,
+            });
+          }
+        }
+
+        // Add failed imports
+        if (data['failed'] != null) {
+          for (var failed in data['failed']) {
+            result.addError(
+              failed['email'] ?? 'Unknown',
+              failed['error'] ?? 'Import failed',
+            );
+          }
+        }
+
+        // Add already existing users as errors
+        if (data['alreadyExisting'] != null) {
+          for (var existing in data['alreadyExisting']) {
+            result.addError(
+              existing,
+              BulkImportConstants.emailExistsError,
+            );
+          }
+        }
+
+        LoggerService.info(
+          'Batch ${batchIndex + 1} completed: ${data['summary']?['imported'] ?? 0} imported, '
+          '${data['summary']?['failed'] ?? 0} failed, '
+          '${data['summary']?['alreadyExisting'] ?? 0} already existing',
+          tag: 'BulkImportService'
+        );
+
+      } catch (e) {
+        LoggerService.error('Failed to process batch ${batchIndex + 1}: $e', tag: 'BulkImportService');
+
+        // Add all students in the failed batch as errors
+        for (final studentData in batch) {
           result.addError(
             studentData['email']?.toString() ?? 'Unknown',
-            e.toString(),
+            'Batch processing failed: ${e.toString()}',
           );
         }
       }
-      
+
+      // Add delay between batches if there are more to process
       if (batchIndex < batches.length - 1) {
         await Future.delayed(BulkImportConstants.batchDelay);
       }
     }
-    
+
     await _logBulkImportActivity('student', result);
     return result;
   }

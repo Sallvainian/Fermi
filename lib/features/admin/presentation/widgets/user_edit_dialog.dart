@@ -24,6 +24,7 @@ class _UserEditDialogState extends State<UserEditDialog> {
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
   late TextEditingController _usernameController;
+  late String _originalUsername; // Store original username
   late TextEditingController _parentEmailController;
   late TextEditingController _gradeLevelController;
   
@@ -37,10 +38,21 @@ class _UserEditDialogState extends State<UserEditDialog> {
     _firstNameController = TextEditingController(text: widget.user.firstName);
     _lastNameController = TextEditingController(text: widget.user.lastName);
     _emailController = TextEditingController(text: widget.user.email);
-    _usernameController = TextEditingController(text: widget.user.username);
+    // For students, use email as username if they don't have one
+    _originalUsername = widget.user.username ?? '';
+    _usernameController = TextEditingController(
+      text: widget.user.username ?? widget.user.email ?? ''
+    );
     _parentEmailController = TextEditingController(text: widget.user.parentEmail);
     _gradeLevelController = TextEditingController(text: widget.user.gradeLevel);
     _selectedRole = widget.user.role?.name ?? 'student';
+
+    // Listen to email changes to update username for students
+    _emailController.addListener(() {
+      if (_selectedRole == 'student' && _emailController.text.isNotEmpty) {
+        _usernameController.text = _emailController.text;
+      }
+    });
   }
 
   @override
@@ -60,9 +72,11 @@ class _UserEditDialogState extends State<UserEditDialog> {
 
     setState(() => _isLoading = true);
 
+    final isStudent = _selectedRole == 'student';
+
     try {
       final updates = <String, dynamic>{};
-      
+
       if (_displayNameController.text != widget.user.displayName) {
         updates['displayName'] = _displayNameController.text;
       }
@@ -74,8 +88,14 @@ class _UserEditDialogState extends State<UserEditDialog> {
       }
       if (_emailController.text != widget.user.email) {
         updates['email'] = _emailController.text;
+        // For students, also update username to match email
+        if (isStudent) {
+          _usernameController.text = _emailController.text;
+          updates['username'] = _emailController.text;
+        }
       }
-      if (_usernameController.text != widget.user.username) {
+      // Only update username for non-students if it changed
+      if (!isStudent && _usernameController.text != widget.user.username) {
         updates['username'] = _usernameController.text.isEmpty ? null : _usernameController.text;
       }
       if (_parentEmailController.text != widget.user.parentEmail) {
@@ -260,25 +280,18 @@ class _UserEditDialogState extends State<UserEditDialog> {
                       ),
                       const SizedBox(height: 16),
                       
-                      // Username (for students)
+                      // Username (for students - auto-filled with email and disabled)
                       if (isStudent) ...[
                         TextFormField(
                           controller: _usernameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Username',
-                            border: OutlineInputBorder(),
+                          enabled: false, // Disabled/greyed out
+                          decoration: InputDecoration(
+                            labelText: 'Username (auto-generated from email)',
+                            border: const OutlineInputBorder(),
+                            filled: true,
+                            fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                            helperText: 'Username is automatically set to the student\'s email',
                           ),
-                          validator: (value) {
-                            if (isStudent && (value == null || value.isEmpty)) {
-                              return 'Username is required for students';
-                            }
-                            if (value != null && value.isNotEmpty) {
-                              if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
-                                return 'Username can only contain letters, numbers, and underscores';
-                              }
-                            }
-                            return null;
-                          },
                         ),
                         const SizedBox(height: 16),
                       ],
