@@ -1003,19 +1003,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
         return Colors.orange;
       case 'test':
         return Colors.red;
-      case 'exam':
-        return Colors.purple;
       case 'project':
         return Colors.green;
       case 'classwork':
         return Colors.teal;
-      case 'essay':
-        return Colors.indigo;
-      case 'lab':
-        return Colors.amber;
-      case 'presentation':
-        return Colors.pink;
-      case 'other':
       default:
         return Colors.grey;
     }
@@ -1029,19 +1020,10 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
         return Icons.quiz;
       case 'test':
         return Icons.assignment_turned_in;
-      case 'exam':
-        return Icons.school;
       case 'project':
         return Icons.folder_special;
       case 'classwork':
         return Icons.class_;
-      case 'essay':
-        return Icons.edit_note;
-      case 'lab':
-        return Icons.science;
-      case 'presentation':
-        return Icons.present_to_all;
-      case 'other':
       default:
         return Icons.assignment;
     }

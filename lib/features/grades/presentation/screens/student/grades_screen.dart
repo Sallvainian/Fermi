@@ -811,40 +811,32 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
       case AssignmentType.test:
         return Icons.assignment;
       case AssignmentType.project:
-        return Icons.science;
-      case AssignmentType.exam:
-        return Icons.school;
-      case AssignmentType.classwork:
-        return Icons.edit_note;
+        return Icons.architecture;
       case AssignmentType.lab:
-        return Icons.biotech;
-      case AssignmentType.presentation:
-        return Icons.present_to_all;
-      case AssignmentType.essay:
-        return Icons.edit;
-      case AssignmentType.other:
-        return Icons.assignment_outlined;
+        return Icons.science;
+      case AssignmentType.classwork:
+        return Icons.school;
+      case AssignmentType.activity:
+        return Icons.sports_handball;
     }
   }
 
   Color _getAssignmentTypeColor(AssignmentType type) {
     switch (type) {
       case AssignmentType.homework:
-        return Colors.green;
-      case AssignmentType.quiz:
         return Colors.blue;
-      case AssignmentType.test:
-        return Colors.orange;
-      case AssignmentType.project:
+      case AssignmentType.quiz:
         return Colors.purple;
-      case AssignmentType.exam:
+      case AssignmentType.test:
         return Colors.red;
-      case AssignmentType.essay:
-      case AssignmentType.classwork:
+      case AssignmentType.project:
+        return Colors.green;
       case AssignmentType.lab:
-      case AssignmentType.presentation:
-      case AssignmentType.other:
-        return Colors.grey;
+        return Colors.orange;
+      case AssignmentType.classwork:
+        return Colors.teal;
+      case AssignmentType.activity:
+        return Colors.pink;
     }
   }
 
@@ -858,18 +850,12 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
         return 'Test';
       case AssignmentType.project:
         return 'Project';
-      case AssignmentType.exam:
-        return 'Exam';
-      case AssignmentType.classwork:
-        return 'Classwork';
       case AssignmentType.lab:
         return 'Lab';
-      case AssignmentType.presentation:
-        return 'Presentation';
-      case AssignmentType.essay:
-        return 'Essay';
-      case AssignmentType.other:
-        return 'Other';
+      case AssignmentType.classwork:
+        return 'Classwork';
+      case AssignmentType.activity:
+        return 'Activity';
     }
   }
 
