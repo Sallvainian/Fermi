@@ -14,7 +14,7 @@ import '../screens/behavior_points_screen.dart';
 class StudentPointCard extends StatelessWidget {
   /// Student data to display
   final StudentPointData student;
-  
+
   /// Student's rank in the class (1 = first place)
   final int? rank;
 
@@ -34,119 +34,104 @@ class StudentPointCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isFirstPlace = rank == 1;
     final isTopThree = rank != null && rank! <= 3;
-    
+
     return Card(
       elevation: isFirstPlace ? 8 : 2,
-      shadowColor: isFirstPlace 
-          ? Colors.amber.withValues(alpha: 128) 
-          : theme.colorScheme.shadow.withValues(alpha: 26),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: isTopThree ? Border.all(
-            color: rank == 1 
-                ? Colors.amber 
-                : rank == 2 
-                    ? Colors.grey[400]! 
-                    : Colors.orange[700]!,
-            width: 2,
-          ) : null,
-          boxShadow: isFirstPlace ? [
-            BoxShadow(
-              color: Colors.amber.withValues(alpha: 102),
-              blurRadius: 12,
-              spreadRadius: 1,
-            ),
-            BoxShadow(
-              color: Colors.amber.withValues(alpha: 51),
-              blurRadius: 20,
-              spreadRadius: 3,
-            ),
-          ] : null,
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(8), // Reduced from 16
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
+      shadowColor: isFirstPlace
+          ? Colors.amber.withValues(alpha: 128)
+          : theme.colorScheme.shadow.withValues(alpha: 64),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withValues(alpha: 230),
+            borderRadius: BorderRadius.circular(12),
+            border: isTopThree
+                ? Border.all(
+                    color: rank == 1
+                        ? Colors.amber
+                        : rank == 2
+                        ? Colors.grey[400]!
+                        : Colors.orange[700]!,
+                    width: 2,
+                  )
+                : Border.all(
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 77,
+                    ),
+                    width: 1,
+                  ),
+            boxShadow: isFirstPlace
+                ? [
+                    BoxShadow(
+                      color: Colors.amber.withValues(alpha: 102),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ]
+                : null,
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Student Avatar with Points Badge
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  // Student Avatar with Points Badge
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                  // Avatar Circle
                   Container(
-                    width: 48,  // Reduced from 64
-                    height: 48, // Reduced from 64
+                    width: 52,
+                    height: 52,
                     decoration: BoxDecoration(
-                      color: student.avatarColor.withValues(alpha: 51),
+                      color: student.avatarColor.withValues(alpha: 90),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: student.avatarColor.withValues(alpha: 128),
+                        color: student.avatarColor.withValues(alpha: 180),
                         width: 2,
                       ),
                     ),
                     child: Center(
                       child: Text(
                         student.initials,
-                        style: theme.textTheme.titleMedium?.copyWith( // Changed from titleLarge
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: student.avatarColor,
-                          fontSize: 16, // Explicit smaller size
+                          fontSize: 16,
                         ),
                       ),
                     ),
                   ),
-                  
-                  // Points Badge
                   Positioned(
-                    top: -4,  // Reduced from -8
-                    right: -4, // Reduced from -8
+                    top: -6,
+                    right: -6,
                     child: _buildPointsBadge(theme),
                   ),
                 ],
               ),
-              
-              const SizedBox(height: 6), // Reduced from 12
-              
+
+              const SizedBox(height: 8),
+
               // Student Name
               Text(
-                student.name,
+                student.formattedName,
                 textAlign: TextAlign.center,
-                maxLines: 1, // Reduced from 2
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith( // Changed from titleSmall
+                style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
-                  fontSize: 11, // Explicit smaller size
+                  fontSize: 12,
                 ),
               ),
-              
-              const SizedBox(height: 2), // Reduced from 4
-              
-              // Points Display
-              Text(
-                '${student.totalPoints} pts', // Shortened from 'points'
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: student.pointsColor,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 10, // Explicit smaller size
-                ),
-              ),
-              
-              if (rank != null) const SizedBox(height: 4), // Conditional spacing
-              
-              // Ranking Display
-              if (rank != null) _buildRankingDisplay(theme),
+
+              if (rank != null) ...[
+                const SizedBox(height: 6),
+                _buildRankingDisplay(theme),
+              ],
             ],
           ),
-        ),
-      ),
         ),
       ),
     );
@@ -155,24 +140,27 @@ class StudentPointCard extends StatelessWidget {
   /// Builds the points badge displayed on top of the avatar
   Widget _buildPointsBadge(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reduced padding
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: student.pointsColor,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.error,
+        shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: student.pointsColor.withValues(alpha: 77),
-            blurRadius: 4,
+            color: theme.colorScheme.error.withValues(alpha: 128),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Text(
-        student.totalPoints.toString(),
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 10, // Reduced from 12
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      child: Center(
+        child: Text(
+          student.totalPoints.toString(),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onError,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
         ),
       ),
     );
@@ -183,7 +171,7 @@ class StudentPointCard extends StatelessWidget {
     String rankText;
     Color rankColor;
     IconData? rankIcon;
-    
+
     switch (rank) {
       case 1:
         rankText = '1st';
@@ -205,16 +193,20 @@ class StudentPointCard extends StatelessWidget {
         rankColor = theme.colorScheme.onSurfaceVariant;
         rankIcon = null;
     }
-    
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), // Reduced padding
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+        vertical: 3,
+      ), // Reduced padding
       decoration: BoxDecoration(
-        color: rank! <= 3 ? rankColor.withValues(alpha: 26) : theme.colorScheme.surfaceContainerHighest,
+        color: rank! <= 3
+            ? rankColor.withValues(alpha: 26)
+            : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-        border: rank! <= 3 ? Border.all(
-          color: rankColor.withValues(alpha: 77),
-          width: 1,
-        ) : null,
+        border: rank! <= 3
+            ? Border.all(color: rankColor.withValues(alpha: 77), width: 1)
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -230,7 +222,8 @@ class StudentPointCard extends StatelessWidget {
           ],
           Text(
             rankText,
-            style: theme.textTheme.labelSmall?.copyWith( // Changed to labelSmall
+            style: theme.textTheme.labelSmall?.copyWith(
+              // Changed to labelSmall
               color: rankColor,
               fontWeight: rank! <= 3 ? FontWeight.bold : FontWeight.w500,
               fontSize: 11, // Explicit smaller size
@@ -240,7 +233,7 @@ class StudentPointCard extends StatelessWidget {
       ),
     );
   }
-  
+
   /// Converts a number to ordinal format (1st, 2nd, 3rd, 4th, etc.)
   String _getOrdinal(int number) {
     if (number >= 11 && number <= 13) {
@@ -268,16 +261,12 @@ class StudentPointCardCompact extends StatelessWidget {
   final VoidCallback? onTap;
 
   /// Creates a compact student point card widget
-  const StudentPointCardCompact({
-    super.key,
-    required this.student,
-    this.onTap,
-  });
+  const StudentPointCardCompact({super.key, required this.student, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: ListTile(
@@ -296,7 +285,7 @@ class StudentPointCardCompact extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Mini points badge
             Positioned(
               top: -4,

@@ -42,18 +42,19 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
 
   void _initializeProvider() {
     if (_isInitialized) return;
-    
+
     final authProvider = context.read<AuthProvider>();
     final classProvider = context.read<ClassProvider>();
     final behaviorProvider = context.read<BehaviorPointProvider>();
-    final teacherId = authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
+    final teacherId =
+        authProvider.firebaseUser?.uid ?? authProvider.userModel?.uid;
 
     if (teacherId != null) {
       _isInitialized = true;
-      
+
       // Load teacher's classes
       classProvider.loadTeacherClasses(teacherId);
-      
+
       // Set first class as selected if available
       if (classProvider.teacherClasses.isNotEmpty) {
         final firstClass = classProvider.teacherClasses.first;
@@ -61,37 +62,33 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
           _selectedClassId = firstClass.id;
           _selectedClass = firstClass;
         });
-        
-        // Load behaviors and points for the selected class
-        behaviorProvider.loadBehaviorsForClass(firstClass.id);
+
         behaviorProvider.loadBehaviorPointsForClass(firstClass.id);
-        
+
         // Load all students for the class
         classProvider.loadClassStudents(firstClass.id);
       }
     }
   }
-  
+
   void _onClassChanged(String? classId) {
     if (classId == null) return;
-    
+
     final classProvider = context.read<ClassProvider>();
     final behaviorProvider = context.read<BehaviorPointProvider>();
-    
+
     final selectedClass = classProvider.teacherClasses.firstWhere(
       (c) => c.id == classId,
       orElse: () => classProvider.teacherClasses.first,
     );
-    
+
     setState(() {
       _selectedClassId = classId;
       _selectedClass = selectedClass;
     });
-    
-    // Load behaviors and points for the new class
-    behaviorProvider.loadBehaviorsForClass(classId);
+
     behaviorProvider.loadBehaviorPointsForClass(classId);
-    
+
     // Load all students for the class
     classProvider.loadClassStudents(classId);
   }
@@ -102,46 +99,81 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       final behaviorProvider = context.read<BehaviorPointProvider>();
       final summaries = behaviorProvider.studentSummaries;
       final colors = [
-        Colors.purple, Colors.blue, Colors.green, Colors.orange, Colors.pink,
-        Colors.teal, Colors.indigo, Colors.red, Colors.cyan, Colors.amber
+        Colors.purple,
+        Colors.blue,
+        Colors.green,
+        Colors.orange,
+        Colors.pink,
+        Colors.teal,
+        Colors.indigo,
+        Colors.red,
+        Colors.cyan,
+        Colors.amber,
       ];
-      
+
       // Get all enrolled students from the class
       final enrolledStudents = classProvider.classStudents;
-      
+
       // Create a map of all students with their points (0 if no points)
       final studentDataList = <StudentPointData>[];
-      
+
       for (final student in enrolledStudents) {
         final points = summaries[student.id]?.totalPoints ?? 0;
         final index = student.id.hashCode % colors.length;
 
-        studentDataList.add(StudentPointData(
-          id: student.id,
-          name: student.displayName,
-          totalPoints: points,
-          avatarColor: colors[index],
-        ));
+        studentDataList.add(
+          StudentPointData(
+            id: student.id,
+            name: student.displayName,
+            totalPoints: points,
+            avatarColor: colors[index],
+          ),
+        );
       }
-      
+
       // Also add any students who have points but aren't in the enrolled list
       // (in case of data inconsistency)
       for (final entry in summaries.entries) {
         if (!studentDataList.any((s) => s.id == entry.key)) {
           final index = entry.key.hashCode % colors.length;
-          studentDataList.add(StudentPointData(
-            id: entry.key,
-            name: entry.value.studentName,
-            totalPoints: entry.value.totalPoints,
-            avatarColor: colors[index],
-          ));
+          studentDataList.add(
+            StudentPointData(
+              id: entry.key,
+              name: entry.value.studentName,
+              totalPoints: entry.value.totalPoints,
+              avatarColor: colors[index],
+            ),
+          );
         }
       }
-      
+
       return studentDataList;
     } catch (e) {
       return [];
     }
+  }
+
+  Map<String, int> _buildRankMap(List<StudentPointData> sortedStudents) {
+    final ranks = <String, int>{};
+    int processed = 0;
+    int? previousPoints;
+    int currentRank = 0;
+
+    for (final student in sortedStudents) {
+      if (student.totalPoints <= 0) {
+        continue;
+      }
+
+      processed += 1;
+      if (previousPoints == null || student.totalPoints != previousPoints) {
+        currentRank = processed;
+        previousPoints = student.totalPoints;
+      }
+
+      ranks[student.id] = currentRank;
+    }
+
+    return ranks;
   }
 
   int get _classTotalPoints {
@@ -152,7 +184,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       return 0;
     }
   }
-  
+
   String get _className {
     return _selectedClass?.name ?? 'Select a Class';
   }
@@ -165,6 +197,38 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     // Use Consumer to listen to provider changes
     return Consumer<BehaviorPointProvider>(
       builder: (context, provider, child) {
+        if (_selectedClassId == null &&
+            classProvider.teacherClasses.isNotEmpty) {
+          final firstClass = classProvider.teacherClasses.first;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            setState(() {
+              _selectedClassId = firstClass.id;
+              _selectedClass = firstClass;
+            });
+            provider.loadBehaviorPointsForClass(firstClass.id);
+            classProvider.loadClassStudents(firstClass.id);
+          });
+        }
+
+        final students = _students;
+        final sortedStudents = List<StudentPointData>.from(students)
+          ..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
+        final rankMap = _buildRankMap(sortedStudents);
+        final totalPoints = _classTotalPoints;
+        final averagePoints = students.isEmpty
+            ? 0
+            : (totalPoints / students.length).round();
+        final positivePoints = provider.calculateClassPositivePoints();
+        final negativePoints = provider.calculateClassNegativePoints();
+        final trackedPoints = positivePoints + negativePoints;
+        final positiveRate = trackedPoints == 0
+            ? 0.0
+            : (positivePoints / trackedPoints) * 100;
+        final negativeRate = trackedPoints == 0
+            ? 0.0
+            : (negativePoints / trackedPoints) * 100;
+
         return AdaptiveLayout(
           title: 'Behavior Points',
           actions: [
@@ -177,108 +241,103 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
           ],
           body: ResponsiveContainer(
             child: CustomScrollView(
-          slivers: [
-            // Class Selector
-            if (classProvider.teacherClasses.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _buildClassSelector(theme, classProvider),
-              ),
-            
-            // Class Summary Header
-            SliverToBoxAdapter(
-              child: _buildClassSummary(theme),
-            ),
-            
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 24),
-            ),
+              slivers: [
+                // Class Selector
+                if (classProvider.teacherClasses.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: _buildClassSelector(theme, classProvider),
+                  ),
 
-            // Students Section Header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.people_outline,
-                      color: theme.colorScheme.primary,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Students',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${_students.length} students',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                // Class Summary Header
+                SliverToBoxAdapter(
+                  child: _buildClassSummary(
+                    theme,
+                    totalPoints: totalPoints,
+                    averagePoints: averagePoints,
+                    positiveRate: positiveRate,
+                    negativeRate: negativeRate,
+                  ),
                 ),
-              ),
-            ),
 
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 16),
-            ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // Student Grid with Class Total Card
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _getCrossAxisCount(context),
-                  crossAxisSpacing: 8,  // Reduced from 16
-                  mainAxisSpacing: 8,   // Reduced from 16
-                  childAspectRatio: _getAspectRatio(context), // Responsive aspect ratio
+                // Students Section Header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          color: theme.colorScheme.primary,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Students',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${students.length} students',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    // Sort students by points (descending) for ranking
-                    final sortedStudents = List<StudentPointData>.from(_students)
-                      ..sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
-                    
-                    // First card is the class total
-                    if (index == 0) {
-                      return _buildClassTotalCard(theme);
-                    }
-                    // Adjust index for students
-                    final studentIndex = index - 1;
-                    final student = sortedStudents[studentIndex];
-                    
-                    // Calculate rank (accounting for ties)
-                    int rank = 1;
-                    for (int i = 0; i < sortedStudents.length; i++) {
-                      if (sortedStudents[i].totalPoints > student.totalPoints) {
-                        rank++;
+
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                // Student Grid with Class Total Card
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _getCrossAxisCount(context),
+                      crossAxisSpacing: 8, // Reduced from 16
+                      mainAxisSpacing: 8, // Reduced from 16
+                      childAspectRatio: _getAspectRatio(
+                        context,
+                      ), // Responsive aspect ratio
+                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      if (index == 0) {
+                        return _buildClassTotalCard(
+                          theme,
+                          totalPoints: totalPoints,
+                          averagePoints: averagePoints,
+                        );
                       }
-                    }
-                    
-                    return StudentPointCard(
-                      student: student,
-                      rank: rank,
-                      onTap: () => _showBehaviorAssignmentPopup(student),
-                    );
-                  },
-                  childCount: _students.length + 1, // Add 1 for class total card
-                ),
-              ),
-            ),
 
-            // Bottom padding
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 32),
+                      final studentIndex = index - 1;
+                      if (studentIndex >= sortedStudents.length) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final student = sortedStudents[studentIndex];
+                      final rank = rankMap[student.id];
+
+                      return StudentPointCard(
+                        student: student,
+                        rank: rank,
+                        onTap: () => _showBehaviorAssignmentPopup(student),
+                      );
+                    }, childCount: sortedStudents.length + 1),
+                  ),
+                ),
+
+                // Bottom padding
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
+          ),
+        );
       },
     );
   }
@@ -291,17 +350,11 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant,
-          width: 1,
-        ),
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.school_outlined,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(Icons.school_outlined, color: theme.colorScheme.primary),
           const SizedBox(width: 12),
           Text(
             'Class:',
@@ -333,163 +386,210 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       ),
     );
   }
-  
+
   /// Builds the class summary header with total points and class info
-  Widget _buildClassSummary(ThemeData theme) {
+  Widget _buildClassSummary(
+    ThemeData theme, {
+    required int totalPoints,
+    required int averagePoints,
+    required double positiveRate,
+    required double negativeRate,
+  }) {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primary.withValues(alpha: 0.1),
-            theme.colorScheme.primary.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 238),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 90),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: theme.colorScheme.shadow.withValues(alpha: 51),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Class name
-          Text(
-            _className,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onPrimaryContainer,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Points summary
-          Row(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth;
+          final twoColumn = maxWidth > 420;
+          final spacing = twoColumn ? 16.0 : 0.0;
+          final cardWidth = twoColumn ? (maxWidth - spacing) / 2 : maxWidth;
+
+          final positiveText = '${positiveRate.round()}%';
+          final negativeText = '${negativeRate.round()}%';
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _buildSummaryCard(
-                  icon: Icons.star,
-                  title: 'Total Points',
-                  value: _classTotalPoints.toString(),
-                  color: theme.colorScheme.primary,
-                  theme: theme,
+              Text(
+                _className,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildSummaryCard(
-                  icon: Icons.trending_up,
-                  title: 'Average',
-                  value: _students.isEmpty ? '0' : (_classTotalPoints / _students.length).round().toString(),
-                  color: theme.colorScheme.secondary,
-                  theme: theme,
-                ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(
+                    width: cardWidth,
+                    child: _buildSummaryCard(
+                      icon: Icons.star,
+                      title: 'Total Points',
+                      value: totalPoints.toString(),
+                      color: theme.colorScheme.primary,
+                      theme: theme,
+                    ),
+                  ),
+                  SizedBox(
+                    width: cardWidth,
+                    child: _buildSummaryCard(
+                      icon: Icons.trending_up,
+                      title: 'Average Points',
+                      value: averagePoints.toString(),
+                      color: theme.colorScheme.secondary,
+                      theme: theme,
+                    ),
+                  ),
+                  SizedBox(
+                    width: cardWidth,
+                    child: _buildSummaryCard(
+                      icon: Icons.thumb_up,
+                      title: 'Positive Rate',
+                      value: positiveText,
+                      color: Colors.green,
+                      theme: theme,
+                    ),
+                  ),
+                  SizedBox(
+                    width: cardWidth,
+                    child: _buildSummaryCard(
+                      icon: Icons.thumb_down,
+                      title: 'Negative Rate',
+                      value: negativeText,
+                      color: Colors.redAccent,
+                      theme: theme,
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
   /// Builds the class total points card for the grid
-  Widget _buildClassTotalCard(ThemeData theme) {
-    final totalPoints = _classTotalPoints;
-    final avgPoints = _students.isNotEmpty ? (totalPoints / _students.length).round() : 0;
-    
+  Widget _buildClassTotalCard(
+    ThemeData theme, {
+    required int totalPoints,
+    required int averagePoints,
+  }) {
     return Card(
       elevation: 4,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.5),
+      shadowColor: theme.colorScheme.primary.withValues(alpha: 120),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              theme.colorScheme.primary.withValues(alpha: 0.15),
-              theme.colorScheme.primary.withValues(alpha: 0.1),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: theme.colorScheme.surface.withValues(alpha: 235),
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 140),
+            width: 1,
+          ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(8), // Reduced padding
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
               children: [
-              // Class icon
-              Container(
-                width: 48,  // Reduced from 60 to match student cards
-                height: 48, // Reduced from 60 to match student cards
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.groups,
-                  size: 24,  // Reduced from 32
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(height: 6), // Reduced from 8
-              // Label
-              Text(
-                'Whole Class',
-                style: theme.textTheme.bodySmall?.copyWith( // Changed from titleMedium
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontSize: 11, // Explicit smaller size
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 2), // Reduced from 4
-              // Total points
-              Text(
-                '$totalPoints',
-                style: theme.textTheme.titleMedium?.copyWith( // Changed from headlineMedium
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  fontSize: 16, // Explicit size
-                ),
-              ),
-              Text(
-                'points',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontSize: 10, // Explicit smaller size
-                ),
-              ),
-              const SizedBox(height: 4), // Reduced from 8
-              // Average badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reduced padding
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Avg: $avgPoints',
-                  style: theme.textTheme.labelSmall?.copyWith( // Changed to labelSmall
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.secondary,
-                    fontSize: 11, // Explicit size
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 90),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 170),
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.groups,
+                    color: theme.colorScheme.onPrimary,
+                    size: 26,
                   ),
                 ),
+                Positioned(
+                  top: -8,
+                  right: -8,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.error.withValues(alpha: 128),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 30,
+                      minHeight: 30,
+                    ),
+                    child: Center(
+                      child: Text(
+                        totalPoints.toString(),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onError,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Whole Class',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+                fontSize: 12,
               ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.secondary.withValues(alpha: 90),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                'Avg: $averagePoints',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
       ),
     );
   }
@@ -503,30 +603,23 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     required ThemeData theme,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.8),
+        color: theme.colorScheme.surface.withValues(alpha: 235),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 130), width: 0.75),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                color: color,
-                size: 20,
-              ),
+              Icon(icon, color: color, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -535,8 +628,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
               color: color,
             ),
           ),
@@ -551,9 +644,9 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     if (screenWidth > 1400) return 8; // Large desktop - fit 30+ students
     if (screenWidth > 1200) return 7; // Desktop
     if (screenWidth > 1000) return 6; // Small desktop
-    if (screenWidth > 800) return 5;  // Tablet landscape
-    if (screenWidth > 600) return 4;  // Tablet portrait
-    if (screenWidth > 400) return 3;  // Large mobile
+    if (screenWidth > 800) return 5; // Tablet landscape
+    if (screenWidth > 600) return 4; // Tablet portrait
+    if (screenWidth > 400) return 3; // Large mobile
     return 2; // Small mobile
   }
 
@@ -561,9 +654,11 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
   /// Provides more vertical space for card content on smaller screens
   double _getAspectRatio(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth > 1200) return 0.85; // Desktop - slightly taller than square
-    if (screenWidth > 800) return 0.8;   // Tablet - more vertical space
-    if (screenWidth > 600) return 0.75;  // Small tablet
+    if (screenWidth > 1200) {
+      return 0.85; // Desktop - slightly taller than square
+    }
+    if (screenWidth > 800) return 0.8; // Tablet - more vertical space
+    if (screenWidth > 600) return 0.75; // Small tablet
     return 0.7; // Mobile - maximum vertical space for all content
   }
 
@@ -576,14 +671,19 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       builder: (context) => BehaviorAssignmentPopup(
         student: student,
         onPointsAwarded: (points, behaviorType) {
-          _awardPoints(student.id, points, behaviorType);
+          _awardPoints(student.id, student.name, points, behaviorType);
         },
       ),
     );
   }
 
   /// Awards points to a student and updates the UI
-  void _awardPoints(String studentId, int points, String behaviorType) {
+  void _awardPoints(
+    String studentId,
+    String studentName,
+    int points,
+    String behaviorType,
+  ) {
     try {
       final provider = context.read<BehaviorPointProvider>();
       // Find matching behavior from the provider or create a custom one
@@ -591,18 +691,18 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
         (b) => b.name == behaviorType,
         orElse: () => provider.behaviors.first, // Fallback to first behavior
       );
-      
+
       provider.awardPoints(
         studentId: studentId,
+        studentName: studentName,
         behaviorId: behavior.id,
         points: points,
-        customReason: behaviorType,
+        reason: behaviorType,
       );
     } catch (e) {
       debugPrint('Error awarding points: $e');
     }
   }
-
 
   /// Navigates to reports screen
   void _viewReports() {
@@ -648,6 +748,17 @@ class StudentPointData {
       return names[0].substring(0, names[0].length >= 2 ? 2 : 1).toUpperCase();
     }
     return 'S';
+  }
+
+  /// Formats the student's name as "First L" for card display.
+  String get formattedName {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.length >= 2) {
+      final last = parts.last;
+      final lastInitial = last.isNotEmpty ? last[0].toUpperCase() : '';
+      return '${parts.first} $lastInitial';
+    }
+    return name;
   }
 
   /// Determines if points are positive, neutral, or negative for color coding

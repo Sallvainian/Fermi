@@ -96,10 +96,7 @@ class Behavior {
 
     // Create IconData separately to avoid non-constant invocation issues
     final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
-    final iconData = IconData(
-      iconCodePoint,
-      fontFamily: 'MaterialIcons',
-    );
+    final iconData = IconData(iconCodePoint, fontFamily: 'MaterialIcons');
 
     return Behavior(
       id: doc.id,
@@ -134,10 +131,7 @@ class Behavior {
 
     // Create IconData separately to avoid non-constant invocation issues
     final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
-    final iconData = IconData(
-      iconCodePoint,
-      fontFamily: 'MaterialIcons',
-    );
+    final iconData = IconData(iconCodePoint, fontFamily: 'MaterialIcons');
 
     return Behavior(
       id: id,
@@ -214,162 +208,4 @@ class Behavior {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
-
-  /// Static list of default positive behaviors
-  static List<Behavior> get defaultPositiveBehaviors => [
-        Behavior(
-          id: 'working_hard',
-          name: 'Working Hard',
-          description: 'Student demonstrates effort and persistence in their work',
-          points: 2,
-          type: BehaviorType.positive,
-          iconData: Icons.work_outline,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'participating',
-          name: 'Participating',
-          description: 'Student actively engages in class discussions and activities',
-          points: 2,
-          type: BehaviorType.positive,
-          iconData: Icons.record_voice_over,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'on_task',
-          name: 'On Task',
-          description: 'Student stays focused and completes assigned work',
-          points: 1,
-          type: BehaviorType.positive,
-          iconData: Icons.task_alt,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'helping_others',
-          name: 'Helping Others',
-          description: 'Student assists classmates and shows kindness',
-          points: 3,
-          type: BehaviorType.positive,
-          iconData: Icons.people_outline,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'teamwork',
-          name: 'Teamwork',
-          description: 'Student collaborates effectively with others',
-          points: 2,
-          type: BehaviorType.positive,
-          iconData: Icons.groups,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'good_manners',
-          name: 'Good Manners',
-          description: 'Student demonstrates politeness and respect',
-          points: 1,
-          type: BehaviorType.positive,
-          iconData: Icons.emoji_people,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'following_directions',
-          name: 'Following Directions',
-          description: 'Student listens carefully and follows instructions',
-          points: 1,
-          type: BehaviorType.positive,
-          iconData: Icons.directions_run,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'making_smart_choices',
-          name: 'Making Smart Choices',
-          description: 'Student demonstrates good decision-making skills',
-          points: 2,
-          type: BehaviorType.positive,
-          iconData: Icons.psychology,
-          createdAt: DateTime.now(),
-        ),
-      ];
-
-  /// Static list of default negative behaviors
-  static List<Behavior> get defaultNegativeBehaviors => [
-        Behavior(
-          id: 'not_following_directions',
-          name: 'Not Following Directions',
-          description: 'Student fails to listen to or follow given instructions',
-          points: -1,
-          type: BehaviorType.negative,
-          iconData: Icons.do_not_disturb,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'off_task',
-          name: 'Off Task',
-          description: 'Student is not focused on assigned work or activities',
-          points: -1,
-          type: BehaviorType.negative,
-          iconData: Icons.schedule,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'talking',
-          name: 'Talking',
-          description: 'Student talks inappropriately during instruction or quiet work time',
-          points: -1,
-          type: BehaviorType.negative,
-          iconData: Icons.chat_bubble_outline,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'disrespectful',
-          name: 'Disrespectful',
-          description: 'Student shows disrespect to teacher or classmates',
-          points: -3,
-          type: BehaviorType.negative,
-          iconData: Icons.thumb_down,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'no_homework',
-          name: 'No Homework',
-          description: 'Student did not complete or bring assigned homework',
-          points: -2,
-          type: BehaviorType.negative,
-          iconData: Icons.assignment_late,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'playing',
-          name: 'Playing',
-          description: 'Student plays with objects or acts inappropriately during class',
-          points: -1,
-          type: BehaviorType.negative,
-          iconData: Icons.toys,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'arguing',
-          name: 'Arguing',
-          description: 'Student argues with teacher or classmates',
-          points: -2,
-          type: BehaviorType.negative,
-          iconData: Icons.forum,
-          createdAt: DateTime.now(),
-        ),
-        Behavior(
-          id: 'blurting_out',
-          name: 'Blurting Out',
-          description: 'Student speaks without permission or interrupts others',
-          points: -1,
-          type: BehaviorType.negative,
-          iconData: Icons.volume_up,
-          createdAt: DateTime.now(),
-        ),
-      ];
-
-  /// Gets all default behaviors (positive and negative combined)
-  static List<Behavior> get allDefaultBehaviors => [
-        ...defaultPositiveBehaviors,
-        ...defaultNegativeBehaviors,
-      ];
 }

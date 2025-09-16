@@ -1,246 +1,329 @@
-import 'dart:async';
-import '../../data/repositories/behavior_points_repository.dart';
-import '../../data/models/student_points_aggregate.dart';
-import '../../data/models/behavior_history_entry.dart';
-import '../models/behavior.dart';
-import '../../../../shared/services/logger_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:flutter/material.dart';
+import 'package:fermi_plus/features/behavior_points/data/models/behavior_history_entry.dart';
+import 'package:fermi_plus/features/behavior_points/data/models/student_points_aggregate.dart';
+import 'package:fermi_plus/features/behavior_points/domain/models/behavior.dart';
+import 'package:fermi_plus/shared/services/logger_service.dart';
 
-/// Service layer for behavior points business logic
-///
-/// Coordinates between the repository and provider layers,
-/// handling validation and business rules.
+/// Service for managing behavior points using Firebase Functions
+/// All write operations go through server-side Functions for security
+/// Read operations use Firestore streams for real-time updates
 class BehaviorPointsService {
-  static const String _tag = 'BehaviorPointsService';
+  final FirebaseFunctions _functions = FirebaseFunctions.instanceFor(
+    region: 'us-east4',
+  );
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  final BehaviorPointsRepository _repository;
-
-  BehaviorPointsService({
-    BehaviorPointsRepository? repository,
-  }) : _repository = repository ?? BehaviorPointsRepository();
-
-  // ============= Point Operations =============
-
-  /// Awards points to a student with validation
-  Future<bool> awardPoints({
+  /// Award behavior points to a student via Firebase Function
+  Future<bool> awardBehaviorPoints({
     required String classId,
     required String studentId,
     required String studentName,
     required Behavior behavior,
-    String? note,
-    String? operationId,
   }) async {
-    // Validate inputs
-    if (classId.isEmpty) {
-      LoggerService.error('Class ID is required', tag: _tag);
+    // Skip invalid entries
+    if (studentId.isEmpty || studentName == 'Loading...') {
+      LoggerService.warning(
+        'Skipping invalid student entry: $studentName (ID: $studentId)',
+      );
       return false;
     }
 
-    if (studentId.isEmpty) {
-      LoggerService.error('Student ID is required', tag: _tag);
+    try {
+      final callable = _functions.httpsCallable('awardBehaviorPoints');
+      final result = await callable.call({
+        'classId': classId,
+        'studentId': studentId,
+        'studentName': studentName,
+        'behaviorId': behavior.id,
+        'behaviorName': behavior.name,
+        'points': behavior.points,
+      });
+
+      final data = result.data as Map<String, dynamic>;
+
+      if (data['success'] == true) {
+        LoggerService.info(
+          'Points awarded successfully: ${data['operationId']}',
+        );
+        return true;
+      } else {
+        LoggerService.warning('Points award failed: ${data['message']}');
+        return false;
+      }
+    } on FirebaseFunctionsException catch (e) {
+      LoggerService.error('Firebase Function error: ${e.code} - ${e.message}');
+      return false;
+    } catch (e) {
+      LoggerService.error('Failed to award points: $e');
       return false;
     }
-
-    if (studentName.trim().isEmpty ||
-        studentName == 'Loading...' ||
-        studentName == 'Unknown Student') {
-      LoggerService.error('Valid student name is required', tag: _tag);
-      return false;
-    }
-
-    // Award points through repository
-    return await _repository.awardPoints(
-      classId: classId,
-      studentId: studentId,
-      studentName: studentName,
-      behaviorId: behavior.id,
-      behaviorName: behavior.name,
-      behaviorType: behavior.type.name,
-      points: behavior.points,
-      note: note ?? behavior.description,
-      operationId: operationId,
-    );
   }
 
-  /// Undo the last operation for a student
-  Future<bool> undoLastOperation({
+  /// Undo previously awarded behavior points via Firebase Function
+  Future<bool> undoBehaviorPoints({
     required String classId,
     required String studentId,
+    required String historyId,
   }) async {
-    if (classId.isEmpty || studentId.isEmpty) {
-      LoggerService.error('Class ID and Student ID are required', tag: _tag);
+    try {
+      final callable = _functions.httpsCallable('undoBehaviorPoints');
+      final result = await callable.call({
+        'classId': classId,
+        'studentId': studentId,
+        'historyId': historyId,
+      });
+
+      final data = result.data as Map<String, dynamic>;
+
+      if (data['success'] == true) {
+        LoggerService.info('Points undone successfully');
+        return true;
+      } else {
+        LoggerService.warning('Points undo failed: ${data['message']}');
+        return false;
+      }
+    } on FirebaseFunctionsException catch (e) {
+      LoggerService.error('Firebase Function error: ${e.code} - ${e.message}');
+      return false;
+    } catch (e) {
+      LoggerService.error('Failed to undo points: $e');
       return false;
     }
-
-    return await _repository.undoLastOperation(classId, studentId);
   }
 
-  // ============= Data Streaming =============
+  /// Get class points summary via Firebase Function (for initial load)
+  Future<Map<String, StudentPointsAggregate>> getClassPointsSummary(
+    String classId,
+  ) async {
+    try {
+      final callable = _functions.httpsCallable('getClassPointsSummary');
+      final result = await callable.call({'classId': classId});
 
-  /// Streams aggregated points for all students in a class
-  Stream<Map<String, StudentPointsAggregate>> streamClassAggregates(String classId) {
-    if (classId.isEmpty) {
-      return Stream.value({});
-    }
+      final data = result.data as Map<String, dynamic>;
+      final summaries = <String, StudentPointsAggregate>{};
 
-    return _repository.streamClassAggregates(classId).map((aggregates) {
-      // Convert list to map for easy lookup
-      final map = <String, StudentPointsAggregate>{};
-      for (final aggregate in aggregates) {
-        // Skip invalid entries
-        if (aggregate.studentId.isEmpty ||
-            aggregate.studentName == 'Loading...' ||
-            aggregate.studentName == 'Unknown Student') {
-          continue;
-        }
-        map[aggregate.studentId] = aggregate;
+      if (data['success'] == true && data['summaries'] != null) {
+        (data['summaries'] as Map<String, dynamic>).forEach((key, value) {
+          summaries[key] = StudentPointsAggregate.fromMap(
+            value as Map<String, dynamic>,
+          );
+        });
       }
-      return map;
-    });
-  }
 
-  /// Streams behavior history for a class
-  Stream<List<BehaviorHistoryEntry>> streamClassHistory(
-    String classId, {
-    int limit = 100,
-  }) {
-    if (classId.isEmpty) {
-      return Stream.value([]);
+      return summaries;
+    } on FirebaseFunctionsException catch (e) {
+      LoggerService.error('Firebase Function error: ${e.code} - ${e.message}');
+      return {};
+    } catch (e) {
+      LoggerService.error('Failed to get points summary: $e');
+      return {};
     }
-
-    return _repository.streamClassHistory(classId, limit: limit);
   }
 
-  /// Streams behavior history for a specific student
-  Stream<List<BehaviorHistoryEntry>> streamStudentHistory(
+  /// Watch real-time updates to class points summary (read-only stream)
+  Stream<Map<String, StudentPointsAggregate>> watchClassPointsSummary(
+    String classId,
+  ) {
+    return _firestore
+        .collection('classes')
+        .doc(classId)
+        .collection('studentPoints')
+        .snapshots()
+        .map((snapshot) {
+          final summaries = <String, StudentPointsAggregate>{};
+
+          for (final doc in snapshot.docs) {
+            try {
+              final data = doc.data();
+              // Filter out invalid entries
+              if (data['studentId'] != null &&
+                  data['studentId'].toString().isNotEmpty &&
+                  data['studentName'] != 'Loading...') {
+                summaries[doc.id] = StudentPointsAggregate.fromMap(data);
+              }
+            } catch (e) {
+              LoggerService.error(
+                'Error parsing student points aggregate: ${doc.id} - $e',
+              );
+            }
+          }
+
+          return summaries;
+        });
+  }
+
+  /// Watch recent history entries for a class (read-only stream)
+  Stream<List<BehaviorHistoryEntry>> watchRecentHistory(
+    String classId, {
+    int limit = 10,
+  }) {
+    return _firestore
+        .collectionGroup('history')
+        .where('classId', isEqualTo: classId)
+        .where('isUndone', isEqualTo: false)
+        .orderBy('awardedAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) {
+                try {
+                  return BehaviorHistoryEntry.fromMap(doc.data());
+                } catch (e) {
+                  LoggerService.error(
+                    'Error parsing history entry: ${doc.id} - $e',
+                  );
+                  return null;
+                }
+              })
+              .where((entry) => entry != null)
+              .cast<BehaviorHistoryEntry>()
+              .toList();
+        });
+  }
+
+  /// Watch history entries for a specific student (read-only stream)
+  Stream<List<BehaviorHistoryEntry>> watchStudentHistory(
     String classId,
     String studentId, {
-    int limit = 50,
+    int limit = 20,
   }) {
-    if (classId.isEmpty || studentId.isEmpty) {
-      return Stream.value([]);
-    }
-
-    return _repository.streamStudentHistory(classId, studentId, limit: limit);
+    return _firestore
+        .collection('classes')
+        .doc(classId)
+        .collection('studentPoints')
+        .doc(studentId)
+        .collection('history')
+        .where('isUndone', isEqualTo: false)
+        .orderBy('awardedAt', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) {
+                try {
+                  return BehaviorHistoryEntry.fromMap(doc.data());
+                } catch (e) {
+                  LoggerService.error(
+                    'Error parsing student history entry: ${doc.id} - $e',
+                  );
+                  return null;
+                }
+              })
+              .where((entry) => entry != null)
+              .cast<BehaviorHistoryEntry>()
+              .toList();
+        });
   }
 
-  /// Streams all behaviors available for a class
-  Stream<List<Behavior>> streamBehaviors(String classId) {
-    if (classId.isEmpty) {
-      return Stream.value([]);
-    }
+  /// Get a single student's points aggregate (read-only)
+  Future<StudentPointsAggregate?> getStudentPoints(
+    String classId,
+    String studentId,
+  ) async {
+    try {
+      final doc = await _firestore
+          .collection('classes')
+          .doc(classId)
+          .collection('studentPoints')
+          .doc(studentId)
+          .get();
 
-    return _repository.streamBehaviors(classId);
+      if (!doc.exists) {
+        return null;
+      }
+
+      return StudentPointsAggregate.fromMap(doc.data()!);
+    } catch (e) {
+      LoggerService.error('Failed to get student points: $e');
+      return null;
+    }
   }
 
-  // ============= Behavior Management =============
+  /// Stream class behaviors for real-time updates.
+  Stream<List<Behavior>> watchClassBehaviors(String classId) {
+    return _firestore
+        .collection('classes')
+        .doc(classId)
+        .collection('behaviors')
+        .orderBy('name')
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) {
+                try {
+                  return Behavior.fromFirestore(doc);
+                } catch (error) {
+                  LoggerService.error(
+                    'Failed to parse behavior ${doc.id}: $error',
+                  );
+                  return null;
+                }
+              })
+              .whereType<Behavior>()
+              .toList();
+        });
+  }
 
-  /// Creates a custom behavior for a class
-  Future<String?> createCustomBehavior({
+  /// Create or update a behavior for the class.
+  Future<bool> saveBehavior({
+    required String classId,
+    required String teacherId,
+    String? behaviorId,
     required String name,
     required String description,
     required int points,
     required BehaviorType type,
-    required String teacherId,
-    required String classId,
-    String? iconName,
+    required IconData icon,
   }) async {
-    // Validate inputs
-    if (name.trim().isEmpty) {
-      LoggerService.error('Behavior name is required', tag: _tag);
-      return null;
-    }
+    try {
+      final behaviorsRef = _firestore
+          .collection('classes')
+          .doc(classId)
+          .collection('behaviors');
 
-    if (points == 0) {
-      LoggerService.error('Points cannot be zero', tag: _tag);
-      return null;
-    }
+      final docRef = behaviorId != null && behaviorId.isNotEmpty
+          ? behaviorsRef.doc(behaviorId)
+          : behaviorsRef.doc();
 
-    // Ensure points match type
-    final adjustedPoints = type == BehaviorType.positive
-        ? points.abs()
-        : -points.abs();
+      await docRef.set({
+        'name': name,
+        'description': description,
+        'points': points,
+        'type': type.name,
+        'iconCodePoint': icon.codePoint,
+        'isCustom': true,
+        'teacherId': teacherId,
+        'classId': classId,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-    final behavior = Behavior(
-      id: '', // Will be set by Firestore
-      name: name.trim(),
-      description: description.trim(),
-      points: adjustedPoints,
-      type: type,
-      iconName: iconName,
-      isCustom: true,
-      teacherId: teacherId,
-      classId: classId,
-    );
-
-    return await _repository.createCustomBehavior(behavior);
-  }
-
-  /// Deletes a custom behavior
-  Future<bool> deleteBehavior(String behaviorId) async {
-    if (behaviorId.isEmpty) {
-      LoggerService.error('Behavior ID is required', tag: _tag);
+      return true;
+    } catch (e) {
+      LoggerService.error('Failed to save behavior: $e');
       return false;
     }
-
-    return await _repository.deleteBehavior(behaviorId);
   }
 
-  // ============= Analytics & Statistics =============
-
-  /// Calculates class-wide statistics
-  Map<String, dynamic> calculateClassStatistics(
-    Map<String, StudentPointsAggregate> aggregates,
-  ) {
-    if (aggregates.isEmpty) {
-      return {
-        'totalStudents': 0,
-        'averagePoints': 0.0,
-        'totalPositivePoints': 0,
-        'totalNegativePoints': 0,
-        'topPerformers': [],
-        'needsAttention': [],
-      };
+  /// Delete a behavior document from the class.
+  Future<bool> deleteBehavior({
+    required String classId,
+    required String behaviorId,
+  }) async {
+    try {
+      await _firestore
+          .collection('classes')
+          .doc(classId)
+          .collection('behaviors')
+          .doc(behaviorId)
+          .delete();
+      return true;
+    } catch (e) {
+      LoggerService.error('Failed to delete behavior: $e');
+      return false;
     }
-
-    final students = aggregates.values.toList();
-    final totalStudents = students.length;
-
-    final totalPoints = students.fold<int>(
-      0,
-      (sum, student) => sum + student.totalPoints,
-    );
-
-    final totalPositive = students.fold<int>(
-      0,
-      (sum, student) => sum + student.positivePoints,
-    );
-
-    final totalNegative = students.fold<int>(
-      0,
-      (sum, student) => sum + student.negativePoints,
-    );
-
-    // Sort by total points
-    students.sort((a, b) => b.totalPoints.compareTo(a.totalPoints));
-
-    // Get top 5 performers
-    final topPerformers = students
-        .where((s) => s.totalPoints > 0)
-        .take(5)
-        .toList();
-
-    // Get students needing attention (negative points)
-    final needsAttention = students
-        .where((s) => s.totalPoints < 0)
-        .toList();
-
-    return {
-      'totalStudents': totalStudents,
-      'averagePoints': totalPoints / totalStudents,
-      'totalPositivePoints': totalPositive,
-      'totalNegativePoints': totalNegative,
-      'topPerformers': topPerformers,
-      'needsAttention': needsAttention,
-    };
   }
 }

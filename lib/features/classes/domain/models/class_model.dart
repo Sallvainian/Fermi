@@ -97,6 +97,33 @@ class ClassModel {
     this.settings,
   });
 
+  /// Attempts to parse the class period number from available fields.
+  ///
+  /// The primary source is the `schedule` string which is expected to follow
+  /// the pattern "Period X". We fall back to checking the `settings` map for
+  /// a numeric `period` entry if the schedule value cannot be parsed.
+  int? get periodNumber {
+    // Check schedule text first (e.g., "Period 1")
+    final scheduleText = schedule?.toLowerCase();
+    if (scheduleText != null) {
+      final match = RegExp(r'period\s*(\d+)').firstMatch(scheduleText);
+      if (match != null) {
+        return int.tryParse(match.group(1)!);
+      }
+    }
+
+    // Fallback to settings map if available
+    final dynamic periodValue = settings != null ? settings!['period'] : null;
+    if (periodValue is int) {
+      return periodValue;
+    }
+    if (periodValue is String) {
+      return int.tryParse(periodValue);
+    }
+
+    return null;
+  }
+
   /// Factory constructor to create ClassModel from Firestore document.
   ///
   /// Handles data parsing and type conversions including:

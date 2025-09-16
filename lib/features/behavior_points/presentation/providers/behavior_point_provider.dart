@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/services/behavior_points_service.dart';
-import '../../data/repositories/behavior_points_repository.dart';
 import '../../data/models/student_points_aggregate.dart';
 import '../../data/models/behavior_history_entry.dart';
 import '../../domain/models/behavior.dart';
@@ -71,7 +70,10 @@ class BehaviorPoint {
     required this.awardedAt,
   });
 
-  factory BehaviorPoint.fromHistoryEntry(BehaviorHistoryEntry entry, String classId) {
+  factory BehaviorPoint.fromHistoryEntry(
+    BehaviorHistoryEntry entry,
+    String classId,
+  ) {
     return BehaviorPoint(
       id: entry.operationId,
       studentId: entry.studentId,
@@ -100,7 +102,9 @@ class BehaviorPoint {
       reason: data['reason'] ?? data['note'] ?? '',
       awardedBy: data['awardedBy'] ?? data['teacherId'] ?? '',
       awardedByName: data['awardedByName'] ?? data['teacherName'] ?? 'Unknown',
-      awardedAt: (data['awardedAt'] ?? data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      awardedAt:
+          (data['awardedAt'] ?? data['timestamp'] as Timestamp?)?.toDate() ??
+          DateTime.now(),
     );
   }
 }
@@ -125,9 +129,10 @@ class BehaviorPointProvider with ChangeNotifier {
   List<BehaviorPoint> _behaviorPoints = [];
 
   // Stream subscriptions
-  StreamSubscription<Map<String, StudentPointsAggregate>>? _aggregatesSubscription;
-  StreamSubscription<List<Behavior>>? _behaviorsSubscription;
+  StreamSubscription<Map<String, StudentPointsAggregate>>?
+  _aggregatesSubscription;
   StreamSubscription<List<BehaviorHistoryEntry>>? _historySubscription;
+  StreamSubscription<List<Behavior>>? _behaviorsSubscription;
 
   // Factory constructor for dependency injection
   factory BehaviorPointProvider({
@@ -144,8 +149,8 @@ class BehaviorPointProvider with ChangeNotifier {
   BehaviorPointProvider._({
     required BehaviorPointsService service,
     required FirebaseAuth auth,
-  })  : _service = service,
-        _auth = auth;
+  }) : _service = service,
+       _auth = auth;
 
   // ============= Getters =============
 
@@ -169,7 +174,10 @@ class BehaviorPointProvider with ChangeNotifier {
   /// Loads all data for a class
   Future<void> loadBehaviorPointsForClass(String classId) async {
     if (classId.isEmpty) {
-      LoggerService.error('Cannot load behavior points: classId is empty', tag: _tag);
+      LoggerService.error(
+        'Cannot load behavior points: classId is empty',
+        tag: _tag,
+      );
       return;
     }
 
@@ -181,63 +189,83 @@ class BehaviorPointProvider with ChangeNotifier {
       // Cancel existing subscriptions
       await _cancelSubscriptions();
 
-      // Subscribe to behaviors
-      _behaviorsSubscription = _service.streamBehaviors(classId).listen(
-        (behaviors) {
-          _behaviors = behaviors;
-          notifyListeners();
-        },
-        onError: (error) {
-          LoggerService.error('Failed to load behaviors', tag: _tag, error: error);
-          _error = 'Failed to load behaviors';
-          notifyListeners();
-        },
-      );
+      _behaviors = [];
+      notifyListeners();
+
+      _behaviorsSubscription = _service
+          .watchClassBehaviors(classId)
+          .listen(
+            (behaviors) {
+              _behaviors = behaviors;
+              notifyListeners();
+            },
+            onError: (error) {
+              LoggerService.error(
+                'Failed to load behaviors',
+                tag: _tag,
+                error: error,
+              );
+              _error = 'Failed to load behaviors';
+              notifyListeners();
+            },
+          );
 
       // Subscribe to student aggregates
-      _aggregatesSubscription = _service.streamClassAggregates(classId).listen(
-        (aggregates) {
-          _studentAggregates.clear();
-          _studentSummaries.clear();
+      _aggregatesSubscription = _service
+          .watchClassPointsSummary(classId)
+          .listen(
+            (aggregates) {
+              _studentAggregates.clear();
+              _studentSummaries.clear();
 
-          for (final entry in aggregates.entries) {
-            final aggregate = entry.value;
+              for (final entry in aggregates.entries) {
+                final aggregate = entry.value;
 
-            // Skip invalid entries
-            if (aggregate.studentId.isEmpty ||
-                aggregate.studentName == 'Loading...' ||
-                aggregate.studentName == 'Unknown Student') {
-              continue;
-            }
+                // Skip invalid entries
+                if (aggregate.studentId.isEmpty ||
+                    aggregate.studentName == 'Loading...' ||
+                    aggregate.studentName == 'Unknown Student') {
+                  continue;
+                }
 
-            _studentAggregates[entry.key] = aggregate;
-            _studentSummaries[entry.key] = StudentPointSummary.fromAggregate(aggregate);
-          }
+                _studentAggregates[entry.key] = aggregate;
+                _studentSummaries[entry.key] =
+                    StudentPointSummary.fromAggregate(aggregate);
+              }
 
-          notifyListeners();
-        },
-        onError: (error) {
-          LoggerService.error('Failed to load student aggregates', tag: _tag, error: error);
-          _error = 'Failed to load student points';
-          notifyListeners();
-        },
-      );
+              notifyListeners();
+            },
+            onError: (error) {
+              LoggerService.error(
+                'Failed to load student aggregates',
+                tag: _tag,
+                error: error,
+              );
+              _error = 'Failed to load student points';
+              notifyListeners();
+            },
+          );
 
       // Subscribe to history for activity feed
-      _historySubscription = _service.streamClassHistory(classId).listen(
-        (entries) {
-          _historyEntries = entries;
-          _behaviorPoints = entries
-              .where((e) => !e.isUndone)
-              .map((e) => BehaviorPoint.fromHistoryEntry(e, classId))
-              .toList();
-          notifyListeners();
-        },
-        onError: (error) {
-          LoggerService.error('Failed to load history', tag: _tag, error: error);
-        },
-      );
-
+      _historySubscription = _service
+          .watchRecentHistory(classId, limit: 100)
+          .listen(
+            (entries) {
+              _historyEntries = entries;
+              _behaviorPoints = entries
+                  .where((e) => !e.isUndone)
+                  .map((e) => BehaviorPoint.fromHistoryEntry(e, classId))
+                  .toList();
+              notifyListeners();
+            },
+            onError: (error) {
+              LoggerService.error(
+                'Failed to load history',
+                tag: _tag,
+                error: error,
+              );
+            },
+          );
     } finally {
       _setLoading(false);
     }
@@ -261,7 +289,10 @@ class BehaviorPointProvider with ChangeNotifier {
 
     // Validate student ID
     if (studentId.isEmpty) {
-      LoggerService.error('Empty studentId provided - cannot award points', tag: _tag);
+      LoggerService.error(
+        'Empty studentId provided - cannot award points',
+        tag: _tag,
+      );
       _error = 'Invalid student ID';
       notifyListeners();
       return;
@@ -275,15 +306,16 @@ class BehaviorPointProvider with ChangeNotifier {
 
     LoggerService.info('>>> AWARDING POINTS <<<', tag: _tag);
     LoggerService.info('Student: $studentId ($studentName)', tag: _tag);
-    LoggerService.info('Behavior: ${behavior.name} (${behavior.points} points)', tag: _tag);
+    LoggerService.info(
+      'Behavior: ${behavior.name} (${behavior.points} points)',
+      tag: _tag,
+    );
 
-    final success = await _service.awardPoints(
+    final success = await _service.awardBehaviorPoints(
       classId: _currentClassId!,
       studentId: studentId,
       studentName: studentName,
       behavior: behavior,
-      note: reason,
-      operationId: operationId,
     );
 
     if (!success) {
@@ -295,17 +327,30 @@ class BehaviorPointProvider with ChangeNotifier {
   }
 
   /// Removes the last behavior point (undo operation)
-  Future<void> removePoints({
-    required String studentId,
-  }) async {
+  Future<void> removePoints({required String studentId}) async {
     if (_currentClassId == null) {
       LoggerService.error('No class selected', tag: _tag);
       return;
     }
 
-    final success = await _service.undoLastOperation(
+    // For undo, we need a history ID. Get the last history entry for this student
+    final lastEntry =
+        _historyEntries
+            .where((e) => e.studentId == studentId && !e.isUndone)
+            .toList()
+          ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    if (lastEntry.isEmpty) {
+      LoggerService.error('No operations to undo for student', tag: _tag);
+      _error = 'No operations to undo';
+      notifyListeners();
+      return;
+    }
+
+    final success = await _service.undoBehaviorPoints(
       classId: _currentClassId!,
       studentId: studentId,
+      historyId: lastEntry.first.operationId,
     );
 
     if (!success) {
@@ -314,7 +359,6 @@ class BehaviorPointProvider with ChangeNotifier {
     }
   }
 
-  /// Creates a custom behavior
   Future<void> createCustomBehavior({
     required String name,
     required String description,
@@ -323,13 +367,15 @@ class BehaviorPointProvider with ChangeNotifier {
     IconData? icon,
   }) async {
     if (_currentClassId == null) {
-      LoggerService.error('No class selected', tag: _tag);
+      _error = 'No class selected';
+      notifyListeners();
       return;
     }
 
-    final user = _auth.currentUser;
-    if (user == null) {
-      LoggerService.error('No authenticated user', tag: _tag);
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      _error = 'You must be signed in to create behaviors';
+      notifyListeners();
       return;
     }
 
@@ -337,42 +383,61 @@ class BehaviorPointProvider with ChangeNotifier {
         ? BehaviorType.negative
         : BehaviorType.positive;
 
-    final behaviorId = await _service.createCustomBehavior(
-      name: name,
-      description: description,
+    final success = await _service.saveBehavior(
+      classId: _currentClassId!,
+      teacherId: currentUser.uid,
+      name: name.trim(),
+      description: description.trim(),
       points: points,
       type: behaviorType,
-      teacherId: user.uid,
-      classId: _currentClassId!,
-      iconName: icon?.codePoint.toString(),
+      icon: icon ?? Icons.star_outline,
     );
 
-    if (behaviorId == null) {
-      _error = 'Failed to create custom behavior';
+    if (!success) {
+      _error = 'Failed to create behavior';
       notifyListeners();
     }
   }
 
-  /// Deletes a custom behavior
   Future<void> deleteBehavior(String behaviorId) async {
-    final success = await _service.deleteBehavior(behaviorId);
+    if (_currentClassId == null) {
+      _error = 'No class selected';
+      notifyListeners();
+      return;
+    }
+
+    final success = await _service.deleteBehavior(
+      classId: _currentClassId!,
+      behaviorId: behaviorId,
+    );
+
     if (!success) {
       _error = 'Failed to delete behavior';
       notifyListeners();
     }
   }
 
-  /// Loads behaviors for a class (for backward compatibility)
-  Future<void> loadBehaviorsForClass(String classId) async {
-    // This is handled by loadBehaviorPointsForClass now
-    await loadBehaviorPointsForClass(classId);
-  }
-
   /// Calculates total points for the class
   int calculateClassTotalPoints() {
     return _studentAggregates.values.fold(
       0,
-      (sum, aggregate) => sum + aggregate.totalPoints,
+      (total, aggregate) => total + aggregate.totalPoints,
+    );
+  }
+
+  /// Calculates the total positive points awarded to the class
+  int calculateClassPositivePoints() {
+    return _studentAggregates.values.fold(
+      0,
+      (total, aggregate) => total + aggregate.positivePoints,
+    );
+  }
+
+  /// Calculates the total negative points awarded to the class
+  int calculateClassNegativePoints() {
+    return _studentAggregates.values.fold(
+      0,
+      (total, aggregate) => total + aggregate.negativePoints,
     );
   }
 
@@ -392,8 +457,8 @@ class BehaviorPointProvider with ChangeNotifier {
 
   Future<void> _cancelSubscriptions() async {
     await _aggregatesSubscription?.cancel();
-    await _behaviorsSubscription?.cancel();
     await _historySubscription?.cancel();
+    await _behaviorsSubscription?.cancel();
   }
 
   // ============= Lifecycle =============

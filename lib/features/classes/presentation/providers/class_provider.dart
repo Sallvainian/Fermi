@@ -52,6 +52,34 @@ class ClassProvider with ChangeNotifier {
     return _teacherClasses.where((c) => !c.isActive).toList();
   }
 
+  List<ClassModel> _sortClasses(List<ClassModel> classes) {
+    final sorted = List<ClassModel>.from(classes);
+    sorted.sort((a, b) {
+      final aPeriod = a.periodNumber;
+      final bPeriod = b.periodNumber;
+
+      if (aPeriod != null && bPeriod != null) {
+        final comparison = aPeriod.compareTo(bPeriod);
+        if (comparison != 0) return comparison;
+      } else if (aPeriod != null) {
+        // Prioritise classes with parsed periods over those without
+        return -1;
+      } else if (bPeriod != null) {
+        return 1;
+      }
+
+      // Fallback to alphabetical order to provide deterministic results
+      final nameComparison = a.name.toLowerCase().compareTo(
+        b.name.toLowerCase(),
+      );
+      if (nameComparison != 0) return nameComparison;
+
+      // As a last resort, compare creation timestamps to keep ordering stable
+      return a.createdAt.compareTo(b.createdAt);
+    });
+    return sorted;
+  }
+
   /// Returns a stream of teacher's classes from Firestore.
   Stream<List<ClassModel>> loadTeacherClasses(String teacherId) {
     // Cancel previous subscription if exists
@@ -75,7 +103,7 @@ class ClassProvider with ChangeNotifier {
               }
             }
 
-            _teacherClasses = classes;
+            _teacherClasses = _sortClasses(classes);
             _setLoading(false);
             // Defer notification to next frame to avoid setState during build
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,9 +128,10 @@ class ClassProvider with ChangeNotifier {
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs
+          final classes = snapshot.docs
               .map((doc) => ClassModel.fromFirestore(doc))
               .toList();
+          return _sortClasses(classes);
         });
   }
 
