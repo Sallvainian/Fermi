@@ -437,155 +437,154 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           );
         }
 
-        // Show max 4 classes on dashboard
-        final displayClasses = teacherClasses.take(4).toList();
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final maxWidth = constraints.maxWidth;
+            final isWide = maxWidth > 960;
+            final isMedium = maxWidth > 640 && maxWidth <= 960;
+            final columns = isWide ? 3 : isMedium ? 2 : 1;
+            final spacing = 16.0;
+            final totalSpacing = columns > 1 ? spacing * (columns - 1) : 0.0;
+            final cardWidth = columns > 1
+                ? (maxWidth - totalSpacing) / columns
+                : maxWidth;
 
-        return Column(
-          children: [
-            ...displayClasses.map(
-              (course) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildClassCard(context, course),
-              ),
-            ),
-            if (teacherClasses.length > 4) ...[
-              const SizedBox(height: 4),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => context.go('/teacher/classes'),
-                  child: Text('View All ${teacherClasses.length} Classes'),
-                ),
-              ),
-            ],
-          ],
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: teacherClasses.map((course) {
+                return SizedBox(
+                  width: cardWidth,
+                  child: _buildCompactClassCard(context, course),
+                );
+              }).toList(),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildClassCard(BuildContext context, ClassModel course) {
+  Widget _buildCompactClassCard(BuildContext context, ClassModel course) {
     final theme = Theme.of(context);
     final colorIndex = course.subject.hashCode % AppTheme.subjectColors.length;
     final color = AppTheme.subjectColors[colorIndex];
+    final period = course.periodNumber;
+    final scheduleLabel = course.schedule;
+
+    final details = <String>[
+      if (period != null) 'Period $period',
+      if (scheduleLabel != null && (period == null || !scheduleLabel.toLowerCase().contains('period')))
+        scheduleLabel,
+    ];
 
     return AppCard(
+      padding: const EdgeInsets.all(12),
       onTap: () => _navigateToClass(context, course),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Color indicator
-          Container(
-            width: 4,
-            height: 60,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 12),
-
-          // Class info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  course.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 6,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(3),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  course.subject,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8.0,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (course.room != null)
-                      _buildInfoChip(Icons.room, course.room!),
-                    if (course.schedule != null)
-                      _buildInfoChip(Icons.schedule, course.schedule!),
-                    _buildInfoChip(
-                      Icons.people,
-                      '${course.studentCount} students',
+                    Text(
+                      course.name,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      course.subject,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (details.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        details.join(' | '),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 48),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${course.studentCount}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
           ),
-
-          // Arrow icon
-          Icon(
-            Icons.arrow_forward_ios,
-            size: 16,
-            color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.people,
+                size: 16,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '${course.studentCount} students',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              if (course.room != null) ...[
+                const SizedBox(width: 12),
+                Icon(
+                  Icons.meeting_room,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    course.room!,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
-      ),
-    );
-  }
-
-  void _navigateToClass(BuildContext context, ClassModel course) {
-    // Navigate directly to the class detail screen
-    context.go('/class/${course.id}');
-  }
-
-  Widget _buildCompactStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-    VoidCallback? onTap,
-  }) {
-    final theme = Theme.of(context);
-
-    return SizedBox(
-      width: 120,
-      child: Card(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon, size: 20, color: color),
-                    const SizedBox(width: 8),
-                    Text(
-                      value,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
