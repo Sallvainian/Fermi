@@ -810,14 +810,10 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
         return Icons.quiz;
       case AssignmentType.test:
         return Icons.assignment;
-      case AssignmentType.project:
-        return Icons.architecture;
-      case AssignmentType.lab:
+      case AssignmentType.projectsLabs:
         return Icons.science;
-      case AssignmentType.classwork:
+      case AssignmentType.classworkActivities:
         return Icons.school;
-      case AssignmentType.activity:
-        return Icons.sports_handball;
     }
   }
 
@@ -829,14 +825,10 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
         return Colors.purple;
       case AssignmentType.test:
         return Colors.red;
-      case AssignmentType.project:
+      case AssignmentType.projectsLabs:
         return Colors.green;
-      case AssignmentType.lab:
-        return Colors.orange;
-      case AssignmentType.classwork:
+      case AssignmentType.classworkActivities:
         return Colors.teal;
-      case AssignmentType.activity:
-        return Colors.pink;
     }
   }
 
@@ -848,14 +840,10 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
         return 'Quiz';
       case AssignmentType.test:
         return 'Test';
-      case AssignmentType.project:
-        return 'Project';
-      case AssignmentType.lab:
-        return 'Lab';
-      case AssignmentType.classwork:
-        return 'Classwork';
-      case AssignmentType.activity:
-        return 'Activity';
+      case AssignmentType.projectsLabs:
+        return 'Projects/Labs';
+      case AssignmentType.classworkActivities:
+        return 'Classwork/Activities';
     }
   }
 

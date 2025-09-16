@@ -996,16 +996,20 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   }
 
   Color _getAssignmentTypeColor(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'homework':
         return Colors.blue;
       case 'quiz':
-        return Colors.orange;
+        return Colors.purple;
       case 'test':
         return Colors.red;
+      case 'projectslabs':
       case 'project':
+      case 'lab':
         return Colors.green;
+      case 'classworkactivities':
       case 'classwork':
+      case 'activity':
         return Colors.teal;
       default:
         return Colors.grey;
@@ -1013,17 +1017,21 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   }
 
   IconData _getAssignmentTypeIcon(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'homework':
         return Icons.home_work;
       case 'quiz':
         return Icons.quiz;
       case 'test':
-        return Icons.assignment_turned_in;
+        return Icons.assignment;
+      case 'projectslabs':
       case 'project':
-        return Icons.folder_special;
+      case 'lab':
+        return Icons.science;
+      case 'classworkactivities':
       case 'classwork':
-        return Icons.class_;
+      case 'activity':
+        return Icons.school;
       default:
         return Icons.assignment;
     }

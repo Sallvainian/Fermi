@@ -377,8 +377,6 @@ enum AssignmentType {
   homework,
   quiz,
   test,
-  project,
-  lab,
-  classwork,
-  activity,
+  projectsLabs,
+  classworkActivities,
 }
