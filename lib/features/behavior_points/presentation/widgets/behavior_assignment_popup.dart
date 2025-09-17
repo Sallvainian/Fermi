@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../screens/behavior_points_screen.dart';
 import '../providers/behavior_point_provider.dart';
-import 'custom_behavior_dialog.dart';
+import 'create_behavior_dialog.dart';
 
 /// Modal bottom sheet popup for assigning behavior points to students.
 ///
@@ -633,7 +633,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   void _showAddCustomBehaviorDialog() {
     showDialog(
       context: context,
-      builder: (context) => CustomBehaviorDialog(
+      builder: (context) => CreateBehaviorDialog(
         onBehaviorCreated: () {
           // Optionally refresh behaviors here
           // The provider's real-time listeners should handle this automatically

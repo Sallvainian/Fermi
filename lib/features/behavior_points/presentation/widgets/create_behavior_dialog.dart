@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/behavior_point_provider.dart';
 
-/// Dialog for creating custom behavior types with form validation and icon selection.
+/// Dialog for creating behavior types with form validation and icon selection.
 ///
 /// Features:
 /// - Text fields for behavior name and description
@@ -13,21 +13,21 @@ import '../providers/behavior_point_provider.dart';
 /// - Form validation
 /// - Save and Cancel buttons
 /// - Responsive design
-class CustomBehaviorDialog extends StatefulWidget {
+class CreateBehaviorDialog extends StatefulWidget {
   /// Callback when behavior is created successfully
   final VoidCallback? onBehaviorCreated;
 
-  /// Creates a custom behavior creation dialog
-  const CustomBehaviorDialog({
+  /// Creates a behavior creation dialog
+  const CreateBehaviorDialog({
     super.key,
     this.onBehaviorCreated,
   });
 
   @override
-  State<CustomBehaviorDialog> createState() => _CustomBehaviorDialogState();
+  State<CreateBehaviorDialog> createState() => _CreateBehaviorDialogState();
 }
 
-class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
+class _CreateBehaviorDialogState extends State<CreateBehaviorDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
