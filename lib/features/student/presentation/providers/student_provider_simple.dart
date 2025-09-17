@@ -162,7 +162,7 @@ class SimpleStudentProvider with ChangeNotifier {
         documentIds: studentIds,
       );
 
-      print('Found ${docs.length} student documents');
+      debugPrint('Found ${docs.length} student documents');
 
       return docs.map((doc) {
         final data = doc.data();
