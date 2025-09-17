@@ -28,6 +28,7 @@ class TeacherDashboardScreen extends StatefulWidget {
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   Stream<List<ClassModel>>? _classesStream;
   bool _isInitialized = false;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -88,6 +89,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final callProvider = context.watch<CallProvider>();
@@ -129,11 +136,15 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           },
         ),
       ],
-      body: ResponsiveContainer(
+      body: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
         child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          controller: _scrollController,
+          child: ResponsiveContainer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Welcome Header
               Card(
                 child: Padding(
@@ -238,10 +249,12 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
         ),
       ),
-    );
-  }
+    ),
+);
 
-  Widget _buildQuickStats(
+    }
+
+Widget _buildQuickStats(
     BuildContext context,
     ClassProvider classProvider,
     DashboardProvider dashboardProvider,
