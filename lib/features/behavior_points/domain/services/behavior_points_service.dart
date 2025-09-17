@@ -181,6 +181,13 @@ class BehaviorPointsService {
               .where((entry) => entry != null)
               .cast<BehaviorHistoryEntry>()
               .toList();
+        })
+        .handleError((error) {
+          LoggerService.error(
+            'Error watching recent history: $error',
+          );
+          // Return empty list on error instead of throwing
+          return <BehaviorHistoryEntry>[];
         });
   }
 

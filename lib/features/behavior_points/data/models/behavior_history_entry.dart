@@ -35,17 +35,29 @@ class BehaviorHistoryEntry {
 
   factory BehaviorHistoryEntry.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    return BehaviorHistoryEntry.fromMap(data..['operationId'] = doc.id);
+  }
+
+  factory BehaviorHistoryEntry.fromMap(Map<String, dynamic> data) {
     return BehaviorHistoryEntry(
-      operationId: doc.id,
+      operationId: data['operationId'] ?? '',
       studentId: data['studentId'] ?? '',
       studentName: data['studentName'] ?? 'Unknown Student',
       behaviorId: data['behaviorId'] ?? '',
       behaviorName: data['behaviorName'] ?? 'Unknown Behavior',
-      type: data['type'] ?? 'positive',
+      type: data['type'] ?? (data['points'] > 0 ? 'positive' : 'negative'),
       points: data['points'] ?? 0,
-      teacherId: data['teacherId'] ?? '',
-      teacherName: data['teacherName'] ?? 'Unknown Teacher',
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      teacherId: data['teacherId'] ?? data['awardedBy'] ?? '',
+      teacherName: data['teacherName'] ?? data['awardedByName'] ?? 'Unknown Teacher',
+      timestamp: data['timestamp'] != null
+          ? (data['timestamp'] is Timestamp
+              ? (data['timestamp'] as Timestamp).toDate()
+              : data['timestamp'] as DateTime)
+          : data['awardedAt'] != null
+              ? (data['awardedAt'] is Timestamp
+                  ? (data['awardedAt'] as Timestamp).toDate()
+                  : data['awardedAt'] as DateTime)
+              : DateTime.now(),
       note: data['note'],
       isUndone: data['isUndone'] ?? false,
     );

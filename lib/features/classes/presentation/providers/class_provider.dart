@@ -260,16 +260,30 @@ class ClassProvider with ChangeNotifier {
           classDoc.data()?['studentIds'] ?? [],
         );
         if (studentIds.isNotEmpty) {
-          // Query users collection with the UIDs (which are the document IDs)
-          final studentsSnapshot = await _firestore
-              .collection('users')
-              .where(FieldPath.documentId, whereIn: studentIds)
-              .where('role', isEqualTo: 'student')
-              .get();
+          // Firestore 'whereIn' queries have a limit of 30 items
+          // If we have more than 30 students, batch the queries
+          _classStudents = [];
 
-          _classStudents = studentsSnapshot.docs
-              .map((doc) => Student.fromFirestore(doc))
-              .toList();
+          // Process in batches of 30
+          const batchSize = 30;
+          for (int i = 0; i < studentIds.length; i += batchSize) {
+            // Get the batch of IDs (max 30)
+            final batchIds = studentIds.sublist(
+              i,
+              i + batchSize > studentIds.length ? studentIds.length : i + batchSize,
+            );
+
+            // Query users collection with the batch of UIDs
+            final studentsSnapshot = await _firestore
+                .collection('users')
+                .where(FieldPath.documentId, whereIn: batchIds)
+                .where('role', isEqualTo: 'student')
+                .get();
+
+            _classStudents.addAll(
+              studentsSnapshot.docs.map((doc) => Student.fromFirestore(doc)),
+            );
+          }
 
           LoggerService.info(
             'Loaded ${_classStudents.length} students for class $classId from ${studentIds.length} IDs',

@@ -32,15 +32,23 @@ class StudentPointsAggregate {
 
   factory StudentPointsAggregate.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    return StudentPointsAggregate.fromMap(data..['studentId'] = doc.id);
+  }
+
+  factory StudentPointsAggregate.fromMap(Map<String, dynamic> data) {
     return StudentPointsAggregate(
-      studentId: data['studentId'] ?? doc.id,
+      studentId: data['studentId'] ?? '',
       studentName: data['studentName'] ?? 'Unknown Student',
       classId: data['classId'] ?? '',
       totalPoints: data['totalPoints'] ?? 0,
       positivePoints: data['positivePoints'] ?? 0,
       negativePoints: data['negativePoints'] ?? 0,
       behaviorCounts: Map<String, int>.from(data['behaviorCounts'] ?? {}),
-      lastUpdated: (data['lastUpdated'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      lastUpdated: data['lastUpdated'] != null
+          ? (data['lastUpdated'] is Timestamp
+              ? (data['lastUpdated'] as Timestamp).toDate()
+              : data['lastUpdated'] as DateTime)
+          : DateTime.now(),
       lastBehaviorName: data['lastBehaviorName'],
       lastPoints: data['lastPoints'],
     );

@@ -197,8 +197,11 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     // Use Consumer to listen to provider changes
     return Consumer<BehaviorPointProvider>(
       builder: (context, provider, child) {
+        // This check should only set the selected class if it's not already set
+        // The data loading happens in _initializeProvider, not here
         if (_selectedClassId == null &&
-            classProvider.teacherClasses.isNotEmpty) {
+            classProvider.teacherClasses.isNotEmpty &&
+            !_isInitialized) {
           final firstClass = classProvider.teacherClasses.first;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
@@ -206,8 +209,6 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               _selectedClassId = firstClass.id;
               _selectedClass = firstClass;
             });
-            provider.loadBehaviorPointsForClass(firstClass.id);
-            classProvider.loadClassStudents(firstClass.id);
           });
         }
 
@@ -396,84 +397,91 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     required double negativeRate,
   }) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 230),
+        color: theme.colorScheme.surface.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 90),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 51),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-        final maxWidth = constraints.maxWidth;
-        final positiveText = '${positiveRate.round()}%';
-        final negativeText = '${negativeRate.round()}%';
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Class name
+          Text(
+            _className,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 16),
 
-        final crossAxisCount = maxWidth < 540 ? 1 : 2;
-        final cards = [
-            _buildSummaryCard(
-              icon: Icons.star,
-              title: 'Total Points',
-              value: totalPoints.toString(),
-              color: theme.colorScheme.primary,
-              theme: theme,
-            ),
-            _buildSummaryCard(
-              icon: Icons.trending_up,
-              title: 'Average Points',
-              value: averagePoints.toString(),
-              color: theme.colorScheme.secondary,
-              theme: theme,
-            ),
-            _buildSummaryCard(
-              icon: Icons.thumb_up,
-              title: 'Positive Rate',
-              value: positiveText,
-              color: Colors.green,
-              theme: theme,
-            ),
-            _buildSummaryCard(
-              icon: Icons.thumb_down,
-              title: 'Negative Rate',
-              value: negativeText,
-              color: Colors.redAccent,
-              theme: theme,
-            ),
-          ];
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          // Points summary - First row with 2 cards
+          Row(
             children: [
-              Text(
-                _className,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.onSurface,
+              Expanded(
+                child: SizedBox(
+                  height: 80,
+                  child: _buildSummaryCard(
+                    icon: Icons.star,
+                    title: 'Total Points',
+                    value: totalPoints.toString(),
+                    color: theme.colorScheme.primary,
+                    theme: theme,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.8,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: cards,
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 80,
+                  child: _buildSummaryCard(
+                    icon: Icons.trending_up,
+                    title: 'Average',
+                    value: averagePoints.toString(),
+                    color: theme.colorScheme.secondary,
+                    theme: theme,
+                  ),
+                ),
               ),
             ],
-          );
-        },
+          ),
+          const SizedBox(height: 16),
+          // Second row with 2 cards
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 80,
+                  child: _buildSummaryCard(
+                    icon: Icons.thumb_up,
+                    title: 'Positive Rate',
+                    value: '${positiveRate.round()}%',
+                    color: Colors.green,
+                    theme: theme,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: SizedBox(
+                  height: 80,
+                  child: _buildSummaryCard(
+                    icon: Icons.thumb_down,
+                    title: 'Negative Rate',
+                    value: '${negativeRate.round()}%',
+                    color: Colors.redAccent,
+                    theme: theme,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -579,34 +587,40 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     required ThemeData theme,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 235),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 130), width: 0.75),
+        color: theme.colorScheme.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-          children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              title,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface,
-                fontWeight: FontWeight.w600,
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 16,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             value,
             style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-              fontSize: 22,
+              fontWeight: FontWeight.bold,
               color: color,
             ),
           ),

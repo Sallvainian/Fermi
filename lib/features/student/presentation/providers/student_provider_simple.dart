@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../shared/utils/firestore_batch_query.dart';
 import '../../domain/models/student.dart';
 
 /// Simplified student provider with direct Firestore access
@@ -89,13 +90,13 @@ class SimpleStudentProvider with ChangeNotifier {
         return;
       }
 
-      // Query students by IDs
-      final snapshot = await _firestore
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: studentIds.toList())
-          .get();
+      // Query students by IDs using batch query to handle > 30 students
+      final docs = await FirestoreBatchQuery.batchWhereInDocumentId(
+        collection: _firestore.collection('users'),
+        documentIds: studentIds.toList(),
+      );
 
-      _students = snapshot.docs.map((doc) {
+      _students = docs.map((doc) {
         final data = doc.data();
         return Student(
           id: doc.id,
@@ -135,12 +136,13 @@ class SimpleStudentProvider with ChangeNotifier {
     if (studentIds.isEmpty) return [];
 
     try {
-      final snapshot = await _firestore
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: studentIds)
-          .get();
+      // Use batch query to handle > 30 students
+      final docs = await FirestoreBatchQuery.batchWhereInDocumentId(
+        collection: _firestore.collection('users'),
+        documentIds: studentIds,
+      );
 
-      return snapshot.docs.map((doc) {
+      return docs.map((doc) {
         final data = doc.data();
         return Student(
           id: doc.id,

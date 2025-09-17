@@ -36,18 +36,37 @@ Future<void> main() async {
       FlutterError.onError = (FlutterErrorDetails details) {
         // Safely handle errors without causing recursive failures
         try {
+          // Try to get the current stack trace safely
+          StackTrace? stack = details.stack;
+          if (stack == null) {
+            try {
+              stack = StackTrace.current;
+            } catch (_) {
+              // If we can't get the stack trace, that's OK
+            }
+          }
+
           // Check if we're in a valid Zone context
-          if (Zone.current != Zone.root) {
-            Zone.current.handleUncaughtError(
-              details.exception,
-              details.stack ?? StackTrace.current,
-            );
-          } else {
-            // Fallback to simple logging if Zone is not available
+          try {
+            if (Zone.current != Zone.root) {
+              Zone.current.handleUncaughtError(
+                details.exception,
+                stack ?? StackTrace.empty,
+              );
+            } else {
+              // Fallback to simple logging if Zone is not available
+              LoggerService.error(
+                'Flutter framework error',
+                error: details.exception,
+                stackTrace: stack,
+              );
+            }
+          } catch (_) {
+            // If Zone.current fails, just log directly
             LoggerService.error(
               'Flutter framework error',
               error: details.exception,
-              stackTrace: details.stack,
+              stackTrace: stack,
             );
           }
         } catch (e) {

@@ -51,3 +51,6 @@ export * from "./bulkImport";
 
 // Export auth blocking functions for automatic role assignment
 export * from "./authBlocking";
+
+// Export behavior points functions for teacher point management
+export * from "./behaviorPoints";
