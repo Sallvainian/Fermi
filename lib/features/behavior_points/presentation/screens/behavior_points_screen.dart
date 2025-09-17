@@ -415,14 +415,41 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final maxWidth = constraints.maxWidth;
-          final twoColumn = maxWidth > 420;
-          final spacing = twoColumn ? 16.0 : 0.0;
-          final rawWidth = twoColumn ? (maxWidth - spacing) / 2 : maxWidth;
-          final cardWidth = rawWidth.clamp(140.0, 220.0).toDouble();
+        final maxWidth = constraints.maxWidth;
+        final positiveText = '${positiveRate.round()}%';
+        final negativeText = '${negativeRate.round()}%';
 
-          final positiveText = '${positiveRate.round()}%';
-          final negativeText = '${negativeRate.round()}%';
+        final crossAxisCount = maxWidth < 540 ? 1 : 2;
+        final cards = [
+            _buildSummaryCard(
+              icon: Icons.star,
+              title: 'Total Points',
+              value: totalPoints.toString(),
+              color: theme.colorScheme.primary,
+              theme: theme,
+            ),
+            _buildSummaryCard(
+              icon: Icons.trending_up,
+              title: 'Average Points',
+              value: averagePoints.toString(),
+              color: theme.colorScheme.secondary,
+              theme: theme,
+            ),
+            _buildSummaryCard(
+              icon: Icons.thumb_up,
+              title: 'Positive Rate',
+              value: positiveText,
+              color: Colors.green,
+              theme: theme,
+            ),
+            _buildSummaryCard(
+              icon: Icons.thumb_down,
+              title: 'Negative Rate',
+              value: negativeText,
+              color: Colors.redAccent,
+              theme: theme,
+            ),
+          ];
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -435,51 +462,14 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  SizedBox(
-                    width: cardWidth,
-                    child: _buildSummaryCard(
-                      icon: Icons.star,
-                      title: 'Total Points',
-                      value: totalPoints.toString(),
-                      color: theme.colorScheme.primary,
-                      theme: theme,
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    child: _buildSummaryCard(
-                      icon: Icons.trending_up,
-                      title: 'Average Points',
-                      value: averagePoints.toString(),
-                      color: theme.colorScheme.secondary,
-                      theme: theme,
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    child: _buildSummaryCard(
-                      icon: Icons.thumb_up,
-                      title: 'Positive Rate',
-                      value: positiveText,
-                      color: Colors.green,
-                      theme: theme,
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    child: _buildSummaryCard(
-                      icon: Icons.thumb_down,
-                      title: 'Negative Rate',
-                      value: negativeText,
-                      color: Colors.redAccent,
-                      theme: theme,
-                    ),
-                  ),
-                ],
+              GridView.count(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.8,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: cards,
               ),
             ],
           );
