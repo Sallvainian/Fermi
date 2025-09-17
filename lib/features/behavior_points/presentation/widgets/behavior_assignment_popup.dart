@@ -110,7 +110,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                 height: 4,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 77,
+                    alpha: 0.3,
                   ),
                   borderRadius: BorderRadius.circular(2),
                 ),
@@ -170,10 +170,10 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: widget.student.avatarColor.withValues(alpha: 51),
+              color: widget.student.avatarColor.withValues(alpha: 0.2),
               shape: BoxShape.circle,
               border: Border.all(
-                color: widget.student.avatarColor.withValues(alpha: 128),
+                color: widget.student.avatarColor.withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
@@ -248,7 +248,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 200),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(8),
       ),
       child: TabBar(
@@ -331,8 +331,8 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
       children: [
         Card(
           elevation: 2,
-          color: theme.colorScheme.surface.withValues(alpha: 235),
-          shadowColor: cardColor.withValues(alpha: 102),
+          color: theme.colorScheme.surface.withValues(alpha: 0.92),
+          shadowColor: cardColor.withValues(alpha: 0.4),
           child: InkWell(
             onTap: (_isEditMode || _isProcessingAward)
                 ? null
@@ -343,7 +343,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: cardColor.withValues(alpha: 140),
+                  color: cardColor.withValues(alpha: 0.55),
                   width: 1,
                 ),
               ),
@@ -356,7 +356,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: cardColor.withValues(alpha: 80),
+                        color: cardColor.withValues(alpha: 0.31),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(behavior.icon, color: cardColor, size: 24),
@@ -437,7 +437,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   Widget _buildAddCustomBehaviorCard(ThemeData theme) {
     return Card(
       elevation: 2,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 51),
+      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.2),
       child: InkWell(
         onTap: _showAddCustomBehaviorDialog,
         borderRadius: BorderRadius.circular(12),
@@ -446,7 +446,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 77),
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
               width: 2,
               style: BorderStyle.solid,
             ),
@@ -460,7 +460,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 26),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -726,11 +726,11 @@ class _PointsAnimationWidgetState extends State<_PointsAnimationWidget>
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 230),
+                  color: color.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha: 77),
+                      color: color.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
