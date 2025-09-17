@@ -88,6 +88,8 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
     final isSmallScreen = screenSize.width < 600;
 
     return Dialog(
+      backgroundColor: theme.colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -141,7 +143,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 26),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -156,7 +158,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Create Custom Behavior',
+                'Create Behavior',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -237,7 +239,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   Widget _buildTypeToggle(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -299,7 +301,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 26) : null,
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
           border: Border.all(
             color: isSelected ? color : theme.colorScheme.outline,
             width: isSelected ? 2 : 1,
@@ -324,7 +326,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             Text(
               subtitle,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 179),
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -339,7 +341,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
     
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -375,9 +377,9 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: color,
-                inactiveTrackColor: color.withValues(alpha: 77),
+                inactiveTrackColor: color.withValues(alpha: 0.3),
                 thumbColor: color,
-                overlayColor: color.withValues(alpha: 51),
+                overlayColor: color.withValues(alpha: 0.2),
                 valueIndicatorColor: color,
                 valueIndicatorTextStyle: const TextStyle(
                   color: Colors.white,
@@ -425,7 +427,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   Widget _buildIconPicker(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -462,9 +464,9 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected ? color.withValues(alpha: 26) : null,
+                        color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
                         border: Border.all(
-                          color: isSelected ? color : theme.colorScheme.outline.withValues(alpha: 77),
+                          color: isSelected ? color : theme.colorScheme.outline.withValues(alpha: 0.3),
                           width: isSelected ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
