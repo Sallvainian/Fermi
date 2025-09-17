@@ -32,28 +32,36 @@ class _GradebookScreenState extends State<GradebookScreen> {
     });
   }
 
-  void _loadData() {
+  void _loadData() async {
     final classProvider = context.read<ClassProvider>();
     final gradeProvider = context.read<SimpleGradeProvider>();
+    final studentProvider = context.read<SimpleStudentProvider>();
 
-    // Load classes and set default selection
+    // Load all students from teacher's classes
     if (classProvider.teacherClasses.isNotEmpty) {
+      // Set default class selection
       final firstClass = classProvider.teacherClasses.first;
       setState(() {
         _selectedClassId = firstClass.id;
       });
 
+      // Load students DIRECTLY from the class's studentIds
+      if (firstClass.studentIds.isNotEmpty) {
+        final students = await studentProvider.loadStudentsByIds(
+          firstClass.studentIds,
+        );
+        setState(() {
+          _students = students;
+        });
+      }
+
       // Load grades for the selected class
       gradeProvider.loadClassGrades(firstClass.id);
-
-      // TODO: Load students for the class
-      // For now, we'll use class student IDs
-      _loadStudentsForClass(firstClass);
     }
   }
 
-  void _loadStudentsForClass(ClassModel classModel) async {
-    // Load actual students from Firebase using SimpleStudentProvider
+  void _updateStudentsForClass(ClassModel classModel) async {
+    // Load students DIRECTLY from the class's studentIds
     final studentProvider = context.read<SimpleStudentProvider>();
 
     if (classModel.studentIds.isNotEmpty) {
@@ -85,6 +93,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
     final gradeProvider = context.watch<SimpleGradeProvider>();
     final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final classProvider = context.watch<ClassProvider>();
+    final studentProvider = context.watch<SimpleStudentProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -312,7 +321,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                     final selectedClass = classProvider.teacherClasses
                         .firstWhere((c) => c.id == value);
                     context.read<SimpleGradeProvider>().loadClassGrades(value);
-                    _loadStudentsForClass(selectedClass);
+                    _updateStudentsForClass(selectedClass);
                   }
                 },
               ),

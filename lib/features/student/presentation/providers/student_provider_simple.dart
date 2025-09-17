@@ -33,19 +33,28 @@ class SimpleStudentProvider with ChangeNotifier {
 
       _students = snapshot.docs.map((doc) {
         final data = doc.data();
+        // Parse displayName into first and last name if needed
+        String firstName = data['firstName'] ?? '';
+        String lastName = data['lastName'] ?? '';
+        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+          final parts = (data['displayName'] as String).split(' ');
+          firstName = parts.isNotEmpty ? parts.first : '';
+          lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        }
+
         return Student(
           id: doc.id,
           uid: data['uid'] ?? doc.id,
-          username: data['username'] ?? '',
-          firstName: data['firstName'] ?? '',
-          lastName: data['lastName'] ?? '',
+          username: data['username'] ?? data['email']?.split('@').first ?? '',
+          firstName: firstName,
+          lastName: lastName,
           displayName:
               data['displayName'] ??
-              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
-          gradeLevel: data['gradeLevel'] ?? 9,
+          gradeLevel: int.tryParse(data['gradeLevel']?.toString() ?? '9') ?? 9,
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
@@ -98,19 +107,28 @@ class SimpleStudentProvider with ChangeNotifier {
 
       _students = docs.map((doc) {
         final data = doc.data();
+        // Parse displayName into first and last name if needed
+        String firstName = data['firstName'] ?? '';
+        String lastName = data['lastName'] ?? '';
+        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+          final parts = (data['displayName'] as String).split(' ');
+          firstName = parts.isNotEmpty ? parts.first : '';
+          lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        }
+
         return Student(
           id: doc.id,
           uid: data['uid'] ?? doc.id,
-          username: data['username'] ?? '',
-          firstName: data['firstName'] ?? '',
-          lastName: data['lastName'] ?? '',
+          username: data['username'] ?? data['email']?.split('@').first ?? '',
+          firstName: firstName,
+          lastName: lastName,
           displayName:
               data['displayName'] ??
-              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
-          gradeLevel: data['gradeLevel'] ?? 9,
+          gradeLevel: int.tryParse(data['gradeLevel']?.toString() ?? '9') ?? 9,
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
@@ -136,27 +154,40 @@ class SimpleStudentProvider with ChangeNotifier {
     if (studentIds.isEmpty) return [];
 
     try {
+      print('Looking for ${studentIds.length} students in users collection');
+
       // Use batch query to handle > 30 students
       final docs = await FirestoreBatchQuery.batchWhereInDocumentId(
         collection: _firestore.collection('users'),
         documentIds: studentIds,
       );
 
+      print('Found ${docs.length} student documents');
+
       return docs.map((doc) {
         final data = doc.data();
+        // Parse displayName into first and last name if needed
+        String firstName = data['firstName'] ?? '';
+        String lastName = data['lastName'] ?? '';
+        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+          final parts = (data['displayName'] as String).split(' ');
+          firstName = parts.isNotEmpty ? parts.first : '';
+          lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        }
+
         return Student(
           id: doc.id,
           uid: data['uid'] ?? doc.id,
-          username: data['username'] ?? '',
-          firstName: data['firstName'] ?? '',
-          lastName: data['lastName'] ?? '',
+          username: data['username'] ?? data['email']?.split('@').first ?? '',
+          firstName: firstName,
+          lastName: lastName,
           displayName:
               data['displayName'] ??
-              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
-          gradeLevel: data['gradeLevel'] ?? 9,
+          gradeLevel: int.tryParse(data['gradeLevel']?.toString() ?? '9') ?? 9,
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
