@@ -21,6 +21,10 @@ class BehaviorPointsService {
     required String studentId,
     required String studentName,
     required Behavior behavior,
+    String? gender,
+    String? gradeLevel,
+    String? studentAvatarUrl,
+    String? note,
   }) async {
     // Skip invalid entries
     if (studentId.isEmpty || studentName == 'Loading...') {
@@ -39,6 +43,10 @@ class BehaviorPointsService {
         'behaviorId': behavior.id,
         'behaviorName': behavior.name,
         'points': behavior.points,
+        'gender': gender,
+        'gradeLevel': gradeLevel,
+        'studentAvatarUrl': studentAvatarUrl,
+        'note': note,
       });
 
       final data = result.data as Map<String, dynamic>;

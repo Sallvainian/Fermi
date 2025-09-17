@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../shared/utils/firestore_batch_query.dart';
 
 /// Simplified grade provider with direct Firestore access
 class SimpleGradeProvider with ChangeNotifier {
@@ -56,13 +57,26 @@ class SimpleGradeProvider with ChangeNotifier {
         return;
       }
 
-      // Query submissions for these assignments
-      final submissionsSnapshot = await _firestore
-          .collection('submissions')
-          .where('assignmentId', whereIn: assignmentIds)
-          .get();
+      // Query submissions for these assignments (batch if >30)
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> submissionDocs = [];
 
-      _grades = submissionsSnapshot.docs.map((doc) {
+      if (assignmentIds.length <= 30) {
+        // Direct query if 30 or fewer assignments
+        final submissionsSnapshot = await _firestore
+            .collection('submissions')
+            .where('assignmentId', whereIn: assignmentIds)
+            .get();
+        submissionDocs = submissionsSnapshot.docs;
+      } else {
+        // Use batch query for more than 30 assignments
+        submissionDocs = await FirestoreBatchQuery.batchWhereIn(
+          collection: _firestore.collection('submissions'),
+          field: 'assignmentId',
+          values: assignmentIds,
+        );
+      }
+
+      _grades = submissionDocs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return data;
@@ -154,13 +168,26 @@ class SimpleGradeProvider with ChangeNotifier {
 
       if (assignmentIds.isEmpty) return [];
 
-      // Get submissions for these assignments
-      final submissionsSnapshot = await _firestore
-          .collection('submissions')
-          .where('assignmentId', whereIn: assignmentIds)
-          .get();
+      // Get submissions for these assignments (batch if >30)
+      List<QueryDocumentSnapshot<Map<String, dynamic>>> submissionDocs = [];
 
-      return submissionsSnapshot.docs.map((doc) {
+      if (assignmentIds.length <= 30) {
+        // Direct query if 30 or fewer assignments
+        final submissionsSnapshot = await _firestore
+            .collection('submissions')
+            .where('assignmentId', whereIn: assignmentIds)
+            .get();
+        submissionDocs = submissionsSnapshot.docs;
+      } else {
+        // Use batch query for more than 30 assignments
+        submissionDocs = await FirestoreBatchQuery.batchWhereIn(
+          collection: _firestore.collection('submissions'),
+          field: 'assignmentId',
+          values: assignmentIds,
+        );
+      }
+
+      return submissionDocs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
         return data;

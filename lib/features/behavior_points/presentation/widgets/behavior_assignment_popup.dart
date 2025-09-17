@@ -309,12 +309,14 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
         ),
         itemCount: totalItems,
         itemBuilder: (context, index) {
-          // Last item is the "+" button for adding custom behaviors
-          if (index == behaviors.length) {
+          // First item is the "+" button for adding custom behaviors
+          if (index == 0) {
             return _buildAddCustomBehaviorCard(theme);
           }
 
-          final behavior = behaviors[index];
+          // Adjust index for behaviors since we put add button first
+          final behaviorIndex = index - 1;
+          final behavior = behaviors[behaviorIndex];
           return _buildBehaviorCard(behavior, theme);
         },
       ),
@@ -435,42 +437,40 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
 
   /// Builds the "+" button card for adding custom behaviors
   Widget _buildAddCustomBehaviorCard(ThemeData theme) {
+    final cardColor = theme.colorScheme.primary;
+
     return Card(
       elevation: 2,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+      color: theme.colorScheme.surface.withValues(alpha: 0.92),
+      shadowColor: cardColor.withValues(alpha: 0.4),
       child: InkWell(
         onTap: _showAddCustomBehaviorDialog,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(8), // Reduced padding for consistency
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 0.3),
-              width: 2,
-              style: BorderStyle.solid,
+              color: cardColor.withValues(alpha: 0.55),
+              width: 1,
             ),
           ),
           child: SizedBox(
-            height: 120, // Fixed height matching regular cards
+            height: 124,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Plus icon
+                // Icon
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    color: cardColor.withValues(alpha: 0.31),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.add,
-                    color: theme.colorScheme.primary,
-                    size: 24,
-                  ),
+                  child: Icon(Icons.add, color: cardColor, size: 24),
                 ),
 
-                // Add custom text with flexible height
+                // Text with flexible height
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -484,15 +484,28 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                           height: 1.2,
-                          color: theme.colorScheme.primary,
                         ),
                       ),
                     ),
                   ),
                 ),
 
-                // Empty container to match the height of points badge in regular cards
-                Container(height: 20),
+                // Plus badge to match regular cards
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
               ],
             ),
           ),

@@ -121,10 +121,10 @@ class AppRouter {
             return null;
           }
           // Authenticated but on auth route - go to dashboard
-          // Mark user as active when they successfully authenticate
-          PresenceService().markUserActive(
-            userRole: authProvider.userModel?.role?.name,
-          );
+          // Note: Presence is already updated by AuthProvider on successful auth
+          // PresenceService().markUserActive(
+          //   userRole: authProvider.userModel?.role?.name,
+          // );
           return '/dashboard';
         }
 
@@ -157,9 +157,10 @@ class AppRouter {
 
             // Mark user active when accessing root and redirect to dashboard
             if (auth.isAuthenticated) {
-              PresenceService().markUserActive(
-                userRole: auth.userModel?.role?.name,
-              );
+              // Note: Presence is already updated by AuthProvider
+              // PresenceService().markUserActive(
+              //   userRole: auth.userModel?.role?.name,
+              // );
               return '/dashboard';
             }
 
@@ -204,8 +205,9 @@ class AppRouter {
             // CRITICAL: Get fresh userModel every time, not cached
             final user = auth.userModel;
 
-            // Mark user active when accessing dashboard
-            PresenceService().markUserActive(userRole: user?.role?.name);
+            // Note: Presence is already updated by AuthProvider and heartbeat
+            // Only update on significant user activity, not navigation
+            // PresenceService().markUserActive(userRole: user?.role?.name);
 
             // Direct to appropriate dashboard based on role
 
@@ -364,9 +366,10 @@ class AppRouter {
           path: '/messages',
           builder: (context, state) {
             final auth = Provider.of<AuthProvider>(context, listen: false);
-            PresenceService().markUserActive(
-              userRole: auth.userModel?.role?.name,
-            );
+            // Note: Presence managed by AuthProvider and heartbeat
+            // PresenceService().markUserActive(
+            //   userRole: auth.userModel?.role?.name,
+            // );
             return const ChatListScreen();
           },
         ),
@@ -380,9 +383,10 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             final auth = Provider.of<AuthProvider>(context, listen: false);
-            PresenceService().markUserActive(
-              userRole: auth.userModel?.role?.name,
-            );
+            // Note: Presence managed by AuthProvider and heartbeat
+            // PresenceService().markUserActive(
+            //   userRole: auth.userModel?.role?.name,
+            // );
             return ChatDetailScreen(chatRoomId: chatRoomId);
           },
         ),

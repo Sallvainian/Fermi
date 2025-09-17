@@ -38,14 +38,14 @@ class StudentPointCard extends StatelessWidget {
     return Card(
       elevation: isFirstPlace ? 8 : 2,
       shadowColor: isFirstPlace
-          ? Colors.amber.withValues(alpha: 128)
-          : theme.colorScheme.shadow.withValues(alpha: 64),
+          ? Colors.amber.withValues(alpha: 0.5)
+          : theme.colorScheme.shadow.withValues(alpha: 0.25),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
           child: Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 225),
+              color: theme.colorScheme.surface.withValues(alpha: 0.88),
               borderRadius: BorderRadius.circular(12),
               border: isTopThree
                   ? Border.all(
@@ -58,21 +58,21 @@ class StudentPointCard extends StatelessWidget {
                     )
                   : Border.all(
                       color: theme.colorScheme.outlineVariant.withValues(
-                        alpha: 70,
+                        alpha: 0.27,
                       ),
                       width: 1,
                     ),
             boxShadow: isFirstPlace
                 ? [
                     BoxShadow(
-                      color: Colors.amber.withValues(alpha: 102),
+                      color: Colors.amber.withValues(alpha: 0.4),
                       blurRadius: 12,
                       spreadRadius: 1,
                     ),
                   ]
                 : null,
           ),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(6), // Further reduced to prevent overflow
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -82,13 +82,13 @@ class StudentPointCard extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 38, // Further reduced to save space
+                  height: 38, // Further reduced to save space
                   decoration: BoxDecoration(
-                    color: student.avatarColor.withValues(alpha: 70),
+                    color: student.avatarColor.withValues(alpha: 0.27),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: student.avatarColor.withValues(alpha: 140),
+                      color: student.avatarColor.withValues(alpha: 0.55),
                       width: 2,
                     ),
                   ),
@@ -98,20 +98,20 @@ class StudentPointCard extends StatelessWidget {
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
-                        fontSize: 15,
+                        fontSize: 14, // Reduced font size
                       ),
                     ),
                   ),
                 ),
                   Positioned(
-                    top: -6,
-                    right: -6,
+                    top: -4,
+                    right: -4,
                     child: _buildPointsBadge(theme),
                   ),
                 ],
               ),
 
-            const SizedBox(height: 6),
+            const SizedBox(height: 3), // Further reduced
 
               // Student Name
               Text(
@@ -122,12 +122,12 @@ class StudentPointCard extends StatelessWidget {
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
-                  fontSize: 12,
+                  fontSize: 11, // Smaller text to prevent overflow
                 ),
               ),
 
               if (rank != null) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 2), // Minimal spacing for rank
                 _buildRankingDisplay(theme),
               ],
             ],
@@ -140,26 +140,26 @@ class StudentPointCard extends StatelessWidget {
   /// Builds the points badge displayed on top of the avatar
   Widget _buildPointsBadge(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(4.5),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: theme.colorScheme.error,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: theme.colorScheme.error.withValues(alpha: 128),
+            color: theme.colorScheme.error.withValues(alpha: 0.5),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
       child: Center(
         child: Text(
           student.totalPoints.toString(),
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onError,
             fontWeight: FontWeight.bold,
-            fontSize: 11,
+            fontSize: 9, // Smaller badge text
           ),
         ),
       ),
@@ -196,16 +196,16 @@ class StudentPointCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 3,
-      ), // Reduced padding
+        horizontal: 6,
+        vertical: 2,
+      ), // Minimal padding to prevent overflow
       decoration: BoxDecoration(
         color: rank! <= 3
-            ? rankColor.withValues(alpha: 26)
+            ? rankColor.withValues(alpha: 0.1)
             : theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
         border: rank! <= 3
-            ? Border.all(color: rankColor.withValues(alpha: 77), width: 1)
+            ? Border.all(color: rankColor.withValues(alpha: 0.3), width: 1)
             : null,
       ),
       child: Row(
@@ -215,10 +215,10 @@ class StudentPointCard extends StatelessWidget {
           if (rankIcon != null) ...[
             Icon(
               rankIcon,
-              size: 14, // Reduced from 16
+              size: 12, // Smaller icon
               color: rankColor,
             ),
-            const SizedBox(width: 2), // Reduced from 4
+            const SizedBox(width: 1), // Minimal spacing
           ],
           Text(
             rankText,
@@ -226,7 +226,7 @@ class StudentPointCard extends StatelessWidget {
               // Changed to labelSmall
               color: rankColor,
               fontWeight: rank! <= 3 ? FontWeight.bold : FontWeight.w500,
-              fontSize: 11, // Explicit smaller size
+              fontSize: 10, // Even smaller for rank text
             ),
           ),
         ],
@@ -276,7 +276,7 @@ class StudentPointCardCompact extends StatelessWidget {
           children: [
             // Avatar
             CircleAvatar(
-              backgroundColor: student.avatarColor.withValues(alpha: 51),
+              backgroundColor: student.avatarColor.withValues(alpha: 0.2),
               child: Text(
                 student.initials,
                 style: TextStyle(

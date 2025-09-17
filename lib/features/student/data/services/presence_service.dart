@@ -10,8 +10,8 @@ class PresenceService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
   // Simplified updatePresence method for compatibility
-  Future<void> updatePresence(String userId, bool isOnline) async {
-    await updateUserPresence(isOnline);
+  Future<void> updatePresence(String userId, bool isOnline, {String? userRole}) async {
+    await updateUserPresence(isOnline, userRole: userRole);
   }
 
   // Privacy settings - can be extended to user preferences
@@ -23,7 +23,7 @@ class PresenceService {
   static const int _maxFailureAttempts = 3;
 
   // Configurable thresholds
-  static const int _updateDebounceSeconds = 30;
+  static const int _updateDebounceSeconds = 5;  // Reduced for better UX
   static const int _stalePresenceMinutes = 5;
 
   // Track update attempts for error handling
@@ -32,6 +32,10 @@ class PresenceService {
   static bool _presenceDisabled = false;
   static DateTime? _lastActivityTime;
   static Timer? _heartbeatTimer;
+
+  // Track last presence state to prevent redundant updates
+  static bool? _lastOnlineState;
+  static String? _lastUserRole;
 
   // Standard practice: use real-time listeners across platforms.
   // Keep a Windows polling fallback behind a feature flag for environments
@@ -49,7 +53,16 @@ class PresenceService {
       return;
     }
 
-    // Debounce rapid updates (minimum 30 seconds between updates to prevent blocking)
+    // Skip redundant updates - only update if state actually changed
+    if (_lastOnlineState == isOnline && _lastUserRole == userRole) {
+      LoggerService.debug(
+        'Skipping redundant presence update - no state change',
+        tag: 'PresenceService',
+      );
+      return;
+    }
+
+    // Debounce rapid updates (reduced to 5 seconds for better UX)
     if (_lastUpdateTime != null) {
       final timeSinceLastUpdate = DateTime.now().difference(_lastUpdateTime!);
       if (timeSinceLastUpdate.inSeconds < _updateDebounceSeconds) {
@@ -103,9 +116,11 @@ class PresenceService {
         );
       }
 
-      // Reset error counters on success
+      // Reset error counters on success and track state
       _updateAttempts = 0;
       _lastUpdateTime = DateTime.now();
+      _lastOnlineState = isOnline;
+      _lastUserRole = userRole;
     } catch (error) {
       _updateAttempts++;
       LoggerService.error(

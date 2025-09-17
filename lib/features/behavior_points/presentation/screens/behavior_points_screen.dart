@@ -5,6 +5,7 @@ import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../shared/widgets/common/responsive_layout.dart';
 import '../widgets/student_point_card.dart';
 import '../widgets/behavior_assignment_popup.dart';
+import '../widgets/behavior_history_panel.dart';
 import '../providers/behavior_point_provider.dart';
 import '../../../classes/presentation/providers/class_provider.dart';
 import '../../../classes/domain/models/class_model.dart';
@@ -29,6 +30,10 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
   String? _selectedClassId;
   ClassModel? _selectedClass;
   bool _isInitialized = false;
+
+  // History panel state
+  bool _showHistoryPanel = false;
+  PanelPosition _panelPosition = PanelPosition.right;
 
   @override
   void initState() {
@@ -65,7 +70,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
 
         behaviorProvider.loadBehaviorPointsForClass(firstClass.id);
 
-        // Load all students for the class
+        // Load students only once (removed duplicate call)
         classProvider.loadClassStudents(firstClass.id);
       }
     }
@@ -89,7 +94,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
 
     behaviorProvider.loadBehaviorPointsForClass(classId);
 
-    // Load all students for the class
+    // Load all students for the class (single source of truth)
     classProvider.loadClassStudents(classId);
   }
 
@@ -230,16 +235,47 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
             ? 0.0
             : (negativePoints / trackedPoints) * 100;
 
-        return AdaptiveLayout(
-          title: 'Behavior Points',
-          actions: [
-            TextButton.icon(
-              onPressed: _viewReports,
-              icon: const Icon(Icons.analytics_outlined),
-              label: const Text('Reports'),
-            ),
-            const SizedBox(width: 8),
-          ],
+        return Stack(
+          children: [
+            AdaptiveLayout(
+              title: 'Behavior Points',
+              actions: [
+                // History panel toggle
+                IconButton(
+                  icon: Icon(_showHistoryPanel ? Icons.history : Icons.history_outlined),
+                  onPressed: () {
+                    setState(() {
+                      _showHistoryPanel = !_showHistoryPanel;
+                    });
+                  },
+                  tooltip: _showHistoryPanel ? 'Hide History' : 'Show History',
+                ),
+                // Panel position toggle
+                if (_showHistoryPanel)
+                  IconButton(
+                    icon: Icon(
+                      _panelPosition == PanelPosition.right
+                          ? Icons.view_sidebar_rounded
+                          : Icons.vertical_split,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _panelPosition = _panelPosition == PanelPosition.right
+                            ? PanelPosition.bottom
+                            : PanelPosition.right;
+                      });
+                    },
+                    tooltip: _panelPosition == PanelPosition.right
+                        ? 'Move to Bottom'
+                        : 'Move to Side',
+                  ),
+                TextButton.icon(
+                  onPressed: _viewReports,
+                  icon: const Icon(Icons.analytics_outlined),
+                  label: const Text('Reports'),
+                ),
+                const SizedBox(width: 8),
+              ],
           body: ResponsiveContainer(
             child: CustomScrollView(
               slivers: [
@@ -301,8 +337,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: _getCrossAxisCount(context),
-                      crossAxisSpacing: 8, // Reduced from 16
-                      mainAxisSpacing: 8, // Reduced from 16
+                      crossAxisSpacing: 2, // Ultra-minimal spacing
+                      mainAxisSpacing: 2, // Ultra-minimal spacing
                       childAspectRatio: _getAspectRatio(
                         context,
                       ), // Responsive aspect ratio
@@ -338,7 +374,20 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               ],
             ),
           ),
-        );
+        ),
+        // History Panel Overlay
+        if (_showHistoryPanel && _selectedClassId != null)
+          BehaviorHistoryPanel(
+            classId: _selectedClassId!,
+            position: _panelPosition,
+            onClose: () {
+              setState(() {
+                _showHistoryPanel = false;
+              });
+            },
+          ),
+      ],
+    );
       },
     );
   }
@@ -504,7 +553,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
             width: 1,
           ),
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(6), // Reduced padding to prevent overflow
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -512,8 +561,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 52,
-                  height: 52,
+                  width: 38, // Same as student cards
+                  height: 38, // Same as student cards
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 80),
                     shape: BoxShape.circle,
@@ -525,14 +574,14 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                   child: Icon(
                     Icons.groups,
                     color: theme.colorScheme.onPrimary,
-                    size: 24,
+                    size: 20, // Smaller icon
                   ),
                 ),
                 Positioned(
-                  top: -6,
-                  right: -6,
+                  top: -4,
+                  right: -4,
                   child: Container(
-                    padding: const EdgeInsets.all(5),
+                    padding: const EdgeInsets.all(3), // Smaller badge
                     decoration: BoxDecoration(
                       color: theme.colorScheme.error,
                       shape: BoxShape.circle,
@@ -545,8 +594,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                       ],
                     ),
                     constraints: const BoxConstraints(
-                      minWidth: 26,
-                      minHeight: 26,
+                      minWidth: 20,
+                      minHeight: 20,
                     ),
                     child: Center(
                       child: Text(
@@ -554,7 +603,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onError,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontSize: 9, // Same as student cards
                         ),
                       ),
                     ),
@@ -562,13 +611,13 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 3), // Minimal spacing
             Text(
               'Whole Class',
               style: theme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
-                fontSize: 12,
+                fontSize: 11, // Smaller text to fit
               ),
               textAlign: TextAlign.center,
             ),
@@ -646,11 +695,11 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
   double _getAspectRatio(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     if (screenWidth > 1200) {
-      return 0.85; // Desktop - slightly taller than square
+      return 1.2; // Desktop - wider to prevent overflow with rankings
     }
-    if (screenWidth > 800) return 0.8; // Tablet - more vertical space
-    if (screenWidth > 600) return 0.75; // Small tablet
-    return 0.7; // Mobile - maximum vertical space for all content
+    if (screenWidth > 800) return 1.15; // Tablet - wider for ranked students
+    if (screenWidth > 600) return 1.1; // Small tablet - slightly wider
+    return 1.05; // Mobile - slightly wider to fit all content
   }
 
   /// Shows the behavior assignment popup for the selected student

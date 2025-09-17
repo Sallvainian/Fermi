@@ -80,23 +80,62 @@ class Behavior {
   /// - Enum parsing with fallback defaults
   /// - Icon data conversion from codePoint
   /// - Null safety for optional fields
+  /// - JavaScript object conversion for web platform
   ///
   /// @param doc Firestore document snapshot containing behavior data
   /// @return Parsed Behavior instance
   factory Behavior.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+    // Handle potential null data or LegacyJavaScriptObject issues
+    final rawData = doc.data();
+    if (rawData == null) {
+      // Return default behavior if data is null
+      return Behavior(
+        id: doc.id,
+        name: 'Unknown',
+        description: '',
+        points: 0,
+        type: BehaviorType.positive,
+        iconData: Icons.star,
+        createdAt: DateTime.now(),
+      );
+    }
+
+    // Convert to proper Map<String, dynamic>, handling JavaScript objects
+    Map<String, dynamic> data;
+    try {
+      if (rawData is Map<String, dynamic>) {
+        data = rawData;
+      } else {
+        // Handle JavaScript object conversion (for web platform)
+        data = Map<String, dynamic>.from(rawData as Map);
+      }
+    } catch (e) {
+      // Fallback for any conversion errors
+      data = <String, dynamic>{};
+    }
 
     // Helper function to convert either Timestamp or DateTime to DateTime
     DateTime? parseDateTime(dynamic value) {
       if (value == null) return null;
       if (value is Timestamp) return value.toDate();
       if (value is DateTime) return value;
+      // Handle JavaScript date object structure
+      if (value is Map) {
+        if (value['_seconds'] != null) {
+          final seconds = value['_seconds'] as int;
+          final nanoseconds = (value['_nanoseconds'] as int?) ?? 0;
+          return DateTime.fromMillisecondsSinceEpoch(
+            seconds * 1000 + (nanoseconds ~/ 1000000),
+          );
+        }
+      }
       return null;
     }
 
-    // Create IconData separately to avoid non-constant invocation issues
+    // Create IconData with proper handling
     final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
-    final iconData = IconData(iconCodePoint, fontFamily: 'MaterialIcons');
+    const fontFamily = 'MaterialIcons';
+    final iconData = IconData(iconCodePoint, fontFamily: fontFamily);
 
     return Behavior(
       id: doc.id,
@@ -126,12 +165,23 @@ class Behavior {
       if (value == null) return null;
       if (value is Timestamp) return value.toDate();
       if (value is DateTime) return value;
+      // Handle JavaScript date object structure
+      if (value is Map) {
+        if (value['_seconds'] != null) {
+          final seconds = value['_seconds'] as int;
+          final nanoseconds = (value['_nanoseconds'] as int?) ?? 0;
+          return DateTime.fromMillisecondsSinceEpoch(
+            seconds * 1000 + (nanoseconds ~/ 1000000),
+          );
+        }
+      }
       return null;
     }
 
-    // Create IconData separately to avoid non-constant invocation issues
+    // Create IconData with proper handling
     final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
-    final iconData = IconData(iconCodePoint, fontFamily: 'MaterialIcons');
+    const fontFamily = 'MaterialIcons';
+    final iconData = IconData(iconCodePoint, fontFamily: fontFamily);
 
     return Behavior(
       id: id,

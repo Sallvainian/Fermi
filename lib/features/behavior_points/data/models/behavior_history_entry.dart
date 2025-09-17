@@ -18,6 +18,12 @@ class BehaviorHistoryEntry {
   final String? note;
   final bool isUndone;
 
+  // New fields for enhanced filtering
+  final String classId;
+  final String? gender;
+  final String? gradeLevel;
+  final String? studentAvatarUrl;
+
   BehaviorHistoryEntry({
     required this.operationId,
     required this.studentId,
@@ -31,35 +37,62 @@ class BehaviorHistoryEntry {
     required this.timestamp,
     this.note,
     this.isUndone = false,
+    required this.classId,
+    this.gender,
+    this.gradeLevel,
+    this.studentAvatarUrl,
   });
 
   factory BehaviorHistoryEntry.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return BehaviorHistoryEntry.fromMap(data..['operationId'] = doc.id);
+    data['operationId'] = doc.id;
+    return BehaviorHistoryEntry.fromMap(data);
   }
 
   factory BehaviorHistoryEntry.fromMap(Map<String, dynamic> data) {
+    // Helper function to safely convert timestamps
+    DateTime parseTimestamp(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is Timestamp) return value.toDate();
+      if (value is DateTime) return value;
+      if (value is Map && value['_seconds'] != null) {
+        // Handle JavaScript timestamp object
+        return DateTime.fromMillisecondsSinceEpoch(
+          (value['_seconds'] as int) * 1000 +
+          ((value['_nanoseconds'] as int? ?? 0) ~/ 1000000),
+        );
+      }
+      return DateTime.now();
+    }
+
+    // Safely parse points
+    int parsePoints(dynamic value) {
+      if (value == null) return 0;
+      if (value is int) return value;
+      if (value is double) return value.round();
+      if (value is String) return int.tryParse(value) ?? 0;
+      return 0;
+    }
+
     return BehaviorHistoryEntry(
-      operationId: data['operationId'] ?? '',
-      studentId: data['studentId'] ?? '',
-      studentName: data['studentName'] ?? 'Unknown Student',
-      behaviorId: data['behaviorId'] ?? '',
-      behaviorName: data['behaviorName'] ?? 'Unknown Behavior',
-      type: data['type'] ?? (data['points'] > 0 ? 'positive' : 'negative'),
-      points: data['points'] ?? 0,
-      teacherId: data['teacherId'] ?? data['awardedBy'] ?? '',
-      teacherName: data['teacherName'] ?? data['awardedByName'] ?? 'Unknown Teacher',
+      operationId: data['operationId']?.toString() ?? '',
+      studentId: data['studentId']?.toString() ?? '',
+      studentName: data['studentName']?.toString() ?? 'Unknown Student',
+      behaviorId: data['behaviorId']?.toString() ?? '',
+      behaviorName: data['behaviorName']?.toString() ?? 'Unknown Behavior',
+      type: data['type']?.toString() ?? (parsePoints(data['points']) > 0 ? 'positive' : 'negative'),
+      points: parsePoints(data['points']),
+      teacherId: data['teacherId']?.toString() ?? data['awardedBy']?.toString() ?? '',
+      teacherName: data['teacherName']?.toString() ?? data['awardedByName']?.toString() ?? 'Unknown Teacher',
       timestamp: data['timestamp'] != null
-          ? (data['timestamp'] is Timestamp
-              ? (data['timestamp'] as Timestamp).toDate()
-              : data['timestamp'] as DateTime)
-          : data['awardedAt'] != null
-              ? (data['awardedAt'] is Timestamp
-                  ? (data['awardedAt'] as Timestamp).toDate()
-                  : data['awardedAt'] as DateTime)
-              : DateTime.now(),
-      note: data['note'],
-      isUndone: data['isUndone'] ?? false,
+          ? parseTimestamp(data['timestamp'])
+          : parseTimestamp(data['awardedAt']),
+      note: data['note']?.toString(),
+      isUndone: data['isUndone'] == true,
+      classId: data['classId']?.toString() ?? '',
+      gender: data['gender']?.toString(),
+      gradeLevel: data['gradeLevel']?.toString(),
+      studentAvatarUrl: data['studentAvatarUrl']?.toString(),
     );
   }
 
@@ -77,11 +110,19 @@ class BehaviorHistoryEntry {
       'timestamp': FieldValue.serverTimestamp(),
       'note': note,
       'isUndone': isUndone,
+      'classId': classId,
+      'gender': gender,
+      'gradeLevel': gradeLevel,
+      'studentAvatarUrl': studentAvatarUrl,
     };
   }
 
   BehaviorHistoryEntry copyWith({
     bool? isUndone,
+    String? classId,
+    String? gender,
+    String? gradeLevel,
+    String? studentAvatarUrl,
   }) {
     return BehaviorHistoryEntry(
       operationId: operationId,
@@ -96,6 +137,10 @@ class BehaviorHistoryEntry {
       timestamp: timestamp,
       note: note,
       isUndone: isUndone ?? this.isUndone,
+      classId: classId ?? this.classId,
+      gender: gender ?? this.gender,
+      gradeLevel: gradeLevel ?? this.gradeLevel,
+      studentAvatarUrl: studentAvatarUrl ?? this.studentAvatarUrl,
     );
   }
 }
