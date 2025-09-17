@@ -254,7 +254,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     );
 
     return SizedBox(
-      height: 80,
+      height: 110,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -592,7 +592,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
