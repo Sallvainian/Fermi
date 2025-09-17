@@ -396,10 +396,10 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     required double negativeRate,
   }) {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 238),
+        color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 230),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 90),
@@ -418,7 +418,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
           final maxWidth = constraints.maxWidth;
           final twoColumn = maxWidth > 420;
           final spacing = twoColumn ? 16.0 : 0.0;
-          final cardWidth = twoColumn ? (maxWidth - spacing) / 2 : maxWidth;
+          final rawWidth = twoColumn ? (maxWidth - spacing) / 2 : maxWidth;
+          final cardWidth = rawWidth.clamp(140.0, 220.0).toDouble();
 
           final positiveText = '${positiveRate.round()}%';
           final negativeText = '${negativeRate.round()}%';
@@ -435,8 +436,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               ),
               const SizedBox(height: 12),
               Wrap(
-                spacing: 16,
-                runSpacing: 16,
+                spacing: 12,
+                runSpacing: 12,
                 children: [
                   SizedBox(
                     width: cardWidth,
@@ -513,41 +514,41 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 52,
+                  height: 52,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 90),
+                    color: theme.colorScheme.primary.withValues(alpha: 80),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 170),
+                      color: theme.colorScheme.primary.withValues(alpha: 160),
                       width: 2,
                     ),
                   ),
                   child: Icon(
                     Icons.groups,
                     color: theme.colorScheme.onPrimary,
-                    size: 26,
+                    size: 24,
                   ),
                 ),
                 Positioned(
-                  top: -8,
-                  right: -8,
+                  top: -6,
+                  right: -6,
                   child: Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.error,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.error.withValues(alpha: 128),
-                          blurRadius: 6,
+                          color: theme.colorScheme.error.withValues(alpha: 110),
+                          blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                     constraints: const BoxConstraints(
-                      minWidth: 30,
-                      minHeight: 30,
+                      minWidth: 26,
+                      minHeight: 26,
                     ),
                     child: Center(
                       child: Text(
@@ -555,7 +556,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: theme.colorScheme.onError,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -563,7 +564,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               'Whole Class',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -572,21 +573,6 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                 fontSize: 12,
               ),
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.secondary.withValues(alpha: 90),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                'Avg: $averagePoints',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
             ),
           ],
         ),
@@ -603,7 +589,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     required ThemeData theme,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 235),
         borderRadius: BorderRadius.circular(12),
@@ -613,23 +599,24 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              Icon(icon, color: color, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w500,
-                ),
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
               ),
-            ],
+            ),
+          ],
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontSize: 22,
               color: color,
             ),
           ),

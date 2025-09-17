@@ -43,25 +43,25 @@ class StudentPointCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface.withValues(alpha: 230),
-            borderRadius: BorderRadius.circular(12),
-            border: isTopThree
-                ? Border.all(
-                    color: rank == 1
-                        ? Colors.amber
-                        : rank == 2
-                        ? Colors.grey[400]!
-                        : Colors.orange[700]!,
-                    width: 2,
-                  )
-                : Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 77,
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 225),
+              borderRadius: BorderRadius.circular(12),
+              border: isTopThree
+                  ? Border.all(
+                      color: rank == 1
+                          ? Colors.amber
+                          : rank == 2
+                              ? Colors.grey[400]!
+                              : Colors.orange[700]!,
+                      width: 2,
+                    )
+                  : Border.all(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 70,
+                      ),
+                      width: 1,
                     ),
-                    width: 1,
-                  ),
             boxShadow: isFirstPlace
                 ? [
                     BoxShadow(
@@ -81,28 +81,28 @@ class StudentPointCard extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: student.avatarColor.withValues(alpha: 90),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: student.avatarColor.withValues(alpha: 180),
-                        width: 2,
-                      ),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: student.avatarColor.withValues(alpha: 70),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: student.avatarColor.withValues(alpha: 140),
+                      width: 2,
                     ),
-                    child: Center(
-                      child: Text(
-                        student.initials,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: student.avatarColor,
-                          fontSize: 16,
-                        ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      student.initials,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 15,
                       ),
                     ),
                   ),
+                ),
                   Positioned(
                     top: -6,
                     right: -6,
@@ -111,7 +111,7 @@ class StudentPointCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
               // Student Name
               Text(
@@ -140,26 +140,26 @@ class StudentPointCard extends StatelessWidget {
   /// Builds the points badge displayed on top of the avatar
   Widget _buildPointsBadge(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(4.5),
       decoration: BoxDecoration(
         color: theme.colorScheme.error,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.error.withValues(alpha: 128),
-            blurRadius: 6,
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
       child: Center(
         child: Text(
           student.totalPoints.toString(),
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onError,
             fontWeight: FontWeight.bold,
-            fontSize: 12,
+            fontSize: 11,
           ),
         ),
       ),
