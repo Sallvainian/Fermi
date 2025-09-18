@@ -334,12 +334,12 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
 
                 // Student Grid with Class Total Card
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: _getCrossAxisCount(context),
-                      crossAxisSpacing: 2, // MINIMAL spacing between cards
-                      mainAxisSpacing: 2, // MINIMAL spacing between cards
+                      crossAxisSpacing: 12, // Proper spacing between cards
+                      mainAxisSpacing: 12, // Proper spacing between cards
                       childAspectRatio: 1.0, // SQUARE aspect ratio
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
@@ -541,6 +541,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     required int averagePoints,
   }) {
     return Card(
+      margin: const EdgeInsets.all(2), // Small margin for consistency with student cards
       elevation: 4,
       shadowColor: theme.colorScheme.primary.withValues(alpha: 120),
       child: Container(
@@ -552,7 +553,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
             width: 1,
           ),
         ),
-        padding: const EdgeInsets.all(6), // Reduced padding to prevent overflow
+        padding: const EdgeInsets.all(10), // Same padding as student cards
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -560,8 +561,8 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 38, // Same as student cards
-                  height: 38, // Same as student cards
+                  width: 56, // Same as student cards
+                  height: 56, // Same as student cards
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 80),
                     shape: BoxShape.circle,
@@ -573,12 +574,12 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                   child: Icon(
                     Icons.groups,
                     color: theme.colorScheme.onPrimary,
-                    size: 20, // Smaller icon
+                    size: 28, // Bigger icon to match larger container
                   ),
                 ),
                 Positioned(
-                  top: -4,
-                  right: -4,
+                  top: -2,
+                  right: -2,
                   child: Container(
                     padding: const EdgeInsets.all(3), // Smaller badge
                     decoration: BoxDecoration(

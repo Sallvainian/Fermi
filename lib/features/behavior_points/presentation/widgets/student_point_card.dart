@@ -36,6 +36,7 @@ class StudentPointCard extends StatelessWidget {
     final isTopThree = rank != null && rank! <= 3;
 
     return Card(
+      margin: const EdgeInsets.all(2), // Small margin for visual separation
       elevation: isFirstPlace ? 8 : 2,
       shadowColor: isFirstPlace
           ? Colors.amber.withValues(alpha: 0.5)
@@ -72,7 +73,7 @@ class StudentPointCard extends StatelessWidget {
                   ]
                 : null,
           ),
-          padding: const EdgeInsets.all(6), // Further reduced to prevent overflow
+          padding: const EdgeInsets.all(10), // Balanced padding for square cards
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
