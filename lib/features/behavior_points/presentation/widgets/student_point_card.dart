@@ -104,8 +104,8 @@ class StudentPointCard extends StatelessWidget {
                   ),
                 ),
                   Positioned(
-                    top: -4,
-                    right: -4,
+                    top: -2,
+                    right: -2,
                     child: _buildPointsBadge(theme),
                   ),
                 ],
@@ -140,26 +140,26 @@ class StudentPointCard extends StatelessWidget {
   /// Builds the points badge displayed on top of the avatar
   Widget _buildPointsBadge(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.error,
-        shape: BoxShape.circle,
+        borderRadius: BorderRadius.circular(10), // Changed from circle to rounded rect for better fit
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.error.withValues(alpha: 0.5),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
-      constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+      constraints: const BoxConstraints(minWidth: 18, minHeight: 16),
       child: Center(
         child: Text(
           student.totalPoints.toString(),
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onError,
             fontWeight: FontWeight.bold,
-            fontSize: 9, // Smaller badge text
+            fontSize: 10, // Slightly bigger text
           ),
         ),
       ),
