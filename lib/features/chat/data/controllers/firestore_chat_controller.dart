@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Firestore-backed ChatController for Flyer Chat
 class FirestoreChatController extends InMemoryChatController with ChangeNotifier {
@@ -26,9 +27,11 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
   /// Initialize the controller and start listening to messages
   Future<void> initialize() async {
+    LoggerService.info('Initializing chat controller for conversation: $conversationId', tag: 'FirestoreChatController');
     await _loadInitialMessages();
     _startListening();
     _startTypingListener();
+    LoggerService.info('Chat controller initialized successfully', tag: 'FirestoreChatController');
   }
 
   /// Load initial messages from Firestore
@@ -51,8 +54,9 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
       // Set initial messages
       setMessages(messages);
+      LoggerService.debug('Loaded ${messages.length} initial messages', tag: 'FirestoreChatController');
     } catch (e) {
-      debugPrint('Error loading messages: $e');
+      LoggerService.error('Error loading messages', error: e, tag: 'FirestoreChatController');
     }
   }
 
@@ -222,7 +226,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
         });
       }
     } catch (e) {
-      debugPrint('Error updating typing status: $e');
+      LoggerService.error('Error updating typing status', error: e, tag: 'FirestoreChatController');
     }
   }
 
@@ -241,6 +245,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
         'attachments': _extractAttachments(message),
       });
 
+      LoggerService.debug('Message sent successfully: ${message.id}', tag: 'FirestoreChatController');
       // Message will be added via the real-time listener
       // Remove the temporary sending message
       final idx = messages.indexWhere((m) => m.id == message.id);
@@ -248,7 +253,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
         removeMessage(message);
       }
     } catch (e) {
-      debugPrint('Error sending message: $e');
+      LoggerService.error('Error sending message', error: e, tag: 'FirestoreChatController');
       // Update message to show failed status
       final failedMessage = _addFailedMetadata(message);
       _messageCache[message.id] = failedMessage;
@@ -283,6 +288,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
         'fileSize': bytes.length,
       });
 
+      LoggerService.info('Image uploaded successfully: ${result.data['fileName']}', tag: 'FirestoreChatController');
       // Send message with image attachment
       final imageUrl = result.data['url'] as String;
       final currentUser = _auth.currentUser;
@@ -297,7 +303,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
       await sendMessage(imageMessage);
     } catch (e) {
-      debugPrint('Error uploading image: $e');
+      LoggerService.error('Error uploading image', error: e, tag: 'FirestoreChatController');
     }
   }
 
@@ -363,6 +369,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
         'fileSize': bytes.length,
       });
 
+      LoggerService.info('File uploaded successfully: ${uploadResult.data['fileName']}', tag: 'FirestoreChatController');
       // Send message with file attachment
       final fileUrl = uploadResult.data['url'] as String;
       final currentUser = _auth.currentUser;
@@ -379,7 +386,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
       await sendMessage(fileMessage);
     } catch (e) {
-      debugPrint('Error uploading file: $e');
+      LoggerService.error('Error uploading file', error: e, tag: 'FirestoreChatController');
     }
   }
 
@@ -407,7 +414,7 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
         }
       }
     } catch (e) {
-      debugPrint('Error loading more messages: $e');
+      LoggerService.error('Error loading more messages', error: e, tag: 'FirestoreChatController');
     }
   }
 
@@ -419,8 +426,9 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
         'conversationId': conversationId,
         'messageIds': messageIds,
       });
+      LoggerService.debug('Marked ${messageIds.length} messages as read', tag: 'FirestoreChatController');
     } catch (e) {
-      debugPrint('Error marking messages as read: $e');
+      LoggerService.error('Error marking messages as read', error: e, tag: 'FirestoreChatController');
     }
   }
 
