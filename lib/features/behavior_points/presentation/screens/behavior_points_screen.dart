@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../shared/services/logger_service.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../shared/widgets/common/responsive_layout.dart';
@@ -740,7 +741,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
         reason: behaviorType,
       );
     } catch (e) {
-      debugPrint('Error awarding points: $e');
+      LoggerService.error('Error awarding points', error: e, tag: 'BehaviorPointsScreen');
     }
   }
 

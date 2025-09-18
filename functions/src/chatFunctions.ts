@@ -1,4 +1,5 @@
 import * as functions from "firebase-functions/v2";
+import { logger } from "firebase-functions";
 import * as admin from "firebase-admin";
 
 const db = admin.firestore();
@@ -101,7 +102,7 @@ export const sendMessage = functions.https.onCall(
 
       return { success: true, messageId: message.id };
     } catch (error) {
-      console.error("Error sending message:", error);
+      logger.error("Error sending message:", error);
       throw new functions.https.HttpsError(
         "internal",
         "Failed to send message"
@@ -165,7 +166,7 @@ export const markMessagesAsRead = functions.https.onCall(
 
       return { success: true, readCount: messageIds.length };
     } catch (error) {
-      console.error("Error marking messages as read:", error);
+      logger.error("Error marking messages as read:", error);
       throw new functions.https.HttpsError(
         "internal",
         "Failed to mark messages as read"
@@ -229,7 +230,7 @@ export const updateTypingStatus = functions.https.onCall(
               }
             }
           } catch (e) {
-            console.error("Error cleaning up typing status:", e);
+            logger.error("Error cleaning up typing status:", e);
           }
         }, 11000);
       } else {
@@ -239,7 +240,7 @@ export const updateTypingStatus = functions.https.onCall(
 
       return { success: true };
     } catch (error) {
-      console.error("Error updating typing status:", error);
+      logger.error("Error updating typing status:", error);
       throw new functions.https.HttpsError(
         "internal",
         "Failed to update typing status"
@@ -341,7 +342,7 @@ export const uploadChatFile = functions.https.onCall(
         filePath: filePath
       };
     } catch (error) {
-      console.error("Error uploading file:", error);
+      logger.error("Error uploading file:", error);
       throw new functions.https.HttpsError(
         "internal",
         "Failed to upload file"
@@ -387,13 +388,13 @@ async function sendPushNotifications(
 
     // Send notifications
     const response = await messaging.sendEachForMulticast(payload);
-    console.log(`Successfully sent ${response.successCount} notifications`);
+    logger.info(`Successfully sent ${response.successCount} notifications`);
 
     if (response.failureCount > 0) {
-      console.error(`Failed to send ${response.failureCount} notifications`);
+      logger.error(`Failed to send ${response.failureCount} notifications`);
     }
   } catch (error) {
-    console.error("Error sending push notifications:", error);
+    logger.error("Error sending push notifications:", error);
     // Don't throw - notifications are not critical
   }
 }
