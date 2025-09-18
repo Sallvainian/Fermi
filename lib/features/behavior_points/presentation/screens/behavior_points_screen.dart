@@ -334,15 +334,13 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
 
                 // Student Grid with Class Total Card
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: _getCrossAxisCount(context),
-                      crossAxisSpacing: 2, // Ultra-minimal spacing
-                      mainAxisSpacing: 2, // Ultra-minimal spacing
-                      childAspectRatio: _getAspectRatio(
-                        context,
-                      ), // Responsive aspect ratio
+                      crossAxisSpacing: 4, // Reduced spacing between cards
+                      mainAxisSpacing: 4, // Reduced spacing between cards
+                      childAspectRatio: 1.0, // SQUARE aspect ratio
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       if (index == 0) {
@@ -692,15 +690,9 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
   }
 
   /// Determines the aspect ratio for the student cards based on screen size
-  /// Provides more vertical space for card content on smaller screens
+  /// Cards are now SQUARE (1:1 aspect ratio)
   double _getAspectRatio(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    if (screenWidth > 1200) {
-      return 1.2; // Desktop - wider to prevent overflow with rankings
-    }
-    if (screenWidth > 800) return 1.15; // Tablet - wider for ranked students
-    if (screenWidth > 600) return 1.1; // Small tablet - slightly wider
-    return 1.05; // Mobile - slightly wider to fit all content
+    return 1.0; // SQUARE cards for all screen sizes
   }
 
   /// Shows the behavior assignment popup for the selected student

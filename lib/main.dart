@@ -32,6 +32,10 @@ Future<void> main() async {
       // Ensure Flutter bindings are initialized inside the zone
       WidgetsFlutterBinding.ensureInitialized();
 
+      // Disable Provider type checking for Flyer Chat compatibility
+      // Flyer Chat internally uses Provider with ChangeNotifier, which triggers warnings
+      Provider.debugCheckInvalidValueType = null;
+
       // Forward Flutter framework errors into Zone for unified logging
       FlutterError.onError = (FlutterErrorDetails details) {
         // Safely handle errors without causing recursive failures

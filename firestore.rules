@@ -214,13 +214,24 @@ service cloud.firestore {
       allow delete: if false; // Never allow deletion
       
       match /messages/{messageId} {
-        allow read: if isAuthenticated() && 
+        allow read: if isAuthenticated() &&
                       request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
-        allow create: if isAuthenticated() && 
-                        request.auth.uid == request.resource.data.senderId &&
+        allow create: if isAuthenticated() &&
+                        request.auth.uid == request.resource.data.authorId &&
                         request.auth.token.email_verified == true;
-        allow update: if false; // Messages are immutable
+        allow update: if isAuthenticated() &&
+                        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
         allow delete: if false; // Messages cannot be deleted
+      }
+
+      // Typing indicators subcollection
+      match /typing/{userId} {
+        allow read: if isAuthenticated() &&
+                      request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+        allow write: if isAuthenticated() &&
+                       request.auth.uid == userId;
+        allow delete: if isAuthenticated() &&
+                        request.auth.uid == userId;
       }
     }
     

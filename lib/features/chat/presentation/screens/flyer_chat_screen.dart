@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/controllers/firestore_chat_controller.dart';
+import '../../../../shared/services/logger_service.dart';
 
 class FlyerChatScreen extends StatefulWidget {
   final String conversationId;
@@ -21,11 +24,13 @@ class FlyerChatScreen extends StatefulWidget {
 }
 
 class _FlyerChatScreenState extends State<FlyerChatScreen> {
-  late FirestoreChatController _controller;
+  FirestoreChatController? _controller;
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final _uuid = const Uuid();
   bool _isLoading = true;
   final Map<String, User> _userCache = {};
+  String? _actualConversationId;
 
   @override
   void initState() {
@@ -34,25 +39,90 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
   }
 
   Future<void> _initializeChat() async {
-    _controller = FirestoreChatController(conversationId: widget.conversationId);
-    await _controller.initialize();
+    try {
+      // Check if we need to create a new conversation
+      String conversationId = widget.conversationId;
 
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (conversationId == 'new') {
+        // Get query parameters from context
+        final router = GoRouter.of(context);
+        final params = router.routerDelegate.currentConfiguration.uri.queryParameters;
+        final recipientId = params['recipientId'];
+
+        if (recipientId != null) {
+          // Create or get existing conversation
+          conversationId = await _getOrCreateConversation(recipientId);
+          _actualConversationId = conversationId;
+        } else {
+          LoggerService.error('No recipient ID provided for new conversation', tag: 'FlyerChatScreen');
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+          return;
+        }
+      } else {
+        _actualConversationId = conversationId;
+      }
+
+      // Initialize controller with actual conversation ID
+      _controller = FirestoreChatController(conversationId: _actualConversationId!);
+      await _controller!.initialize();
+    } catch (e) {
+      LoggerService.error('Failed to initialize chat', error: e, tag: 'FlyerChatScreen');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  Future<String> _getOrCreateConversation(String recipientId) async {
+    final currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null) {
+      throw Exception('User not authenticated');
+    }
+
+    // Create a consistent conversation ID based on participants
+    final participants = [currentUserId, recipientId]..sort();
+    final conversationId = participants.join('_');
+
+    // Check if conversation exists
+    final conversationDoc = await _firestore
+        .collection('conversations')
+        .doc(conversationId)
+        .get();
+
+    if (!conversationDoc.exists) {
+      // Create new conversation document
+      await _firestore.collection('conversations').doc(conversationId).set({
+        'participants': participants,
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastActivity': FieldValue.serverTimestamp(),
+        'unreadCount': {
+          currentUserId: 0,
+          recipientId: 0,
+        },
+      });
+
+      LoggerService.info('Created new conversation: $conversationId', tag: 'FlyerChatScreen');
+    }
+
+    return conversationId;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller?.dispose();
     super.dispose();
   }
 
   void _handleSendPressed(String text) {
     final currentUser = _auth.currentUser;
-    if (currentUser == null) return;
+    if (currentUser == null || _controller == null) return;
 
     final textMessage = TextMessage(
       id: _uuid.v4(),
@@ -61,8 +131,8 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
       text: text,
     );
 
-    _controller.sendMessage(textMessage);
-    _controller.updateTypingStatus(false); // Stop typing when sending
+    _controller!.sendMessage(textMessage);
+    _controller!.updateTypingStatus(false); // Stop typing when sending
   }
 
 
@@ -91,7 +161,7 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
               title: const Text('Take Photo'),
               onTap: () {
                 Navigator.pop(context);
-                _controller.uploadImage(source: ImageSource.camera);
+                _controller?.uploadImage(source: ImageSource.camera);
               },
             ),
             ListTile(
@@ -99,7 +169,7 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
               title: const Text('Choose from Gallery'),
               onTap: () {
                 Navigator.pop(context);
-                _controller.uploadImage(source: ImageSource.gallery);
+                _controller?.uploadImage(source: ImageSource.gallery);
               },
             ),
             ListTile(
@@ -107,7 +177,7 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
               title: const Text('Upload Document'),
               onTap: () {
                 Navigator.pop(context);
-                _controller.uploadFile();
+                _controller?.uploadFile();
               },
             ),
             const SizedBox(height: 8),
@@ -169,35 +239,36 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(widget.conversationTitle),
-            ListenableBuilder(
-              listenable: _controller,
-              builder: (context, child) {
-                final typingUsers = _controller.getTypingUsers();
-                if (typingUsers.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                final typingText = typingUsers.length == 1
-                    ? '${typingUsers.first} is typing...'
-                    : '${typingUsers.length} people are typing...';
-                return Text(
-                  typingText,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.normal,
-                  ),
-                );
-              },
-            ),
+            if (_controller != null)
+              ListenableBuilder(
+                listenable: _controller!,
+                builder: (context, child) {
+                  final typingUsers = _controller!.getTypingUsers();
+                  if (typingUsers.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  final typingText = typingUsers.length == 1
+                      ? '${typingUsers.first} is typing...'
+                      : '${typingUsers.length} people are typing...';
+                  return Text(
+                    typingText,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  );
+                },
+              ),
           ],
         ),
         backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,
       ),
-      body: _isLoading
+      body: _isLoading || _controller == null
           ? const Center(child: CircularProgressIndicator())
           : Chat(
-              chatController: _controller,
+              chatController: _controller!,
               currentUserId: currentUser.uid,
               onMessageSend: _handleSendPressed,
               onAttachmentTap: _handleAttachmentPressed,

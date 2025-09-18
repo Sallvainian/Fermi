@@ -127,7 +127,7 @@ class StudentPointCard extends StatelessWidget {
               ),
 
               if (rank != null) ...[
-                const SizedBox(height: 2), // Minimal spacing for rank
+                const SizedBox(height: 6), // More spacing for rank
                 _buildRankingDisplay(theme),
               ],
             ],
