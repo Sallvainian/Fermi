@@ -41,9 +41,28 @@ jobs:
       - name: 'Checkout repository'
         uses: 'actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8' # ratchet:actions/checkout@v5
 
+      - name: 'Check Gemini configuration'
+        run: |
+          echo "Checking Gemini configuration..."
+          if [[ -n "${{ secrets.GEMINI_API_KEY }}" ]]; then
+            echo "✅ GEMINI_API_KEY is configured"
+          elif [[ -n "${{ secrets.GOOGLE_API_KEY }}" ]]; then
+            echo "✅ GOOGLE_API_KEY is configured"
+          elif [[ -n "${{ vars.GCP_WIF_PROVIDER }}" ]] && [[ -n "${{ vars.GOOGLE_CLOUD_PROJECT }}" ]]; then
+            echo "✅ GCP Workload Identity Federation is configured"
+          else
+            echo "❌ No Gemini authentication method is configured!"
+            echo "Please set one of the following:"
+            echo "  - secrets.GEMINI_API_KEY (recommended)"
+            echo "  - secrets.GOOGLE_API_KEY"
+            echo "  - GCP Workload Identity Federation (advanced)"
+            exit 0  # Don't fail the workflow, just skip
+          fi
+
       - name: 'Run Gemini pull request review'
         uses: 'google-github-actions/run-gemini-cli@v0' # ratchet:exclude
         id: 'gemini_pr_review'
+        continue-on-error: true  # Allow workflow to continue if Gemini fails
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
@@ -61,7 +80,7 @@ jobs:
           use_vertex_ai: '${{ vars.GOOGLE_GENAI_USE_VERTEXAI }}'
           google_api_key: '${{ secrets.GOOGLE_API_KEY }}'
           use_gemini_code_assist: '${{ vars.GOOGLE_GENAI_USE_GCA }}'
-          gemini_debug: '${{ fromJSON(vars.DEBUG || vars.ACTIONS_STEP_DEBUG || false) }}'
+          gemini_debug: 'true'  # Enable debug to see what's failing
           settings: |-
             {
               "maxSessionTurns": 25,

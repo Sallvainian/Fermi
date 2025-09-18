@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../shared/utils/firestore_batch_query.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/student.dart';
 
 /// Simplified student provider with direct Firestore access
@@ -32,19 +34,28 @@ class SimpleStudentProvider with ChangeNotifier {
 
       _students = snapshot.docs.map((doc) {
         final data = doc.data();
+        // Parse displayName into first and last name if needed
+        String firstName = data['firstName'] ?? '';
+        String lastName = data['lastName'] ?? '';
+        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+          final parts = (data['displayName'] as String).split(' ');
+          firstName = parts.isNotEmpty ? parts.first : '';
+          lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        }
+
         return Student(
           id: doc.id,
           uid: data['uid'] ?? doc.id,
-          username: data['username'] ?? '',
-          firstName: data['firstName'] ?? '',
-          lastName: data['lastName'] ?? '',
+          username: data['username'] ?? data['email']?.split('@').first ?? '',
+          firstName: firstName,
+          lastName: lastName,
           displayName:
               data['displayName'] ??
-              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
-          gradeLevel: data['gradeLevel'] ?? 9,
+          gradeLevel: int.tryParse(data['gradeLevel']?.toString() ?? '9') ?? 9,
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
@@ -89,27 +100,36 @@ class SimpleStudentProvider with ChangeNotifier {
         return;
       }
 
-      // Query students by IDs
-      final snapshot = await _firestore
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: studentIds.toList())
-          .get();
+      // Query students by IDs using batch query to handle > 30 students
+      final docs = await FirestoreBatchQuery.batchWhereInDocumentId(
+        collection: _firestore.collection('users'),
+        documentIds: studentIds.toList(),
+      );
 
-      _students = snapshot.docs.map((doc) {
+      _students = docs.map((doc) {
         final data = doc.data();
+        // Parse displayName into first and last name if needed
+        String firstName = data['firstName'] ?? '';
+        String lastName = data['lastName'] ?? '';
+        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+          final parts = (data['displayName'] as String).split(' ');
+          firstName = parts.isNotEmpty ? parts.first : '';
+          lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        }
+
         return Student(
           id: doc.id,
           uid: data['uid'] ?? doc.id,
-          username: data['username'] ?? '',
-          firstName: data['firstName'] ?? '',
-          lastName: data['lastName'] ?? '',
+          username: data['username'] ?? data['email']?.split('@').first ?? '',
+          firstName: firstName,
+          lastName: lastName,
           displayName:
               data['displayName'] ??
-              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
-          gradeLevel: data['gradeLevel'] ?? 9,
+          gradeLevel: int.tryParse(data['gradeLevel']?.toString() ?? '9') ?? 9,
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,
@@ -135,26 +155,40 @@ class SimpleStudentProvider with ChangeNotifier {
     if (studentIds.isEmpty) return [];
 
     try {
-      final snapshot = await _firestore
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: studentIds)
-          .get();
+      LoggerService.debug('Looking for ${studentIds.length} students in users collection', tag: 'StudentProvider');
 
-      return snapshot.docs.map((doc) {
+      // Use batch query to handle > 30 students
+      final docs = await FirestoreBatchQuery.batchWhereInDocumentId(
+        collection: _firestore.collection('users'),
+        documentIds: studentIds,
+      );
+
+      debugPrint('Found ${docs.length} student documents');
+
+      return docs.map((doc) {
         final data = doc.data();
+        // Parse displayName into first and last name if needed
+        String firstName = data['firstName'] ?? '';
+        String lastName = data['lastName'] ?? '';
+        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+          final parts = (data['displayName'] as String).split(' ');
+          firstName = parts.isNotEmpty ? parts.first : '';
+          lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+        }
+
         return Student(
           id: doc.id,
           uid: data['uid'] ?? doc.id,
-          username: data['username'] ?? '',
-          firstName: data['firstName'] ?? '',
-          lastName: data['lastName'] ?? '',
+          username: data['username'] ?? data['email']?.split('@').first ?? '',
+          firstName: firstName,
+          lastName: lastName,
           displayName:
               data['displayName'] ??
-              '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
-          gradeLevel: data['gradeLevel'] ?? 9,
+          gradeLevel: int.tryParse(data['gradeLevel']?.toString() ?? '9') ?? 9,
           classIds: List<String>.from(data['classIds'] ?? []),
           accountClaimed: data['accountClaimed'] ?? false,
           passwordChanged: data['passwordChanged'] ?? false,

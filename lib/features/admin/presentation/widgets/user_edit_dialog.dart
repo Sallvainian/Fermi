@@ -289,7 +289,7 @@ class _UserEditDialogState extends State<UserEditDialog> {
                             labelText: 'Username (auto-generated from email)',
                             border: const OutlineInputBorder(),
                             filled: true,
-                            fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                            fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                             helperText: 'Username is automatically set to the student\'s email',
                           ),
                         ),

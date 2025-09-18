@@ -369,22 +369,14 @@ class Assignment {
 /// - [homework]: Regular take-home assignments
 /// - [quiz]: Short assessments, often timed
 /// - [test]: Formal assessments covering specific topics
-/// - [exam]: Major assessments, typically weighted heavily
-/// - [project]: Long-term assignments with multiple components
-/// - [classwork]: In-class activities and assignments
-/// - [essay]: Written assignments requiring extended responses
-/// - [lab]: Science or practical lab assignments
-/// - [presentation]: Oral or visual presentation assignments
-/// - [other]: Miscellaneous assignment types
+/// - [project]: Long-term projects
+/// - [lab]: Lab assignments and experiments
+/// - [classwork]: In-class work
+/// - [activity]: Class activities
 enum AssignmentType {
   homework,
   quiz,
   test,
-  exam,
-  project,
-  classwork,
-  essay,
-  lab,
-  presentation,
-  other,
+  projectsLabs,
+  classworkActivities,
 }

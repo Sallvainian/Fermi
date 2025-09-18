@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../screens/behavior_points_screen.dart';
 import '../providers/behavior_point_provider.dart';
-import 'custom_behavior_dialog.dart';
+import 'create_behavior_dialog.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Modal bottom sheet popup for assigning behavior points to students.
 ///
@@ -28,121 +29,17 @@ class BehaviorAssignmentPopup extends StatefulWidget {
   });
 
   @override
-  State<BehaviorAssignmentPopup> createState() => _BehaviorAssignmentPopupState();
+  State<BehaviorAssignmentPopup> createState() =>
+      _BehaviorAssignmentPopupState();
 }
 
 class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
-  // Mock positive behaviors with points and icons (fallback)
-  final List<BehaviorOption> _mockPositiveBehaviors = [
-    BehaviorOption(
-      name: 'Participation',
-      points: 5,
-      icon: Icons.front_hand,
-      description: 'Active participation in class',
-    ),
-    BehaviorOption(
-      name: 'Helping Others',
-      points: 8,
-      icon: Icons.people_outline,
-      description: 'Helping classmates',
-    ),
-    BehaviorOption(
-      name: 'Great Work',
-      points: 10,
-      icon: Icons.star,
-      description: 'Excellent assignment quality',
-    ),
-    BehaviorOption(
-      name: 'Leadership',
-      points: 10,
-      icon: Icons.psychology,
-      description: 'Showing leadership skills',
-    ),
-    BehaviorOption(
-      name: 'Respect',
-      points: 6,
-      icon: Icons.favorite,
-      description: 'Respectful behavior',
-    ),
-    BehaviorOption(
-      name: 'Creativity',
-      points: 8,
-      icon: Icons.lightbulb,
-      description: 'Creative thinking',
-      isCustom: true, // Mark as custom for testing delete functionality
-    ),
-    BehaviorOption(
-      name: 'On Time',
-      points: 3,
-      icon: Icons.schedule,
-      description: 'Punctual arrival',
-    ),
-    BehaviorOption(
-      name: 'Following Directions',
-      points: 4,
-      icon: Icons.check_circle,
-      description: 'Following instructions well',
-    ),
-  ];
-
-  // Mock needs work behaviors with negative points and icons (fallback)
-  final List<BehaviorOption> _mockNeedsWorkBehaviors = [
-    BehaviorOption(
-      name: 'Talking Out',
-      points: -3,
-      icon: Icons.record_voice_over,
-      description: 'Talking without permission',
-    ),
-    BehaviorOption(
-      name: 'Not Following Directions',
-      points: -4,
-      icon: Icons.cancel,
-      description: 'Not following instructions',
-    ),
-    BehaviorOption(
-      name: 'Disrupting Class',
-      points: -6,
-      icon: Icons.warning,
-      description: 'Disruptive behavior',
-    ),
-    BehaviorOption(
-      name: 'Incomplete Work',
-      points: -5,
-      icon: Icons.assignment_late,
-      description: 'Not completing assignments',
-    ),
-    BehaviorOption(
-      name: 'Disrespectful',
-      points: -8,
-      icon: Icons.mood_bad,
-      description: 'Disrespectful to others',
-    ),
-    BehaviorOption(
-      name: 'Off Task',
-      points: -3,
-      icon: Icons.phonelink_off,
-      description: 'Not staying focused',
-    ),
-    BehaviorOption(
-      name: 'Late',
-      points: -2,
-      icon: Icons.access_time,
-      description: 'Arriving late',
-    ),
-    BehaviorOption(
-      name: 'Not Prepared',
-      points: -4,
-      icon: Icons.backpack,
-      description: 'Missing materials',
-      isCustom: true, // Mark as custom for testing delete functionality
-    ),
-  ];
 
   // Edit mode state for managing behaviors
   bool _isEditMode = false;
+  bool _isProcessingAward = false;
 
   @override
   void initState() {
@@ -156,74 +53,38 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
     super.dispose();
   }
 
-  /// Get positive behaviors from provider or fallback to mock data
+  /// Get positive behaviors from provider
   List<BehaviorOption> get _positiveBehaviors {
-    try {
-      final provider = context.read<BehaviorPointProvider>();
-      final behaviors = provider.positiveBehaviors;
-      
-      if (behaviors.isEmpty) {
-        return _mockPositiveBehaviors;
-      }
-      
-      return behaviors.map((behavior) => BehaviorOption(
-        id: behavior.id,
-        name: behavior.name,
-        points: behavior.points,
-        icon: _getBehaviorIcon(behavior.name),
-        description: behavior.description,
-        isCustom: behavior.isCustom,
-      )).toList();
-    } catch (e) {
-      return _mockPositiveBehaviors;
-    }
+    final provider = context.watch<BehaviorPointProvider>();
+    return provider.positiveBehaviors
+        .map(
+          (behavior) => BehaviorOption(
+            id: behavior.id,
+            name: behavior.name,
+            points: behavior.points,
+            icon: behavior.iconData,
+            description: behavior.description,
+            isCustom: behavior.isCustom,
+          ),
+        )
+        .toList();
   }
 
-  /// Get negative behaviors from provider or fallback to mock data
+  /// Get negative behaviors from provider
   List<BehaviorOption> get _needsWorkBehaviors {
-    try {
-      final provider = context.read<BehaviorPointProvider>();
-      final behaviors = provider.negativeBehaviors;
-      
-      if (behaviors.isEmpty) {
-        return _mockNeedsWorkBehaviors;
-      }
-      
-      return behaviors.map((behavior) => BehaviorOption(
-        id: behavior.id,
-        name: behavior.name,
-        points: behavior.points,
-        icon: _getBehaviorIcon(behavior.name),
-        description: behavior.description,
-        isCustom: behavior.isCustom,
-      )).toList();
-    } catch (e) {
-      return _mockNeedsWorkBehaviors;
-    }
-  }
-
-  /// Get appropriate icon for behavior name
-  IconData _getBehaviorIcon(String behaviorName) {
-    final name = behaviorName.toLowerCase();
-    
-    if (name.contains('participation') || name.contains('participate')) return Icons.front_hand;
-    if (name.contains('help') || name.contains('helping')) return Icons.people_outline;
-    if (name.contains('excellent') || name.contains('great') || name.contains('work')) return Icons.star;
-    if (name.contains('leadership') || name.contains('leader')) return Icons.psychology;
-    if (name.contains('respect') || name.contains('respectful')) return Icons.favorite;
-    if (name.contains('creative') || name.contains('creativity')) return Icons.lightbulb;
-    if (name.contains('time') || name.contains('punctual') || name.contains('on time')) return Icons.schedule;
-    if (name.contains('direction') || name.contains('following')) return Icons.check_circle;
-    if (name.contains('talking') || name.contains('talk')) return Icons.record_voice_over;
-    if (name.contains('disrupting') || name.contains('disruptive')) return Icons.warning;
-    if (name.contains('homework') || name.contains('incomplete') || name.contains('missing')) return Icons.assignment_late;
-    if (name.contains('disrespectful') || name.contains('disrespect')) return Icons.mood_bad;
-    if (name.contains('off task') || name.contains('focus')) return Icons.phonelink_off;
-    if (name.contains('late') || name.contains('tardy')) return Icons.access_time;
-    if (name.contains('prepared') || name.contains('materials')) return Icons.backpack;
-    
-    // Default icons
-    return Icons.star_outline;
+    final provider = context.watch<BehaviorPointProvider>();
+    return provider.negativeBehaviors
+        .map(
+          (behavior) => BehaviorOption(
+            id: behavior.id,
+            name: behavior.name,
+            points: behavior.points,
+            icon: behavior.iconData,
+            description: behavior.description,
+            isCustom: behavior.isCustom,
+          ),
+        )
+        .toList();
   }
 
   @override
@@ -249,7 +110,9 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 77),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.3,
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -265,8 +128,16 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildBehaviorGrid(_positiveBehaviors, scrollController, theme),
-                    _buildBehaviorGrid(_needsWorkBehaviors, scrollController, theme),
+                    _buildBehaviorGrid(
+                      _positiveBehaviors,
+                      scrollController,
+                      theme,
+                    ),
+                    _buildBehaviorGrid(
+                      _needsWorkBehaviors,
+                      scrollController,
+                      theme,
+                    ),
                   ],
                 ),
               ),
@@ -300,10 +171,10 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: widget.student.avatarColor.withValues(alpha: 51),
+              color: widget.student.avatarColor.withValues(alpha: 0.2),
               shape: BoxShape.circle,
               border: Border.all(
-                color: widget.student.avatarColor.withValues(alpha: 128),
+                color: widget.student.avatarColor.withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
@@ -317,9 +188,9 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Student Info
           Expanded(
             child: Column(
@@ -352,7 +223,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
               ],
             ),
           ),
-          
+
           // Edit/Done Button
           TextButton.icon(
             onPressed: () {
@@ -360,13 +231,12 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                 _isEditMode = !_isEditMode;
               });
             },
-            icon: Icon(
-              _isEditMode ? Icons.check : Icons.edit,
-              size: 18,
-            ),
+            icon: Icon(_isEditMode ? Icons.check : Icons.edit, size: 18),
             label: Text(_isEditMode ? 'Done' : 'Edit'),
             style: TextButton.styleFrom(
-              foregroundColor: _isEditMode ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+              foregroundColor: _isEditMode
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -379,7 +249,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 128),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(8),
       ),
       child: TabBar(
@@ -427,7 +297,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   ) {
     // Add 1 to item count for the "+" button
     final totalItems = behaviors.length + 1;
-    
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: GridView.builder(
@@ -440,12 +310,14 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
         ),
         itemCount: totalItems,
         itemBuilder: (context, index) {
-          // Last item is the "+" button for adding custom behaviors
-          if (index == behaviors.length) {
+          // First item is the "+" button for adding custom behaviors
+          if (index == 0) {
             return _buildAddCustomBehaviorCard(theme);
           }
-          
-          final behavior = behaviors[index];
+
+          // Adjust index for behaviors since we put add button first
+          final behaviorIndex = index - 1;
+          final behavior = behaviors[behaviorIndex];
           return _buildBehaviorCard(behavior, theme);
         },
       ),
@@ -456,28 +328,30 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   Widget _buildBehaviorCard(BehaviorOption behavior, ThemeData theme) {
     final isPositive = behavior.points > 0;
     final cardColor = isPositive ? Colors.green : Colors.orange;
-    final isCustom = behavior.isCustom ?? false;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Card(
           elevation: 2,
-          shadowColor: cardColor.withValues(alpha: 51),
+          color: theme.colorScheme.surface.withValues(alpha: 0.92),
+          shadowColor: cardColor.withValues(alpha: 0.4),
           child: InkWell(
-            onTap: _isEditMode ? null : () => _awardBehaviorPoints(behavior),
+            onTap: (_isEditMode || _isProcessingAward)
+                ? null
+                : () => _awardBehaviorPoints(behavior),
             borderRadius: BorderRadius.circular(12),
             child: Container(
-              padding: const EdgeInsets.all(8), // Reduced padding for more content space
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: cardColor.withValues(alpha: 77),
+                  color: cardColor.withValues(alpha: 0.55),
                   width: 1,
                 ),
               ),
               child: SizedBox(
-                height: 120, // Fixed height for consistent card size
+                height: 124,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -485,16 +359,12 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: cardColor.withValues(alpha: 26),
+                        color: cardColor.withValues(alpha: 0.31),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(
-                        behavior.icon,
-                        color: cardColor,
-                        size: 24,
-                      ),
+                      child: Icon(behavior.icon, color: cardColor, size: 24),
                     ),
-                    
+
                     // Behavior name with flexible height
                     Flexible(
                       child: Padding(
@@ -514,13 +384,16 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                         ),
                       ),
                     ),
-                    
+
                     // Points
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: cardColor,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
                         '${behavior.points > 0 ? '+' : ''}${behavior.points}',
@@ -537,8 +410,8 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
             ),
           ),
         ),
-        // Delete button (only shown in edit mode for custom behaviors)
-        if (_isEditMode && isCustom)
+        // Delete button (shown in edit mode for any behavior)
+        if (_isEditMode)
           Positioned(
             top: -4,
             right: -4,
@@ -555,11 +428,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                     width: 2,
                   ),
                 ),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 14,
-                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 14),
               ),
             ),
           ),
@@ -569,42 +438,40 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
 
   /// Builds the "+" button card for adding custom behaviors
   Widget _buildAddCustomBehaviorCard(ThemeData theme) {
+    final cardColor = theme.colorScheme.primary;
+
     return Card(
       elevation: 2,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 51),
+      color: theme.colorScheme.surface.withValues(alpha: 0.92),
+      shadowColor: cardColor.withValues(alpha: 0.4),
       child: InkWell(
         onTap: _showAddCustomBehaviorDialog,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(8), // Reduced padding for consistency
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: theme.colorScheme.primary.withValues(alpha: 77),
-              width: 2,
-              style: BorderStyle.solid,
+              color: cardColor.withValues(alpha: 0.55),
+              width: 1,
             ),
           ),
           child: SizedBox(
-            height: 120, // Fixed height matching regular cards
+            height: 124,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Plus icon
+                // Icon
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 26),
+                    color: cardColor.withValues(alpha: 0.31),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    Icons.add,
-                    color: theme.colorScheme.primary,
-                    size: 24,
-                  ),
+                  child: Icon(Icons.add, color: cardColor, size: 24),
                 ),
-                
-                // Add custom text with flexible height
+
+                // Text with flexible height
                 Flexible(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -618,16 +485,27 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                           height: 1.2,
-                          color: theme.colorScheme.primary,
                         ),
                       ),
                     ),
                   ),
                 ),
-                
-                // Empty container to match the height of points badge in regular cards
+
+                // Plus badge to match regular cards
                 Container(
-                  height: 20,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
               ],
             ),
@@ -660,9 +538,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -679,7 +555,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
     try {
       final provider = context.read<BehaviorPointProvider>();
       await provider.deleteBehavior(behavior.id);
-      
+
       // Show success message
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -688,7 +564,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
           backgroundColor: Colors.red,
         ),
       );
-      
+
       // Exit edit mode after deletion
       setState(() {
         _isEditMode = false;
@@ -706,28 +582,46 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   }
 
   /// Awards behavior points and provides feedback
-  void _awardBehaviorPoints(BehaviorOption behavior) {
-    // Award the points
-    widget.onPointsAwarded(behavior.points, behavior.name);
+  void _awardBehaviorPoints(BehaviorOption behavior) async {
+    // Prevent duplicate operations
+    if (_isProcessingAward) {
+      LoggerService.debug('Award already in progress, ignoring duplicate click', tag: 'BehaviorAssignment');
+      return;
+    }
 
-    // Show visual feedback
-    _showPointsAnimation(behavior);
-
-    // Close popup after brief delay
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        Navigator.pop(context);
-      }
+    setState(() {
+      _isProcessingAward = true;
     });
+
+    try {
+      // Award the points
+      await widget.onPointsAwarded(behavior.points, behavior.name);
+
+      // Show visual feedback
+      _showPointsAnimation(behavior);
+
+      // Close popup after brief delay
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessingAward = false;
+        });
+      }
+    }
   }
 
   /// Shows animated feedback when points are awarded
   void _showPointsAnimation(BehaviorOption behavior) {
     final overlay = Overlay.of(context);
     final renderBox = context.findRenderObject() as RenderBox?;
-    
+
     if (renderBox == null) return;
-    
+
     final size = renderBox.size;
     final position = renderBox.localToGlobal(Offset.zero);
 
@@ -753,7 +647,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   void _showAddCustomBehaviorDialog() {
     showDialog(
       context: context,
-      builder: (context) => CustomBehaviorDialog(
+      builder: (context) => CreateBehaviorDialog(
         onBehaviorCreated: () {
           // Optionally refresh behaviors here
           // The provider's real-time listeners should handle this automatically
@@ -787,10 +681,7 @@ class _PointsAnimationWidget extends StatefulWidget {
   final int points;
   final Offset position;
 
-  const _PointsAnimationWidget({
-    required this.points,
-    required this.position,
-  });
+  const _PointsAnimationWidget({required this.points, required this.position});
 
   @override
   State<_PointsAnimationWidget> createState() => _PointsAnimationWidgetState();
@@ -810,21 +701,14 @@ class _PointsAnimationWidgetState extends State<_PointsAnimationWidget>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.3, 1.0),
-    ));
+    _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _controller, curve: const Interval(0.3, 1.0)),
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: Offset.zero,
       end: const Offset(0, -2),
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutQuart,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutQuart));
 
     _controller.forward();
   }
@@ -851,13 +735,16 @@ class _PointsAnimationWidgetState extends State<_PointsAnimationWidget>
             child: SlideTransition(
               position: _slideAnimation,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 230),
+                  color: color.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha: 77),
+                      color: color.withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),

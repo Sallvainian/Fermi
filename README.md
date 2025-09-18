@@ -5,6 +5,7 @@
 ![Firebase](https://img.shields.io/badge/Firebase-Enabled-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20Android%20%7C%20iOS%20%7C%20Windows-lightgrey)
+![Version](https://img.shields.io/badge/Version-0.9.6-brightgreen)
 
 🌐 **Live Demo**: [https://academic-tools.org](https://academic-tools.org)
 
@@ -125,6 +126,7 @@ lib/
 │   ├── grades/                 # Grading system
 │   ├── notifications/          # Push notifications
 │   ├── student/                # Student management
+│   ├── students/               # Students listing and management
 │   └── teacher/                # Teacher features
 ├── shared/                      # Shared components
 │   ├── core/                   # App initialization, DI
@@ -517,12 +519,13 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## 📈 Roadmap
 
-### Current Version (0.9.5)
+### Current Version (0.9.6)
 - ✅ Core platform features
 - ✅ Multi-platform support
 - ✅ Real-time collaboration
 - ✅ Behavior point system
 - ✅ Firebase integration
+- ✅ Student management improvements
 
 ### Version 1.0 (Q1 2025)
 - [ ] Parent portal enhancements

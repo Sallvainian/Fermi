@@ -3,34 +3,33 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/behavior_point_provider.dart';
 
-/// Dialog for creating custom behavior types with form validation and icon selection.
+/// Dialog for creating behavior types with form validation and icon selection.
 ///
 /// Features:
-/// - Text fields for behavior name and description
+/// - Text field for behavior name
 /// - Positive/Negative toggle switch
 /// - Point value selector (1-10) with slider
 /// - Icon picker from predefined icons
 /// - Form validation
 /// - Save and Cancel buttons
 /// - Responsive design
-class CustomBehaviorDialog extends StatefulWidget {
+class CreateBehaviorDialog extends StatefulWidget {
   /// Callback when behavior is created successfully
   final VoidCallback? onBehaviorCreated;
 
-  /// Creates a custom behavior creation dialog
-  const CustomBehaviorDialog({
+  /// Creates a behavior creation dialog
+  const CreateBehaviorDialog({
     super.key,
     this.onBehaviorCreated,
   });
 
   @override
-  State<CustomBehaviorDialog> createState() => _CustomBehaviorDialogState();
+  State<CreateBehaviorDialog> createState() => _CreateBehaviorDialogState();
 }
 
-class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
+class _CreateBehaviorDialogState extends State<CreateBehaviorDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
 
   bool _isPositive = true;
   int _pointValue = 5;
@@ -77,7 +76,6 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   @override
   void dispose() {
     _nameController.dispose();
-    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -88,6 +86,8 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
     final isSmallScreen = screenSize.width < 600;
 
     return Dialog(
+      backgroundColor: theme.colorScheme.surface,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
@@ -112,8 +112,6 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildNameField(theme),
-                      const SizedBox(height: 16),
-                      _buildDescriptionField(theme),
                       const SizedBox(height: 24),
                       _buildTypeToggle(theme),
                       const SizedBox(height: 24),
@@ -141,7 +139,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 26),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -156,7 +154,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Create Custom Behavior',
+                'Create Behavior',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -177,59 +175,67 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
 
   /// Builds the behavior name text field
   Widget _buildNameField(ThemeData theme) {
-    return TextFormField(
-      controller: _nameController,
-      decoration: InputDecoration(
-        labelText: 'Behavior Name',
-        hintText: 'e.g., Great Participation, Late Assignment',
-        prefixIcon: Icon(
-          _selectedIcon,
-          color: _isPositive ? Colors.green : Colors.orange,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Behavior Name',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                hintText: 'e.g., Great Participation',
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                prefixIcon: Icon(
+                  _selectedIcon,
+                  color: _isPositive ? Colors.green : Colors.orange,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: theme.colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: _isPositive ? Colors.green : Colors.orange,
+                    width: 2,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+              textCapitalization: TextCapitalization.words,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a behavior name';
+                }
+                if (value.trim().length < 2) {
+                  return 'Name must be at least 2 characters';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                // Auto-suggest icon based on name
+                _suggestIconFromName(value);
+              },
+            ),
+          ],
         ),
       ),
-      textCapitalization: TextCapitalization.words,
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Please enter a behavior name';
-        }
-        if (value.trim().length < 2) {
-          return 'Name must be at least 2 characters';
-        }
-        return null;
-      },
-      onChanged: (value) {
-        // Auto-suggest icon based on name
-        _suggestIconFromName(value);
-      },
-    );
-  }
-
-  /// Builds the description text field
-  Widget _buildDescriptionField(ThemeData theme) {
-    return TextFormField(
-      controller: _descriptionController,
-      decoration: InputDecoration(
-        labelText: 'Description',
-        hintText: 'Brief description of the behavior',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        alignLabelWithHint: true,
-      ),
-      maxLines: 3,
-      textCapitalization: TextCapitalization.sentences,
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Please enter a description';
-        }
-        if (value.trim().length < 10) {
-          return 'Description must be at least 10 characters';
-        }
-        return null;
-      },
     );
   }
 
@@ -237,7 +243,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   Widget _buildTypeToggle(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -299,7 +305,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 26) : null,
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
           border: Border.all(
             color: isSelected ? color : theme.colorScheme.outline,
             width: isSelected ? 2 : 1,
@@ -324,7 +330,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             Text(
               subtitle,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 179),
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
               ),
             ),
           ],
@@ -336,10 +342,10 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   /// Builds the point value selector
   Widget _buildPointSelector(ThemeData theme) {
     final color = _isPositive ? Colors.green : Colors.orange;
-    
+
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -355,17 +361,17 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: color,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${_isPositive ? '+' : '-'}$_pointValue',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                      fontSize: 13,
                     ),
                   ),
                 ),
@@ -375,9 +381,9 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
             SliderTheme(
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: color,
-                inactiveTrackColor: color.withValues(alpha: 77),
+                inactiveTrackColor: color.withValues(alpha: 0.3),
                 thumbColor: color,
-                overlayColor: color.withValues(alpha: 51),
+                overlayColor: color.withValues(alpha: 0.2),
                 valueIndicatorColor: color,
                 valueIndicatorTextStyle: const TextStyle(
                   color: Colors.white,
@@ -385,14 +391,19 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
                 ),
               ),
               child: Slider(
-                value: _pointValue.toDouble(),
+                value: _isPositive ? _pointValue.toDouble() : (11 - _pointValue).toDouble(),
                 min: 1,
                 max: 10,
                 divisions: 9,
-                label: _pointValue.toString(),
+                label: '${_isPositive ? '' : '-'}$_pointValue',
                 onChanged: (value) {
                   setState(() {
-                    _pointValue = value.round();
+                    if (_isPositive) {
+                      _pointValue = value.round();
+                    } else {
+                      // Reverse the value for negative behaviors
+                      _pointValue = (11 - value.round());
+                    }
                   });
                   HapticFeedback.selectionClick();
                 },
@@ -402,13 +413,13 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '1 point',
+                  _isPositive ? '1 point' : '-10 points',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 Text(
-                  '10 points',
+                  _isPositive ? '10 points' : '-1 point',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -425,7 +436,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
   Widget _buildIconPicker(ThemeData theme) {
     return Card(
       elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 77),
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -462,9 +473,9 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: isSelected ? color.withValues(alpha: 26) : null,
+                        color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
                         border: Border.all(
-                          color: isSelected ? color : theme.colorScheme.outline.withValues(alpha: 77),
+                          color: isSelected ? color : theme.colorScheme.outline.withValues(alpha: 0.3),
                           width: isSelected ? 2 : 1,
                         ),
                         borderRadius: BorderRadius.circular(8),
@@ -582,7 +593,7 @@ class _CustomBehaviorDialogState extends State<CustomBehaviorDialog> {
       
       await provider.createCustomBehavior(
         name: _nameController.text.trim(),
-        description: _descriptionController.text.trim(),
+        description: _nameController.text.trim(),  // Use name as description
         points: points,
         type: _isPositive ? 'positive' : 'negative',
       );

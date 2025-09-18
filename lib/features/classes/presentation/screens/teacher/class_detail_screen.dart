@@ -996,52 +996,42 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
   }
 
   Color _getAssignmentTypeColor(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'homework':
         return Colors.blue;
       case 'quiz':
-        return Colors.orange;
+        return Colors.purple;
       case 'test':
         return Colors.red;
-      case 'exam':
-        return Colors.purple;
+      case 'projectslabs':
       case 'project':
-        return Colors.green;
-      case 'classwork':
-        return Colors.teal;
-      case 'essay':
-        return Colors.indigo;
       case 'lab':
-        return Colors.amber;
-      case 'presentation':
-        return Colors.pink;
-      case 'other':
+        return Colors.green;
+      case 'classworkactivities':
+      case 'classwork':
+      case 'activity':
+        return Colors.teal;
       default:
         return Colors.grey;
     }
   }
 
   IconData _getAssignmentTypeIcon(String type) {
-    switch (type) {
+    switch (type.toLowerCase()) {
       case 'homework':
         return Icons.home_work;
       case 'quiz':
         return Icons.quiz;
       case 'test':
-        return Icons.assignment_turned_in;
-      case 'exam':
-        return Icons.school;
+        return Icons.assignment;
+      case 'projectslabs':
       case 'project':
-        return Icons.folder_special;
-      case 'classwork':
-        return Icons.class_;
-      case 'essay':
-        return Icons.edit_note;
       case 'lab':
         return Icons.science;
-      case 'presentation':
-        return Icons.present_to_all;
-      case 'other':
+      case 'classworkactivities':
+      case 'classwork':
+      case 'activity':
+        return Icons.school;
       default:
         return Icons.assignment;
     }

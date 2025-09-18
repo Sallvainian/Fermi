@@ -32,28 +32,36 @@ class _GradebookScreenState extends State<GradebookScreen> {
     });
   }
 
-  void _loadData() {
+  void _loadData() async {
     final classProvider = context.read<ClassProvider>();
     final gradeProvider = context.read<SimpleGradeProvider>();
+    final studentProvider = context.read<SimpleStudentProvider>();
 
-    // Load classes and set default selection
+    // Load all students from teacher's classes
     if (classProvider.teacherClasses.isNotEmpty) {
+      // Set default class selection
       final firstClass = classProvider.teacherClasses.first;
       setState(() {
         _selectedClassId = firstClass.id;
       });
 
+      // Load students DIRECTLY from the class's studentIds
+      if (firstClass.studentIds.isNotEmpty) {
+        final students = await studentProvider.loadStudentsByIds(
+          firstClass.studentIds,
+        );
+        setState(() {
+          _students = students;
+        });
+      }
+
       // Load grades for the selected class
       gradeProvider.loadClassGrades(firstClass.id);
-
-      // TODO: Load students for the class
-      // For now, we'll use class student IDs
-      _loadStudentsForClass(firstClass);
     }
   }
 
-  void _loadStudentsForClass(ClassModel classModel) async {
-    // Load actual students from Firebase using SimpleStudentProvider
+  void _updateStudentsForClass(ClassModel classModel) async {
+    // Load students DIRECTLY from the class's studentIds
     final studentProvider = context.read<SimpleStudentProvider>();
 
     if (classModel.studentIds.isNotEmpty) {
@@ -85,6 +93,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
     final gradeProvider = context.watch<SimpleGradeProvider>();
     final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final classProvider = context.watch<ClassProvider>();
+    final studentProvider = context.watch<SimpleStudentProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -162,16 +171,30 @@ class _GradebookScreenState extends State<GradebookScreen> {
   ) {
     final stats = gradeProvider.classStatistics;
 
-    final classAverage = (stats['average'] as double?) ?? 0.0;
+    // Calculate actual class average from graded assignments only
+    final gradedAssignments = gradeProvider.classGrades
+        .where((g) => g['status'] == 'graded' || g['status'] == 'returned')
+        .toList();
+
+    double classAverage = 0.0;
+    if (gradedAssignments.isNotEmpty) {
+      double totalPoints = 0;
+      double maxPoints = 0;
+      for (final grade in gradedAssignments) {
+        totalPoints += (grade['pointsEarned'] as num?)?.toDouble() ?? 0.0;
+        maxPoints += (grade['pointsPossible'] as num?)?.toDouble() ?? 0.0;
+      }
+      classAverage = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0.0;
+    }
+
     // Calculate completion rate from grades
     final totalGrades = gradeProvider.classGrades.length;
-    final completedGrades = gradeProvider.classGrades
-        .where((g) => g['status'] == 'graded' || g['status'] == 'returned')
-        .length;
+    final completedGrades = gradedAssignments.length;
     final completionRate = totalGrades > 0
         ? (completedGrades / totalGrades) * 100
         : 0.0;
     final studentCount = _students.length;
+    final hasGrades = completedGrades > 0;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -180,10 +203,10 @@ class _GradebookScreenState extends State<GradebookScreen> {
           Expanded(
             child: _buildCompactStatCard(
               title: 'Class Avg',
-              value: '${classAverage.toStringAsFixed(1)}%',
-              subtitle: _getLetterGrade(classAverage),
+              value: hasGrades ? '${classAverage.toStringAsFixed(1)}%' : '--',
+              subtitle: hasGrades ? _getLetterGrade(classAverage) : 'No grades',
               icon: Icons.trending_up,
-              valueColor: AppTheme.getGradeColor(_getLetterGrade(classAverage)),
+              valueColor: hasGrades ? AppTheme.getGradeColor(_getLetterGrade(classAverage)) : null,
             ),
           ),
           const SizedBox(width: 8),
@@ -312,7 +335,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
                     final selectedClass = classProvider.teacherClasses
                         .firstWhere((c) => c.id == value);
                     context.read<SimpleGradeProvider>().loadClassGrades(value);
-                    _loadStudentsForClass(selectedClass);
+                    _updateStudentsForClass(selectedClass);
                   }
                 },
               ),
@@ -403,6 +426,7 @@ class _GradebookScreenState extends State<GradebookScreen> {
         .where((g) => g['status'] == 'graded')
         .length;
     final totalAssignments = studentGrades.length;
+    final hasGrades = completedAssignments > 0;
 
     return AppCard(
       onTap: () => _showStudentGradeDetail(student),
@@ -447,14 +471,30 @@ class _GradebookScreenState extends State<GradebookScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  StatusBadge.grade(grade: _getLetterGrade(overallGrade)),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${overallGrade.toStringAsFixed(1)}%',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  if (hasGrades) ...[
+                    StatusBadge.grade(grade: _getLetterGrade(overallGrade)),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${overallGrade.toStringAsFixed(1)}%',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'No Grade',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

@@ -572,14 +572,22 @@ class AuthProvider extends ChangeNotifier {
   /// Update user presence to online
   void _updatePresenceOnline() {
     if (_userModel != null) {
-      _presenceService.updatePresence(_userModel!.id, true);
+      _presenceService.updatePresence(
+        _userModel!.id,
+        true,
+        userRole: _userModel!.role?.name,
+      );
     }
   }
 
   /// Update user presence to offline
   void _updatePresenceOffline() {
     if (_userModel != null) {
-      _presenceService.updatePresence(_userModel!.id, false);
+      _presenceService.updatePresence(
+        _userModel!.id,
+        false,
+        userRole: _userModel!.role?.name,
+      );
     }
   }
 

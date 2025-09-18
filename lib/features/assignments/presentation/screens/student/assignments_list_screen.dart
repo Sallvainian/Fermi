@@ -633,21 +633,18 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
       switch (type.toLowerCase()) {
         case 'homework':
           return Icons.home_work_outlined;
-        case 'essay':
-          return Icons.article_outlined;
         case 'quiz':
           return Icons.quiz_outlined;
         case 'test':
-        case 'exam':
           return Icons.assignment_outlined;
+        case 'projectslabs':
+        case 'project':
         case 'lab':
           return Icons.science_outlined;
-        case 'project':
-          return Icons.folder_special_outlined;
-        case 'presentation':
-          return Icons.present_to_all_outlined;
+        case 'classworkactivities':
         case 'classwork':
-          return Icons.work_outline;
+        case 'activity':
+          return Icons.school;
         default:
           return Icons.assignment_outlined;
       }
@@ -656,21 +653,14 @@ class _StudentAssignmentsScreenState extends State<StudentAssignmentsScreen>
     switch (type) {
       case AssignmentType.homework:
         return Icons.home_work_outlined;
-      case AssignmentType.essay:
-        return Icons.article_outlined;
       case AssignmentType.quiz:
         return Icons.quiz_outlined;
       case AssignmentType.test:
-      case AssignmentType.exam:
         return Icons.assignment_outlined;
-      case AssignmentType.lab:
+      case AssignmentType.projectsLabs:
         return Icons.science_outlined;
-      case AssignmentType.project:
-        return Icons.folder_special_outlined;
-      case AssignmentType.presentation:
-        return Icons.present_to_all_outlined;
-      case AssignmentType.classwork:
-        return Icons.work_outline;
+      case AssignmentType.classworkActivities:
+        return Icons.school;
       default:
         return Icons.assignment_outlined;
     }

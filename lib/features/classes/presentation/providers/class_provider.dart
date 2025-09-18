@@ -52,6 +52,34 @@ class ClassProvider with ChangeNotifier {
     return _teacherClasses.where((c) => !c.isActive).toList();
   }
 
+  List<ClassModel> _sortClasses(List<ClassModel> classes) {
+    final sorted = List<ClassModel>.from(classes);
+    sorted.sort((a, b) {
+      final aPeriod = a.periodNumber;
+      final bPeriod = b.periodNumber;
+
+      if (aPeriod != null && bPeriod != null) {
+        final comparison = aPeriod.compareTo(bPeriod);
+        if (comparison != 0) return comparison;
+      } else if (aPeriod != null) {
+        // Prioritise classes with parsed periods over those without
+        return -1;
+      } else if (bPeriod != null) {
+        return 1;
+      }
+
+      // Fallback to alphabetical order to provide deterministic results
+      final nameComparison = a.name.toLowerCase().compareTo(
+        b.name.toLowerCase(),
+      );
+      if (nameComparison != 0) return nameComparison;
+
+      // As a last resort, compare creation timestamps to keep ordering stable
+      return a.createdAt.compareTo(b.createdAt);
+    });
+    return sorted;
+  }
+
   /// Returns a stream of teacher's classes from Firestore.
   Stream<List<ClassModel>> loadTeacherClasses(String teacherId) {
     // Cancel previous subscription if exists
@@ -75,7 +103,7 @@ class ClassProvider with ChangeNotifier {
               }
             }
 
-            _teacherClasses = classes;
+            _teacherClasses = _sortClasses(classes);
             _setLoading(false);
             // Defer notification to next frame to avoid setState during build
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -100,9 +128,10 @@ class ClassProvider with ChangeNotifier {
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs
+          final classes = snapshot.docs
               .map((doc) => ClassModel.fromFirestore(doc))
               .toList();
+          return _sortClasses(classes);
         });
   }
 
@@ -231,16 +260,30 @@ class ClassProvider with ChangeNotifier {
           classDoc.data()?['studentIds'] ?? [],
         );
         if (studentIds.isNotEmpty) {
-          // Query users collection with the UIDs (which are the document IDs)
-          final studentsSnapshot = await _firestore
-              .collection('users')
-              .where(FieldPath.documentId, whereIn: studentIds)
-              .where('role', isEqualTo: 'student')
-              .get();
+          // Firestore 'whereIn' queries have a limit of 30 items
+          // If we have more than 30 students, batch the queries
+          _classStudents = [];
 
-          _classStudents = studentsSnapshot.docs
-              .map((doc) => Student.fromFirestore(doc))
-              .toList();
+          // Process in batches of 30
+          const batchSize = 30;
+          for (int i = 0; i < studentIds.length; i += batchSize) {
+            // Get the batch of IDs (max 30)
+            final batchIds = studentIds.sublist(
+              i,
+              i + batchSize > studentIds.length ? studentIds.length : i + batchSize,
+            );
+
+            // Query users collection with the batch of UIDs
+            final studentsSnapshot = await _firestore
+                .collection('users')
+                .where(FieldPath.documentId, whereIn: batchIds)
+                .where('role', isEqualTo: 'student')
+                .get();
+
+            _classStudents.addAll(
+              studentsSnapshot.docs.map((doc) => Student.fromFirestore(doc)),
+            );
+          }
 
           LoggerService.info(
             'Loaded ${_classStudents.length} students for class $classId from ${studentIds.length} IDs',

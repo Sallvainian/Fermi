@@ -147,8 +147,53 @@ service cloud.firestore {
       // Teacher or admin can delete classes
       allow delete: if (isTheTeacher() && resource.data.teacherId == request.auth.uid) ||
                         isAdmin();
-      
-      // Nested collections in classes
+
+      // Student Points Aggregate subcollection (NEW behavior points system)
+      match /studentPoints/{studentId} {
+        // Teachers can read all, students can read their own
+        allow read: if isTheTeacher() ||
+                       isAdmin() ||
+                       (isStudent() && request.auth.uid == studentId);
+
+        // Only teachers can write (with atomic operations)
+        allow create, update: if isTheTeacher();
+
+        // Only admins can delete (for cleanup after migration)
+        allow delete: if isAdmin();
+
+        // History subcollection for audit trail
+        match /history/{historyId} {
+          // Teachers can read all, students can read their own
+          allow read: if isTheTeacher() ||
+                         isAdmin() ||
+                         (isStudent() && studentId == request.auth.uid);
+
+          // Only teachers can create history entries
+          allow create: if isTheTeacher();
+
+          // Teachers can update history entries (for undo operations marking isUndone = true)
+          allow update: if isTheTeacher();
+
+          // Only admins can delete (for cleanup)
+          allow delete: if isAdmin();
+        }
+      }
+
+      // Behaviors subcollection for class-specific behaviors
+      match /behaviors/{behaviorId} {
+        // Teachers and students in the class can read behaviors
+        allow read: if isTheTeacher() ||
+                       isAdmin() ||
+                       isEnrolledInClass(classId);
+
+        // Only teachers can manage behaviors
+        allow create, update: if isTheTeacher();
+
+        // Only teachers or admins can delete behaviors
+        allow delete: if isTheTeacher() || isAdmin();
+      }
+
+      // Other nested collections in classes
       match /{document=**} {
         allow read: if isTheTeacher() || isEnrolledInClass(classId);
         allow write: if isTheTeacher();
@@ -276,6 +321,18 @@ service cloud.firestore {
     // Collection group queries for grades (teacher analytics only)
     match /{path=**}/grades/{gradeId} {
       allow read: if isTheTeacher();
+    }
+
+    // Collection group queries for behavior history (teacher access only)
+    match /{path=**}/history/{historyId} {
+      // Teachers can read all history entries for collection group queries
+      // Also check if the history entry belongs to a class the teacher owns
+      allow read: if isTheTeacher() || isAdmin() ||
+                     (isAuthenticated() &&
+                      resource != null &&
+                      resource.data.classId != null &&
+                      exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+                      get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.teacherId == request.auth.uid);
     }
     
     // Submissions - students submit, teacher reviews
