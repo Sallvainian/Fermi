@@ -361,7 +361,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                           label: Text(_getTypeLabel(type)),
                                           selected: isSelected,
                                           selectedColor: _getTypeColor(type),
-                                          backgroundColor: _getTypeColor(type).withOpacity(0.1),
+                                          backgroundColor: _getTypeColor(type).withValues(alpha: 0.1),
                                           labelStyle: TextStyle(
                                             color: isSelected 
                                               ? Colors.white 
