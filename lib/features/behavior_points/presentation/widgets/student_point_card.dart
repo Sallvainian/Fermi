@@ -73,63 +73,69 @@ class StudentPointCard extends StatelessWidget {
                   ]
                 : null,
           ),
-          padding: const EdgeInsets.all(10), // Balanced padding for square cards
+          padding: const EdgeInsets.all(8), // Reduced padding to give more space for content
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Student Avatar with Points Badge
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                Container(
-                  width: 56, // Enlarged to match Whole Class card
-                  height: 56, // Enlarged to match Whole Class card
-                  decoration: BoxDecoration(
-                    color: student.avatarColor.withValues(alpha: 0.27),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: student.avatarColor.withValues(alpha: 0.55),
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      student.initials,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: theme.colorScheme.onSurface,
-                        fontSize: 20, // Bigger font to match larger circle
+              // Student Avatar with Points Badge - wrapped in Flexible to prevent overflow
+              Flexible(
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 48, // Reduced size to fit better in card
+                      height: 48, // Reduced size to fit better in card
+                      decoration: BoxDecoration(
+                        color: student.avatarColor.withValues(alpha: 0.27),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: student.avatarColor.withValues(alpha: 0.55),
+                          width: 2,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          student.initials,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSurface,
+                            fontSize: 16, // Reduced font size to match smaller circle
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    Positioned(
+                      top: -2,
+                      right: -2,
+                      child: _buildPointsBadge(theme),
+                    ),
+                  ],
                 ),
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: _buildPointsBadge(theme),
-                  ),
-                ],
               ),
 
-            const SizedBox(height: 8), // More spacing for larger avatar
+              const SizedBox(height: 4), // Reduced spacing
 
-              // Student Name
-              Text(
-                student.formattedName,
-                textAlign: TextAlign.center,
-                maxLines: 2, // Allow 2 lines
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
-                  fontSize: 13, // Slightly bigger text
+              // Student Name - wrapped in Flexible to prevent overflow
+              Flexible(
+                child: Text(
+                  student.formattedName,
+                  textAlign: TextAlign.center,
+                  maxLines: 2, // Allow 2 lines
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith( // Changed to bodySmall
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 11, // Smaller text to fit better
+                  ),
                 ),
               ),
 
               if (rank != null) ...[
-                const SizedBox(height: 6), // More spacing for rank
-                _buildRankingDisplay(theme),
+                const SizedBox(height: 2), // Minimal spacing for rank
+                Flexible(
+                  child: _buildRankingDisplay(theme),
+                ),
               ],
             ],
           ),

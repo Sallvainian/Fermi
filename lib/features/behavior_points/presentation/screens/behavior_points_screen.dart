@@ -543,83 +543,89 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
     return Card(
       margin: const EdgeInsets.all(2), // Small margin for consistency with student cards
       elevation: 4,
-      shadowColor: theme.colorScheme.primary.withValues(alpha: 120),
+      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.25),
       child: Container(
         decoration: BoxDecoration(
-          color: theme.colorScheme.surface.withValues(alpha: 235),
+          color: theme.colorScheme.surface.withValues(alpha: 0.88), // Match student cards opacity
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: theme.colorScheme.primary.withValues(alpha: 140),
+            color: theme.colorScheme.primary.withValues(alpha: 0.55), // Match student cards border opacity
             width: 1,
           ),
         ),
-        padding: const EdgeInsets.all(10), // Same padding as student cards
+        padding: const EdgeInsets.all(8), // Same padding as student cards
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 56, // Same as student cards
-                  height: 56, // Same as student cards
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 80),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 160),
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.groups,
-                    color: theme.colorScheme.onPrimary,
-                    size: 28, // Bigger icon to match larger container
-                  ),
-                ),
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    padding: const EdgeInsets.all(3), // Smaller badge
+            Flexible(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 48, // Same as student cards
+                    height: 48, // Same as student cards
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.error,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.27), // Match student cards avatar opacity
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.colorScheme.error.withValues(alpha: 110),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.55), // Match student cards border opacity
+                        width: 2,
+                      ),
                     ),
-                    constraints: const BoxConstraints(
-                      minWidth: 20,
-                      minHeight: 20,
+                    child: Icon(
+                      Icons.groups,
+                      color: theme.colorScheme.onPrimary,
+                      size: 24, // Adjusted icon size to match container
                     ),
-                    child: Center(
-                      child: Text(
-                        totalPoints.toString(),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onError,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 9, // Same as student cards
+                  ),
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // Same as student cards
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.error,
+                        borderRadius: BorderRadius.circular(10), // Rounded rect like student cards
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.error.withValues(alpha: 0.5), // Match student cards badge shadow
+                            blurRadius: 3,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 16,
+                      ),
+                      child: Center(
+                        child: Text(
+                          totalPoints.toString(),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onError,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10, // Same as student cards
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 3), // Minimal spacing
-            Text(
-              'Whole Class',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
-                fontSize: 11, // Smaller text to fit
+                ],
               ),
-              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4), // Same spacing as student cards
+            Flexible(
+              child: Text(
+                'Whole Class',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 11, // Same text size as student cards
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
