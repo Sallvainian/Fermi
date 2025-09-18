@@ -334,12 +334,12 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
 
                 // Student Grid with Class Total Card
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
                   sliver: SliverGrid(
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: _getCrossAxisCount(context),
-                      crossAxisSpacing: 4, // Reduced spacing between cards
-                      mainAxisSpacing: 4, // Reduced spacing between cards
+                      crossAxisSpacing: 2, // MINIMAL spacing between cards
+                      mainAxisSpacing: 2, // MINIMAL spacing between cards
                       childAspectRatio: 1.0, // SQUARE aspect ratio
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
