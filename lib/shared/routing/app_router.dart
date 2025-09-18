@@ -15,8 +15,6 @@ import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/bulk_import_screen.dart';
 import '../../features/admin/presentation/screens/user_management_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
-import '../../features/chat/presentation/screens/chat_detail_screen.dart';
-import '../../features/chat/presentation/screens/simple_chat_screen.dart';
 import '../../features/chat/presentation/screens/simple_user_list.dart';
 import '../../features/chat/presentation/screens/group_creation_screen.dart';
 import '../../features/chat/presentation/screens/class_selection_screen.dart';
@@ -388,25 +386,19 @@ class AppRouter {
             // PresenceService().markUserActive(
             //   userRole: auth.userModel?.role?.name,
             // );
-            return ChatDetailScreen(chatRoomId: chatRoomId);
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: 'Chat',
+            );
           },
         ),
         GoRoute(
           path: '/chat/:chatRoomId',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
-            return ChatDetailScreen(chatRoomId: chatRoomId);
-          },
-        ),
-        // New Flyer Chat route
-        GoRoute(
-          path: '/flyer-chat/:conversationId',
-          builder: (context, state) {
-            final conversationId = state.pathParameters['conversationId']!;
-            final title = state.uri.queryParameters['title'] ?? 'Chat';
             return FlyerChatScreen(
-              conversationId: conversationId,
-              conversationTitle: title,
+              conversationId: chatRoomId,
+              conversationTitle: 'Chat',
             );
           },
         ),
@@ -415,14 +407,10 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             final title = state.uri.queryParameters['title'] ?? 'Chat';
-            final recipientId = state.uri.queryParameters['recipientId'];
-            final recipientName = state.uri.queryParameters['recipientName'];
 
-            return SimpleChatScreen(
-              chatRoomId: chatRoomId,
-              chatTitle: title,
-              recipientId: recipientId,
-              recipientName: recipientName,
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: title,
             );
           },
         ),
@@ -431,9 +419,9 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId'] ?? 'default';
             final chatTitle = state.uri.queryParameters['title'] ?? 'Chat';
-            return SimpleChatScreen(
-              chatRoomId: chatRoomId,
-              chatTitle: chatTitle,
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: chatTitle,
             );
           },
         ),
@@ -594,7 +582,10 @@ class AppRouter {
           path: '/student/messages/:chatRoomId',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
-            return ChatDetailScreen(chatRoomId: chatRoomId);
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: 'Chat',
+            );
           },
         ),
         GoRoute(
