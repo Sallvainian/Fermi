@@ -101,6 +101,11 @@ dependencies:
 
   # Call UI handled through standard notifications
 
+  # Flyer Chat for messaging
+  flutter_chat_ui: ^2.9.0
+  flutter_chat_core: ^2.8.0
+  uuid: ^4.5.1
+
   # Calendar sync
   device_calendar: ^4.3.3
   icalendar_parser: ^2.1.0  # For iCalendar export
