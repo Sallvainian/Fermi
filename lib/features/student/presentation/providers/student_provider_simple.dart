@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/utils/firestore_batch_query.dart';
+import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/student.dart';
 
 /// Simplified student provider with direct Firestore access
@@ -154,7 +155,7 @@ class SimpleStudentProvider with ChangeNotifier {
     if (studentIds.isEmpty) return [];
 
     try {
-      print('Looking for ${studentIds.length} students in users collection');
+      LoggerService.debug('Looking for ${studentIds.length} students in users collection', tag: 'StudentProvider');
 
       // Use batch query to handle > 30 students
       final docs = await FirestoreBatchQuery.batchWhereInDocumentId(

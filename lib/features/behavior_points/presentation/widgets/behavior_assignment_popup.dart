@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../screens/behavior_points_screen.dart';
 import '../providers/behavior_point_provider.dart';
 import 'create_behavior_dialog.dart';
+import '../../../../shared/services/logger_service.dart';
 
 /// Modal bottom sheet popup for assigning behavior points to students.
 ///
@@ -584,7 +585,7 @@ class _BehaviorAssignmentPopupState extends State<BehaviorAssignmentPopup>
   void _awardBehaviorPoints(BehaviorOption behavior) async {
     // Prevent duplicate operations
     if (_isProcessingAward) {
-      debugPrint('Award already in progress, ignoring duplicate click');
+      LoggerService.debug('Award already in progress, ignoring duplicate click', tag: 'BehaviorAssignment');
       return;
     }
 

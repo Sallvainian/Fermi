@@ -542,7 +542,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                     Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
