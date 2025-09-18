@@ -83,8 +83,8 @@ class StudentPointCard extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                 Container(
-                  width: 38, // Further reduced to save space
-                  height: 38, // Further reduced to save space
+                  width: 56, // Enlarged to match Whole Class card
+                  height: 56, // Enlarged to match Whole Class card
                   decoration: BoxDecoration(
                     color: student.avatarColor.withValues(alpha: 0.27),
                     shape: BoxShape.circle,
@@ -99,7 +99,7 @@ class StudentPointCard extends StatelessWidget {
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
-                        fontSize: 14, // Reduced font size
+                        fontSize: 20, // Bigger font to match larger circle
                       ),
                     ),
                   ),
@@ -112,18 +112,18 @@ class StudentPointCard extends StatelessWidget {
                 ],
               ),
 
-            const SizedBox(height: 3), // Further reduced
+            const SizedBox(height: 8), // More spacing for larger avatar
 
               // Student Name
               Text(
                 student.formattedName,
                 textAlign: TextAlign.center,
-                maxLines: 1,
+                maxLines: 2, // Allow 2 lines
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
-                  fontSize: 11, // Smaller text to prevent overflow
+                  fontSize: 13, // Slightly bigger text
                 ),
               ),
 
