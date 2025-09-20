@@ -9,7 +9,6 @@ import '../../features/discussions/presentation/providers/discussion_provider_si
 import '../../features/calendar/presentation/providers/calendar_provider.dart';
 import '../../features/grades/presentation/providers/grade_analytics_provider.dart';
 import '../providers/navigation_provider.dart';
-import '../../features/chat/presentation/providers/call_provider.dart';
 import '../../features/notifications/presentation/providers/notification_provider.dart';
 import '../../features/classes/presentation/providers/class_provider.dart';
 import '../../features/dashboard/presentation/providers/dashboard_provider.dart';
@@ -55,7 +54,6 @@ class AppProviders {
         create: (_) => GradeAnalyticsProvider(),
         lazy: true,
       ),
-      ChangeNotifierProvider(create: (_) => CallProvider(), lazy: true),
       ChangeNotifierProvider(create: (_) => NotificationProvider(), lazy: true),
       ChangeNotifierProvider(
         create: (_) => SimpleStudentProvider(),

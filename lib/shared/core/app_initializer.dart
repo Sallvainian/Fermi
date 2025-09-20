@@ -57,7 +57,7 @@ class AppInitializer {
 
     // Build list of services to initialize
     final List<Future<void>> servicesToInitialize = [
-      // Performance monitoring is not critical
+      // Performance monitoring for production insights
       _initializePerformanceMonitoring(),
 
       // Notifications can be initialized later
@@ -193,12 +193,11 @@ class AppInitializer {
     }
   }
 
-  /// Initialize performance monitoring
+  /// Initialize Firebase Performance monitoring
   static Future<void> _initializePerformanceMonitoring() async {
     try {
-      // Initialize performance monitoring - await it properly
       await PerformanceService().initialize();
-      LoggerService.debug(
+      LoggerService.info(
         'Performance monitoring initialized',
         tag: 'AppInitializer',
       );

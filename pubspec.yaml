@@ -41,6 +41,7 @@ dependencies:
   firebase_database: ^12.0.0
   firebase_messaging: ^16.0.0
   cloud_functions: ^6.0.0
+  firebase_performance: ^0.10.0
 
   # Authentication
   google_sign_in: ^7.0.5  # For mobile platforms (iOS/Android)
@@ -230,6 +231,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icon/
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

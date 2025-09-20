@@ -79,6 +79,12 @@ class AuthService {
 
     // Safely try to access dotenv - it might not be initialized yet
     try {
+      // Debug: Log all env keys to see what's loaded (moved inside try-catch for safety)
+      LoggerService.info(
+        'Dotenv keys available: ${dotenv.env.keys.toList()}',
+        tag: 'AuthService',
+      );
+
       // Try both naming conventions for backwards compatibility
       clientId =
           dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ??

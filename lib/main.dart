@@ -5,6 +5,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -97,15 +98,65 @@ Future<void> main() async {
       // Load environment variables from .env file (skip on web to avoid 404)
       if (!kIsWeb) {
         try {
-          await dotenv.load(fileName: ".env");
-          if (kDebugMode) {
-            LoggerService.debug(
-              '.env file loaded successfully',
+          // Try multiple locations for .env file
+          String? envPath;
+
+          // Try 1: Current directory (for development)
+          if (File('.env').existsSync()) {
+            envPath = '.env';
+            LoggerService.debug('Found .env in current directory', tag: 'Bootstrap');
+          }
+          // Try 2: Next to the executable (for production/Windows)
+          else if (File('data/flutter_assets/.env').existsSync()) {
+            envPath = 'data/flutter_assets/.env';
+            LoggerService.debug('Found .env in flutter_assets', tag: 'Bootstrap');
+          }
+          // Try 3: Parent directory (for flutter run from subdirectory)
+          else if (File('../.env').existsSync()) {
+            envPath = '../.env';
+            LoggerService.debug('Found .env in parent directory', tag: 'Bootstrap');
+          }
+          // Try 4: Two levels up (for deeply nested runs)
+          else if (File('../../.env').existsSync()) {
+            envPath = '../../.env';
+            LoggerService.debug('Found .env two levels up', tag: 'Bootstrap');
+          }
+
+          if (envPath != null) {
+            await dotenv.load(fileName: envPath);
+
+            if (kDebugMode) {
+              LoggerService.debug(
+                '.env file loaded successfully with ${dotenv.env.length} variables from $envPath',
+                tag: 'Bootstrap',
+              );
+              // Log first few keys to verify it loaded
+              final keys = dotenv.env.keys.take(3).toList();
+              LoggerService.debug(
+                'Loaded env vars include: $keys',
+                tag: 'Bootstrap',
+              );
+            }
+          } else {
+            LoggerService.warning(
+              '.env file not found in any expected location. Google Sign-In will not work.',
               tag: 'Bootstrap',
             );
+            if (kDebugMode) {
+              LoggerService.debug(
+                'Working directory: ${Directory.current.path}',
+                tag: 'Bootstrap',
+              );
+            }
           }
         } catch (e) {
-          // .env is optional - silently continue
+          // LOG THE ERROR SO WE CAN SEE WHAT'S HAPPENING!
+          LoggerService.error(
+            'Failed to load .env file',
+            tag: 'Bootstrap',
+            error: e,
+          );
+          // .env is optional - continue anyway but log the error
         }
       }
 

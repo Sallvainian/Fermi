@@ -18,10 +18,7 @@ import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/simple_user_list.dart';
 import '../../features/chat/presentation/screens/group_creation_screen.dart';
 import '../../features/chat/presentation/screens/class_selection_screen.dart';
-import '../../features/chat/presentation/screens/call_screen.dart';
-import '../../features/chat/presentation/screens/incoming_call_screen.dart';
 import '../../features/chat/presentation/screens/flyer_chat_screen.dart';
-import '../../features/chat/domain/models/call.dart';
 import '../../features/classes/presentation/screens/teacher/classes_screen.dart';
 import '../../features/classes/presentation/screens/teacher/class_detail_screen.dart';
 import '../../features/classes/presentation/screens/student/courses_screen.dart';
@@ -631,27 +628,6 @@ class AppRouter {
               },
             ),
           ],
-        ),
-        GoRoute(
-          path: '/call',
-          builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>;
-            return CallScreen(
-              callId: extra['callId'],
-              receiverId: extra['receiverId'],
-              receiverName: extra['receiverName'],
-              receiverPhotoUrl: extra['receiverPhotoUrl'],
-              isVideoCall: extra['isVideoCall'] ?? false,
-              chatRoomId: extra['chatRoomId'],
-            );
-          },
-        ),
-        GoRoute(
-          path: '/incoming-call',
-          builder: (context, state) {
-            final call = state.extra as Call;
-            return IncomingCallScreen(call: call);
-          },
         ),
 
         // Add other routes as needed, keeping them simple and flat
