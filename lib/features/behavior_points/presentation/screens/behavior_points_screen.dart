@@ -340,7 +340,7 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
                       crossAxisCount: _getCrossAxisCount(context),
                       crossAxisSpacing: 12, // Proper spacing between cards
                       mainAxisSpacing: 12, // Proper spacing between cards
-                      childAspectRatio: 0.85, // Adjusted to prevent overflow (was 1.0)
+                      childAspectRatio: 1.0, // SQUARE aspect ratio
                     ),
                     delegate: SliverChildBuilderDelegate((context, index) {
                       if (index == 0) {

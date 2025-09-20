@@ -218,12 +218,7 @@ class FirestoreService<T> {
         query = query.limit(limit);
       }
 
-      return query.snapshots()
-          .asyncMap((snapshot) async {
-            await Future.delayed(Duration.zero);
-            return snapshot;
-          })
-          .map(
+      return query.snapshots().map(
         (snapshot) => snapshot.docs.map((doc) => fromFirestore(doc)).toList(),
       );
     } catch (e) {

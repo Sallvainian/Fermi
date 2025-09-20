@@ -139,10 +139,6 @@ class BehaviorPointsService {
         .doc(classId)
         .collection('studentPoints')
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map((snapshot) {
           final summaries = <String, StudentPointsAggregate>{};
 
@@ -178,10 +174,6 @@ class BehaviorPointsService {
         .orderBy('awardedAt', descending: true)
         .limit(limit)
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map((snapshot) {
           return snapshot.docs
               .map((doc) {
@@ -223,10 +215,6 @@ class BehaviorPointsService {
         .orderBy('awardedAt', descending: true)
         .limit(limit)
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map((snapshot) {
           return snapshot.docs
               .map((doc) {
@@ -277,10 +265,6 @@ class BehaviorPointsService {
         .collection('behaviors')
         .orderBy('name')
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map((snapshot) {
           return snapshot.docs
               .map((doc) {

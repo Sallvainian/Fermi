@@ -43,10 +43,6 @@ class SimpleCalendarService {
         .where('participantIds', arrayContains: user.uid)
         .orderBy('startTime')
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map((snapshot) {
           final events = snapshot.docs
               .map((doc) => CalendarEvent.fromFirestore(doc))

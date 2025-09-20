@@ -51,7 +51,7 @@ class SimpleStudentProvider with ChangeNotifier {
           lastName: lastName,
           displayName:
               data['displayName'] ??
-              '$firstName $lastName',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
@@ -125,7 +125,7 @@ class SimpleStudentProvider with ChangeNotifier {
           lastName: lastName,
           displayName:
               data['displayName'] ??
-              '$firstName $lastName',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
@@ -184,7 +184,7 @@ class SimpleStudentProvider with ChangeNotifier {
           lastName: lastName,
           displayName:
               data['displayName'] ??
-              '$firstName $lastName',
+              '${firstName} ${lastName}',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],

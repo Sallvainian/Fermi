@@ -1,3 +1,0 @@
-{"type":"session_start","timestamp":"2025-09-18T23:45:24.466343","platform":"windows","dart_version":"3.9.2 (stable) (Wed Aug 27 03:49:40 2025 -0700) on \"windows_x64\""}
-{"timestamp":"2025-09-18T23:46:41.264581","function":"log","class":"RuntimeCoverage","parameters":{"level":"INFO","message":"Stopping runtime coverage tracking"}}
-{"type":"session_end","timestamp":"2025-09-18T23:46:41.273751","duration_ms":76807,"total_events":1}

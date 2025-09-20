@@ -109,26 +109,6 @@ Future<void> main() async {
         }
       }
 
-      // Initialize MonitoringService in debug mode (skip on web - can't host WebSocket server)
-      // TEMPORARILY DISABLED to debug crash issue
-      /*
-      if (kDebugMode && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
-        try {
-          final monitoring = MonitoringService();
-          await monitoring.initialize();
-          LoggerService.debug(
-            'MonitoringService initialized',
-            tag: 'Bootstrap',
-          );
-        } catch (e) {
-          LoggerService.error(
-            'Failed to initialize MonitoringService',
-            error: e,
-          );
-        }
-      }
-      */
-
       runApp(const InitializationWrapper());
     },
     (error, stack) {

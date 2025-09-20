@@ -19,9 +19,6 @@ class AuthService {
   final DirectDesktopOAuthHandler _directOAuthHandler =
       DirectDesktopOAuthHandler();
 
-  // Enhanced OAuth handler with desktopoauth2 for better desktop support
-  // Will be used for Windows desktop authentication with PKCE
-
   // Test student account credentials (for development/testing only)
   // On web, dotenv doesn't work, so we need to hardcode for testing
   // This is ONLY enabled in debug mode to prevent production access
@@ -80,12 +77,6 @@ class AuthService {
     String clientId = '';
     String clientSecret = '';
 
-    // Debug: Log all env keys to see what's loaded
-    LoggerService.info(
-      'Dotenv keys available: ${dotenv.env.keys.toList()}',
-      tag: 'AuthService',
-    );
-
     // Safely try to access dotenv - it might not be initialized yet
     try {
       // Try both naming conventions for backwards compatibility
@@ -97,11 +88,6 @@ class AuthService {
           dotenv.env['GOOGLE_OAUTH_CLIENT_SECRET'] ??
           dotenv.env['GOOGLE_CLIENT_SECRET'] ??
           '';
-
-      LoggerService.info(
-        'OAuth credentials loaded - ClientId: ${clientId.isNotEmpty}, Secret: ${clientSecret.isNotEmpty}',
-        tag: 'AuthService',
-      );
     } catch (e) {
       // dotenv not initialized yet - this is fine, we'll use empty strings
       LoggerService.info(
@@ -161,66 +147,8 @@ class AuthService {
 
   // Current user
   User? get currentUser => _auth?.currentUser;
-
-  // Thread-safe auth state changes stream
-  // Wraps the stream to ensure callbacks run on platform thread
-  Stream<User?> get authStateChanges {
-    if (_auth == null) return Stream.value(null);
-
-    // On web, no threading issues - return stream directly
-    if (kIsWeb) {
-      return _auth!.authStateChanges();
-    }
-
-    // On native platforms, ensure callbacks run on platform thread
-    // This fixes the "channel sent a message from native to Flutter on a non-platform thread" error
-    return _auth!.authStateChanges().asyncMap((user) async {
-      // Force async boundary to ensure we're on the platform thread
-      await Future.delayed(Duration.zero);
-      return user;
-    }).handleError((error) {
-      LoggerService.error('Auth state stream error', tag: 'AuthService', error: error);
-      // Continue stream on error rather than breaking
-      return null;
-    });
-  }
-
-  // Thread-safe ID token changes stream
-  Stream<User?> get idTokenChanges {
-    if (_auth == null) return Stream.value(null);
-
-    // On web, no threading issues - return stream directly
-    if (kIsWeb) {
-      return _auth!.idTokenChanges();
-    }
-
-    // On native platforms, ensure callbacks run on platform thread
-    return _auth!.idTokenChanges().asyncMap((user) async {
-      // Force async boundary to ensure we're on the platform thread
-      await Future.delayed(Duration.zero);
-      return user;
-    }).handleError((error) {
-      LoggerService.error('ID token stream error', tag: 'AuthService', error: error);
-      // Continue stream on error rather than breaking
-      return null;
-    });
-  }
-
-  // Thread-safe method to get ID token with proper error handling
-  Future<String?> getIdToken({bool forceRefresh = false}) async {
-    try {
-      final user = currentUser;
-      if (user == null) return null;
-
-      // Force async boundary to ensure platform thread
-      await Future.delayed(Duration.zero);
-
-      return await user.getIdToken(forceRefresh);
-    } catch (e) {
-      LoggerService.error('Failed to get ID token', tag: 'AuthService', error: e);
-      return null;
-    }
-  }
+  Stream<User?> get authStateChanges =>
+      _auth?.authStateChanges() ?? Stream.value(null);
 
   // Sign up with username support
   Future<User?> signUp({
@@ -300,44 +228,21 @@ class AuthService {
 
     LoggerService.info('Email domain validation passed for: $email', tag: 'AuthService');
 
-    try {
-      final cred = await _auth!.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+    final cred = await _auth!.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
 
-      // Update last active
-      if (cred.user != null) {
-        await _firestore!
-            .collection('users')
-            .doc(cred.user!.uid)
-            .set({'lastActive': FieldValue.serverTimestamp()}, SetOptions(merge: true))
-            .catchError((_) {});
-      }
-
-      return cred.user;
-    } catch (e) {
-      // Log the actual error for debugging
-      LoggerService.error('Firebase Auth Error: $e', tag: 'AuthService');
-      if (e.toString().contains('wrong-password')) {
-        throw FirebaseAuthException(
-          code: 'wrong-password',
-          message: 'Incorrect password',
-        );
-      } else if (e.toString().contains('user-not-found')) {
-        throw FirebaseAuthException(
-          code: 'user-not-found',
-          message: 'No user found with this email',
-        );
-      } else if (e.toString().contains('internal-error') || e.toString().contains('unknown')) {
-        // This could be a password issue or other auth issue
-        throw FirebaseAuthException(
-          code: 'auth-error',
-          message: 'Authentication failed. Please check your credentials and try again.',
-        );
-      }
-      rethrow;
+    // Update last active
+    if (cred.user != null) {
+      await _firestore!
+          .collection('users')
+          .doc(cred.user!.uid)
+          .set({'lastActive': FieldValue.serverTimestamp()}, SetOptions(merge: true))
+          .catchError((_) {});
     }
+
+    return cred.user;
   }
 
   // Sign in with Google

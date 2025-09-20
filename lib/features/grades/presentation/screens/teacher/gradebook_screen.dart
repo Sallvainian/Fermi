@@ -948,7 +948,7 @@ class StudentGradeDetailSheet extends StatelessWidget {
                   StatusBadge(
                     label: statusText,
                     type: StatusType.custom,
-                    color: statusColor,
+                    customColor: statusColor,
                   ),
                   const SizedBox(height: 4),
                   Text(

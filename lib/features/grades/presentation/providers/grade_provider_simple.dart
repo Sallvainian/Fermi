@@ -207,10 +207,6 @@ class SimpleGradeProvider with ChangeNotifier {
         .collection('submissions')
         .where('grade', isNotEqualTo: null)
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map(
           (snapshot) => snapshot.docs.map((doc) {
             final data = doc.data();

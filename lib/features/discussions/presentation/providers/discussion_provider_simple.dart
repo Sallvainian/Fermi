@@ -5,7 +5,6 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/services/logger_service.dart';
@@ -242,27 +241,18 @@ class SimpleDiscussionProvider with ChangeNotifier {
       await _userDocSubscription?.cancel();
 
       // Listen to user document changes for cache invalidation
-      // Create thread-safe stream
-      final stream = _firestore
+      _userDocSubscription = _firestore
           .collection('users')
           .doc(userId)
           .snapshots()
-          .asyncMap((snapshot) async {
-            await Future.delayed(Duration.zero);
-            return snapshot;
-          });
-
-      _userDocSubscription = stream.listen(
+          .listen(
             (snapshot) {
-              // Process on main thread to avoid platform channel threading issues
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (snapshot.exists) {
-                  _cachedUserModel = UserModel.fromFirestore(snapshot);
-                  _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
-                  _cacheTimestamp = DateTime.now();
-                  notifyListeners();
-                }
-              });
+              if (snapshot.exists) {
+                _cachedUserModel = UserModel.fromFirestore(snapshot);
+                _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
+                _cacheTimestamp = DateTime.now();
+                notifyListeners();
+              }
             },
             onError: (error) {
               LoggerService.error(
@@ -334,18 +324,12 @@ class SimpleDiscussionProvider with ChangeNotifier {
       await _boardsSubscription?.cancel();
 
       // Listen to boards collection
-      // Create thread-safe stream
-      final stream = _firestore
+      _boardsSubscription = _firestore
           .collection('discussion_boards')
           .orderBy('isPinned', descending: true)
           .orderBy('createdAt', descending: true)
           .snapshots()
-          .asyncMap((snapshot) async {
-            await Future.delayed(Duration.zero);
-            return snapshot;
-          });
-
-      _boardsSubscription = stream.listen(
+          .listen(
             (snapshot) async {
               LoggerService.debug(
                 'Loaded ${snapshot.docs.length} boards',
@@ -484,20 +468,14 @@ class SimpleDiscussionProvider with ChangeNotifier {
       await _threadSubscriptions[boardId]?.cancel();
 
       // Listen to threads subcollection
-      // Create thread-safe stream
-      final stream = _firestore
+      _threadSubscriptions[boardId] = _firestore
           .collection('discussion_boards')
           .doc(boardId)
           .collection('threads')
           .orderBy('isPinned', descending: true)
           .orderBy('createdAt', descending: true)
           .snapshots()
-          .asyncMap((snapshot) async {
-            await Future.delayed(Duration.zero);
-            return snapshot;
-          });
-
-      _threadSubscriptions[boardId] = stream.listen(
+          .listen(
             (snapshot) {
               // Simple load first, then check likes asynchronously
               _boardThreads[boardId] = snapshot.docs

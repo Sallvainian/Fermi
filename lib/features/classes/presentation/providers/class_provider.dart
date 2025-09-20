@@ -85,18 +85,12 @@ class ClassProvider with ChangeNotifier {
     // Cancel previous subscription if exists
     _teacherClassesSubscription?.cancel();
 
-    // Set up new subscription with thread safety
-    final stream = _firestore
+    // Set up new subscription
+    _teacherClassesSubscription = _firestore
         .collection('classes')
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
-        .asyncMap((snapshot) async {
-          // Force processing onto the next microtask to avoid threading issues
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        });
-
-    _teacherClassesSubscription = stream.listen(
+        .listen(
           (snapshot) {
             final List<ClassModel> classes = [];
             for (var doc in snapshot.docs) {
@@ -128,15 +122,11 @@ class ClassProvider with ChangeNotifier {
           },
         );
 
-    // Return the stream for UI if needed with thread safety
+    // Return the stream for UI if needed
     return _firestore
         .collection('classes')
         .where('teacherId', isEqualTo: teacherId)
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map((snapshot) {
           final classes = snapshot.docs
               .map((doc) => ClassModel.fromFirestore(doc))
@@ -152,18 +142,12 @@ class ClassProvider with ChangeNotifier {
     // Cancel previous subscription if exists
     _studentClassesSubscription?.cancel();
 
-    // Set up new subscription with thread safety
-    final stream = _firestore
+    // Set up new subscription (same pattern as loadTeacherClasses)
+    _studentClassesSubscription = _firestore
         .collection('classes')
         .where('studentIds', arrayContains: studentId)
         .snapshots()
-        .asyncMap((snapshot) async {
-          // Force processing onto the next microtask to avoid threading issues
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        });
-
-    _studentClassesSubscription = stream.listen(
+        .listen(
           (snapshot) {
             final List<ClassModel> classes = [];
             for (var doc in snapshot.docs) {

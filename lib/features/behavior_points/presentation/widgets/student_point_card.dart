@@ -73,7 +73,7 @@ class StudentPointCard extends StatelessWidget {
                   ]
                 : null,
           ),
-          padding: const EdgeInsets.all(6), // Further reduced padding
+          padding: const EdgeInsets.all(8), // Reduced padding to give more space for content
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -84,8 +84,8 @@ class StudentPointCard extends StatelessWidget {
                   clipBehavior: Clip.none,
                   children: [
                     Container(
-                      width: 40, // Further reduced to prevent overflow
-                      height: 40, // Further reduced to prevent overflow
+                      width: 48, // Reduced size to fit better in card
+                      height: 48, // Reduced size to fit better in card
                       decoration: BoxDecoration(
                         color: student.avatarColor.withValues(alpha: 0.27),
                         shape: BoxShape.circle,
@@ -95,15 +95,12 @@ class StudentPointCard extends StatelessWidget {
                         ),
                       ),
                       child: Center(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            student.initials,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: theme.colorScheme.onSurface,
-                              fontSize: 14, // Reduced font size
-                            ),
+                        child: Text(
+                          student.initials,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.onSurface,
+                            fontSize: 16, // Reduced font size to match smaller circle
                           ),
                         ),
                       ),
@@ -117,25 +114,19 @@ class StudentPointCard extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 2), // Further reduced spacing
+              const SizedBox(height: 4), // Reduced spacing
 
               // Student Name - wrapped in Flexible to prevent overflow
               Flexible(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      student.formattedName,
-                      textAlign: TextAlign.center,
-                      maxLines: 2, // Allow 2 lines
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface,
-                        fontSize: 10, // Smaller text to prevent overflow
-                      ),
-                    ),
+                child: Text(
+                  student.formattedName,
+                  textAlign: TextAlign.center,
+                  maxLines: 2, // Allow 2 lines
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith( // Changed to bodySmall
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 11, // Smaller text to fit better
                   ),
                 ),
               ),
@@ -156,26 +147,26 @@ class StudentPointCard extends StatelessWidget {
   /// Builds the points badge displayed on top of the avatar
   Widget _buildPointsBadge(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.error,
-        borderRadius: BorderRadius.circular(8), // Smaller radius
+        borderRadius: BorderRadius.circular(10), // Changed from circle to rounded rect for better fit
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.error.withValues(alpha: 0.5),
-            blurRadius: 2,
+            blurRadius: 3,
             offset: const Offset(0, 1),
           ),
         ],
       ),
-      constraints: const BoxConstraints(minWidth: 16, minHeight: 14),
+      constraints: const BoxConstraints(minWidth: 18, minHeight: 16),
       child: Center(
         child: Text(
           student.totalPoints.toString(),
           style: theme.textTheme.labelSmall?.copyWith(
             color: theme.colorScheme.onError,
             fontWeight: FontWeight.bold,
-            fontSize: 9, // Smaller text to fit better
+            fontSize: 10, // Slightly bigger text
           ),
         ),
       ),

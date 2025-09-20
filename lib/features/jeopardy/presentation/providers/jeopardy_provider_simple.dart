@@ -272,10 +272,6 @@ class SimpleJeopardyProvider with ChangeNotifier {
         .collection('jeopardy_sessions')
         .doc(sessionId)
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map((doc) {
           if (doc.exists) {
             final data = doc.data()!;

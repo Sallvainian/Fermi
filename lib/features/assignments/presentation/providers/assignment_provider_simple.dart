@@ -107,10 +107,6 @@ class SimpleAssignmentProvider with ChangeNotifier {
         .where('teacherId', isEqualTo: user.uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
         .map(
           (snapshot) => snapshot.docs.map((doc) {
             final data = doc.data();

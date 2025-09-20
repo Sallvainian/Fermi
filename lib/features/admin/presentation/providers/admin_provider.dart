@@ -31,8 +31,7 @@ class AdminProvider extends ChangeNotifier {
   Future<void> loadAdminDashboard() async {
     _isLoading = true;
     _error = null;
-    // Don't call notifyListeners() here - it causes setState during build
-    // Only notify after data is loaded
+    notifyListeners();
 
     try {
       // Load all data in parallel
@@ -46,7 +45,7 @@ class AdminProvider extends ChangeNotifier {
       _error = 'Failed to load dashboard data';
     } finally {
       _isLoading = false;
-      notifyListeners(); // Only notify once at the end
+      notifyListeners();
     }
   }
 

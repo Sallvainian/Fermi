@@ -3,7 +3,6 @@ import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import '../../../../shared/services/logger_service.dart';
 
 class PresenceService {
@@ -220,10 +219,7 @@ class PresenceService {
         .collection('presence')
         .where('online', isEqualTo: true)
         .snapshots()
-        .asyncMap((snapshot) async {
-          // Process on main thread to avoid platform channel threading issues
-          await Future.microtask(() {});
-
+        .map((snapshot) {
           LoggerService.debug(
             'Real-time update - ${snapshot.docs.length} online users',
             tag: 'PresenceService',
@@ -410,15 +406,12 @@ class PresenceService {
   // Initialize presence tracking
   void initializePresence({String? userRole}) {
     _auth.authStateChanges().listen((user) {
-      // Ensure callbacks run on platform thread to avoid threading errors
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (user != null) {
-          updateUserPresence(true, userRole: userRole);
-          _startActivityBasedHeartbeat(userRole);
-        } else {
-          _stopHeartbeat();
-        }
-      });
+      if (user != null) {
+        updateUserPresence(true, userRole: userRole);
+        _startActivityBasedHeartbeat(userRole);
+      } else {
+        _stopHeartbeat();
+      }
     });
   }
 

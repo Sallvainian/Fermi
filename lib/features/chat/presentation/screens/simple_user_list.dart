@@ -22,13 +22,7 @@ class SimpleUserList extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('users')
-            .snapshots()
-            .asyncMap((snapshot) async {
-              await Future.delayed(Duration.zero);
-              return snapshot;
-            }),
+        stream: FirebaseFirestore.instance.collection('users').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));

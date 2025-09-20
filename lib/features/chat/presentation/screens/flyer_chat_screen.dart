@@ -109,26 +109,6 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
       });
 
       LoggerService.info('Created new conversation: $conversationId', tag: 'FlyerChatScreen');
-
-      // Verify the document was created successfully before proceeding
-      // This ensures the participants array is properly set for security rules
-      int retries = 0;
-      bool documentReady = false;
-      while (!documentReady && retries < 3) {
-        await Future.delayed(const Duration(milliseconds: 300));
-        final verifyDoc = await _firestore
-            .collection('conversations')
-            .doc(conversationId)
-            .get();
-        if (verifyDoc.exists && verifyDoc.data()?['participants'] != null) {
-          documentReady = true;
-        }
-        retries++;
-      }
-
-      if (!documentReady) {
-        LoggerService.error('Failed to verify conversation creation', tag: 'FlyerChatScreen');
-      }
     }
 
     return conversationId;
@@ -255,10 +235,6 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/messages'),
-        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

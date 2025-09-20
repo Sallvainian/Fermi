@@ -53,12 +53,7 @@ class FirestoreRepository<T> extends FirestoreService<T> {
     final query = queryBuilder != null
         ? queryBuilder(typedCollection)
         : typedCollection;
-    return query.snapshots()
-        .asyncMap((snapshot) async {
-          await Future.delayed(Duration.zero);
-          return snapshot;
-        })
-        .map(
+    return query.snapshots().map(
       (snapshot) => snapshot.docs.map(fromFirestore).toList(),
     );
   }

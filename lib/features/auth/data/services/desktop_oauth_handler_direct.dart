@@ -222,13 +222,6 @@ class DirectDesktopOAuthHandler {
         LoggerService.warning('Authorization error: $error', tag: 'DirectOAuth');
         LoggerService.warning('Error description: $errorDescription', tag: 'DirectOAuth');
 
-        // Send error response to browser
-        try {
-          request.response.statusCode = 400;
-          request.response.write('Authentication failed: $error');
-          await request.response.close();
-        } catch (_) {}
-
         // Provide user-friendly error messages
         if (error == 'invalid_client') {
           throw Exception(
@@ -247,17 +240,6 @@ class DirectDesktopOAuthHandler {
         }
       }
 
-      if (code == null) {
-        // No code parameter - might be a different request
-        LoggerService.warning('No authorization code in request', tag: 'DirectOAuth');
-        try {
-          request.response.statusCode = 400;
-          request.response.write('Invalid request: No authorization code');
-          await request.response.close();
-        } catch (_) {}
-        return null;
-      }
-
       // Bring app to front
       if (!kIsWeb) {
         try {
@@ -268,73 +250,61 @@ class DirectDesktopOAuthHandler {
       }
 
       // Send success response
-      try {
-        request.response.statusCode = 200;
-        request.response.headers.set('content-type', 'text/html; charset=utf-8');
+      request.response.statusCode = 200;
+      request.response.headers.set('content-type', 'text/html');
+      request.response.write('''
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Authentication Successful</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .container {
+              text-align: center;
+              padding: 2rem;
+              background: white;
+              border-radius: 10px;
+              box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            }
+            h1 { color: #333; margin-bottom: 1rem; }
+            p { color: #666; }
+            .checkmark {
+              width: 60px;
+              height: 60px;
+              margin: 0 auto 1rem;
+              background: #4CAF50;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .checkmark:after {
+              content: '✓';
+              color: white;
+              font-size: 30px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="checkmark"></div>
+            <h1>Authentication Successful!</h1>
+            <p>You can close this tab and return to Fermi.</p>
+            <script>setTimeout(() => window.close(), 2000);</script>
+          </div>
+        </body>
+        </html>
+      ''');
 
-        const successHtml = '''<!DOCTYPE html>
-<html>
-<head>
-  <title>Authentication Successful</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .container {
-      text-align: center;
-      padding: 2rem;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    h1 { color: #333; margin-bottom: 1rem; }
-    p { color: #666; }
-    .checkmark {
-      width: 60px;
-      height: 60px;
-      margin: 0 auto 1rem;
-      background: #4CAF50;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .checkmark:after {
-      content: '✓';
-      color: white;
-      font-size: 30px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="checkmark"></div>
-    <h1>Authentication Successful!</h1>
-    <p>You can close this tab and return to Fermi.</p>
-    <script>setTimeout(() => window.close(), 2000);</script>
-  </div>
-</body>
-</html>''';
-
-        request.response.write(successHtml);
-        await request.response.close();
-      } catch (e) {
-        LoggerService.warning('Failed to send HTML response: $e', tag: 'DirectOAuth');
-        // Try a simple response if HTML fails
-        try {
-          request.response.statusCode = 200;
-          request.response.write('OK');
-          await request.response.close();
-        } catch (_) {
-          // Ignore if even simple response fails
-        }
-      }
+      await request.response.close();
       await _redirectServer!.close();
       _redirectServer = null;
 
