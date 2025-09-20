@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/services/logger_service.dart';
@@ -31,55 +32,81 @@ class SimpleChatProvider with ChangeNotifier {
     if (userId == null) return;
 
     _chatRoomsSubscription?.cancel();
-    _chatRoomsSubscription = _firestore
+
+    // Transform the stream to handle threading properly
+    final stream = _firestore
         .collection('chatRooms')
         .where('participantIds', arrayContains: userId)
         .orderBy('lastMessageTime', descending: true)
         .snapshots()
-        .listen(
-          (snapshot) {
-            _chatRooms = snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList();
-            _error = null;
-            notifyListeners();
-          },
-          onError: (error) {
-            LoggerService.error('Failed to load chat rooms', error: error);
-            _error = error.toString();
-            notifyListeners();
-          },
-        );
+        .handleError((error) {
+          LoggerService.error('Failed to load chat rooms', error: error);
+          _error = error.toString();
+          notifyListeners();
+        });
+
+    // Use asyncMap to ensure proper thread handling
+    _chatRoomsSubscription = stream.asyncMap((snapshot) async {
+      // Force processing onto the next microtask to avoid threading issues
+      await Future.delayed(Duration.zero);
+      return snapshot;
+    }).listen(
+      (snapshot) {
+        _chatRooms = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }).toList();
+        _error = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        LoggerService.error('Failed to load chat rooms in listen', error: error);
+        _error = error.toString();
+        notifyListeners();
+      },
+    );
   }
 
   /// Load messages for a specific chat room
   void loadChatMessages(String chatRoomId) {
     _messagesSubscription?.cancel();
-    _messagesSubscription = _firestore
+
+    // Transform the stream to handle threading properly
+    final stream = _firestore
         .collection('chatRooms')
         .doc(chatRoomId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
         .limit(100)
         .snapshots()
-        .listen(
-          (snapshot) {
-            _currentMessages = snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList();
-            _error = null;
-            notifyListeners();
-          },
-          onError: (error) {
-            LoggerService.error('Failed to load messages', error: error);
-            _error = error.toString();
-            notifyListeners();
-          },
-        );
+        .handleError((error) {
+          LoggerService.error('Failed to load messages', error: error);
+          _error = error.toString();
+          notifyListeners();
+        });
+
+    // Use asyncMap to ensure proper thread handling
+    _messagesSubscription = stream.asyncMap((snapshot) async {
+      // Force processing onto the next microtask to avoid threading issues
+      await Future.delayed(Duration.zero);
+      return snapshot;
+    }).listen(
+      (snapshot) {
+        _currentMessages = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }).toList();
+        _error = null;
+        notifyListeners();
+      },
+      onError: (error) {
+        LoggerService.error('Failed to load messages in listen', error: error);
+        _error = error.toString();
+        notifyListeners();
+      },
+    );
   }
 
   /// Create or get direct chat with another user

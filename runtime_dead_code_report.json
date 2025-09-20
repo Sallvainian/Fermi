@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-09-19T19:33:07.012743",
+  "summary": {
+    "total_dead_files": 20,
+    "unused_screens": 10,
+    "unused_services": 4,
+    "unused_widgets": 0,
+    "unused_providers": 0,
+    "orphaned_files": 6
+  },
+  "details": {
+  "unused_screens": [
+    "lib/features/chat/presentation/screens/user_selection_screen.dart",
+    "lib/features/notifications/presentation/screens/student_notifications_screen.dart",
+    "lib/features/student/presentation/screens/messages_screen.dart",
+    "lib/features/teacher/presentation/screens/messages_screen.dart",
+    "lib/shared/screens/common/common/dashboard_screen.dart",
+    "lib/shared/screens/common/common/placeholder_screen.dart",
+    "lib/shared/screens/contact_support_screen.dart",
+    "lib/shared/screens/debug/debug/update_display_name_screen.dart",
+    "lib/shared/screens/help_screen.dart",
+    "lib/shared/widgets/auth_loading_screen.dart"
+  ],
+  "unused_services": [
+    "RegionDetectorService (0 references)",
+    "ValidationService (0 references)",
+    "CacheService (0 references)",
+    "ScheduledMessagesService (0 references)"
+  ],
+  "unused_widgets": [
+  ],
+  "unused_providers": [
+  ],
+  "orphaned_files": [
+    "lib\features\student\presentation\widgets\preview_with_data.dart",
+    "lib\shared\utils\firestore_thread_safe.dart",
+    "lib\shared\widgets\common\custom_list_tile.dart",
+    "lib\shared\widgets\common\status_badge.dart",
+    "lib\shared\widgets\common\stat_card.dart",
+    "lib\shared\widgets\preview\example_badge.dart"
+  ]
+}
+}

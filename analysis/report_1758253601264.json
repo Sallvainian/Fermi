@@ -1,0 +1,61 @@
+{
+  "session_start": "2025-09-18T23:45:24.463280",
+  "session_end": "2025-09-18T23:46:41.264581",
+  "duration_seconds": 76,
+  "coverage": {
+    "timestamp": "2025-09-18T23:46:41.266626",
+    "total_functions_executed": 0,
+    "execution_counts": {},
+    "last_executed": {},
+    "call_paths": {},
+    "hot_functions": [],
+    "cold_functions": []
+  },
+  "execution": {
+    "session_start": "2025-09-18T23:45:24.466343",
+    "session_end": "2025-09-18T23:46:41.273751",
+    "duration_ms": 76807,
+    "total_events": 1,
+    "metrics": {
+      "RuntimeCoverage::log": {
+        "function": "log",
+        "class": "RuntimeCoverage",
+        "execution_count": 1,
+        "error_count": 0,
+        "error_rate": 0.0,
+        "total_time_ms": 0,
+        "avg_time_ms": 0,
+        "max_time_ms": 0,
+        "min_time_ms": 86313600000
+      }
+    },
+    "heatmap": {
+      "RuntimeCoverage::log": 1
+    },
+    "dead_code_candidates": [],
+    "performance_issues": []
+  },
+  "leaks": {
+    "start_time": "2025-09-18T23:45:24.472431",
+    "end_time": "2025-09-18T23:46:41.279985",
+    "duration_seconds": 76,
+    "total_leaks": 0,
+    "leaks_by_type": {},
+    "widget_leaks": {},
+    "provider_leaks": {},
+    "events": [],
+    "summary": {
+      "total_leaks": 0,
+      "leak_types": 0,
+      "suspected_widget_leaks": [],
+      "suspected_provider_leaks": [],
+      "top_leak_sources": []
+    }
+  },
+  "dead_code": [],
+  "performance_issues": [],
+  "memory_issues": [],
+  "recommendations": [
+    "No major issues detected - code is well optimized"
+  ]
+}

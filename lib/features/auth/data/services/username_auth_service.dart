@@ -397,20 +397,26 @@ class UsernameAuthService {
   }
   
   /// Update password for a user (teacher can reset student passwords)
-  Future<void> updatePasswordForUser({
+  /// Note: This requires the Firebase Admin SDK which is only available server-side.
+  /// For now, this returns false indicating the operation is not supported client-side.
+  Future<bool> updatePasswordForUser({
     required String username,
     required String newPassword,
   }) async {
     try {
-      // This would require Firebase Admin SDK or Cloud Functions
-      // For now, we'll throw an exception indicating this needs backend support
-      throw UnimplementedError(
-        'Password reset requires Firebase Admin SDK. '
-        'Please implement a Cloud Function for this feature.',
+      // Password reset requires Firebase Admin SDK which is not available client-side
+      // This should be implemented as a Cloud Function
+      LoggerService.warning(
+        'Password reset attempted but requires server-side implementation via Cloud Functions',
+        tag: 'UsernameAuthService'
       );
+
+      // Return false to indicate the operation is not supported
+      // The calling code should handle this gracefully
+      return false;
     } catch (e) {
       LoggerService.error('Update password error', tag: 'UsernameAuthService', error: e);
-      rethrow;
+      return false;
     }
   }
 

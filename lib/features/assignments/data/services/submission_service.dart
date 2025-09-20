@@ -127,6 +127,10 @@ class SubmissionService {
         .where('assignmentId', isEqualTo: assignmentId)
         .orderBy('submittedAt', descending: true)
         .snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        })
         .map(
           (snapshot) => snapshot.docs
               .map((doc) => Submission.fromFirestore(doc))
@@ -150,6 +154,10 @@ class SubmissionService {
         .where('studentId', isEqualTo: studentId)
         .orderBy('submittedAt', descending: true)
         .snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        })
         .map(
           (snapshot) => snapshot.docs
               .map((doc) => Submission.fromFirestore(doc))
@@ -273,6 +281,10 @@ class SubmissionService {
         .where('studentId', isEqualTo: studentId)
         .where('assignmentId', isEqualTo: assignmentId)
         .snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        })
         .map((snapshot) => snapshot.docs.isNotEmpty);
   }
 
@@ -293,6 +305,10 @@ class SubmissionService {
         .where('assignmentId', isEqualTo: assignmentId)
         .where('submittedAt', isGreaterThan: Timestamp.fromDate(dueDate))
         .snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        })
         .map(
           (snapshot) => snapshot.docs
               .map((doc) => Submission.fromFirestore(doc))

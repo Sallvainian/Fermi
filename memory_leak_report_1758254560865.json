@@ -1,0 +1,17 @@
+{
+  "start_time": "2025-09-19T00:02:40.865465",
+  "end_time": "2025-09-19T00:03:48.204471",
+  "duration_seconds": 67,
+  "total_leaks": 0,
+  "leaks_by_type": {},
+  "widget_leaks": {},
+  "provider_leaks": {},
+  "events": [],
+  "summary": {
+    "total_leaks": 0,
+    "leak_types": 0,
+    "suspected_widget_leaks": [],
+    "suspected_provider_leaks": [],
+    "top_leak_sources": []
+  }
+}

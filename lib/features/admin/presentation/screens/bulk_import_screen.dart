@@ -830,7 +830,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       final batchSize = _parsedData.length;
       setState(() {
         _importProgress = 0.1;
-        _progressMessage = 'Processing ${batchSize} accounts in batch...';
+        _progressMessage = 'Processing $batchSize accounts in batch...';
       });
 
       // Use bulk import for efficient processing

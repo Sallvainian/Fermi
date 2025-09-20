@@ -1,197 +1,174 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
 
-/// Badge component for displaying status information with appropriate colors
+enum StatusType {
+  success,
+  warning,
+  error,
+  info,
+  custom,
+}
+
+/// A status badge widget for displaying various states
 class StatusBadge extends StatelessWidget {
   final String label;
   final StatusType type;
-  final String? customType;
-  final Color? customColor;
+  final Color? color;
+  final Color? textColor;
   final IconData? icon;
-  final bool isSmall;
+  final double? fontSize;
+  final EdgeInsets? padding;
 
   const StatusBadge({
     super.key,
     required this.label,
     required this.type,
-    this.customType,
-    this.customColor,
+    this.color,
+    this.textColor,
     this.icon,
-    this.isSmall = false,
+    this.fontSize,
+    this.padding,
   });
 
-  /// Create a grade badge
-  const StatusBadge.grade({
-    super.key,
-    required String grade,
-    this.icon,
-    this.isSmall = false,
-  }) : label = grade,
-       type = StatusType.grade,
-       customType = null,
-       customColor = null;
-
-  /// Create a priority badge
-  const StatusBadge.priority({
-    super.key,
-    required String priority,
-    this.icon,
-    this.isSmall = false,
-  }) : label = priority,
-       type = StatusType.priority,
-       customType = null,
-       customColor = null;
-
-  /// Create an assignment type badge
-  const StatusBadge.assignmentType({
-    super.key,
-    required String type,
-    this.icon,
-    this.isSmall = false,
-  }) : label = type,
-       type = StatusType.assignmentType,
-       customType = null,
-       customColor = null;
-
-  /// Create a custom badge
-  const StatusBadge.custom({
-    super.key,
-    required this.label,
-    required Color color,
-    this.icon,
-    this.isSmall = false,
-  }) : type = StatusType.custom,
-       customType = null,
-       customColor = color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    Color backgroundColor;
-    Color textColor;
-
-    switch (type) {
-      case StatusType.grade:
-        backgroundColor = AppTheme.getGradeColor(label);
-        textColor = _getContrastColor(backgroundColor);
-        break;
-      case StatusType.priority:
-        backgroundColor = AppTheme.getPriorityColor(label);
-        textColor = _getContrastColor(backgroundColor);
-        break;
-      case StatusType.attendance:
-        backgroundColor = _getAttendanceColor(label);
-        textColor = _getContrastColor(backgroundColor);
-        break;
-      case StatusType.assignment:
-        backgroundColor = _getAssignmentColor(label);
-        textColor = _getContrastColor(backgroundColor);
-        break;
-      case StatusType.assignmentType:
-        backgroundColor = _getAssignmentTypeColor(label);
-        textColor = _getContrastColor(backgroundColor);
-        break;
-      case StatusType.custom:
-        backgroundColor = customColor ?? colorScheme.primary;
-        textColor = _getContrastColor(backgroundColor);
-        break;
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmall ? 6 : 8,
-        vertical: isSmall ? 2 : 4,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(isSmall ? 8 : 12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, color: textColor, size: isSmall ? 12 : 14),
-            SizedBox(width: isSmall ? 2 : 4),
-          ],
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.w600,
-              fontSize: isSmall ? 10 : 12,
-            ),
-          ),
-        ],
-      ),
+  /// Factory constructor for grade badges
+  factory StatusBadge.grade({required String grade}) {
+    final color = _getGradeColor(grade);
+    return StatusBadge(
+      label: grade,
+      type: StatusType.custom,
+      color: color,
+      textColor: Colors.white,
     );
   }
 
-  Color _getAttendanceColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'present':
-        return AppTheme.successColor;
-      case 'absent':
-        return AppTheme.errorColor;
-      case 'late':
-        return AppTheme.warningColor;
-      case 'excused':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
+  /// Factory constructor for assignment type badges
+  factory StatusBadge.assignmentType({required String type}) {
+    final color = _getAssignmentTypeColor(type);
+    return StatusBadge(
+      label: type,
+      type: StatusType.custom,
+      color: color,
+      textColor: Colors.white,
+    );
   }
 
-  Color _getAssignmentColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'submitted':
-      case 'complete':
-        return AppTheme.successColor;
-      case 'missing':
-      case 'not submitted':
-        return AppTheme.errorColor;
-      case 'late':
-        return AppTheme.warningColor;
-      case 'in progress':
-      case 'draft':
-        return Colors.blue;
-      case 'graded':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
+  /// Factory constructor for custom badges
+  factory StatusBadge.custom({
+    required String label,
+    required Color color,
+    Color? textColor,
+    IconData? icon,
+  }) {
+    return StatusBadge(
+      label: label,
+      type: StatusType.custom,
+      color: color,
+      textColor: textColor ?? Colors.white,
+      icon: icon,
+    );
   }
 
-  Color _getAssignmentTypeColor(String type) {
-    switch (type.toLowerCase()) {
-      case 'homework':
+  static Color _getGradeColor(String grade) {
+    switch (grade[0]) {
+      case 'A':
         return Colors.green;
-      case 'quiz':
+      case 'B':
         return Colors.blue;
-      case 'test':
+      case 'C':
         return Colors.orange;
-      case 'project':
-        return Colors.purple;
-      case 'exam':
+      case 'D':
+        return Colors.deepOrange;
+      case 'F':
         return Colors.red;
       default:
         return Colors.grey;
     }
   }
 
-  Color _getContrastColor(Color backgroundColor) {
-    // Simple contrast calculation
-    final luminance = backgroundColor.computeLuminance();
-    return luminance > 0.5 ? Colors.black : Colors.white;
+  static Color _getAssignmentTypeColor(String type) {
+    switch (type.toLowerCase()) {
+      case 'homework':
+        return Colors.blue;
+      case 'quiz':
+        return Colors.purple;
+      case 'test':
+      case 'exam':
+        return Colors.orange;
+      case 'project':
+        return Colors.green;
+      case 'participation':
+        return Colors.teal;
+      default:
+        return Colors.grey;
+    }
   }
-}
 
-enum StatusType {
-  grade,
-  priority,
-  attendance,
-  assignment,
-  assignmentType,
-  custom,
+  Color _getTypeColor() {
+    if (color != null) return color!;
+
+    switch (type) {
+      case StatusType.success:
+        return Colors.green;
+      case StatusType.warning:
+        return Colors.orange;
+      case StatusType.error:
+        return Colors.red;
+      case StatusType.info:
+        return Colors.blue;
+      case StatusType.custom:
+        return Colors.grey;
+    }
+  }
+
+  IconData? _getTypeIcon() {
+    if (icon != null) return icon;
+
+    switch (type) {
+      case StatusType.success:
+        return Icons.check_circle;
+      case StatusType.warning:
+        return Icons.warning;
+      case StatusType.error:
+        return Icons.error;
+      case StatusType.info:
+        return Icons.info;
+      case StatusType.custom:
+        return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeColor = _getTypeColor();
+    final badgeIcon = _getTypeIcon();
+    final badgeTextColor = textColor ?? Colors.white;
+
+    return Container(
+      padding: padding ?? const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: badgeColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (badgeIcon != null) ...[
+            Icon(
+              badgeIcon,
+              size: fontSize ?? 12,
+              color: badgeTextColor,
+            ),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              color: badgeTextColor,
+              fontSize: fontSize ?? 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

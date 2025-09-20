@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../shared/widgets/common/app_card.dart';
 
 class QuickActionsGrid extends StatelessWidget {
@@ -8,6 +9,7 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback onSystemSettings;
   final VoidCallback onBulkImport;
   final VoidCallback onManageUsers;
+  final VoidCallback? onDeveloperTools;
 
   const QuickActionsGrid({
     super.key,
@@ -17,6 +19,7 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onSystemSettings,
     required this.onBulkImport,
     required this.onManageUsers,
+    this.onDeveloperTools,
   });
 
   @override
@@ -37,10 +40,10 @@ class QuickActionsGrid extends StatelessWidget {
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 3,
-            childAspectRatio: 1.1,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
+            crossAxisCount: kDebugMode && onDeveloperTools != null ? 4 : 3,
+            childAspectRatio: 0.9, // Reduced from 1.1 to give more height
+            mainAxisSpacing: 8,   // Reduced from 12
+            crossAxisSpacing: 8,   // Reduced from 12
             children: [
               _QuickActionButton(
                 icon: Icons.person_add,
@@ -78,6 +81,13 @@ class QuickActionsGrid extends StatelessWidget {
                 color: Colors.purple,
                 onTap: onSystemSettings,
               ),
+              if (kDebugMode && onDeveloperTools != null)
+                _QuickActionButton(
+                  icon: Icons.code,
+                  label: 'Developer Tools',
+                  color: Colors.deepOrange,
+                  onTap: onDeveloperTools!,
+                ),
             ],
           ),
         ],
@@ -110,7 +120,7 @@ class _QuickActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(8), // Reduced from 16
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
@@ -121,21 +131,26 @@ class _QuickActionButton extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                icon,
-                size: 32,
-                color: color,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
+              Flexible(
+                child: Icon(
+                  icon,
+                  size: 28, // Reduced from 32
                   color: color,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4), // Reduced from 8
+              Flexible(
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith( // Changed from bodyMedium
+                    fontWeight: FontWeight.w500,
+                    color: color,
+                    fontSize: 11, // Explicit smaller font size
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),

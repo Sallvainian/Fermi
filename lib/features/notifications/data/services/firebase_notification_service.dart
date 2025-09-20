@@ -40,7 +40,12 @@ class FirebaseNotificationService {
       query = query.limit(limit);
     }
 
-    return query.snapshots().map((snapshot) {
+    return query.snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        })
+        .map((snapshot) {
       return snapshot.docs
           .map((doc) => NotificationModel.fromFirestore(doc))
           .where((notification) {
@@ -73,6 +78,10 @@ class FirebaseNotificationService {
         )
         .orderBy('createdAt', descending: true)
         .snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        })
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => NotificationModel.fromFirestore(doc))
@@ -96,6 +105,10 @@ class FirebaseNotificationService {
         .where('userId', isEqualTo: userId)
         .where('isRead', isEqualTo: false)
         .snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        })
         .map((snapshot) {
           return snapshot.docs
               .map((doc) => NotificationModel.fromFirestore(doc))

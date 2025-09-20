@@ -19,20 +19,24 @@ class UserManagementService {
     DocumentSnapshot? startAfter,
   }) {
     Query query = _firestore.collection('users');
-    
+
     if (roleFilter != null && roleFilter != 'all') {
       query = query.where('role', isEqualTo: roleFilter);
     }
-    
+
     query = query.orderBy('createdAt', descending: true);
-    
+
     if (startAfter != null) {
       query = query.startAfterDocument(startAfter);
     }
-    
+
     query = query.limit(limit);
-    
-    return query.snapshots();
+
+    return query.snapshots()
+        .asyncMap((snapshot) async {
+          await Future.delayed(Duration.zero);
+          return snapshot;
+        });
   }
 
   Future<List<UserModel>> getUsers({

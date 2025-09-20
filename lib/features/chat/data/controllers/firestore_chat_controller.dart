@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -62,43 +63,57 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
   /// Start listening to real-time message updates
   void _startListening() {
-    _messageSubscription = _firestore
+    // Transform the stream to handle threading properly
+    final stream = _firestore
         .collection('conversations')
         .doc(conversationId)
         .collection('messages')
         .orderBy('createdAt', descending: false)
         .snapshots()
-        .listen((snapshot) {
+        .handleError((error) {
+          LoggerService.error('Error in message stream', error: error, tag: 'FirestoreChatController');
+        });
 
-      for (final change in snapshot.docChanges) {
-        final message = _convertToFlyerMessage(change.doc);
+    // Use asyncMap to ensure proper thread handling
+    _messageSubscription = stream.asyncMap((snapshot) async {
+      // Force processing onto the next microtask to avoid threading issues
+      await Future.delayed(Duration.zero);
+      return snapshot;
+    }).listen(
+      (snapshot) {
+        for (final change in snapshot.docChanges) {
+          final message = _convertToFlyerMessage(change.doc);
 
-        switch (change.type) {
-          case DocumentChangeType.added:
-            // Only add if not already in cache (prevents duplicates)
-            if (!_messageCache.containsKey(message.id)) {
+          switch (change.type) {
+            case DocumentChangeType.added:
+              // Only add if not already in cache (prevents duplicates)
+              if (!_messageCache.containsKey(message.id)) {
+                _messageCache[message.id] = message;
+                insertMessage(message);
+              }
+              break;
+
+            case DocumentChangeType.modified:
+              // Update existing message
               _messageCache[message.id] = message;
-              insertMessage(message);
-            }
-            break;
+              // Message will update via the messages list
+              break;
 
-          case DocumentChangeType.modified:
-            // Update existing message
-            _messageCache[message.id] = message;
-            // Message will update via the messages list
-            break;
-
-          case DocumentChangeType.removed:
-            // Remove message
-            final index = messages.indexWhere((m) => m.id == message.id);
-            if (index != -1) {
-              _messageCache.remove(message.id);
-              removeMessage(message);
-            }
-            break;
+            case DocumentChangeType.removed:
+              // Remove message
+              final index = messages.indexWhere((m) => m.id == message.id);
+              if (index != -1) {
+                _messageCache.remove(message.id);
+                removeMessage(message);
+              }
+              break;
+          }
         }
-      }
-    });
+      },
+      onError: (error) {
+        LoggerService.error('Error in message stream listen', error: error, tag: 'FirestoreChatController');
+      },
+    );
   }
 
   /// Convert Firestore document to Flyer Chat message
@@ -174,25 +189,39 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
   /// Start listening to typing indicators
   void _startTypingListener() {
-    _typingSubscription = _firestore
+    // Transform the stream to handle threading properly
+    final stream = _firestore
         .collection('conversations')
         .doc(conversationId)
         .collection('typing')
         .snapshots()
-        .listen((snapshot) {
+        .handleError((error) {
+          LoggerService.error('Error in typing stream', error: error, tag: 'FirestoreChatController');
+        });
 
-      final currentUserId = _auth.currentUser?.uid;
-      _typingUsers.clear();
+    // Use asyncMap to ensure proper thread handling
+    _typingSubscription = stream.asyncMap((snapshot) async {
+      // Force processing onto the next microtask to avoid threading issues
+      await Future.delayed(Duration.zero);
+      return snapshot;
+    }).listen(
+      (snapshot) {
+        final currentUserId = _auth.currentUser?.uid;
+        _typingUsers.clear();
 
-      for (final doc in snapshot.docs) {
-        if (doc.id != currentUserId) {
-          _typingUsers[doc.id] = doc.data();
+        for (final doc in snapshot.docs) {
+          if (doc.id != currentUserId) {
+            _typingUsers[doc.id] = doc.data();
+          }
         }
-      }
 
-      // Notify UI about typing status changes
-      notifyListeners();
-    });
+        // Notify UI about typing status changes
+        notifyListeners();
+      },
+      onError: (error) {
+        LoggerService.error('Error in typing stream listen', error: error, tag: 'FirestoreChatController');
+      },
+    );
   }
 
   /// Get list of currently typing users

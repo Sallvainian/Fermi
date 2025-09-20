@@ -377,7 +377,11 @@ class _ManageStudentAccountsScreenState
                                 ?.uid,
                           )
                           .orderBy('createdAt', descending: true)
-                          .snapshots(),
+                          .snapshots()
+                          .asyncMap((snapshot) async {
+                            await Future.delayed(Duration.zero);
+                            return snapshot;
+                          }),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState ==
                             ConnectionState.waiting) {

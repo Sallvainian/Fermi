@@ -1,0 +1,5 @@
+{"type":"session_start","timestamp":"2025-09-18T23:30:56.157476","platform":"windows","dart_version":"3.9.2 (stable) (Wed Aug 27 03:49:40 2025 -0700) on \"windows_x64\""}
+{"timestamp":"2025-09-18T23:35:23.628295","function":"log","class":"RuntimeCoverage","parameters":{"level":"INFO","message":"Stopping runtime coverage tracking"}}
+{"timestamp":"2025-09-18T23:36:22.950042","function":"log","class":"RuntimeCoverage","parameters":{"level":"INFO","message":"Starting runtime coverage tracking"}}
+{"timestamp":"2025-09-18T23:41:54.785332","function":"log","class":"RuntimeCoverage","parameters":{"level":"INFO","message":"Stopping runtime coverage tracking"}}
+{"type":"session_end","timestamp":"2025-09-18T23:41:54.794309","duration_ms":658636,"total_events":3}

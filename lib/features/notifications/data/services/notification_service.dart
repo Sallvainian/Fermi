@@ -344,9 +344,12 @@ class NotificationService {
       defaultIcon: AssetsLinuxIcon('icons/app_icon.png'),
     );
 
-    // Windows settings - basic support through flutter_local_notifications
-    // Note: Windows notification support is limited compared to other platforms
-    // Full action support requires additional platform-specific implementation
+    // Windows settings
+    const windowsSettings = WindowsInitializationSettings(
+      appName: 'Fermi Plus',
+      appUserModelId: 'com.fermiplus.app',
+      guid: '9c5e4f8a-2b1d-4e3f-8a7c-1b9d3e5f7a2c',
+    );
 
     // Combined settings
     final initSettings = InitializationSettings(
@@ -354,7 +357,7 @@ class NotificationService {
       iOS: iosSettings,
       macOS: macOSSettings,
       linux: linuxSettings,
-      // Windows uses default initialization
+      windows: windowsSettings,
     );
 
     await _localNotifications.initialize(

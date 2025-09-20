@@ -23,7 +23,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
     _adminProvider = context.read<AdminProvider>();
-    _loadDashboard();
+    // Defer loading to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadDashboard();
+    });
   }
 
   Future<void> _loadDashboard() async {
@@ -119,6 +122,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             onSystemSettings: () => context.go('/admin/system-settings'),
                             onBulkImport: () => context.go('/admin/bulk-import'),
                             onManageUsers: () => context.go('/admin/users'),
+                            onDeveloperTools: () => context.go('/admin/developer-tools'),
                           ),
                         ),
                       ],
@@ -133,6 +137,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       onSystemSettings: () => context.go('/admin/system-settings'),
                       onBulkImport: () => context.go('/admin/bulk-import'),
                       onManageUsers: () => context.go('/admin/users'),
+                      onDeveloperTools: () => context.go('/admin/developer-tools'),
                     ),
                   ] else ...[
                     SystemStatsCard(stats: adminProvider.systemStats),
@@ -144,6 +149,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       onSystemSettings: () => context.go('/admin/system-settings'),
                       onBulkImport: () => context.go('/admin/bulk-import'),
                       onManageUsers: () => context.go('/admin/users'),
+                      onDeveloperTools: () => context.go('/admin/developer-tools'),
                     ),
                   ],
                   const SizedBox(height: 32),
