@@ -90,25 +90,32 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
     final participants = [currentUserId, recipientId]..sort();
     final conversationId = participants.join('_');
 
-    // Check if conversation exists
-    final conversationDoc = await _firestore
-        .collection('conversations')
-        .doc(conversationId)
-        .get();
+    try {
+      // Check if conversation exists
+      final conversationDoc = await _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .get();
 
-    if (!conversationDoc.exists) {
-      // Create new conversation document
-      await _firestore.collection('conversations').doc(conversationId).set({
-        'participants': participants,
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastActivity': FieldValue.serverTimestamp(),
-        'unreadCount': {
-          currentUserId: 0,
-          recipientId: 0,
-        },
-      });
+      if (!conversationDoc.exists) {
+        // Create new conversation document with proper structure
+        await _firestore.collection('conversations').doc(conversationId).set({
+          'participants': participants,
+          'participantIds': participants, // Some code uses this field name
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'lastMessage': null,
+          'lastMessageTime': null,
+          'type': 'direct', // direct message between two users
+        });
 
-      LoggerService.info('Created new conversation: $conversationId', tag: 'FlyerChatScreen');
+        LoggerService.info('Created new conversation: $conversationId', tag: 'FlyerChatScreen');
+      } else {
+        LoggerService.info('Using existing conversation: $conversationId', tag: 'FlyerChatScreen');
+      }
+    } catch (e) {
+      LoggerService.error('Error creating/checking conversation', error: e, tag: 'FlyerChatScreen');
+      // Try to continue anyway, the conversation might still work
     }
 
     return conversationId;
@@ -235,6 +242,10 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

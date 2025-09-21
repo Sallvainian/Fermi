@@ -251,58 +251,20 @@ class DirectDesktopOAuthHandler {
 
       // Send success response
       request.response.statusCode = 200;
-      request.response.headers.set('content-type', 'text/html');
-      request.response.write('''
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>Authentication Successful</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              margin: 0;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            }
-            .container {
-              text-align: center;
-              padding: 2rem;
-              background: white;
-              border-radius: 10px;
-              box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            }
-            h1 { color: #333; margin-bottom: 1rem; }
-            p { color: #666; }
-            .checkmark {
-              width: 60px;
-              height: 60px;
-              margin: 0 auto 1rem;
-              background: #4CAF50;
-              border-radius: 50%;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            .checkmark:after {
-              content: '✓';
-              color: white;
-              font-size: 30px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="checkmark"></div>
-            <h1>Authentication Successful!</h1>
-            <p>You can close this tab and return to Fermi.</p>
-            <script>setTimeout(() => window.close(), 2000);</script>
-          </div>
-        </body>
-        </html>
-      ''');
+      request.response.headers.set('content-type', 'text/html; charset=utf-8');
+
+      // Use add with UTF-8 bytes to avoid string encoding issues
+      final successPage = '''
+<!DOCTYPE html>
+<html>
+<head><title>Success</title></head>
+<body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+<h1>Authentication Successful!</h1>
+<p>You can close this window and return to Fermi.</p>
+</body>
+</html>''';
+
+      request.response.add(utf8.encode(successPage));
 
       await request.response.close();
       await _redirectServer!.close();

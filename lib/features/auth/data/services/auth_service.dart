@@ -23,7 +23,6 @@ class AuthService {
   // On web, dotenv doesn't work, so we need to hardcode for testing
   // This is ONLY enabled in debug mode to prevent production access
   static const String _testStudentEmail = 'fcottone@rosellestudent.com';
-  static const String _testStudentPassword = '123456';
 
   AuthService() {
     _auth = FirebaseAuth.instance;

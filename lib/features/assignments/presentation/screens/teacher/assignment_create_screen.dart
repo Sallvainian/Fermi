@@ -3,8 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/assignment_provider_simple.dart';
-import '../../../../../shared/widgets/custom_radio_list_tile.dart';
+import '../../providers/assignment_provider.dart';
 import '../../../../../shared/models/user_model.dart';
 import '../../../domain/models/assignment.dart';
 
@@ -17,7 +16,7 @@ class AssignmentCreateScreen extends StatefulWidget {
   State<AssignmentCreateScreen> createState() => _AssignmentCreateScreenState();
 }
 
-class _AssignmentCreateScreenState extends State<AssignmentCreateScreen> 
+class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
@@ -26,7 +25,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
   final _maxPointsController = TextEditingController(text: '100');
 
   late TabController _tabController;
-  
+
   DateTime _dueDate = DateTime.now().add(const Duration(days: 7));
   TimeOfDay _dueTime = const TimeOfDay(hour: 23, minute: 59);
   AssignmentType _selectedType = AssignmentType.homework;
@@ -37,7 +36,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
   bool _isLoading = false;
 
   // Scheduled publishing
-  int _publishOption = 0; // 0: draft, 1: immediate, 2: scheduled
+  final int _publishOption = 0; // 0: draft, 1: immediate, 2: scheduled
   DateTime _publishDate = DateTime.now();
   TimeOfDay _publishTime = TimeOfDay.now();
 
@@ -58,13 +57,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
   }
 
   DateTime _combineDateAndTime(DateTime date, TimeOfDay time) {
-    return DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
+    return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
   IconData _getTypeIcon(AssignmentType type) {
@@ -121,9 +114,9 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: _getTypeColor(_selectedType),
-            ),
+            colorScheme: Theme.of(
+              context,
+            ).colorScheme.copyWith(primary: _getTypeColor(_selectedType)),
           ),
           child: child!,
         );
@@ -143,9 +136,9 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: _getTypeColor(_selectedType),
-            ),
+            colorScheme: Theme.of(
+              context,
+            ).colorScheme.copyWith(primary: _getTypeColor(_selectedType)),
           ),
           child: child!,
         );
@@ -176,7 +169,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
 
       // Determine publish at date based on publish option
       DateTime? publishAt;
-      
+
       if (_publishOption == 1) {
         // Publish immediately
         publishAt = null;
@@ -281,13 +274,13 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
           actions: [
             FilledButton.icon(
               onPressed: _isLoading ? null : _createAssignment,
-              icon: _isLoading 
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.publish),
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.publish),
               label: Text(_publishOption == 1 ? 'Publish' : 'Save'),
               style: FilledButton.styleFrom(
                 backgroundColor: _getTypeColor(_selectedType),
@@ -298,7 +291,9 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
         ),
         body: Center(
           child: Container(
-            constraints: BoxConstraints(maxWidth: isDesktop ? 900 : double.infinity),
+            constraints: BoxConstraints(
+              maxWidth: isDesktop ? 900 : double.infinity,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -340,35 +335,41 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                   children: [
                                     Text(
                                       'Assignment Type',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 16),
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
-                                      children: AssignmentType.values.map((type) {
-                                        final isSelected = _selectedType == type;
+                                      children: AssignmentType.values.map((
+                                        type,
+                                      ) {
+                                        final isSelected =
+                                            _selectedType == type;
                                         return ChoiceChip(
                                           avatar: Icon(
                                             _getTypeIcon(type),
                                             size: 18,
-                                            color: isSelected 
-                                              ? Colors.white 
-                                              : _getTypeColor(type),
+                                            color: isSelected
+                                                ? Colors.white
+                                                : _getTypeColor(type),
                                           ),
                                           label: Text(_getTypeLabel(type)),
                                           selected: isSelected,
                                           selectedColor: _getTypeColor(type),
-                                          backgroundColor: _getTypeColor(type).withValues(alpha: 0.1),
+                                          backgroundColor: _getTypeColor(
+                                            type,
+                                          ).withValues(alpha: 0.1),
                                           labelStyle: TextStyle(
-                                            color: isSelected 
-                                              ? Colors.white 
-                                              : _getTypeColor(type),
-                                            fontWeight: isSelected 
-                                              ? FontWeight.bold 
-                                              : FontWeight.normal,
+                                            color: isSelected
+                                                ? Colors.white
+                                                : _getTypeColor(type),
+                                            fontWeight: isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
                                           ),
                                           onSelected: (selected) {
                                             if (selected) {
@@ -402,16 +403,18 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                   children: [
                                     Text(
                                       'Basic Information',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 20),
                                     TextFormField(
                                       controller: _titleController,
                                       decoration: InputDecoration(
                                         labelText: 'Assignment Title',
-                                        hintText: 'Enter a clear, descriptive title',
+                                        hintText:
+                                            'Enter a clear, descriptive title',
                                         prefixIcon: Icon(
                                           Icons.title,
                                           color: _getTypeColor(_selectedType),
@@ -419,7 +422,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                         border: const OutlineInputBorder(),
                                       ),
                                       textInputAction: TextInputAction.next,
-                                      textCapitalization: TextCapitalization.sentences,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
                                           return 'Please enter a title';
@@ -432,7 +436,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                       controller: _descriptionController,
                                       decoration: InputDecoration(
                                         labelText: 'Brief Description',
-                                        hintText: 'What is this assignment about?',
+                                        hintText:
+                                            'What is this assignment about?',
                                         prefixIcon: Icon(
                                           Icons.description,
                                           color: _getTypeColor(_selectedType),
@@ -441,7 +446,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                       ),
                                       maxLines: 3,
                                       textInputAction: TextInputAction.next,
-                                      textCapitalization: TextCapitalization.sentences,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
                                       validator: (value) {
                                         if (value == null || value.isEmpty) {
                                           return 'Please enter a description';
@@ -454,7 +460,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                       controller: _instructionsController,
                                       decoration: InputDecoration(
                                         labelText: 'Detailed Instructions',
-                                        hintText: 'Step-by-step instructions for students...',
+                                        hintText:
+                                            'Step-by-step instructions for students...',
                                         prefixIcon: Icon(
                                           Icons.list_alt,
                                           color: _getTypeColor(_selectedType),
@@ -462,7 +469,8 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                         border: const OutlineInputBorder(),
                                       ),
                                       maxLines: 5,
-                                      textCapitalization: TextCapitalization.sentences,
+                                      textCapitalization:
+                                          TextCapitalization.sentences,
                                     ),
                                   ],
                                 ),
@@ -486,9 +494,10 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                   children: [
                                     Text(
                                       'Due Date & Time',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 20),
                                     Row(
@@ -496,20 +505,28 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                         Expanded(
                                           child: InkWell(
                                             onTap: _selectDueDate,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             child: InputDecorator(
                                               decoration: InputDecoration(
                                                 labelText: 'Due Date',
                                                 prefixIcon: Icon(
                                                   Icons.calendar_today,
-                                                  color: _getTypeColor(_selectedType),
+                                                  color: _getTypeColor(
+                                                    _selectedType,
+                                                  ),
                                                 ),
-                                                border: const OutlineInputBorder(),
-                                                suffixIcon: const Icon(Icons.arrow_drop_down),
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                suffixIcon: const Icon(
+                                                  Icons.arrow_drop_down,
+                                                ),
                                               ),
                                               child: Text(
                                                 '${_dueDate.month}/${_dueDate.day}/${_dueDate.year}',
-                                                style: theme.textTheme.bodyLarge,
+                                                style:
+                                                    theme.textTheme.bodyLarge,
                                               ),
                                             ),
                                           ),
@@ -518,20 +535,28 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                         Expanded(
                                           child: InkWell(
                                             onTap: _selectDueTime,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             child: InputDecorator(
                                               decoration: InputDecoration(
                                                 labelText: 'Due Time',
                                                 prefixIcon: Icon(
                                                   Icons.access_time,
-                                                  color: _getTypeColor(_selectedType),
+                                                  color: _getTypeColor(
+                                                    _selectedType,
+                                                  ),
                                                 ),
-                                                border: const OutlineInputBorder(),
-                                                suffixIcon: const Icon(Icons.arrow_drop_down),
+                                                border:
+                                                    const OutlineInputBorder(),
+                                                suffixIcon: const Icon(
+                                                  Icons.arrow_drop_down,
+                                                ),
                                               ),
                                               child: Text(
                                                 _dueTime.format(context),
-                                                style: theme.textTheme.bodyLarge,
+                                                style:
+                                                    theme.textTheme.bodyLarge,
                                               ),
                                             ),
                                           ),
@@ -542,7 +567,10 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                     Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                                        color: theme
+                                            .colorScheme
+                                            .primaryContainer
+                                            .withValues(alpha: 0.3),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Row(
@@ -588,9 +616,10 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                   children: [
                                     Text(
                                       'Points Configuration',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 20),
                                     TextFormField(
@@ -641,16 +670,23 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                   children: [
                                     Text(
                                       'Late Submission Policy',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 16),
                                     SwitchListTile(
-                                      title: const Text('Allow Late Submissions'),
-                                      subtitle: const Text('Students can submit after the due date with penalty'),
+                                      title: const Text(
+                                        'Allow Late Submissions',
+                                      ),
+                                      subtitle: const Text(
+                                        'Students can submit after the due date with penalty',
+                                      ),
                                       value: _allowLateSubmissions,
-                                      activeColor: _getTypeColor(_selectedType),
+                                      activeThumbColor: _getTypeColor(
+                                        _selectedType,
+                                      ),
                                       onChanged: (value) {
                                         setState(() {
                                           _allowLateSubmissions = value;
@@ -660,35 +696,47 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                     if (_allowLateSubmissions) ...[
                                       const Divider(),
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'Late Penalty: $_latePenaltyPercentage% per day',
-                                              style: theme.textTheme.bodyLarge?.copyWith(
-                                                fontWeight: FontWeight.w500,
-                                              ),
+                                              style: theme.textTheme.bodyLarge
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
                                             ),
                                             const SizedBox(height: 8),
                                             Slider(
-                                              value: _latePenaltyPercentage.toDouble(),
+                                              value: _latePenaltyPercentage
+                                                  .toDouble(),
                                               min: 0,
                                               max: 50,
                                               divisions: 10,
                                               label: '$_latePenaltyPercentage%',
-                                              activeColor: _getTypeColor(_selectedType),
+                                              activeColor: _getTypeColor(
+                                                _selectedType,
+                                              ),
                                               onChanged: (value) {
                                                 setState(() {
-                                                  _latePenaltyPercentage = value.round();
+                                                  _latePenaltyPercentage = value
+                                                      .round();
                                                 });
                                               },
                                             ),
                                             Text(
                                               'Students will lose $_latePenaltyPercentage% of their score for each day late',
-                                              style: theme.textTheme.bodySmall?.copyWith(
-                                                color: theme.colorScheme.onSurfaceVariant,
-                                              ),
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -720,46 +768,53 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                   children: [
                                     Text(
                                       'Publishing Options',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                     ),
                                     const SizedBox(height: 16),
                                     RadioListTile<int>(
                                       title: const Text('Save as Draft'),
-                                      subtitle: const Text('Assignment will not be visible to students'),
+                                      subtitle: const Text(
+                                        'Assignment will not be visible to students',
+                                      ),
                                       value: 0,
-                                      groupValue: _publishOption,
+                                      // groupValue: _publishOption, // Deprecated
                                       activeColor: _getTypeColor(_selectedType),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _publishOption = value!;
-                                        });
-                                      },
+                                      // onChanged: (value) { // Deprecated
+                                        // setState(() {
+                                        //   _publishOption = value!;
+                                        // });
+                                      // },
                                     ),
                                     RadioListTile<int>(
                                       title: const Text('Publish Immediately'),
-                                      subtitle: const Text('Students can see and submit the assignment now'),
+                                      subtitle: const Text(
+                                        'Students can see and submit the assignment now',
+                                      ),
                                       value: 1,
-                                      groupValue: _publishOption,
+                                      // groupValue: _publishOption, // Deprecated
                                       activeColor: _getTypeColor(_selectedType),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _publishOption = value!;
-                                        });
-                                      },
+                                      // onChanged: (value) { // Deprecated
+                                        // setState(() {
+                                        //   _publishOption = value!;
+                                        // });
+                                      // },
                                     ),
                                     RadioListTile<int>(
                                       title: const Text('Schedule for Later'),
-                                      subtitle: const Text('Assignment becomes visible at a future date'),
+                                      subtitle: const Text(
+                                        'Assignment becomes visible at a future date',
+                                      ),
                                       value: 2,
-                                      groupValue: _publishOption,
+                                      // groupValue: _publishOption, // Deprecated
                                       activeColor: _getTypeColor(_selectedType),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _publishOption = value!;
-                                        });
-                                      },
+                                      // onChanged: (value) { // Deprecated
+                                        // setState(() {
+                                        //   _publishOption = value!;
+                                        // });
+                                      // },
                                     ),
                                     if (_publishOption == 2) ...[
                                       const Divider(),
@@ -769,27 +824,32 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                           Expanded(
                                             child: InkWell(
                                               onTap: () async {
-                                                final DateTime? picked = await showDatePicker(
-                                                  context: context,
-                                                  initialDate: _publishDate,
-                                                  firstDate: DateTime.now(),
-                                                  lastDate: _dueDate,
-                                                );
+                                                final DateTime? picked =
+                                                    await showDatePicker(
+                                                      context: context,
+                                                      initialDate: _publishDate,
+                                                      firstDate: DateTime.now(),
+                                                      lastDate: _dueDate,
+                                                    );
                                                 if (picked != null) {
                                                   setState(() {
                                                     _publishDate = picked;
                                                   });
                                                 }
                                               },
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                               child: InputDecorator(
                                                 decoration: InputDecoration(
                                                   labelText: 'Publish Date',
                                                   prefixIcon: Icon(
                                                     Icons.event,
-                                                    color: _getTypeColor(_selectedType),
+                                                    color: _getTypeColor(
+                                                      _selectedType,
+                                                    ),
                                                   ),
-                                                  border: const OutlineInputBorder(),
+                                                  border:
+                                                      const OutlineInputBorder(),
                                                 ),
                                                 child: Text(
                                                   '${_publishDate.month}/${_publishDate.day}/${_publishDate.year}',
@@ -801,27 +861,34 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                           Expanded(
                                             child: InkWell(
                                               onTap: () async {
-                                                final TimeOfDay? picked = await showTimePicker(
-                                                  context: context,
-                                                  initialTime: _publishTime,
-                                                );
+                                                final TimeOfDay? picked =
+                                                    await showTimePicker(
+                                                      context: context,
+                                                      initialTime: _publishTime,
+                                                    );
                                                 if (picked != null) {
                                                   setState(() {
                                                     _publishTime = picked;
                                                   });
                                                 }
                                               },
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                               child: InputDecorator(
                                                 decoration: InputDecoration(
                                                   labelText: 'Publish Time',
                                                   prefixIcon: Icon(
                                                     Icons.schedule,
-                                                    color: _getTypeColor(_selectedType),
+                                                    color: _getTypeColor(
+                                                      _selectedType,
+                                                    ),
                                                   ),
-                                                  border: const OutlineInputBorder(),
+                                                  border:
+                                                      const OutlineInputBorder(),
                                                 ),
-                                                child: Text(_publishTime.format(context)),
+                                                child: Text(
+                                                  _publishTime.format(context),
+                                                ),
                                               ),
                                             ),
                                           ),

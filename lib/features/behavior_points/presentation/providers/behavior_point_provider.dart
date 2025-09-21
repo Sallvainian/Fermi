@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/utils/firestore_thread_safe.dart';
 import '../../domain/services/behavior_points_service.dart';
 import '../../data/models/student_points_aggregate.dart';
 import '../../data/models/behavior_history_entry.dart';
@@ -190,82 +191,79 @@ class BehaviorPointProvider with ChangeNotifier {
       await _cancelSubscriptions();
 
       _behaviors = [];
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
 
-      _behaviorsSubscription = _service
-          .watchClassBehaviors(classId)
-          .listen(
-            (behaviors) {
-              _behaviors = behaviors;
-              notifyListeners();
-            },
-            onError: (error) {
-              LoggerService.error(
-                'Failed to load behaviors',
-                tag: _tag,
-                error: error,
-              );
-              _error = 'Failed to load behaviors';
-              notifyListeners();
-            },
+      _behaviorsSubscription = FirestoreThreadSafe.listen(
+        _service.watchClassBehaviors(classId),
+        onData: (behaviors) {
+          _behaviors = behaviors;
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
+        },
+        onError: (error) {
+          LoggerService.error(
+            'Failed to load behaviors',
+            tag: _tag,
+            error: error,
           );
+          _error = 'Failed to load behaviors';
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
+        },
+      );
 
       // Subscribe to student aggregates
-      _aggregatesSubscription = _service
-          .watchClassPointsSummary(classId)
-          .listen(
-            (aggregates) {
-              _studentAggregates.clear();
-              _studentSummaries.clear();
+      _aggregatesSubscription = FirestoreThreadSafe.listen(
+        _service.watchClassPointsSummary(classId),
+        onData: (aggregates) {
+          _studentAggregates.clear();
+          _studentSummaries.clear();
 
-              for (final entry in aggregates.entries) {
-                final aggregate = entry.value;
+          for (final entry in aggregates.entries) {
+            final aggregate = entry.value;
 
-                // Skip invalid entries
-                if (aggregate.studentId.isEmpty ||
-                    aggregate.studentName == 'Loading...' ||
-                    aggregate.studentName == 'Unknown Student') {
-                  continue;
-                }
+            // Skip invalid entries
+            if (aggregate.studentId.isEmpty ||
+                aggregate.studentName == 'Loading...' ||
+                aggregate.studentName == 'Unknown Student') {
+              continue;
+            }
 
-                _studentAggregates[entry.key] = aggregate;
-                _studentSummaries[entry.key] =
-                    StudentPointSummary.fromAggregate(aggregate);
-              }
+            _studentAggregates[entry.key] = aggregate;
+            _studentSummaries[entry.key] =
+                StudentPointSummary.fromAggregate(aggregate);
+          }
 
-              notifyListeners();
-            },
-            onError: (error) {
-              LoggerService.error(
-                'Failed to load student aggregates',
-                tag: _tag,
-                error: error,
-              );
-              _error = 'Failed to load student points';
-              notifyListeners();
-            },
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
+        },
+        onError: (error) {
+          LoggerService.error(
+            'Failed to load student aggregates',
+            tag: _tag,
+            error: error,
           );
+          _error = 'Failed to load student points';
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
+        },
+      );
 
       // Subscribe to history for activity feed
-      _historySubscription = _service
-          .watchRecentHistory(classId, limit: 100)
-          .listen(
-            (entries) {
-              _historyEntries = entries;
-              _behaviorPoints = entries
-                  .where((e) => !e.isUndone)
-                  .map((e) => BehaviorPoint.fromHistoryEntry(e, classId))
-                  .toList();
-              notifyListeners();
-            },
-            onError: (error) {
-              LoggerService.error(
-                'Failed to load history',
-                tag: _tag,
-                error: error,
-              );
-            },
+      _historySubscription = FirestoreThreadSafe.listen(
+        _service.watchRecentHistory(classId, limit: 100),
+        onData: (entries) {
+          _historyEntries = entries;
+          _behaviorPoints = entries
+              .where((e) => !e.isUndone)
+              .map((e) => BehaviorPoint.fromHistoryEntry(e, classId))
+              .toList();
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
+        },
+        onError: (error) {
+          LoggerService.error(
+            'Failed to load history',
+            tag: _tag,
+            error: error,
           );
+        },
+      );
     } finally {
       _setLoading(false);
     }
@@ -283,7 +281,7 @@ class BehaviorPointProvider with ChangeNotifier {
     if (_currentClassId == null) {
       LoggerService.error('No class selected', tag: _tag);
       _error = 'No class selected';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
       return;
     }
 
@@ -294,7 +292,7 @@ class BehaviorPointProvider with ChangeNotifier {
         tag: _tag,
       );
       _error = 'Invalid student ID';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
       return;
     }
 
@@ -320,7 +318,7 @@ class BehaviorPointProvider with ChangeNotifier {
 
     if (!success) {
       _error = 'Failed to award points';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     } else {
       LoggerService.info('Points awarded successfully', tag: _tag);
     }
@@ -343,7 +341,7 @@ class BehaviorPointProvider with ChangeNotifier {
     if (lastEntry.isEmpty) {
       LoggerService.error('No operations to undo for student', tag: _tag);
       _error = 'No operations to undo';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
       return;
     }
 
@@ -355,7 +353,7 @@ class BehaviorPointProvider with ChangeNotifier {
 
     if (!success) {
       _error = 'Failed to undo operation';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     }
   }
 
@@ -364,18 +362,18 @@ class BehaviorPointProvider with ChangeNotifier {
     required String description,
     required int points,
     required String type,
-    IconData? icon,
+    required IconData icon,
   }) async {
     if (_currentClassId == null) {
       _error = 'No class selected';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
       return;
     }
 
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
       _error = 'You must be signed in to create behaviors';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
       return;
     }
 
@@ -390,19 +388,19 @@ class BehaviorPointProvider with ChangeNotifier {
       description: description.trim(),
       points: points,
       type: behaviorType,
-      icon: icon ?? Icons.star_outline,
+      icon: icon,
     );
 
     if (!success) {
       _error = 'Failed to create behavior';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     }
   }
 
   Future<void> deleteBehavior(String behaviorId) async {
     if (_currentClassId == null) {
       _error = 'No class selected';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
       return;
     }
 
@@ -413,7 +411,7 @@ class BehaviorPointProvider with ChangeNotifier {
 
     if (!success) {
       _error = 'Failed to delete behavior';
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     }
   }
 
@@ -452,7 +450,7 @@ class BehaviorPointProvider with ChangeNotifier {
 
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();
+    FirestoreThreadSafe.safeNotify(() => notifyListeners());
   }
 
   Future<void> _cancelSubscriptions() async {

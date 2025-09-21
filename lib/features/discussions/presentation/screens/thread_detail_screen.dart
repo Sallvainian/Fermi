@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../providers/discussion_provider_simple.dart';
+import '../providers/discussion_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/models/user_model.dart';
 

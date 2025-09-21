@@ -697,10 +697,6 @@ class _BehaviorPointsScreenState extends State<BehaviorPointsScreen> {
   }
 
   /// Determines the aspect ratio for the student cards based on screen size
-  /// Cards are now SQUARE (1:1 aspect ratio)
-  double _getAspectRatio(BuildContext context) {
-    return 1.0; // SQUARE cards for all screen sizes
-  }
 
   /// Shows the behavior assignment popup for the selected student
   void _showBehaviorAssignmentPopup(StudentPointData student) {

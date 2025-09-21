@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/widgets/profile_completion_dialog.dart';
 import '../../../classes/presentation/providers/class_provider.dart';
-import '../../../chat/presentation/providers/call_provider.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../classes/domain/models/class_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
@@ -16,7 +15,7 @@ import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../dashboard/domain/models/activity_model.dart';
-import '../../../assignments/presentation/providers/assignment_provider_simple.dart';
+import '../../../assignments/presentation/providers/assignment_provider.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
@@ -97,28 +96,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final callProvider = context.watch<CallProvider>();
     final classProvider = context.watch<ClassProvider>();
     final dashboardProvider = context.watch<DashboardProvider>();
     final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final user = authProvider.userModel;
     final theme = Theme.of(context);
-
-    // Handle incoming calls
-    if (callProvider.hasIncomingCall &&
-        callProvider.incomingCall != null &&
-        !callProvider.isNavigationInProgress) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        callProvider.setNavigationInProgress(true);
-        context.push('/incoming-call', extra: callProvider.incomingCall).then((
-          _,
-        ) {
-          // Reset navigation state after call screen is popped
-          callProvider.setNavigationInProgress(false);
-          // Optional: Add any post-call logic here
-        });
-      });
-    }
 
     return AdaptiveLayout(
       title: 'Teacher Dashboard',
@@ -638,30 +620,6 @@ Widget _buildQuickStats(
 
   void _navigateToClass(BuildContext context, ClassModel course) {
     context.go('/class/${course.id}');
-  }
-
-  Widget _buildInfoChip(IconData icon, String text) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildRecentActivityCard(

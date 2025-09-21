@@ -24,7 +24,6 @@ class _UserEditDialogState extends State<UserEditDialog> {
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
   late TextEditingController _usernameController;
-  late String _originalUsername; // Store original username
   late TextEditingController _parentEmailController;
   late TextEditingController _gradeLevelController;
   
@@ -39,7 +38,6 @@ class _UserEditDialogState extends State<UserEditDialog> {
     _lastNameController = TextEditingController(text: widget.user.lastName);
     _emailController = TextEditingController(text: widget.user.email);
     // For students, use email as username if they don't have one
-    _originalUsername = widget.user.username ?? '';
     _usernameController = TextEditingController(
       text: widget.user.username ?? widget.user.email ?? ''
     );

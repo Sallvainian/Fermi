@@ -8,6 +8,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/utils/firestore_thread_safe.dart';
 
 /// Firestore-backed ChatController for Flyer Chat
 class FirestoreChatController extends InMemoryChatController with ChangeNotifier {
@@ -28,10 +29,44 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
   /// Initialize the controller and start listening to messages
   Future<void> initialize() async {
     LoggerService.info('Initializing chat controller for conversation: $conversationId', tag: 'FirestoreChatController');
+
+    // Ensure conversation exists before trying to access messages
+    await _ensureConversationExists();
+
     await _loadInitialMessages();
     _startListening();
     _startTypingListener();
     LoggerService.info('Chat controller initialized successfully', tag: 'FirestoreChatController');
+  }
+
+  /// Ensure the conversation document exists
+  Future<void> _ensureConversationExists() async {
+    try {
+      final conversationRef = _firestore.collection('conversations').doc(conversationId);
+      final doc = await conversationRef.get();
+
+      if (!doc.exists) {
+        // Create minimal conversation document if it doesn't exist
+        // This should have been created by FlyerChatScreen, but adding as safety
+        final currentUserId = _auth.currentUser?.uid;
+        if (currentUserId != null) {
+          // Parse conversation ID to get participants (format: userId1_userId2)
+          final participants = conversationId.split('_');
+
+          await conversationRef.set({
+            'participants': participants,
+            'participantIds': participants,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'type': 'direct',
+          });
+
+          LoggerService.info('Created missing conversation document: $conversationId', tag: 'FirestoreChatController');
+        }
+      }
+    } catch (e) {
+      LoggerService.error('Error ensuring conversation exists', error: e, tag: 'FirestoreChatController');
+    }
   }
 
   /// Load initial messages from Firestore
@@ -62,43 +97,47 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
   /// Start listening to real-time message updates
   void _startListening() {
-    _messageSubscription = _firestore
-        .collection('conversations')
-        .doc(conversationId)
-        .collection('messages')
-        .orderBy('createdAt', descending: false)
-        .snapshots()
-        .listen((snapshot) {
+    _messageSubscription = FirestoreThreadSafe.listen(
+      _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .orderBy('createdAt', descending: false)
+          .snapshots(),
+      onData: (snapshot) {
+        for (final change in snapshot.docChanges) {
+          final message = _convertToFlyerMessage(change.doc);
 
-      for (final change in snapshot.docChanges) {
-        final message = _convertToFlyerMessage(change.doc);
+          switch (change.type) {
+            case DocumentChangeType.added:
+              // Only add if not already in cache (prevents duplicates)
+              if (!_messageCache.containsKey(message.id)) {
+                _messageCache[message.id] = message;
+                insertMessage(message);
+              }
+              break;
 
-        switch (change.type) {
-          case DocumentChangeType.added:
-            // Only add if not already in cache (prevents duplicates)
-            if (!_messageCache.containsKey(message.id)) {
+            case DocumentChangeType.modified:
+              // Update existing message
               _messageCache[message.id] = message;
-              insertMessage(message);
-            }
-            break;
+              // Message will update via the messages list
+              break;
 
-          case DocumentChangeType.modified:
-            // Update existing message
-            _messageCache[message.id] = message;
-            // Message will update via the messages list
-            break;
-
-          case DocumentChangeType.removed:
-            // Remove message
-            final index = messages.indexWhere((m) => m.id == message.id);
-            if (index != -1) {
-              _messageCache.remove(message.id);
-              removeMessage(message);
-            }
-            break;
+            case DocumentChangeType.removed:
+              // Remove message
+              final index = messages.indexWhere((m) => m.id == message.id);
+              if (index != -1) {
+                _messageCache.remove(message.id);
+                removeMessage(message);
+              }
+              break;
+          }
         }
-      }
-    });
+      },
+      onError: (error) {
+        LoggerService.error('Error listening to messages', error: error, tag: 'FirestoreChatController');
+      },
+    );
   }
 
   /// Convert Firestore document to Flyer Chat message
@@ -174,25 +213,29 @@ class FirestoreChatController extends InMemoryChatController with ChangeNotifier
 
   /// Start listening to typing indicators
   void _startTypingListener() {
-    _typingSubscription = _firestore
-        .collection('conversations')
-        .doc(conversationId)
-        .collection('typing')
-        .snapshots()
-        .listen((snapshot) {
+    _typingSubscription = FirestoreThreadSafe.listen(
+      _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('typing')
+          .snapshots(),
+      onData: (snapshot) {
+        final currentUserId = _auth.currentUser?.uid;
+        _typingUsers.clear();
 
-      final currentUserId = _auth.currentUser?.uid;
-      _typingUsers.clear();
-
-      for (final doc in snapshot.docs) {
-        if (doc.id != currentUserId) {
-          _typingUsers[doc.id] = doc.data();
+        for (final doc in snapshot.docs) {
+          if (doc.id != currentUserId) {
+            _typingUsers[doc.id] = doc.data() as Map<String, dynamic>;
+          }
         }
-      }
 
-      // Notify UI about typing status changes
-      notifyListeners();
-    });
+        // Notify UI about typing status changes using thread-safe wrapper
+        FirestoreThreadSafe.safeNotify(() => notifyListeners());
+      },
+      onError: (error) {
+        LoggerService.error('Error listening to typing status', error: error, tag: 'FirestoreChatController');
+      },
+    );
   }
 
   /// Get list of currently typing users

@@ -6,7 +6,7 @@ import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/responsive_layout.dart';
 import '../../../../../shared/models/user_model.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
-import '../../providers/assignment_provider_simple.dart';
+import '../../providers/assignment_provider.dart';
 import '../../../../../shared/widgets/custom_radio_list_tile.dart';
 
 class TeacherAssignmentsScreen extends StatefulWidget {

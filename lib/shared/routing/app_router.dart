@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
-import '../../features/student/data/services/presence_service.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -15,7 +14,7 @@ import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/bulk_import_screen.dart';
 import '../../features/admin/presentation/screens/user_management_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
-import '../../features/chat/presentation/screens/simple_user_list.dart';
+import '../../features/chat/presentation/screens/user_list.dart';
 import '../../features/chat/presentation/screens/group_creation_screen.dart';
 import '../../features/chat/presentation/screens/class_selection_screen.dart';
 import '../../features/chat/presentation/screens/flyer_chat_screen.dart';
@@ -69,9 +68,7 @@ class AppRouter {
     return GoRouter(
       initialLocation: '/',
       refreshListenable: authProvider,
-      observers: [
-        _LoggingNavigatorObserver(),
-      ],
+      observers: [_LoggingNavigatorObserver()],
       redirect: (context, state) {
         final isAuth = authProvider.status == AuthStatus.authenticated;
         final isAuthenticating =
@@ -361,7 +358,6 @@ class AppRouter {
         GoRoute(
           path: '/messages',
           builder: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
             // Note: Presence managed by AuthProvider and heartbeat
             // PresenceService().markUserActive(
             //   userRole: auth.userModel?.role?.name,
@@ -378,7 +374,6 @@ class AppRouter {
           path: '/messages/:chatRoomId',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
-            final auth = Provider.of<AuthProvider>(context, listen: false);
             // Note: Presence managed by AuthProvider and heartbeat
             // PresenceService().markUserActive(
             //   userRole: auth.userModel?.role?.name,

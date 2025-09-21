@@ -6,6 +6,7 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../constants/behavior_icons.dart';
 
 /// Enumeration representing the types of behaviors.
 ///
@@ -44,6 +45,9 @@ class Behavior {
   /// Icon data for visual representation
   final IconData iconData;
 
+  /// Icon name for storage and retrieval
+  final String? iconName;
+
   /// Whether this is a custom behavior created by a teacher
   final bool isCustom;
 
@@ -66,6 +70,7 @@ class Behavior {
     required this.points,
     required this.type,
     required this.iconData,
+    this.iconName,
     this.isCustom = false,
     this.teacherId,
     this.classId,
@@ -95,7 +100,7 @@ class Behavior {
         description: '',
         points: 0,
         type: BehaviorType.positive,
-        iconData: Icons.star,
+        iconData: BehaviorIcons.defaultIcon,
         createdAt: DateTime.now(),
       );
     }
@@ -132,10 +137,9 @@ class Behavior {
       return null;
     }
 
-    // Create IconData with proper handling
+    // Get IconData from predefined constants map to ensure compile-time constant
     final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
-    const fontFamily = 'MaterialIcons';
-    final iconData = IconData(iconCodePoint, fontFamily: fontFamily);
+    final iconData = BehaviorIcons.getIconFromCodePoint(iconCodePoint);
 
     return Behavior(
       id: doc.id,
@@ -147,6 +151,7 @@ class Behavior {
         orElse: () => BehaviorType.positive,
       ),
       iconData: iconData,
+      iconName: data['iconName'],
       isCustom: data['isCustom'] ?? false,
       teacherId: data['teacherId'],
       classId: data['classId'],
@@ -178,10 +183,9 @@ class Behavior {
       return null;
     }
 
-    // Create IconData with proper handling
+    // Get IconData from predefined constants map to ensure compile-time constant
     final int iconCodePoint = data['iconCodePoint'] ?? Icons.star.codePoint;
-    const fontFamily = 'MaterialIcons';
-    final iconData = IconData(iconCodePoint, fontFamily: fontFamily);
+    final iconData = BehaviorIcons.getIconFromCodePoint(iconCodePoint);
 
     return Behavior(
       id: id,
@@ -193,6 +197,7 @@ class Behavior {
         orElse: () => BehaviorType.positive,
       ),
       iconData: iconData,
+      iconName: data['iconName'],
       isCustom: data['isCustom'] ?? false,
       teacherId: data['teacherId'],
       classId: data['classId'],
@@ -216,6 +221,7 @@ class Behavior {
       'description': description,
       'points': points,
       'type': type.name,
+      'iconName': iconName,
       'iconCodePoint': iconData.codePoint,
       'isCustom': isCustom,
       'teacherId': teacherId,
@@ -238,6 +244,7 @@ class Behavior {
     int? points,
     BehaviorType? type,
     IconData? iconData,
+    String? iconName,
     bool? isCustom,
     String? teacherId,
     String? classId,
@@ -251,6 +258,7 @@ class Behavior {
       points: points ?? this.points,
       type: type ?? this.type,
       iconData: iconData ?? this.iconData,
+      iconName: iconName ?? this.iconName,
       isCustom: isCustom ?? this.isCustom,
       teacherId: teacherId ?? this.teacherId,
       classId: classId ?? this.classId,

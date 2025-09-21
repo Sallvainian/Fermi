@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/chat_provider_simple.dart';
+import '../providers/chat_provider.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 
 class UserSelectionScreen extends StatefulWidget {

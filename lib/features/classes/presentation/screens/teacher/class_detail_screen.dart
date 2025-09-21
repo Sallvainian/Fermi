@@ -12,7 +12,7 @@ import '../../../../../features/student/domain/models/student.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../widgets/edit_class_dialog.dart';
 import '../../widgets/enroll_students_dialog.dart';
-import '../../../../../features/assignments/presentation/providers/assignment_provider_simple.dart';
+import '../../../../../features/assignments/presentation/providers/assignment_provider.dart';
 
 class ClassDetailScreen extends StatefulWidget {
   final String classId;
@@ -199,14 +199,17 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
     );
 
     if (confirmed == true) {
+      if (!mounted) return;
       final classProvider = context.read<ClassProvider>();
       for (final studentId in _selectedStudentIds) {
         await classProvider.unenrollStudent(widget.classId, studentId);
       }
       setState(() => _selectedStudentIds.clear());
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Students removed from class')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Students removed from class')),
+        );
+      }
     }
   }
 
@@ -228,9 +231,11 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
 
     // For now, just copy to clipboard
     await Clipboard.setData(ClipboardData(text: csvContent.toString()));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Student list copied to clipboard')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Student list copied to clipboard')),
+      );
+    }
   }
 
   @override

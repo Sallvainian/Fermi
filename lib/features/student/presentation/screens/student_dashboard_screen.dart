@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../classes/presentation/providers/class_provider.dart';
-import '../../../chat/presentation/providers/call_provider.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../classes/domain/models/class_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
@@ -12,7 +11,7 @@ import '../../../../shared/theme/app_spacing.dart';
 import '../../../../shared/theme/app_theme.dart';
 import '../../../../shared/widgets/pwa_install_prompt.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
-import '../../../assignments/presentation/providers/student_assignment_provider_simple.dart';
+import '../../../assignments/presentation/providers/student_assignment_provider.dart';
 import '../widgets/online_users_card.dart';
 import '../../data/services/presence_service.dart';
 
@@ -55,27 +54,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
-    final callProvider = context.watch<CallProvider>();
     final classProvider = context.watch<ClassProvider>();
     final dashboardProvider = context.watch<DashboardProvider>();
     final user = authProvider.userModel;
     final theme = Theme.of(context);
-
-    // Handle incoming calls
-    if (callProvider.hasIncomingCall &&
-        callProvider.incomingCall != null &&
-        !callProvider.isNavigationInProgress) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        callProvider.setNavigationInProgress(true);
-        context.push('/incoming-call', extra: callProvider.incomingCall).then((
-          _,
-        ) {
-          // Reset navigation state after call screen is popped
-          callProvider.setNavigationInProgress(false);
-          // Optional: Add any post-call logic here
-        });
-      });
-    }
 
     return AdaptiveLayout(
       title: 'Student Dashboard',

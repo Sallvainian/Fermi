@@ -17,7 +17,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../../features/auth/data/services/auth_service.dart';
 import '../../features/assignments/data/services/assignment_service.dart';
-import '../../features/chat/data/services/chat_service.dart';
 import '../../features/assignments/data/services/submission_service.dart';
 import '../services/logger_service.dart';
 import 'app_initializer.dart';
@@ -110,7 +109,6 @@ Future<void> setupServiceLocator() async {
     () => AssignmentService(firestore: getIt<FirebaseFirestore>()),
   );
 
-  getIt.registerFactory<ChatService>(() => ChatService());
   getIt.registerFactory<SubmissionService>(
     () => SubmissionService(firestore: getIt<FirebaseFirestore>()),
   );
@@ -144,7 +142,6 @@ extension ServiceLocatorExtension on GetIt {
 
   AuthService get authService => get<AuthService>();
   AssignmentService get assignmentService => get<AssignmentService>();
-  ChatService get chatService => get<ChatService>();
   SubmissionService get submissionService => get<SubmissionService>();
   // LoggerService is a singleton - use LoggerService.method() directly
   // Repository getters removed - using direct Firestore access
