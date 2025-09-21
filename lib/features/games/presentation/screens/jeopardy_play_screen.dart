@@ -185,7 +185,13 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             Row(
               children: [
                 IconButton(
-                  onPressed: () => context.go('/teacher/games/jeopardy'),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/teacher/games/jeopardy');
+                    }
+                  },
                   icon: const Icon(Icons.arrow_back),
                 ),
                 Expanded(

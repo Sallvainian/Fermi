@@ -27,11 +27,11 @@ export const sendMessage = functions.https.onCall(
     const { conversationId, text, attachments } = request.data;
     const senderId = request.auth.uid;
 
-    // Validate input
-    if (!conversationId || !text) {
+    // Validate input - allow attachment-only messages
+    if (!conversationId || (!text && !attachments)) {
       throw new functions.https.HttpsError(
         "invalid-argument",
-        "conversationId and text are required"
+        "conversationId and either text or attachments are required"
       );
     }
 
@@ -53,7 +53,7 @@ export const sendMessage = functions.https.onCall(
         authorId: senderId,
         authorName: senderData.name || "Unknown",
         authorRole: senderData.role || "student",
-        text: text.trim(),
+        text: text ? text.trim() : "",
         attachments: attachments || [],
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         sentAt: admin.firestore.FieldValue.serverTimestamp(),

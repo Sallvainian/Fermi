@@ -28,11 +28,11 @@ class FirestoreThreadSafe {
   static int _queueDepth = 0;
   static int _maxQueueDepth = 0;
 
-  // Platform detection - only apply workaround on Windows/Linux
+  // Platform detection - only apply workaround on Windows
   static bool get _needsThreadWorkaround {
     if (kIsWeb) return false;
     try {
-      return Platform.isWindows || Platform.isLinux;
+      return Platform.isWindows;
     } catch (_) {
       return false; // Fallback for platforms where Platform isn't available
     }

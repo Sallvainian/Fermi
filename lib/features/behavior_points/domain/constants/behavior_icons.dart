@@ -50,46 +50,46 @@ class BehaviorIcons {
 
   /// Map of icon codepoints to their corresponding IconData constants.
   /// Used to look up icons when loading from Firestore.
-  static const Map<int, IconData> iconMap = {
+  static final Map<int, IconData> iconMap = {
     // Positive behavior icons
-    0xe5f9: star, // Icons.star.codePoint
-    0xe8dc: thumbUp, // Icons.thumb_up
-    0xe25b: favorite, // Icons.favorite
-    0xe0f0: lightbulb, // Icons.lightbulb
-    0xe631: psychology, // Icons.psychology
-    0xe9ae: frontHand, // Icons.front_hand
-    0xe7fc: peopleOutline, // Icons.people_outline
-    0xe8b5: schedule, // Icons.schedule
-    0xe86c: checkCircle, // Icons.check_circle
-    0xe7f2: emojiEmotions, // Icons.emoji_emotions
-    0xe80c: school, // Icons.school
-    0xe169: assignmentTurnedIn, // Icons.assignment_turned_in
-    0xea70: volunteerActivism, // Icons.volunteer_activism
-    0xf490: workspacePremium, // Icons.workspace_premium
-    0xe8e5: trendingUp, // Icons.trending_up
+    star.codePoint: star,
+    thumbUp.codePoint: thumbUp,
+    favorite.codePoint: favorite,
+    lightbulb.codePoint: lightbulb,
+    psychology.codePoint: psychology,
+    frontHand.codePoint: frontHand,
+    peopleOutline.codePoint: peopleOutline,
+    schedule.codePoint: schedule,
+    checkCircle.codePoint: checkCircle,
+    emojiEmotions.codePoint: emojiEmotions,
+    school.codePoint: school,
+    assignmentTurnedIn.codePoint: assignmentTurnedIn,
+    volunteerActivism.codePoint: volunteerActivism,
+    workspacePremium.codePoint: workspacePremium,
+    trendingUp.codePoint: trendingUp,
 
     // Negative/Neutral behavior icons
-    0xe002: warning, // Icons.warning
-    0xe5c9: cancel, // Icons.cancel
-    0xe003: accessTime, // Icons.access_time
-    0xe16a: assignmentLate, // Icons.assignment_late
-    0xe7f3: moodBad, // Icons.mood_bad
-    0xe627: phonelinkOff, // Icons.phonelink_off
-    0xf540: backpack, // Icons.backpack
-    0xe91f: recordVoiceOver, // Icons.record_voice_over
-    0xe645: priorityHigh, // Icons.priority_high
-    0xe001: errorOutline, // Icons.error_outline
-    0xe8db: thumbDown, // Icons.thumb_down
-    0xe15d: removeCircleOutline, // Icons.remove_circle_outline
-    0xe14b: block, // Icons.block
-    0xe7f6: notificationsOff, // Icons.notifications_off
-    0xe8e6: trendingDown, // Icons.trending_down
+    warning.codePoint: warning,
+    cancel.codePoint: cancel,
+    accessTime.codePoint: accessTime,
+    assignmentLate.codePoint: assignmentLate,
+    moodBad.codePoint: moodBad,
+    phonelinkOff.codePoint: phonelinkOff,
+    backpack.codePoint: backpack,
+    recordVoiceOver.codePoint: recordVoiceOver,
+    priorityHigh.codePoint: priorityHigh,
+    errorOutline.codePoint: errorOutline,
+    thumbDown.codePoint: thumbDown,
+    removeCircleOutline.codePoint: removeCircleOutline,
+    block.codePoint: block,
+    notificationsOff.codePoint: notificationsOff,
+    trendingDown.codePoint: trendingDown,
 
     // Additional commonly used icons
-    0xe5f8: starOutline, // Icons.star_outline
-    0xe047: add, // Icons.add
-    0xe15b: remove, // Icons.remove
-    0xe869: build, // Icons.build
+    starOutline.codePoint: starOutline,
+    add.codePoint: add,
+    remove.codePoint: remove,
+    build.codePoint: build,
   };
 
   /// Get IconData from codepoint, with fallback to star icon.

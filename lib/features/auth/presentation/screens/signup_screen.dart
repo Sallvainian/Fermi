@@ -168,9 +168,15 @@ class _SignupScreenState extends State<SignupScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go(_isTeacherRole 
-              ? '/auth/login?role=teacher' 
-              : '/auth/login'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(_isTeacherRole
+                  ? '/auth/login?role=teacher'
+                  : '/auth/login');
+            }
+          },
         ),
       ),
       body: SafeArea(

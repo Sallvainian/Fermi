@@ -98,7 +98,13 @@ class _GradebookScreenState extends State<GradebookScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
           tooltip: 'Back to Dashboard',
         ),
         title: const Text('Gradebook'),

@@ -16,8 +16,11 @@ class SimpleUserList extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Always go back to messages instead of trying to pop
-            context.go('/messages');
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/messages');
+            }
           },
         ),
       ),

@@ -245,7 +245,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/teacher/classes'),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/teacher/classes');
+              }
+            },
           ),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -258,7 +264,13 @@ class _ClassDetailScreenState extends State<ClassDetailScreen>
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/teacher/classes'),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/teacher/classes');
+                }
+              },
               tooltip: 'Back to Classes',
             ),
             title: Column(

@@ -36,7 +36,7 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
   bool _isLoading = false;
 
   // Scheduled publishing
-  final int _publishOption = 0; // 0: draft, 1: immediate, 2: scheduled
+  int _publishOption = 0; // 0: draft, 1: immediate, 2: scheduled
   DateTime _publishDate = DateTime.now();
   TimeOfDay _publishTime = TimeOfDay.now();
 
@@ -780,13 +780,13 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                         'Assignment will not be visible to students',
                                       ),
                                       value: 0,
-                                      // groupValue: _publishOption, // Deprecated
+                                      groupValue: _publishOption,
                                       activeColor: _getTypeColor(_selectedType),
-                                      // onChanged: (value) { // Deprecated
-                                        // setState(() {
-                                        //   _publishOption = value!;
-                                        // });
-                                      // },
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _publishOption = value!;
+                                        });
+                                      },
                                     ),
                                     RadioListTile<int>(
                                       title: const Text('Publish Immediately'),
@@ -794,13 +794,13 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                         'Students can see and submit the assignment now',
                                       ),
                                       value: 1,
-                                      // groupValue: _publishOption, // Deprecated
+                                      groupValue: _publishOption,
                                       activeColor: _getTypeColor(_selectedType),
-                                      // onChanged: (value) { // Deprecated
-                                        // setState(() {
-                                        //   _publishOption = value!;
-                                        // });
-                                      // },
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _publishOption = value!;
+                                        });
+                                      },
                                     ),
                                     RadioListTile<int>(
                                       title: const Text('Schedule for Later'),
@@ -808,13 +808,13 @@ class _AssignmentCreateScreenState extends State<AssignmentCreateScreen>
                                         'Assignment becomes visible at a future date',
                                       ),
                                       value: 2,
-                                      // groupValue: _publishOption, // Deprecated
+                                      groupValue: _publishOption,
                                       activeColor: _getTypeColor(_selectedType),
-                                      // onChanged: (value) { // Deprecated
-                                        // setState(() {
-                                        //   _publishOption = value!;
-                                        // });
-                                      // },
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _publishOption = value!;
+                                        });
+                                      },
                                     ),
                                     if (_publishOption == 2) ...[
                                       const Divider(),

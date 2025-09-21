@@ -85,7 +85,13 @@ class _ClassesScreenState extends State<ClassesScreen> {
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.go('/dashboard'),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/dashboard');
+                }
+              },
               tooltip: 'Back to Dashboard',
             ),
             title: const Text('My Classes'),
