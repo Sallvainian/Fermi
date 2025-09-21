@@ -150,7 +150,7 @@ class StudentPointCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.error,
-        borderRadius: BorderRadius.circular(10), // Changed from circle to rounded rect for better fit
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.error.withValues(alpha: 0.5),
