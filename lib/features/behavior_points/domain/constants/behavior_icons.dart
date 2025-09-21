@@ -92,10 +92,11 @@ class BehaviorIcons {
     build.codePoint: build,
   };
 
-  /// Get IconData from codepoint, with fallback to star icon.
+  /// Returns the [IconData] corresponding to the given codepoint.
   ///
-  /// This method ensures we always return a valid compile-time constant IconData,
-  /// never creating dynamic IconData instances.
+  /// If the [codePoint] is not found in the predefined [iconMap], this method
+  /// returns the default star icon ([Icons.star]). This ensures a valid compile-time
+  /// constant [IconData] is always returned, and never creates dynamic IconData instances.
   static IconData getIconFromCodePoint(int codePoint) {
     return iconMap[codePoint] ?? star;
   }
