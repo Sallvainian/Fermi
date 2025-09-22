@@ -6,6 +6,36 @@ const db = admin.firestore();
 const messaging = admin.messaging();
 const storage = admin.storage();
 
+async function ensureConversationMembership(
+  conversationId: string,
+  userId: string
+) {
+  const conversationRef = db.collection("conversations").doc(conversationId);
+  const conversationDoc = await conversationRef.get();
+
+  if (!conversationDoc.exists) {
+    throw new functions.https.HttpsError(
+      "not-found",
+      "Conversation not found"
+    );
+  }
+
+  const conversationData = conversationDoc.data() ?? {};
+  const rawParticipants = conversationData.participants ?? conversationData.participantIds;
+  const participants = Array.isArray(rawParticipants)
+    ? rawParticipants.filter((participant): participant is string => typeof participant === "string")
+    : [];
+
+  if (!participants.includes(userId)) {
+    throw new functions.https.HttpsError(
+      "permission-denied",
+      "User does not belong to this conversation"
+    );
+  }
+
+  return { conversationRef, conversationDoc, conversationData, participants };
+}
+
 /**
  * Send a message with server-side validation
  * Ensures sender is authenticated and adds server timestamp
@@ -36,6 +66,11 @@ export const sendMessage = functions.https.onCall(
     }
 
     try {
+      const { conversationRef, participants } = await ensureConversationMembership(
+        conversationId,
+        senderId
+      );
+
       // Get sender info
       const senderDoc = await db.collection("users").doc(senderId).get();
       if (!senderDoc.exists) {
@@ -61,15 +96,13 @@ export const sendMessage = functions.https.onCall(
       };
 
       // Add message to conversation
-      await db
-        .collection("conversations")
-        .doc(conversationId)
+      await conversationRef
         .collection("messages")
         .doc(message.id)
         .set(message);
 
       // Update conversation metadata
-      await db.collection("conversations").doc(conversationId).update({
+      await conversationRef.update({
         lastMessage: {
           text: message.text,
           authorId: senderId,
@@ -80,25 +113,20 @@ export const sendMessage = functions.https.onCall(
         [`unreadCount.${senderId}`]: 0, // Reset sender's unread count
       });
 
-      // Increment unread count for other participants
-      const conversationDoc = await db.collection("conversations").doc(conversationId).get();
-      if (conversationDoc.exists) {
-        const participants = conversationDoc.data()!.participants || [];
-        const otherParticipants = participants.filter((p: string) => p !== senderId);
+      const otherParticipants = participants.filter((participantId) => participantId !== senderId);
 
-        // Update unread counts for other participants
-        const unreadUpdates: any = {};
-        for (const participantId of otherParticipants) {
-          unreadUpdates[`unreadCount.${participantId}`] = admin.firestore.FieldValue.increment(1);
-        }
-
-        if (Object.keys(unreadUpdates).length > 0) {
-          await db.collection("conversations").doc(conversationId).update(unreadUpdates);
-        }
-
-        // Send push notifications to other participants
-        await sendPushNotifications(otherParticipants, senderData.name, message.text, conversationId);
+      // Update unread counts for other participants
+      const unreadUpdates: Record<string, unknown> = {};
+      for (const participantId of otherParticipants) {
+        unreadUpdates[`unreadCount.${participantId}`] = admin.firestore.FieldValue.increment(1);
       }
+
+      if (Object.keys(unreadUpdates).length > 0) {
+        await conversationRef.update(unreadUpdates);
+      }
+
+      // Send push notifications to other participants
+      await sendPushNotifications(otherParticipants, senderData.name, message.text, conversationId);
 
       return { success: true, messageId: message.id };
     } catch (error) {
@@ -139,14 +167,14 @@ export const markMessagesAsRead = functions.https.onCall(
     }
 
     try {
+      const { conversationRef } = await ensureConversationMembership(conversationId, userId);
+
       // Update messages with seenAt timestamp
       const batch = db.batch();
       const now = admin.firestore.FieldValue.serverTimestamp();
 
       for (const messageId of messageIds) {
-        const messageRef = db
-          .collection("conversations")
-          .doc(conversationId)
+        const messageRef = conversationRef
           .collection("messages")
           .doc(messageId);
 
@@ -157,7 +185,6 @@ export const markMessagesAsRead = functions.https.onCall(
       }
 
       // Reset unread count for user
-      const conversationRef = db.collection("conversations").doc(conversationId);
       batch.update(conversationRef, {
         [`unreadCount.${userId}`]: 0
       });
@@ -203,10 +230,10 @@ export const updateTypingStatus = functions.https.onCall(
     }
 
     try {
+      const { conversationRef } = await ensureConversationMembership(conversationId, userId);
+
       // Update typing status in conversation metadata
-      const typingRef = db
-        .collection("conversations")
-        .doc(conversationId)
+      const typingRef = conversationRef
         .collection("typing")
         .doc(userId);
 
@@ -304,6 +331,8 @@ export const uploadChatFile = functions.https.onCall(
     }
 
     try {
+      await ensureConversationMembership(conversationId, userId);
+
       // Generate unique file path
       const timestamp = Date.now();
       const sanitizedFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_");

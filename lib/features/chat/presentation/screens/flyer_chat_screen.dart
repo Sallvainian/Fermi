@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../data/controllers/firestore_chat_controller.dart';
+import '../../../notifications/data/services/firebase_messaging_service.dart';
 import '../../../../shared/services/logger_service.dart';
 
 class FlyerChatScreen extends StatefulWidget {
@@ -46,7 +47,8 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
       if (conversationId == 'new') {
         // Get query parameters from context
         final router = GoRouter.of(context);
-        final params = router.routerDelegate.currentConfiguration.uri.queryParameters;
+        final params =
+            router.routerDelegate.currentConfiguration.uri.queryParameters;
         final recipientId = params['recipientId'];
 
         if (recipientId != null) {
@@ -54,7 +56,10 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
           conversationId = await _getOrCreateConversation(recipientId);
           _actualConversationId = conversationId;
         } else {
-          LoggerService.error('No recipient ID provided for new conversation', tag: 'FlyerChatScreen');
+          LoggerService.error(
+            'No recipient ID provided for new conversation',
+            tag: 'FlyerChatScreen',
+          );
           if (mounted) {
             setState(() {
               _isLoading = false;
@@ -67,10 +72,17 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
       }
 
       // Initialize controller with actual conversation ID
-      _controller = FirestoreChatController(conversationId: _actualConversationId!);
+      _controller = FirestoreChatController(
+        conversationId: _actualConversationId!,
+      );
+      FirebaseMessagingService().markConversationActive(_actualConversationId);
       await _controller!.initialize();
     } catch (e) {
-      LoggerService.error('Failed to initialize chat', error: e, tag: 'FlyerChatScreen');
+      LoggerService.error(
+        'Failed to initialize chat',
+        error: e,
+        tag: 'FlyerChatScreen',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -109,12 +121,22 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
           'type': 'direct', // direct message between two users
         });
 
-        LoggerService.info('Created new conversation: $conversationId', tag: 'FlyerChatScreen');
+        LoggerService.info(
+          'Created new conversation: $conversationId',
+          tag: 'FlyerChatScreen',
+        );
       } else {
-        LoggerService.info('Using existing conversation: $conversationId', tag: 'FlyerChatScreen');
+        LoggerService.info(
+          'Using existing conversation: $conversationId',
+          tag: 'FlyerChatScreen',
+        );
       }
     } catch (e) {
-      LoggerService.error('Error creating/checking conversation', error: e, tag: 'FlyerChatScreen');
+      LoggerService.error(
+        'Error creating/checking conversation',
+        error: e,
+        tag: 'FlyerChatScreen',
+      );
       // Try to continue anyway, the conversation might still work
     }
 
@@ -123,11 +145,12 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
 
   @override
   void dispose() {
+    FirebaseMessagingService().markConversationActive(null);
     _controller?.dispose();
     super.dispose();
   }
 
-  void _handleSendPressed(String text) {
+  void _handleSendPressed(String text) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null || _controller == null) return;
 
@@ -138,10 +161,24 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
       text: text,
     );
 
-    _controller!.sendMessage(textMessage);
-    _controller!.updateTypingStatus(false); // Stop typing when sending
+    try {
+      await _controller!.sendMessage(textMessage);
+    } on MessageSendException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to send message.')));
+    } finally {
+      if (_controller != null) {
+        await _controller!.updateTypingStatus(false);
+      }
+    }
   }
-
 
   void _handleAttachmentPressed() {
     showModalBottomSheet<void>(
@@ -172,7 +209,10 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF8B5CF6)),
+              leading: const Icon(
+                Icons.photo_library,
+                color: Color(0xFF8B5CF6),
+              ),
               title: const Text('Choose from Gallery'),
               onTap: () {
                 Navigator.pop(context);
@@ -194,31 +234,55 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
     );
   }
 
-
-
   Future<User> _resolveUser(UserID id) async {
-    // Check cache first
     if (_userCache.containsKey(id)) {
       return _userCache[id]!;
     }
 
-    // TODO: Fetch user data from Firestore
-    // For now, return a basic user
-    final user = User(
-      id: id,
-      name: 'User $id',
-    );
-    _userCache[id] = user;
-    return user;
+    try {
+      final doc = await _firestore.collection('users').doc(id).get();
+      if (doc.exists) {
+        final data = doc.data() ?? <String, dynamic>{};
+        final displayName =
+            (data['name'] as String?) ??
+            (data['displayName'] as String?) ??
+            (data['fullName'] as String?) ??
+            'User $id';
+        final user = User(
+          id: id,
+          name: displayName,
+          imageSource:
+              data['avatarUrl'] as String? ??
+              data['profileImageUrl'] as String? ??
+              data['photoUrl'] as String?,
+          metadata: {
+            if (data['role'] != null) 'role': data['role'],
+            if (data['email'] != null) 'email': data['email'],
+            if (data['firstName'] != null) 'firstName': data['firstName'],
+            if (data['lastName'] != null) 'lastName': data['lastName'],
+          },
+        );
+        _userCache[id] = user;
+        return user;
+      }
+    } catch (error) {
+      LoggerService.error(
+        'Failed to resolve chat user',
+        error: error,
+        tag: 'FlyerChatScreen',
+      );
+    }
+
+    final fallbackUser = User(id: id, name: 'User $id');
+    _userCache[id] = fallbackUser;
+    return fallbackUser;
   }
 
   @override
   Widget build(BuildContext context) {
     final currentUser = _auth.currentUser;
     if (currentUser == null) {
-      return const Scaffold(
-        body: Center(child: Text('Not authenticated')),
-      );
+      return const Scaffold(body: Center(child: Text('Not authenticated')));
     }
 
     // Get theme colors
@@ -292,77 +356,101 @@ class _FlyerChatScreenState extends State<FlyerChatScreen> {
               resolveUser: _resolveUser,
               theme: chatTheme,
               builders: Builders(
-                textMessageBuilder: (context, message, index, {required bool isSentByMe, MessageGroupStatus? groupStatus}) {
-                  // Custom text message with read receipts
-                  final textMessage = message;
+                textMessageBuilder:
+                    (
+                      context,
+                      message,
+                      index, {
+                      required bool isSentByMe,
+                      MessageGroupStatus? groupStatus,
+                    }) {
+                      // Custom text message with read receipts
+                      final textMessage = message;
 
-                  // Build status icon
-                  Widget? statusIcon;
-                  if (isSentByMe) {
-                    if (textMessage.failedAt != null) {
-                      statusIcon = const Icon(Icons.error, size: 12, color: Colors.red);
-                    } else if (textMessage.seenAt != null) {
-                      statusIcon = const Icon(Icons.done_all, size: 12, color: Colors.blue);
-                    } else if (textMessage.sentAt != null) {
-                      statusIcon = const Icon(Icons.done, size: 12, color: Colors.grey);
-                    } else {
-                      statusIcon = const SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 1.5),
-                      );
-                    }
-                  }
+                      // Build status icon
+                      Widget? statusIcon;
+                      if (isSentByMe) {
+                        if (textMessage.failedAt != null) {
+                          statusIcon = const Icon(
+                            Icons.error,
+                            size: 12,
+                            color: Colors.red,
+                          );
+                        } else if (textMessage.seenAt != null) {
+                          statusIcon = const Icon(
+                            Icons.done_all,
+                            size: 12,
+                            color: Colors.blue,
+                          );
+                        } else if (textMessage.sentAt != null) {
+                          statusIcon = const Icon(
+                            Icons.done,
+                            size: 12,
+                            color: Colors.grey,
+                          );
+                        } else {
+                          statusIcon = const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 1.5),
+                          );
+                        }
+                      }
 
-                  return Container(
-                    margin: EdgeInsets.only(
-                      left: isSentByMe ? 48 : 0,
-                      right: isSentByMe ? 0 : 48,
-                      top: 4,
-                      bottom: 4,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Flexible(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isSentByMe
-                                  ? const Color(0xFF8B5CF6)
-                                  : isDarkMode
+                      return Container(
+                        margin: EdgeInsets.only(
+                          left: isSentByMe ? 48 : 0,
+                          right: isSentByMe ? 0 : 48,
+                          top: 4,
+                          bottom: 4,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: isSentByMe
+                              ? MainAxisAlignment.end
+                              : MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSentByMe
+                                      ? const Color(0xFF8B5CF6)
+                                      : isDarkMode
                                       ? Colors.grey[800]
                                       : Colors.grey[200],
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  textMessage.text,
-                                  style: TextStyle(
-                                    color: isSentByMe
-                                        ? Colors.white
-                                        : isDarkMode
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      textMessage.text,
+                                      style: TextStyle(
+                                        color: isSentByMe
+                                            ? Colors.white
+                                            : isDarkMode
                                             ? Colors.white
                                             : Colors.black87,
-                                  ),
+                                      ),
+                                    ),
+                                    if (statusIcon != null)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 2),
+                                        child: statusIcon,
+                                      ),
+                                  ],
                                 ),
-                                if (statusIcon != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 2),
-                                    child: statusIcon,
-                                  ),
-                              ],
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                },
+                      );
+                    },
               ),
             ),
     );

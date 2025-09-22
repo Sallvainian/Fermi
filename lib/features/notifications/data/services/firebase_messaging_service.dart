@@ -27,6 +27,8 @@ class FirebaseMessagingService {
   /// Navigation callback for handling navigation from notifications
   void Function(String route, {Map<String, dynamic>? params})?
   _navigationCallback;
+  String Function()? _currentRouteResolver;
+  String? _activeConversationId;
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -106,9 +108,16 @@ class FirebaseMessagingService {
 
   /// Set navigation callback for handling navigation from notifications
   void setNavigationCallback(
-    void Function(String route, {Map<String, dynamic>? params}) callback,
-  ) {
+    void Function(String route, {Map<String, dynamic>? params}) callback, {
+    String Function()? currentRouteResolver,
+  }) {
     _navigationCallback = callback;
+    _currentRouteResolver = currentRouteResolver;
+  }
+
+  /// Track the currently active chat conversation to suppress duplicate alerts
+  void markConversationActive(String? conversationId) {
+    _activeConversationId = conversationId;
   }
 
   /// Request notification permissions
@@ -274,19 +283,26 @@ class FirebaseMessagingService {
     // Handle standard message types
     onMessage?.call(message);
 
-    // Don't show notification if user is already in that chat
-    final currentRoute = _navigationCallback.toString(); // Get current route if available
-    final conversationId = message.data['conversationId'];
+    final conversationId = message.data['conversationId'] as String?;
+    final isChatMessage = message.data['type'] == 'chat';
 
-    // Check if we're already in this conversation
-    if (message.data['type'] == 'chat' &&
-        conversationId != null &&
-        currentRoute.contains(conversationId)) {
-      LoggerService.debug(
-        'User already in conversation $conversationId, skipping notification',
-        tag: 'FirebaseMessagingService',
-      );
-      return;
+    if (isChatMessage && conversationId != null) {
+      if (_activeConversationId == conversationId) {
+        LoggerService.debug(
+          'User already in conversation $conversationId (active), skipping notification',
+          tag: 'FirebaseMessagingService',
+        );
+        return;
+      }
+
+      final currentRoute = _currentRouteResolver?.call();
+      if (currentRoute != null && currentRoute.contains(conversationId)) {
+        LoggerService.debug(
+          'User already in conversation $conversationId (route match), skipping notification',
+          tag: 'FirebaseMessagingService',
+        );
+        return;
+      }
     }
 
     // Show local notification for messages
