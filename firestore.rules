@@ -199,11 +199,12 @@ service cloud.firestore {
     }
     
     // Messages and conversations (legacy - being phased out)
-    // WORKING RULES - Simple and proven pattern
+    // SECURE RULES - Participant validation enforced
     match /conversations/{conversationId} {
-      // Allow authenticated users to read conversations
-      // This handles both existence checks and participant validation
-      allow read: if isAuthenticated();
+      // Only allow participants to read conversations
+      allow read: if isAuthenticated() &&
+                     (resource == null ||  // Allow existence check
+                      request.auth.uid in resource.data.participants);
 
       // Create conversation if user is a participant (NO EMAIL VERIFICATION)
       allow create: if isAuthenticated() &&
@@ -217,13 +218,15 @@ service cloud.firestore {
       allow delete: if false; // Never allow deletion
 
       match /messages/{messageId} {
-        // Allow authenticated users to read messages
-        allow read: if isAuthenticated();
+        // Only allow participants to read messages
+        allow read: if isAuthenticated() &&
+                      request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
 
-        // Create message if authenticated and sender matches (client uses senderId)
+        // Create message if authenticated, sender matches, and user is participant
         allow create: if isAuthenticated() &&
                         (request.auth.uid == request.resource.data.authorId ||
-                         request.auth.uid == request.resource.data.senderId);
+                         request.auth.uid == request.resource.data.senderId) &&
+                        request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
 
         allow update: if false; // Messages are immutable
         allow delete: if false; // Messages cannot be deleted
