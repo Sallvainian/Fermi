@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/auth/providers/auth_provider.dart';
-import '../../features/student/data/services/presence_service.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -15,14 +14,10 @@ import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../../features/admin/presentation/screens/bulk_import_screen.dart';
 import '../../features/admin/presentation/screens/user_management_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
-import '../../features/chat/presentation/screens/chat_detail_screen.dart';
-import '../../features/chat/presentation/screens/simple_chat_screen.dart';
-import '../../features/chat/presentation/screens/simple_user_list.dart';
+import '../../features/chat/presentation/screens/user_list.dart';
 import '../../features/chat/presentation/screens/group_creation_screen.dart';
 import '../../features/chat/presentation/screens/class_selection_screen.dart';
-import '../../features/chat/presentation/screens/call_screen.dart';
-import '../../features/chat/presentation/screens/incoming_call_screen.dart';
-import '../../features/chat/domain/models/call.dart';
+import '../../features/chat/presentation/screens/flyer_chat_screen.dart';
 import '../../features/classes/presentation/screens/teacher/classes_screen.dart';
 import '../../features/classes/presentation/screens/teacher/class_detail_screen.dart';
 import '../../features/classes/presentation/screens/student/courses_screen.dart';
@@ -73,9 +68,7 @@ class AppRouter {
     return GoRouter(
       initialLocation: '/',
       refreshListenable: authProvider,
-      observers: [
-        _LoggingNavigatorObserver(),
-      ],
+      observers: [_LoggingNavigatorObserver()],
       redirect: (context, state) {
         final isAuth = authProvider.status == AuthStatus.authenticated;
         final isAuthenticating =
@@ -365,7 +358,6 @@ class AppRouter {
         GoRoute(
           path: '/messages',
           builder: (context, state) {
-            final auth = Provider.of<AuthProvider>(context, listen: false);
             // Note: Presence managed by AuthProvider and heartbeat
             // PresenceService().markUserActive(
             //   userRole: auth.userModel?.role?.name,
@@ -382,19 +374,24 @@ class AppRouter {
           path: '/messages/:chatRoomId',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
-            final auth = Provider.of<AuthProvider>(context, listen: false);
             // Note: Presence managed by AuthProvider and heartbeat
             // PresenceService().markUserActive(
             //   userRole: auth.userModel?.role?.name,
             // );
-            return ChatDetailScreen(chatRoomId: chatRoomId);
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: 'Chat',
+            );
           },
         ),
         GoRoute(
           path: '/chat/:chatRoomId',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
-            return ChatDetailScreen(chatRoomId: chatRoomId);
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: 'Chat',
+            );
           },
         ),
         GoRoute(
@@ -402,14 +399,10 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
             final title = state.uri.queryParameters['title'] ?? 'Chat';
-            final recipientId = state.uri.queryParameters['recipientId'];
-            final recipientName = state.uri.queryParameters['recipientName'];
 
-            return SimpleChatScreen(
-              chatRoomId: chatRoomId,
-              chatTitle: title,
-              recipientId: recipientId,
-              recipientName: recipientName,
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: title,
             );
           },
         ),
@@ -418,9 +411,9 @@ class AppRouter {
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId'] ?? 'default';
             final chatTitle = state.uri.queryParameters['title'] ?? 'Chat';
-            return SimpleChatScreen(
-              chatRoomId: chatRoomId,
-              chatTitle: chatTitle,
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: chatTitle,
             );
           },
         ),
@@ -581,7 +574,10 @@ class AppRouter {
           path: '/student/messages/:chatRoomId',
           builder: (context, state) {
             final chatRoomId = state.pathParameters['chatRoomId']!;
-            return ChatDetailScreen(chatRoomId: chatRoomId);
+            return FlyerChatScreen(
+              conversationId: chatRoomId,
+              conversationTitle: 'Chat',
+            );
           },
         ),
         GoRoute(
@@ -627,27 +623,6 @@ class AppRouter {
               },
             ),
           ],
-        ),
-        GoRoute(
-          path: '/call',
-          builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>;
-            return CallScreen(
-              callId: extra['callId'],
-              receiverId: extra['receiverId'],
-              receiverName: extra['receiverName'],
-              receiverPhotoUrl: extra['receiverPhotoUrl'],
-              isVideoCall: extra['isVideoCall'] ?? false,
-              chatRoomId: extra['chatRoomId'],
-            );
-          },
-        ),
-        GoRoute(
-          path: '/incoming-call',
-          builder: (context, state) {
-            final call = state.extra as Call;
-            return IncomingCallScreen(call: call);
-          },
         ),
 
         // Add other routes as needed, keeping them simple and flat

@@ -29,20 +29,28 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   final List<String> _importErrors = [];
   final List<String> _importSuccesses = [];
 
-  final List<String> _studentRequiredFields = BulkImportConstants.studentRequiredFields;
-  final List<String> _teacherRequiredFields = BulkImportConstants.teacherRequiredFields;
+  final List<String> _studentRequiredFields =
+      BulkImportConstants.studentRequiredFields;
+  final List<String> _teacherRequiredFields =
+      BulkImportConstants.teacherRequiredFields;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bulk Account Import'),
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
         ),
       ),
       body: _isProcessing
@@ -61,7 +69,8 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                     const SizedBox(height: 24),
                     _buildImportActions(colorScheme),
                   ],
-                  if (_importErrors.isNotEmpty || _importSuccesses.isNotEmpty) ...[
+                  if (_importErrors.isNotEmpty ||
+                      _importSuccesses.isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _buildImportResults(colorScheme),
                   ],
@@ -164,7 +173,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha:0.2),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -195,9 +204,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
             onPressed: _downloadTemplate,
             icon: const Icon(Icons.download, size: 16),
             label: Text('Download ${_fileFormat.toUpperCase()} Template'),
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size(0, 36),
-            ),
+            style: ElevatedButton.styleFrom(minimumSize: const Size(0, 36)),
           ),
         ],
       ),
@@ -225,7 +232,9 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                   style: BorderStyle.solid,
                 ),
                 borderRadius: BorderRadius.circular(8),
-                color: colorScheme.surfaceContainerHighest.withValues(alpha:0.1),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.1,
+                ),
               ),
               child: InkWell(
                 onTap: _pickFile,
@@ -241,11 +250,12 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        _fileName ?? 'Click to upload ${_fileFormat.toUpperCase()} file',
+                        _fileName ??
+                            'Click to upload ${_fileFormat.toUpperCase()} file',
                         style: TextStyle(
                           fontSize: 16,
-                          color: _fileName != null 
-                              ? colorScheme.onSurface 
+                          color: _fileName != null
+                              ? colorScheme.onSurface
                               : colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -297,21 +307,29 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  columns: _headers.map((header) => DataColumn(
-                    label: Text(
-                      header,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  )).toList(),
-                  rows: _parsedData.take(10).toList().asMap().entries.map((entry) {
+                  columns: _headers
+                      .map(
+                        (header) => DataColumn(
+                          label: Text(
+                            header,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  rows: _parsedData.take(10).toList().asMap().entries.map((
+                    entry,
+                  ) {
                     final index = entry.key;
                     final row = entry.value;
                     final hasError = _validationErrors.containsKey(index);
-                    
+
                     return DataRow(
                       color: WidgetStateProperty.resolveWith<Color?>((states) {
                         if (hasError) {
-                          return colorScheme.errorContainer.withValues(alpha:0.2);
+                          return colorScheme.errorContainer.withValues(
+                            alpha: 0.2,
+                          );
                         }
                         return null;
                       }),
@@ -321,7 +339,11 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                           Row(
                             children: [
                               if (hasError && _isRequiredField(header))
-                                const Icon(Icons.error, size: 16, color: Colors.red),
+                                const Icon(
+                                  Icons.error,
+                                  size: 16,
+                                  color: Colors.red,
+                                ),
                               const SizedBox(width: 4),
                               Text(value),
                             ],
@@ -345,7 +367,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.errorContainer.withValues(alpha:0.2),
+                  color: colorScheme.errorContainer.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -365,17 +387,24 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    ..._validationErrors.entries.take(5).map((entry) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        'Row ${entry.key + 1}: ${entry.value}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    )),
+                    ..._validationErrors.entries
+                        .take(5)
+                        .map(
+                          (entry) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              'Row ${entry.key + 1}: ${entry.value}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
                     if (_validationErrors.length > 5)
                       Text(
                         '... and ${_validationErrors.length - 5} more',
-                        style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                   ],
                 ),
@@ -389,7 +418,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
 
   Widget _buildImportActions(ColorScheme colorScheme) {
     final hasValidData = _parsedData.isNotEmpty && _validationErrors.isEmpty;
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -403,10 +432,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                 label: const Text('Fix Errors'),
               ),
             const SizedBox(width: 12),
-            TextButton(
-              onPressed: _clearFile,
-              child: const Text('Cancel'),
-            ),
+            TextButton(onPressed: _clearFile, child: const Text('Cancel')),
             const SizedBox(width: 12),
             ElevatedButton.icon(
               onPressed: hasValidData ? _startImport : null,
@@ -473,7 +499,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha:0.1),
+                  color: Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -481,7 +507,11 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                        const Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Colors.green,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Successfully Imported (${_importSuccesses.length})',
@@ -493,14 +523,24 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    ..._importSuccesses.take(10).map((success) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(success, style: const TextStyle(fontSize: 12)),
-                    )),
+                    ..._importSuccesses
+                        .take(10)
+                        .map(
+                          (success) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              success,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
                     if (_importSuccesses.length > 10)
                       Text(
                         '... and ${_importSuccesses.length - 10} more',
-                        style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                   ],
                 ),
@@ -511,7 +551,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.errorContainer.withValues(alpha:0.2),
+                  color: colorScheme.errorContainer.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -531,14 +571,24 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    ..._importErrors.take(10).map((error) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(error, style: const TextStyle(fontSize: 12)),
-                    )),
+                    ..._importErrors
+                        .take(10)
+                        .map(
+                          (error) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              error,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ),
                     if (_importErrors.length > 10)
                       Text(
                         '... and ${_importErrors.length - 10} more',
-                        style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
                       ),
                   ],
                 ),
@@ -569,9 +619,9 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking file: $e')));
     }
   }
 
@@ -592,20 +642,22 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       }
       _validateData();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error parsing file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error parsing file: $e')));
     }
   }
 
   void _parseCSV() {
     final csvString = utf8.decode(_fileBytes!);
-    final List<List<dynamic>> csvData = const CsvToListConverter().convert(csvString);
-    
+    final List<List<dynamic>> csvData = const CsvToListConverter().convert(
+      csvString,
+    );
+
     if (csvData.isEmpty) return;
-    
+
     _headers = csvData[0].map((e) => e.toString()).toList();
-    
+
     for (int i = 1; i < csvData.length; i++) {
       final Map<String, dynamic> row = {};
       for (int j = 0; j < _headers.length && j < csvData[i].length; j++) {
@@ -618,7 +670,7 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
   void _parseJSON() {
     final jsonString = utf8.decode(_fileBytes!);
     final jsonData = json.decode(jsonString);
-    
+
     if (jsonData is List && jsonData.isNotEmpty) {
       _parsedData = jsonData.cast<Map<String, dynamic>>();
       _headers = _parsedData[0].keys.toList();
@@ -658,8 +710,10 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
           if (!_isValidEmail(email)) {
             errors.add('Invalid email format');
           } else if (!email.toLowerCase().endsWith('@rosellestudent.com') &&
-                     !email.toLowerCase().endsWith('@rosellestudent.org')) {
-            errors.add('Email must be from @rosellestudent.com or @rosellestudent.org domain');
+              !email.toLowerCase().endsWith('@rosellestudent.org')) {
+            errors.add(
+              'Email must be from @rosellestudent.com or @rosellestudent.org domain',
+            );
           }
         }
 
@@ -684,13 +738,10 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     return BulkImportConstants.emailPattern.hasMatch(email);
   }
 
-  bool _isValidUsername(String username) {
-    return BulkImportConstants.usernamePattern.hasMatch(username);
-  }
 
   bool _isRequiredField(String field) {
-    final requiredFields = _importType == 'student' 
-        ? _studentRequiredFields 
+    final requiredFields = _importType == 'student'
+        ? _studentRequiredFields
         : _teacherRequiredFields;
     return requiredFields.contains(field);
   }
@@ -704,7 +755,8 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
         if (row['email'] == null || row['email'].toString().isEmpty) {
           final displayName = row['displayName']?.toString() ?? '';
           if (displayName.isNotEmpty) {
-            final emailBase = displayName.toLowerCase()
+            final emailBase = displayName
+                .toLowerCase()
                 .replaceAll(' ', '.')
                 .replaceAll(RegExp(r'[^a-z0-9.]'), '');
             row['email'] = '$emailBase@rosellestudent.com';
@@ -712,7 +764,8 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
         }
       }
 
-      if (_importType == 'teacher' && (row['password'] == null || row['password'].toString().isEmpty)) {
+      if (_importType == 'teacher' &&
+          (row['password'] == null || row['password'].toString().isEmpty)) {
         row['password'] = BulkImportConstants.defaultTeacherPassword;
       }
     }
@@ -739,12 +792,16 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     if (_fileFormat == BulkImportConstants.csvFormat) {
       if (_importType == BulkImportConstants.studentImportType) {
         content = '${BulkImportConstants.studentCsvHeader}\n';
-        content += 'johndoe@rosellestudent.com,John Doe,10,parent@example.com,"math101,science201",false\n';
-        content += 'janesmith@rosellestudent.com,Jane Smith,11,parent2@example.com,english301,false\n';
-        content += 'fcottone@rosellestudent.com,Frank Cottone,12,,"physics401,calculus501",true\n';
+        content +=
+            'johndoe@rosellestudent.com,John Doe,10,parent@example.com,"math101,science201",false\n';
+        content +=
+            'janesmith@rosellestudent.com,Jane Smith,11,parent2@example.com,english301,false\n';
+        content +=
+            'fcottone@rosellestudent.com,Frank Cottone,12,,"physics401,calculus501",true\n';
       } else {
         content = '${BulkImportConstants.teacherCsvHeader}\n';
-        content += 'teacher1@school.edu,Mr. Smith,"Math,Science",SecurePass123!\n';
+        content +=
+            'teacher1@school.edu,Mr. Smith,"Math,Science",SecurePass123!\n';
         content += 'teacher2@school.edu,Ms. Johnson,English,SecurePass456!\n';
       }
       fileName = '${_importType}_import_template.csv';
@@ -792,25 +849,22 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       content = const JsonEncoder.withIndent('  ').convert(jsonData);
       fileName = '${_importType}_import_template.json';
     }
-    
+
     final bytes = utf8.encode(content);
     final blob = Uint8List.fromList(bytes);
-    
+
     try {
-      await FilePicker.platform.saveFile(
-        fileName: fileName,
-        bytes: blob,
-      );
-      
+      await FilePicker.platform.saveFile(fileName: fileName, bytes: blob);
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Template downloaded successfully')),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error downloading template: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error downloading template: $e')));
     }
   }
 
@@ -830,21 +884,26 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
       final batchSize = _parsedData.length;
       setState(() {
         _importProgress = 0.1;
-        _progressMessage = 'Processing ${batchSize} accounts in batch...';
+        _progressMessage = 'Processing $batchSize accounts in batch...';
       });
 
       // Use bulk import for efficient processing
       if (_importType == BulkImportConstants.studentImportType) {
         // Prepare student data for bulk import
-        final studentsData = _parsedData.map((row) => {
-          'email': row['email'].toString(),
-          'displayName': row['displayName'].toString(),
-          'gradeLevel': row['gradeLevel']?.toString(),
-          'parentEmail': row['parentEmail']?.toString(),
-          'classIds': _parseClassIds(row['classIds']),
-          'isGoogleAuth': row['isGoogleAuth']?.toString().toLowerCase() == 'true',
-          'className': row['className']?.toString(),
-        }).toList();
+        final studentsData = _parsedData
+            .map(
+              (row) => {
+                'email': row['email'].toString(),
+                'displayName': row['displayName'].toString(),
+                'gradeLevel': row['gradeLevel']?.toString(),
+                'parentEmail': row['parentEmail']?.toString(),
+                'classIds': _parseClassIds(row['classIds']),
+                'isGoogleAuth':
+                    row['isGoogleAuth']?.toString().toLowerCase() == 'true',
+                'className': row['className']?.toString(),
+              },
+            )
+            .toList();
 
         setState(() {
           _importProgress = 0.3;
@@ -861,21 +920,26 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
 
         // Process results
         for (final success in result.successes) {
-          _importSuccesses.add('✓ Student: ${success['displayName']} (${success['email']})');
+          _importSuccesses.add(
+            '✓ Student: ${success['displayName']} (${success['email']})',
+          );
         }
 
         for (final error in result.errors) {
           _importErrors.add('✗ ${error.identifier}: ${error.message}');
         }
-
       } else {
         // Prepare teacher data for bulk import
-        final teachersData = _parsedData.map((row) => {
-          'email': row['email'].toString(),
-          'password': row['password'].toString(),
-          'displayName': row['displayName'].toString(),
-          'subjects': _parseSubjects(row['subjects']),
-        }).toList();
+        final teachersData = _parsedData
+            .map(
+              (row) => {
+                'email': row['email'].toString(),
+                'password': row['password'].toString(),
+                'displayName': row['displayName'].toString(),
+                'subjects': _parseSubjects(row['subjects']),
+              },
+            )
+            .toList();
 
         setState(() {
           _importProgress = 0.3;
@@ -892,7 +956,9 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
 
         // Process results
         for (final success in result.successes) {
-          _importSuccesses.add('✓ Teacher: ${success['displayName']} (${success['email']})');
+          _importSuccesses.add(
+            '✓ Teacher: ${success['displayName']} (${success['email']})',
+          );
         }
 
         for (final error in result.errors) {
@@ -907,7 +973,6 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
 
       // Brief delay to show completion
       await Future.delayed(const Duration(seconds: 1));
-
     } catch (e) {
       setState(() {
         _importErrors.add('Bulk import failed: ${e.toString()}');
@@ -938,7 +1003,11 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     if (classIds == null) return [];
     if (classIds is List) return classIds.map((e) => e.toString()).toList();
     if (classIds is String) {
-      return classIds.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return classIds
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
     return [];
   }
@@ -947,7 +1016,11 @@ class _BulkImportScreenState extends State<BulkImportScreen> {
     if (subjects == null) return [];
     if (subjects is List) return subjects.map((e) => e.toString()).toList();
     if (subjects is String) {
-      return subjects.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return subjects
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
     return [];
   }

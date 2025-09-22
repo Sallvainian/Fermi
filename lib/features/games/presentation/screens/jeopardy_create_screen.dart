@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../domain/models/jeopardy_game.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
-import '../providers/jeopardy_provider_simple.dart';
+import '../providers/jeopardy_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class JeopardyCreateScreen extends StatefulWidget {

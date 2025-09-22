@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/models/user_model.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../providers/discussion_provider_simple.dart';
+import '../providers/discussion_provider.dart';
 import '../widgets/create_board_dialog.dart';
 
 class DiscussionBoardsScreen extends StatefulWidget {

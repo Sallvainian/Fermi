@@ -1,6 +1,10 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
 
+# Suppress CMake deprecation warnings from Firebase SDK
+set(CMAKE_WARN_DEPRECATED OFF)
+set(CMAKE_ERROR_DEPRECATED OFF)
+
 # Suppress warnings for Windows SDK components
 set(CMAKE_SUPPRESS_REGENERATION TRUE)
 
@@ -122,3 +126,4 @@ install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
 install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   CONFIGURATIONS Profile;Release
   COMPONENT Runtime)
+

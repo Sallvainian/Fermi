@@ -9,7 +9,6 @@ import '../../firebase_options.dart';
 import '../services/logger_service.dart';
 import '../../features/notifications/data/services/notification_service.dart';
 import '../../features/notifications/data/services/firebase_messaging_service.dart';
-import '../services/performance_service.dart';
 import 'service_locator.dart';
 
 /// Handles all app initialization tasks
@@ -57,8 +56,6 @@ class AppInitializer {
 
     // Build list of services to initialize
     final List<Future<void>> servicesToInitialize = [
-      // Performance monitoring is not critical
-      _initializePerformanceMonitoring(),
 
       // Notifications can be initialized later
       _initializeNotifications(),
@@ -193,23 +190,6 @@ class AppInitializer {
     }
   }
 
-  /// Initialize performance monitoring
-  static Future<void> _initializePerformanceMonitoring() async {
-    try {
-      // Initialize performance monitoring - await it properly
-      await PerformanceService().initialize();
-      LoggerService.debug(
-        'Performance monitoring initialized',
-        tag: 'AppInitializer',
-      );
-    } catch (e) {
-      LoggerService.error(
-        'Performance monitoring initialization error',
-        tag: 'AppInitializer',
-        error: e,
-      );
-    }
-  }
 
   /// Initialize notification service
   static Future<void> _initializeNotifications() async {

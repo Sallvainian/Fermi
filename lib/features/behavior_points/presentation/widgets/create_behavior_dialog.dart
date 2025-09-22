@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/behavior_point_provider.dart';
+import '../../domain/constants/behavior_icons.dart';
 
 /// Dialog for creating behavior types with form validation and icon selection.
 ///
@@ -33,45 +34,11 @@ class _CreateBehaviorDialogState extends State<CreateBehaviorDialog> {
 
   bool _isPositive = true;
   int _pointValue = 5;
-  IconData _selectedIcon = Icons.star_outline;
+  IconData _selectedIcon = BehaviorIcons.star;
   bool _isLoading = false;
 
-  // Predefined icons to choose from
-  static final List<IconData> _availableIcons = [
-    // Positive icons
-    Icons.star,
-    Icons.thumb_up,
-    Icons.favorite,
-    Icons.lightbulb,
-    Icons.psychology,
-    Icons.front_hand,
-    Icons.people_outline,
-    Icons.schedule,
-    Icons.check_circle,
-    Icons.emoji_emotions,
-    Icons.school,
-    Icons.assignment_turned_in,
-    Icons.volunteer_activism,
-    Icons.workspace_premium,
-    Icons.trending_up,
-    
-    // Neutral/Negative icons
-    Icons.warning,
-    Icons.cancel,
-    Icons.access_time,
-    Icons.assignment_late,
-    Icons.mood_bad,
-    Icons.phonelink_off,
-    Icons.backpack,
-    Icons.record_voice_over,
-    Icons.priority_high,
-    Icons.error_outline,
-    Icons.thumb_down,
-    Icons.remove_circle_outline,
-    Icons.block,
-    Icons.notifications_off,
-    Icons.trending_down,
-  ];
+  // Predefined icons to choose from - using compile-time constants
+  static final List<IconData> _availableIcons = BehaviorIcons.allIcons;
 
   @override
   void dispose() {
@@ -264,7 +231,7 @@ class _CreateBehaviorDialogState extends State<CreateBehaviorDialog> {
                     isSelected: _isPositive,
                     title: 'Positive',
                     subtitle: 'Awards points',
-                    icon: Icons.thumb_up,
+                    icon: BehaviorIcons.thumbUp,
                     color: Colors.green,
                     onTap: () => setState(() => _isPositive = true),
                   ),
@@ -276,7 +243,7 @@ class _CreateBehaviorDialogState extends State<CreateBehaviorDialog> {
                     isSelected: !_isPositive,
                     title: 'Needs Work',
                     subtitle: 'Deducts points',
-                    icon: Icons.build,
+                    icon: BehaviorIcons.build,
                     color: Colors.orange,
                     onTap: () => setState(() => _isPositive = false),
                   ),
@@ -534,38 +501,26 @@ class _CreateBehaviorDialogState extends State<CreateBehaviorDialog> {
     // Positive behavior suggestions
     if (_isPositive) {
       if (lowerName.contains('participation') || lowerName.contains('participate')) {
-        suggestedIcon = Icons.front_hand;
+        suggestedIcon = BehaviorIcons.frontHand;
       } else if (lowerName.contains('help') || lowerName.contains('helping')) {
-        suggestedIcon = Icons.people_outline;
+        suggestedIcon = BehaviorIcons.peopleOutline;
       } else if (lowerName.contains('leadership') || lowerName.contains('leader')) {
-        suggestedIcon = Icons.psychology;
+        suggestedIcon = BehaviorIcons.psychology;
       } else if (lowerName.contains('creative') || lowerName.contains('creativity')) {
-        suggestedIcon = Icons.lightbulb;
+        suggestedIcon = BehaviorIcons.lightbulb;
       } else if (lowerName.contains('respect') || lowerName.contains('respectful')) {
-        suggestedIcon = Icons.favorite;
+        suggestedIcon = BehaviorIcons.favorite;
       } else if (lowerName.contains('excellent') || lowerName.contains('great')) {
-        suggestedIcon = Icons.star;
-      } else if (lowerName.contains('homework') || lowerName.contains('assignment')) {
-        suggestedIcon = Icons.assignment_turned_in;
-      } else if (lowerName.contains('volunteer') || lowerName.contains('helping')) {
-        suggestedIcon = Icons.volunteer_activism;
+        suggestedIcon = BehaviorIcons.star;
       }
     } else {
       // Negative behavior suggestions
       if (lowerName.contains('late') || lowerName.contains('tardy')) {
-        suggestedIcon = Icons.access_time;
+        suggestedIcon = BehaviorIcons.accessTime;
       } else if (lowerName.contains('missing') || lowerName.contains('incomplete')) {
-        suggestedIcon = Icons.assignment_late;
-      } else if (lowerName.contains('talking') || lowerName.contains('talk')) {
-        suggestedIcon = Icons.record_voice_over;
-      } else if (lowerName.contains('disrupting') || lowerName.contains('disruptive')) {
-        suggestedIcon = Icons.warning;
-      } else if (lowerName.contains('disrespectful') || lowerName.contains('rude')) {
-        suggestedIcon = Icons.mood_bad;
-      } else if (lowerName.contains('off task') || lowerName.contains('distracted')) {
-        suggestedIcon = Icons.phonelink_off;
-      } else if (lowerName.contains('unprepared') || lowerName.contains('materials')) {
-        suggestedIcon = Icons.backpack;
+        suggestedIcon = BehaviorIcons.assignmentLate;
+      } else if (lowerName.contains('disruptive')) {
+        suggestedIcon = BehaviorIcons.warning;
       }
     }
 
@@ -596,6 +551,7 @@ class _CreateBehaviorDialogState extends State<CreateBehaviorDialog> {
         description: _nameController.text.trim(),  // Use name as description
         points: points,
         type: _isPositive ? 'positive' : 'negative',
+        icon: _selectedIcon,
       );
 
       if (mounted) {

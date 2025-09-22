@@ -23,7 +23,6 @@ class AuthService {
   // On web, dotenv doesn't work, so we need to hardcode for testing
   // This is ONLY enabled in debug mode to prevent production access
   static const String _testStudentEmail = 'fcottone@rosellestudent.com';
-  static const String _testStudentPassword = '123456';
 
   AuthService() {
     _auth = FirebaseAuth.instance;
@@ -79,6 +78,12 @@ class AuthService {
 
     // Safely try to access dotenv - it might not be initialized yet
     try {
+      // Debug: Log all env keys to see what's loaded (moved inside try-catch for safety)
+      LoggerService.info(
+        'Dotenv keys available: ${dotenv.env.keys.toList()}',
+        tag: 'AuthService',
+      );
+
       // Try both naming conventions for backwards compatibility
       clientId =
           dotenv.env['GOOGLE_OAUTH_CLIENT_ID'] ??

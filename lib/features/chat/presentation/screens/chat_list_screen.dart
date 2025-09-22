@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../providers/chat_provider_simple.dart';
+import '../providers/chat_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../shared/services/logger_service.dart';

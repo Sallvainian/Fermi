@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/utils/firestore_thread_safe.dart';
 import '../../../../shared/models/user_model.dart';
 
 /// Simple discussion board model
@@ -183,7 +184,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
         final userDoc = await _firestore.collection('users').doc(uid).get();
         if (userDoc.exists) {
           _userRole = userDoc.data()?['role'] ?? 'student';
-          notifyListeners();
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
         }
       }
     } catch (e) {
@@ -228,7 +229,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
   /// Set loading state
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();
+    FirestoreThreadSafe.safeNotify(() => notifyListeners());
   }
 
   /// Load and cache the user model for display name
@@ -241,26 +242,26 @@ class SimpleDiscussionProvider with ChangeNotifier {
       await _userDocSubscription?.cancel();
 
       // Listen to user document changes for cache invalidation
-      _userDocSubscription = _firestore
-          .collection('users')
-          .doc(userId)
-          .snapshots()
-          .listen(
-            (snapshot) {
-              if (snapshot.exists) {
-                _cachedUserModel = UserModel.fromFirestore(snapshot);
-                _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
-                _cacheTimestamp = DateTime.now();
-                notifyListeners();
-              }
-            },
-            onError: (error) {
-              LoggerService.error(
-                'Failed to listen to user document',
-                tag: _tag,
-                error: error,
-              );
-              // Fallback to Firebase Auth display name
+      _userDocSubscription = FirestoreThreadSafe.listen(
+        _firestore
+            .collection('users')
+            .doc(userId)
+            .snapshots(),
+        onData: (snapshot) {
+          if (snapshot.exists) {
+            _cachedUserModel = UserModel.fromFirestore(snapshot);
+            _cachedDisplayName = _cachedUserModel!.displayNameOrFallback;
+            _cacheTimestamp = DateTime.now();
+            FirestoreThreadSafe.safeNotify(() => notifyListeners());
+          }
+        },
+        onError: (error) {
+          LoggerService.error(
+            'Failed to listen to user document',
+            tag: _tag,
+            error: error,
+          );
+          // Fallback to Firebase Auth display name
               final user = _auth.currentUser;
               if (user != null) {
                 final tempUser = UserModel(
@@ -324,13 +325,13 @@ class SimpleDiscussionProvider with ChangeNotifier {
       await _boardsSubscription?.cancel();
 
       // Listen to boards collection
-      _boardsSubscription = _firestore
-          .collection('discussion_boards')
-          .orderBy('isPinned', descending: true)
-          .orderBy('createdAt', descending: true)
-          .snapshots()
-          .listen(
-            (snapshot) async {
+      _boardsSubscription = FirestoreThreadSafe.listen(
+        _firestore
+            .collection('discussion_boards')
+            .orderBy('isPinned', descending: true)
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        onData: (snapshot) async {
               LoggerService.debug(
                 'Loaded ${snapshot.docs.length} boards',
                 tag: _tag,
@@ -400,19 +401,19 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
               _boards = boardsList;
               _setLoading(false);
-              notifyListeners();
+              FirestoreThreadSafe.safeNotify(() => notifyListeners());
             },
-            onError: (error) {
-              LoggerService.error(
-                'Failed to load boards',
-                tag: _tag,
-                error: error,
-              );
-              _error = 'Failed to load discussion boards';
-              _setLoading(false);
-              notifyListeners();
-            },
+        onError: (error) {
+          LoggerService.error(
+            'Failed to load boards',
+            tag: _tag,
+            error: error,
           );
+          _error = 'Failed to load discussion boards';
+          _setLoading(false);
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
+        },
+      );
     } catch (e) {
       LoggerService.error(
         'Failed to setup board listener',
@@ -421,7 +422,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
       );
       _error = 'Failed to load discussion boards';
       _setLoading(false);
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     }
   }
 
@@ -452,12 +453,12 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
       LoggerService.info('Created discussion board: $title', tag: _tag);
       _setLoading(false);
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     } catch (e) {
       LoggerService.error('Failed to create board', tag: _tag, error: e);
       _error = 'Failed to create discussion board';
       _setLoading(false);
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     }
   }
 
@@ -468,32 +469,32 @@ class SimpleDiscussionProvider with ChangeNotifier {
       await _threadSubscriptions[boardId]?.cancel();
 
       // Listen to threads subcollection
-      _threadSubscriptions[boardId] = _firestore
-          .collection('discussion_boards')
-          .doc(boardId)
-          .collection('threads')
-          .orderBy('isPinned', descending: true)
-          .orderBy('createdAt', descending: true)
-          .snapshots()
-          .listen(
-            (snapshot) {
-              // Simple load first, then check likes asynchronously
-              _boardThreads[boardId] = snapshot.docs
-                  .map((doc) => SimpleDiscussionThread.fromFirestore(doc))
-                  .toList();
-              notifyListeners();
+      _threadSubscriptions[boardId] = FirestoreThreadSafe.listen(
+        _firestore
+            .collection('discussion_boards')
+            .doc(boardId)
+            .collection('threads')
+            .orderBy('isPinned', descending: true)
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        onData: (snapshot) {
+          // Simple load first, then check likes asynchronously
+          _boardThreads[boardId] = snapshot.docs
+              .map((doc) => SimpleDiscussionThread.fromFirestore(doc))
+              .toList();
+          FirestoreThreadSafe.safeNotify(() => notifyListeners());
 
-              // Then update with like status
-              _updateThreadLikes(boardId, snapshot.docs);
-            },
-            onError: (error) {
-              LoggerService.error(
-                'Failed to load threads for board $boardId',
-                tag: _tag,
-                error: error,
-              );
-            },
+          // Then update with like status
+          _updateThreadLikes(boardId, snapshot.docs);
+        },
+        onError: (error) {
+          LoggerService.error(
+            'Failed to load threads for board $boardId',
+            tag: _tag,
+            error: error,
           );
+        },
+      );
     } catch (e) {
       LoggerService.error(
         'Failed to setup thread listener',
@@ -582,12 +583,12 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
       LoggerService.info('Created thread in board $boardId', tag: _tag);
       _setLoading(false);
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     } catch (e) {
       LoggerService.error('Failed to create thread', tag: _tag, error: e);
       _error = 'Failed to create thread';
       _setLoading(false);
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
       rethrow;
     }
   }
@@ -596,20 +597,20 @@ class SimpleDiscussionProvider with ChangeNotifier {
   void selectBoard(SimpleDiscussionBoard board) {
     _currentBoard = board;
     // Don't load threads here - let the detail screen handle it
-    notifyListeners();
+    FirestoreThreadSafe.safeNotify(() => notifyListeners());
   }
 
   /// Select a thread
   void selectThread(SimpleDiscussionThread thread) {
     _currentThread = thread;
-    notifyListeners();
+    FirestoreThreadSafe.safeNotify(() => notifyListeners());
   }
 
   /// Clear current selections
   void clearSelection() {
     _currentBoard = null;
     _currentThread = null;
-    notifyListeners();
+    FirestoreThreadSafe.safeNotify(() => notifyListeners());
   }
 
   /// Update thread like status for current user
@@ -665,7 +666,7 @@ class SimpleDiscussionProvider with ChangeNotifier {
 
       // Update the threads list with like status
       _boardThreads[boardId] = updatedThreads;
-      notifyListeners();
+      FirestoreThreadSafe.safeNotify(() => notifyListeners());
     } catch (e) {
       LoggerService.error('Failed to update thread likes', tag: _tag, error: e);
     }

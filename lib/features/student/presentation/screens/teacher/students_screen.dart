@@ -4,7 +4,7 @@ import '../../../domain/models/student.dart';
 import '../../../../../features/classes/domain/models/class_model.dart';
 import '../../../../../shared/widgets/common/adaptive_layout.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
-import '../../providers/student_provider_simple.dart';
+import '../../providers/student_provider.dart';
 import '../../../../../features/classes/presentation/providers/class_provider.dart';
 import '../../../../../features/auth/presentation/providers/auth_provider.dart';
 

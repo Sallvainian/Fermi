@@ -9,7 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/calendar_event.dart';
-import '../../data/services/calendar_service_simple.dart';
+import '../../data/services/calendar_service.dart';
 // import 'package:ical/ical.dart'; // Temporarily disabled due to null safety issues
 
 /// Provider for managing calendar state.

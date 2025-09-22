@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/grade.dart';
-import '../../providers/grade_provider_simple.dart';
+import '../../providers/grade_provider.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
-import '../../../../assignments/presentation/providers/assignment_provider_simple.dart';
+import '../../../../assignments/presentation/providers/assignment_provider.dart';
 import '../../../../assignments/domain/models/assignment.dart';
 import '../../../../classes/presentation/providers/class_provider.dart';
 import '../../../../classes/domain/models/class_model.dart';
@@ -93,7 +93,13 @@ class _StudentGradesScreenState extends State<StudentGradesScreen> {
         backgroundColor: theme.colorScheme.surface,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
         ),
       ),
       body: gradeProvider.isLoading

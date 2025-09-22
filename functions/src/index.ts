@@ -49,6 +49,9 @@ export * from "./adminFunctions";
 // Export bulk import functions for efficient user creation
 export * from "./bulkImport";
 
+// Export chat functions for secure messaging
+export * from "./chatFunctions";
+
 // Export auth blocking functions for automatic role assignment
 export * from "./authBlocking";
 

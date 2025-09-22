@@ -37,7 +37,9 @@ class SimpleStudentProvider with ChangeNotifier {
         // Parse displayName into first and last name if needed
         String firstName = data['firstName'] ?? '';
         String lastName = data['lastName'] ?? '';
-        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+        if (firstName.isEmpty &&
+            lastName.isEmpty &&
+            data['displayName'] != null) {
           final parts = (data['displayName'] as String).split(' ');
           firstName = parts.isNotEmpty ? parts.first : '';
           lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
@@ -49,9 +51,7 @@ class SimpleStudentProvider with ChangeNotifier {
           username: data['username'] ?? data['email']?.split('@').first ?? '',
           firstName: firstName,
           lastName: lastName,
-          displayName:
-              data['displayName'] ??
-              '${firstName} ${lastName}',
+          displayName: data['displayName'] ?? '$firstName $lastName',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
@@ -111,7 +111,9 @@ class SimpleStudentProvider with ChangeNotifier {
         // Parse displayName into first and last name if needed
         String firstName = data['firstName'] ?? '';
         String lastName = data['lastName'] ?? '';
-        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+        if (firstName.isEmpty &&
+            lastName.isEmpty &&
+            data['displayName'] != null) {
           final parts = (data['displayName'] as String).split(' ');
           firstName = parts.isNotEmpty ? parts.first : '';
           lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
@@ -123,9 +125,7 @@ class SimpleStudentProvider with ChangeNotifier {
           username: data['username'] ?? data['email']?.split('@').first ?? '',
           firstName: firstName,
           lastName: lastName,
-          displayName:
-              data['displayName'] ??
-              '${firstName} ${lastName}',
+          displayName: data['displayName'] ?? '$firstName $lastName',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],
@@ -155,7 +155,10 @@ class SimpleStudentProvider with ChangeNotifier {
     if (studentIds.isEmpty) return [];
 
     try {
-      LoggerService.debug('Looking for ${studentIds.length} students in users collection', tag: 'StudentProvider');
+      LoggerService.debug(
+        'Looking for ${studentIds.length} students in users collection',
+        tag: 'StudentProvider',
+      );
 
       // Use batch query to handle > 30 students
       final docs = await FirestoreBatchQuery.batchWhereInDocumentId(
@@ -170,7 +173,9 @@ class SimpleStudentProvider with ChangeNotifier {
         // Parse displayName into first and last name if needed
         String firstName = data['firstName'] ?? '';
         String lastName = data['lastName'] ?? '';
-        if (firstName.isEmpty && lastName.isEmpty && data['displayName'] != null) {
+        if (firstName.isEmpty &&
+            lastName.isEmpty &&
+            data['displayName'] != null) {
           final parts = (data['displayName'] as String).split(' ');
           firstName = parts.isNotEmpty ? parts.first : '';
           lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
@@ -182,9 +187,7 @@ class SimpleStudentProvider with ChangeNotifier {
           username: data['username'] ?? data['email']?.split('@').first ?? '',
           firstName: firstName,
           lastName: lastName,
-          displayName:
-              data['displayName'] ??
-              '${firstName} ${lastName}',
+          displayName: data['displayName'] ?? '$firstName $lastName',
           email: data['email'],
           parentEmail: data['parentEmail'],
           backupEmail: data['backupEmail'],

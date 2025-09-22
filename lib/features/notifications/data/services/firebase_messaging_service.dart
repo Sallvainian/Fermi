@@ -274,13 +274,31 @@ class FirebaseMessagingService {
     // Handle standard message types
     onMessage?.call(message);
 
+    // Don't show notification if user is already in that chat
+    final currentRoute = _navigationCallback.toString(); // Get current route if available
+    final conversationId = message.data['conversationId'];
+
+    // Check if we're already in this conversation
+    if (message.data['type'] == 'chat' &&
+        conversationId != null &&
+        currentRoute.contains(conversationId)) {
+      LoggerService.debug(
+        'User already in conversation $conversationId, skipping notification',
+        tag: 'FirebaseMessagingService',
+      );
+      return;
+    }
+
     // Show local notification for messages
     if (message.notification != null) {
       final notificationService = NotificationService();
+
       notificationService.sendImmediateNotification(
         title: message.notification!.title ?? 'New Message',
         body: message.notification!.body ?? '',
-        payload: message.data['payload'],
+        payload: message.data['type'] == 'chat'
+            ? message.data['conversationId']
+            : message.data['payload'],
       );
     }
   }
@@ -294,18 +312,30 @@ class FirebaseMessagingService {
 
     // Navigate based on notification type
     if (message.data['type'] == 'chat') {
-      // Navigate to chat screen
-      final chatRoomId = message.data['chatRoomId'];
-      if (chatRoomId != null && _navigationCallback != null) {
+      // Navigate to chat screen with conversation ID
+      final conversationId = message.data['conversationId'];
+      if (conversationId != null && _navigationCallback != null) {
         LoggerService.info(
-          'Navigate to chat: $chatRoomId',
+          'Navigate to chat conversation: $conversationId',
           tag: 'FirebaseMessagingService',
         );
         _navigationCallback!(
-          '/messages/chat/$chatRoomId',
-          params: {'chatRoomId': chatRoomId},
+          '/messages/chat/$conversationId',
+          params: {
+            'conversationId': conversationId,
+            'chatRoomId': conversationId, // For backwards compatibility
+          },
         );
       }
+    } else if (message.data['type'] == 'assignment') {
+      // Navigate to assignments
+      _navigationCallback?.call('/assignments');
+    } else if (message.data['type'] == 'grade') {
+      // Navigate to grades
+      _navigationCallback?.call('/grades');
+    } else if (message.data['type'] == 'behavior') {
+      // Navigate to behavior points
+      _navigationCallback?.call('/behavior');
     }
   }
 

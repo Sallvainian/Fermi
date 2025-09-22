@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import '../../data/models/behavior_history_entry.dart';
 import '../../../students/data/models/student_enhanced.dart';
@@ -31,10 +30,8 @@ class BehaviorHistoryFilters {
         'studentName': studentName,
       if (gender != null && gender != Gender.notSpecified)
         'gender': gender!.name,
-      if (startDate != null)
-        'startDate': startDate!.toIso8601String(),
-      if (endDate != null)
-        'endDate': endDate!.toIso8601String(),
+      if (startDate != null) 'startDate': startDate!.toIso8601String(),
+      if (endDate != null) 'endDate': endDate!.toIso8601String(),
       if (behaviorType != null && behaviorType != 'all')
         'behaviorType': behaviorType,
     };
@@ -147,12 +144,14 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
       }
     } catch (e) {
       LoggerService.error('Failed to load behavior history: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load history: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load history: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       setState(() {
         _isLoading = false;
@@ -197,9 +196,11 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
 
-    final panelWidth = widget.width ??
+    final panelWidth =
+        widget.width ??
         (widget.position == PanelPosition.right ? 400.0 : size.width);
-    final panelHeight = widget.height ??
+    final panelHeight =
+        widget.height ??
         (widget.position == PanelPosition.bottom ? 300.0 : size.height);
 
     return AnimatedBuilder(
@@ -212,8 +213,12 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
           bottom: widget.position == PanelPosition.bottom
               ? (_slideAnimation.value - 1) * panelHeight
               : 0,
-          width: widget.position == PanelPosition.right ? panelWidth : size.width,
-          height: widget.position == PanelPosition.bottom ? panelHeight : size.height,
+          width: widget.position == PanelPosition.right
+              ? panelWidth
+              : size.width,
+          height: widget.position == PanelPosition.bottom
+              ? panelHeight
+              : size.height,
           child: Material(
             elevation: 0,
             color: theme.colorScheme.surface,
@@ -235,9 +240,7 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
                   _buildHeader(theme),
                   _buildSearchBar(theme),
                   _buildFilterChips(theme),
-                  Expanded(
-                    child: _buildHistoryList(theme),
-                  ),
+                  Expanded(child: _buildHistoryList(theme)),
                 ],
               ),
             ),
@@ -387,7 +390,12 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
     );
   }
 
-  Widget _buildStatChip(IconData icon, String value, String label, Color color) {
+  Widget _buildStatChip(
+    IconData icon,
+    String value,
+    String label,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -397,11 +405,7 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: Colors.white,
-          ),
+          Icon(icon, size: 16, color: Colors.white),
           const SizedBox(width: 6),
           Text(
             value,
@@ -504,7 +508,9 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
     if (_filters.behaviorType != null && _filters.behaviorType != 'all') {
       chips.add(
         Chip(
-          label: Text(_filters.behaviorType == 'positive' ? 'Positive' : 'Negative'),
+          label: Text(
+            _filters.behaviorType == 'positive' ? 'Positive' : 'Negative',
+          ),
           deleteIcon: const Icon(Icons.close, size: 18),
           onDeleted: () {
             setState(() {
@@ -520,7 +526,8 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
       final dateFormat = DateFormat('MMM d');
       String dateText = '';
       if (_filters.startDate != null && _filters.endDate != null) {
-        dateText = '${dateFormat.format(_filters.startDate!)} - ${dateFormat.format(_filters.endDate!)}';
+        dateText =
+            '${dateFormat.format(_filters.startDate!)} - ${dateFormat.format(_filters.endDate!)}';
       } else if (_filters.startDate != null) {
         dateText = 'From ${dateFormat.format(_filters.startDate!)}';
       } else {
@@ -667,13 +674,17 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
   Widget _buildHistoryItem(BehaviorHistoryEntry entry, ThemeData theme) {
     final timeFormat = DateFormat('h:mm a');
     final dateFormat = DateFormat('MMM d');
-    final fullDateFormat = DateFormat('EEEE, MMMM d');
-    final isToday = entry.timestamp.day == DateTime.now().day &&
+    final isToday =
+        entry.timestamp.day == DateTime.now().day &&
         entry.timestamp.month == DateTime.now().month &&
         entry.timestamp.year == DateTime.now().year;
-    final isYesterday = entry.timestamp.day == DateTime.now().subtract(const Duration(days: 1)).day &&
-        entry.timestamp.month == DateTime.now().subtract(const Duration(days: 1)).month &&
-        entry.timestamp.year == DateTime.now().subtract(const Duration(days: 1)).year;
+    final isYesterday =
+        entry.timestamp.day ==
+            DateTime.now().subtract(const Duration(days: 1)).day &&
+        entry.timestamp.month ==
+            DateTime.now().subtract(const Duration(days: 1)).month &&
+        entry.timestamp.year ==
+            DateTime.now().subtract(const Duration(days: 1)).year;
 
     String timeText;
     String dateText;
@@ -690,7 +701,9 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
 
     final isPositive = entry.type == 'positive';
     final pointColor = isPositive ? Colors.green : Colors.red;
-    final pointIcon = isPositive ? Icons.add_circle_rounded : Icons.remove_circle_rounded;
+    final pointIcon = isPositive
+        ? Icons.add_circle_rounded
+        : Icons.remove_circle_rounded;
     final pointBackgroundColor = isPositive
         ? Colors.green.withValues(alpha: 0.1)
         : Colors.red.withValues(alpha: 0.1);
@@ -735,11 +748,7 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        pointIcon,
-                        color: pointColor,
-                        size: 20,
-                      ),
+                      Icon(pointIcon, color: pointColor, size: 20),
                       const SizedBox(height: 2),
                       Text(
                         '${entry.points > 0 ? "+" : ""}${entry.points}',
@@ -802,7 +811,9 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                          color: theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.3,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -819,7 +830,8 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Row(
@@ -851,24 +863,26 @@ class _BehaviorHistoryPanelState extends State<BehaviorHistoryPanel>
                           Icon(
                             Icons.schedule_rounded,
                             size: 14,
-                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.6),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '$dateText • $timeText',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.7),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           const Spacer(),
-                          if (entry.teacherName != null)
-                            Text(
-                              'by ${entry.teacherName}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-                              ),
+                          Text(
+                            'by ${entry.teacherName}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.6),
                             ),
+                          ),
                         ],
                       ),
                     ],
@@ -888,10 +902,7 @@ class _FilterDialog extends StatefulWidget {
   final BehaviorHistoryFilters filters;
   final Function(BehaviorHistoryFilters) onApply;
 
-  const _FilterDialog({
-    required this.filters,
-    required this.onApply,
-  });
+  const _FilterDialog({required this.filters, required this.onApply});
 
   @override
   State<_FilterDialog> createState() => _FilterDialogState();
@@ -924,25 +935,13 @@ class _FilterDialogState extends State<_FilterDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Gender filter
-            Text(
-              'Gender',
-              style: theme.textTheme.labelLarge,
-            ),
+            Text('Gender', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             SegmentedButton<Gender?>(
               segments: const [
-                ButtonSegment(
-                  value: null,
-                  label: Text('All'),
-                ),
-                ButtonSegment(
-                  value: Gender.male,
-                  label: Text('Male'),
-                ),
-                ButtonSegment(
-                  value: Gender.female,
-                  label: Text('Female'),
-                ),
+                ButtonSegment(value: null, label: Text('All')),
+                ButtonSegment(value: Gender.male, label: Text('Male')),
+                ButtonSegment(value: Gender.female, label: Text('Female')),
               ],
               selected: {_tempFilters.gender},
               onSelectionChanged: (Set<Gender?> selection) {
@@ -954,25 +953,13 @@ class _FilterDialogState extends State<_FilterDialog> {
             const SizedBox(height: 16),
 
             // Behavior type filter
-            Text(
-              'Behavior Type',
-              style: theme.textTheme.labelLarge,
-            ),
+            Text('Behavior Type', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             SegmentedButton<String?>(
               segments: const [
-                ButtonSegment(
-                  value: null,
-                  label: Text('All'),
-                ),
-                ButtonSegment(
-                  value: 'positive',
-                  label: Text('Positive'),
-                ),
-                ButtonSegment(
-                  value: 'negative',
-                  label: Text('Negative'),
-                ),
+                ButtonSegment(value: null, label: Text('All')),
+                ButtonSegment(value: 'positive', label: Text('Positive')),
+                ButtonSegment(value: 'negative', label: Text('Negative')),
               ],
               selected: {_tempFilters.behaviorType},
               onSelectionChanged: (Set<String?> selection) {
@@ -984,10 +971,7 @@ class _FilterDialogState extends State<_FilterDialog> {
             const SizedBox(height: 16),
 
             // Date range filter
-            Text(
-              'Date Range',
-              style: theme.textTheme.labelLarge,
-            ),
+            Text('Date Range', style: theme.textTheme.labelLarge),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -997,7 +981,9 @@ class _FilterDialogState extends State<_FilterDialog> {
                       final date = await showDatePicker(
                         context: context,
                         initialDate: _tempFilters.startDate ?? DateTime.now(),
-                        firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                        firstDate: DateTime.now().subtract(
+                          const Duration(days: 365),
+                        ),
                         lastDate: DateTime.now(),
                       );
                       if (date != null) {
@@ -1021,7 +1007,9 @@ class _FilterDialogState extends State<_FilterDialog> {
                       final date = await showDatePicker(
                         context: context,
                         initialDate: _tempFilters.endDate ?? DateTime.now(),
-                        firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                        firstDate: DateTime.now().subtract(
+                          const Duration(days: 365),
+                        ),
                         lastDate: DateTime.now(),
                       );
                       if (date != null) {

@@ -1,0 +1,114 @@
+{
+  "collections": [
+    {
+      "collectionId": "users",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "classes",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "assignments",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "grades",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "behavior_points",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "chats",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "messages",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "students",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "teachers",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "parents",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "notifications",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "settings",
+      "operations": ["read", "write", "query"]
+    },
+    {
+      "collectionId": "public_usernames",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "submissions",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "activities",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "presence",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "bug_reports",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "_rowy_",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "calls",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "pending_users",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "chatRooms",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "chat_rooms",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "calendar_events",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "discussion_boards",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "fcm_tokens",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "jeopardy_games",
+      "operations": ["read", "write", "query", "delete"]
+    },
+    {
+      "collectionId": "scheduled_messages",
+      "operations": ["read", "write", "query", "delete"]
+    }
+  ],
+  "defaultAllow": false,
+  "description": "MCP Firestore permissions for Fermi education platform development"
+}

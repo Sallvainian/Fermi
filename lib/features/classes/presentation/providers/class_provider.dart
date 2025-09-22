@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../shared/services/logger_service.dart';
+import '../../../../shared/utils/firestore_thread_safe.dart';
 import '../../domain/models/class_model.dart';
 import '../../../student/domain/models/student.dart';
 
@@ -85,42 +86,38 @@ class ClassProvider with ChangeNotifier {
     // Cancel previous subscription if exists
     _teacherClassesSubscription?.cancel();
 
-    // Set up new subscription
-    _teacherClassesSubscription = _firestore
-        .collection('classes')
-        .where('teacherId', isEqualTo: teacherId)
-        .snapshots()
-        .listen(
-          (snapshot) {
-            final List<ClassModel> classes = [];
-            for (var doc in snapshot.docs) {
-              try {
-                final classModel = ClassModel.fromFirestore(doc);
-                classes.add(classModel);
-              } catch (e) {
-                // ERROR: Failed to parse class document ${doc.id}: $e
-                // Continue processing other documents
-              }
-            }
+    // Set up new subscription with thread-safe wrapper
+    _teacherClassesSubscription = FirestoreThreadSafe.listen(
+      _firestore
+          .collection('classes')
+          .where('teacherId', isEqualTo: teacherId)
+          .snapshots(),
+      onData: (snapshot) {
+        final List<ClassModel> classes = [];
+        for (var doc in snapshot.docs) {
+          try {
+            final classModel = ClassModel.fromFirestore(doc);
+            classes.add(classModel);
+          } catch (e) {
+            LoggerService.error('Failed to parse class document ${doc.id}', error: e, tag: 'ClassProvider');
+            // Continue processing other documents
+          }
+        }
 
-            _teacherClasses = _sortClasses(classes);
-            _setLoading(false);
-            // Defer notification to next frame to avoid setState during build
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              notifyListeners();
-            });
-          },
-          onError: (error) {
-            // ERROR: Failed to load teacher classes: $error
-            _teacherClasses = [];
-            _setError('Failed to load classes: $error');
-            _setLoading(false);
-            // Defer notification to next frame to avoid setState during build
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              notifyListeners();
-            });
-          },
-        );
+        _teacherClasses = _sortClasses(classes);
+        _setLoading(false);
+        // Use thread-safe notification
+        FirestoreThreadSafe.safeNotify(() => notifyListeners());
+      },
+      onError: (error) {
+        LoggerService.error('Failed to load teacher classes', error: error, tag: 'ClassProvider');
+        _teacherClasses = [];
+        _setError('Failed to load classes: $error');
+        _setLoading(false);
+        // Use thread-safe notification
+        FirestoreThreadSafe.safeNotify(() => notifyListeners());
+      },
+    );
 
     // Return the stream for UI if needed
     return _firestore
@@ -142,42 +139,38 @@ class ClassProvider with ChangeNotifier {
     // Cancel previous subscription if exists
     _studentClassesSubscription?.cancel();
 
-    // Set up new subscription (same pattern as loadTeacherClasses)
-    _studentClassesSubscription = _firestore
-        .collection('classes')
-        .where('studentIds', arrayContains: studentId)
-        .snapshots()
-        .listen(
-          (snapshot) {
-            final List<ClassModel> classes = [];
-            for (var doc in snapshot.docs) {
-              try {
-                final classModel = ClassModel.fromFirestore(doc);
-                classes.add(classModel);
-              } catch (e) {
-                // ERROR: Failed to parse class document ${doc.id}: $e
-                // Continue processing other documents
-              }
-            }
+    // Set up new subscription with thread-safe wrapper
+    _studentClassesSubscription = FirestoreThreadSafe.listen(
+      _firestore
+          .collection('classes')
+          .where('studentIds', arrayContains: studentId)
+          .snapshots(),
+      onData: (snapshot) {
+        final List<ClassModel> classes = [];
+        for (var doc in snapshot.docs) {
+          try {
+            final classModel = ClassModel.fromFirestore(doc);
+            classes.add(classModel);
+          } catch (e) {
+            LoggerService.error('Failed to parse class document ${doc.id}', error: e, tag: 'ClassProvider');
+            // Continue processing other documents
+          }
+        }
 
-            _studentClasses = classes;
-            _setLoading(false);
-            // Defer notification to next frame to avoid setState during build
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              notifyListeners();
-            });
-          },
-          onError: (error) {
-            // ERROR: Failed to load student classes: $error
-            _studentClasses = [];
-            _setError('Failed to load classes: $error');
-            _setLoading(false);
-            // Defer notification to next frame to avoid setState during build
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              notifyListeners();
-            });
-          },
-        );
+        _studentClasses = classes;
+        _setLoading(false);
+        // Use thread-safe notification
+        FirestoreThreadSafe.safeNotify(() => notifyListeners());
+      },
+      onError: (error) {
+        LoggerService.error('Failed to load student classes', error: error, tag: 'ClassProvider');
+        _studentClasses = [];
+        _setError('Failed to load classes: $error');
+        _setLoading(false);
+        // Use thread-safe notification
+        FirestoreThreadSafe.safeNotify(() => notifyListeners());
+      },
+    );
   }
 
   /// Creates a new class.

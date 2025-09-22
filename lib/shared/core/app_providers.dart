@@ -1,21 +1,20 @@
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
-import '../../features/assignments/presentation/providers/assignment_provider_simple.dart';
-import '../../features/assignments/presentation/providers/student_assignment_provider_simple.dart';
+import '../../features/assignments/presentation/providers/assignment_provider.dart';
+import '../../features/assignments/presentation/providers/student_assignment_provider.dart';
 import '../providers/theme_provider.dart';
-import '../../features/chat/presentation/providers/chat_provider_simple.dart';
-import '../../features/discussions/presentation/providers/discussion_provider_simple.dart';
+import '../../features/chat/presentation/providers/chat_provider.dart';
+import '../../features/discussions/presentation/providers/discussion_provider.dart';
 import '../../features/calendar/presentation/providers/calendar_provider.dart';
 import '../../features/grades/presentation/providers/grade_analytics_provider.dart';
 import '../providers/navigation_provider.dart';
-import '../../features/chat/presentation/providers/call_provider.dart';
 import '../../features/notifications/presentation/providers/notification_provider.dart';
 import '../../features/classes/presentation/providers/class_provider.dart';
 import '../../features/dashboard/presentation/providers/dashboard_provider.dart';
-import '../../features/student/presentation/providers/student_provider_simple.dart';
-import '../../features/grades/presentation/providers/grade_provider_simple.dart';
-import '../../features/games/presentation/providers/jeopardy_provider_simple.dart';
+import '../../features/student/presentation/providers/student_provider.dart';
+import '../../features/grades/presentation/providers/grade_provider.dart';
+import '../../features/games/presentation/providers/jeopardy_provider.dart';
 import '../../features/admin/presentation/providers/admin_provider.dart';
 import '../../features/behavior_points/presentation/providers/behavior_point_provider.dart';
 
@@ -55,7 +54,6 @@ class AppProviders {
         create: (_) => GradeAnalyticsProvider(),
         lazy: true,
       ),
-      ChangeNotifierProvider(create: (_) => CallProvider(), lazy: true),
       ChangeNotifierProvider(create: (_) => NotificationProvider(), lazy: true),
       ChangeNotifierProvider(
         create: (_) => SimpleStudentProvider(),

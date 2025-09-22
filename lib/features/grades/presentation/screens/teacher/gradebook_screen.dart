@@ -5,12 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../../shared/widgets/common/common_widgets.dart';
 import '../../../../../shared/theme/app_theme.dart';
 import '../../../domain/models/grade.dart';
-import '../../providers/grade_provider_simple.dart';
-import '../../../../assignments/presentation/providers/assignment_provider_simple.dart';
+import '../../providers/grade_provider.dart';
+import '../../../../assignments/presentation/providers/assignment_provider.dart';
 import '../../../../classes/presentation/providers/class_provider.dart';
 import '../../../../classes/domain/models/class_model.dart';
 import '../../../../student/domain/models/student.dart';
-import '../../../../student/presentation/providers/student_provider_simple.dart';
+import '../../../../student/presentation/providers/student_provider.dart';
 
 class GradebookScreen extends StatefulWidget {
   const GradebookScreen({super.key});
@@ -93,13 +93,18 @@ class _GradebookScreenState extends State<GradebookScreen> {
     final gradeProvider = context.watch<SimpleGradeProvider>();
     final assignmentProvider = context.watch<SimpleAssignmentProvider>();
     final classProvider = context.watch<ClassProvider>();
-    final studentProvider = context.watch<SimpleStudentProvider>();
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
           tooltip: 'Back to Dashboard',
         ),
         title: const Text('Gradebook'),
@@ -169,7 +174,6 @@ class _GradebookScreenState extends State<GradebookScreen> {
     BuildContext context,
     SimpleGradeProvider gradeProvider,
   ) {
-    final stats = gradeProvider.classStatistics;
 
     // Calculate actual class average from graded assignments only
     final gradedAssignments = gradeProvider.classGrades

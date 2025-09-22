@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../domain/models/jeopardy_game.dart';
-import '../providers/jeopardy_provider_simple.dart';
+import '../providers/jeopardy_provider.dart';
 
 class JeopardyPlayScreen extends StatefulWidget {
   final String gameId;
@@ -185,7 +185,13 @@ class _JeopardyPlayScreenState extends State<JeopardyPlayScreen> {
             Row(
               children: [
                 IconButton(
-                  onPressed: () => context.go('/teacher/games/jeopardy'),
+                  onPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/teacher/games/jeopardy');
+                    }
+                  },
                   icon: const Icon(Icons.arrow_back),
                 ),
                 Expanded(

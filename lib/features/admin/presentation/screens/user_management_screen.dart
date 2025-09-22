@@ -403,7 +403,13 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         centerTitle: false,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
         ),
         actions: [
           IconButton(

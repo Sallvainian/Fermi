@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -298,22 +297,6 @@ class BulkImportService {
     return validationResult;
   }
 
-  Future<bool> _checkUsernameExists(String username) async {
-    try {
-      // This method is now deprecated - we use email instead
-      // Keeping for backward compatibility if needed
-      final querySnapshot = await _firestore
-          .collection('users')
-          .where('username', isEqualTo: username)
-          .limit(1)
-          .get();
-      return querySnapshot.docs.isNotEmpty;
-    } catch (e) {
-      LoggerService.error('Error checking username existence: $e', tag: 'BulkImportService');
-      return false;
-    }
-  }
-
   Future<bool> _checkEmailExists(String email) async {
     try {
       final querySnapshot = await _firestore
@@ -328,34 +311,8 @@ class BulkImportService {
     }
   }
 
-  String _generateStudentPassword() {
-    final random = Random.secure();
-    const charset = BulkImportConstants.passwordCharset;
-    const length = BulkImportConstants.passwordLength;
-    
-    // Generate password using cryptographically secure random selection from charset
-    String password = List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
-    
-    // Ensure password has at least one of each required character type
-    final hasUpper = RegExp(r'[A-Z]').hasMatch(password);
-    final hasLower = RegExp(r'[a-z]').hasMatch(password);
-    final hasNumber = RegExp(r'[0-9]').hasMatch(password);
-    final hasSpecial = RegExp(r'[!@#\$%^&*]').hasMatch(password);
-    
-    if (!hasUpper || !hasLower || !hasNumber || !hasSpecial) {
-      // Recursively generate a new password if requirements aren't met
-      return _generateStudentPassword();
-    }
-    
-    return password;
-  }
-
   bool _isValidEmail(String email) {
     return BulkImportConstants.emailPattern.hasMatch(email);
-  }
-
-  bool _isValidUsername(String username) {
-    return BulkImportConstants.usernamePattern.hasMatch(username);
   }
 
   List<List<T>> _createBatches<T>(List<T> items, int batchSize) {

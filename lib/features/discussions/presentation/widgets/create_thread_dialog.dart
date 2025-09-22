@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/discussion_provider_simple.dart';
+import '../providers/discussion_provider.dart';
 
 class CreateThreadDialog extends StatefulWidget {
   final String boardId;
