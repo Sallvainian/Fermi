@@ -33,7 +33,9 @@ class FirestoreThreadSafe {
     if (kIsWeb) return false;
     try {
       return Platform.isWindows;
-    } catch (_) {
+    } on UnsupportedError catch (_) {
+      return false; // Fallback for platforms where Platform isn't available
+    } on NoSuchMethodError catch (_) {
       return false; // Fallback for platforms where Platform isn't available
     }
   }
