@@ -131,6 +131,7 @@ launch_app.sh
 .cursor/
 .gemini/
 .codex/
+.bmad-core/
 devtools_options.yaml
 
 # AI instruction files (keep local only)
