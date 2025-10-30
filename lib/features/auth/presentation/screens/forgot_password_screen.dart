@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 
+/// A screen that allows users to reset their password.
+///
+/// Users can enter their email address to receive a password reset link.
+/// The screen provides feedback on the success or failure of this operation.
 class ForgotPasswordScreen extends StatefulWidget {
+  /// Creates a [ForgotPasswordScreen].
   const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
+/// The state for the [ForgotPasswordScreen].
+///
+/// This class manages the form for entering the user's email, handles the
+/// password reset logic, and displays success or error messages.
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -21,6 +30,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
+  /// Sends a password reset email to the user.
+  ///
+  /// This method validates the email address, then uses [FirebaseAuth] to
+  /// send the reset link. It updates the UI to show loading and success states,
+  /// and displays an error message if the process fails.
   Future<void> _resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -77,6 +91,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
+  /// Builds the form for entering the email address.
+  ///
+  /// This widget includes a text field for the email, a submit button, and
+  /// associated informational text.
+  ///
+  /// - [theme]: The current theme data.
   Widget _buildForm(ThemeData theme) {
     return Form(
       key: _formKey,
@@ -143,6 +163,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 
+  /// Builds the success message displayed after the email is sent.
+  ///
+  /// This widget informs the user that the email has been sent and provides
+  /// a button to return to the login screen.
+  ///
+  /// - [theme]: The current theme data.
   Widget _buildSuccessMessage(ThemeData theme) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,

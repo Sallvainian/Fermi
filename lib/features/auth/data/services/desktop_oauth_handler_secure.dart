@@ -5,10 +5,14 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../shared/services/logger_service.dart';
-import 'package:window_to_front/window_to_front.dart';
+import 'package.window_to_front/window_to_front.dart';
 
-/// Secure OAuth handler for desktop platforms using Firebase Functions backend
-/// This implementation keeps OAuth client secrets on the server side
+/// A secure OAuth handler for desktop platforms that uses a Firebase Functions
+/// backend to keep client secrets off the client.
+///
+/// This approach is more secure than embedding OAuth client secrets in a desktop
+/// application. It communicates with a set of Firebase Functions to orchestrate
+/// the OAuth flow.
 class SecureDesktopOAuthHandler {
   // Get project ID and region from environment variables, with sensible defaults
   static String get _projectId => const String.fromEnvironment(
@@ -44,7 +48,17 @@ class SecureDesktopOAuthHandler {
   String? _codeVerifier;
   String? _state;
 
-  /// Performs secure OAuth flow using Firebase Functions backend
+  /// Performs a secure OAuth flow using a Firebase Functions backend.
+  ///
+  /// This method orchestrates the following steps:
+  /// 1. Requests an OAuth URL from a Firebase Function.
+  /// 2. Opens the URL in the user's browser.
+  /// 3. Listens for the redirect on a local server.
+  /// 4. Sends the received authorization code to another Firebase Function.
+  /// 5. Receives a Firebase custom token from the function.
+  /// 6. Signs into Firebase with the custom token.
+  ///
+  /// Returns a [UserCredential] on success, or `null` on failure.
   Future<UserCredential?> performSecureOAuthFlow() async {
     try {
       LoggerService.info('Starting secure OAuth flow with Firebase Functions', tag: 'SecureOAuth');
@@ -143,7 +157,11 @@ class SecureDesktopOAuthHandler {
     }
   }
 
-  /// Gets OAuth URL from Firebase Function
+  /// Fetches the OAuth authorization URL from the backend Firebase Function.
+  ///
+  /// - [redirectUri]: The local URI to which the OAuth provider should redirect.
+  ///
+  /// Returns a map containing the `authUrl`, `state`, and `codeVerifier`.
   Future<Map<String, dynamic>?> _getOAuthUrl(String redirectUri) async {
     try {
       LoggerService.debug('Requesting OAuth URL from: $_getOAuthUrlEndpoint', tag: 'SecureOAuth');
@@ -186,7 +204,14 @@ class SecureDesktopOAuthHandler {
     }
   }
 
-  /// Exchanges authorization code for tokens via Firebase Function
+  /// Exchanges the authorization code for a Firebase custom token via a backend function.
+  ///
+  /// - [code]: The authorization code.
+  /// - [state]: The CSRF state token.
+  /// - [codeVerifier]: The PKCE code verifier.
+  /// - [redirectUri]: The original redirect URI.
+  ///
+  /// Returns a map containing the `firebaseToken`.
   Future<Map<String, dynamic>?> _exchangeAuthCode({
     required String code,
     required String state,
@@ -217,7 +242,11 @@ class SecureDesktopOAuthHandler {
     }
   }
 
-  /// Opens the authorization URL in the default browser
+  /// Opens the authorization URI in the user's default browser.
+  ///
+  /// Includes platform-specific fallbacks.
+  ///
+  /// - [authorizationUri]: The URI to open.
   Future<void> _openBrowser(Uri authorizationUri) async {
     // Validate URI to prevent command injection
     if (!_isValidAuthorizationUri(authorizationUri)) {
@@ -270,7 +299,11 @@ class SecureDesktopOAuthHandler {
     throw Exception('Cannot launch authorization URL: $authorizationUri');
   }
 
-  /// Validates that the authorization URI is safe to pass to shell commands
+  /// Validates the authorization URI to prevent potential command injection.
+  ///
+  /// - [uri]: The URI to validate.
+  ///
+  /// Returns `true` if the URI is considered safe.
   bool _isValidAuthorizationUri(Uri uri) {
     LoggerService.debug('Validating URI: $uri', tag: 'SecureOAuth');
     LoggerService.debug('URI scheme: ${uri.scheme}', tag: 'SecureOAuth');
@@ -308,7 +341,11 @@ class SecureDesktopOAuthHandler {
     return true;
   }
 
-  /// Listens for the OAuth redirect and extracts the authorization code
+  /// Listens for the OAuth redirect and extracts the authorization code.
+  ///
+  /// Also verifies the state parameter to prevent CSRF attacks.
+  ///
+  /// Returns the authorization code.
   Future<String?> _listenForAuthCode() async {
     try {
       LoggerService.info('Waiting for redirect...', tag: 'SecureOAuth');
@@ -432,7 +469,11 @@ class SecureDesktopOAuthHandler {
     }
   }
 
-  /// Refreshes the access token using a refresh token
+  /// Refreshes the access token using a refresh token via a backend function.
+  ///
+  /// - [refreshToken]: The refresh token to use.
+  ///
+  /// Returns a map containing the new tokens.
   Future<Map<String, dynamic>?> refreshToken(String refreshToken) async {
     try {
       final response = await http.post(
@@ -453,7 +494,7 @@ class SecureDesktopOAuthHandler {
     }
   }
 
-  /// Cleans up resources
+  /// Cleans up resources used by the handler.
   void dispose() {
     _redirectServer?.close();
     _redirectServer = null;

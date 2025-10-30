@@ -10,7 +10,12 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:crypto/crypto.dart';
 
-/// Direct OAuth handler for Windows desktop - no Firebase Functions needed
+/// Handles the desktop OAuth2 flow directly with Google's servers, using PKCE.
+///
+/// This implementation avoids the need for a backend function to handle the token
+/// exchange, making it suitable for desktop applications where a client secret
+/// can be securely stored. It retrieves credentials from compile-time environment
+/// variables for release builds and falls back to a `.env` file for development.
 class DirectDesktopOAuthHandler {
   // OAuth 2.0 Client ID and Secret from Google Cloud Console
   // These are injected at compile time via --dart-define flags
@@ -25,6 +30,7 @@ class DirectDesktopOAuthHandler {
     defaultValue: '',
   );
 
+  /// The Google OAuth client ID.
   static String get _clientId {
     // First try compile-time constant (for production builds)
     if (_compiledClientId.isNotEmpty) {
@@ -41,6 +47,7 @@ class DirectDesktopOAuthHandler {
     }
   }
 
+  /// The Google OAuth client secret.
   static String get _clientSecret {
     // First try compile-time constant (for production builds)
     if (_compiledClientSecret.isNotEmpty) {
@@ -60,7 +67,16 @@ class DirectDesktopOAuthHandler {
   HttpServer? _redirectServer;
   String? _codeVerifier;
 
-  /// Performs OAuth flow directly with Google
+  /// Performs the complete direct OAuth2 flow with Google and signs into Firebase.
+  ///
+  /// This method orchestrates the PKCE flow:
+  /// 1. Generates a code verifier and challenge.
+  /// 2. Opens the browser for user authorization.
+  /// 3. Listens for the redirect and captures the authorization code.
+  /// 4. Exchanges the code for an ID token and access token.
+  /// 5. Uses the tokens to create a Firebase [UserCredential].
+  ///
+  /// Returns the [UserCredential] on success, or `null` on failure.
   Future<UserCredential?> performDirectOAuthFlow() async {
     try {
       LoggerService.info('Starting direct OAuth flow', tag: 'DirectOAuth');
@@ -174,7 +190,13 @@ class DirectDesktopOAuthHandler {
     }
   }
 
-  /// Exchange authorization code for tokens
+  /// Exchanges the authorization code for an ID token and access token.
+  ///
+  /// - [code]: The authorization code.
+  /// - [redirectUri]: The redirect URI used in the initial request.
+  /// - [codeVerifier]: The PKCE code verifier.
+  ///
+  /// Returns a map containing the tokens.
   Future<Map<String, dynamic>?> _exchangeCodeForTokens({
     required String code,
     required String redirectUri,
@@ -206,7 +228,9 @@ class DirectDesktopOAuthHandler {
     }
   }
 
-  /// Listen for OAuth redirect
+  /// Listens for the OAuth redirect on the local server and extracts the auth code.
+  ///
+  /// Returns the authorization code, or `null` if an error occurs.
   Future<String?> _listenForAuthCode() async {
     try {
       LoggerService.info('Waiting for redirect...', tag: 'DirectOAuth');
@@ -279,7 +303,7 @@ class DirectDesktopOAuthHandler {
     }
   }
 
-  /// Generate PKCE code verifier
+  /// Generates a cryptographically random string for the PKCE code verifier.
   String _generateCodeVerifier() {
     const chars =
         'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~';
@@ -290,14 +314,16 @@ class DirectDesktopOAuthHandler {
     ).join();
   }
 
-  /// Generate PKCE code challenge using SHA256
+  /// Generates a SHA256 code challenge from a code verifier for PKCE.
+  ///
+  /// - [verifier]: The code verifier.
   String _generateCodeChallenge(String verifier) {
     final bytes = utf8.encode(verifier);
     final digest = sha256.convert(bytes);
     return base64Url.encode(digest.bytes).replaceAll('=', '');
   }
 
-  /// Clean up resources
+  /// Cleans up resources, such as the local HTTP server.
   void dispose() {
     _redirectServer?.close();
     _redirectServer = null;

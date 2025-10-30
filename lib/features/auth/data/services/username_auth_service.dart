@@ -4,10 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../shared/services/logger_service.dart';
 import '../../../../shared/models/user_role.dart';
 
-/// Service for handling username-based authentication.
+/// A service for managing username-based authentication.
 ///
-/// This service converts usernames to synthetic emails for Firebase Auth
-/// while maintaining a clean username-based interface for users.
+/// This service abstracts the complexity of using usernames with Firebase Auth
+/// by converting them to and from synthetic email addresses. It also provides
+/// methods for checking username availability and creating user accounts.
 class UsernameAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -26,13 +27,22 @@ class UsernameAuthService {
   /// Maximum number of username suffix attempts
   static const int _maxUsernameSuffixAttempts = 100;
 
-  /// Generate a synthetic email from a username based on role
+  /// Generates a synthetic email from a username and role.
+  ///
+  /// - [username]: The username.
+  /// - [role]: The user's role, which determines the email domain.
+  ///
+  /// Returns a synthetic email address (e.g., `johndoe@students.fermi-app.local`).
   String generateSyntheticEmail(String username, {UserRole role = UserRole.student}) {
     final domain = role == UserRole.teacher ? _teacherEmailDomain : _studentEmailDomain;
     return '${username.toLowerCase()}$domain';
   }
 
-  /// Extract username from a synthetic email
+  /// Extracts a username from a synthetic email address.
+  ///
+  /// - [email]: The synthetic email.
+  ///
+  /// Returns the username, or `null` if the email is not a synthetic one.
   String? extractUsernameFromEmail(String email) {
     if (email.endsWith(_studentEmailDomain)) {
       return email.substring(0, email.length - _studentEmailDomain.length);
@@ -42,7 +52,11 @@ class UsernameAuthService {
     return null;
   }
 
-  /// Check if a username is already taken
+  /// Checks if a username is available.
+  ///
+  /// - [username]: The username to check.
+  ///
+  /// Returns `true` if the username is available, `false` otherwise.
   Future<bool> isUsernameAvailable(String username) async {
     try {
       // Check in public_usernames collection (safe for unauthenticated access)
@@ -58,7 +72,11 @@ class UsernameAuthService {
     }
   }
 
-  /// Get user UID by username
+  /// Retrieves a user's UID by their username.
+  ///
+  /// - [username]: The user's username.
+  ///
+  /// Returns the UID, or `null` if not found.
   Future<String?> getUidByUsername(String username) async {
     try {
       final querySnapshot = await _firestore
@@ -77,7 +95,15 @@ class UsernameAuthService {
     }
   }
 
-  /// Sign in with username and password
+  /// Signs in a user with their username and password.
+  ///
+  /// This method first looks up the user's synthetic email using their username
+  /// and then signs them in with Firebase Auth.
+  ///
+  /// - [username]: The user's username.
+  /// - [password]: The user's password.
+  ///
+  /// Returns the signed-in [User] object.
   Future<User?> signInWithUsername({
     required String username,
     required String password,
@@ -215,7 +241,15 @@ class UsernameAuthService {
     }
   }
 
-  /// Create a new student account with username and password
+  /// Creates a new student account.
+  ///
+  /// - [username]: The student's username.
+  /// - [password]: The student's password.
+  /// - [firstName]: The student's first name.
+  /// - [lastName]: The student's last name.
+  /// - [teacherId]: The ID of the teacher creating the account (optional).
+  ///
+  /// Returns the newly created [User] object.
   Future<User?> createStudentAccount({
     required String username,
     required String password,
@@ -292,7 +326,14 @@ class UsernameAuthService {
     }
   }
 
-  /// Create a teacher account with username and password
+  /// Creates a new teacher account.
+  ///
+  /// - [username]: The teacher's username.
+  /// - [password]: The teacher's password.
+  /// - [firstName]: The teacher's first name.
+  /// - [lastName]: The teacher's last name.
+  ///
+  /// Returns the newly created [User] object.
   Future<User?> createTeacherAccount({
     required String username,
     required String password,
@@ -368,7 +409,10 @@ class UsernameAuthService {
     }
   }
 
-  /// Delete user and synchronize both collections
+  /// Deletes a user from both the `users` and `public_usernames` collections.
+  ///
+  /// - [uid]: The UID of the user to delete.
+  /// - [username]: The username of the user to delete.
   Future<void> deleteUser({
     required String uid,
     required String username,
@@ -396,7 +440,10 @@ class UsernameAuthService {
     }
   }
   
-  /// Update password for a user (teacher can reset student passwords)
+  /// Updates the password for a user. (Not implemented)
+  ///
+  /// This requires backend support (e.g., a Cloud Function with the Admin SDK)
+  /// and is not implemented on the client side for security reasons.
   Future<void> updatePasswordForUser({
     required String username,
     required String newPassword,
@@ -414,7 +461,14 @@ class UsernameAuthService {
     }
   }
 
-  /// Validate username format
+  /// Validates the format of a username.
+  ///
+  /// Usernames must be 3-20 characters long, start with a letter, and
+  /// contain only letters, numbers, and underscores.
+  ///
+  /// - [username]: The username to validate.
+  ///
+  /// Returns `true` if the username is valid.
   bool isValidUsername(String username) {
     // Username must be:
     // - 3-20 characters long
@@ -424,7 +478,12 @@ class UsernameAuthService {
     return regex.hasMatch(username);
   }
 
-  /// Generate a username suggestion based on name
+  /// Generates a username suggestion based on a user's first and last name.
+  ///
+  /// - [firstName]: The user's first name.
+  /// - [lastName]: The user's last name.
+  ///
+  /// Returns a suggested username (e.g., `jdoe01`).
   String generateUsername(String firstName, String lastName) {
     // Create username from first initial + last name + number
     final firstInitial = firstName.isNotEmpty ? firstName[0].toLowerCase() : '';
@@ -451,7 +510,11 @@ class UsernameAuthService {
     return '${baseUsername}01';
   }
 
-  /// Get next available username with number suffix
+  /// Finds the next available username by incrementing a numerical suffix.
+  ///
+  /// - [baseUsername]: The base username to start with.
+  ///
+  /// Returns an available username.
   Future<String> getNextAvailableUsername(String baseUsername) async {
     // Remove any trailing numbers
     final cleanBase = baseUsername.replaceAll(RegExp(r'\d+$'), '');
@@ -468,7 +531,10 @@ class UsernameAuthService {
     throw Exception('Could not generate unique username');
   }
   
-  /// Add item to cache with LRU eviction
+  /// Adds a username-UID mapping to the cache with an LRU eviction policy.
+  ///
+  /// - [username]: The username to cache.
+  /// - [uid]: The corresponding UID.
   static void _addToCache(String username, String uid) {
     // Remove from access order if already exists
     _cacheAccessOrder.remove(username);
@@ -493,20 +559,24 @@ class UsernameAuthService {
     );
   }
   
-  /// Update access order when retrieving from cache
+  /// Updates the access order for a cached item, marking it as recently used.
+  ///
+  /// - [username]: The username to update.
   static void _updateCacheAccess(String username) {
     _cacheAccessOrder.remove(username);
     _cacheAccessOrder.add(username);
   }
   
-  /// Clear the username cache (useful for testing or when users are updated)
+  /// Clears the entire username cache.
   static void clearCache() {
     _usernameCache.clear();
     _cacheAccessOrder.clear();
     LoggerService.info('Username cache cleared', tag: 'UsernameAuthService');
   }
   
-  /// Remove specific username from cache (useful when user is deleted)
+  /// Removes a specific username from the cache.
+  ///
+  /// - [username]: The username to invalidate.
   static void invalidateCacheEntry(String username) {
     final lowerUsername = username.toLowerCase();
     _usernameCache.remove(lowerUsername);
@@ -515,16 +585,21 @@ class UsernameAuthService {
   }
 }
 
-/// Cache entry for username lookups
+/// Represents a cached username-to-UID mapping.
 class _CachedUsername {
+  /// The user's UID.
   final String uid;
+
+  /// The timestamp when the entry was cached.
   final DateTime timestamp;
   
+  /// Creates a cache entry.
   _CachedUsername({
     required this.uid,
     required this.timestamp,
   });
   
+  /// Whether the cache entry has expired.
   bool get isExpired => 
       DateTime.now().difference(timestamp) > UsernameAuthService._cacheTTL;
 }

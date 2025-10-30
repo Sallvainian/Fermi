@@ -6,9 +6,19 @@ import '../../../../shared/services/logger_service.dart';
 import '../widgets/auth_text_field.dart';
 import '../providers/auth_provider.dart';
 
+/// A screen that provides a user interface for users to log in.
+///
+/// This screen supports login via email/password and Google Sign-In. It adapts
+/// its appearance and behavior based on the user's role (student, teacher, or admin).
 class LoginScreen extends StatefulWidget {
+  /// The user role, which determines the appearance and behavior of the login screen.
+  ///
+  /// This can be 'student', 'teacher', or 'admin'.
   final String? role;
 
+  /// Creates a [LoginScreen].
+  ///
+  /// The [key] is required by Flutter, and [role] is optional.
   const LoginScreen({
     super.key,
     this.role,
@@ -18,6 +28,9 @@ class LoginScreen extends StatefulWidget {
   LoginScreenState createState() => LoginScreenState();
 }
 
+/// The state for the [LoginScreen].
+///
+/// This class manages the form state, text controllers, and user interactions.
 class LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -60,6 +73,11 @@ class LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Initiates the Google Sign-In process.
+  ///
+  /// This method uses the [AuthProvider] to sign in with Google. Upon success,
+  /// it navigates the user to the dashboard. If an error occurs, it displays
+  /// a snackbar with an error message.
   Future<void> _signInWithGoogle() async {
     final authProvider = context.read<AuthProvider>();
 
@@ -93,6 +111,11 @@ class LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Initiates the email and password sign-in process.
+  ///
+  /// This method validates the form, then uses the [AuthProvider] to sign in.
+  /// On success, it navigates to the dashboard. On failure, it displays a
+  /// snackbar with a relevant error message.
   Future<void> _signIn() async {
     if (_formKey.currentState?.validate() ?? false) {
       final authProvider = context.read<AuthProvider>();
@@ -150,6 +173,13 @@ class LoginScreenState extends State<LoginScreen> {
   }
 
 
+  /// Validates the user's email input.
+  ///
+  /// This method checks if the email is empty or does not contain an '@' symbol.
+  ///
+  /// - [value]: The email string to validate.
+  ///
+  /// Returns a `String` with an error message if validation fails, otherwise `null`.
   String? _validateInput(String? value) {
     if (value?.isEmpty ?? true) {
       return 'Please enter your email';
@@ -459,8 +489,12 @@ class LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// Google Logo Painter for the official Google "G" logo
+/// A custom painter for rendering the official Google "G" logo.
+///
+/// This painter is used in the Google Sign-In button to display a high-fidelity
+/// and scalable Google logo, following Google's branding guidelines.
 class GoogleLogoPainter extends CustomPainter {
+  /// Creates a [GoogleLogoPainter].
   const GoogleLogoPainter();
 
   @override
