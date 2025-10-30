@@ -8,7 +8,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'desktop_oauth_handler_direct.dart';
 
-/// Simple authentication service - does one thing well
+/// A service that handles all authentication-related operations with Firebase.
+///
+/// This service provides methods for signing up, signing in, signing out,
+/// and managing user sessions. It supports email/password, Google, and Apple
+/// authentication, with platform-specific implementations for web, mobile, and desktop.
 class AuthService {
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
@@ -24,6 +28,7 @@ class AuthService {
   // This is ONLY enabled in debug mode to prevent production access
   static const String _testStudentEmail = 'fcottone@rosellestudent.com';
 
+  /// Creates an [AuthService] and initializes Firebase instances.
   AuthService() {
     _auth = FirebaseAuth.instance;
     _firestore = FirebaseFirestore.instance;
@@ -42,7 +47,14 @@ class AuthService {
     }
   }
 
-  // Helper method to validate school email domains
+  /// Validates if an email address belongs to an authorized school domain.
+  ///
+  /// In debug mode, this method allows a specific test student email to bypass
+  /// the domain check.
+  ///
+  /// - [email]: The email address to validate.
+  ///
+  /// Returns `true` if the email is valid, `false` otherwise.
   bool _isValidSchoolEmail(String email) {
     final emailLower = email.toLowerCase();
 
@@ -72,6 +84,7 @@ class AuthService {
     return false;
   }
 
+  /// Initializes the Google Sign-In configuration based on the current platform.
   void _initializeGoogleSignIn() async {
     String clientId = '';
     String clientSecret = '';
@@ -150,12 +163,24 @@ class AuthService {
     }
   }
 
-  // Current user
+  /// The currently authenticated Firebase user, or `null` if none.
   User? get currentUser => _auth?.currentUser;
+
+  /// A stream that notifies listeners about changes in the user's authentication state.
   Stream<User?> get authStateChanges =>
       _auth?.authStateChanges() ?? Stream.value(null);
 
-  // Sign up with username support
+  /// Creates a new user account with email and password.
+  ///
+  /// This method validates the email domain before creating the user.
+  /// After creation, it updates the user's profile in Firestore.
+  ///
+  /// - [email]: The user's email.
+  /// - [password]: The user's password.
+  /// - [displayName]: The user's full name.
+  /// - [username]: The user's username (optional).
+  ///
+  /// Returns the newly created [User] object.
   Future<User?> signUp({
     required String email,
     required String password,
@@ -207,7 +232,15 @@ class AuthService {
     return cred.user;
   }
 
-  // Sign in with email
+  /// Signs in a user with their email and password.
+  ///
+  /// Validates the email domain before attempting to sign in.
+  /// Updates the user's `lastActive` timestamp on success.
+  ///
+  /// - [email]: The user's email.
+  /// - [password]: The user's password.
+  ///
+  /// Returns the signed-in [User] object.
   Future<User?> signIn({
     required String email,
     required String password,
@@ -250,7 +283,16 @@ class AuthService {
     return cred.user;
   }
 
-  // Sign in with Google
+  /// Initiates the Google Sign-In flow.
+  ///
+  /// This method uses a different approach depending on the platform:
+  /// - **Web**: Firebase popup or redirect.
+  /// - **Desktop**: A secure, direct OAuth flow.
+  /// - **Mobile**: Firebase's native Google provider.
+  ///
+  /// On successful sign-in, it creates or updates the user's document in Firestore.
+  ///
+  /// Returns the signed-in [User] object, or `null` if the user cancels.
   Future<User?> signInWithGoogle() async {
     if (_auth == null || _firestore == null) {
       throw UnsupportedError(
@@ -413,7 +455,13 @@ class AuthService {
     return user;
   }
 
-  // Sign in with Apple (required for App Store compliance - Guideline 4.8)
+  /// Initiates the Sign in with Apple flow.
+  ///
+  /// This method is required for iOS App Store compliance. It handles the
+  /// native Apple Sign-In flow and creates or updates the user's document
+  /// in Firestore upon success.
+  ///
+  /// Returns the signed-in [User] object.
   Future<User?> signInWithApple() async {
     try {
       // Check if Apple Sign In is available
@@ -497,7 +545,7 @@ class AuthService {
     }
   }
 
-  // Sign out
+  /// Signs out the current user from Firebase and other providers.
   Future<void> signOut() async {
     await _auth!.signOut();
 
@@ -518,12 +566,20 @@ class AuthService {
     }
   }
 
-  // Password reset
+  /// Sends a password reset email to the given email address.
+  ///
+  /// - [email]: The user's email.
   Future<void> resetPassword(String email) async {
     await _auth!.sendPasswordResetEmail(email: email);
   }
 
-  // Update user role (for role selection after Google sign-in)
+  /// Updates the role of a user in Firestore.
+  ///
+  /// If the role is set to 'student', it also creates a corresponding
+  /// document in the 'students' collection.
+  ///
+  /// - [uid]: The user ID.
+  /// - [role]: The role to assign.
   Future<void> updateUserRole(String uid, String role) async {
     // Parse role properly
     String roleStr = role;
@@ -560,7 +616,7 @@ class AuthService {
     }
   }
 
-  // Save user role with username support
+  /// Saves or updates a user's role and other profile information.
   Future<void> saveUserRole({
     required String uid,
     required String role,
@@ -587,12 +643,18 @@ class AuthService {
     }, SetOptions(merge: true));
   }
 
-  // Send password reset email
+  /// Sends a password reset email.
+  ///
+  /// - [email]: The email to send the reset link to.
   Future<void> sendPasswordResetEmail(String email) async {
     await _auth!.sendPasswordResetEmail(email: email);
   }
 
-  // Get user data
+  /// Retrieves user data from Firestore.
+  ///
+  /// - [uid]: The user ID.
+  ///
+  /// Returns a map of user data, or `null` if not found.
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     final doc = await _firestore!.collection('users').doc(uid).get();
     final data = doc.data();
@@ -603,8 +665,7 @@ class AuthService {
     return data;
   }
 
-  // Delete user account and all associated data
-  // Required for privacy compliance (GDPR, App Store guidelines)
+  /// Deletes the current user's account and all associated data.
   Future<void> deleteAccount() async {
     final user = currentUser;
     if (user == null) {
@@ -658,7 +719,10 @@ class AuthService {
     }
   }
 
-  // Re-authenticate user for sensitive operations like account deletion
+  /// Re-authenticates the user with their email and password.
+  ///
+  /// - [email]: The user's email.
+  /// - [password]: The user's password.
   Future<void> reauthenticateWithEmail(String email, String password) async {
     final user = currentUser;
     if (user == null) {
@@ -683,7 +747,7 @@ class AuthService {
     }
   }
 
-  // Re-authenticate with Google for account deletion
+  /// Re-authenticates the user with Google.
   Future<void> reauthenticateWithGoogle() async {
     final user = currentUser;
     if (user == null) {
@@ -739,7 +803,7 @@ class AuthService {
     }
   }
 
-  // Re-authenticate with Apple for account deletion
+  /// Re-authenticates the user with Apple.
   Future<void> reauthenticateWithApple() async {
     final user = currentUser;
     if (user == null) {

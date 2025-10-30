@@ -4,9 +4,10 @@ import '../../../../shared/services/logger_service.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:window_to_front/window_to_front.dart';
+import 'package.window_to_front/window_to_front.dart';
 
-/// Custom HTTP client that accepts JSON responses
+/// A custom HTTP client that adds an 'Accept: application/json' header
+/// to every request, which is required by some OAuth2 token endpoints.
 class JsonAcceptingHttpClient extends http.BaseClient {
   final _httpClient = http.Client();
 
@@ -17,7 +18,11 @@ class JsonAcceptingHttpClient extends http.BaseClient {
   }
 }
 
-/// Handles OAuth2 authentication flow for desktop platforms
+/// Handles the OAuth2 authentication flow for desktop platforms (Windows, macOS, Linux).
+///
+/// This class orchestrates the process of opening a browser for user authorization,
+/// listening for the redirect on a local server, and exchanging the authorization
+/// code for an access token.
 class DesktopOAuthHandler {
   static const String _googleAuthApi =
       "https://accounts.google.com/o/oauth2/v2/auth";
@@ -30,7 +35,16 @@ class DesktopOAuthHandler {
   HttpServer? _redirectServer;
   String? _lastAccessToken;
 
-  /// Performs the complete OAuth2 flow and returns credentials
+  /// Performs the complete OAuth2 flow for desktop applications.
+  ///
+  /// This method starts a local server to listen for the OAuth redirect,
+  /// opens the user's browser for authorization, and exchanges the received
+  /// authorization code for OAuth2 credentials.
+  ///
+  /// - [clientId]: The OAuth2 client ID.
+  /// - [clientSecret]: The OAuth2 client secret.
+  ///
+  /// Returns the [oauth2.Credentials] on success, or `null` on failure.
   Future<oauth2.Credentials?> performOAuthFlow({
     required String clientId,
     required String clientSecret,
@@ -121,7 +135,13 @@ class DesktopOAuthHandler {
     }
   }
 
-  /// Creates OAuth2 client and handles authorization
+  /// Creates an OAuth2 client and handles the authorization code exchange.
+  ///
+  /// - [clientId]: The OAuth2 client ID.
+  /// - [clientSecret]: The OAuth2 client secret.
+  /// - [redirectUri]: The local redirect URI.
+  ///
+  /// Returns a fully authenticated [oauth2.Client].
   Future<oauth2.Client> _getOauthClient({
     required String clientId,
     required String clientSecret,
@@ -199,7 +219,12 @@ class DesktopOAuthHandler {
     }
   }
 
-  /// Opens the authorization URL in the default browser
+  /// Opens the specified URI in the user's default browser.
+  ///
+  /// This method includes platform-specific fallbacks for Windows, macOS, and Linux
+  /// in case the primary `url_launcher` package fails.
+  ///
+  /// - [authorizationUri]: The URI to open.
   Future<void> _redirect(Uri authorizationUri) async {
     try {
       // Try url_launcher first
@@ -262,7 +287,10 @@ class DesktopOAuthHandler {
     throw Exception('Cannot launch authorization URL: $authorizationUri');
   }
 
-  /// Listens for the OAuth redirect and extracts query parameters
+  /// Listens for the incoming redirect on the local server and extracts the
+  /// authorization code from the query parameters.
+  ///
+  /// Returns a map of the query parameters from the redirect URI.
   Future<Map<String, String>> _listen() async {
     try {
       LoggerService.info('OAuth: Waiting for redirect...', tag: 'DesktopOAuth');
@@ -377,7 +405,13 @@ class DesktopOAuthHandler {
     }
   }
 
-  /// Signs out from Google by revoking the access token
+  /// Signs out from Google by revoking the last used access token.
+  ///
+  /// This helps to ensure that the user is fully signed out from the desktop
+  /// application's perspective.
+  ///
+  /// Returns `true` if the token was successfully revoked or if there was no
+  /// token to revoke, `false` otherwise.
   Future<bool> signOutFromGoogle() async {
     if (_lastAccessToken == null) {
       LoggerService.debug(
@@ -418,7 +452,7 @@ class DesktopOAuthHandler {
     }
   }
 
-  /// Cleans up resources
+  /// Cleans up resources used by the handler, such as the local HTTP server.
   void dispose() {
     _redirectServer?.close();
     _redirectServer = null;

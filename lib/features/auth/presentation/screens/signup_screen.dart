@@ -6,13 +6,23 @@ import '../../../../shared/services/logger_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 
+/// A screen that allows new users to create an account.
+///
+/// This screen provides a form for users to enter their details, such as
+/// name, email, and password. The form fields and behavior adapt based on
+/// whether the user is signing up as a student or a teacher.
 class SignupScreen extends StatefulWidget {
+  /// Creates a [SignupScreen].
   const SignupScreen({super.key});
 
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
+/// The state for the [SignupScreen].
+///
+/// This class manages the form, text controllers, and the sign-up process.
+/// It interacts with the [AuthProvider] to handle user registration.
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameOrEmailController = TextEditingController();
@@ -105,6 +115,9 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  /// Clears the error message in the [AuthProvider] if one exists.
+  ///
+  /// This is typically called when the user starts typing in a form field.
   void _clearError() {
     final authProvider = context.read<AuthProvider>();
     if (authProvider.errorMessage != null) {
@@ -112,6 +125,11 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  /// Handles the sign-up process.
+  ///
+  /// This method validates the form and, if successful, calls the [AuthProvider]
+  /// to create a new user account. It also handles role verification and clears
+  /// the verified role from [SharedPreferences] upon successful registration.
   Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -159,6 +177,10 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  /// Builds the widget tree for the signup screen.
+  ///
+  /// This method returns a [Scaffold] containing the signup form and other
+  /// UI elements. It adapts the form fields based on the user's role.
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

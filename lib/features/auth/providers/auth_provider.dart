@@ -10,33 +10,36 @@ import '../data/services/auth_service.dart';
 import '../../notifications/data/services/web_in_app_notification_service.dart';
 import '../../student/data/services/presence_service.dart';
 
-/// Simplified authentication states for the application.
+/// Defines the possible authentication states of the application.
 enum AuthStatus {
-  /// Initial state - checking authentication status
+  /// The initial state while the authentication status is being determined.
   uninitialized,
 
-  /// User is authenticated with complete profile
+  /// The user is successfully authenticated and has a complete profile.
   authenticated,
 
-  /// Authentication in progress
+  /// An authentication operation is currently in progress.
   authenticating,
 
-  /// User is not authenticated
+  /// The user is not authenticated.
   unauthenticated,
 
-  /// Authentication error occurred
+  /// An error occurred during an authentication process.
   error,
 }
 
 // Type alias for Firebase Auth User
 typedef User = firebase_auth.User;
 
-/// Simplified authentication provider with domain-based role assignment.
+/// A provider that manages user authentication and session state.
 ///
-/// Key simplifications:
-/// 1. No role selection - roles are assigned automatically based on email domain
-/// 2. No separate role verification - handled by cloud functions
-/// 3. Streamlined sign-in flow
+/// This class handles all authentication-related logic, including sign-in,
+/// sign-up, sign-out, and state management. It uses a domain-based role
+/// assignment system, where user roles are automatically determined by their
+/// email domain.
+///
+/// It interacts with [AuthService] for the underlying authentication
+/// mechanisms and provides a simplified [AuthStatus] to the rest of the app.
 class AuthProvider extends ChangeNotifier {
   // Dependencies
   final AuthService _authService;
@@ -59,6 +62,13 @@ class AuthProvider extends ChangeNotifier {
   // Prevent concurrent auth operations
   bool _authOperationInProgress = false;
 
+  /// Creates an [AuthProvider].
+  ///
+  /// Initializes the auth state and sets up dependencies.
+  ///
+  /// - [authService]: An optional [AuthService] instance for dependency injection.
+  /// - [initialStatus]: The initial [AuthStatus] for testing purposes.
+  /// - [initialUserModel]: The initial [UserModel] for testing purposes.
   AuthProvider({
     AuthService? authService,
     AuthStatus? initialStatus,
@@ -72,17 +82,34 @@ class AuthProvider extends ChangeNotifier {
 
   // ============= Getters =============
 
+  /// The current authentication status.
   AuthStatus get status => _status;
+
+  /// The currently authenticated user's data model.
   UserModel? get userModel => _userModel;
+
+  /// The underlying Firebase user object.
   firebase_auth.User? get firebaseUser => _firebaseAuth.currentUser;
+
+  /// The last error message, if any.
   String? get errorMessage => _errorMessage;
+
+  /// Whether an authentication operation is in progress.
   bool get isLoading => _isLoading;
+
+  /// Whether the user is fully authenticated.
   bool get isAuthenticated => _status == AuthStatus.authenticated && _userModel != null;
+
+  /// Whether the user has selected "Remember Me".
   bool get rememberMe => _rememberMe;
 
   // ============= Initialization =============
 
-  /// Initialize authentication state on app startup
+  /// Initializes the authentication state when the provider is first created.
+  ///
+  /// This method checks for an existing Firebase user session, handles OAuth
+  /// redirects on the web, and loads the user's profile data if they are
+  /// already logged in.
   Future<void> _initializeAuthState() async {
     try {
       // Check for redirect result first (for web OAuth redirects)
@@ -136,7 +163,13 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Process user after authentication
+  /// Processes a Firebase user to load their associated [UserModel].
+  ///
+  /// This method is called after a successful sign-in or during initialization.
+  /// It loads the user's profile from Firestore, handles the creation of profiles
+  /// for manually added admin accounts, and sets the final authenticated state.
+  ///
+  /// - [user]: The Firebase user to process.
   Future<void> _processUser(firebase_auth.User user) async {
     try {
       // Load user model from Firestore with retry logic
@@ -188,8 +221,13 @@ class AuthProvider extends ChangeNotifier {
 
   // ============= Core Authentication Methods =============
 
-  /// Universal sign in with email and password
-  /// No role checking needed - role is determined by email domain
+  /// Signs in a user with their email and password.
+  ///
+  /// The user's role is automatically determined by their email domain upon
+  /// successful authentication.
+  ///
+  /// - [email]: The user's email address.
+  /// - [password]: The user's password.
   Future<void> signIn(String email, String password) async {
     if (_authOperationInProgress) {
       LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
@@ -223,8 +261,14 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Universal sign up with email and password
-  /// Role is automatically assigned based on email domain
+  /// Creates a new user account with email and password.
+  ///
+  /// The user's role is automatically assigned based on their email domain
+  /// by a cloud function upon account creation.
+  ///
+  /// - [email]: The user's email address.
+  /// - [password]: The user's chosen password.
+  /// - [displayName]: The user's display name.
   Future<void> signUp({
     required String email,
     required String password,
@@ -267,8 +311,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Sign in with Google OAuth
-  /// Role is automatically assigned based on email domain
+  /// Initiates the Google Sign-In flow.
+  ///
+  /// The user's role is determined by their email domain upon successful
+  /// authentication.
   Future<void> signInWithGoogle() async {
     if (_authOperationInProgress) {
       LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
@@ -298,8 +344,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Sign in with Apple OAuth
-  /// Role is automatically assigned based on email domain
+  /// Initiates the Apple Sign-In flow.
+  ///
+  /// The user's role is determined by their email domain upon successful
+  /// authentication.
   Future<void> signInWithApple() async {
     if (_authOperationInProgress) {
       LoggerService.warning('Auth operation already in progress', tag: 'AuthProvider');
@@ -329,7 +377,9 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Send password reset email
+  /// Sends a password reset email to the specified email address.
+  ///
+  /// - [email]: The email address to send the reset link to.
   Future<void> sendPasswordResetEmail(String email) async {
     _startLoading();
     try {
@@ -343,7 +393,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Resend email verification
+  /// Resends the email verification link to the current user.
   Future<void> resendEmailVerification() async {
     _startLoading();
     try {
@@ -362,7 +412,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Sign out the current user
+  /// Signs out the current user.
+  ///
+  /// This method clears the user's session, updates their presence to offline,
+  /// and resets the authentication state.
   Future<void> signOut() async {
     try {
       LoggerService.info('Signing out user', tag: 'AuthProvider');
@@ -393,7 +446,14 @@ class AuthProvider extends ChangeNotifier {
 
   // ============= Helper Methods =============
 
-  /// Load user model with retry logic for Firestore eventual consistency
+  /// Loads a [UserModel] from Firestore with a retry mechanism.
+  ///
+  /// This method attempts to fetch the user's data multiple times to handle
+  /// potential eventual consistency delays in Firestore.
+  ///
+  /// - [uid]: The user ID to load.
+  ///
+  /// Returns the loaded [UserModel] or `null` if not found after all retries.
   Future<UserModel?> _loadUserModelWithRetry(String uid) async {
     for (int attempt = 0; attempt < _maxRetries; attempt++) {
       if (attempt > 0) {
@@ -419,7 +479,11 @@ class AuthProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Get user data from Firestore with single retry
+  /// Fetches user data from Firestore with a single retry.
+  ///
+  /// - [uid]: The user ID to fetch.
+  ///
+  /// Returns a map of user data or `null`.
   Future<Map<String, dynamic>?> _getUserDataWithRetry(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
@@ -437,13 +501,19 @@ class AuthProvider extends ChangeNotifier {
     return null;
   }
 
-  /// Calculate exponential backoff delay for retries
+  /// Calculates the delay for exponential backoff retries.
+  ///
+  /// - [attempt]: The current retry attempt number.
   Duration _calculateRetryDelay(int attempt) {
     final exponentialDelay = _baseRetryDelay * (1 << attempt);
     return exponentialDelay > _maxRetryDelay ? _maxRetryDelay : exponentialDelay;
   }
 
-  /// Handle invalid user scenario
+  /// Handles cases where the user's session is no longer valid.
+  ///
+  /// This method signs the user out and sets an appropriate error message.
+  ///
+  /// - [message]: The error message to display.
   Future<void> _handleInvalidUser(String message) async {
     await _authService.signOut();
     _userModel = null;
@@ -452,7 +522,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update authentication state
+  /// Updates the authentication state and notifies listeners.
+  ///
+  /// - [newStatus]: The new [AuthStatus] to set.
   void _setAuthState(AuthStatus newStatus) {
     if (_status != newStatus) {
       LoggerService.info('Auth state change: $_status -> $newStatus', tag: 'AuthProvider');
@@ -461,27 +533,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Start loading state
+  /// Sets the provider to a loading state.
   void _startLoading() {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// Stop loading state
+  /// Stops the loading state.
   void _stopLoading() {
     _isLoading = false;
     notifyListeners();
   }
 
-  /// Handle authentication errors
+  /// Handles a generic authentication error.
+  ///
+  /// - [error]: The error message.
   void _handleAuthError(String error) {
     _errorMessage = error;
     _setAuthState(AuthStatus.error);
     notifyListeners();
   }
 
-  /// Handle sign-in specific errors
+  /// Handles errors specific to the sign-in process.
+  ///
+  /// - [error]: The error object from the sign-in attempt.
   void _handleSignInError(dynamic error) {
     String errorMessage;
     final errorString = error.toString();
@@ -507,7 +583,9 @@ class AuthProvider extends ChangeNotifier {
     _handleAuthError(errorMessage);
   }
 
-  /// Handle sign-up specific errors
+  /// Handles errors specific to the sign-up process.
+  ///
+  /// - [error]: The error object from the sign-up attempt.
   void _handleSignUpError(dynamic error) {
     String errorMessage;
     final errorString = error.toString();
@@ -527,7 +605,10 @@ class AuthProvider extends ChangeNotifier {
     _handleAuthError(errorMessage);
   }
 
-  /// Handle OAuth specific errors
+  /// Handles errors specific to OAuth providers (Google, Apple).
+  ///
+  /// - [error]: The error object from the OAuth attempt.
+  /// - [provider]: The name of the OAuth provider.
   void _handleOAuthError(dynamic error, String provider) {
     // Log the full error for debugging
     LoggerService.error('OAuth Error Details', tag: 'AuthProvider', error: error);
@@ -562,14 +643,14 @@ class AuthProvider extends ChangeNotifier {
     _handleAuthError(errorMessage);
   }
 
-  /// Start notifications if needed (web only)
+  /// Starts listening for in-app notifications if the user is on the web.
   void _startNotificationsIfNeeded() {
     if (kIsWeb && _userModel != null) {
       WebInAppNotificationService.instance.startListening(_userModel!.id);
     }
   }
 
-  /// Update user presence to online
+  /// Updates the user's presence to 'online'.
   void _updatePresenceOnline() {
     if (_userModel != null) {
       _presenceService.updatePresence(
@@ -580,7 +661,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Update user presence to offline
+  /// Updates the user's presence to 'offline'.
   void _updatePresenceOffline() {
     if (_userModel != null) {
       _presenceService.updatePresence(
@@ -591,7 +672,9 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Update remember me preference
+  /// Sets the "Remember Me" preference for the user.
+  ///
+  /// - [value]: `true` to remember the user, `false` otherwise.
   Future<void> setRememberMe(bool value) async {
     _rememberMe = value;
     final prefs = await SharedPreferences.getInstance();
@@ -601,13 +684,13 @@ class AuthProvider extends ChangeNotifier {
 
   // ============= Additional Methods for Compatibility =============
   
-  /// Clear current error message
+  /// Clears the current error message.
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
   
-  /// Reload user model from Firestore
+  /// Reloads the user model from Firestore.
   Future<void> reloadUserModel() async {
     final user = _firebaseAuth.currentUser;
     if (user != null) {
@@ -619,7 +702,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
-  /// Reload current user
+  /// Reloads the current Firebase user and their user model.
   Future<void> reloadUser() async {
     final user = _firebaseAuth.currentUser;
     if (user != null) {
@@ -628,13 +711,13 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
-  /// Set selected role (no longer needed but kept for compatibility)
+  /// A no-op method for backward compatibility. Roles are now domain-based.
   void setSelectedRole(String role) {
     // No-op - roles are now determined by email domain
     LoggerService.info('setSelectedRole called but ignored - roles are domain-based', tag: 'AuthProvider');
   }
   
-  /// Create student account (admin only)
+  /// Throws an exception, as student accounts should be created via admin functions.
   Future<void> createStudentAccount({
     required String username,
     required String password,
@@ -644,17 +727,20 @@ class AuthProvider extends ChangeNotifier {
     throw Exception('Student account creation should be done through admin functions');
   }
   
-  /// Reauthenticate with Apple
+  /// Reauthenticates the user with Apple Sign-In.
   Future<void> reauthenticateWithApple() async {
     await signInWithApple();
   }
   
-  /// Reauthenticate with Google
+  /// Reauthenticates the user with Google Sign-In.
   Future<void> reauthenticateWithGoogle() async {
     await signInWithGoogle();
   }
   
-  /// Reauthenticate with email and password
+  /// Reauthenticates the user with their email and password.
+  ///
+  /// - [email]: The user's email.
+  /// - [password]: The user's password.
   Future<void> reauthenticateWithEmail(String email, String password) async {
     final user = _firebaseAuth.currentUser;
     if (user != null && user.email != null) {
@@ -666,7 +752,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
-  /// Delete user account
+  /// Deletes the current user's account.
   Future<void> deleteAccount() async {
     final user = _firebaseAuth.currentUser;
     if (user != null) {
@@ -675,7 +761,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
-  /// Update user profile
+  /// Updates the user's profile information.
+  ///
+  /// - [displayName]: The new display name.
+  /// - [firstName]: The new first name.
+  /// - [lastName]: The new last name.
   Future<void> updateProfile({
     String? displayName,
     String? firstName,
@@ -700,7 +790,9 @@ class AuthProvider extends ChangeNotifier {
     }
   }
   
-  /// Update profile picture
+  /// Updates the user's profile picture URL.
+  ///
+  /// - [photoUrl]: The new URL of the profile picture.
   Future<void> updateProfilePicture(String photoUrl) async {
     final user = _firebaseAuth.currentUser;
     if (user != null) {

@@ -6,7 +6,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_text_field.dart';
 
+/// A screen for teachers to set their password for the first time.
+///
+/// This screen is typically shown when a teacher's account has been created
+/// by an administrator and requires the teacher to set a password before they
+/// can log in.
 class TeacherPasswordResetScreen extends StatefulWidget {
+  /// Creates a [TeacherPasswordResetScreen].
   const TeacherPasswordResetScreen({super.key});
 
   @override
@@ -14,6 +20,11 @@ class TeacherPasswordResetScreen extends StatefulWidget {
       _TeacherPasswordResetScreenState();
 }
 
+/// The state for the [TeacherPasswordResetScreen].
+///
+/// This class manages the form for setting a new password, handles the
+/// password update logic, and interacts with Firebase to update the user's
+/// credentials and flags.
 class _TeacherPasswordResetScreenState
     extends State<TeacherPasswordResetScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -30,6 +41,11 @@ class _TeacherPasswordResetScreenState
     super.dispose();
   }
 
+  /// Updates the user's password in Firebase Auth and Firestore.
+  ///
+  /// This method validates the new password, updates it in Firebase Auth,
+  /// and then updates a flag in Firestore to indicate that the password
+  /// has been reset. On success, it navigates to the dashboard.
   Future<void> _updatePassword() async {
     if (!_formKey.currentState!.validate()) return;
 

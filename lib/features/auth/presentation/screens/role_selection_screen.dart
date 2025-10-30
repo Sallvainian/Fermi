@@ -4,16 +4,32 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 
+/// A screen that allows users to select their role (e.g., student, teacher, admin).
+///
+/// This is typically the first screen a new user sees. Once a role is selected,
+/// it's saved to [SharedPreferences] and the user is navigated to the login screen.
 class RoleSelectionScreen extends StatefulWidget {
+  /// Creates a [RoleSelectionScreen].
   const RoleSelectionScreen({super.key});
 
   @override
   State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
 }
 
+/// The state for the [RoleSelectionScreen].
+///
+/// This class handles the UI for role selection and the logic for persisting
+/// the selected role.
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   bool _isLoading = false;
 
+  /// Handles the selection of a role.
+  ///
+  /// This method saves the selected role to [SharedPreferences], updates the
+  /// [AuthProvider], and navigates to the login screen with the role as a
+  /// query parameter.
+  ///
+  /// - [role]: The role that was selected (e.g., 'student', 'teacher').
   Future<void> _selectRole(String role) async {
     setState(() => _isLoading = true);
 
@@ -176,6 +192,17 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     );
   }
 
+  /// Builds a card for a specific role.
+  ///
+  /// This widget is used to display a single role selection option. It includes
+  /// an icon, title, subtitle, and is styled with a given color.
+  ///
+  /// - [context]: The build context.
+  /// - [role]: The role identifier (e.g., 'student').
+  /// - [title]: The title of the role.
+  /// - [subtitle]: A brief description of the role.
+  /// - [icon]: The icon representing the role.
+  /// - [color]: The color associated with the role.
   Widget _buildRoleCard({
     required BuildContext context,
     required String role,
