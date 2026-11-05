@@ -6,7 +6,7 @@ on:
       - 'v*'
       - 'macos-v*'
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       version:
@@ -29,7 +29,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        ref: master
+        ref: main
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
@@ -353,7 +353,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: main
           fetch-depth: 0
       
       - name: Download DMG artifact
