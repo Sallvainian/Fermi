@@ -7,10 +7,18 @@
     "deploy": "echo 'Deploy handled by Cloudflare Pages'"
   },
   "devDependencies": {
+    "@seontechnologies/playwright-utils": "^4.6.1",
     "codebase-map": "^0.6.0",
     "wrangler": "^4.38.0"
   },
   "dependencies": {
     "mcp-firestore": "file:../mcp-firestore-fixed"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "fsevents": true,
+    "sharp": true,
+    "workerd": true,
+    "@seontechnologies/playwright-utils": false
   }
 }
