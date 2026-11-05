@@ -168,8 +168,6 @@ firestore_rules_fix.txt
 fastlane/
 fastlane/*.pkg
 
-.taskmaster/
-.trae/rules/
 rebuild_ios.sh
 node_modules/
 
@@ -201,3 +199,55 @@ fastlane/report.xml
 fastlane/report.html
 fastlane/screenshots/
 fastlane/test_output/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+
+# Playwright test artifacts and MCP output
+**/test-results/
+**/playwright-report/
+**/playwright-output/
+/playwright/.cache/
+/playwright/.auth/
+/blob-report/
+.playwright-mcp/
+.playwright/
+
+# Other agent tools (local only)
+.opencode/
+.contextstream/
+.agentvibes/
+.serena/
+.todos/
+.sidecar/
+gha-creds-*.json
+__pycache__/
+
+# BMAD: installed skills and module files are local tooling; skills-lock.json
+# is tracked and restores them.
+_bmad/*
+.agent/
+.agents/
+_bmad/render/
+
+# The v7 ticket store is tracked: initiatives (their tickets own status),
+# backlog tickets with no epic, and archived documents. Build/test artifacts
+# stay local. `/*` rather than a bare `_bmad-output/`, so the negations below
+# can re-include those folders.
+_bmad-output/*
+!_bmad-output/initiative-*/
+!_bmad-output/backlog/
+!_bmad-output/archive/
+
+# BMAD customization overrides are shared configuration, but never personal
+# `*.user.toml` overrides. `_bmad/*` above ends in `*` so git descends far
+# enough for these negations to apply.
+!_bmad/custom/
+_bmad/custom/*
+!_bmad/custom/*.toml
+_bmad/custom/*.user.toml
+
+# bmad-loop run state and local policy
+.bmad-loop/runs/
+.bmad-loop/cache/
+.bmad-loop/archive/
+.bmad-loop/policy.toml
