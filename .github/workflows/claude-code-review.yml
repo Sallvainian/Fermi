@@ -3,43 +3,201 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
-
+    # Bot-authored PRs are skipped. The action hard-fails (exit 1) on one rather
+    # than skipping — "Action failed with error: Workflow initiated by non-human
+    # actor: dependabot (type: Bot)" — so every dependabot PR would carry a red X
+    # for a review nobody wanted (half the runs in My-Love, where this came from).
+    # Adding dependabot to `allowed_bots` would run the review instead of
+    # suppressing it.
+    #
+    # claude[bot] is the deliberate exception: `allowed_bots: 'claude'` below
+    # keeps its PRs reviewed, and a blanket type check would undo that. Matching
+    # on `user.type` covers other bot accounts without a login denylist.
+    if: |
+      !github.event.pull_request.draft &&
+      !github.event.pull_request.merged &&
+      (github.event.pull_request.user.type != 'Bot' ||
+       github.event.pull_request.user.login == 'claude[bot]')
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
       id-token: write
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+
+      # The review agent's sandbox has no network to pub.dev, so `flutter pub
+      # get` can never succeed once the agent is running. Resolve packages here,
+      # where the runner has network — the agent then runs `flutter analyze` and
+      # `flutter test` against ready packages, offline. Same Flutter as 01_ci.yml.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.32.0'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
 
       - name: Run Claude Code Review
         id: claude-review
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+          track_progress: true
+          # Without this, every push mints a NEW comment instead of updating the
+          # existing one, and a finished review sits next to a still-running
+          # "Claude Code is working…" placeholder from the next push. Defaults to
+          # false; the action describes it as "Use just one comment to deliver
+          # issue/PR comments".
+          use_sticky_comment: true
+          # Run subagents in the foreground. Background subagents have split a
+          # review into parts, ticked one, and ended with no verdict posted.
+          settings: '{"env":{"CLAUDE_CODE_DISABLE_BACKGROUND_TASKS":"1"}}'
+          allowed_bots: 'claude'
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
 
+            You are a code review agent. You always deliver exactly one comment
+            containing the complete review — never a running commentary spread
+            across several. Be terse: report what matters and nothing else.
+
+            Review only what this PR changes; read surrounding code only to judge
+            impact. You have `git commit` and `git push` in your default tool set:
+            do not use them. Do not edit files, approve the PR, or request changes.
+            Your only output is the one comment.
+
+            ## Before reviewing
+
+            1. If the checkout has a `CLAUDE.md` or `AGENTS.md`, read it. It is the
+               authoritative statement of this repo's policy, layout, conventions
+               and known pitfalls. If it has neither, the project checks below
+               simply have no rules file to check against.
+            2. Run `gh pr diff ${{ github.event.pull_request.number }}` to get the full diff.
+            3. Check if the diff ONLY contains lockfiles, markdown, version bumps, or
+               auto-generated files (`*.g.dart`, `*.freezed.dart`,
+               `lib/firebase_options.dart`, generated plugin registrants under
+               `android/`, `ios/`, `macos/`, `windows/`). If so, skip the review
+               entirely and make your comment read exactly: "No reviewable changes."
+            4. This workflow re-runs on every push. Your comment is reused and rewritten
+               in place, so write it as a complete standalone review of the CURRENT diff —
+               not a delta against your last one. If something you previously flagged is
+               now fixed, simply drop it rather than narrating the change.
+
+            ## Filter gate (2-of-4 rule)
+
+            Only report a finding if AT LEAST TWO of these criteria are met:
+            - You can quote the exact violated line from `CLAUDE.md` or `AGENTS.md`, naming its section
+            - The finding is introduced in THIS PR's diff (not pre-existing code)
+            - It will cause incorrect runtime behavior, a bug, or a security vulnerability
+            - It is objectively wrong (not a style preference)
+
+            This gate governs the WHOLE review, not the Issues Found section alone.
+            If fewer than two criteria are met, drop the finding entirely — delete it.
+            Do NOT demote it to Suggestions. Suggestions is not the overflow bin for
+            findings that failed this gate; it carries its own additional bar, below.
+
+            If the rules file names code that ALREADY violates its own rules, that
+            is documentation of known debt, not a work list. Report it only if THIS
+            diff touches that code and leaves it worse. Opening a review by
+            relisting it is a failed review.
+
+            ## Project checks
+
+            When the repo has a rules file, check the diff against every rule in it
+            first. Quote the rule for any finding against it, as the filter gate
+            requires.
+
+            ## General checks
+
+            Then, subject to the same filter gate:
+            - **Bugs**: Logic errors, race conditions, null access, off-by-one errors
+            - **Security**: Exposed secrets or API keys, auth bypasses, missing input validation
+            - **Firebase**: `firestore.rules` or `storage.rules` changes that expose
+              another user's data or reject a write the app makes; queries that need
+              a composite index missing from `firestore.indexes.json`; Cloud
+              Functions in `functions/` that skip the caller's auth or role check
+            - **Flutter/Dart**: `BuildContext` used across an async gap without a
+              `mounted` check, `setState` after dispose, controllers, streams or
+              subscriptions never disposed or cancelled, `!` on a value that can be
+              null, unawaited futures whose errors are lost, Provider listened to
+              inside callbacks
+            - **Routing**: `go_router` routes or redirects that let a signed-out user
+              or the wrong role reach a page
+
+            Run `flutter analyze` and `flutter test` when the diff touches Dart code;
+            a failure the diff introduced is a finding.
+
+            ## Output Format
+
+            `track_progress: true` means the action already created a comment for you
+            and owns it. Deliver the ENTIRE review by updating that comment with
+            `mcp__github_comment__update_claude_comment`. Do not call `gh pr comment`
+            — that creates a second, unowned comment which `use_sticky_comment`
+            cannot dedupe, which is exactly the accumulation this setup avoids.
+            Never post inline comments. Never split findings across several comments.
+
+            Use this structure, omitting any section that would be empty:
+
+            **Summary** — one or two sentences on what this PR changes.
+
+            **Issues Found** — problems that passed the filter gate above. For each:
+            `path/to/file.dart:42` — what is wrong, and the fix. Include a suggestion
+            block where a one-click fix is possible. Order by user impact, highest
+            first.
+
+            **Suggestions** — non-blocking improvements, same `file:line` format. A
+            suggestion must pass the filter gate above AND clear both of these:
+
+            - **Reachable today.** The condition must be reachable from code that
+              exists in the repo right now. If it only manifests once a config value
+              is changed, a `null` is replaced with a real value, or a caller that
+              has not been written yet appears, it is not reachable — drop it.
+              Catching yourself writing "unreachable today, but…", "harmless while
+              nothing calls this", or "once X is set to a real value" IS the signal
+              to drop it, not a caveat to ship alongside it.
+            - **Named user consequence.** Say what a person using this app
+              experiences differently — what they see, lose, wait for, or cannot do.
+              If you cannot name that, it is not a suggestion. Internal consistency,
+              stale or inaccurate comments, naming, and scope-creep observations
+              never clear this bar on their own.
+
+            Order suggestions by user impact, highest first — the one affecting the
+            most users, or costing them the most, leads. There is no cap: every
+            suggestion clearing both bars belongs in the list, however many that is.
+
+            **Minor** — at most ONE line, total, for findings that pass the filter
+            gate but name no user consequence (wrong comments, internal
+            inconsistency, scope creep). Bare `file:line` references, a few words
+            each. Omit the section entirely rather than padding it out.
+
+            **Verdict** — a single line stating whether anything blocks merge.
+
+            If nothing passed the filter gate, the whole comment is the Summary plus
+            `**Verdict** — no blocking issues.`
+
+            ## FORBIDDEN
+
+            - Praise or compliments ("Great job!", "Nice work on this!")
+            - Open-ended questions ("Have you considered...?")
+            - Emojis
+            - Style preferences (naming, formatting) — `flutter analyze` and `dart format` handle those
+            - Commenting on code outside the PR diff
+            - Suggesting tests unless a bug is found that tests would catch
+            - Documentation suggestions unless a public API changed
+            - Relisting pre-existing violations the rules file already documents
+            - Editing files, committing, pushing, approving, or requesting changes
+
+          claude_args: |
+            --model claude-opus-5-5
+            --effort high
+            --allowedTools "Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*),Bash(flutter analyze:*),Bash(flutter test:*)"

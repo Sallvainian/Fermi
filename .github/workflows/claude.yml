@@ -18,33 +18,80 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
-      contents: read
-      pull-requests: read
-      issues: read
+      # write, so an @claude task can commit and push a fix rather than only
+      # describe one. With `contents: read` the action cannot write to a branch.
+      # Anything that can post `@claude` on an issue or PR comment can now reach
+      # a branch through this job.
+      contents: write
+      # write (not read) on both: this workflow answers by posting a comment, on
+      # issues as well as PRs, which the read-only defaults silently forbid. The
+      # action's own docs/setup.md shows write for each.
+      pull-requests: write
+      issues: write
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+
+      # Without these the prompt's verify commands below cannot run — this job
+      # otherwise checks out the repo and nothing else. Same Flutter as 01_ci.yml.
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.32.0'
+          cache: true
+
+      - run: flutter pub get
 
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: '--model claude-opus-5-5 --effort high'
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
+          # Project rules are NOT duplicated here. The action's injected system
+          # prompt already says "Always check for and follow the repository's
+          # CLAUDE.md file(s)", so this prompt points at them instead. Inlining a
+          # copy means two places to keep in sync and one of them going stale.
+          prompt: |
+            ## Fermi
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
+            Fermi is a Flutter app on Firebase (Auth, Firestore, Storage, Cloud
+            Functions in `functions/`). If the checkout has a `CLAUDE.md` or
+            `AGENTS.md`, read it before changing behavior it covers.
 
+            ### Before you claim it works
+
+            Flutter packages are fetched already. Run what your change touches:
+
+            - `flutter analyze --no-fatal-infos` — what CI's `01_ci.yml` runs
+            - `dart format --set-exit-if-changed .` — CI fails on unformatted
+              Dart, so format the files you change
+            - `flutter test` — the unit and widget tests under `test/`
+
+            Do NOT run `flutter build` in this job and do not treat it as
+            passing: this job sets none of the Firebase config secrets the app
+            builds need.
+
+            Do NOT claim on-device coverage. This job has no device or
+            emulator, so nothing here exercises the app as a user runs it.
+
+            `functions/` dependencies are not installed here, so a change there
+            is unverified unless you say how you checked it.
+
+            If you could not verify something, say so plainly rather than
+            implying it passed.
+
+            ---
+
+            Now execute the task from the comment that tagged you.
