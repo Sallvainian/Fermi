@@ -66,6 +66,7 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - K13 (D16): access policies and edge functions have automated tests that run in CI; today nothing tests rules or functions
 - K14 (D16): chat is one model shared by direct, group and class chats; today it is stored two ways
 - K15 (D9, D19): a live update carries fixes, UI changes and content within the app's purpose; a major new feature ships as a reviewed App Store build (Apple's license terms allow downloaded web code that does not change the app's primary purpose, per Capgo's reading)
+- K16 (D20): a user sees another user's email only where D20 allows (their teachers' and the admin's for a student, their students' for a teacher, everyone's for the admin); every other email stays private
 
 ## Done when
 
@@ -86,6 +87,13 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Out: an in-app folder file manager (D12)
 - Out: reading or sending a user's Gmail from Fermi (D14)
 - Out: fixing or hardening the Firebase backend that is being retired
+- Touch point: the hosted Supabase project — linked and migrated from CI; owner: epic-platform-baseline
+- Touch point: the Cloudflare account — the fermi-plus Worker on workers.dev; the old Pages project `fermi` is removed by epic-app-store-release; owner: epic-platform-baseline
+- Touch point: Apple Developer and App Store Connect — TestFlight internal builds (epic-platform-baseline), Sign in with Apple (epic-invite-sign-in), the push key (epic-notifications), review of the listing com.academic-tools.fermi; owner: epic-app-store-release
+- Touch point: a Google Cloud project — the OAuth client for sign-in and its basic app verification; owner: epic-invite-sign-in; the Drive Picker and `drive.file` on it; owner: epic-assignments-grades
+- Touch point: Gmail — its compose screen is opened, never called; owner: epic-contact
+- Touch point: the `@capgo/capacitor-updater` plugin — self-hosted live updates, no Capgo account; owner: epic-platform-baseline
+- Touch point: My-Love — read as the reference for CI, hosting and live updates, never changed; owner: epic-platform-baseline
 - Tracer path: the admin creates a teacher code; a teacher enters it on the website, signs in with Google, creates a class and adds a student to its roster; that student enters the class code and their name in the iPhone app, signs in with Apple and is messaged by the teacher; the message arrives as a push notification while the app is closed
 
 ## References
@@ -103,3 +111,9 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Decision: 2026-11-05, desktop dropped, start fresh, parity means reachable working features, Jeopardy removed (brief D1–D4)
 - Decision: 2026-11-05, Android later, invite codes replace the domain gate, Google or Apple sign-in with no passwords or email, workers.dev hosting, Home Screen website plus optional App Store app, five broken features fixed, calls and games removed, Drive for assignments, class archiving, Gmail opened not sent, no admin password reset (brief D5–D16)
 - Decision: 2026-11-05, class codes work only for students on the roster, matched by name; rosters filled one at a time or by CSV; the port updates Fermi's existing App Store listing (brief D17–D19)
+- Decision: 2026-11-05, email visibility follows D20 (K16)
+- Decision: 2026-11-05, sliced into 13 epics in tickets/tickets.toml, one feature area each, deployed on its own; rule: one source capability or a tightly coupled pair per epic; the platform baseline opens
+- Decision: 2026-11-05, decisions several epics share (web framework, schema and access-policy pattern, edge-function errors, upload rules, account-delete rule, live update versus App Store build) are settled in an architecture spine through bmad-architecture before epic 1's stories
+- Decision: 2026-11-05, the new app lives in `app/` beside the Flutter app until epic-app-store-release removes Flutter; its iOS project takes over bundle com.academic-tools.fermi
+- Decision: 2026-11-05, class archiving moved to epic-classes-rosters so other epics' class views do not collide; epic-invite-sign-in owns the upload pattern and the user directory
+- Open question: which Google Cloud project holds the sign-in client? Pick: a new Fermi project, so Google's sign-in screen names Fermi and the Firebase project can be deleted; the user is checking which project My-Love uses. Waits: epic-invite-sign-in

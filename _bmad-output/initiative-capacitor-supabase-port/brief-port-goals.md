@@ -47,3 +47,4 @@ Given the same day while the initiative was written. Where one replaces a constr
 - **D17** A class's code is the student invite code, and it works only for students on that class's roster. At sign-up the student enters their name, which is fuzzy-matched against the roster, so a code shared outside the class lets nobody in.
 - **D18** Teachers add students to a roster both ways: one at a time and by CSV.
 - **D19** Fermi is already on the App Store, and the user already has the paid Apple developer membership. The port ships as an update to that listing.
+- **D20** Email addresses: students see their teachers' and the admin's, teachers see their students', and the admin sees everyone's. Classmates never see each other's. The Email button fills in the recipient from these.
