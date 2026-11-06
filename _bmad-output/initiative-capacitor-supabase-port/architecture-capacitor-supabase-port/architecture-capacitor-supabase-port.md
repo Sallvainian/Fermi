@@ -359,7 +359,7 @@ Fermi/
     dependabot.yml          # app/ npm and GitHub Actions only
     workflows/              # deploy.yml, test.yml, keep-alive.yml, apple-secret.yml, backup.yml,
                             # dependency-review.yml, dependabot-auto-merge.yml,
-                            # claude.yml, claude-code-review.yml (all epic-platform-baseline)
+                            # claude.yml, claude-code-review.yml (owners in the Epic Map)
 ```
 
 ```mermaid
