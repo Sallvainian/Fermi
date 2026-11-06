@@ -255,8 +255,9 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 ### AD-18 — Live update or App Store build [ADOPTED]
 
 - **Binds:** R23, K15; epic-platform-baseline owns
-- **Prevents:** a bundle reaching an app without the native code it needs; a major feature shipped around App Review
+- **Prevents:** a bundle reaching an app without the native code it needs; a major feature shipped around App Review; a Dependabot update shipping plugin code by live update, or stalling every other update behind it
 - **Rule:** any change to native code, a Capacitor plugin, `Info.plist`, entitlements or `capacitor.config` ships as an App Store build and raises `MIN_NATIVE_BUILD`. Until epic-app-store-release's first TestFlight build, such a change ships only in Simulator builds and still raises `MIN_NATIVE_BUILD`; that build carries every earlier one. `updates/latest.json` carries `min_native_build`, and the shell skips a bundle above its own build. Web code guards every plugin with `Capacitor.isPluginAvailable`. A major new feature ships with a reviewed build; fixes, UI and content go by live update.
+  - **Native packages:** the native group in `.github/dependabot.yml` (`@capacitor/*`, `@capgo/*` and every Capacitor plugin) is the one list of them. The `MIN_NATIVE_BUILD` check reads it, and an epic that adds a plugin adds it there in the same change. Dependabot updates them only in that group, which never merges itself: the owner raises `MIN_NATIVE_BUILD` on it and merges it by hand.
 
 ### AD-19 — Realtime: private channels, server-sent events, ids only [ADOPTED]
 
@@ -282,9 +283,10 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
   - **Extensions:** only epic-platform-baseline enables extensions: `pg_cron` (schema `pg_catalog`), `pg_net` (schema `extensions`) and `pgtap` for tests; `supabase_vault` is on by default.
   - **Deploy order:** migrate, then push the hosted Auth config (`supabase config push`, provider secrets through `env()`), then set Realtime private-only through the Management API, then deploy functions, build and package the live update, `wrangler deploy`, and the health check.
   - **Health check:** reads the hosted Auth and Realtime config through the Management API and fails unless email sign-in is on, anonymous sign-ins are off and Realtime is private-only (a missing `private_only` fails). Epic-platform-baseline ships `[auth] enable_signup = false` and asserts it. Epic-invite-sign-in, in the change that creates the hook, turns sign-up on and replaces that assertion with one comparing the registered hook URI exactly.
-  - **Per-environment settings:** CI writes each pg_net-called function's row in `internal.edge_function_settings` per environment (AD-5).
+  - **Per-environment settings:** CI writes each pg_net-called function's row in `internal.edge_function_settings` per environment (AD-5), from one `deploy.yml` step that epic-invite-sign-in adds with the table and `sweep-storage`'s entry.
+  - **Extension points:** epic-platform-baseline owns every `.github` file. A later epic changes them only in the change that needs it, and only by adding a health-check assertion, its function's entry to the one `deploy.yml` step that writes `internal.edge_function_settings`, the Apple secret step (epic-invite-sign-in), a `test.yml` lane (AD-23), or a deploy or scheduled-workflow secret to the Production environment, never at repo level (R10). A new workflow file is added only for a new schedule or trigger, and it is listed in the Structural Seed with its owner.
   - **Keep-alive:** a twice-daily workflow runs a real query through the API so breaks do not pause the Free project. It calls `public.job_health()`, a `postgres`-owned definer function only `service_role` may execute (epic-platform-baseline), and fails, so GitHub emails the owner, when `internal.job_failures`, `cron.job_run_details` or non-2xx `net._http_response` rows for those functions hold new failures. It re-enables itself monthly through the GitHub API, because GitHub disables scheduled workflows in an inactive public repo after 60 days.
-  - **Apple secret:** a scheduled workflow regenerates the Apple sign-in client secret from the `.p8` key monthly; Apple's limit is 6 months.
+  - **Apple secret:** the Apple sign-in client secret is never stored. A `deploy.yml` step just before the config push mints it from the `.p8` key, whose key id, team id and services id sit beside it in the Production environment. `apple-secret.yml` (epic-invite-sign-in) reruns that step monthly, so the secret never reaches Apple's 6-month limit.
   - **Backups:** the Free plan has none, so a weekly workflow runs `supabase db dump --remote` (roles, schema, data) through the Session pooler. It encrypts the dump to the owner's age key and keeps it as a 90-day workflow artifact, never committed, because the repo is public. It restores the dump into a throwaway local database to prove it works. Storage file bytes are not backed up, and neither is the Vault root key, so a restore into a new project loses stored student passwords and teachers reset them.
 
 ### AD-22 — One audit log for access-changing actions [ADOPTED]
@@ -301,6 +303,16 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 
   Adding an action amends this AD. The admin reads every event. A teacher reads the events of classes they teach now and of students they teach now; events of deleted classes and people are the admin's only. Students read none.
 
+### AD-23 — One merge gate [ADOPTED]
+
+- **Binds:** K13, all epics' tests and checks; epic-platform-baseline owns
+- **Prevents:** a later epic's tests failing while a pull request still merges; a lane that fails every Dependabot pull request for lack of secrets; a ruleset that blocks Dependabot's own branches; an update with a known security advisory merging unattended
+- **Rule:**
+  - **Required checks:** the Main ruleset applies to the default branch only and requires exactly two checks, under fixed names: `test.yml`'s summary job, and the dependency review, which fails at moderate severity.
+  - **Lanes:** every other check that must block a merge is a job in `test.yml` that the summary job waits on, added to it in the same change that adds the job; the `MIN_NATIVE_BUILD` check is one. A check in another workflow blocks nothing.
+  - **No secrets:** `test.yml` reads no repo or environment secret and tests against the local stack only, so Dependabot pull requests run every lane.
+  - **Self-merge:** `dependabot-auto-merge.yml` merges a Dependabot pull request once both required checks pass, except the native group (AD-18).
+
 ## Consistency Conventions
 
 | Concern | Convention |
@@ -312,7 +324,7 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 | Migrations | One concern per timestamped file under `supabase/migrations/`, with a header naming its test; RLS, grants and the privilege fixture updated in the same change |
 | Tests | pgTAP `supabase/tests/database/NN_*.sql` for every table, policy, grant, function and view; `deno test` for every `handler.ts`; Vitest for `app/src`; Playwright projects Desktop Chrome and iPhone WebKit, plus api tests; native-only paths checked by hand in the iOS Simulator by the epic that builds each: the live-update restart (epic-platform-baseline), the NativeAuth sheet (epic-invite-sign-in; the Drive picker page, epic-assignments-grades) and APNs push to a closed app through the sandbox (epic-notifications); production APNs is checked first on epic-app-store-release's TestFlight build, the first TestFlight build |
 | Client layering | Features → hooks and stores (Zustand) → `app/src/api/*` → supabase-js; only `api/` imports the client |
-| Secrets | fnox locally; GitHub secrets in CI; Supabase function secrets for APNs, VAPID and the Apple secret; the bootstrap admin email in Vault, set by CI; nothing in source |
+| Secrets | fnox locally; GitHub secrets in CI, a later epic's in the Production environment (AD-21), none read by `test.yml` (AD-23); Supabase function secrets for APNs and VAPID; the Apple client secret minted at each deploy, never stored (AD-21); the bootstrap admin email in Vault, set by CI; nothing in source |
 | Email | Fermi sends none: no custom SMTP; recovery, OTP and email change are never offered in the UI |
 
 ## Stack
@@ -430,7 +442,7 @@ erDiagram
 | R30 audit log | `audit_events`, `internal.audit` | AD-22 |
 | K17 uploads | buckets, Drive copy-in | AD-13 |
 | K18 Free plan | keep-alive, backup workflows | AD-21 |
-| K7, K13 deploy and tests | workflows, privilege fixture | AD-3, AD-21 |
+| K7, K13 deploy and tests | workflows, privilege fixture, Main ruleset, Dependabot | AD-3, AD-18, AD-21, AD-23 |
 
 ## Deferred
 
