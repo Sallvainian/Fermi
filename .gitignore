@@ -127,7 +127,10 @@ coverage/
 PROJECT_TODOS.md
 launch_app.sh
 .mcp.json
-.claude/
+.claude/*
+!.claude/hooks/
+!.claude/commands/
+!.claude/rules/
 .cursor/
 .gemini/
 .codex/
