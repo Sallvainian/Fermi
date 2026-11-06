@@ -1,0 +1,10 @@
+if_missing = "error"
+
+[providers.age]
+type = "age"
+recipients = [
+  "age1nh6erurdkerjxk834v7ttuekm5tmk09s6uner2nm2yhrcp9hwekqfdmjag",
+  "age1pd6qp5x0h3lp3u23xzh9wkh2gnmkdglp0hak89538vwlqp7xnajsqfs6nw",
+]
+
+[secrets]

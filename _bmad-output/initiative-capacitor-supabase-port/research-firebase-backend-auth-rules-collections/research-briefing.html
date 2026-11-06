@@ -1,0 +1,2255 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Firebase Backend Baseline</title><style>
+:root{--bg:#fafaf9;--fg:#1c1917;--mut:#57534e;--card:#fff;--bd:#e7e5e4;--ac:#2563eb;--code:#f5f5f4;--unv:#b45309;--unvbg:#fef3c7;--disp:#b91c1c;--dispbg:#fee2e2;--ok:#15803d;--okbg:#dcfce7}
+@media (prefers-color-scheme:dark){:root{--bg:#0c0a09;--fg:#e7e5e4;--mut:#a8a29e;--card:#1c1917;--bd:#292524;--ac:#60a5fa;--code:#292524;--unv:#fbbf24;--unvbg:#451a03;--disp:#fca5a5;--dispbg:#450a0a;--ok:#86efac;--okbg:#052e16}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{padding:28px 16px 12px;max-width:1100px;margin:auto}header h1{margin:0 0 8px;font-size:1.6rem}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--mut);font-size:.85rem}
+.wrap{display:grid;grid-template-columns:240px 1fr;gap:20px;max-width:1100px;margin:auto;padding:0 16px 40px}
+nav{position:sticky;top:12px;align-self:start;max-height:92vh;overflow:auto;font-size:.82rem;border-right:1px solid var(--bd);padding-right:10px}
+nav a{display:block;color:var(--mut);text-decoration:none;padding:3px 0}nav a:hover{color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px 20px;margin-bottom:16px;overflow-wrap:anywhere}
+h2{font-size:1.15rem;margin-top:0}h3{font-size:1rem;margin:18px 0 6px}h4{font-size:.95rem}
+code{background:var(--code);padding:1px 4px;border-radius:4px;font-size:.84em}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.85rem;margin:8px 0}th,td{border:1px solid var(--bd);padding:5px 8px;text-align:left;vertical-align:top}th{background:var(--code)}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;padding:1px 6px;border-radius:4px;letter-spacing:.02em}
+.unv{color:var(--unv);background:var(--unvbg);border:1px solid var(--unv)}.disp{color:var(--disp);background:var(--dispbg);border:1px solid var(--disp)}.ok{color:var(--ok);background:var(--okbg);border:1px solid var(--ok)}
+.corr{color:var(--disp);font-style:italic}
+ul,ol{padding-left:22px}li{margin:2px 0}
+@media (max-width:760px){.wrap{grid-template-columns:1fr}nav{position:static;max-height:none;border:0}}
+</style></head><body>
+<header><h1>Firebase backend auth, rules, collections and functions</h1>
+<div class="meta"><span>type: codebase</span><span>repository: /Users/sallvain/Projects/Fermi</span><span>commit: <code>7808a91cfc09</code></span><span>branch: initiative/capacitor-supabase-port</span><span>validation: normal</span><span>status: complete</span><span>updated: 2026-11-05</span><span>claims: <code>{verified: 75, disputed: 3}</code></span></div>
+<p class="meta"><span class="badge ok">verified</span> load-bearing claims re-checked by a verifier &nbsp;<span class="badge disp">corrected</span> claim changed after verification &nbsp;<span class="badge unv">UNVERIFIED</span> not settled from code</p></header>
+<div class="wrap"><nav><a href="#questions">Questions</a><a href="#1-how-does-the-client-start-firebase-and-sign-users-in">1. How does the client start Firebase and sign users in?</a><a href="#2-how-are-role-claims-assigned-and-changed-on-the-server">2. How are role claims assigned and changed on the server?</a><a href="#3-how-does-firestore-rules-decide-read-and-write-access-for-">3. How does `firestore.rules` decide read and write access for each match path?</a><a href="#4-how-does-storage-rules-decide-access-and-which-storage-pat">4. How does `storage.rules` decide access, and which Storage paths does the client read or write?</a><a href="#5-where-are-users-public-usernames-presence-fcm-tokens-notif">5. Where are `users`, `public_usernames`, `presence`, `fcm_tokens`, `notifications`, `scheduled_messages` and `bug_reports` defined and accessed?</a><a href="#6-where-are-classes-students-assignments-submissions-grades-">6. Where are `classes`, `students`, `assignments`, `submissions`, `grades` and `calendar_events` defined and accessed?</a><a href="#7-where-are-chatrooms-conversations-messages-typing-discussi">7. Where are `chatRooms`, `conversations`, `messages`, `typing`, `discussion_boards`, `threads`, `replies` and `likes` defined and accessed?</a><a href="#8-where-are-studentpoints-behaviors-history-activities-the-j">8. Where are `studentPoints`, `behaviors`, `history`, `activities`, the `jeopardy_*` collections, `oauth_pkce_challenges` and `_rate_limits` defined and accessed?</a><a href="#9-what-do-the-functions-in-adminfunctions-ts-bulkimport-ts-o">9. What do the functions in `adminFunctions.ts`, `bulkImport.ts`, `oauth.ts` and `cleanup.ts` do, and what triggers each?</a><a href="#10-what-do-the-functions-in-chatfunctions-ts-behaviorpoints-">10. What do the functions in `chatFunctions.ts`, `behaviorPoints.ts`, `security.ts`, `rate-limiter.ts` and `migrate-usernames.ts` do, and which are exported?</a><a href="#11-how-does-the-client-register-for-receive-and-display-push">11. How does the client register for, receive and display push notifications?</a><a href="#12-which-client-files-call-cloud-functions-callables-and-wit">12. Which client files call Cloud Functions callables, and with what arguments?</a><a href="#13-how-are-the-client-auth-code-firestore-rules-storage-rule">13. How are the client auth code, `firestore.rules`, `storage.rules` and the Cloud Functions tested?</a><a href="#where-the-answers-meet">Where the answers meet</a><a href="#open-questions">Open questions</a><a href="#prior-documents">Prior documents</a></nav><main><section class="card">
+<h2 id="questions">Questions</h2>
+<ol><li>
+(how) How does the client start Firebase and sign users in? Cover <code>lib/firebase_options.dart</code>, <code>lib/shared/core/service_locator.dart</code>, <code>lib/shared/core/app_initializer.dart</code> (including what it initializes for Realtime Database and Messaging), each sign-in flow in <code>lib/features/auth</code> (email/password, username, Google, the desktop OAuth handlers), how auth state is exposed to the rest of the app, and how the client reads the user's role.
+</li><li>
+(how) How are role claims assigned and changed on the server? Cover <code>functions/src/authBlocking.ts</code>, <code>functions/src/customClaims.ts</code>, <code>functions/src/config/domainRoles.ts</code>, <code>functions/src/migrate-user-roles.ts</code>, <code>functions/src/migrate-user-roles-cloud.ts</code>, and the client's <code>lib/shared/utils/set_user_role_claims.dart</code> and <code>lib/shared/utils/run_migration.dart</code>: what triggers each and what each writes.
+</li><li>
+(how) How does <code>firestore.rules</code> decide read and write access for each match path: helper functions, claim/role checks, ownership and membership checks, and field-level validation?
+</li><li>
+(how) How does <code>storage.rules</code> decide access, and which Storage paths does the client read or write?
+</li><li>
+(where) Where is the document shape of each of these Firestore collections defined (model classes, serializers, <code>firestore.indexes.json</code>), and which files read or write each: <code>users</code>, <code>public_usernames</code>, <code>presence</code>, <code>fcm_tokens</code>, <code>notifications</code>, <code>scheduled_messages</code>, <code>bug_reports</code>? Also resolve the call sites that pass a collection name as a variable (<code>collection(this.collectionName)</code>, <code>collection(path)</code>, <code>collection(collectionPath)</code>).
+</li><li>
+(where) Same as 5 for: <code>classes</code>, <code>students</code>, <code>assignments</code>, <code>submissions</code>, <code>grades</code> (including <code>collectionGroup('grades')</code>), <code>calendar_events</code>.
+</li><li>
+(where) Same as 5 for: <code>chatRooms</code>, <code>conversations</code>, <code>messages</code>, <code>typing</code>, <code>discussion_boards</code>, <code>threads</code>, <code>replies</code>, <code>likes</code>.
+</li><li>
+(where) Same as 5 for: <code>studentPoints</code>, <code>behaviors</code>, <code>history</code> (including the <code>collectionGroup('history')</code> queries), <code>activities</code>, <code>jeopardy_games</code>, <code>jeopardy_sessions</code>, <code>jeopardy_questions</code>, <code>oauth_pkce_challenges</code>, <code>_rate_limits</code>.
+</li><li>
+(how) What does each exported function in <code>functions/src/adminFunctions.ts</code>, <code>functions/src/bulkImport.ts</code>, <code>functions/src/oauth.ts</code> and <code>functions/src/cleanup.ts</code> do, what triggers it (callable, HTTP, schedule, Firestore event, auth event), and which collections and Admin SDK APIs does it touch?
+</li><li>
+(how) Same as 9 for <code>functions/src/chatFunctions.ts</code>, <code>functions/src/behaviorPoints.ts</code>, <code>functions/src/security.ts</code>, <code>functions/src/rate-limiter.ts</code> and <code>functions/src/migrate-usernames.ts</code>, including which of their functions are or are not exported from <code>functions/src/index.ts</code>.
+</li><li>
+(how) How does the client register for, receive and display push notifications? Cover <code>lib/features/notifications/data/services/firebase_messaging_service.dart</code>, <code>lib/shared/core/app_initializer.dart</code>, <code>lib/features/chat/presentation/screens/flyer_chat_screen.dart</code>, and <code>flutter_local_notifications</code> usage.
+</li><li>
+(where) Which client files call Cloud Functions callables, and which function does each call with what arguments? (Files using <code>FirebaseFunctions</code> / <code>httpsCallable</code>.)
+</li><li>
+(how) How are the client auth code, <code>firestore.rules</code>, <code>storage.rules</code> and the Cloud Functions tested: <code>test/</code>, any tests under <code>functions/</code>, and the emulator configuration in <code>firebase.json</code>?
+</li></ol>
+</section><section class="card">
+<h2 id="1-how-does-the-client-start-firebase-and-sign-users-in">1. How does the client start Firebase and sign users in?</h2>
+<p>The client starts Firebase once, with no emulator configured. Every sign-in goes through <code>AuthProvider</code> and <code>AuthService</code>. On desktop, only <code>DirectDesktopOAuthHandler</code> is live. The client reads the user's role from the Firestore field <code>users/{uid}.role</code>. No live path reads an ID-token claim.</p>
+<h3 id="startup">Startup</h3>
+<ol><li>
+<strong><code>main</code></strong>
+<ul><li>
+Loads <code>.env</code> on non-web builds.
+</li><li>
+Calls <code>runApp(InitializationWrapper)</code>.
+<br><code>lib/main.dart:30 (main) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>_InitializationWrapperState._initializeApp</code></strong>
+<ul><li>
+Calls <code>AppInitializer.initialize()</code>.
+</li><li>
+Has a fast path for when Firebase is already up.
+<br><code>lib/main.dart:341 (_InitializationWrapperState) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>AppInitializer.initialize</code></strong>
+<ul><li>
+Runs Firebase, then the service locator, then deferred services in a post-frame callback.
+</li><li>
+Errors are logged and execution continues.
+<br><code>lib/shared/core/app_initializer.dart:29-51 (AppInitializer) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Firebase initialization</strong>
+<ul><li>
+Calls <code>Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)</code> only when <code>Firebase.apps.isEmpty</code>, and ignores <code>duplicate-app</code>.
+</li><li>
+No emulator is configured.
+<br><code>lib/shared/core/app_initializer.dart:101-139 (AppInitializer) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Platform options</strong>
+<ul><li>
+<code>DefaultFirebaseOptions.currentPlatform</code> has web, android, ios, macos, windows and linux entries, all for project <code>teacher-dashboard-flutterfire</code>.
+</li><li>
+Any other platform throws <code>UnsupportedError</code>.
+<br><code>lib/firebase_options.dart:18-38 (DefaultFirebaseOptions) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Persistence settings</strong>
+<ul><li>
+Firestore: <code>persistenceEnabled: true</code> with an unlimited cache, on non-web only. <code>lib/shared/core/app_initializer.dart:142-147 (AppInitializer) @ 7808a91</code>
+</li><li>
+<strong>Realtime Database:</strong> the only initialization is <code>FirebaseDatabase.instance</code> plus <code>setPersistenceEnabled(true)</code> on non-web. No refs or listeners are created. <code>lib/shared/core/app_initializer.dart:150-165 (AppInitializer) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Service locator</strong> registers lazy singletons for <code>FirebaseAuth</code>, <code>FirebaseFirestore</code>, <code>FirebaseStorage</code> and <code>AuthService</code>, plus factories for <code>AssignmentService</code> and <code>SubmissionService</code>. <code>lib/shared/core/service_locator.dart:55-119 (setupServiceLocator) @ 7808a91</code>
+<ul><li>
+Nothing resolves the GetIt <code>AuthService</code>. <code>AuthProvider</code> builds its own with <code>authService ?? AuthService()</code>. <code>lib/features/auth/providers/auth_provider.dart:66 (AuthProvider) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Deferred services</strong>
+<ul><li>
+<code>NotificationService().initialize()</code> runs on all platforms.
+</li><li>
+<strong>Messaging:</strong> <code>FirebaseMessagingService().initialize()</code> runs on Android and iOS only. Desktop and web never start FCM.
+<br><code>lib/shared/core/app_initializer.dart:54-89 (AppInitializer) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Root widget</strong>
+<ul><li>
+Shows a loading app while <code>AuthStatus</code> is <code>uninitialized</code> or <code>authenticating</code>.
+</li><li>
+Then builds <code>AppRouter.createRouter(authProvider)</code> once.
+<br><code>lib/main.dart:198-244 (_TeacherDashboardAppState) @ 7808a91</code>
+</li></ul>
+</li></ol>
+<h3 id="sign-in-methods">Sign-in methods</h3>
+<h4 id="email-password-sign-in">Email/password sign-in</h4>
+<ol><li>
+<code>login_screen._signIn</code> calls <code>AuthProvider.signIn</code>. <code>lib/features/auth/presentation/screens/login_screen.dart:96-117 (_signIn) @ 7808a91</code>
+</li><li>
+<code>AuthProvider.signIn</code> passes the call to <code>AuthService.signIn</code>. <code>lib/features/auth/providers/auth_provider.dart:193-224 (AuthProvider) @ 7808a91</code>
+</li><li>
+<code>AuthService.signIn</code>:
+<ul><li>
+Rejects <code>invalid-email-domain</code> unless the email ends with <code>@roselleschools.org</code>, <code>@rosellestudent.org</code> or <code>@fermi-plus.com</code>. <code>lib/features/auth/data/services/auth_service.dart:46-73 (AuthService) @ 7808a91</code>
+</li><li>
+Calls <code>signInWithEmailAndPassword</code>.
+</li><li>
+Merge-writes <code>users/{uid}.lastActive</code>.
+<br><code>lib/features/auth/data/services/auth_service.dart:211-251 (AuthService) @ 7808a91</code>
+</li></ul>
+</li></ol>
+<h4 id="email-password-sign-up">Email/password sign-up</h4>
+<p><code>AuthService.signUp</code>:</p>
+<ul><li>
+Applies the same domain check.
+</li><li>
+Calls <code>createUserWithEmailAndPassword</code>, then <code>updateDisplayName</code>.
+</li><li>
+Merge-writes <code>users/{uid}</code> with <code>{uid, firstName, lastName, username, lastActive}</code> and no role. A comment says the blocking function sets the role.
+</li></ul>
+<p><code>lib/features/auth/data/services/auth_service.dart:159-208 (AuthService) @ 7808a91</code></p>
+<h4 id="username-sign-in">Username sign-in</h4>
+<p><code>UsernameAuthService.signInWithUsername</code>:</p>
+<ol><li>
+Resolves <code>public_usernames/{username}</code>. If that misses, it queries <code>users</code> where <code>username ==</code> and writes the mapping back.
+</li><li>
+Reads <code>users/{uid}.email</code>.
+</li><li>
+Calls <code>signInWithEmailAndPassword</code>.
+</li></ol>
+<p><code>lib/features/auth/data/services/username_auth_service.dart:81-192 (UsernameAuthService) @ 7808a91</code></p>
+<p><code>signInWithUsername</code> has no caller. The only use of <code>UsernameAuthService</code> is for generating and validating usernames. <code>lib/features/teacher/presentation/screens/manage_student_accounts_screen.dart:26 (_ManageStudentAccountsScreenState) @ 7808a91</code></p>
+<h4 id="google">Google</h4>
+<p><code>AuthService.signInWithGoogle</code> never calls the domain check. It branches by platform:</p>
+<div class="tw"><table><thead><tr><th>Platform</th><th>Flow</th></tr></thead><tbody><tr><td>Web</td><td><code>GoogleAuthProvider</code> with <code>signInWithPopup</code>, falling back to <code>signInWithRedirect</code> / <code>getRedirectResult</code></td></tr><tr><td>Desktop (Windows, macOS, Linux)</td><td><code>_directOAuthHandler.performDirectOAuthFlow()</code></td></tr><tr><td>Android and iOS</td><td><code>signInWithProvider(GoogleAuthProvider)</code></td></tr></tbody></table></div>
+<p>Afterwards it reads <code>users/{uid}</code>:</p>
+<ul><li>
+If the document is missing, it merge-writes profile fields with no role.
+</li><li>
+Otherwise, it merge-writes <code>lastActive</code>.
+</li></ul>
+<p><code>lib/features/auth/data/services/auth_service.dart:254-414 (AuthService) @ 7808a91</code></p>
+<h4 id="apple">Apple</h4>
+<p><code>AuthService.signInWithApple</code>:</p>
+<ul><li>
+Calls <code>SignInWithApple.getAppleIDCredential</code>, then <code>OAuthProvider('apple.com').credential</code>, then <code>signInWithCredential</code>.
+</li><li>
+For a new user, writes <code>users/{uid}</code> with <code>role: null</code> and <code>authProvider: 'apple'</code>.
+</li></ul>
+<p><code>lib/features/auth/data/services/auth_service.dart:417-498 (AuthService) @ 7808a91</code></p>
+<p>The login and sign-up screens do not call it. Its only caller is <code>reauthenticateWithApple</code>. <code>lib/features/auth/providers/auth_provider.dart:648-650 (AuthProvider) @ 7808a91</code></p>
+<h3 id="desktop-oauth-handlers">Desktop OAuth handlers</h3>
+<ul><li>
+<strong>Live:</strong> <code>DirectDesktopOAuthHandler</code>, which is a field of <code>AuthService</code>. <code>lib/features/auth/data/services/auth_service.dart:19-20 (AuthService) @ 7808a91</code> Its flow:
+<ul><li>
+Reads the client ID and secret from <code>--dart-define</code>, falling back to <code>.env</code>.
+</li><li>
+Opens a loopback server with <code>HttpServer.bind('localhost', 0)</code>.
+</li><li>
+Uses PKCE S256 and launches Google's auth URL.
+</li><li>
+Exchanges the code on the client at <code>oauth2.googleapis.com/token</code>, sending <code>client_secret</code>.
+</li><li>
+Calls <code>GoogleAuthProvider.credential</code> and then <code>signInWithCredential</code>.
+<br><code>lib/features/auth/data/services/desktop_oauth_handler_direct.dart:64-207 (DirectDesktopOAuthHandler) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Not instantiated:</strong> <code>SecureDesktopOAuthHandler</code>. It calls the <code>getOAuthUrl</code> and <code>exchangeOAuthCode</code> HTTP functions, then <code>signInWithCustomToken</code>. <code>lib/features/auth/data/services/desktop_oauth_handler_secure.dart:12-118 (SecureDesktopOAuthHandler) @ 7808a91</code>
+</li><li>
+<strong>Not instantiated:</strong> <code>DesktopOAuthHandler</code>. It returns <code>oauth2.Credentials</code> and makes no Firebase Auth call. <code>lib/features/auth/data/services/desktop_oauth_handler.dart:21-54 (DesktopOAuthHandler) @ 7808a91</code>
+</li><li>
+The log text in <code>AuthService</code> says "secure OAuth via Firebase Functions", but the code calls the direct handler. <code>lib/features/auth/data/services/auth_service.dart:336-341 (AuthService) @ 7808a91</code>
+</li></ul>
+<h3 id="how-auth-state-reaches-the-app">How auth state reaches the app</h3>
+<p><code>AuthProvider</code> is a <code>ChangeNotifier</code>. It exposes:</p>
+<ul><li>
+<code>status</code>, one of <code>uninitialized</code>, <code>authenticated</code>, <code>authenticating</code>, <code>unauthenticated</code> or <code>error</code>
+</li><li>
+<code>userModel</code>
+</li><li>
+<code>firebaseUser</code>
+</li></ul>
+<p><code>lib/features/auth/providers/auth_provider.dart:14-81 (AuthProvider) @ 7808a91</code></p>
+<p><strong><code>AuthProvider</code> does not subscribe to <code>authStateChanges</code>.</strong> <code>_initializeAuthState</code> runs once:</p>
+<ol><li>
+On web, calls <code>getRedirectResult</code>.
+</li><li>
+Reads <code>currentUser</code>.
+</li><li>
+Calls <code>user.reload()</code>, and signs out if it fails.
+</li><li>
+Calls <code>_processUser</code>.
+</li></ol>
+<p><code>lib/features/auth/providers/auth_provider.dart:86-137 (AuthProvider) @ 7808a91</code></p>
+<p>The only <code>authStateChanges()</code> listener in <code>lib</code> is in the presence service. <code>lib/features/student/data/services/presence_service.dart:408 (PresenceService) @ 7808a91</code></p>
+<p><strong><code>_processUser</code>:</strong></p>
+<ul><li>
+Loads <code>users/{uid}</code>, retrying up to 5 times, and accepts the model only when <code>role != null</code>. <code>lib/features/auth/providers/auth_provider.dart:397-438 (AuthProvider) @ 7808a91</code>
+</li><li>
+If no model loads and the email ends with <code>@fermi-plus.com</code>, writes <code>users/{uid}</code> with <code>role: 'admin'</code> from the client and loads again.
+</li><li>
+On success, starts web in-app notifications and sets presence.
+</li><li>
+If the model or role is missing, signs out and sets <code>error</code>.
+</li></ul>
+<p><code>lib/features/auth/providers/auth_provider.dart:140-187 (AuthProvider) @ 7808a91</code></p>
+<p><strong>Routing</strong> uses <code>refreshListenable: authProvider</code>. <code>lib/shared/routing/app_router.dart:67-136 (AppRouter) @ 7808a91</code></p>
+<div class="tw"><table><thead><tr><th>Condition</th><th>Redirect</th></tr></thead><tbody><tr><td><code>uninitialized</code> or <code>authenticating</code></td><td>none</td></tr><tr><td><code>error</code></td><td><code>/auth/login</code></td></tr><tr><td>signed out</td><td><code>/auth/role-selection</code></td></tr><tr><td><code>needsPasswordReset</code></td><td><code>/auth/teacher-setup/password</code></td></tr><tr><td>signed in on an auth route</td><td><code>/dashboard</code></td></tr><tr><td>non-student on a <code>/student</code> route</td><td><code>/dashboard</code></td></tr></tbody></table></div>
+<p><code>/dashboard</code> picks the teacher, student or admin dashboard from <code>userModel.role</code>. A null role with a signed-in user falls back to the student dashboard. <code>lib/shared/routing/app_router.dart:194-254 (GoRoute) @ 7808a91</code></p>
+<p><code>computeAuthRedirect</code> has no caller. <code>lib/shared/routing/auth_redirect.dart:21 (computeAuthRedirect) @ 7808a91</code></p>
+<h3 id="where-the-client-reads-the-role">Where the client reads the role</h3>
+<ul><li>
+<strong>From Firestore.</strong> <code>UserModel.fromFirestore</code> maps <code>users/{uid}.role</code> through <code>_roleFromString</code>. Only <code>teacher</code>, <code>student</code> and <code>admin</code> map to a role; any other value becomes null. <code>lib/shared/models/user_model.dart:146-262 (UserModel) @ 7808a91</code>
+</li><li>
+<strong>From ID-token claims, unused.</strong> <code>UserRoleClaims.hasRole</code> and <code>getCurrentUserRole</code> read <code>getIdTokenResult().claims['role']</code>, but nothing imports them. <code>lib/shared/utils/set_user_role_claims.dart:41-69 (UserRoleClaims) @ 7808a91</code>
+</li><li>
+<strong>Client-side role writers, uncalled.</strong>
+<ul><li>
+<code>AuthService.updateUserRole</code> and <code>saveUserRole</code> write <code>users.role</code> and have no callers. <code>lib/features/auth/data/services/auth_service.dart:527-588 (AuthService) @ 7808a91</code>
+</li><li>
+<code>AuthProvider.setSelectedRole</code> is a no-op. <code>lib/features/auth/providers/auth_provider.dart:632-635 (AuthProvider) @ 7808a91</code>
+</li></ul>
+</li></ul>
+<h3 id="answered-elsewhere">Answered elsewhere</h3>
+<ul><li>
+Presence storage: see question 5, <code>presence</code> (it is Firestore).
+</li><li>
+Role at sign-up: see question 2, <code>autoAssignRole</code>.
+</li></ul>
+</section><section class="card">
+<h2 id="2-how-are-role-claims-assigned-and-changed-on-the-server">2. How are role claims assigned and changed on the server?</h2>
+<p>The email domain decides the role only at sign-up. After that, the claim follows the Firestore <code>users.role</code> field through <code>syncUserRole</code>, but only for <code>teacher</code> and <code>student</code>. An <code>admin</code> claim is written only by the blocking function at sign-up and by <code>createAdminAccount</code>.</p>
+<h3 id="domain-to-role-mapping">Domain-to-role mapping</h3>
+<ul><li>
+<code>DOMAIN_ROLE_MAPPINGS</code> maps three email domains to roles:
+<br>| Domain | Role |
+<br>|---|---|
+<br>| <code>@roselleschools.org</code> | teacher |
+<br>| <code>@rosellestudent.org</code> | student |
+<br>| <code>@fermi-plus.com</code> | admin |
+<br><code>functions/src/config/domainRoles.ts:7-23 (DOMAIN_ROLE_MAPPINGS) @ 7808a91</code>
+</li><li>
+<code>ADMIN_EMAILS</code> is empty. <code>functions/src/config/domainRoles.ts:26 (ADMIN_EMAILS) @ 7808a91</code>
+</li><li>
+<code>getRoleFromEmail</code> lowercases the email, checks <code>ADMIN_EMAILS</code>, then returns the first mapping whose domain the email ends with, or <code>null</code>. <code>functions/src/config/domainRoles.ts:33-49 (getRoleFromEmail) @ 7808a91</code>
+</li></ul>
+<h3 id="autoassignrole-blocking-function"><code>autoAssignRole</code>: blocking function</h3>
+<ul><li>
+<strong>Trigger:</strong> <code>beforeUserCreated</code> in <code>us-east4</code>. <code>functions/src/authBlocking.ts:13-14 (autoAssignRole) @ 7808a91</code>
+</li><li>
+<strong>Rejections:</strong>
+<ul><li>
+<code>invalid-argument</code> when the user data or the email is missing.
+</li><li>
+<code>permission-denied</code> when the domain is not a school domain. The message differs for <code>google.com</code> sign-ups.
+<br><code>functions/src/authBlocking.ts:18-50 (autoAssignRole) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Writes:</strong>
+<ul><li>
+<code>users/{uid}</code> with <code>{email, displayName, role, createdAt, emailVerified: false, isEmailUser: true, profileComplete: false}</code>
+</li><li>
+an <code>activities</code> document of type <code>user_created</code>
+<br><code>functions/src/authBlocking.ts:73-95 (autoAssignRole) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Returns:</strong> <code>{customClaims: {role, emailDomain}, displayName, emailVerified: role === "admin"}</code>. It handles all three roles. <code>functions/src/authBlocking.ts:106-110 (autoAssignRole) @ 7808a91</code>
+</li></ul>
+<h3 id="syncuserrole-firestore-trigger"><code>syncUserRole</code>: Firestore trigger</h3>
+<ul><li>
+<strong>Trigger:</strong> <code>onDocumentWritten</code> on <code>users/{userId}</code> in <code>us-east4</code>. It does nothing when <code>before.role === after.role</code>. <code>functions/src/customClaims.ts:80-92 (syncUserRole) @ 7808a91</code>
+</li><li>
+<strong>On delete:</strong> it calls <code>setCustomUserClaims(userId, null)</code>, which clears every claim. <code>functions/src/customClaims.ts:95-103 (syncUserRole) @ 7808a91</code>
+</li><li>
+<strong>Role filter:</strong> it writes <code>{role}</code> only for <code>teacher</code> or <code>student</code>. A change to <code>admin</code>, to any other value, or to no value writes nothing, and the old claim stays. Errors are logged and swallowed. <code>functions/src/customClaims.ts:106-114 (syncUserRole) @ 7808a91</code>
+</li></ul>
+<h3 id="setroleclaim-callable"><code>setRoleClaim</code>: callable</h3>
+<ul><li>
+<strong>Trigger:</strong> <code>onCall</code> in <code>us-east4</code>.
+</li><li>
+<strong>Rejections:</strong> it rejects unauthenticated callers, a missing <code>uid</code> or <code>role</code>, and any role other than <code>teacher</code> or <code>student</code>.
+</li></ul>
+<p><code>functions/src/customClaims.ts:10-34 (setRoleClaim) @ 7808a91</code></p>
+<ul><li>
+<strong>Permission check:</strong> it is denied unless the caller's <code>users.role</code> is <code>teacher</code> or the <code>uid</code> is the caller's own. Two consequences:
+<ul><li>
+Any authenticated user can set their own role to teacher.
+</li><li>
+The catch turns every error into <code>internal</code>, so the client never sees <code>permission-denied</code>.
+<br><code>functions/src/customClaims.ts:46-72 (setRoleClaim) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Writes:</strong> <code>setCustomUserClaims(uid, {role})</code> first, then <code>users/{uid}.update({role})</code>. If the update fails, the claim has changed and the field has not. <code>functions/src/customClaims.ts:54-60 (setRoleClaim) @ 7808a91</code>
+</li></ul>
+<h3 id="migrations">Migrations</h3>
+<ul><li>
+<strong><code>migrateAllUserRoles</code></strong>
+<ul><li>
+<code>https.onCall</code>. Only a caller whose <code>users.role</code> is <code>teacher</code> may run it, so admins cannot.
+</li><li>
+For every <code>users</code> document it calls <code>setCustomUserClaims(id, {role})</code>, for teacher and student only.
+</li><li>
+It writes nothing to Firestore.
+<br><code>functions/src/migrate-user-roles-cloud.ts:13-86 (migrateAllUserRoles) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>migrateUserRoles</code></strong>
+<ul><li>
+A standalone node script, run with <code>npm run migrate:roles</code> and not exported from <code>index.ts</code>. It has no caller check.
+</li><li>
+It runs the same loop with the same filter.
+<br><code>functions/src/migrate-user-roles.ts:10-68 (migrateUserRoles) @ 7808a91</code> and <code>functions/package.json:12 (scripts) @ 7808a91</code>
+</li></ul>
+</li></ul>
+<h3 id="other-places-that-set-claims">Other places that set claims</h3>
+<ul><li>
+<strong><code>createStudentAccount</code></strong> sets <code>{role: "student"}</code>. It accepts <code>@rosellestudent.com</code>, which is not in <code>DOMAIN_ROLE_MAPPINGS</code>. <code>functions/src/adminFunctions.ts:75-135 (createStudentAccount) @ 7808a91</code>
+</li><li>
+<strong><code>createTeacherAccount</code></strong> sets <code>{role: "teacher"}</code>. <code>functions/src/adminFunctions.ts:248-256 (createTeacherAccount) @ 7808a91</code>
+</li><li>
+<strong><code>createAdminAccount</code></strong> sets <code>{role: "admin"}</code>. <code>functions/src/adminFunctions.ts:350-358 (createAdminAccount) @ 7808a91</code>
+</li><li>
+<strong><code>bulkImportStudents</code></strong> sets <code>customClaims = {role: "student", gradeLevel}</code> through <code>auth.importUsers</code>. <code>functions/src/bulkImport.ts:228-244 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong><code>exchangeOAuthCode</code></strong> puts <code>{provider: "google.com", email}</code> on a custom token and sets no role. <code>functions/src/oauth.ts:311-314 (exchangeOAuthCode) @ 7808a91</code>
+</li></ul>
+<p><span class="badge unv">UNVERIFIED</span> (platform behavior, not in this code): whether Admin SDK <code>createUser</code> and <code>importUsers</code> fire <code>beforeUserCreated</code>.</p>
+<h3 id="client-utilities">Client utilities</h3>
+<ul><li>
+<strong><code>UserRoleClaims.setRoleClaim</code></strong>
+<ul><li>
+Calls the <code>setRoleClaim</code> callable with <code>{uid, role}</code>, then forces a token refresh.
+</li><li>
+Uses <code>FirebaseFunctions.instance</code> with no region set.
+<br><code>lib/shared/utils/set_user_role_claims.dart:7-37 (UserRoleClaims) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>runUserRoleMigration</code></strong> calls <code>migrateAllUserRoles</code> in <code>us-east4</code>. <code>lib/shared/utils/run_migration.dart:13-50 (runUserRoleMigration) @ 7808a91</code>
+</li><li>
+Nothing in <code>lib</code>, <code>test</code> or <code>integration_test</code> calls either utility.
+</li></ul>
+<h3 id="how-the-claim-and-users-role-diverge">How the claim and <code>users.role</code> diverge</h3>
+<ul><li>
+<strong>Owner self-edit.</strong> The owner of a <code>users</code> document may update it with no field restriction, so they can change <code>role</code> to teacher or student. <code>syncUserRole</code> then copies the new value into the claim. <code>firestore.rules:97 (users) @ 7808a91</code>
+</li><li>
+<strong>Change to admin, or role removed.</strong> The old claim stays. <code>functions/src/customClaims.ts:106-114 (syncUserRole) @ 7808a91</code>
+</li><li>
+<strong>Sign-up.</strong> The <code>users</code> document written at sign-up fires <code>syncUserRole</code>. For teacher and student, that replaces <code>{role, emailDomain}</code> with <code>{role}</code>. It also drops the <code>gradeLevel</code> claim set by bulk import.
+</li><li>
+<strong>Missing callable.</strong> <code>UserManagementService.updateUserRole</code> calls an <code>updateUserRole</code> callable that does not exist under <code>functions/src</code>, then writes <code>users.role</code> directly. <code>lib/features/admin/data/services/user_management_service.dart:154-163 (UserManagementService) @ 7808a91</code>
+</li><li>
+<strong>Role checks never read the claim.</strong> The Firestore rules (question 3) and every server callable's role check read <code>users.role</code>.
+</li></ul>
+</section><section class="card">
+<h2 id="3-how-does-firestore-rules-decide-read-and-write-access-for-">3. How does <code>firestore.rules</code> decide read and write access for each match path?</h2>
+<p>Roles come from the Firestore field <code>users/{uid}.role</code>, combined with the email domain in the token; the rules read no custom claims. An owner can edit their own <code>users</code> document, <code>role</code> included. 15 conditions are a placeholder <code>true</code>. Each point is cited below.</p>
+<h3 id="how-roles-are-determined">How roles are determined</h3>
+<ul><li>
+The rules read no custom claims. The only <code>request.auth.token</code> field used is <code>email</code>. <code>firestore.rules:22-40 (hasTeacherDomain) @ 7808a91</code>
+</li><li>
+<code>getUserRole(userId)</code> does <code>get(/users/$(userId))</code> and returns <code>data.role</code> (or null), and every role helper calls it with <code>request.auth.uid</code>. <code>firestore.rules:43-46 (getUserRole) @ 7808a91</code>
+</li><li>
+The email-domain helpers match the token email against a case-insensitive regex:
+<ul><li>
+teacher: <code>@roselleschools.org</code>
+</li><li>
+student: <code>@rosellestudent.org</code>
+</li><li>
+admin: <code>@fermi-plus.com</code>
+</li><li>
+<code>hasValidSchoolDomain</code> is any of the three.
+<br><code>firestore.rules:17-40 (hasValidSchoolDomain) @ 7808a91</code>
+</li></ul>
+</li><li>
+<code>isTheTeacher()</code> requires role <code>'teacher'</code> and either the teacher domain or <code>isAdmin()</code>. Because <code>isAdmin()</code> needs role <code>'admin'</code>, this reduces to role teacher plus the teacher domain. It checks ownership of no document. <code>firestore.rules:49-55 (isTheTeacher) @ 7808a91</code>
+</li><li>
+<code>isStudent()</code> requires role <code>'student'</code> and the student domain (or <code>isAdmin()</code>, which cannot be true at the same time). <code>firestore.rules:58-64 (isStudent) @ 7808a91</code>
+</li><li>
+<code>isAdmin()</code> requires role <code>'admin'</code> and the admin domain. <code>firestore.rules:67-73 (isAdmin) @ 7808a91</code>
+</li><li>
+<code>isEnrolledInClass(classId)</code> requires <code>isStudent()</code> and the caller's uid in <code>classes/{classId}.studentIds</code>. <code>firestore.rules:76-79 (isEnrolledInClass) @ 7808a91</code>
+</li><li>
+<code>isOwner(userId)</code> requires a signed-in caller whose uid equals <code>userId</code>. <code>firestore.rules:12-14 (isOwner) @ 7808a91</code>
+</li></ul>
+<h3 id="users-userid"><code>users/{userId}</code></h3>
+<p><code>firestore.rules:82-100 (users) @ 7808a91</code></p>
+<ul><li>
+<strong>Read:</strong> a signed-in caller who is the owner, <code>isTheTeacher()</code>, <code>isAdmin()</code>, or <code>isStudent() &amp;&amp; hasValidSchoolDomain()</code>. Any student can therefore read every user document. <code>firestore.rules:85-90 (users) @ 7808a91</code>
+</li><li>
+<strong>Create:</strong> requires <code>auth.uid == userId</code>, <code>request.resource.data.uid == userId</code> and <code>hasValidSchoolDomain()</code>. No other field is checked, including <code>role</code>. <code>firestore.rules:92-95 (users) @ 7808a91</code>
+</li><li>
+<strong>Update:</strong> <code>isOwner(userId) || isAdmin() || isTheTeacher()</code>, with no field checks. A user can therefore change the <code>role</code> field on their own document. The domain check inside each role helper is the only thing that ties a role to an email. <code>firestore.rules:97 (users) @ 7808a91</code>
+</li><li>
+<strong>Delete:</strong> <code>isAdmin() || isTheTeacher()</code>. The comment says "Only admins". <code>firestore.rules:98-99 (users) @ 7808a91</code>
+</li></ul>
+<h3 id="public-usernames-username"><code>public_usernames/{username}</code></h3>
+<ul><li>
+<strong>Read:</strong> <code>if true</code>, so unauthenticated callers can read. <code>firestore.rules:106 (public_usernames) @ 7808a91</code>
+</li><li>
+<strong>Create:</strong> requires <code>request.resource.data.uid == auth.uid</code> and <code>get(users/{auth.uid}).data.username == username</code>. <code>firestore.rules:108-110 (public_usernames) @ 7808a91</code>
+</li><li>
+<strong>Update and delete:</strong> admin or teacher. <code>firestore.rules:112 (public_usernames) @ 7808a91</code>
+</li></ul>
+<h3 id="classes-classid-and-subcollections"><code>classes/{classId}</code> and subcollections</h3>
+<p><code>firestore.rules:117-199 (classes) @ 7808a91</code></p>
+<ul><li>
+<strong>Read:</strong> any signed-in user can read any class. The comment mentions enrollment, but the rule never checks it. <code>firestore.rules:124-127 (classes) @ 7808a91</code>
+</li><li>
+<strong>Create:</strong> <code>(isTheTeacher() &amp;&amp; request.resource.data.teacherId == auth.uid) || isAdmin() || isTheTeacher()</code>. The trailing bare <code>isTheTeacher()</code> makes the <code>teacherId</code> check non-binding. <code>firestore.rules:130-131 (classes) @ 7808a91</code>
+</li><li>
+<strong>Update</strong> is allowed in either of two cases:
+<ul><li>
+<code>isTheTeacher()</code>, on any class and any fields.
+</li><li>
+<code>isStudent()</code>, where the changed keys are <code>hasOnly(['studentIds','updatedAt'])</code> and the caller's uid is not already in <code>resource.data.studentIds</code>. Nothing checks that the new <code>studentIds</code> contains the caller or keeps the existing entries.
+<br><code>firestore.rules:134-143 (classes) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Delete:</strong> the <code>teacherId</code> ownership check is non-binding, for the same reason as create. <code>firestore.rules:146-147 (classes) @ 7808a91</code>
+</li><li>
+<strong><code>studentPoints/{studentId}</code>:</strong>
+<ul><li>
+read: teacher, admin, or the student whose points they are
+</li><li>
+create and update: <code>isTheTeacher()</code>
+</li><li>
+delete: admin or teacher
+<br><code>firestore.rules:150-161 (studentPoints) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>studentPoints/{studentId}/history/{historyId}</code>:</strong>
+<ul><li>
+read: teacher, admin, or the owning student
+</li><li>
+create and update: <code>isTheTeacher()</code>
+<br><code>firestore.rules:163-177 (history) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>behaviors/{behaviorId}</code>:</strong>
+<ul><li>
+read: teacher, admin, or <code>isEnrolledInClass(classId)</code>
+</li><li>
+writes: <code>isTheTeacher()</code>
+<br><code>firestore.rules:181-192 (behaviors) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>{document=</strong>}</code> catch-all under a class:**
+<ul><li>
+read: <code>isTheTeacher() || isEnrolledInClass(classId)</code>
+</li><li>
+write: <code>isTheTeacher()</code>
+<br>Under Firestore's OR semantics for overlapping matches, this also gives any enrolled student read access to every student's points and history. <code>firestore.rules:195-198 (document) @ 7808a91</code>
+</li></ul>
+</li></ul>
+<h3 id="conversations-chatrooms-chat-rooms"><code>conversations</code>, <code>chatRooms</code>, <code>chat_rooms</code></h3>
+<ul><li>
+<strong><code>conversations/{conversationId}</code></strong> <code>firestore.rules:203-218 (conversations) @ 7808a91</code>
+<ul><li>
+read: signed in, and either <code>resource == null</code> or the caller is in <code>resource.data.participants</code>
+</li><li>
+create: the caller is in the new <code>participants</code>
+</li><li>
+update: the caller is in the existing <code>participants</code>, with no field checks
+</li><li>
+delete: <code>false</code>
+</li></ul>
+</li><li>
+<strong>Its <code>messages</code></strong> <code>firestore.rules:220-233 (messages) @ 7808a91</code>
+<ul><li>
+read: the caller is in the parent's <code>participants</code>, checked with <code>get</code>
+</li><li>
+create: requires <code>auth.uid == authorId || auth.uid == senderId</code> plus parent membership
+</li><li>
+update and delete: <code>false</code>
+</li></ul>
+</li><li>
+<strong>Its <code>typing/{userId}</code>:</strong> read by any signed-in user; written only when <code>auth.uid == userId</code>. <code>firestore.rules:236-246 (typing) @ 7808a91</code>
+</li><li>
+<strong><code>chatRooms/{chatRoomId}</code></strong> <code>firestore.rules:250-262 (chatRooms) @ 7808a91</code>
+<ul><li>
+read: any signed-in user
+</li><li>
+create: the caller is in the new <code>participantIds</code>
+</li><li>
+update and delete: the caller is in the existing <code>participantIds</code>, with no field checks
+</li></ul>
+</li><li>
+<strong>Its <code>messages</code></strong> <code>firestore.rules:264-274 (messages) @ 7808a91</code>
+<ul><li>
+read: parent membership
+</li><li>
+create: <code>senderId == uid</code> plus membership
+</li><li>
+update: <code>false</code>
+</li><li>
+delete: any signed-in user. <code>firestore.rules:273 (messages) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>The older <code>chat_rooms/{chatRoomId}</code>:</strong> an update by a non-teacher must keep <code>participantIds.hasAll(old participantIds)</code>, so a non-teacher cannot remove participants. Delete is <code>false</code>. <code>firestore.rules:278-307 (chat_rooms) @ 7808a91</code>
+</li></ul>
+<h3 id="assignments-grades-submissions-collection-groups"><code>assignments</code>, <code>grades</code>, <code>submissions</code>, collection groups</h3>
+<ul><li>
+<strong><code>assignments/{assignmentId}</code></strong> <code>firestore.rules:310-325 (assignments) @ 7808a91</code>
+<ul><li>
+read: <code>isTheTeacher() || resource == null || (isStudent() &amp;&amp; isEnrolledInClass(resource.data.classId))</code>
+</li><li>
+create: <code>isTheTeacher() &amp;&amp; request.resource.data.teacherId == auth.uid</code>. Nothing checks that <code>classId</code> belongs to that teacher.
+</li><li>
+update and delete: require the existing <code>teacherId == uid</code>. Update does not stop <code>teacherId</code> from being changed.
+</li></ul>
+</li><li>
+<strong><code>grades/{gradeId}</code></strong> <code>firestore.rules:328-341 (grades) @ 7808a91</code>
+<ul><li>
+read: teacher, <code>resource == null</code>, or the student whose <code>studentId</code> it is
+</li><li>
+create: the teacher, with the new <code>teacherId == uid</code>
+</li><li>
+update and delete: the teacher, with the existing <code>teacherId == uid</code>
+</li></ul>
+</li><li>
+<strong>Collection group <code>{path=</strong>}/grades</code>:** read when <code>isTheTeacher()</code>. <code>firestore.rules:344-346 (path) @ 7808a91</code>
+</li><li>
+<strong>Collection group <code>{path=</strong>}/history</code>:** read by teacher, admin, or the caller who owns the class named in <code>resource.data.classId</code>, checked with <code>get</code>. <code>firestore.rules:349-358 (path) @ 7808a91</code>
+</li><li>
+<strong><code>submissions/{submissionId}</code></strong> <code>firestore.rules:361-382 (submissions) @ 7808a91</code>
+<ul><li>
+read: teacher, <code>resource == null</code>, or the owning student
+</li><li>
+create: <code>isStudent()</code> with <code>auth.uid == request.resource.data.studentId</code>. Nothing checks the assignment or enrollment.
+</li><li>
+update by a student: allowed while <code>resource.data.submittedAt == null</code> and <code>studentId</code> is unchanged, with no <code>affectedKeys</code> limit
+</li><li>
+update by <code>isTheTeacher()</code>: allowed
+</li><li>
+delete: teacher
+</li></ul>
+</li></ul>
+<h3 id="other-collections">Other collections</h3>
+<ul><li>
+<strong><code>announcements</code>:</strong>
+<ul><li>
+read: signed in
+</li><li>
+writes: <code>isTheTeacher()</code>
+<br><code>firestore.rules:385-388 (announcements) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>discussion_boards/{boardId}</code></strong> is matched twice, at <code>:391</code> and <code>:506</code>. Firestore combines the two with OR, so the more permissive block wins:
+<ul><li>
+any signed-in user can create a board (<code>:393</code>), even though <code>:508</code> requires a teacher
+</li><li>
+thread, comment and reply creates need no <code>authorId</code> check (<code>:402</code>, <code>:420</code>, <code>:431</code>), even though <code>:517</code>, <code>:536</code> and <code>:548</code> require one
+<br><code>firestore.rules:391-588 (discussion_boards) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Thread counter updates:</strong> anyone may update a thread's counters when the changed keys are only <code>likeCount</code> or only <code>replyCount</code> and the value moves by ±1. <code>firestore.rules:407-413 (threads) @ 7808a91</code>
+</li><li>
+<strong>Reply <code>likeCount</code> update:</strong> the condition lacks inner parentheses. By standard precedence, any update with <code>likeCount == old-1</code> passes regardless of which other keys change. <code>firestore.rules:436-438 (replies) @ 7808a91</code>
+</li><li>
+<strong><code>likes</code>:</strong>
+<ul><li>
+create: <code>auth.uid == likeId == request.resource.data.userId</code>
+</li><li>
+delete: <code>auth.uid == likeId</code>
+</li><li>
+update: <code>false</code>
+<br><code>firestore.rules:443-469 (likes) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>games/{gameId}</code>:</strong>
+<ul><li>
+read and create: signed in
+</li><li>
+update and delete: <code>creatorId == uid</code>
+</li><li>
+<code>scores</code> create: the new <code>studentId == uid</code>
+<br><code>firestore.rules:474-488 (games) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>scheduled_messages</code>:</strong> every operation keys on the nested field <code>message.senderId == uid</code>. <code>firestore.rules:492-503 (scheduled_messages) @ 7808a91</code>
+</li><li>
+<strong><code>calendar_events</code>:</strong>
+<ul><li>
+read: <code>createdBy == uid</code> or the caller is in <code>participantIds</code>
+</li><li>
+writes: <code>createdBy == uid</code>
+<br><code>firestore.rules:591-601 (calendar_events) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>students/{studentId}</code>:</strong>
+<ul><li>
+read: teacher, or the student matching <code>studentId</code> or <code>resource.data.userId</code>
+</li><li>
+update: that student, with no field checks
+</li><li>
+create and delete: teacher
+<br><code>firestore.rules:604-618 (students) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>teachers/{teacherId}</code>:</strong> read and write when <code>isTheTeacher() &amp;&amp; uid == teacherId</code>. <code>firestore.rules:621-624 (teachers) @ 7808a91</code>
+</li><li>
+<strong><code>calls/{callId}</code>:</strong>
+<ul><li>
+read: any signed-in user while <code>status == 'ringing'</code>
+</li><li>
+update: caller or receiver, limited to a status transition list
+</li><li>
+<code>candidates</code> subcollection: caller and receiver, checked with <code>get</code>
+<br><code>firestore.rules:627-660 (calls) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>activities</code>:</strong>
+<ul><li>
+read: admin, teacher, or a student enrolled in the class named in <code>resource.data.classId</code>
+</li><li>
+create: admin, teacher, or the new <code>userId == uid</code>
+</li><li>
+update and delete: admin or teacher
+<br><code>firestore.rules:663-682 (activities) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>notifications</code>:</strong>
+<ul><li>
+read, update and delete: <code>userId == uid</code>
+</li><li>
+create: teacher or the new <code>userId == uid</code>
+<br><code>firestore.rules:685-703 (notifications) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>fcm_tokens/{userId}</code>:</strong> owner only. <code>firestore.rules:706-708 (fcm_tokens) @ 7808a91</code>
+</li><li>
+<strong><code>bug_reports</code>:</strong>
+<ul><li>
+create: the new <code>userId == uid</code>
+</li><li>
+read: teacher
+</li><li>
+update and delete: <code>false</code>
+<br><code>firestore.rules:711-722 (bug_reports) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>jeopardy_games</code>:</strong>
+<ul><li>
+read: <code>isPublic == true</code> or <code>teacherId == uid</code>
+</li><li>
+create: teacher, with <code>teacherId == uid</code>
+</li><li>
+update: <code>teacherId</code> must stay unchanged
+<br><code>firestore.rules:725-749 (jeopardy_games) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>jeopardy_sessions</code>:</strong>
+<ul><li>
+update: <code>teacherId == uid</code> or the caller is in <code>participantIds</code>, with no field checks
+<br><code>firestore.rules:752-772 (jeopardy_sessions) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>presence/{userId}</code>:</strong> read by any signed-in user; written by the owner. <code>firestore.rules:775-790 (presence) @ 7808a91</code>
+</li><li>
+<strong>Default <code>{document=</strong>}</code>:** denies read and write. <code>firestore.rules:793-795 (document) @ 7808a91</code>
+</li><li>
+<strong>Collections with no rule:</strong> <code>jeopardy_questions</code>, <code>oauth_pkce_challenges</code> and <code>_rate_limits</code> have no match block, so they fall to the default deny.
+</li></ul>
+<h3 id="placeholders-and-comments">Placeholders and comments</h3>
+<ul><li>
+<strong>Placeholder conditions:</strong> 15 conditions are the literal <code>true</code>, at lines <code>:136</code>, <code>:256</code>, <code>:270</code>, <code>:289</code>, <code>:302</code>, <code>:370</code>, <code>:394</code>, <code>:403</code>, <code>:421</code>, <code>:432</code>, <code>:497</code>, <code>:641</code>, <code>:718</code>, <code>:738</code> and <code>:762</code>. Nearby comments mention email verification. <code>firestore.rules:367-370 (submissions) @ 7808a91</code>
+</li><li>
+<strong>Footer comment:</strong> it claims "Email verification required for content creation", but the file has no <code>email_verified</code> check. <code>firestore.rules:800 (document) @ 7808a91</code>
+</li><li>
+<strong>Field-level checks:</strong> the only ones in the file are:
+<ul><li>
+<code>affectedKeys().hasOnly</code> at <code>:140</code>, <code>:407</code>, <code>:411</code>, <code>:436</code>, <code>:522</code>, <code>:526</code>, <code>:553</code>
+</li><li>
+<code>hasAll</code> at <code>:293</code>
+</li></ul>
+</li></ul>
+<p>Looked for and not found at 7808a91: custom-claim reads (<code>token.role</code>, <code>.claims</code>, <code>customClaims</code>) and <code>email_verified</code>. Not settled from the code: how <code>resource == null</code> behaves in list queries.</p>
+</section><section class="card">
+<h2 id="4-how-does-storage-rules-decide-access-and-which-storage-pat">4. How does <code>storage.rules</code> decide access, and which Storage paths does the client read or write?</h2>
+<p><code>storage.rules</code> checks two things only: whether the caller is signed in, and whether the uid matches the path's <code>{userId}</code>. It has no size, content-type, custom-claim or metadata checks. The only helper is <code>isAuthenticated()</code>, which returns <code>request.auth != null</code>. <code>storage.rules:5-7 (isAuthenticated) @ 7808a91</code></p>
+<p>Every rule is written as <code>read</code> or <code>write</code>, so <code>write</code> covers create, update and delete.</p>
+<div class="tw"><table><thead><tr><th>Block</th><th>read</th><th>write</th><th>Citation</th></tr></thead><tbody><tr><td><code>/chat_images/{chatRoomId}/{fileName}</code></td><td>signed in</td><td>signed in. Nothing ties the caller to <code>chatRoomId</code></td><td><code>storage.rules:10-13 (chat_images) @ 7808a91</code></td></tr><tr><td><code>/chat_videos/{chatRoomId}/{fileName}</code></td><td>signed in</td><td>signed in</td><td><code>storage.rules:16-19 (chat_videos) @ 7808a91</code></td></tr><tr><td><code>/users/{userId}/profile/{fileName}</code></td><td>signed in</td><td><code>request.auth.uid == userId</code></td><td><code>storage.rules:22-25 (users) @ 7808a91</code></td></tr><tr><td><code>/users/{userId}/{allPaths=**}</code></td><td>signed in</td><td><code>request.auth.uid == userId</code></td><td><code>storage.rules:28-31 (users) @ 7808a91</code></td></tr><tr><td><code>/public/{allPaths=**}</code></td><td><code>true</code> (signed-out callers too)</td><td><code>false</code></td><td><code>storage.rules:34-37 (public) @ 7808a91</code></td></tr><tr><td><code>/{document=**}</code></td><td><code>false</code></td><td><code>false</code></td><td><code>storage.rules:40-42 (document) @ 7808a91</code></td></tr></tbody></table></div>
+<p>A comment in <code>setRoleClaim</code> says the role claim "is needed for Storage rules to check if a user is a teacher". The rules at this commit never read that claim. <code>functions/src/customClaims.ts:6-10 (setRoleClaim) @ 7808a91</code></p>
+<h3 id="every-storage-path-the-code-touches">Every Storage path the code touches</h3>
+<p><strong>1. Client write.</strong> The client writes <code>users/{uid}/profile/avatar.jpg</code> with <code>putFile</code>, and that path matches the profile block. <code>lib/shared/screens/settings_screen.dart:1029-1038 (_uploadProfilePicture) @ 7808a91</code></p>
+<p><strong>2. Client read.</strong> The client calls <code>getDownloadURL()</code> on the same path. <code>lib/shared/screens/settings_screen.dart:1041 (_uploadProfilePicture) @ 7808a91</code> <code>updateProfilePicture</code> then stores the URL. <code>lib/features/auth/providers/auth_provider.dart:704-713 (updateProfilePicture) @ 7808a91</code></p>
+<p><strong>3. Client delete.</strong> The client deletes the same path with <code>storageRef.delete()</code> and swallows any error. It does not clear <code>photoURL</code> afterwards. <code>lib/shared/screens/settings_screen.dart:1078-1093 (_removeProfilePicture) @ 7808a91</code></p>
+<p><strong>4. Server write.</strong> The Admin SDK writes <code>chat-attachments/{conversationId}/{userId}/{timestamp}_{sanitizedFileName}</code> in <code>uploadChatFile</code>. <code>functions/src/chatFunctions.ts:339-357 (uploadChatFile) @ 7808a91</code></p>
+<ul><li>
+No allow block covers <code>chat-attachments/</code>. The nearest blocks, <code>chat_images</code> and <code>chat_videos</code>, use underscores. The default-deny block matches the path, so client SDK access is denied, and only the Admin SDK and the signed URL reach these files. <code>storage.rules:40-42 (document) @ 7808a91</code> <span class="badge disp">corrected</span> <span class="corr">(An earlier draft said no rules block matched the path; the verifier found that the default deny does.)</span>
+</li><li>
+The function returns a signed read URL that expires <code>03-01-2500</code>. <code>functions/src/chatFunctions.ts:360-363 (uploadChatFile) @ 7808a91</code>
+</li><li>
+The client sends the file as base64 and uses the <code>url</code> that comes back, once for images and once for files. <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:383-397 (FirestoreChatController) @ 7808a91</code> and <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:473-487 (FirestoreChatController) @ 7808a91</code>
+</li><li>
+Images are shown with a plain URL fetch through <code>Image.network</code>, not through the Storage SDK. <code>lib/features/chat/presentation/widgets/web_image_stub.dart:20 (build) @ 7808a91</code>
+</li></ul>
+<p><strong>5. Unused paths.</strong> No code uses <code>chat_images/</code>, <code>chat_videos/</code> or <code>public/</code>. A repository-wide grep finds them only in <code>storage.rules</code>.</p>
+<h3 id="checks-in-uploadchatfile-that-stand-in-for-rules-on-the-chat">Checks in <code>uploadChatFile</code> that stand in for rules on the chat path</h3>
+<ul><li>
+<strong>Unauthenticated callers</strong> are rejected. <code>functions/src/chatFunctions.ts:290-295 (uploadChatFile) @ 7808a91</code>
+</li><li>
+<strong>File size</strong> is checked against the client-declared <code>fileSize</code> (10 MB limit), not the decoded buffer. The check is skipped when <code>fileSize</code> is absent. <code>functions/src/chatFunctions.ts:309-314 (uploadChatFile) @ 7808a91</code>
+</li><li>
+<strong>MIME type</strong> must be one of 11 allowed types. <code>functions/src/chatFunctions.ts:317-331 (uploadChatFile) @ 7808a91</code>
+<ul><li>
+The client builds image types as <code>'image/${extension}'</code>, so a <code>.jpg</code> file becomes <code>image/jpg</code>, which is not on the list. <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:387 (FirestoreChatController) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Conversation membership</strong> is checked by <code>ensureConversationMembership</code>. <code>functions/src/chatFunctions.ts:334 (uploadChatFile) @ 7808a91</code>
+</li></ul>
+<h3 id="not-found-at-7808a91">Not found at 7808a91</h3>
+<ul><li>
+<code>FirebaseStorage</code> is registered in the service locator, but nothing in <code>lib/</code> reads it through <code>getIt</code>. <code>lib/shared/core/service_locator.dart:88-90 (setupServiceLocator) @ 7808a91</code>
+</li><li>
+No function reads or deletes Storage objects.
+</li><li>
+<code>firebase.json</code> is not tracked at this commit, so nothing shows how <code>storage.rules</code> is deployed.
+</li></ul>
+</section><section class="card">
+<h2 id="5-where-are-users-public-usernames-presence-fcm-tokens-notif">5. Where are <code>users</code>, <code>public_usernames</code>, <code>presence</code>, <code>fcm_tokens</code>, <code>notifications</code>, <code>scheduled_messages</code> and <code>bug_reports</code> defined and accessed?</h2>
+<p>The field lists for the writes in <code>auth_service.dart</code> come from grep, not from a full read.</p>
+<h3 id="collection-names-passed-as-variables">Collection names passed as variables</h3>
+<p>None of these resolve to the seven collections in this question.</p>
+<ul><li>
+<strong><code>rate-limiter.ts</code>:</strong> <code>collection(this.collectionName)</code> is fixed to <code>"_rate_limits"</code>. <code>functions/src/rate-limiter.ts:18-34 (FirestoreRateLimiter) @ 7808a91</code>
+</li><li>
+<strong><code>FirestoreService.collection</code>:</strong> <code>collection(collectionPath)</code> receives <code>'assignments'</code>, <code>'classes'</code> and <code>'grades'</code>. <code>lib/shared/services/firestore_service.dart:52 (FirestoreService) @ 7808a91</code>
+<ul><li>
+<code>'assignments'</code>: <code>lib/features/assignments/data/services/assignment_service.dart:23 (AssignmentService) @ 7808a91</code>
+</li><li>
+<code>'classes'</code>: <code>lib/features/classes/data/services/class_service.dart:22 (ClassService) @ 7808a91</code>
+</li><li>
+<code>'grades'</code>: <code>lib/features/grades/data/services/grade_service.dart:19 (GradeService) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>getCollectionReference</code>:</strong> <code>collection(path)</code> receives <code>'grades'</code> and <code>'archived_grades'</code>. <code>lib/shared/services/firestore_repository.dart:142-146 (getCollectionReference) @ 7808a91</code>
+<ul><li>
+<code>'grades'</code>: <code>lib/features/assignments/data/services/assignment_service.dart:83 (AssignmentService) @ 7808a91</code>
+</li><li>
+<code>'archived_grades'</code>: <code>lib/features/grades/data/services/grade_service.dart:279-281 (archiveOldGrades) @ 7808a91</code>
+</li></ul>
+</li></ul>
+<h3 id="users"><code>users</code></h3>
+<p><strong>Shape.</strong> The read model is <code>UserModel</code>. <code>lib/shared/models/user_model.dart:100-175 (UserModel) @ 7808a91</code> Its fields are:</p>
+<ul><li>
+identity: <code>uid</code>, <code>email</code>, <code>displayName</code>, <code>firstName</code>, <code>lastName</code>, <code>username</code>, <code>realEmail</code>
+</li><li>
+profile: <code>photoURL</code> (falls back to <code>photoUrl</code>), <code>parentEmail</code>, <code>gradeLevel</code>
+</li><li>
+links: <code>teacherId</code>, <code>studentId</code>, <code>enrolledClassIds</code>
+</li><li>
+state: <code>role</code> (enum name), <code>needsPasswordReset</code>, <code>createdAt</code>, <code>lastActive</code>
+</li></ul>
+<p><code>createdAt</code> and <code>lastActive</code> are accepted only when they are a <code>DateTime</code>. Every writer stores a server timestamp or <code>Timestamp</code>. <code>lib/shared/models/user_model.dart:140-145 (UserModel) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> There are none for <code>users</code>.</p>
+<p><strong>Writes from functions:</strong></p>
+<div class="tw"><table><thead><tr><th>Function</th><th>Operation</th><th>Fields</th><th>Citation</th></tr></thead><tbody><tr><td><code>autoAssignRole</code></td><td>set</td><td><code>email</code>, <code>displayName</code>, <code>role</code>, <code>createdAt</code>, <code>emailVerified</code>, <code>isEmailUser</code>, <code>profileComplete</code></td><td><code>functions/src/authBlocking.ts:73-81 (autoAssignRole) @ 7808a91</code></td></tr><tr><td><code>createStudentAccount</code></td><td>set</td><td><code>email</code>, <code>displayName</code>, <code>role</code>, <code>gradeLevel</code>, <code>parentEmail</code>, <code>createdAt</code>, <code>createdBy</code>, <code>isEmailUser</code>, <code>isGoogleAuth</code></td><td><code>functions/src/adminFunctions.ts:132-142 (createStudentAccount) @ 7808a91</code></td></tr><tr><td><code>createTeacherAccount</code></td><td>set</td><td><code>email</code>, <code>displayName</code>, <code>role</code>, <code>createdAt</code>, <code>createdBy</code>, <code>isEmailUser</code></td><td><code>functions/src/adminFunctions.ts:253-260 (createTeacherAccount) @ 7808a91</code></td></tr><tr><td><code>createAdminAccount</code></td><td>set</td><td>same fields as the teacher write</td><td><code>functions/src/adminFunctions.ts:355-362 (createAdminAccount) @ 7808a91</code></td></tr><tr><td><code>deleteUserAccount</code></td><td>delete</td><td>—</td><td><code>functions/src/adminFunctions.ts:438 (deleteUserAccount) @ 7808a91</code></td></tr><tr><td><code>bulkImportStudents</code></td><td>set</td><td>the student fields, plus <code>profileComplete</code>, <code>studentId</code>, <code>classId</code>, <code>enrolledClasses</code></td><td><code>functions/src/bulkImport.ts:294-317 (bulkImportStudents) @ 7808a91</code></td></tr><tr><td><code>migrateStudentClassEnrollment</code></td><td>update</td><td>sets <code>classId</code>, <code>enrolledClasses</code>; deletes <code>className</code></td><td><code>functions/src/bulkImport.ts:619-624 (migrateStudentClassEnrollment) @ 7808a91</code></td></tr><tr><td><code>setRoleClaim</code></td><td>update</td><td><code>role</code></td><td><code>functions/src/customClaims.ts:58-60 (setRoleClaim) @ 7808a91</code></td></tr></tbody></table></div>
+<p><strong>Reads from functions:</strong></p>
+<ul><li>
+<code>adminFunctions.ts</code>:
+<ul><li>
+caller role check at <code>:56</code>, <code>:208</code>, <code>:308</code>, <code>:410</code>, <code>:479</code>, <code>:544</code>
+</li><li>
+target user at <code>:431</code>, <code>:503</code>
+</li><li>
+the whole collection at <code>:553</code>
+<br><code>functions/src/adminFunctions.ts:56 (createStudentAccount) @ 7808a91</code>
+</li></ul>
+</li><li>
+<code>behaviorPoints.ts</code>: <code>:54</code>, <code>:185</code>, <code>:296</code>, <code>:388</code>. <code>functions/src/behaviorPoints.ts:54 (awardBehaviorPoints) @ 7808a91</code>
+</li><li>
+<code>bulkImport.ts</code>: <code>:45</code>, <code>:563</code>, and a query on <code>role == student</code> at <code>:574</code>. <code>functions/src/bulkImport.ts:574 (migrateStudentClassEnrollment) @ 7808a91</code>
+</li><li>
+<code>chatFunctions.ts</code>: <code>:75</code>; the <code>.name</code> field at <code>:245</code>; <code>fcmToken</code> at <code>:397-399</code>. <code>functions/src/chatFunctions.ts:245 (updateTypingStatus) @ 7808a91</code>
+</li><li>
+<code>customClaims.ts</code>: <code>:39</code>, and the <code>syncUserRole</code> trigger on <code>users/{userId}</code>. <code>functions/src/customClaims.ts:80-81 (syncUserRole) @ 7808a91</code>
+</li><li>
+Migration scripts and functions:
+<ul><li>
+<code>functions/src/migrate-user-roles.ts:20 (migrateUserRoles) @ 7808a91</code>
+</li><li>
+<code>functions/src/migrate-user-roles-cloud.ts:27 (migrateAllUserRoles) @ 7808a91</code>, <code>:46</code>
+</li><li>
+<code>functions/src/migrate-usernames.ts:26 (migrateUsernamesToPublic) @ 7808a91</code>, <code>:164</code>; a query on <code>username != null</code> at <code>:45</code> and <code>:194</code>
+</li></ul>
+</li></ul>
+<p><strong>Writes from the client:</strong></p>
+<ul><li>
+<code>auth_service.dart</code>: <code>:196</code>, <code>:393</code>, <code>:407</code>, <code>:473</code>, <code>:536</code> (<code>role</code>), <code>:578</code>. <code>lib/features/auth/data/services/auth_service.dart:536 (AuthService) @ 7808a91</code>
+<ul><li>
+merge of <code>lastActive</code>: <code>:244-246</code>
+</li><li>
+update: <code>:487</code>
+</li><li>
+delete: <code>:622</code>
+</li></ul>
+</li><li>
+<code>username_auth_service.dart</code>: <code>lib/features/auth/data/services/username_auth_service.dart:253 (UsernameAuthService) @ 7808a91</code>
+<ul><li>
+update of <code>lastActive</code>: <code>:184-186</code>
+</li><li>
+set: <code>:253</code>, <code>:329</code>
+</li><li>
+batch delete: <code>:381</code>
+</li></ul>
+</li><li>
+<code>auth_provider.dart</code>: <code>lib/features/auth/providers/auth_provider.dart:155 (AuthProvider) @ 7808a91</code>
+<ul><li>
+set with <code>role: 'admin'</code>: <code>:155</code>
+</li><li>
+update of name fields: <code>:697</code>
+</li><li>
+update of <code>photoURL</code>: <code>:708</code>
+</li></ul>
+</li><li>
+<code>teacher_password_reset_screen.dart</code>: update of <code>needsPasswordReset</code> and <code>lastPasswordChange</code>. <code>lib/features/auth/presentation/screens/teacher_password_reset_screen.dart:49-54 (_TeacherPasswordResetScreenState) @ 7808a91</code>
+</li><li>
+<code>profile_completion_dialog.dart</code>: update of the name fields, <code>profileComplete</code> and <code>updatedAt</code>. <code>lib/features/auth/presentation/widgets/profile_completion_dialog.dart:56-64 (_ProfileCompletionDialogState) @ 7808a91</code>
+</li><li>
+<code>user_management_service.dart</code>: <code>lib/features/admin/data/services/user_management_service.dart:135-260 (UserManagementService) @ 7808a91</code>
+<ul><li>
+update with caller-supplied fields: <code>:135-138</code>
+</li><li>
+update of <code>role</code>: <code>:160</code>
+</li><li>
+batch update of <code>enrolledClassIds</code>: <code>:222-226</code>
+</li><li>
+batch update: <code>:256-260</code>
+</li></ul>
+</li><li>
+<code>student_provider.dart</code>: <code>lib/features/student/presentation/providers/student_provider.dart:228-273 (createStudent) @ 7808a91</code>
+<ul><li>
+set of the student account fields: <code>:228-239</code>
+</li><li>
+update: <code>:259</code>
+</li><li>
+delete: <code>:273</code>
+</li></ul>
+</li><li>
+<code>firebase_messaging_service.dart</code>: <code>lib/features/notifications/data/services/firebase_messaging_service.dart:241-245 (_saveFCMToken) @ 7808a91</code>
+<ul><li>
+update of <code>fcmToken</code>, <code>fcmTokenUpdatedAt</code> and <code>platform</code>: <code>:241-245</code>
+</li><li>
+delete of those fields: <code>:407-410</code>
+</li></ul>
+</li></ul>
+<p><strong>Reads from the client:</strong></p>
+<ul><li>
+admin:
+<ul><li>
+<code>lib/features/admin/data/services/bulk_import_service.dart:303 (_checkEmailExists) @ 7808a91</code>
+</li><li>
+<code>lib/features/admin/data/services/user_management_service.dart:21 (getUsersStream) @ 7808a91</code>, <code>:45</code>, <code>:86</code>, <code>:322</code>
+</li><li>
+<code>lib/features/admin/presentation/providers/admin_provider.dart:56 (_loadSystemStats) @ 7808a91</code>, <code>:189</code>
+</li></ul>
+</li><li>
+auth:
+<ul><li>
+<code>lib/features/auth/data/services/auth_service.dart:383 (signInWithGoogle) @ 7808a91</code>, <code>:452</code>, <code>:543</code>, <code>:597</code>
+</li><li>
+<code>lib/features/auth/data/services/username_auth_service.dart:65 (getUidByUsername) @ 7808a91</code>, <code>:117</code>, <code>:159</code>
+</li><li>
+<code>lib/features/auth/providers/auth_provider.dart:425 (AuthProvider) @ 7808a91</code>, <code>:432</code>
+</li></ul>
+</li><li>
+chat:
+<ul><li>
+<code>lib/features/chat/data/services/scheduled_messages_service.dart:97 (scheduleMessage) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/presentation/screens/class_selection_screen.dart:107 (_createOrJoinClassChat) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:243 (_resolveUser) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/presentation/screens/group_creation_screen.dart:48-50 (_searchUsers) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/presentation/screens/user_list.dart:28 (SimpleUserList) @ 7808a91</code> (snapshots of the whole collection)
+</li><li>
+<code>lib/features/chat/presentation/screens/user_selection_screen.dart:44-45 (_loadUsers) @ 7808a91</code>
+</li></ul>
+</li><li>
+other features:
+<ul><li>
+<code>lib/features/calendar/presentation/providers/calendar_provider.dart:164 (createEvent) @ 7808a91</code>
+</li><li>
+<code>lib/features/classes/presentation/providers/class_provider.dart:271-273 (batchSize) @ 7808a91</code>, <code>:455</code>
+</li><li>
+<code>lib/features/discussions/presentation/providers/discussion_provider.dart:184 (_fetchUserRole) @ 7808a91</code>, <code>:247</code>, <code>:350</code>, <code>:514</code>
+</li><li>
+<code>lib/features/grades/data/services/grade_analytics_service.dart:40 (generateClassAnalytics) @ 7808a91</code>
+</li><li>
+<code>lib/features/student/presentation/providers/student_provider.dart:29-32 (loadAllStudents) @ 7808a91</code>, <code>:105</code>, <code>:165</code> (the operation at <code>:105</code> and <code>:165</code> is <span class="badge unv">UNVERIFIED</span>)
+</li><li>
+<code>lib/features/teacher/presentation/screens/manage_student_accounts_screen.dart:370 (collection) @ 7808a91</code>
+</li><li>
+<code>lib/shared/utils/check_auth_info.dart:16 (analyzeAuthSituation) @ 7808a91</code>, <code>:29</code>
+</li></ul>
+</li></ul>
+<p><strong>Field-name disagreements:</strong></p>
+<ul><li>
+<strong><code>photoURL</code> and <code>photoUrl</code>.</strong> Every writer uses <code>photoURL</code>. Three chat readers read <code>photoUrl</code> from <code>users</code> documents:
+<ul><li>
+<code>lib/features/chat/presentation/screens/class_selection_screen.dart:117 (_createOrJoinClassChat) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:257 (_resolveUser) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/presentation/screens/user_selection_screen.dart:157 (build) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>enrolledClassIds</code> and <code>enrolledClasses</code>.</strong> The model and the admin service use <code>enrolledClassIds</code>. The functions write <code>enrolledClasses</code> plus a scalar <code>classId</code>. <code>functions/src/bulkImport.ts:315-316 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong><code>name</code> and <code>displayName</code>.</strong> One function and one client query use <code>name</code>; every writer uses <code>displayName</code>.
+<ul><li>
+<code>functions/src/chatFunctions.ts:245 (updateTypingStatus) @ 7808a91</code> reads <code>.name</code>.
+</li><li>
+<code>lib/features/chat/presentation/screens/group_creation_screen.dart:49-50 (_searchUsers) @ 7808a91</code> queries <code>name</code>.
+</li></ul>
+</li></ul>
+<h3 id="public-usernames"><code>public_usernames</code></h3>
+<p><strong>Shape.</strong> There is no model class. The document id is <code>username.toLowerCase()</code>, with fields <code>{uid, role}</code>. The functions writer adds <code>migratedAt</code>.</p>
+<p><strong>Call sites in <code>username_auth_service.dart</code>:</strong> <code>lib/features/auth/data/services/username_auth_service.dart:49-384 (UsernameAuthService) @ 7808a91</code></p>
+<ul><li>
+reads: <code>:49-54</code> (availability), <code>:97-104</code> (login lookup)
+</li><li>
+write: <code>:133</code> (backfills a missing entry on login)
+</li><li>
+sets: <code>:268</code> (student), <code>:343</code> (teacher)
+</li><li>
+batch delete: <code>:384</code>
+</li></ul>
+<p><strong>Call sites in <code>migrate-usernames.ts</code>:</strong> <code>functions/src/migrate-usernames.ts:76-96 (migrateUsernamesToPublic) @ 7808a91</code></p>
+<ul><li>
+reads: <code>:76-79</code>, <code>:211-214</code>
+</li><li>
+batch sets: <code>:88-92</code>, <code>:222</code>
+</li></ul>
+<p><strong>Writers that skip it.</strong> Three <code>users</code> writers set <code>username</code> without creating a <code>public_usernames</code> entry:</p>
+<ul><li>
+<code>lib/features/auth/data/services/auth_service.dart:200 (AuthService) @ 7808a91</code>
+</li><li>
+<code>lib/features/auth/data/services/auth_service.dart:584 (AuthService) @ 7808a91</code>
+</li><li>
+<code>lib/features/student/presentation/providers/student_provider.dart:229 (createStudent) @ 7808a91</code>
+</li></ul>
+<h3 id="presence"><code>presence</code></h3>
+<p><strong>Shape.</strong> Presence is stored in Firestore. The document id is the uid. Fields are <code>online</code>, <code>lastSeen</code>, <code>uid</code>, <code>displayName</code>, <code>photoURL</code>, <code>role</code>, <code>isAnonymous</code> and <code>metadata{platform, version}</code>. <code>lib/features/student/data/services/presence_service.dart:151-173 (_buildPresenceData) @ 7808a91</code></p>
+<p><strong>Indexes:</strong></p>
+<ul><li>
+<code>online</code> + <code>lastSeen</code>: <code>firestore.indexes.json:976-992 (presence) @ 7808a91</code>
+</li><li>
+<code>online</code> + <code>updatedAt</code>: <code>firestore.indexes.json:994-1010 (presence) @ 7808a91</code>. No presence writer writes <code>updatedAt</code>.
+</li></ul>
+<p><strong>Call sites in <code>presence_service.dart</code>:</strong> <code>lib/features/student/data/services/presence_service.dart:92 (PresenceService) @ 7808a91</code></p>
+<ul><li>
+writes:
+<ul><li>
+merge set: <code>:92</code>, <code>:101</code>
+</li><li>
+update: <code>:109</code>
+</li><li>
+batch update: <code>:480</code>, <code>:539-540</code>
+</li><li>
+delete: <code>:520</code>
+</li></ul>
+</li><li>
+reads:
+<ul><li>
+snapshots: <code>:219</code>, <code>:363</code>, <code>:388</code>, <code>:558</code>
+</li><li>
+get: <code>:259</code>, <code>:466</code>, <code>:517</code>
+</li></ul>
+</li></ul>
+<p><strong>Other reader.</strong> <code>admin_provider.dart</code> reads <code>online == true</code>. <code>lib/features/admin/presentation/providers/admin_provider.dart:101-104 (AdminProvider) @ 7808a91</code></p>
+<h3 id="fcm-tokens"><code>fcm_tokens</code></h3>
+<p><strong>Shape.</strong> There is no model class and no index. The document id is the userId, with fields <code>token</code>, <code>userId</code>, <code>platform</code> and <code>updatedAt</code>. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:248-253 (_saveFCMToken) @ 7808a91</code></p>
+<p><strong>Call sites.</strong> It is written at <code>:248</code> and deleted at <code>:412</code>. Nothing in <code>lib/</code> or <code>functions/src/</code> reads it.</p>
+<p><strong>The server reads a different field.</strong> The only server-side token consumer reads <code>users.fcmToken</code>, not this collection. <code>functions/src/chatFunctions.ts:397-399 (sendPushNotifications) @ 7808a91</code></p>
+<h3 id="notifications"><code>notifications</code></h3>
+<p><strong>Shape: two models.</strong></p>
+<ul><li>
+<code>NotificationModel</code>: <code>userId</code>, <code>type</code>, <code>title</code>, <code>message</code>, <code>createdAt</code>, <code>isRead</code>, <code>priority</code>, <code>actionData</code>, <code>imageUrl</code>, <code>category</code>, <code>scheduledFor</code>, <code>expiresAt</code>. <code>lib/features/notifications/domain/models/notification_model.dart:47-93 (NotificationModel) @ 7808a91</code>
+</li><li>
+<code>Notification</code>: <code>userId</code>, <code>type</code>, <code>title</code>, <code>message</code>, <code>read</code>, <code>relatedId</code>, <code>relatedType</code>, <code>actionUrl</code>, <code>metadata</code>, <code>createdAt</code>, <code>readAt</code>. Nothing calls its serializers. <code>lib/features/notifications/domain/models/notification.dart:124-160 (Notification) @ 7808a91</code>
+</li></ul>
+<p><strong>Indexes:</strong></p>
+<ul><li>
+collection group, <code>userId</code> + <code>createdAt</code>: <code>firestore.indexes.json:874 (notifications) @ 7808a91</code>
+</li><li>
+collection group, <code>userId</code> + <code>isRead</code> + <code>createdAt</code>: <code>firestore.indexes.json:892 (notifications) @ 7808a91</code>
+</li><li>
+collection scope, <code>read</code> + <code>userId</code> + <code>createdAt</code>: <code>firestore.indexes.json:914 (notifications) @ 7808a91</code>
+</li><li>
+collection scope, <code>userId</code> + <code>createdAt</code>: <code>firestore.indexes.json:936 (notifications) @ 7808a91</code>
+</li><li>
+collection scope, <code>userId</code> + <code>isRead</code> + <code>createdAt</code>: <code>firestore.indexes.json:954 (notifications) @ 7808a91</code>
+</li></ul>
+<p><strong>Call sites in <code>firebase_notification_service.dart</code>:</strong> <code>lib/features/notifications/data/services/firebase_notification_service.dart:10-296 (FirebaseNotificationService) @ 7808a91</code></p>
+<ul><li>
+reads: <code>:24-31</code>, <code>:64-75</code>, <code>:95-97</code>, <code>:129-132</code>, <code>:152-155</code>
+</li><li>
+updates of <code>isRead</code>: <code>:113</code>, <code>:118</code>, and a batch at <code>:135</code>
+</li><li>
+deletes: <code>:143</code>, and a batch at <code>:158</code>
+</li><li>
+adds: <code>:192</code>, and a batch set at <code>:284</code>/<code>:296</code>
+</li></ul>
+<p><strong>Call sites in <code>web_in_app_notification_service.dart</code>:</strong> <code>lib/features/notifications/data/services/web_in_app_notification_service.dart:46-149 (WebInAppNotificationService) @ 7808a91</code></p>
+<ul><li>
+read: <code>:46-52</code>, filtering on <code>userId</code> and <code>read == false</code> and reading <code>title</code>, <code>body</code> and <code>data</code>
+</li><li>
+update with <code>delivered</code>: <code>:116</code>
+</li><li>
+test add: <code>:137-149</code>
+</li></ul>
+<p><strong>Call site in <code>notification_service.dart</code>.</strong> An <code>add</code> with no <code>userId</code> and no read flag. <code>lib/features/notifications/data/services/notification_service.dart:303-311 (_storeNotificationRecord) @ 7808a91</code></p>
+<p><strong>Disagreements:</strong></p>
+<ul><li>
+The read flag is <code>isRead</code> in one service and <code>read</code> in the other.
+</li><li>
+<code>NotificationModel</code> writes <code>message</code> and <code>actionData</code>, while the web listener reads <code>body</code> and <code>data</code>.
+</li><li>
+Records with no <code>userId</code> never match the <code>userId</code>-filtered queries.
+</li></ul>
+<h3 id="scheduled-messages"><code>scheduled_messages</code></h3>
+<p><strong>Shape.</strong> Each document holds <code>chatRoomId</code>, <code>createdAt</code> and an embedded <code>message</code>. <code>lib/features/chat/data/services/scheduled_messages_service.dart:111-117 (ScheduledMessagesService) @ 7808a91</code> The embedded <code>message</code> is the map from <code>Message.toFirestore</code>. Its fields are <code>senderId</code>, <code>senderName</code>, <code>senderRole</code>, <code>content</code>, <code>timestamp</code>, <code>isRead</code>, <code>attachmentUrl</code>, <code>attachmentType</code>, <code>scheduledFor</code>, <code>isScheduled</code>, <code>status</code>, <code>isEdited</code> and <code>editedAt</code>. <code>lib/features/chat/domain/models/message.dart:175-192 (Message) @ 7808a91</code> There is no index.</p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+set: <code>:111</code>
+</li><li>
+reads: <code>:145-147</code>, <code>:263-264</code>
+</li><li>
+delete: <code>:185</code>
+</li><li>
+update: <code>:232-234</code>
+</li></ul>
+<p><strong>No server-side delivery.</strong> Nothing in <code>functions/src</code> reads this collection.</p>
+<h3 id="bug-reports"><code>bug_reports</code></h3>
+<p><strong>Shape.</strong> The document is built inline with no model class and no index. Fields are <code>category</code>, <code>priority</code>, <code>subject</code>, <code>description</code>, <code>userId</code>, <code>userEmail</code>, <code>userName</code>, <code>userRole</code>, <code>createdAt</code>, <code>status: 'new'</code>, <code>platform</code>, <code>appVersion</code> and <code>deviceInfo</code>. <code>lib/shared/screens/contact_support_screen.dart:308-328 (_submitReport) @ 7808a91</code></p>
+<p><strong>Call sites.</strong> The only call is an <code>add</code> at <code>:331-333</code>. Nothing reads the collection.</p>
+</section><section class="card">
+<h2 id="6-where-are-classes-students-assignments-submissions-grades-">6. Where are <code>classes</code>, <code>students</code>, <code>assignments</code>, <code>submissions</code>, <code>grades</code> and <code>calendar_events</code> defined and accessed?</h2>
+<p>No <code>fieldOverrides</code> entry in <code>firestore.indexes.json</code> covers these six collections. Index line numbers below point to the <code>"collectionGroup"</code> line of each entry.</p>
+<h3 id="classes"><code>classes</code></h3>
+<p><strong>Shape.</strong> <code>ClassModel</code> defines:</p>
+<ul><li>
+<code>teacherId</code>, <code>name</code>, <code>subject</code>, <code>description</code>, <code>gradeLevel</code>, <code>room</code>, <code>schedule</code>
+</li><li>
+<code>studentIds[]</code>, <code>syllabusUrl</code>, <code>isActive</code>, <code>academicYear</code>, <code>semester</code>
+</li><li>
+<code>maxStudents</code>, <code>enrollmentCode</code>, <code>settings</code>, <code>createdAt</code>, <code>updatedAt</code>
+</li></ul>
+<p>Timestamps are parsed leniently.</p>
+<p><code>lib/features/classes/domain/models/class_model.dart:137-236 (ClassModel) @ 7808a91</code></p>
+<p><strong>Disagreements with the model:</strong></p>
+<ul><li>
+<strong><code>students</code> instead of <code>studentIds</code>.</strong> <code>class_selection_screen.dart</code> queries and reads <code>students</code>. <code>lib/features/chat/presentation/screens/class_selection_screen.dart:52 (_loadClasses) @ 7808a91</code> So does <code>grade_analytics_service.dart</code>. <code>lib/features/grades/data/services/grade_analytics_service.dart:35 (GradeAnalyticsService) @ 7808a91</code> The model and every writer use <code>studentIds</code>.
+</li><li>
+<strong><code>studentCount</code>.</strong> Incremented by <code>create_student_dialog.dart</code> and <code>student_provider.dart</code>, but not a model field. <code>lib/features/classes/presentation/widgets/create_student_dialog.dart:131-137 (_createAndEnrollStudent) @ 7808a91</code>
+</li><li>
+<strong><code>chatRoomId</code>.</strong> Written but not in the model. <code>lib/features/chat/presentation/screens/class_selection_screen.dart:132-134 (_createOrJoinClassChat) @ 7808a91</code>
+</li><li>
+<strong><code>teacherUID</code>.</strong> The functions read <code>classData.teacherId || classData.teacherUID</code>. Nothing in <code>lib</code> reads or writes <code>teacherUID</code>. <code>functions/src/behaviorPoints.ts:74 (awardBehaviorPoints) @ 7808a91</code>
+</li><li>
+<strong>A hand-built write.</strong> One write leaves out <code>semester</code>, <code>syllabusUrl</code>, <code>maxStudents</code> and <code>settings</code>. <code>lib/features/classes/presentation/providers/class_provider.dart:426-442 (createClassFromParams) @ 7808a91</code>
+</li></ul>
+<p><strong>Indexes</strong> (<code>firestore.indexes.json:308-406 (classes) @ 7808a91</code>):</p>
+<div class="tw"><table><thead><tr><th>Line</th><th>Fields</th></tr></thead><tbody><tr><td>308</td><td><code>enrollmentCode</code> + <code>isActive</code></td></tr><tr><td>326</td><td><code>studentIds</code> CONTAINS + <code>isActive</code> + <code>name</code></td></tr><tr><td>348</td><td><code>studentIds</code> CONTAINS + <code>name</code></td></tr><tr><td>366</td><td><code>teacherId</code> + <code>isActive</code></td></tr><tr><td>384</td><td><code>teacherId</code> + <code>isActive</code> + <code>createdAt</code> desc</td></tr><tr><td>406</td><td><code>teacherId</code> + <code>name</code></td></tr></tbody></table></div>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+<code>class_service.dart</code>, through <code>FirestoreRepository('classes')</code> <code>lib/features/classes/data/services/class_service.dart:22-310 (ClassService) @ 7808a91</code>
+<ul><li>
+Writes: <code>:46</code>, <code>:78</code>, <code>:87</code>, <code>:93</code>; transactions at <code>:162</code>/<code>:193</code> and <code>:207</code>/<code>:231</code>; <code>:247</code>
+</li><li>
+Reads: <code>:65</code>, <code>:70</code>, <code>:105</code>, <code>:124</code>, <code>:140</code>, <code>:259</code>, <code>:310</code>
+</li></ul>
+</li><li>
+<code>class_provider.dart</code> <code>lib/features/classes/presentation/providers/class_provider.dart:92-479 (ClassProvider) @ 7808a91</code>
+<ul><li>
+Reads: <code>:92</code>, <code>:124</code>, <code>:145</code>, <code>:221</code>, <code>:248</code>, <code>:372</code>
+</li><li>
+Writes: <code>:181</code>, <code>:195</code>, <code>:210</code>, <code>:305</code>, <code>:319</code>, <code>:333</code>, <code>:347</code>, <code>:442</code>, <code>:479</code>
+</li></ul>
+</li><li>
+<code>class_selection_screen.dart</code> (chat): reads at <code>:46</code>, <code>:51</code>, <code>:94</code>; write at <code>:132-134</code>
+</li><li>
+<code>create_student_dialog.dart</code>: write at <code>:131-137</code>
+</li><li>
+<code>student_provider.dart</code>: writes at <code>:291</code>, <code>:306</code>
+</li><li>
+<code>bulk_import_service.dart</code>: write at <code>:202</code>
+</li><li>
+<code>user_management_service.dart</code>: write at <code>:230</code>; reads at <code>:303</code>, <code>:329</code>
+</li><li>
+<code>student_assignment_provider.dart</code>: read at <code>:34</code>
+</li><li>
+<code>grade_analytics_service.dart</code>: read at <code>:16</code>
+</li><li>
+<code>fix_teacher_id.dart</code>: read, then batch write of <code>teacherId</code>, for a hard-coded uid at <code>:24-40</code>
+</li><li>
+<code>behavior_points_service.dart</code>: subcollections only (see question 8)
+</li><li>
+<code>functions/src/adminFunctions.ts</code>: write at <code>:149</code>. <code>functions/src/adminFunctions.ts:149-153 (createStudentAccount) @ 7808a91</code>
+</li><li>
+<code>functions/src/bulkImport.ts</code>: reads at <code>:167</code>, <code>:180</code>, <code>:588</code>; writes at <code>:348</code>, <code>:648</code>. <code>functions/src/bulkImport.ts:180-184 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<code>functions/src/behaviorPoints.ts</code>: class reads at <code>:64</code>, <code>:195</code>, <code>:309</code>, <code>:400</code>
+</li></ul>
+<h3 id="students"><code>students</code></h3>
+<p><strong>Shape. Two models disagree:</strong></p>
+<div class="tw"><table><thead><tr><th></th><th><code>Student</code></th><th><code>StudentEnhanced</code></th></tr></thead><tbody><tr><td>Fields</td><td><code>uid</code>, <code>username</code>, <code>temporaryPassword</code>, <code>accountClaimed</code>, <code>passwordChanged</code>, <code>backupEmail</code>, <code>email</code>, <code>firstName</code>, <code>lastName</code>, <code>displayName</code>, <code>gradeLevel</code>, <code>parentEmail</code>, <code>classIds[]</code>, <code>photoURL</code>, <code>createdAt</code>, <code>updatedAt</code>, <code>isActive</code>, <code>metadata</code></td><td><code>uid</code> (falls back to doc id), <code>email</code>, <code>displayName</code>, <code>firstName</code>, <code>lastName</code>, <code>gender</code>, <code>avatarUrl</code>, <code>gradeLevel</code>, <code>classIds</code>, <code>createdAt</code>, <code>updatedAt</code>, <code>totalPoints</code>, <code>positivePoints</code>, <code>negativePoints</code>, <code>lastBehaviorUpdate</code></td></tr><tr><td><code>gradeLevel</code></td><td>int</td><td>String</td></tr><tr><td>Photo field</td><td><code>photoURL</code></td><td><code>avatarUrl</code></td></tr><tr><td>Citation</td><td><code>lib/features/student/domain/models/student.dart:120-182 (Student) @ 7808a91</code></td><td><code>lib/features/students/data/models/student_enhanced.dart:79-134 (StudentEnhanced) @ 7808a91</code></td></tr></tbody></table></div>
+<p>Nothing calls <code>StudentEnhanced.fromFirestore</code>. Which collection it would read is <span class="badge unv">UNVERIFIED</span>.</p>
+<p><strong>Disagreements:</strong></p>
+<ul><li>
+<strong><code>userId</code> vs <code>uid</code>.</strong>
+<ul><li>
+<code>auth_service.dart</code> writes <code>id</code>, <code>userId</code> and <code>gradeLevel: 9</code>. <code>lib/features/auth/data/services/auth_service.dart:546-558 (AuthService) @ 7808a91</code>
+</li><li>
+<code>getStudentByUserId</code> queries <code>userId</code>. <code>lib/features/student/data/services/student_service.dart:91 (StudentService) @ 7808a91</code>
+</li><li>
+<code>createStudentDocumentIfMissing</code> queries <code>uid</code>. <code>lib/features/student/data/services/student_service.dart:545 (createStudentDocumentIfMissing) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Indexes on a field no model has.</strong> The indexes at lines 1012 and 1030 are on <code>classIds</code> + <code>name</code>; neither model has <code>name</code>. The query that actually runs, <code>classIds</code> + <code>orderBy displayName</code>, has no matching index. <code>lib/features/student/data/services/student_service.dart:154-155 (getStudentsForClass) @ 7808a91</code>
+</li><li>
+<strong>Student lists built from <code>users</code>.</strong> Several places build <code>Student.fromFirestore</code> from <code>users</code> documents, not from <code>students</code>. <code>lib/features/classes/presentation/providers/class_provider.dart:270-277 (ClassProvider) @ 7808a91</code>
+</li></ul>
+<p><strong>Indexes:</strong></p>
+<div class="tw"><table><thead><tr><th>Line</th><th>Fields</th><th>Scope</th></tr></thead><tbody><tr><td>1012</td><td><code>classIds</code> + <code>name</code></td><td>collection group</td></tr><tr><td>1030</td><td><code>classIds</code> + <code>name</code></td><td>collection</td></tr><tr><td>1048</td><td><code>gradeLevel</code> + <code>displayName</code></td><td>collection</td></tr><tr><td>1066</td><td><code>isActive</code> + <code>displayName</code></td><td>collection</td></tr></tbody></table></div>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+<code>student_service.dart</code> <code>lib/features/student/data/services/student_service.dart:36-603 (StudentService) @ 7808a91</code>
+<ul><li>
+Writes: <code>:52</code>, <code>:227</code>, <code>:246</code>, <code>:263</code>, <code>:282</code>, <code>:304</code>, <code>:324</code>; batches at <code>:350</code>, <code>:379</code>, <code>:407</code>, <code>:433</code>; <code>:579-603</code>
+</li><li>
+Reads: <code>:71</code>, <code>:90</code>, <code>:112</code>, <code>:130</code>, <code>:153</code>, <code>:173</code>, <code>:199</code>, <code>:457</code>, <code>:473</code>, <code>:493</code>, <code>:513</code>, <code>:541-547</code>
+</li></ul>
+</li><li>
+<code>create_student_dialog.dart</code>: writes at <code>:96</code> and <code>:125-127</code>
+</li><li>
+<code>bulk_import_service.dart</code>: write at <code>:195</code>
+</li><li>
+<code>auth_service.dart</code>: writes at <code>:546</code> and <code>:628</code>
+</li><li>
+<code>functions/src</code> has no access to <code>students</code>.
+</li></ul>
+<h3 id="assignments"><code>assignments</code></h3>
+<p><strong>Shape. Two models:</strong></p>
+<div class="tw"><table><thead><tr><th></th><th><code>Assignment</code></th><th><code>AssignmentModel</code></th></tr></thead><tbody><tr><td>Fields</td><td><code>teacherId</code>, <code>classId</code>, <code>title</code>, <code>description</code>, <code>instructions</code>, <code>dueDate</code>, <code>totalPoints</code>, <code>maxPoints</code>, <code>attachmentUrl</code>, <code>createdAt</code>, <code>updatedAt</code>, <code>type</code>, <code>status</code>, <code>category</code>, <code>teacherName</code>, <code>isPublished</code>, <code>allowLateSubmissions</code>, <code>latePenaltyPercentage</code>, <code>publishAt</code></td><td><code>title</code>, <code>description</code>, <code>classId</code>, <code>className</code>, <code>subject</code>, <code>teacherId</code>, <code>dueDate</code>, <code>createdAt</code>, <code>hasSubmissions</code>, <code>needsGrading</code>, <code>totalPoints</code>, <code>attachments[]</code></td></tr><tr><td>Citation</td><td><code>lib/features/assignments/domain/models/assignment.dart:222-297 (Assignment) @ 7808a91</code></td><td><code>lib/features/assignments/domain/models/assignment_model.dart:34-66 (AssignmentModel) @ 7808a91</code></td></tr></tbody></table></div>
+<p><code>Assignment.status</code> takes <code>draft | active | completed | archived</code>. Nothing imports <code>AssignmentModel</code>.</p>
+<p><strong>Disagreements:</strong></p>
+<ul><li>
+<strong>Query on an unused model's field.</strong> <code>dashboard_service.dart</code> queries <code>needsGrading == true</code>, a field only <code>AssignmentModel</code> declares. <code>lib/features/dashboard/data/services/dashboard_service.dart:77 (DashboardService) @ 7808a91</code>
+</li><li>
+<strong>Hand-built write.</strong> <code>assignment_provider.dart</code> writes a caller-supplied map instead of <code>toFirestore()</code>. <code>lib/features/assignments/presentation/providers/assignment_provider.dart:54-62 (SimpleAssignmentProvider) @ 7808a91</code>
+</li></ul>
+<p><strong>Indexes</strong> (<code>firestore.indexes.json:40-174 (assignments) @ 7808a91</code>):</p>
+<div class="tw"><table><thead><tr><th>Line</th><th>Fields</th><th>Scope</th></tr></thead><tbody><tr><td>40</td><td><code>classId</code> + <code>dueDate</code></td><td>collection group</td></tr><tr><td>58</td><td><code>teacherId</code> + <code>createdAt</code></td><td>collection group</td></tr><tr><td>76</td><td><code>classId</code> + <code>createdAt</code></td><td>collection</td></tr><tr><td>94</td><td><code>classId</code> + <code>dueDate</code></td><td>collection</td></tr><tr><td>112</td><td><code>classId</code> + <code>isPublished</code> + <code>dueDate</code></td><td>collection</td></tr><tr><td>134</td><td><code>classId</code> + <code>status</code> + <code>dueDate</code></td><td>collection</td></tr><tr><td>156</td><td><code>isPublished</code> + <code>publishAt</code></td><td>collection</td></tr><tr><td>174</td><td><code>teacherId</code> + <code>createdAt</code></td><td>collection</td></tr></tbody></table></div>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+<code>assignment_service.dart</code>, through the repository <code>lib/features/assignments/data/services/assignment_service.dart:23-253 (AssignmentService) @ 7808a91</code>
+<ul><li>
+Writes: <code>:34</code>, <code>:66</code>, <code>:73-93</code> (transaction that also deletes grades), <code>:137</code>, <code>:147</code>, <code>:160-177</code>, <code>:228-244</code>
+</li><li>
+Reads: <code>:60</code>, <code>:103</code>, <code>:113</code>, <code>:127</code>, <code>:198</code>, <code>:213</code>, <code>:253</code>
+</li></ul>
+</li><li>
+<code>assignment_provider.dart</code>: reads at <code>:32</code>, <code>:79</code>, <code>:106</code>, <code>:131</code>, <code>:206</code>; writes at <code>:62</code>, <code>:166</code>, <code>:188</code>
+</li><li>
+<code>student_assignment_provider.dart</code>: reads at <code>:51</code>, <code>:109</code>
+</li><li>
+<code>assignments_list_screen.dart</code>: delete at <code>:671</code>
+</li><li>
+<code>dashboard_service.dart</code>: reads at <code>:68</code>, <code>:75</code>, <code>:81</code>, <code>:109</code>, <code>:116</code>, <code>:153</code>
+</li><li>
+<code>grade_analytics_service.dart</code>: read at <code>:26</code>
+</li><li>
+<code>grade_provider.dart</code>: reads at <code>:46</code>, <code>:161</code>
+</li></ul>
+<h3 id="submissions"><code>submissions</code></h3>
+<p><strong>Shape.</strong> <code>Submission</code> has <code>assignmentId</code>, <code>studentId</code>, <code>studentName</code>, <code>fileUrl</code>, <code>fileName</code>, <code>textContent</code>, <code>submittedAt</code>, <code>gradedAt</code>, <code>updatedAt</code> and <code>status</code>. <code>submittedAt</code> is hard-cast to <code>Timestamp</code>. <code>status</code> takes <code>submitted | graded | returned | late</code>. <code>lib/features/assignments/domain/models/submission.dart:79-122 (Submission) @ 7808a91</code></p>
+<p><strong>Disagreements:</strong></p>
+<ul><li>
+<strong>Nested <code>grade</code> map.</strong> <code>grade_provider.dart</code> writes a <code>grade</code> map (<code>points</code>, <code>maxPoints</code>, <code>percentage</code>, <code>letter</code>, <code>feedback</code>, <code>gradedAt</code>, <code>gradedBy</code>) that the model does not have. It also queries <code>grade != null</code>. <code>lib/features/grades/presentation/providers/grade_provider.dart:135-145 (gradeSubmission) @ 7808a91</code>
+</li><li>
+<strong>Missing <code>status</code> and a local path.</strong> <code>student_assignment_provider.dart</code> adds a submission with no <code>status</code> and with <code>fileUrl: file?.path</code>. <code>lib/features/assignments/presentation/providers/student_assignment_provider.dart:181-188 (submitAssignment) @ 7808a91</code>
+</li></ul>
+<p><strong>Indexes.</strong> None exist for <code>submissions</code>. The service still queries <code>assignmentId</code> + <code>orderBy submittedAt</code> and <code>studentId</code> + <code>orderBy submittedAt</code>. <code>lib/features/assignments/data/services/submission_service.dart:127-151 (getSubmissionsForAssignment) @ 7808a91</code></p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+<code>submission_service.dart</code> <code>lib/features/assignments/data/services/submission_service.dart:34-294 (SubmissionService) @ 7808a91</code>
+<ul><li>
+Writes: <code>:58</code>, <code>:170-172</code>, <code>:189</code>, <code>:209</code>
+</li><li>
+Reads: <code>:76</code>, <code>:100</code>, <code>:126</code>, <code>:149</code>, <code>:226</code>, <code>:272</code>, <code>:292</code>
+</li></ul>
+</li><li>
+<code>student_assignment_provider.dart</code>: reads at <code>:73</code>, <code>:123</code>; write at <code>:181</code>
+</li><li>
+<code>assignments_list_screen.dart</code>: read, then delete of each document, at <code>:677-682</code>
+</li><li>
+<code>grade_analytics_service.dart</code>: read at <code>:55</code>
+</li><li>
+<code>grade_provider.dart</code>: reads at <code>:66</code>, <code>:73</code>, <code>:103</code>, <code>:177</code>, <code>:184</code>, <code>:207</code>, <code>:268</code>; write at <code>:135</code>
+</li></ul>
+<h3 id="grades-top-level-the-submissions-subcollection-the-collectio"><code>grades</code> (top-level, the <code>submissions</code> subcollection, the collection group) and <code>archived_grades</code></h3>
+<p><strong>Shape.</strong> <code>Grade</code> has:</p>
+<ul><li>
+<code>assignmentId</code>, <code>studentId</code>, <code>studentName</code>, <code>teacherId</code>, <code>classId</code>
+</li><li>
+<code>pointsEarned</code>, <code>pointsPossible</code>, <code>percentage</code>, <code>letterGrade</code>, <code>feedback</code>, <code>status</code>
+</li><li>
+<code>gradedAt</code>, <code>returnedAt</code>, <code>createdAt</code>, <code>updatedAt</code>
+</li><li>
+<code>rubricScores</code>, <code>attachmentUrls</code>
+</li></ul>
+<p><code>toFirestore</code> always writes server timestamps for <code>createdAt</code> and <code>updatedAt</code>.</p>
+<p><code>lib/features/grades/domain/models/grade.dart:265-325 (Grade) @ 7808a91</code></p>
+<p><strong>Disagreements:</strong></p>
+<ul><li>
+<strong>Where grades live.</strong>
+<ul><li>
+Writes go only to the top-level <code>grades</code> collection.
+</li><li>
+<code>grade_analytics_service.dart</code> reads a <code>submissions/{id}/grades</code> subcollection that nothing writes. <code>lib/features/grades/data/services/grade_analytics_service.dart:67-71 (generateClassAnalytics) @ 7808a91</code>
+</li><li>
+It also runs <code>collectionGroup('grades')</code> on <code>classId</code> + <code>gradedAt</code>. <code>lib/features/grades/data/services/grade_analytics_service.dart:464-468 (getGradeTrends) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>isGraded</code>.</strong> <code>dashboard_service.dart</code> queries <code>isGraded == true</code> on top-level <code>grades</code>, but <code>Grade</code> has <code>status</code>, not <code>isGraded</code>. <code>lib/features/dashboard/data/services/dashboard_service.dart:174-194 (getRecentGrades) @ 7808a91</code>
+</li><li>
+<strong>A second grade store.</strong> The <code>grade</code> map inside <code>submissions</code> uses <code>points</code>/<code>maxPoints</code>/<code>letter</code>/<code>gradedBy</code>, where <code>Grade</code> uses <code>pointsEarned</code>/<code>pointsPossible</code>/<code>letterGrade</code>.
+</li></ul>
+<p><strong>Indexes:</strong></p>
+<div class="tw"><table><thead><tr><th>Line</th><th>Fields</th><th>Scope</th></tr></thead><tbody><tr><td>548</td><td><code>classId</code> + <code>gradedAt</code></td><td>collection group</td></tr><tr><td>566</td><td><code>studentId</code> + <code>classId</code> + <code>assignmentId</code></td><td>collection group</td></tr><tr><td>588</td><td><code>assignmentId</code> + <code>status</code></td><td>collection</td></tr><tr><td>606</td><td><code>classId</code> + <code>createdAt</code></td><td>collection</td></tr><tr><td>624</td><td><code>classId</code> + <code>gradedAt</code></td><td>collection</td></tr><tr><td>642–722</td><td>five more collection-scope entries</td><td>collection</td></tr></tbody></table></div>
+<p>The five entries at 642–722 include <code>isGraded</code> + <code>studentId</code> + <code>gradedAt</code> (twice) and <code>studentId</code> + <code>status</code> + <code>classId</code>; the remaining shapes are <span class="badge unv">UNVERIFIED</span>. Which line holds which shape is <span class="badge unv">UNVERIFIED</span>. <code>archived_grades</code> has no index.</p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+<code>grade_service.dart</code> <code>lib/features/grades/data/services/grade_service.dart:19-298 (GradeService) @ 7808a91</code>
+<ul><li>
+Writes: <code>:28</code>, <code>:48</code>, <code>:55</code>, <code>:116-119</code>, <code>:139-143</code>, <code>:158-171</code>, and <code>:278-289</code> (archives to <code>archived_grades</code>, then deletes)
+</li><li>
+Reads: <code>:40</code>, <code>:64</code>, <code>:76</code>, <code>:85</code>, <code>:94</code>, <code>:103</code>, <code>:178</code>, <code>:199-214</code>, <code>:224</code>, <code>:242</code>, <code>:254</code>, <code>:270</code>, <code>:298</code>
+</li></ul>
+</li><li>
+<code>assignment_service.dart</code>: reads grades outside the transaction, then deletes them inside it. <code>lib/features/assignments/data/services/assignment_service.dart:82-89 (AssignmentService) @ 7808a91</code>
+</li><li>
+<code>grade_analytics_service.dart</code>: reads at <code>:68</code> (subcollection) and <code>:464</code> (collection group)
+</li><li>
+<code>dashboard_service.dart</code>: reads at <code>:174</code>, <code>:192</code>
+</li></ul>
+<h3 id="calendar-events"><code>calendar_events</code></h3>
+<p><strong>Shape.</strong> <code>CalendarEvent</code> has:</p>
+<ul><li>
+<code>title</code>, <code>description</code>, <code>type</code>, <code>startTime</code>, <code>endTime</code>, <code>isAllDay</code>, <code>location</code>
+</li><li>
+<code>createdBy</code>, <code>createdByName</code>, <code>classId</code>, <code>assignmentId</code>
+</li><li>
+<code>participantIds[]</code>, <code>participantEmails[]</code>, <code>colorHex</code>
+</li><li>
+<code>recurrence</code>, <code>recurrenceEndDate</code>, <code>recurrenceDetails</code>, <code>hasReminder</code>, <code>reminderMinutes</code>
+</li><li>
+<code>metadata</code>, <code>createdAt</code>, <code>updatedAt</code>, <code>isActive</code>
+</li></ul>
+<p><code>lib/features/calendar/domain/models/calendar_event.dart:189-255 (CalendarEvent) @ 7808a91</code></p>
+<p>The service's create writes the same keys by hand. Whether that map includes <code>isActive</code> is <span class="badge unv">UNVERIFIED</span>.</p>
+<p><strong>Indexes:</strong></p>
+<ul><li>
+line 192: <code>createdBy</code> + <code>isActive</code> + <code>startTime</code>
+</li><li>
+line 214: <code>participantIds</code> CONTAINS + <code>isActive</code> + <code>startTime</code>
+</li><li>
+line 236: <code>participantIds</code> CONTAINS + <code>startTime</code>
+</li></ul>
+<p><strong>Call sites</strong>, all in <code>calendar_service.dart</code>: <code>lib/features/calendar/data/services/calendar_service.dart:19-279 (SimpleCalendarService) @ 7808a91</code></p>
+<ul><li>
+Reads: <code>:19</code>, <code>:42</code>, <code>:175</code>, <code>:229</code>
+</li><li>
+Writes: <code>:92</code>, <code>:136</code>, <code>:152</code>, <code>:263</code>, <code>:279</code>
+</li></ul>
+</section><section class="card">
+<h2 id="7-where-are-chatrooms-conversations-messages-typing-discussi">7. Where are <code>chatRooms</code>, <code>conversations</code>, <code>messages</code>, <code>typing</code>, <code>discussion_boards</code>, <code>threads</code>, <code>replies</code> and <code>likes</code> defined and accessed?</h2>
+<h3 id="two-chat-systems-one-chat-screen">Two chat systems, one chat screen</h3>
+<p>The client has two chat systems:</p>
+<ul><li>
+<strong><code>chatRooms</code></strong> is run by <code>SimpleChatProvider</code>. <code>lib/features/chat/presentation/providers/chat_provider.dart:8 (SimpleChatProvider) @ 7808a91</code> The provider is registered at <code>lib/shared/core/app_providers.dart:47 (AppProviders) @ 7808a91</code>. Screens that use it:
+<ul><li>
+the chat list
+</li><li>
+user selection
+</li><li>
+group creation
+</li><li>
+class selection
+</li><li>
+<code>user_list</code>
+</li></ul>
+</li><li>
+<strong><code>conversations</code></strong> is run by <code>FlyerChatScreen</code> through <code>FirestoreChatController</code>. <code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:75 (_FlyerChatScreenState) @ 7808a91</code>
+</li></ul>
+<p>Every chat route builds <code>FlyerChatScreen(conversationId: chatRoomId)</code>. <code>lib/shared/routing/app_router.dart:374-418 (AppRouter) @ 7808a91</code> and <code>lib/shared/routing/app_router.dart:574-581 (createRouter) @ 7808a91</code> This means a <code>chatRooms</code> id picked from the chat list is opened as <code>conversations/{chatRoomId}</code>. <code>SimpleChatProvider.loadChatMessages</code> and <code>sendMessage</code> have no callers outside <code>chat_provider.dart</code>.</p>
+<p>When the conversation document is missing, <code>_ensureConversationExists</code> creates it with participants set to <code>conversationId.split('_')</code>. <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:65-73 (FirestoreChatController) @ 7808a91</code></p>
+<h3 id="field-name-differences-between-the-two-systems">Field-name differences between the two systems</h3>
+<div class="tw"><table><thead><tr><th>Field</th><th><code>chatRooms</code> system</th><th><code>conversations</code> system</th></tr></thead><tbody><tr><td>message sender</td><td><code>senderId</code></td><td><code>authorId</code></td></tr><tr><td>message time</td><td><code>timestamp</code></td><td><code>createdAt</code></td></tr><tr><td>message body</td><td><code>content</code>, plus <code>text</code> from the provider</td><td><code>text</code>, plus <code>attachments[]</code></td></tr><tr><td>parent members</td><td><code>participantIds</code></td><td><code>participants</code> and <code>participantIds</code>; the server reads <code>participants ?? participantIds</code></td></tr><tr><td><code>lastMessage</code></td><td>a string</td><td>a map <code>{text, authorId, authorName, createdAt}</code></td></tr><tr><td>unread</td><td><code>unreadCounts</code> map plus <code>unreadCount</code> int</td><td>an <code>unreadCount.{uid}</code> map</td></tr><tr><td>last activity</td><td><code>lastMessageTime</code></td><td><code>lastActivity</code></td></tr></tbody></table></div>
+<p>The <code>chatRooms</code> side of each row comes from the provider's raw message write. <code>lib/features/chat/presentation/providers/chat_provider.dart:153-170 (sendMessage) @ 7808a91</code> Those messages are read raw, ordered by <code>timestamp</code>. <code>lib/features/chat/presentation/providers/chat_provider.dart:60-73 (loadChatMessages) @ 7808a91</code> The <code>Message</code> model uses the same field names. Its <code>toFirestore</code> has one caller in <code>lib/features/chat</code>, which embeds the result under <code>scheduled_messages/{id}.message</code>. <code>lib/features/chat/data/services/scheduled_messages_service.dart:111-117 (scheduleMessage) @ 7808a91</code> <span class="badge disp">corrected</span> <span class="corr">(An earlier draft said <code>Message.toFirestore</code> writes the <code>chatRooms</code> messages; the verifier found its only caller writes <code>scheduled_messages</code>.)</span> The <code>conversations</code> side comes from the <code>sendMessage</code> object literal. <code>functions/src/chatFunctions.ts:86-114 (sendMessage) @ 7808a91</code></p>
+<h3 id="chatrooms"><code>chatRooms</code></h3>
+<p><strong>Shape.</strong> <code>ChatRoom.fromFirestore</code>/<code>toFirestore</code> defines the shape. <code>lib/features/chat/domain/models/chat_room.dart:95-155 (ChatRoom) @ 7808a91</code> Its fields:</p>
+<ul><li>
+<code>name</code>, <code>type</code>, <code>classId</code>, <code>createdBy</code>, <code>mutedUsers</code>
+</li><li>
+<code>participantIds</code>, <code>participants[]</code>
+</li><li>
+<code>lastMessage</code>, <code>lastMessageTime</code>, <code>lastMessageSenderId</code>
+</li><li>
+<code>unreadCount</code>, <code>unreadCounts</code>
+</li><li>
+<code>createdAt</code>, <code>updatedAt</code>
+</li></ul>
+<p>Each entry in <code>participants[]</code> is a <code>ParticipantInfo</code> with <code>{id, name, role, photoUrl}</code>. Nothing in <code>lib</code> calls <code>ChatRoom.fromFirestore</code>; the provider reads and writes raw maps.</p>
+<p><strong>Writes</strong> (all in <code>chat_provider.dart</code> except as noted):</p>
+<ul><li>
+direct-chat create at <code>:115-123</code>
+</li><li>
+group create at <code>:303-316</code>
+</li><li>
+mark-read at <code>:193</code>, which writes <code>lastReadTime</code>, a field the model does not have
+</li></ul>
+<p><strong>Indexes.</strong></p>
+<ul><li>
+<code>chatRooms</code>: <code>participantIds</code> CONTAINS + <code>lastMessageTime</code> DESC. <code>firestore.indexes.json:290 (chatRooms) @ 7808a91</code>
+</li><li>
+<code>chat_rooms</code> (legacy): <code>firestore.indexes.json:254 (chat_rooms) @ 7808a91</code> and <code>firestore.indexes.json:272 (chat_rooms) @ 7808a91</code>. No code references <code>chat_rooms</code>.
+</li></ul>
+<p><strong>Call sites</strong> (all in <code>chat_provider.dart</code> except as noted):</p>
+<ul><li>
+reads:
+<ul><li>
+<code>:34-38</code>, a stream on <code>participantIds</code> ordered by <code>lastMessageTime</code>
+</li><li>
+<code>:98-102</code>
+</li><li>
+<code>:210-213</code>
+</li><li>
+<code>lib/features/chat/presentation/screens/user_list.dart:67-71 (SimpleUserList) @ 7808a91</code>
+</li></ul>
+</li><li>
+creates: <code>:125</code>, <code>:318</code>
+</li><li>
+updates:
+<ul><li>
+<code>:173-180</code>, last-message fields
+</li><li>
+<code>:192-194</code>
+</li><li>
+<code>:234-236</code>, arrayRemove on <code>participantIds</code>
+</li></ul>
+</li><li>
+delete: <code>:270</code>
+</li></ul>
+<h3 id="conversations"><code>conversations</code></h3>
+<p><strong>Shape.</strong> There is no model class. The document id is the two uids sorted and joined with <code>_</code>. <code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:102-122 (_FlyerChatScreenState) @ 7808a91</code> Creates also happen at <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:67-73 (_ensureConversationExists) @ 7808a91</code>. There is no index.</p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+reads:
+<ul><li>
+<code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:107-110 (_getOrCreateConversation) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/data/controllers/firestore_chat_controller.dart:54-57 (_ensureConversationExists) @ 7808a91</code>
+</li><li>
+<code>functions/src/chatFunctions.ts:13-14 (ensureConversationMembership) @ 7808a91</code>
+</li></ul>
+</li><li>
+sets: <code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:114 (_getOrCreateConversation) @ 7808a91</code>, <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:67 (_ensureConversationExists) @ 7808a91</code>
+</li><li>
+updates:
+<ul><li>
+<code>functions/src/chatFunctions.ts:105 (sendMessage) @ 7808a91</code>, <code>:125</code> (sendMessage)
+</li><li>
+<code>functions/src/chatFunctions.ts:188 (markMessagesAsRead) @ 7808a91</code>
+</li></ul>
+</li></ul>
+<h3 id="messages"><code>messages</code></h3>
+<p><strong>Shape A: <code>chatRooms/{id}/messages</code>.</strong> The provider writes raw maps with the same field names as the <code>Message</code> model; the model's <code>toFirestore</code> is used only for <code>scheduled_messages</code>. <code>lib/features/chat/domain/models/message.dart:91-193 (Message) @ 7808a91</code> The model's fields:</p>
+<ul><li>
+<code>senderId</code>, <code>senderName</code>, <code>senderRole</code>
+</li><li>
+<code>content</code>, <code>timestamp</code>, <code>isRead</code>
+</li><li>
+<code>attachmentUrl</code>, <code>attachmentType</code>
+</li><li>
+<code>scheduledFor</code>, <code>isScheduled</code>, <code>status</code>
+</li><li>
+<code>isEdited</code>, <code>editedAt</code>
+</li></ul>
+<p><code>Message.fromFirestore</code> has no callers. The provider's raw write adds <code>text</code> and <code>imageUrl</code>. <code>lib/features/chat/presentation/providers/chat_provider.dart:153-164 (sendMessage) @ 7808a91</code></p>
+<p><strong>Shape B: <code>conversations/{id}/messages</code>.</strong> Defined by an object literal in <code>sendMessage</code>, with fields <code>{id, authorId, authorName, authorRole, text, attachments, createdAt, sentAt, metadata}</code>. <code>functions/src/chatFunctions.ts:86-96 (sendMessage) @ 7808a91</code> <code>markMessagesAsRead</code> adds <code>seenAt</code> and <code>readBy.{uid}</code>. The reader <code>_convertToFlyerMessage</code> reads:</p>
+<ul><li>
+<code>sentAt</code>, <code>seenAt</code>, <code>failedAt</code>
+</li><li>
+<code>attachments[0]</code>
+</li><li>
+<code>authorId</code>, <code>createdAt</code>, <code>text</code>, <code>metadata</code>
+</li></ul>
+<p><code>lib/features/chat/data/controllers/firestore_chat_controller.dart:175-243 (FirestoreChatController) @ 7808a91</code></p>
+<p><strong>Indexes.</strong></p>
+<ul><li>
+<code>conversationId</code> + <code>timestamp</code>: <code>firestore.indexes.json:802 (messages) @ 7808a91</code> and <code>:838</code>
+</li><li>
+<code>senderId</code> + <code>timestamp</code>: <code>:820</code> and <code>:856</code>
+</li></ul>
+<p>Neither message shape has a <code>conversationId</code> field, and no index covers <code>createdAt</code>.</p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+<code>chatRooms/{id}/messages</code>: in <code>chat_provider.dart</code>
+<ul><li>
+read at <code>:60-66</code> (<code>timestamp</code> DESC, limit 100)
+</li><li>
+create at <code>:166-170</code>
+</li><li>
+batch delete at <code>:256-267</code>
+</li></ul>
+</li><li>
+<code>conversations/{id}/messages</code>:
+<ul><li>
+reads in <code>firestore_chat_controller.dart</code>
+<ul><li>
+<code>:93-99</code> (limit 30)
+</li><li>
+<code>:128-133</code> (stream)
+</li><li>
+<code>:516-523</code> (paging)
+</li></ul>
+</li><li>
+set at <code>functions/src/chatFunctions.ts:99-102 (sendMessage) @ 7808a91</code>
+</li><li>
+batch update at <code>:177-184</code>
+</li><li>
+The client writes these only through the <code>sendMessage</code> and <code>markMessagesAsRead</code> callables.
+</li></ul>
+</li></ul>
+<h3 id="typing-conversations-id-typing-uid"><code>typing</code> (<code>conversations/{id}/typing/{uid}</code>)</h3>
+<p><strong>Shape.</strong> <code>{isTyping, startedAt, userName}</code>, with no model class and no index. <code>functions/src/chatFunctions.ts:238-246 (updateTypingStatus) @ 7808a91</code></p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+read: a stream at <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:248-252 (FirestoreChatController) @ 7808a91</code>
+</li><li>
+writes, all in <code>chatFunctions.ts</code>:
+<ul><li>
+set at <code>:242</code>
+</li><li>
+delete at <code>:256</code>
+</li><li>
+delete at <code>:265</code>
+</li></ul>
+</li></ul>
+<h3 id="discussion-boards"><code>discussion_boards</code></h3>
+<p><strong>Shape.</strong> <code>SimpleDiscussionBoard</code> defines <code>title</code>, <code>description</code>, <code>createdBy</code>, <code>createdAt</code>, <code>threadCount</code>, <code>isPinned</code> and <code>tags</code>. <code>lib/features/discussions/presentation/providers/discussion_provider.dart:36-60 (SimpleDiscussionBoard) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> <code>isPinned</code> + <code>createdAt</code> (<code>firestore.indexes.json:424 (discussion_boards) @ 7808a91</code>) and <code>isPinned</code> + <code>updatedAt</code> (<code>:442</code>). The model has no <code>updatedAt</code>.</p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+stream: <code>lib/features/discussions/presentation/providers/discussion_provider.dart:329-333 (loadBoards) @ 7808a91</code>
+</li><li>
+create: <code>lib/features/discussions/presentation/providers/discussion_provider.dart:452 (createBoard) @ 7808a91</code>
+</li><li>
+<code>threadCount</code>: <code>+1</code> at <code>lib/features/discussions/presentation/providers/discussion_provider.dart:580-582 (createThread) @ 7808a91</code>; <code>-1</code> at <code>lib/features/discussions/presentation/screens/discussion_board_detail_screen.dart:441-444 (_showDeleteThreadDialog) @ 7808a91</code>
+</li><li>
+delete: <code>lib/features/discussions/presentation/screens/discussion_boards_screen.dart:356-359 (_showDeleteBoardDialog) @ 7808a91</code>. This removes only the board document.
+</li></ul>
+<h3 id="threads-discussion-boards-b-threads"><code>threads</code> (<code>discussion_boards/{b}/threads</code>)</h3>
+<p><strong>Shape.</strong> <code>SimpleDiscussionThread</code> defines <code>boardId</code>, <code>title</code>, <code>content</code>, <code>authorId</code>, <code>authorName</code>, <code>createdAt</code>, <code>replyCount</code>, <code>likeCount</code>, <code>isPinned</code> and <code>isLocked</code>. <code>lib/features/discussions/presentation/providers/discussion_provider.dart:93-123 (SimpleDiscussionThread) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> <code>firestore.indexes.json:1084 (threads) @ 7808a91</code> (collection group), <code>:1102</code> and <code>:1120</code>.</p>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+reads: stream at <code>lib/features/discussions/presentation/providers/discussion_provider.dart:473-479 (loadThreadsForBoard) @ 7808a91</code>; get at <code>lib/features/discussions/presentation/screens/thread_detail_screen.dart:42-47 (_loadThreadAndReplies) @ 7808a91</code>
+</li><li>
+create: <code>lib/features/discussions/presentation/providers/discussion_provider.dart:573-577 (createThread) @ 7808a91</code>
+</li><li>
+<code>replyCount</code>: <code>+1</code> at <code>lib/features/discussions/presentation/screens/thread_detail_screen.dart:137-142 (_addReply) @ 7808a91</code>; <code>-1</code> at <code>:521-526</code>
+</li><li>
+<code>likeCount</code>: <code>±1</code> at <code>lib/features/discussions/presentation/screens/discussion_board_detail_screen.dart:295-306 (threadRef) @ 7808a91</code>
+</li><li>
+delete: <code>lib/features/discussions/presentation/screens/discussion_board_detail_screen.dart:433-438 (_showDeleteThreadDialog) @ 7808a91</code>. Its <code>replies</code> and <code>likes</code> subcollections are not deleted.
+</li></ul>
+<h3 id="replies-threads-t-replies"><code>replies</code> (<code>.../threads/{t}/replies</code>)</h3>
+<p><strong>Shape.</strong> There is no model class. The write map is <code>{content, authorId, authorName, createdAt}</code>. <code>likeCount</code> is read and incremented but is not set when a reply is created. <code>lib/features/discussions/presentation/screens/thread_detail_screen.dart:123-134 (_addReply) @ 7808a91</code> There is no index.</p>
+<p><strong>Call sites</strong> (all in <code>thread_detail_screen.dart</code>):</p>
+<ul><li>
+reads: get at <code>:56-63</code>; stream at <code>:75-83</code>
+</li><li>
+create: <code>:123-134</code>
+</li><li>
+<code>likeCount</code>: <code>:480</code>, <code>:491</code>
+</li><li>
+delete: <code>:511-518</code>. Its <code>likes</code> subcollection is not deleted.
+</li></ul>
+<h3 id="likes"><code>likes</code></h3>
+<p><strong>Shape.</strong> <code>{userId, likedAt}</code>, keyed by uid, with no model class and no index. Two writers produce it:</p>
+<ul><li>
+<code>lib/features/discussions/presentation/screens/discussion_board_detail_screen.dart:300-303 (likeRef) @ 7808a91</code>
+</li><li>
+<code>lib/features/discussions/presentation/screens/thread_detail_screen.dart:487-490 (_toggleLike) @ 7808a91</code>
+</li></ul>
+<p><strong>Call sites:</strong></p>
+<ul><li>
+<code>threads/{t}/likes/{uid}</code>:
+<ul><li>
+reads: <code>lib/features/discussions/presentation/providers/discussion_provider.dart:633-640 (_updateThreadLikes) @ 7808a91</code>, <code>lib/features/discussions/presentation/screens/discussion_board_detail_screen.dart:287-290 (_buildThreadCard) @ 7808a91</code>
+</li><li>
+delete: <code>lib/features/discussions/presentation/screens/discussion_board_detail_screen.dart:294 (likeRef) @ 7808a91</code>
+</li><li>
+set: <code>lib/features/discussions/presentation/screens/discussion_board_detail_screen.dart:300 (likeRef) @ 7808a91</code>
+</li></ul>
+</li><li>
+<code>replies/{r}/likes/{uid}</code>:
+<ul><li>
+read: <code>lib/features/discussions/presentation/screens/thread_detail_screen.dart:441-450 (_checkIfLiked) @ 7808a91</code>
+</li><li>
+delete: <code>lib/features/discussions/presentation/screens/thread_detail_screen.dart:479 (_toggleLike) @ 7808a91</code>
+</li><li>
+set: <code>lib/features/discussions/presentation/screens/thread_detail_screen.dart:487 (_toggleLike) @ 7808a91</code>
+</li></ul>
+</li></ul>
+</section><section class="card">
+<h2 id="8-where-are-studentpoints-behaviors-history-activities-the-j">8. Where are <code>studentPoints</code>, <code>behaviors</code>, <code>history</code>, <code>activities</code>, the <code>jeopardy_*</code> collections, <code>oauth_pkce_challenges</code> and <code>_rate_limits</code> defined and accessed?</h2>
+<h3 id="studentpoints-classes-c-studentpoints-studentid"><code>studentPoints</code> (<code>classes/{c}/studentPoints/{studentId}</code>)</h3>
+<p><strong>Shapes.</strong> Three definitions exist:</p>
+<ul><li>
+<strong>Client model.</strong> <code>StudentPointsAggregate</code> has <code>studentId</code>, <code>studentName</code>, <code>classId</code>, <code>totalPoints</code>, <code>positivePoints</code>, <code>negativePoints</code>, <code>behaviorCounts</code> (a map), <code>lastUpdated</code>, <code>lastBehaviorName</code> and <code>lastPoints</code>. <code>lib/features/behavior_points/data/models/student_points_aggregate.dart:8-70 (StudentPointsAggregate) @ 7808a91</code>
+</li><li>
+<strong>Server write.</strong> A merge-set writes <code>studentId</code>, <code>studentName</code>, the incremented counters, <code>behaviorCounts.&lt;behaviorId&gt;</code>, <code>lastUpdated</code> and <code>lastUpdatedBy</code>. <code>functions/src/behaviorPoints.ts:106-119 (awardBehaviorPoints) @ 7808a91</code>
+</li><li>
+<strong>Older model.</strong> <code>StudentPoints</code> is imported by nothing. <code>lib/features/behavior_points/domain/models/student_points.dart:23 (StudentPoints) @ 7808a91</code>
+</li></ul>
+<p><strong>Disagreements.</strong></p>
+<ul><li>
+The server never writes <code>classId</code>, <code>lastBehaviorName</code> or <code>lastPoints</code>, so those come back empty or null on the client.
+</li><li>
+The server writes <code>lastUpdatedBy</code>, which the model does not have.
+</li><li>
+<code>behaviorCounts</code> is written with a dotted key and read as a nested map. <code>lib/features/behavior_points/data/models/student_points_aggregate.dart:46 (StudentPointsAggregate) @ 7808a91</code> Whether <code>set</code> with merge treats the dotted key as a path is SDK behavior (<span class="badge unv">UNVERIFIED</span>).
+</li></ul>
+<p><strong>Indexes.</strong> None.</p>
+<p><strong>Call sites.</strong></p>
+<div class="tw"><table><thead><tr><th>Operation</th><th>Site</th><th>Citation</th></tr></thead><tbody><tr><td>Server write</td><td>set at <code>:102-119</code> (award); <code>batch.update</code> at <code>:236-251</code> (undo)</td><td><code>functions/src/behaviorPoints.ts:236-251 (undoBehaviorPoints) @ 7808a91</code></td></tr><tr><td>Server read</td><td><code>:332-335</code> (summary)</td><td><code>functions/src/behaviorPoints.ts:332-335 (getClassPointsSummary) @ 7808a91</code></td></tr><tr><td>Client read</td><td>stream in <code>watchClassPointsSummary</code></td><td><code>lib/features/behavior_points/domain/services/behavior_points_service.dart:137-162 (watchClassPointsSummary) @ 7808a91</code></td></tr><tr><td>Client read</td><td><code>getStudentPoints</code> at <code>:242-247</code> (no callers)</td><td><code>lib/features/behavior_points/domain/services/behavior_points_service.dart:242-247 (getStudentPoints) @ 7808a91</code></td></tr></tbody></table></div>
+<h3 id="history-studentpoints-s-history-operationid-also-queried-as-"><code>history</code> (<code>.../studentPoints/{s}/history/{operationId}</code>, also queried as a collection group)</h3>
+<p><strong>Server write shape.</strong> <code>operationId</code>, <code>studentId</code>, <code>studentName</code>, <code>behaviorId</code>, <code>behaviorName</code>, <code>points</code>, <code>type</code>, <code>teacherId</code>, <code>teacherName</code>, <code>awardedBy</code>, <code>awardedByName</code>, <code>timestamp</code>, <code>awardedAt</code>, <code>isUndone</code>, <code>classId</code>, <code>gender</code>, <code>gradeLevel</code>, <code>studentAvatarUrl</code> and <code>note</code>. An undo adds <code>undoneBy</code> and <code>undoneAt</code>. <code>functions/src/behaviorPoints.ts:125-145 (awardBehaviorPoints) @ 7808a91</code></p>
+<p><strong>Client model.</strong> <code>BehaviorHistoryEntry.fromMap</code> reads <code>teacherId ?? awardedBy</code> and <code>timestamp ?? awardedAt</code>. Its <code>toFirestore</code> has no callers. <code>lib/features/behavior_points/data/models/behavior_history_entry.dart:7-118 (BehaviorHistoryEntry) @ 7808a91</code> A second reader, <code>BehaviorPoint.fromFirestore</code> in the provider, also has no callers. <code>lib/features/behavior_points/presentation/providers/behavior_point_provider.dart:47-93 (BehaviorPoint) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> Four collection-group indexes, all ending in <code>awardedAt</code> desc. None includes <code>timestamp</code>.</p>
+<div class="tw"><table><thead><tr><th>Line</th><th>Fields before <code>awardedAt</code></th></tr></thead><tbody><tr><td><code>:1138</code></td><td><code>classId</code>, <code>isUndone</code></td></tr><tr><td><code>:1160</code></td><td>adds <code>studentId</code></td></tr><tr><td><code>:1186</code></td><td>adds <code>gender</code></td></tr><tr><td><code>:1212</code></td><td>adds <code>type</code></td></tr></tbody></table></div>
+<p><code>firestore.indexes.json:1138 (history) @ 7808a91</code></p>
+<p><strong>Call sites.</strong></p>
+<ul><li>
+<strong>Server, in <code>behaviorPoints.ts</code>:</strong>
+<ul><li>
+<code>awardBehaviorPoints</code>: idempotency read and write at <code>:86-99</code> and <code>:125</code>
+</li><li>
+<code>undoBehaviorPoints</code>: read and write at <code>:213-223</code> and <code>:254</code>
+</li><li>
+<code>getBehaviorHistory</code>: collection-group query at <code>:426-472</code> and count at <code>:493-509</code>
+<br><code>functions/src/behaviorPoints.ts:426-472 (getBehaviorHistory) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Client, in <code>watchRecentHistory</code>:</strong> a collection-group stream on <code>classId</code> and <code>isUndone</code>, ordered by <code>awardedAt</code>. <code>lib/features/behavior_points/domain/services/behavior_points_service.dart:170-176 (watchRecentHistory) @ 7808a91</code>
+</li><li>
+<strong>Client, in <code>watchStudentHistory</code>:</strong> at <code>:208-216</code>, with no callers.
+</li><li>
+<strong>Indirect read:</strong> the <code>getBehaviorHistory</code> callable, parsed with <code>fromMap</code>. <code>lib/features/behavior_points/presentation/widgets/behavior_history_panel.dart:123-136 (_BehaviorHistoryPanelState) @ 7808a91</code>
+</li></ul>
+<p><strong>Disagreements.</strong></p>
+<ul><li>
+<strong>Date range filters on one field, orders on another.</strong> The query filters the date range on <code>timestamp</code> and orders by <code>awardedAt</code>, the field every index uses. <code>functions/src/behaviorPoints.ts:445-461 (getBehaviorHistory) @ 7808a91</code>
+</li><li>
+<strong>Callable dates come back as strings.</strong> The callable turns timestamps into ISO strings. The client's <code>parseTimestamp</code> handles null, <code>Timestamp</code>, <code>DateTime</code> and <code>{_seconds}</code>, so a string falls back to <code>DateTime.now()</code>. <code>lib/features/behavior_points/data/models/behavior_history_entry.dart:54-66 (BehaviorHistoryEntry) @ 7808a91</code>
+</li></ul>
+<h3 id="behaviors-classes-c-behaviors-id"><code>behaviors</code> (<code>classes/{c}/behaviors/{id}</code>)</h3>
+<p><strong>Shape.</strong> <code>Behavior</code> has <code>name</code>, <code>description</code>, <code>points</code>, <code>type</code>, <code>iconName</code>, <code>iconCodePoint</code>, <code>isCustom</code>, <code>teacherId</code>, <code>classId</code>, <code>createdAt</code> and <code>updatedAt</code>. <code>lib/features/behavior_points/domain/models/behavior.dart:29-218 (Behavior) @ 7808a91</code></p>
+<p><strong>Index.</strong> <code>name</code>. <code>firestore.indexes.json:1238 (behaviors) @ 7808a91</code></p>
+<p><strong>Call sites.</strong> All are on the client; the server has none.</p>
+<div class="tw"><table><thead><tr><th>Operation</th><th>Site</th></tr></thead><tbody><tr><td>Read, ordered by <code>name</code></td><td><code>watchClassBehaviors</code>, <code>:262-282</code></td></tr><tr><td>Merge-set</td><td><code>saveBehavior</code>, <code>:297-317</code></td></tr><tr><td>Delete</td><td><code>deleteBehavior</code>, <code>:332-337</code></td></tr></tbody></table></div>
+<p><code>lib/features/behavior_points/domain/services/behavior_points_service.dart:262-337 (watchClassBehaviors) @ 7808a91</code></p>
+<p><strong>Disagreements.</strong> <code>saveBehavior</code> never writes <code>iconName</code>, and it overwrites <code>createdAt</code> on every save.</p>
+<h3 id="activities"><code>activities</code></h3>
+<p><strong>Shape.</strong> <code>ActivityModel</code> has <code>type</code> (an <code>ActivityType</code> name), <code>title</code>, <code>description</code>, <code>timestamp</code>, <code>userId</code>, <code>userName</code>, <code>classId</code>, <code>className</code>, <code>assignmentId</code>, <code>metadata</code> and <code>isRead</code>. <code>lib/features/dashboard/domain/models/activity_model.dart:14-78 (ActivityModel) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> <code>classId</code> + <code>timestamp</code> at line 4, and <code>teacherId</code> + <code>timestamp</code> at line 22. <code>firestore.indexes.json:4 (activities) @ 7808a91</code></p>
+<p><strong>Client call sites.</strong></p>
+<ul><li>
+<strong><code>dashboard_service.dart</code>:</strong>
+<ul><li>
+reads: <code>getTeacherActivities</code> on <code>teacherId</code> at <code>:17-22</code>; <code>getStudentActivities</code> on <code>classId</code> whereIn at <code>:47-52</code>
+</li><li>
+write: <code>logActivity</code> at <code>:135</code>. Its only caller, <code>DashboardProvider.logActivity</code>, has no callers.
+<br><code>lib/features/dashboard/data/services/dashboard_service.dart:17-135 (DashboardService) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>bulk_import_service.dart</code>:</strong> write in <code>_logBulkImportActivity</code>. <code>lib/features/admin/data/services/bulk_import_service.dart:346 (_logBulkImportActivity) @ 7808a91</code>
+</li><li>
+<strong><code>user_management_service.dart</code>:</strong> read on <code>userId</code> at <code>:338-343</code>; write at <code>:363-369</code>.
+</li><li>
+<strong><code>admin_provider.dart</code>:</strong> reads at <code>:145-149</code> and <code>:214-218</code>.
+</li></ul>
+<p><strong>Server call sites.</strong> All writes are <code>add</code>.</p>
+<ul><li>
+<code>adminFunctions.ts</code>: <code>:160</code>, <code>:263</code>, <code>:365</code>, <code>:441</code>, <code>:507</code>. A read at <code>:569-572</code>. <code>functions/src/adminFunctions.ts:160 (createStudentAccount) @ 7808a91</code>
+</li><li>
+<code>bulkImport.ts</code>: <code>:395</code>.
+</li><li>
+<code>authBlocking.ts</code>: <code>:84</code>. <code>functions/src/authBlocking.ts:84 (autoAssignRole) @ 7808a91</code>
+</li></ul>
+<p><strong>Disagreements.</strong></p>
+<ul><li>
+<strong><code>teacherId</code> is never written.</strong> No writer writes <code>teacherId</code>, yet <code>getTeacherActivities</code> filters on it and the line-22 index exists for it.
+</li><li>
+<strong><code>userId</code> is nested on the server.</strong> The server puts the user id in <code>details.userId</code>, while <code>getUserDetails</code> filters on top-level <code>userId</code>.
+</li><li>
+<strong><code>type</code> values do not match.</strong> Writer values such as <code>user_created</code> and <code>bulk_import</code> are not <code>ActivityType</code> names, and <code>fromFirestore</code> maps unknown values to <code>announcement</code>. <code>lib/features/dashboard/domain/models/activity_model.dart:47-50 (ActivityModel) @ 7808a91</code>
+</li></ul>
+<h3 id="jeopardy-games-jeopardy-questions-jeopardy-sessions"><code>jeopardy_games</code>, <code>jeopardy_questions</code>, <code>jeopardy_sessions</code></h3>
+<p><strong>No reachable code reads or writes these collections.</strong> Two classes are named <code>SimpleJeopardyProvider</code>:</p>
+<ul><li>
+<strong>The wired one</strong> is a stub with no Firestore import. Its methods return stub data. <code>lib/features/games/presentation/providers/jeopardy_provider.dart:6-149 (SimpleJeopardyProvider) @ 7808a91</code> It is imported at <code>lib/shared/core/app_providers.dart:17 (import) @ 7808a91</code>.
+</li><li>
+<strong>The other one</strong> is under <code>lib/features/jeopardy/</code>, and nothing imports it.
+</li></ul>
+<p><strong>Shape (model).</strong> <code>JeopardyGame</code> has <code>title</code>, <code>teacherId</code>, <code>categories[]</code> (each <code>{name, questions[]}</code>, with questions nested), <code>doubleJeopardyCategories</code>, <code>finalJeopardy</code>, <code>createdAt</code>, <code>updatedAt</code>, <code>isPublic</code>, <code>gameMode</code>, <code>assignedClassIds</code>, <code>dailyDoubles[]</code> and <code>randomDailyDoubles</code>. <code>lib/features/games/domain/models/jeopardy_game.dart:4-61 (JeopardyGame) @ 7808a91</code></p>
+<p><code>JeopardyGameSession</code> has <code>gameId</code>, <code>teacherId</code>, <code>classId</code>, <code>startedAt</code>, <code>endedAt</code>, <code>players[]</code>, <code>teams[]</code>, <code>currentRound</code>, <code>answeredQuestions</code> and <code>isActive</code>. <code>lib/features/games/domain/models/jeopardy_game.dart:323 (JeopardyGameSession) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> Only <code>jeopardy_games</code> has any, all on <code>teacherId</code>, <code>isPublic</code> and <code>updatedAt</code>. <code>firestore.indexes.json:744-784 (jeopardy_games) @ 7808a91</code></p>
+<p><strong>Call sites, all in the unreachable provider.</strong> <code>lib/features/jeopardy/presentation/providers/jeopardy_provider.dart:35-330 (SimpleJeopardyProvider) @ 7808a91</code></p>
+<div class="tw"><table><thead><tr><th>Collection</th><th>Lines</th></tr></thead><tbody><tr><td><code>jeopardy_games</code></td><td><code>:35-39</code>, <code>:77-79</code>, <code>:289</code>, <code>:313</code>, <code>:327-330</code></td></tr><tr><td><code>jeopardy_questions</code></td><td><code>:105</code>, <code>:123-128</code>, <code>:209</code>, <code>:217-220</code>, <code>:303-309</code></td></tr><tr><td><code>jeopardy_sessions</code></td><td><code>:162-164</code>, <code>:187</code>, <code>:225-228</code>, <code>:238-241</code>, <code>:256</code>, <code>:271-274</code></td></tr></tbody></table></div>
+<p><strong>Disagreements.</strong> The unreachable writer and the model differ:</p>
+<div class="tw"><table><thead><tr><th></th><th>Unreachable writer</th><th>Model</th></tr></thead><tbody><tr><td>Owner and visibility</td><td><code>createdBy</code>, <code>isPublished</code>, <code>playCount</code></td><td><code>teacherId</code>, <code>isPublic</code></td></tr><tr><td>Questions</td><td>a separate <code>jeopardy_questions</code> collection</td><td>nested in categories</td></tr><tr><td>Sessions</td><td><code>hostId</code>, <code>status</code>, <code>currentQuestion</code></td><td><code>teacherId</code>, <code>isActive</code>, <code>currentRound</code></td></tr></tbody></table></div>
+<h3 id="oauth-pkce-challenges"><code>oauth_pkce_challenges</code></h3>
+<p><strong>Shape.</strong> <code>PKCEChallenge</code> has <code>codeVerifier</code>, <code>expiresAt</code> (epoch ms), <code>createdAt</code> and an optional <code>clientId</code>. The document id is the OAuth <code>state</code>. <code>functions/src/types/oauth.types.ts:30-35 (PKCEChallenge) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> None.</p>
+<p><strong>Call sites.</strong> All are on the server.</p>
+<ul><li>
+<strong><code>oauth.ts</code>:</strong>
+<ul><li>
+accessor at <code>:63-64</code>
+</li><li>
+set at <code>:123-129</code>
+</li><li>
+read at <code>:222</code>
+</li><li>
+deletes at <code>:229</code> and <code>:240</code>
+<br><code>functions/src/oauth.ts:123-129 (getOAuthUrl) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>cleanup.ts</code>:</strong>
+<ul><li>
+<code>cleanupExpiredPKCEChallenges</code> queries and batch-deletes at <code>:21-100</code>
+</li><li>
+a count at <code>:108</code>
+</li><li>
+<code>manualPKCECleanup</code> runs the same queries at <code>:131-163</code>.
+<br><code>functions/src/cleanup.ts:21-108 (cleanupExpiredPKCEChallenges) @ 7808a91</code>
+</li></ul>
+</li></ul>
+<h3 id="rate-limits"><code>_rate_limits</code></h3>
+<p><strong>Shape.</strong> <code>RateLimitRecord</code> has <code>count</code>, <code>firstCall</code> and <code>lastCall</code>. The document id is <code>${name}_${identifier}</code>. <code>functions/src/rate-limiter.ts:9-13 (RateLimitRecord) @ 7808a91</code></p>
+<p><strong>Indexes.</strong> None.</p>
+<p><strong>Call sites.</strong> All are on the server.</p>
+<ul><li>
+<strong>Transaction:</strong> reads, then sets or updates. <code>functions/src/rate-limiter.ts:32-80 (FirestoreRateLimiter) @ 7808a91</code> It is reached through <code>applyRateLimit</code>. <code>functions/src/security.ts:44 (applyRateLimit) @ 7808a91</code>
+</li><li>
+<strong><code>cleanupOldRateLimitRecords</code>:</strong> at <code>:92-115</code>, with no callers.
+</li></ul>
+</section><section class="card">
+<h2 id="9-what-do-the-functions-in-adminfunctions-ts-bulkimport-ts-o">9. What do the functions in <code>adminFunctions.ts</code>, <code>bulkImport.ts</code>, <code>oauth.ts</code> and <code>cleanup.ts</code> do, and what triggers each?</h2>
+<h3 id="shared-setup">Shared setup</h3>
+<ul><li>
+<code>index.ts</code> calls <code>admin.initializeApp()</code>. <code>functions/src/index.ts:14 (setGlobalOptions) @ 7808a91</code>
+</li><li>
+Global options are maxInstances 10 and region us-east4. <code>functions/src/index.ts:29-32 (setGlobalOptions) @ 7808a91</code>
+</li><li>
+All four modules are re-exported with <code>export *</code>. <code>functions/src/index.ts:38-50 (cleanup) @ 7808a91</code>
+</li></ul>
+<p>The callables in <code>adminFunctions.ts</code> and <code>bulkImport.ts</code> share one admin gate. It checks the Firestore document <code>users/{request.auth.uid}.role === "admin"</code>, not a token claim. It throws <code>unauthenticated</code> when there is no <code>request.auth</code>, and <code>permission-denied</code> when the role is not admin. <code>functions/src/adminFunctions.ts:51-61 (createStudentAccount) @ 7808a91</code></p>
+<p>None of the four files calls Storage or Messaging.</p>
+<h3 id="adminfunctions-ts"><code>adminFunctions.ts</code></h3>
+<p>All six exports are <code>onCall</code> with <code>{region: "us-east4", maxInstances: 10}</code>, and each one runs the admin gate.</p>
+<div class="tw"><table><thead><tr><th>Function</th><th>Input</th><th>Auth calls</th><th>Firestore writes</th><th>Returns</th></tr></thead><tbody><tr><td><code>createStudentAccount</code></td><td><code>{email, password, displayName, gradeLevel, parentEmail, classIds, isGoogleAuth}</code></td><td><code>getUserByEmail</code> (if <code>isGoogleAuth</code>), <code>createUser</code> with <code>emailVerified: true</code>, <code>setCustomUserClaims({role:"student"})</code></td><td><code>users/{uid}.set</code>, batch <code>classes/{id}</code> <code>studentIds</code> arrayUnion, <code>activities.add</code></td><td><code>{success, userId, email, displayName, isGoogleAuth}</code></td></tr><tr><td><code>createTeacherAccount</code></td><td><code>{email, password, displayName}</code></td><td><code>createUser</code>, <code>setCustomUserClaims({role:"teacher"})</code></td><td><code>users/{uid}.set</code>, <code>activities.add</code></td><td><code>{success, userId, email, displayName}</code></td></tr><tr><td><code>createAdminAccount</code></td><td><code>{email, password, displayName}</code></td><td><code>createUser</code>, <code>setCustomUserClaims({role:"admin"})</code></td><td><code>users/{uid}.set</code>, <code>activities.add</code></td><td><code>{success, userId, email, displayName}</code></td></tr><tr><td><code>deleteUserAccount</code></td><td><code>{userId}</code></td><td><code>deleteUser</code></td><td><code>users/{userId}.delete()</code>, <code>activities.add</code> (<code>classes</code> untouched)</td><td><code>{success, message}</code></td></tr><tr><td><code>resetUserPassword</code></td><td><code>{userId}</code></td><td><code>updateUser({password})</code> with a generated password</td><td><code>activities.add</code></td><td><code>{success, newPassword, message}</code>: the plaintext password goes back to the caller</td></tr><tr><td><code>getSystemStats</code></td><td>none</td><td>—</td><td>reads all of <code>users</code> and <code>activities</code> from the last day</td><td>counts by role, plus online and recent-activity counts</td></tr></tbody></table></div>
+<p>Citations for the table:</p>
+<ul><li>
+<code>functions/src/adminFunctions.ts:47-193 (createStudentAccount) @ 7808a91</code>
+</li><li>
+<code>functions/src/adminFunctions.ts:199-293 (createTeacherAccount) @ 7808a91</code>
+</li><li>
+<code>functions/src/adminFunctions.ts:299-395 (createAdminAccount) @ 7808a91</code>
+</li><li>
+<code>functions/src/adminFunctions.ts:401-464 (deleteUserAccount) @ 7808a91</code>
+</li><li>
+<code>functions/src/adminFunctions.ts:470-529 (resetUserPassword) @ 7808a91</code>
+</li><li>
+<code>functions/src/adminFunctions.ts:535-582 (getSystemStats) @ 7808a91</code>
+</li></ul>
+<p>Checks that reject input, all <code>invalid-argument</code>:</p>
+<ul><li>
+<strong>Student emails:</strong> must be <code>@rosellestudent.org</code> or <code>@rosellestudent.com</code>. <code>functions/src/adminFunctions.ts:75-81 (createStudentAccount) @ 7808a91</code>
+</li><li>
+<strong>Student passwords:</strong> 6 or more characters, unless <code>isGoogleAuth</code>. <code>functions/src/adminFunctions.ts:85-88 (createStudentAccount) @ 7808a91</code>
+</li><li>
+<strong>Teacher accounts:</strong> <code>@roselleschools.org</code> and a password of 6 or more characters. <code>functions/src/adminFunctions.ts:227-234 (createTeacherAccount) @ 7808a91</code>
+</li><li>
+<strong>Admin accounts:</strong> <code>@fermi-plus.com</code> and a password of 8 or more characters. <code>functions/src/adminFunctions.ts:328-335 (createAdminAccount) @ 7808a91</code>
+</li><li>
+<strong>Self-deletion:</strong> an admin cannot delete their own account. <code>functions/src/adminFunctions.ts:425 (deleteUserAccount) @ 7808a91</code>
+</li></ul>
+<p>Errors are mapped two ways: <code>auth/email-already-exists</code> becomes <code>already-exists</code>, and anything else becomes <code>internal</code>. <code>functions/src/adminFunctions.ts:186-190 (createStudentAccount) @ 7808a91</code></p>
+<p>The password generator <code>generateSecurePassword</code> is not exported. It uses <code>crypto.randomBytes</code> with rejection sampling. <code>functions/src/adminFunctions.ts:14-41 (generateSecurePassword) @ 7808a91</code></p>
+<h3 id="bulkimport-ts"><code>bulkImport.ts</code></h3>
+<p><strong><code>bulkImportStudents</code></strong></p>
+<p><code>onCall</code> with <code>{region: "us-east4", maxInstances: 10, memory: "512MiB", timeoutSeconds: 300}</code>, behind the admin gate. <code>functions/src/bulkImport.ts:31-50 (bulkImportStudents) @ 7808a91</code></p>
+<ol><li>
+<strong>Input.</strong> It takes <code>{users, csvData, sendPasswordResetEmails = true}</code>. <code>functions/src/bulkImport.ts:53 (bulkImportStudents) @ 7808a91</code> <code>parseCSV</code> requires <code>name</code> and <code>email</code> headers. <code>functions/src/bulkImport.ts:437-506 (parseCSV) @ 7808a91</code>
+</li><li>
+<strong>Whole-request rejections.</strong> These throw <code>invalid-argument</code>:
+<ul><li>
+a CSV parse error
+</li><li>
+no users
+</li><li>
+more than 1000 users
+</li><li>
+any row whose email is missing or not a rosellestudent domain, or duplicated within the import
+<br><code>functions/src/bulkImport.ts:62-126 (bulkImportStudents) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong>Existing users.</strong> They are split out with <code>auth.getUserByEmail</code> via <code>Promise.allSettled</code>. If every user already exists, the function returns <code>success: false</code>. <code>functions/src/bulkImport.ts:129-152 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong>Class validation.</strong> It checks <code>classes/{classId}</code> exists, or queries <code>enrollmentCode == code.toUpperCase()</code> with <code>isActive == true</code>. Invalid classes are only logged. <code>functions/src/bulkImport.ts:167-202 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong>Account creation.</strong> It calls <code>auth.importUsers(records, {hash: {algorithm: "BCRYPT"}})</code>. Each record has a 28-character uid from <code>Math.random</code>, <code>emailVerified: true</code> and <code>customClaims {role: "student", gradeLevel}</code>. <code>functions/src/bulkImport.ts:206-248 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong>Placeholder hashes.</strong> Users without Google auth get a placeholder bcrypt hash made of random characters, not the hash of any known password. <code>functions/src/bulkImport.ts:221-225 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong><code>users</code> writes.</strong> One unchunked batch of <code>users/{uid}.set</code> runs over all <code>newUsers</code>, not only those <code>importUsers</code> reported as succeeding. <code>functions/src/bulkImport.ts:256-329 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong>Class membership.</strong> It updates <code>classes/{classId}</code> with <code>studentIds</code> arrayUnion. <code>functions/src/bulkImport.ts:347-357 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong>Reset links.</strong> <code>generatePasswordResetLink</code> runs for each new user without Google auth. The link is only written to <code>logger.info</code>; nothing sends it. <code>functions/src/bulkImport.ts:361-379 (bulkImportStudents) @ 7808a91</code>
+</li><li>
+<strong>Activity log.</strong> It adds a <code>bulk_import</code> entry to <code>activities</code>. <code>functions/src/bulkImport.ts:395-406 (bulkImportStudents) @ 7808a91</code>
+</li></ol>
+<p><strong><code>migrateStudentClassEnrollment</code></strong></p>
+<p><code>onCall</code> (256MiB, 60s), behind the admin gate. <code>functions/src/bulkImport.ts:549-673 (migrateStudentClassEnrollment) @ 7808a91</code></p>
+<ul><li>
+It reads <code>users</code> where <code>role == "student"</code> and all of <code>classes</code>.
+</li><li>
+It maps <code>className</code> to a class id by lowercase name.
+</li><li>
+It sets <code>classId</code> and <code>enrolledClasses</code>, deletes <code>className</code>, and adds the user to <code>classes.studentIds</code> with arrayUnion.
+</li></ul>
+<h3 id="oauth-ts"><code>oauth.ts</code></h3>
+<p>All three functions are <code>onRequest</code> with <code>{cors: true, secrets: [GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET]}</code>. <code>functions/src/oauth.ts:21-22 (googleClientId) @ 7808a91</code></p>
+<p>None of them checks a Firebase ID token or App Check. What gates them is:</p>
+<ul><li>
+<strong>Rate limits.</strong> <code>applyRateLimit</code> throws <code>resource-exhausted</code>. <code>functions/src/security.ts:38-51 (applyRateLimit) @ 7808a91</code> The limit is kept per IP in <code>_rate_limits/{name}_{ip}</code> by a transaction that lets the request through when the limiter fails. <code>functions/src/rate-limiter.ts:32-86 (FirestoreRateLimiter) @ 7808a91</code>
+</li><li>
+<strong>User-agent check.</strong> It rejects a missing user-agent, or one that looks like a bot, curl, wget or python-requests. <code>functions/src/security.ts:70-100 (oauthValidator) @ 7808a91</code>
+</li></ul>
+<div class="tw"><table><thead><tr><th>Function</th><th>Rate limit</th><th>Input</th><th>Firestore</th><th>External / Auth</th><th>Returns</th></tr></thead><tbody><tr><td><code>getOAuthUrl</code></td><td>10/60s</td><td><code>redirect_uri</code> query, localhost or 127.0.0.1 only</td><td>sets <code>oauth_pkce_challenges/{state}</code> to <code>{codeVerifier, expiresAt: now+600000, createdAt, clientId: ip}</code></td><td>—</td><td><code>{authUrl, state, codeVerifier}</code></td></tr><tr><td><code>exchangeOAuthCode</code></td><td>5/60s</td><td>body <code>{code, state, codeVerifier, redirectUri?}</code></td><td>reads, then deletes, the PKCE doc before calling Google</td><td>Google token and userinfo endpoints; <code>getUserByEmail</code>, falling back to <code>createUser</code>; <code>createCustomToken(uid, {provider:"google.com", email})</code></td><td><code>{firebaseToken, googleTokens, user}</code></td></tr><tr><td><code>refreshOAuthToken</code></td><td>20/60s</td><td>body <code>{refreshToken}</code></td><td><code>_rate_limits</code> only</td><td>Google refresh grant</td><td><code>{accessToken, expiresIn, idToken}</code></td></tr></tbody></table></div>
+<p>Citations for the table:</p>
+<ul><li>
+<code>functions/src/oauth.ts:70-164 (getOAuthUrl) @ 7808a91</code>
+</li><li>
+<code>functions/src/oauth.ts:170-345 (exchangeOAuthCode) @ 7808a91</code>
+</li><li>
+<code>functions/src/oauth.ts:350-434 (refreshOAuthToken) @ 7808a91</code>
+</li></ul>
+<p><code>exchangeOAuthCode</code> rejects:</p>
+<ul><li>
+a malformed state or verifier (40-50 base64url characters required)
+</li><li>
+a missing PKCE document
+</li><li>
+a verifier that does not match the stored one
+</li></ul>
+<p>An expired document is deleted and the call throws <code>deadline-exceeded</code>. <code>functions/src/oauth.ts:203-237 (exchangeOAuthCode) @ 7808a91</code></p>
+<p><code>exchangeOAuthCode</code> also does not check the email domain, assigns no role or claim, and writes nothing to <code>users</code>. <code>functions/src/oauth.ts:297-314 (exchangeOAuthCode) @ 7808a91</code></p>
+<h3 id="cleanup-ts"><code>cleanup.ts</code></h3>
+<p><strong><code>cleanupExpiredPKCEChallenges</code></strong></p>
+<p><code>onSchedule</code> with <code>{schedule: "every 1 hours", timeZone: "America/New_York", retryCount: 3, memory: "256MiB"}</code>. It has no caller check. <code>functions/src/cleanup.ts:9-15 (cleanupExpiredPKCEChallenges) @ 7808a91</code></p>
+<ul><li>
+It deletes <code>oauth_pkce_challenges</code> where <code>expiresAt &lt; now</code>, in batches of 500.
+</li><li>
+It returns early when nothing has expired, so the second sweep (<code>createdAt</code> older than 30 days) only runs when at least one expired document was found. <code>functions/src/cleanup.ts:28-102 (cleanupExpiredPKCEChallenges) @ 7808a91</code>
+</li></ul>
+<p><strong><code>manualPKCECleanup</code></strong></p>
+<p>A plain exported <code>async</code> function with no trigger wrapper. It is still re-exported through <code>index.ts</code>. <code>functions/src/cleanup.ts:129-171 (manualPKCECleanup) @ 7808a91</code></p>
+<p>The only <code>manualPKCECleanup</code> hit in the repository is its definition.</p>
+</section><section class="card">
+<h2 id="10-what-do-the-functions-in-chatfunctions-ts-behaviorpoints-">10. What do the functions in <code>chatFunctions.ts</code>, <code>behaviorPoints.ts</code>, <code>security.ts</code>, <code>rate-limiter.ts</code> and <code>migrate-usernames.ts</code> do, and which are exported?</h2>
+<h3 id="exported-from-index-ts">Exported from <code>index.ts</code></h3>
+<p><code>index.ts</code> re-exports <code>./chatFunctions</code> and <code>./behaviorPoints</code>, so they deploy. It has no export line for <code>./security</code>, <code>./rate-limiter</code> or <code>./migrate-usernames</code>. <code>functions/src/index.ts:35-59 (chatFunctions) @ 7808a91</code> <code>security.ts</code> is reached only because <code>oauth.ts</code> imports it. <code>functions/src/oauth.ts:5-11 (import) @ 7808a91</code> No file imports <code>migrate-usernames.ts</code>.</p>
+<p>None of the five modules has a schedule, Firestore-event or auth-event trigger.</p>
+<h3 id="chatfunctions-ts"><code>chatFunctions.ts</code></h3>
+<p>All four exports are v2 <code>https.onCall</code> with <code>maxInstances: 10, region: "us-east4"</code>. The module creates <code>admin.firestore()</code>, <code>admin.messaging()</code> and <code>admin.storage()</code> when it loads. <code>functions/src/chatFunctions.ts:5-7 (db) @ 7808a91</code></p>
+<p><strong>Membership check.</strong> The helper <code>ensureConversationMembership</code> reads <code>conversations/{id}</code>. It throws <code>not-found</code> when the document is missing, and <code>permission-denied</code> when the caller is not in <code>participants</code> (falling back to <code>participantIds</code>). <code>functions/src/chatFunctions.ts:13-34 (ensureConversationMembership) @ 7808a91</code></p>
+<p><strong>Error handling.</strong> Each callable wraps its body in a catch that rethrows every error as <code>internal</code>, including the membership errors. Only the checks that run before the <code>try</code> reach the client with their own codes. <code>functions/src/chatFunctions.ts:132-137 (sendMessage) @ 7808a91</code></p>
+<p><strong><code>sendMessage</code></strong></p>
+<ul><li>
+<strong>Input:</strong> <code>{conversationId, text, attachments}</code>.
+</li><li>
+<strong>Checks:</strong> <code>unauthenticated</code> when there is no auth; <code>invalid-argument</code> when <code>conversationId</code> is missing, or both <code>text</code> and <code>attachments</code> are missing. <code>functions/src/chatFunctions.ts:43-69 (sendMessage) @ 7808a91</code>
+</li><li>
+<strong>Reads:</strong> <code>users/{senderId}</code>.
+</li><li>
+<strong>Writes <code>conversations/{id}/messages/{newId}</code></strong> with <code>{id, authorId, authorName, authorRole, text, attachments, createdAt, sentAt, metadata}</code>. <code>attachments</code> is stored without checks. <code>functions/src/chatFunctions.ts:75-102 (sendMessage) @ 7808a91</code>
+</li><li>
+<strong>Updates the conversation:</strong> sets <code>lastMessage</code>, <code>lastActivity</code> and the sender's <code>unreadCount.{uid}=0</code>, and increments each other participant's count. <code>functions/src/chatFunctions.ts:105-126 (sendMessage) @ 7808a91</code>
+</li></ul>
+<p><strong><code>markMessagesAsRead</code></strong></p>
+<ul><li>
+<strong>Input:</strong> <code>{conversationId, messageIds}</code>.
+</li><li>
+<strong>Writes, in one batch:</strong> <code>seenAt</code> and <code>readBy.{uid}</code> on each message, and <code>unreadCount.{uid}=0</code> on the conversation.
+</li><li>
+<strong>No limit</strong> on the length of <code>messageIds</code>.
+</li></ul>
+<p><code>functions/src/chatFunctions.ts:146-192 (markMessagesAsRead) @ 7808a91</code></p>
+<p><strong><code>updateTypingStatus</code></strong></p>
+<ul><li>
+<strong>Input:</strong> <code>{conversationId, isTyping}</code>.
+</li><li>
+<strong>When true:</strong> sets <code>conversations/{id}/typing/{uid}</code> to <code>{isTyping, startedAt, userName}</code>, then starts an 11-second <code>setTimeout</code> that deletes the document after the handler has returned.
+</li><li>
+<strong>When false:</strong> deletes the document.
+</li></ul>
+<p><code>functions/src/chatFunctions.ts:209-265 (updateTypingStatus) @ 7808a91</code></p>
+<p><strong><code>uploadChatFile</code></strong></p>
+<ul><li>
+<strong>Input:</strong> <code>{conversationId, fileName, mimeType, base64Data, fileSize}</code>, with 512MiB of memory.
+</li><li>
+<strong>Checks:</strong> rejects a client-supplied <code>fileSize</code> over 10 MB (the decoded buffer is never measured) and MIME types outside 11 allowed types. <code>functions/src/chatFunctions.ts:283-331 (uploadChatFile) @ 7808a91</code>
+</li><li>
+<strong>Storage:</strong> saves <code>chat-attachments/{conversationId}/{uid}/{ts}_{sanitizedName}</code> and returns a signed read URL that expires <code>03-01-2500</code>. It writes nothing to Firestore. <code>functions/src/chatFunctions.ts:338-363 (uploadChatFile) @ 7808a91</code>
+</li></ul>
+<p><strong><code>sendPushNotifications</code></strong> (not exported)</p>
+<ul><li>
+<strong>Reads:</strong> <code>users/{id}.fcmToken</code> for each recipient.
+</li><li>
+<strong>Sends:</strong> calls <code>messaging.sendEachForMulticast</code> with data <code>{type: "chat", conversationId}</code>.
+</li><li>
+<strong>Errors:</strong> caught and swallowed.
+</li></ul>
+<p><code>functions/src/chatFunctions.ts:386-428 (sendPushNotifications) @ 7808a91</code></p>
+<h3 id="behaviorpoints-ts"><code>behaviorPoints.ts</code></h3>
+<p>All four exports are v2 <code>onCall</code> with <code>maxInstances: 50, region: "us-east4"</code>. None of them calls Admin Auth, Storage or Messaging.</p>
+<p><strong><code>awardBehaviorPoints</code></strong></p>
+<ul><li>
+<strong>Checks, in order:</strong>
+<ol><li>
+<code>unauthenticated</code>
+</li><li>
+<code>permission-denied</code> unless <code>users/{uid}.role === "teacher"</code>
+</li><li>
+<code>not-found</code> when the class is missing
+</li><li>
+<code>permission-denied</code> unless <code>classes/{classId}.teacherId</code> (or <code>teacherUID</code>) equals the caller
+<br><code>functions/src/behaviorPoints.ts:31-77 (awardBehaviorPoints) @ 7808a91</code>
+</li></ol>
+</li><li>
+<strong>No check</strong> on the type or range of <code>points</code>.
+</li><li>
+<strong>Idempotency:</strong> the operation id is <code>${teacherId}_${studentId}_${behaviorId}_${Date.now()}</code>, and an existing history document with that id returns <code>{success: false}</code>. <code>functions/src/behaviorPoints.ts:80-99 (awardBehaviorPoints) @ 7808a91</code>
+</li><li>
+<strong>Writes, in one batch:</strong>
+<ul><li>
+a merge into <code>classes/{c}/studentPoints/{s}</code> with incremented <code>totalPoints</code>, <code>positivePoints</code>, <code>negativePoints</code> and <code>behaviorCounts.{id}</code>
+</li><li>
+a history document with <code>operationId</code>, student, behavior, <code>points</code>, <code>type</code>, teacher fields, <code>timestamp</code>, <code>awardedAt</code>, <code>isUndone: false</code>, <code>classId</code>, <code>gender</code>, <code>gradeLevel</code>, <code>studentAvatarUrl</code> and <code>note</code>
+<br><code>functions/src/behaviorPoints.ts:102-145 (awardBehaviorPoints) @ 7808a91</code>
+</li></ul>
+</li></ul>
+<p><strong><code>undoBehaviorPoints</code></strong></p>
+<ul><li>
+<strong>Checks:</strong> the same four as <code>awardBehaviorPoints</code>.
+</li><li>
+<strong>Writes:</strong> reverses the increments, then marks the history entry <code>isUndone</code>, <code>undoneBy</code>, <code>undoneAt</code>.
+</li></ul>
+<p><code>functions/src/behaviorPoints.ts:162-258 (undoBehaviorPoints) @ 7808a91</code></p>
+<p><strong><code>getClassPointsSummary</code></strong></p>
+<ul><li>
+<strong>Callers:</strong> only a teacher who owns the class. Students and every other role get <code>permission-denied</code>.
+</li><li>
+<strong>Reads:</strong> all of <code>classes/{c}/studentPoints</code>.
+</li><li>
+<strong>Returns:</strong> <code>{success, summaries}</code>.
+</li></ul>
+<p><code>functions/src/behaviorPoints.ts:274-335 (getClassPointsSummary) @ 7808a91</code></p>
+<p><strong><code>getBehaviorHistory</code></strong></p>
+<ul><li>
+<strong>Teachers:</strong> must own the class.
+</li><li>
+<strong>Students:</strong> have <code>studentId</code> forced to their own uid instead of a membership check. <code>functions/src/behaviorPoints.ts:394-422 (getBehaviorHistory) @ 7808a91</code>
+</li><li>
+<strong>Query:</strong> a <code>collectionGroup('history')</code> query on <code>classId ==</code> and <code>isUndone == false</code>, with optional <code>studentId</code>, <code>gender</code>, <code>type</code> and <code>timestamp</code> range, then <code>orderBy awardedAt desc</code>, <code>offset</code> and <code>limit</code> (default 50).
+</li><li>
+<strong>Count:</strong> a <code>count()</code> query with the same filters minus the date range. <code>functions/src/behaviorPoints.ts:426-509 (getBehaviorHistory) @ 7808a91</code>
+</li></ul>
+<h3 id="security-ts-helpers-only"><code>security.ts</code> (helpers only)</h3>
+<p><code>createRateLimiter</code> and <code>oauthRateLimiters</code> set three limits:</p>
+<div class="tw"><table><thead><tr><th>Limiter</th><th>Limit</th></tr></thead><tbody><tr><td><code>oauth_get_url</code></td><td>10 calls per 60 s</td></tr><tr><td><code>oauth_exchange</code></td><td>5 calls per 60 s</td></tr><tr><td><code>oauth_refresh</code></td><td>20 calls per 60 s</td></tr></tbody></table></div>
+<p><code>functions/src/security.ts:8-35 (oauthRateLimiters) @ 7808a91</code></p>
+<div class="tw"><table><thead><tr><th>Helper</th><th>What it does</th></tr></thead><tbody><tr><td><code>applyRateLimit</code></td><td>Turns any limiter error into <code>resource-exhausted</code>.</td></tr><tr><td><code>oauthValidator</code></td><td>Returns booleans: user-agent, redirect URI (localhost or 127.0.0.1), and the state and verifier format (40–50 base64url characters).</td></tr><tr><td><code>applySecurityHeaders</code></td><td>Sets six response headers.</td></tr><tr><td><code>getClientIdentifier</code></td><td>Takes the first <code>x-forwarded-for</code> entry, then <code>x-real-ip</code>, the remote address, <code>req.ip</code>, or <code>"unknown"</code>.</td></tr></tbody></table></div>
+<p><code>functions/src/security.ts:38-198 (applyRateLimit) @ 7808a91</code></p>
+<h3 id="rate-limiter-ts-helpers-only"><code>rate-limiter.ts</code> (helpers only)</h3>
+<p><strong><code>FirestoreRateLimiter.rejectOnQuotaExceededOrRecordUsage</code></strong> runs a transaction on <code>_rate_limits/{name}_{id}</code> that writes <code>{count, firstCall, lastCall}</code>.</p>
+<ul><li>
+It throws <code>Error("Rate limit exceeded")</code> when <code>count &gt;= maxCalls</code>.
+</li><li>
+Any other error is logged and swallowed, so the request goes through.
+</li></ul>
+<p><code>functions/src/rate-limiter.ts:15-88 (FirestoreRateLimiter) @ 7808a91</code></p>
+<p><strong><code>cleanupOldRateLimitRecords</code></strong> batch-deletes up to 500 old <code>_rate_limits</code> documents. Nothing in <code>functions/src</code> calls it. <code>functions/src/rate-limiter.ts:92-115 (cleanupOldRateLimitRecords) @ 7808a91</code></p>
+<h3 id="migrate-usernames-ts-not-deployed-from-index-ts"><code>migrate-usernames.ts</code> (not deployed from <code>index.ts</code>)</h3>
+<p><strong><code>migrateUsernamesToPublic</code></strong></p>
+<ul><li>
+<strong>Trigger and caller:</strong> a v2 <code>onCall</code> for callers whose <code>users</code> role is teacher or admin.
+</li><li>
+<strong>Reads:</strong> <code>users</code> where <code>username != null</code>.
+</li><li>
+<strong>Writes:</strong> <code>public_usernames/{lowercased username}</code> as <code>{uid, role, migratedAt}</code>, in batches of 500, skipping usernames that already exist.
+</li></ul>
+<p><code>functions/src/migrate-usernames.ts:12-138 (migrateUsernamesToPublic) @ 7808a91</code></p>
+<p><strong><code>migrateUsernamesHttp</code></strong></p>
+<ul><li>
+<strong>Trigger:</strong> a v2 <code>onRequest</code>.
+</li><li>
+<strong>Auth:</strong> requires a <code>Bearer</code> header, verifies it with <code>admin.auth().verifyIdToken</code>, and applies the same role check.
+</li><li>
+<strong>Work:</strong> calls the internal <code>runMigration</code>, which does the same copy.
+</li></ul>
+<p><code>functions/src/migrate-usernames.ts:146-251 (migrateUsernamesHttp) @ 7808a91</code></p>
+<p>The deploy configuration beyond <code>functions/package.json</code>'s <code>"main": "lib/index.js"</code> could not be checked, because <code>firebase.json</code> is not tracked at this commit. <code>functions/package.json:17 (main) @ 7808a91</code></p>
+</section><section class="card">
+<h2 id="11-how-does-the-client-register-for-receive-and-display-push">11. How does the client register for, receive and display push notifications?</h2>
+<p>Android and iOS register for FCM. Web never registers and shows an in-app SnackBar instead. No code anywhere shows a local notification. Tapping a push does nothing, because no code installs the navigation callback.</p>
+<h3 id="registration">Registration</h3>
+<p><strong>Platforms.</strong> Messaging is set up on Android and iOS only:</p>
+<ul><li>
+<code>_initializeDeferredServices</code> adds <code>_initializeFirebaseMessaging</code> only when <code>!kIsWeb &amp;&amp; _isFirebaseMessagingSupported()</code>, which is true for Android and iOS. <code>lib/shared/core/app_initializer.dart:54-89 (_initializeDeferredServices) @ 7808a91</code>
+</li><li>
+Web is blocked twice more:
+<ul><li>
+<code>_initializeFirebaseMessaging</code> returns early on web. <code>lib/shared/core/app_initializer.dart:227-230 (AppInitializer) @ 7808a91</code>
+</li><li>
+<code>FirebaseMessagingService.initialize</code> starts with <code>if (kIsWeb) return</code>. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:46 (initialize) @ 7808a91</code>
+<br>So the web VAPID-key branch in <code>_updateFCMToken</code> can never run.
+</li></ul>
+</li></ul>
+<p><strong><code>initialize</code>, in order.</strong> <code>lib/features/notifications/data/services/firebase_messaging_service.dart:45-107 (initialize) @ 7808a91</code></p>
+<ol><li>
+Calls <code>deleteToken()</code>.
+</li><li>
+Requests permissions.
+</li><li>
+Registers the background handler, <code>onMessage</code> and <code>onMessageOpenedApp</code>.
+</li><li>
+Checks <code>getInitialMessage</code>.
+</li><li>
+Sets the iOS foreground presentation to alert, badge and sound.
+</li><li>
+Fetches and saves the token.
+</li><li>
+Listens on <code>onTokenRefresh</code>.
+</li></ol>
+<p>Exceptions are only logged.</p>
+<p><strong>Permissions.</strong></p>
+<ul><li>
+FCM calls <code>requestPermission</code> only on iOS and macOS. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:124-146 (_requestPermissions) @ 7808a91</code>
+</li><li>
+Separately, on Android and iOS, <code>NotificationService.requestPermissions()</code> asks through <code>flutter_local_notifications</code>. <code>lib/features/notifications/data/services/notification_service.dart:63-96 (requestPermissions) @ 7808a91</code>
+</li></ul>
+<p><strong>Token storage.</strong> <code>_saveFCMToken</code> does nothing when no user is signed in. Otherwise it makes two writes:</p>
+<ul><li>
+<code>users/{uid}.update({fcmToken, fcmTokenUpdatedAt, platform})</code>. This throws, and the error is logged, when the user document does not exist.
+</li><li>
+<code>fcm_tokens/{uid}.set({token, userId, platform, updatedAt})</code>. There is one token per user, so the last device overwrites it.
+</li></ul>
+<p><code>lib/features/notifications/data/services/firebase_messaging_service.dart:235-263 (_saveFCMToken) @ 7808a91</code></p>
+<p><strong>Sign-in does not save the token.</strong> <code>_updateFCMToken</code> is called only from <code>initialize</code>. If nobody is signed in when the deferred init runs, the token is not saved until <code>onTokenRefresh</code> fires.</p>
+<p><strong>Logout does not remove the token.</strong> <code>deleteToken()</code> removes both the field and the <code>fcm_tokens</code> document, but nothing in <code>lib</code> calls it, so logout leaves the token behind. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:400-423 (deleteToken) @ 7808a91</code></p>
+<h3 id="receiving">Receiving</h3>
+<p><strong>Server sender.</strong> <code>sendPushNotifications</code> reads only <code>users/{id}.fcmToken</code>, never <code>fcm_tokens</code>. It sends <code>notification{title, body}</code> and <code>data{type: "chat", conversationId}</code> with <code>sendEachForMulticast</code>. <code>functions/src/chatFunctions.ts:386-425 (sendPushNotifications) @ 7808a91</code></p>
+<p><strong>Background and terminated.</strong> The handler only logs; the OS draws the notification from the payload. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:13-18 (_firebaseMessagingBackgroundHandler) @ 7808a91</code></p>
+<p><strong>Foreground.</strong> <code>_handleForegroundMessage</code>:</p>
+<ul><li>
+Calls <code>onMessage?.call</code>. Nothing in <code>lib</code> assigns <code>onMessage</code>.
+</li><li>
+Skips a chat message when <code>_activeConversationId</code> matches.
+</li><li>
+Otherwise calls <code>NotificationService().sendImmediateNotification(...)</code>.
+</li></ul>
+<p><code>lib/features/notifications/data/services/firebase_messaging_service.dart:277-320 (_handleForegroundMessage) @ 7808a91</code></p>
+<p><code>FlyerChatScreen</code> sets the active conversation after it builds the controller, and clears it in <code>dispose</code>. <code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:78 (_FlyerChatScreenState) @ 7808a91</code> and <code>lib/features/chat/presentation/screens/flyer_chat_screen.dart:148 (dispose) @ 7808a91</code></p>
+<p><strong>Opened from a notification.</strong> <code>_handleMessageOpenedApp</code> routes <code>chat</code>, <code>assignment</code>, <code>grade</code> and <code>behavior</code> through <code>_navigationCallback</code>. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:323-356 (_handleMessageOpenedApp) @ 7808a91</code> <code>setNavigationCallback</code> has no callers in <code>lib</code>, so every tap-to-open path does nothing. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:110-116 (setNavigationCallback) @ 7808a91</code></p>
+<h3 id="what-is-displayed">What is displayed</h3>
+<p><strong>Local notifications are never shown.</strong> <code>flutter_local_notifications</code> is initialized, with an Android channel <code>teacher_dashboard_calls</code>, but nothing in the repository calls <code>.show(</code> or <code>zonedSchedule</code>. <code>lib/features/notifications/data/services/notification_service.dart:323-383 (_initializeLocalNotifications) @ 7808a91</code></p>
+<p><strong>Display methods are stubs.</strong> <code>sendImmediateNotification</code>, <code>scheduleEventReminder</code> and <code>scheduleAssignmentReminder</code> only log and call <code>_storeNotificationRecord</code>. <code>lib/features/notifications/data/services/notification_service.dart:218-267 (NotificationService) @ 7808a91</code></p>
+<p><strong>The stored record.</strong> <code>_storeNotificationRecord</code> writes <code>notifications.add({type, title, message, relatedId, scheduledFor, createdAt, status: 'scheduled'})</code>. The record has no <code>userId</code>, <code>read</code> or <code>body</code> field. <code>lib/features/notifications/data/services/notification_service.dart:295-319 (_storeNotificationRecord) @ 7808a91</code></p>
+<p><strong>What users see, by platform:</strong></p>
+<div class="tw"><table><thead><tr><th>Platform</th><th>App state</th><th>What appears</th></tr></thead><tbody><tr><td>Android, iOS</td><td>background or closed</td><td>the OS-drawn FCM notification</td></tr><tr><td>iOS</td><td>foreground</td><td>the system banner from the presentation options, even inside the open conversation</td></tr><tr><td>Android</td><td>foreground</td><td>nothing on screen, only a <code>notifications</code> document</td></tr></tbody></table></div>
+<h3 id="web-in-app-path">Web in-app path</h3>
+<p><strong>Listener.</strong> On web, <code>AuthProvider</code> starts <code>WebInAppNotificationService</code> after sign-in. <code>lib/features/auth/providers/auth_provider.dart:566-570 (AuthProvider) @ 7808a91</code> The service listens to <code>notifications where userId == uid &amp;&amp; read == false orderBy createdAt desc limit 20</code>. For each document added, it calls <code>onNotificationReceived</code> and marks the document <code>delivered</code>. <code>lib/features/notifications/data/services/web_in_app_notification_service.dart:46-127 (WebInAppNotificationService) @ 7808a91</code></p>
+<p><strong>Display.</strong> <code>WebNotificationHandler</code> wraps the router and shows a 4-second floating SnackBar. <code>lib/shared/widgets/web_notification_handler.dart:27-61 (WebNotificationHandler) @ 7808a91</code></p>
+<p><strong>The two paths do not connect.</strong> Records from <code>_storeNotificationRecord</code> lack <code>userId</code> and <code>read</code>, so this query never matches them.</p>
+<h3 id="platform-configuration">Platform configuration</h3>
+<ul><li>
+<strong>iOS.</strong> <code>UIBackgroundModes</code> includes <code>remote-notification</code>. <code>ios/Runner/Info.plist:39-44 (UIBackgroundModes) @ 7808a91</code> <code>aps-environment</code> is <code>development</code>. <code>ios/Runner/Runner.entitlements:5-6 (aps-environment) @ 7808a91</code>
+</li><li>
+<strong>Android.</strong> The manifest has no <code>POST_NOTIFICATIONS</code> permission, no FCM channel meta-data and no messaging service. <code>android/app/src/main/AndroidManifest.xml:1-50 (manifest) @ 7808a91</code>
+</li><li>
+<strong>Web.</strong> There is no <code>firebase-messaging-sw.js</code>, and <code>index.html</code> unregisters every service worker. <code>web/index.html:65-85 (script) @ 7808a91</code>
+</li></ul>
+<h3 id="open">Open</h3>
+<ul><li>
+<span class="badge unv">UNVERIFIED</span>: whether plugin manifests merge <code>POST_NOTIFICATIONS</code> into the Android build.
+</li><li>
+The other <code>notifications</code> writer, <code>firebase_notification_service.dart</code>, is listed in question 5.
+</li></ul>
+</section><section class="card">
+<h2 id="12-which-client-files-call-cloud-functions-callables-and-wit">12. Which client files call Cloud Functions callables, and with what arguments?</h2>
+<p>Eight client files call 18 distinct callables from 29 call sites. Every server callable runs in <code>us-east4</code>. <code>functions/src/index.ts:29-32 (setGlobalOptions) @ 7808a91</code> Three client files use the default <code>FirebaseFunctions.instance</code>. In the cloud_functions plugin that default is believed to be <code>us-central1</code>; it comes from the library, not this repository (<span class="badge unv">UNVERIFIED</span>). Nothing in <code>lib</code> or <code>test</code> sets an emulator or another region.</p>
+<div class="tw"><table><thead><tr><th>Client file</th><th>Instance</th><th>Callable (line)</th><th>Arguments</th><th>Matches server?</th></tr></thead><tbody><tr><td><code>behavior_points_service.dart</code></td><td><code>us-east4</code></td><td><code>awardBehaviorPoints</code> (:38)</td><td><code>classId, studentId, studentName, behaviorId, behaviorName, points, gender, gradeLevel, studentAvatarUrl, note</code></td><td>yes</td></tr><tr><td></td><td></td><td><code>undoBehaviorPoints</code> (:79)</td><td><code>classId, studentId, historyId</code></td><td>yes</td></tr><tr><td></td><td></td><td><code>getClassPointsSummary</code> (:109)</td><td><code>classId</code></td><td>yes. No caller of this method was found.</td></tr><tr><td><code>behavior_history_panel.dart</code></td><td><code>us-east4</code></td><td><code>getBehaviorHistory</code> (:122)</td><td><code>BehaviorHistoryFilters.toMap</code> plus <code>classId, limit, offset</code></td><td>no: sends <code>studentName</code>; the server filters only on <code>studentId</code></td></tr><tr><td><code>firestore_chat_controller.dart</code></td><td><code>us-east4</code></td><td><code>updateTypingStatus</code> (:292)</td><td><code>conversationId, isTyping</code></td><td>yes</td></tr><tr><td></td><td></td><td><code>sendMessage</code> (:323)</td><td><code>conversationId, text, attachments</code></td><td>yes</td></tr><tr><td></td><td></td><td><code>uploadChatFile</code> (:383, :473)</td><td><code>conversationId, fileName, mimeType, base64Data, fileSize</code></td><td>keys match. A <code>.jpg</code> produces <code>image/jpg</code>, which the server rejects.</td></tr><tr><td></td><td></td><td><code>markMessagesAsRead</code> (:547)</td><td><code>conversationId, messageIds</code></td><td>yes. No caller of this method was found.</td></tr><tr><td><code>bulk_import_service.dart</code></td><td><code>us-east4</code></td><td><code>bulkImportStudents</code> (:66)</td><td><code>users[], sendPasswordResetEmails</code></td><td>partly: <code>className</code> is not a server key; <code>imported[]</code> has no <code>displayName</code></td></tr><tr><td></td><td></td><td><code>createTeacherAccount</code> (:154)</td><td><code>email, password, displayName, subjects</code></td><td>no: <code>subjects</code> is ignored, and the client reads <code>uid</code> where the server returns <code>userId</code></td></tr><tr><td><code>user_management_service.dart</code></td><td>default region</td><td><code>updateUserRole</code> (:154)</td><td><code>userId, newRole</code></td><td>no such server callable</td></tr><tr><td></td><td></td><td><code>resetUserPassword</code> (:179)</td><td><code>userId</code></td><td>keys match</td></tr><tr><td></td><td></td><td><code>deleteUserAccount</code> (:203, :285)</td><td><code>userId</code></td><td>keys match</td></tr><tr><td><code>admin_provider.dart</code></td><td>default region</td><td><code>createStudentAccount</code> (:237)</td><td><code>username, password, displayName, grade</code></td><td>no: the server requires <code>email</code> and uses <code>gradeLevel</code>, so every call fails</td></tr><tr><td></td><td></td><td><code>createTeacherAccount</code> (:271)</td><td><code>email, password, displayName</code></td><td>keys match</td></tr><tr><td></td><td></td><td><code>deleteUserAccount</code> (:300)</td><td><code>userId</code></td><td>keys match</td></tr><tr><td></td><td></td><td><code>resetUserPassword</code> (:319)</td><td><code>userId</code></td><td>keys match</td></tr><tr><td></td><td></td><td><code>createStudentAccount</code> (:345)</td><td><code>email, displayName, gradeLevel, password, parentEmail, classIds, isGoogleAuth</code></td><td>keys match. No caller was found.</td></tr><tr><td></td><td></td><td><code>createTeacherAccount</code> (:376)</td><td><code>email, password, displayName, subjects</code></td><td><code>subjects</code> is ignored. No caller was found.</td></tr><tr><td><code>set_user_role_claims.dart</code></td><td>default region</td><td><code>setRoleClaim</code> (:20)</td><td><code>uid, role</code></td><td>keys match. The file is not reachable.</td></tr><tr><td><code>run_migration.dart</code></td><td><code>us-east4</code></td><td><code>migrateAllUserRoles</code> (:48)</td><td>none</td><td>yes. The file is not reachable.</td></tr></tbody></table></div>
+<h3 id="citations-for-the-table">Citations for the table</h3>
+<p><strong>Client side</strong></p>
+<ul><li>
+<code>lib/features/behavior_points/domain/services/behavior_points_service.dart:13-110 (BehaviorPointsService) @ 7808a91</code>
+</li><li>
+<code>lib/features/behavior_points/presentation/widgets/behavior_history_panel.dart:122-130 (_BehaviorHistoryPanelState) @ 7808a91</code>
+</li><li>
+<code>lib/features/chat/data/controllers/firestore_chat_controller.dart:17-551 (FirestoreChatController) @ 7808a91</code>
+</li><li>
+<code>lib/features/admin/data/services/bulk_import_service.dart:9-160 (BulkImportService) @ 7808a91</code>
+</li><li>
+<code>lib/features/admin/data/services/user_management_service.dart:10-286 (UserManagementService) @ 7808a91</code>
+</li><li>
+<code>lib/features/admin/presentation/providers/admin_provider.dart:13-382 (AdminProvider) @ 7808a91</code>
+</li><li>
+<code>lib/shared/utils/set_user_role_claims.dart:7-21 (UserRoleClaims) @ 7808a91</code>
+</li><li>
+<code>lib/shared/utils/run_migration.dart:47-50 (runUserRoleMigration) @ 7808a91</code>
+</li></ul>
+<p><strong>Server side</strong></p>
+<ul><li>
+<code>functions/src/behaviorPoints.ts:367-433 (getBehaviorHistory) @ 7808a91</code>
+</li><li>
+<code>functions/src/chatFunctions.ts:317-329 (uploadChatFile) @ 7808a91</code>
+</li><li>
+<code>functions/src/adminFunctions.ts:64 (createStudentAccount) @ 7808a91</code>
+</li><li>
+<code>functions/src/adminFunctions.ts:216-282 (createTeacherAccount) @ 7808a91</code>
+</li></ul>
+<h3 id="effects-of-the-region-and-name-mismatches">Effects of the region and name mismatches</h3>
+<ul><li>
+<strong><code>UserManagementService.updateUserRole</code></strong> catches the failed call and returns false. Its Firestore role update comes after the call, so the update never runs. <code>lib/features/admin/data/services/user_management_service.dart:152-175 (updateUserRole) @ 7808a91</code>
+</li><li>
+<strong><code>AdminProvider</code> and <code>UserManagementService</code></strong> both use the default instance. Neither targets <code>us-east4</code>, where every server callable lives.
+</li></ul>
+<h3 id="http-endpoints-not-callables">HTTP endpoints (not callables)</h3>
+<p><code>SecureDesktopOAuthHandler</code> builds <code>https://&lt;region&gt;-&lt;project&gt;.cloudfunctions.net/{getOAuthUrl, exchangeOAuthCode, refreshOAuthToken}</code>. The region defaults to <code>us-east4</code>. Nothing outside its own file references the class. <code>lib/features/auth/data/services/desktop_oauth_handler_secure.dart:19-41 (SecureDesktopOAuthHandler) @ 7808a91</code></p>
+<h3 id="server-callables-with-no-client-call-site">Server callables with no client call site</h3>
+<ul><li>
+<code>createAdminAccount</code>
+</li><li>
+<code>getSystemStats</code>
+</li><li>
+<code>migrateStudentClassEnrollment</code>
+</li><li>
+<code>migrateUsernamesToPublic</code>. This one is also not exported from <code>index.ts</code>.
+</li></ul>
+<h3 id="not-checked">Not checked</h3>
+<ul><li>
+Reachability was checked with <code>git grep</code> for constructors and callers. The calling files were not read.
+</li><li>
+The request bodies of the three OAuth HTTP calls were not read, because the analyzer's file budget ran out.
+</li></ul>
+</section><section class="card">
+<h2 id="13-how-are-the-client-auth-code-firestore-rules-storage-rule">13. How are the client auth code, <code>firestore.rules</code>, <code>storage.rules</code> and the Cloud Functions tested?</h2>
+<p>At this commit there are no tests for the client auth code, either rules file, or the Cloud Functions. There is no emulator configuration, and no CI step runs tests, checks the rules, or builds the functions.</p>
+<h3 id="tracked-test-files">Tracked test files</h3>
+<p>Exactly one test file is tracked: <code>test/unit/firestore_thread_safe_test.dart</code>. Its imports are <code>flutter_test</code>, <code>flutter/material</code>, the <code>firestore_thread_safe</code> utility, and <code>fake_async</code>. It imports nothing from Firebase or the auth code. Its 11 cases cover only the callback scheduler:</p>
+<ul><li>
+priority ordering
+</li><li>
+20 ms deduplication
+</li><li>
+metrics
+</li><li>
+<code>safeNotify</code>
+</li><li>
+queue depth
+</li></ul>
+<p><code>test/unit/firestore_thread_safe_test.dart:7-307 (main) @ 7808a91</code></p>
+<p><code>pubspec.yaml</code> has scripts for <code>test/widgets/</code> and <code>integration_test</code>, but neither directory exists. <code>pubspec.yaml:193-194 (scripts) @ 7808a91</code></p>
+<h3 id="rules-and-functions">Rules and functions</h3>
+<ul><li>
+<strong>Rules:</strong> nothing tests either rules file. No file in the tree mentions <code>rules-unit-testing</code>.
+</li><li>
+<strong>Rules review:</strong> the only check on the rules is a review prompt asking an AI reviewer to flag rule changes. <code>.github/workflows/claude-code-review.yml:125-128 (prompt) @ 7808a91</code>
+</li><li>
+<strong>Functions tests:</strong> <code>functions/</code> has no test files and no <code>test</code> script. <code>functions/package.json:3-13 (scripts) @ 7808a91</code>
+</li><li>
+<strong>Functions test tooling:</strong> <code>firebase-functions-test ^3.3.0</code> is declared as a dev dependency, but nothing imports it. <code>functions/package.json:28 (devDependencies) @ 7808a91</code>
+</li></ul>
+<h3 id="emulator-configuration">Emulator configuration</h3>
+<ul><li>
+<strong><code>firebase.json</code>:</strong> not tracked at this commit. <code>.gitignore</code> ignores <code>**/firebase.json</code>. <code>.gitignore:114 (firebase.json) @ 7808a91</code> The <code>serve</code> script (<code>firebase emulators:start --only functions</code>) depends on that file. <code>functions/package.json:7 (scripts) @ 7808a91</code>
+</li><li>
+<strong>Local copy:</strong> a copy exists in the working tree but is not part of the commit. This research reads only the commit, so nothing it records about emulator ports, rules paths, or deploy targets comes from that file.
+</li><li>
+<strong>Client emulator calls:</strong> none. The tree has no <code>use*Emulator</code> or <code>connect*Emulator</code> calls. <code>AppInitializer</code> has only a comment saying emulator configuration is skipped. <code>lib/shared/core/app_initializer.dart:138-139 (AppInitializer) @ 7808a91</code>
+</li><li>
+<strong>Desktop OAuth handler:</strong> <code>SecureDesktopOAuthHandler</code> points at <code>localhost:5001</code> in debug mode, but nothing references the class. <code>lib/features/auth/data/services/desktop_oauth_handler_secure.dart:25-37 (SecureDesktopOAuthHandler) @ 7808a91</code>
+</li></ul>
+<h3 id="seams-for-testing">Seams for testing</h3>
+<p><code>AuthService</code> hard-wires <code>FirebaseAuth.instance</code> and <code>FirebaseFirestore.instance</code>, so neither can be swapped for a fake. <code>lib/features/auth/data/services/auth_service.dart:27-29 (AuthService) @ 7808a91</code></p>
+<p>Several services do take an optional <code>FirebaseFirestore</code>. <code>StudentService</code> is one; its doc comment says the parameter supports unit testing. <code>lib/features/student/data/services/student_service.dart:34 (StudentService) @ 7808a91</code> Others are <code>AssignmentService</code>, <code>SubmissionService</code>, <code>ClassService</code>, <code>GradeService</code>, <code>ScheduledMessagesService</code> and <code>FirestoreService</code>. No test constructs any of them.</p>
+<h3 id="tooling-declared-vs-used">Tooling declared vs used</h3>
+<ul><li>
+<strong>Dev dependencies:</strong> <code>pubspec.yaml</code> declares <code>flutter_test</code>, <code>integration_test</code>, <code>fake_cloud_firestore</code>, <code>test</code> and <code>fake_async</code>. Only <code>flutter_test</code> and <code>fake_async</code> are imported anywhere. <code>pubspec.yaml:121-135 (dev_dependencies) @ 7808a91</code>
+</li><li>
+<strong>Mis-indented packages:</strong> <code>mockito</code>, <code>faker</code> and <code>freezed</code> are indented under the <code>flutter_launcher_icons:</code> block, so YAML parses them as keys of that block, not as dev dependencies. <code>pubspec.yaml:153-161 (flutter_launcher_icons) @ 7808a91</code>
+</li></ul>
+<h3 id="ci">CI</h3>
+<p>The <code>validate</code> job does four things:</p>
+<ul><li>
+runs <code>flutter pub get</code>
+</li><li>
+runs <code>flutter analyze --no-fatal-infos</code>
+</li><li>
+runs <code>dart format --set-exit-if-changed</code>
+</li><li>
+runs a dead-code analyzer, set to <code>continue-on-error</code>
+</li></ul>
+<p><code>.github/workflows/01_ci.yml:13-55 (validate) @ 7808a91</code></p>
+<p>It has no <code>flutter test</code> step and does nothing in <code>functions/</code>. It also checks out <code>ref: main</code>, not the PR head. No workflow anywhere has a <code>run:</code> step that runs tests or emulators.</p>
+</section><section class="card">
+<h2 id="where-the-answers-meet">Where the answers meet</h2>
+<p>These are methods and fields that the answers to more than one question pass through, with the checks in each that reject a call or throw. Every line repeats a claim already cited in a question section above.</p>
+<ul><li>
+<strong>The <code>users/{uid}.role</code> lookup.</strong> Questions 1, 2, 3, 9 and 10 all depend on it.
+<ul><li>
+In the rules, <code>getUserRole</code> reads it with <code>get()</code>, and <code>isTheTeacher</code>, <code>isStudent</code> and <code>isAdmin</code> each also require a matching email domain. <code>firestore.rules:43-46 (getUserRole) @ 7808a91</code>
+</li><li>
+The admin callables throw <code>unauthenticated</code> or <code>permission-denied</code> from this field. <code>functions/src/adminFunctions.ts:51-61 (createStudentAccount) @ 7808a91</code>
+</li><li>
+The behavior-points callables require role teacher and class ownership. <code>functions/src/behaviorPoints.ts:31-77 (awardBehaviorPoints) @ 7808a91</code>
+</li><li>
+The client signs the user out when the role is null. <code>lib/features/auth/providers/auth_provider.dart:140-187 (AuthProvider) @ 7808a91</code>
+</li><li>
+<code>syncUserRole</code> copies it into the claim only for teacher or student. <code>functions/src/customClaims.ts:106-114 (syncUserRole) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>ensureConversationMembership</code>.</strong> Questions 4, 7 and 10 depend on it. It throws <code>not-found</code> when the conversation is missing and <code>permission-denied</code> when the caller is not a participant. The callable's catch then rewrites both as <code>internal</code>. <code>functions/src/chatFunctions.ts:13-34 (ensureConversationMembership) @ 7808a91</code> and <code>functions/src/chatFunctions.ts:132-137 (sendMessage) @ 7808a91</code>
+</li><li>
+<strong><code>uploadChatFile</code>.</strong> Questions 4, 10 and 12 depend on it.
+<ul><li>
+It rejects a declared <code>fileSize</code> over 10 MB. <code>functions/src/chatFunctions.ts:309-314 (uploadChatFile) @ 7808a91</code>
+</li><li>
+It rejects a MIME type outside its allow-list. <code>functions/src/chatFunctions.ts:317-331 (uploadChatFile) @ 7808a91</code>
+</li><li>
+The client sends <code>image/jpg</code> for <code>.jpg</code> files. <code>lib/features/chat/data/controllers/firestore_chat_controller.dart:387 (FirestoreChatController) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>sendPushNotifications</code> and <code>_saveFCMToken</code>.</strong> Questions 5, 10 and 11 depend on them.
+<ul><li>
+The sender reads only <code>users/{id}.fcmToken</code> and swallows errors. <code>functions/src/chatFunctions.ts:386-428 (sendPushNotifications) @ 7808a91</code>
+</li><li>
+The client writes both <code>users.fcmToken</code> and <code>fcm_tokens/{uid}</code>, and does nothing when no user is signed in. <code>lib/features/notifications/data/services/firebase_messaging_service.dart:235-263 (_saveFCMToken) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>getBehaviorHistory</code>.</strong> Questions 8, 10 and 12 depend on it.
+<ul><li>
+It rejects a missing <code>classId</code>, and rejects a teacher who does not own the class. <code>functions/src/behaviorPoints.ts:394-422 (getBehaviorHistory) @ 7808a91</code>
+</li><li>
+It filters the date range on <code>timestamp</code> and orders by <code>awardedAt</code>. <code>functions/src/behaviorPoints.ts:445-461 (getBehaviorHistory) @ 7808a91</code>
+</li><li>
+The client sends <code>studentName</code>, which the server ignores. <code>functions/src/behaviorPoints.ts:367-433 (getBehaviorHistory) @ 7808a91</code>
+</li></ul>
+</li><li>
+<strong><code>FirestoreRateLimiter</code>.</strong> Questions 8, 9 and 10 depend on it. It throws when <code>count &gt;= maxCalls</code> and lets the request through on any other error. <code>applyRateLimit</code> turns the throw into <code>resource-exhausted</code>. <code>functions/src/rate-limiter.ts:15-88 (FirestoreRateLimiter) @ 7808a91</code> and <code>functions/src/security.ts:38-51 (applyRateLimit) @ 7808a91</code>
+</li></ul>
+</section><section class="card">
+<h2 id="open-questions">Open questions</h2>
+<ul><li>
+<strong><code>firebase.json</code> is not in the commit.</strong> It is ignored by <code>.gitignore:114 (firebase.json) @ 7808a91</code>. A copy exists in the working tree, and this research did not read it. That leaves unchecked which rules files, functions source, hosting targets and emulator ports the project deploys with. Next ask, once the file is committed: <em>What does <code>firebase.json</code> configure for Firestore rules, Storage rules, indexes, functions source, hosting and emulators?</em>
+</li><li>
+<strong>Collections outside the question set.</strong> <code>firestore.rules</code> and <code>firestore.indexes.json</code> name collections this research did not trace: <code>calls</code> (and <code>candidates</code>), <code>announcements</code>, <code>games</code>/<code>scores</code>, <code>teachers</code>, <code>files</code>, <code>archived_grades</code> and the legacy <code>chat_rooms</code>. Next ask: <em>Where are <code>calls</code>, <code>announcements</code>, <code>games</code>, <code>teachers</code>, <code>files</code>, <code>archived_grades</code> and <code>chat_rooms</code> read and written?</em>
+</li><li>
+<strong>Platform behavior the code does not show (<span class="badge unv">UNVERIFIED</span>):</strong>
+<ul><li>
+whether Admin SDK <code>createUser</code>/<code>importUsers</code> fire <code>beforeUserCreated</code>
+</li><li>
+the default region of <code>FirebaseFunctions.instance</code> (believed to be <code>us-central1</code>)
+</li><li>
+how <code>set</code> with merge treats a dotted <code>behaviorCounts.&lt;id&gt;</code> key
+</li><li>
+how <code>resource == null</code> behaves in rules list queries
+</li><li>
+whether plugin manifests merge <code>POST_NOTIFICATIONS</code> into the Android build
+</li></ul>
+</li><li>
+<strong>Items left unread:</strong>
+<ul><li>
+the operation at <code>lib/features/student/presentation/providers/student_provider.dart:105 (loadTeacherStudents) @ 7808a91</code> and <code>:165</code>
+</li><li>
+which <code>grades</code> index entries sit at <code>firestore.indexes.json</code> lines 642–722
+</li><li>
+whether the hand-built <code>calendar_events</code> create includes <code>isActive</code>
+</li><li>
+which collection <code>StudentEnhanced</code> would read
+</li><li>
+the request bodies of the three OAuth HTTP calls
+</li><li>
+the calling files in question 12, whose reachability was checked by <code>git grep</code> only
+</li></ul>
+</li><li>
+<strong>Budget:</strong> the analyzers for questions 5 (about 31 short reads), 7 (16 files) and 8 (15 full reads plus 12 excerpts) went past the 15-file budget to finish their call-site lists.
+</li></ul>
+</section><section class="card">
+<h2 id="prior-documents">Prior documents</h2>
+<p>None. No research run folders existed under this initiative and the repository holds no ADRs at 7808a91.</p>
+</section></main></div></body></html>
