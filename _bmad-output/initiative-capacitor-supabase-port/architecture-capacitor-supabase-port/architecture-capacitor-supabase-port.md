@@ -218,7 +218,8 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
   - **Delivery (epic-notifications):**
     - `AFTER INSERT` triggers on `notifications` and `messages` post the id through `pg_net` to `send-push`.
     - `send-push` calls one RPC, `internal.push_targets(kind, ref)`. That RPC uses epic-chat's `internal.message_recipients` for messages, skips DND, and returns devices.
-    - `send-push` sends to `apns` rows (sandbox or production) and `webpush` rows (endpoint, keys, VAPID, `npm:web-push`), and deletes targets reported gone.
+    - `send-push` sends to `apns` rows (sandbox or production) and `webpush` rows (endpoint, keys, VAPID, `npm:web-push`), and deletes only targets reported gone: APNs 410 `Unregistered`, web push 404 or 410. A 400 `BadDeviceToken` is logged, never deleted.
+    - An `apns` row's environment is what the native shell reports at registration, read from the embedded provisioning profile's `aps-environment` (no profile in the Simulator: sandbox), as My-Love's `PushEnvironment.swift` does. `App.entitlements` stays `development`; distribution signing sets production.
     - Devices change only through `register_push_device` and `unregister_push_device` (at sign-out).
     - A notifications insert also sends a `notification` event on `user:<uuid>`, which drives the web pop-up (R17).
     - Web push is offered on the Home Screen web app and desktop browsers.
@@ -255,7 +256,7 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 
 - **Binds:** R23, K15; epic-platform-baseline owns
 - **Prevents:** a bundle reaching an app without the native code it needs; a major feature shipped around App Review
-- **Rule:** any change to native code, a Capacitor plugin, `Info.plist`, entitlements or `capacitor.config` ships as an App Store build and raises `MIN_NATIVE_BUILD`. `updates/latest.json` carries `min_native_build`, and the shell skips a bundle above its own build. Web code guards every plugin with `Capacitor.isPluginAvailable`. A major new feature ships with a reviewed build; fixes, UI and content go by live update.
+- **Rule:** any change to native code, a Capacitor plugin, `Info.plist`, entitlements or `capacitor.config` ships as an App Store build and raises `MIN_NATIVE_BUILD`. Until epic-app-store-release's first TestFlight build, such a change ships only in Simulator builds and still raises `MIN_NATIVE_BUILD`; that build carries every earlier one. `updates/latest.json` carries `min_native_build`, and the shell skips a bundle above its own build. Web code guards every plugin with `Capacitor.isPluginAvailable`. A major new feature ships with a reviewed build; fixes, UI and content go by live update.
 
 ### AD-19 — Realtime: private channels, server-sent events, ids only [ADOPTED]
 
@@ -309,7 +310,7 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 | Shared data shapes | `display_name`, `avatar_path`; `enrollments` for membership; `chat_reads` for read markers; one `grades` row per (assignment, student); GPA, letter grade and averages come from one grade-summary function owned by epic-assignments-grades, which epic-dashboards calls; `notifications.read_at`; `points_history.awarded_at`; dashboards read `security_invoker` views over source tables, with no `activities` table |
 | Calendar | Participants are added only through `add_event_participant`, which requires `app.can_see_user(creator, participant)` |
 | Migrations | One concern per timestamped file under `supabase/migrations/`, with a header naming its test; RLS, grants and the privilege fixture updated in the same change |
-| Tests | pgTAP `supabase/tests/database/NN_*.sql` for every table, policy, grant, function and view; `deno test` for every `handler.ts`; Vitest for `app/src`; Playwright projects Desktop Chrome and iPhone WebKit, plus api tests; native-only paths (APNs, NativeAuth sheet, live-update restart) checked by hand on TestFlight |
+| Tests | pgTAP `supabase/tests/database/NN_*.sql` for every table, policy, grant, function and view; `deno test` for every `handler.ts`; Vitest for `app/src`; Playwright projects Desktop Chrome and iPhone WebKit, plus api tests; native-only paths checked by hand in the iOS Simulator by the epic that builds each: the live-update restart (epic-platform-baseline), the NativeAuth sheet (epic-invite-sign-in; the Drive picker page, epic-assignments-grades) and APNs push to a closed app through the sandbox (epic-notifications); production APNs is checked first on epic-app-store-release's TestFlight build, the first TestFlight build |
 | Client layering | Features → hooks and stores (Zustand) → `app/src/api/*` → supabase-js; only `api/` imports the client |
 | Secrets | fnox locally; GitHub secrets in CI; Supabase function secrets for APNs, VAPID and the Apple secret; the bootstrap admin email in Vault, set by CI; nothing in source |
 | Email | Fermi sends none: no custom SMTP; recovery, OTP and email change are never offered in the UI |
@@ -446,6 +447,7 @@ erDiagram
   - confirm Sign in with Apple through the NativeAuth sheet works end to end;
   - confirm a `BEFORE UPDATE ON auth.users` trigger refuses a student's own password change cleanly (AD-8).
 - **Spike opening epic-assignments-grades:** a Fermi-hosted Drive picker page in the NativeAuth sheet on iOS (AD-13).
+- **Spike opening epic-notifications:** a real sandbox APNs push reaches a closed app in the iOS Simulator on the build Mac (AD-14). If it does not, a development-signed build installed from Xcode on the owner's iPhone, also sandbox, takes its place.
 - **App Review, at epic-app-store-release:**
   - whether App Review accepts web-flow Sign in with Apple that refuses unlisted reviewers. Demo accounts on the lists go in the review notes.
   - whether App Review accepts the student removal request under 5.1.1(v).

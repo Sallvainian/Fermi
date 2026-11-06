@@ -3,12 +3,8 @@ type: epic
 title: "The new app ships from CI"
 parent: initiative-capacitor-supabase-port
 covers: [R23]
-sources:
-  - _bmad-output/initiative-capacitor-supabase-port/initiative-capacitor-supabase-port.md
-  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md
-companions:
-  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md
-  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/epic-map-capacitor-supabase-port.md
+sources: [_bmad-output/initiative-capacitor-supabase-port/initiative-capacitor-supabase-port.md, _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md]
+companions: [_bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md, _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/epic-map-capacitor-supabase-port.md]
 after: []
 refined: true
 risk: high
@@ -77,7 +73,8 @@ Every later epic ships by pushing to main: the website on workers.dev and the iO
 
 - Decision: 2026-11-06, refined: Requirements R1–R9 deepen R23 with K6, K7, K13, K18 and AD-3, AD-17, AD-18, AD-21, since R23 alone does not describe this epic
 - Decision: 2026-11-06, the iOS app is checked in the iOS Simulator in this epic, not on TestFlight, which is for beta releases and first matters at epic-app-store-release
-- Source conflict: spine Consistency Conventions, Tests ("native-only paths … checked by hand on TestFlight") — vs the Simulator decision above; amending the spine is the architect's (bmad-architecture)
+- Decision: 2026-11-06, the source conflict with spine Consistency Conventions, Tests is settled: the architect amended it so native-only paths are checked in the Simulator in the epic that builds them, and AD-18 so native changes ship only in Simulator builds until epic-app-store-release's first TestFlight build
+- Decision: 2026-11-06, one checked-in xcconfig holds the native build number: the Xcode project reads its build number from it and story 9's packaging reads `min_native_build` from it, so the two cannot drift (answers the spine memlog's MIN_NATIVE_BUILD question)
 - Decision: 2026-11-06, tracer bullet is story 1, web only: the shell reaches workers.dev through migrate, build, wrangler deploy and the health check; iOS follows as story 2, the least certain part, because its setup is all hand steps
 - Decision: 2026-11-06, sequencing: stories 1, 4, 5 and 9 edit deploy.yml in that order; story 3 owns the CI lanes and pgtap before the fixture (6) and the keep-alive (7); stories 2, 3, 4 and 8 can run in parallel after story 1
 - Decision: 2026-11-06, the shared edge-function error helper in `supabase/functions/_shared` is this epic's (story 5); the epic map names no owner

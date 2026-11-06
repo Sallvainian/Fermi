@@ -2,14 +2,8 @@
 type: initiative
 title: Capacitor Supabase Port
 parent: none
-sources:
-  - _bmad-output/initiative-capacitor-supabase-port/research-firebase-backend-auth-rules-collections/research-firebase-backend-auth-rules-collections.md
-  - _bmad-output/initiative-capacitor-supabase-port/brief-port-goals.md
-  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md
-companions:
-  - _bmad-output/initiative-capacitor-supabase-port/parity-inventory.md
-  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md
-  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/epic-map-capacitor-supabase-port.md
+sources: [_bmad-output/initiative-capacitor-supabase-port/research-firebase-backend-auth-rules-collections/research-firebase-backend-auth-rules-collections.md, _bmad-output/initiative-capacitor-supabase-port/brief-port-goals.md, _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md]
+companions: [_bmad-output/initiative-capacitor-supabase-port/parity-inventory.md, _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md, _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/epic-map-capacitor-supabase-port.md]
 after: []
 risk: high
 ---
