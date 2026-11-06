@@ -90,7 +90,7 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Touch point: the hosted Supabase project — linked and migrated from CI; owner: epic-platform-baseline
 - Touch point: the Cloudflare account — the fermi-plus Worker on workers.dev; the old Pages project `fermi` is removed by epic-app-store-release; owner: epic-platform-baseline
 - Touch point: Apple Developer and App Store Connect — TestFlight internal builds (epic-platform-baseline), Sign in with Apple (epic-invite-sign-in), the push key (epic-notifications), review of the listing com.academic-tools.fermi; owner: epic-app-store-release
-- Touch point: a new Google Cloud project for Fermi — the OAuth client for sign-in and its basic app verification; owner: epic-invite-sign-in; the Drive Picker and `drive.file` on it; owner: epic-assignments-grades
+- Touch point: the Google Cloud project Fermi-Plus (`fermi-plus-513902`) — the OAuth client for sign-in and its basic app verification; owner: epic-invite-sign-in; the Drive Picker and `drive.file` on it; owner: epic-assignments-grades
 - Touch point: Gmail — its compose screen is opened, never called; owner: epic-contact
 - Touch point: the `@capgo/capacitor-updater` plugin — self-hosted live updates, no Capgo account; owner: epic-platform-baseline
 - Touch point: My-Love — read as the reference for CI, hosting and live updates, never changed; owner: epic-platform-baseline
@@ -116,4 +116,4 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Decision: 2026-11-05, decisions several epics share (web framework, schema and access-policy pattern, edge-function errors, upload rules, account-delete rule, live update versus App Store build) are settled in an architecture spine through bmad-architecture before epic 1's stories
 - Decision: 2026-11-05, the new app lives in `app/` beside the Flutter app until epic-app-store-release removes Flutter; its iOS project takes over bundle com.academic-tools.fermi
 - Decision: 2026-11-05, class archiving moved to epic-classes-rosters so other epics' class views do not collide; epic-invite-sign-in owns the upload pattern and the user directory
-- Decision: 2026-11-05, sign-in and Drive use a new Google Cloud project just for Fermi, as My-Love has its own (my-love-478322); not the Firebase project teacher-dashboard-flutterfire, since K2 allows no Firebase project dependency
+- Decision: 2026-11-05, sign-in and Drive use a new Google Cloud project just for Fermi, Fermi-Plus (`fermi-plus-513902`), created by the user, as My-Love has its own (my-love-478322); not the Firebase project teacher-dashboard-flutterfire, since K2 allows no Firebase project dependency
