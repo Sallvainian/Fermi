@@ -1,0 +1,14 @@
+# Model split under test (owner's choice, 2026-10-31): the main session plans,
+# verifies and triages review findings on the session model (Opus, set by
+# .bmad-loop/policy.toml), the review lenses run at that same capability
+# (step-04's rule), and only the full-route builder runs on Sonnet. A oneshot
+# route (about 100 lines or fewer) builds in the main session, so it stays Opus.
+
+[workflow]
+implementation_handoff = """
+Launch a subagent with no prior conversation context, on the Sonnet model at high reasoning effort (Agent tool: `model: "sonnet"`, `effort: "high"`), with this prompt:
+
+> Read {plan_file} fully and implement it — the plan is the sole source of truth. Load every file listed in its frontmatter `context:` before you start.
+>
+> When done, report what you changed, how you verified it, and anything left incomplete or risky.
+"""
