@@ -14,7 +14,7 @@ risk: high
 
 ## Description
 
-The iOS app passes App Store review as an update to com.academic-tools.fermi with Sign in with Apple, account deletion and a demo teacher login and a demo student login in the review notes with a note that sign-in is invitation-only; the Flutter app, functions/, Firebase config, the email worker, workflows 01_ci, 03, 04 and 05 and the Cloudflare Pages project fermi are removed; a per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working.
+The iOS app passes App Store review as an update to com.academic-tools.fermi with Sign in with Apple, account deletion and a demo teacher login and a demo student login in the review notes with a note that sign-in is invitation-only; the Flutter app, functions/, Firebase config, the email worker and the Cloudflare Pages project fermi are removed; a per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working.
 
 ## Outcome
 
@@ -25,7 +25,7 @@ Fermi's App Store listing runs the new app, and nothing of Flutter or Firebase r
 - On the first TestFlight build, which carries every native change since epic-platform-baseline, a chat message reaches the closed app as a push through production APNs
 - The iOS app passes App Store review as an update to com.academic-tools.fermi, with demo accounts on the lists in the review notes
 - A per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working
-- The Flutter app, functions/, Firebase config, the email worker, workflows 01_ci, 03, 04 and 05 and the Pages project fermi are gone, and no Firebase package, config or SDK call remains
+- The Flutter app, functions/, Firebase config, the email worker and the Pages project fermi are gone, and no Firebase package, config or SDK call remains
 
 ## Boundaries
 
@@ -48,3 +48,5 @@ Fermi's App Store listing runs the new app, and nothing of Flutter or Firebase r
 - Waits on epic-dashboards because: R19 deployed
 - Waits on epic-admin-console because: R15, R28 and R29 complete, account deletion for App Review
 - Decision: 2026-11-06, this epic makes the first TestFlight build and is the first to check production APNs; earlier epics check the iOS app in the Simulator (spine Tests, AD-18)
+- Decision: 2026-11-06, a .github audit found workflows 01_ci, 03, 04 and 05 failing on every pull request or firing together on a v* tag; their removal and the ten repo secrets only they use moved to epic-platform-baseline story 1.12, built now, and retargeting claude.yml and claude-code-review.yml to app/ and supabase/ to story 1.13; this epic still removes the Pages project fermi
+- Open question: how do TestFlight builds reach App Store Connect, Xcode by hand or CI? Settle at refinement and list the secrets it needs. None of the old ones can be reused: the Flutter-era distribution certificate expired 2026-08-18, the App Store Connect API key secrets were already gone, and the signing set was deleted in 01d3424. CI needs an Apple Distribution certificate (.p12) and its password, an App Store provisioning profile for com.academic-tools.fermi or automatic signing through the API key, an App Store Connect API key (key ID, issuer ID, .p8) and a temporary keychain password; by hand needs no GitHub secrets, and My-Love has no CI upload path to copy. waits: epic-app-store-release refinement

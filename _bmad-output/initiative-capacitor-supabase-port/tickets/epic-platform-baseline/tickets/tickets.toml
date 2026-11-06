@@ -4,12 +4,23 @@
 id = 1
 type = "story"
 title = "The empty app ships to workers.dev from a push to main"
-description = "Delivers R2's migrate, build, deploy and site-check part, R3, and R7's schemas part. Scaffolds app/ (Vite, React, React Router, TypeScript, Tailwind, Zustand, zod, supabase-js and Capacitor core, CLI and iOS at the Stack's pinned versions, with ESLint and typecheck) as a shell page that shows the build's commit id; adds supabase/config.toml with [auth] enable_signup = false and a first migration creating the empty app and internal schemas, not exposed by the Data API; adds an assets-only wrangler.jsonc for the Worker fermi-plus on workers.dev and a deploy.yml that runs migrate, build, wrangler deploy and an HTTP health check; deletes 02_deploy_web.yml, wrangler.toml and src/index.js, and deletes the Flutter-era root package.json and package-lock.json (wrangler is pinned in app/ instead). Setup (hitl), as My-Love did it: a GitHub environment Production holding CLOUDFLARE_API_TOKEN (Edit Cloudflare Workers template, the account whose workers.dev subdomain is sallvain), CLOUDFLARE_ACCOUNT_ID and the Supabase secrets for project mzbblbgmrvcgvzxwhptm, plus the repo variables SITE_URL (https://fermi-plus.sallvain.workers.dev/) and SUPABASE_PROJECT_ID; the first wrangler deploy creates the Worker. Hands the scaffold, the pinned dependency set and deploy.yml to every later story."
-verify = "After a push to main, fermi-plus.sallvain.workers.dev shows the shell with that push's commit id, the run shows migrate, build, deploy and health check green, and wrangler.toml, src/index.js, 02_deploy_web.yml and the root package.json are gone from main."
-covers = ["R2", "R3", "R7"]
+description = "Delivers R2's migrate, build, deploy and site-check part, R3, and R7's schemas part. Scaffolds app/ (Vite, React, React Router, TypeScript, Tailwind, Zustand, zod, supabase-js and Capacitor core, CLI and iOS at the Stack's pinned versions, with ESLint and typecheck) as a shell page that shows the build's commit id; adds supabase/config.toml with [auth] enable_signup = false and a first migration creating the empty app and internal schemas, not exposed by the Data API; adds an assets-only wrangler.jsonc for the Worker fermi-plus on workers.dev and a deploy.yml that runs migrate, build, wrangler deploy and an HTTP health check; deletes 02_deploy_web.yml, wrangler.toml and src/index.js, and deletes the Flutter-era root package.json and package-lock.json (wrangler is pinned in app/ instead), and README.md's CI/CD list item 2 (02_deploy_web.yml). Delivers R11: rewrites .github/dependabot.yml on My-Love's model (/Users/sallvain/Projects/My-Love/.github/dependabot.yml): npm at /app, with the vitest group (vitest and @vitest/*, majors included) listed first, then minor/patch production and dev groups, commit prefix deps with scope; github-actions grouped minor/patch, prefix ci with scope; no pub, no gradle and none of My-Love's preactjs ignore. Delivers R10's Cloudflare part: once deploy.yml has run green from the Production environment's secrets, deletes the repo-level CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID. Setup (hitl), as My-Love did it: a GitHub environment Production holding CLOUDFLARE_API_TOKEN (Edit Cloudflare Workers template, the account whose workers.dev subdomain is sallvain), CLOUDFLARE_ACCOUNT_ID and the Supabase secrets for project mzbblbgmrvcgvzxwhptm, plus the repo variables SITE_URL (https://fermi-plus.sallvain.workers.dev/) and SUPABASE_PROJECT_ID; the first wrangler deploy creates the Worker. Hands the scaffold, the pinned dependency set and deploy.yml to every later story, and dependabot.yml to story 13."
+verify = "After a push to main, fermi-plus.sallvain.workers.dev shows the shell with that push's commit id, the run shows migrate, build, deploy and health check green, and wrangler.toml, src/index.js, 02_deploy_web.yml and the root package.json are gone from main; Dependabot shows its /app npm and github-actions jobs with no errors, and gh secret list shows no CLOUDFLARE_ secret at repo level."
+covers = ["R2", "R3", "R7", "R10", "R11"]
 after = []
 hitl = true
 risk = "high"
+
+[[entry]]
+id = 12
+type = "story"
+title = "The dead Flutter-era workflows and their secrets are gone"
+description = "Delivers R10's workflow part and R13's part for what it deletes. Deletes 01_ci.yml, 03_windows_release.yml, 04_macos_release.yml and 05_Ignore_desktop-release.yml, and the repo secrets only they use: ANTHROPIC_API_KEY, APPLE_ID, APPLE_TEAM_ID, APPLE_APP_SPECIFIC_PASSWORD, CSC_LINK, CSC_KEY_PASSWORD, FIREBASE_PROJECT_ID, FIREBASE_FUNCTIONS_REGION, GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET. Removes the docs that describe them: README.md's CI/CD list items 1 (01_ci.yml) and 3 (Platform Releases), and docs/claude-code-setup.md's sections ANTHROPIC_API_KEY (Required), CI Pipeline Enhancement and MCP Server Configuration, which exist only for 01_ci.yml; the rest of that page and the Claude workflows' 01_ci mentions are story 13's. Pull requests then run no CI until story 3's test.yml, and claude.yml and claude-code-review.yml still install Flutter until story 13. Setup (hitl): the owner confirms the secret deletions, which cannot be undone. Needs nothing from other stories."
+verify = ".github/workflows/ holds none of 01_ci, 03, 04 or 05, a test pull request runs none of them, gh secret list shows none of the ten secrets, and README.md and docs/claude-code-setup.md no longer name the deleted workflows."
+covers = ["R10", "R13"]
+after = []
+hitl = true
+risk = "low"
 
 [[entry]]
 id = 2
@@ -26,10 +37,21 @@ risk = "high"
 id = 3
 type = "story"
 title = "Every test kind runs in CI and fails the run"
-description = "Delivers R5's CI-lane part and R7's pgtap part, built by running TEA's test framework setup with its CI scope (bmad-tea-framework, framework and CI together) to My-Love's standard. Enables pgtap in a migration with a first pgTAP test asserting the app and internal schemas exist and anon has no usage on them; adds test.yml, run on every pull request and push: ESLint and typecheck, Vitest with coverage, pgTAP through supabase test db on a local stack at CLI 2.122.0, deno test over every folder in supabase/functions (none yet; story 5 adds the first), and Playwright on Desktop Chrome and iPhone WebKit against the built shell, with My-Love's checks that every test ran and its burn-in of changed specs, each failing the run when it fails. Points .mcp.json's playwright-test server at app/'s Playwright (My-Love runs the same server from its root, where its Playwright is installed). Setup (hitl): the owner runs the TEA session. Uses story 1's scaffold; hands the lanes stories 5, 6 and 7 add tests to."
+description = "Delivers R5's CI-lane part and R7's pgtap part, built by running TEA's test framework setup with its CI scope (bmad-tea-framework, framework and CI together) to My-Love's standard. Enables pgtap in a migration with a first pgTAP test asserting the app and internal schemas exist and anon has no usage on them; adds test.yml, run on every pull request and push: ESLint and typecheck, Vitest with coverage, pgTAP through supabase test db on a local stack at CLI 2.122.0, deno test over every folder in supabase/functions (none yet; story 5 adds the first), and Playwright on Desktop Chrome and iPhone WebKit against the built shell, with My-Love's checks that every test ran and its burn-in of changed specs, each failing the run when it fails. Points .mcp.json's playwright-test server at app/'s Playwright (My-Love runs the same server from its root, where its Playwright is installed). Setup (hitl): the owner runs the TEA session. test.yml ends in one summary job that passes only when every lane passes, as My-Love's Test Summary, for story 13 to make a required check. Uses story 1's scaffold; hands the lanes stories 5, 6 and 7 add tests to, and the summary job to story 13."
 verify = "A pull request with one failing ESLint rule, Vitest test, pgTAP test and Playwright test shows a red run naming each failed job; reverting it turns the run green."
 covers = ["R5", "R7"]
 after = [1]
+hitl = true
+risk = "medium"
+
+[[entry]]
+id = 13
+type = "story"
+title = "Main merges only on green CI, and the Claude workflows target the new app"
+description = "Delivers R12 and R13's Claude-workflow part, in this order: adds story 3's test.yml summary job as a required status check on the Main ruleset; adds dependency-review.yml on My-Love's model (every pull request, fail-on-severity moderate, summary comment); adds dependabot-auto-merge.yml on My-Love's model, which merges a Dependabot pull request once the required check passes, and only now that one is required, since without it a pull request merges untested. Retargets claude.yml and claude-code-review.yml to app/ and supabase/: their prompts name the new stack's checks and test commands, and their Flutter setup and 01_ci.yml mentions go. Rewrites or deletes docs/claude-code-setup.md, whose remaining sections (Gemini coexistence, the Claude review workflow, and CLAUDE_CODE_OAUTH_TOKEN, wrongly described as a GitHub classic PAT) describe the old setup, and removes README.md's CI/CD list item 4 (Code Review Automation). Setup (hitl): the owner approves the ruleset change and turns on the repo's Allow auto-merge setting (off on Fermi, on in My-Love; gh pr merge --auto fails without it). Uses story 3's summary job, story 1's dependabot.yml, and comes after story 12, which edits the same README list and docs page."
+verify = "A pull request with a failing test cannot be merged; a Dependabot pull request merges itself after the summary check passes; a pull request changing app/package.json gets a dependency review comment; a Claude review of a pull request touching app/ runs with no Flutter step."
+covers = ["R12", "R13"]
+after = [3, 12]
 hitl = true
 risk = "medium"
 
@@ -117,6 +139,6 @@ title = "Refactor sweep"
 description = "Cleanup only, scoped at its start from what this epic's plans and reviews deferred; scope pushed out of another story is a new story."
 verify = "CI is green on main and each deferred item named at the start is closed or recorded as a new entry."
 covers = []
-after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13]
 hitl = false
 risk = "low"

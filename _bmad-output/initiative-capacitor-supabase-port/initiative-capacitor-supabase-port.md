@@ -94,6 +94,7 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Out: reading or sending a user's Gmail from Fermi (D14)
 - Out: fixing or hardening the Firebase backend that is being retired
 - Touch point: the hosted Supabase project — linked, migrated and configured from CI, kept awake and backed up by scheduled workflows; owner: epic-platform-baseline
+- Touch point: the GitHub repo — workflows, repo and environment secrets, Dependabot and the Main ruleset; owner: epic-platform-baseline
 - Touch point: the Cloudflare account — the fermi-plus Worker on workers.dev; the old Pages project `fermi` is removed by epic-app-store-release; owner: epic-platform-baseline
 - Touch point: Apple Developer and App Store Connect — TestFlight builds (epic-app-store-release; epic-platform-baseline checks the iOS app in the Simulator), Sign in with Apple and its monthly client-secret renewal (epic-invite-sign-in), the push key (epic-notifications), review of the listing com.academic-tools.fermi; owner: epic-app-store-release
 - Touch point: the Google Cloud project Fermi-Plus (`fermi-plus-513902`) — the OAuth client for sign-in and its basic app verification; owner: epic-invite-sign-in; the Drive Picker and `drive.file` on it; owner: epic-assignments-grades
@@ -134,3 +135,4 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Decision: 2026-11-06, the tree check's remaining suggestions (audit log screens, Settings owner, epics 9 and 10 waiting on epic 3, GitHub and Firebase-project touch points, shared files) are settled when each epic is refined
 - Decision: 2026-11-06, the spine is amended so the admin works on any class's roster (AD-8, AD-9), with its review fixes; the epic map's build-order details now match these Notes
 - Decision: 2026-11-06, epic-platform-baseline refined and broken into 11 stories; it checks the iOS app in the Simulator, not TestFlight, and removes src/index.js, so epic-app-store-release no longer lists it
+- Decision: 2026-11-06, a .github audit found the old CI dead or broken; removing workflows 01_ci, 03, 04 and 05 and the ten repo secrets only they use moved from epic-app-store-release to epic-platform-baseline (story 1.12, built now), which also rewrites Dependabot, requires test.yml's summary check on the Main ruleset, adds dependency review and Dependabot auto-merge, and retargets the Claude workflows; pull requests run no CI until story 1.3's test.yml; how TestFlight builds reach App Store Connect is settled when epic-app-store-release is refined
