@@ -7,7 +7,7 @@ created: 2026-11-05
 
 # Parity inventory
 
-What the port keeps, drops and must not repeat. Each line cites the research at `research-firebase-backend-auth-rules-collections/research-firebase-backend-auth-rules-collections.md` (Q = question section) or the brief at `brief-port-goals.md` (C, D ids). Code citations are at 7808a91; the research holds the rest.
+What the port keeps, drops and must not repeat. Each line cites the research at `research-firebase-backend-auth-rules-collections/research-firebase-backend-auth-rules-collections.md` (Q = question section) the brief at `brief-port-goals.md` (C, D ids), or the architecture spine at `architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md` (AD ids). Code citations are at 7808a91; the research holds the rest.
 
 ## In scope: what the Firebase app does today, by requirement
 
@@ -15,11 +15,11 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 
 | Req | Firebase pieces behind it today | Source |
 |---|---|---|
-| R1 | `AuthService.signInWithGoogle`; `autoAssignRole` (`beforeUserCreated`) and `DOMAIN_ROLE_MAPPINGS` give way to invite codes; Apple sign-in is new (only `reauthenticateWithApple` existed) | Q1, Q2, D6, D7 |
+| R1 | `AuthService.signInWithGoogle`; `autoAssignRole` (`beforeUserCreated`) and `DOMAIN_ROLE_MAPPINGS` give way to the admin's teacher list and teacher-created student accounts; Apple sign-in and the teacher/student choice screen are new (only `reauthenticateWithApple` existed); student email-and-password sign-in comes back for students only | Q1, Q2, AD-7, AD-8 |
 | R2 | `AuthProvider._processUser` (role from `users.role`, sign-out when null); router redirects; `/dashboard` picks by role | Q1 |
 | R3 | `profile_completion_dialog`; Storage `users/{uid}/profile/avatar.jpg` | Q4, Q5 |
-| R4 | `classes` (`teacherId`, `studentIds`, `enrollmentCode`, `isActive`); `ClassService`, `ClassProvider`; the roster name match is new | Q3, Q6, D17 |
-| R5 | `create_student_dialog`, `student_provider.createStudent`, `students`; `bulkImportStudents` callable (CSV, 1000-row cap, class by id or enrollment code); rows become roster names, not accounts | Q5, Q6, Q9, D18 |
+| R4 | `classes` (`teacherId`, `studentIds`, `isActive`); `ClassService`, `ClassProvider`; `enrollmentCode` is not ported | Q3, Q6, AD-9 |
+| R5 | `create_student_dialog`, `student_provider.createStudent`, `students`; `bulkImportStudents` callable (CSV, 1000-row cap, class by id or enrollment code); rows become student accounts with generated passwords, enrolled in the class | Q5, Q6, Q9, D18, AD-8 |
 | R6 | `assignments` (`attachmentUrl`), `submissions` (text; `fileUrl` stores a local path, so files never upload), `grades`; `AssignmentService`, `SubmissionService`, `GradeService`, `grade_provider`; Google Drive is new | Q3, Q6, D10, D12 |
 | R7 | `classes/{c}/behaviors`, `studentPoints`, `history`; callables `awardBehaviorPoints`, `undoBehaviorPoints`, `getClassPointsSummary`, `getBehaviorHistory` | Q8, Q10 |
 | R8 | `calendar_events` (`createdBy`, `participantIds`) | Q3, Q6 |
@@ -29,7 +29,7 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 | R12 | `presence/{uid}` (`online`, `lastSeen`); admin online count | Q5 |
 | R13 | `bug_reports` add from `contact_support_screen` | Q5 |
 | R14 | `notifications` via `FirebaseNotificationService` (`isRead`); `NotificationsScreen` routed at `app_router.dart:585`, `:599` | Q5 |
-| R15 | `UserManagementService`, `AdminProvider`; callables `createTeacherAccount` (gives way to teacher invite codes), `deleteUserAccount`; client-side system stats | Q5, Q9, Q12, D15 |
+| R15 | `UserManagementService`, `AdminProvider`; callables `createTeacherAccount` (gives way to the admin's teacher email list), `deleteUserAccount`; client-side system stats | Q5, Q9, Q12, D15, AD-7 |
 | R16 | `scheduled_messages` (`chatRoomId`, `createdAt`, embedded `message`); `ScheduledMessagesService.scheduleMessage` (`scheduled_messages_service.dart:97`); nothing delivers them | Q5, D10 |
 | R17 | `WebNotificationHandler`, a 4-second SnackBar (`web_notification_handler.dart:27-61`); its listener filters `read` while writers write `isRead` | Q5, Q11, D10 |
 | R18 | `GradeAnalyticsService.generateClassAnalytics` (`grade_analytics_service.dart:12`) and `getGradeTrends` (`:456`); models `GradeAnalytics`, `StudentPerformance`, `AssignmentStats`, `GradeTrend`, `CategoryPerformance`; reads `classes.students` and a `submissions/{id}/grades` subcollection nothing writes | Q6, D10 |
@@ -39,7 +39,12 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 | R22 | New | D14 |
 | R23 | New; follows My-Love's `src/services/nativeUpdates.ts` and `scripts/package-live-update.sh` | D9 |
 | R24 | New; web never registers for push today | Q11, D9 |
-| R25 | New | D6, D9 |
+| R25 | New | D9, AD-7 |
+| R26 | New | AD-8 |
+| R27 | New | AD-15 |
+| R28 | New | AD-16 |
+| R29 | New | AD-16 |
+| R30 | New | AD-22 |
 
 ## Out of scope
 
@@ -49,7 +54,7 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 - Any Firebase Auth or Firestore data migration; `migrateAllUserRoles`, `migrateUserRoles`, `migrateUsernamesToPublic`, `migrateUsernamesHttp`, `migrateStudentClassEnrollment` (Q2, Q9, Q10)
 - Jeopardy entirely: both `SimpleJeopardyProvider` classes, the games screen, `jeopardy_games`, `jeopardy_questions`, `jeopardy_sessions` (Q8)
 - `calls` and `candidates`; `games` and `scores` (D11)
-- Email/password sign-in, password reset and `teacher_password_reset_screen` (`needsPasswordReset`); `resetUserPassword`; the MailChannels email worker (D7, D15, Q1, Q9)
+- Email/password sign-in for teachers and the admin, self-service and emailed password reset, and `teacher_password_reset_screen` (`needsPasswordReset`); `resetUserPassword`; the MailChannels email worker (D7, D15, AD-8, Q1, Q9)
 - The `files` indexes (`ownerId`, `parentFolder`, `createdAt`): no folder file manager (D12)
 - The `teachers` collection: only a rule (`firestore.rules:621`), no code
 

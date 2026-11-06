@@ -7,8 +7,8 @@ paradigm: 'policy-in-the-database client-server: Postgres row-level security and
 scope: 'The new Fermi: app/ (web and iOS shell), supabase/ (schema, policies, functions, tests), CI, hosting, live updates and operations, across the 13 epics in tickets/tickets.toml'
 status: final
 created: '2026-11-05'
-updated: '2026-11-05'
-binds: [R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, K1, K2, K3, K4, K5, K6, K7, K8, K9, K10, K11, K12, K13, K14, K15, K16, epic-platform-baseline, epic-invite-sign-in, epic-classes-rosters, epic-assignments-grades, epic-chat, epic-notifications, epic-boards-announcements, epic-behavior-points, epic-calendar, epic-contact, epic-dashboards, epic-admin-console, epic-app-store-release]
+updated: '2026-11-06'
+binds: [R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22, R23, R24, R25, R26, R27, R28, R29, R30, K1, K2, K3, K4, K5, K6, K7, K8, K9, K10, K11, K12, K13, K14, K15, K16, K17, K18, epic-platform-baseline, epic-invite-sign-in, epic-classes-rosters, epic-assignments-grades, epic-chat, epic-notifications, epic-boards-announcements, epic-behavior-points, epic-calendar, epic-contact, epic-dashboards, epic-admin-console, epic-app-store-release]
 sources:
   - _bmad-output/initiative-capacitor-supabase-port/initiative-capacitor-supabase-port.md
   - _bmad-output/initiative-capacitor-supabase-port/parity-inventory.md
@@ -19,16 +19,6 @@ sources:
 ---
 
 # Architecture Spine — Capacitor Supabase Port
-
-> [!WARNING]
-> This spine changes settled parts of the ticket and of tickets.toml's epic descriptions:
-> - Sign-in no longer uses invite codes, class codes or name matching (R1, R4, R5, K3, D6, D17).
-> - Students have teacher-generated passwords (D7, and K10 for students).
-> - Students send text-only chat (R10), and presence gains do-not-disturb (R12).
-> - Due reminders, teacher self-deletion and student removal requests are new.
-> - The inbox (`notifications`, `notify`) moves from epic 6 to epic 2.
->
-> Update the ticket and the epic descriptions to match before refining epics.
 
 ## Design Paradigm
 
@@ -79,6 +69,8 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 | `app.enrolled(s, class)` | an enrollment row exists | true | false |
 | `app.class_open(class)` | the class is not archived | false | n/a |
 | `app.teaches_student(t, s)` | `s` is enrolled in a non-archived class `t` owns | false | false |
+| `app.manages_class(u, class)` | `app.teaches(u, class)` or `app.is_admin(u)` | true | n/a |
+| `app.manages_student(u, s)` | `app.teaches_student(u, s)` or `app.is_admin(u)` | false for the teacher | false for the teacher |
 | `app.shares_class(a, b)` | both are in one non-archived class as teacher or student | false | false |
 | `app.in_chat(u, chat)` | AD-10's membership rule | class chat: true, read-only | false |
 | `app.can_see_user(a, b)` | `a = b`, either is admin, `app.teaches_student` either way, `app.shares_class`, or co-members of a chat | per clauses | per clauses |
@@ -111,7 +103,7 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 - **Prevents:** checks moving into TypeScript, where pgTAP cannot see them; an epic building its API as edge functions
 - **Rule:** the edge functions are `send-push` (APNs and web push), `add-students` and `reset-student-password` (Auth admin API), `delete-account` (Auth admin API) and `sweep-storage` (Storage API). A new one needs an outside service no existing one reaches.
   - **User-called functions:** `verify_jwt = true`, and the function asks SQL (`internal.*_as`) before acting.
-  - **Trigger- or cron-called functions:** `verify_jwt = false`, and the function checks a shared secret held in a service-only table (My-Love `send-push`).
+  - **Trigger- or cron-called functions:** `verify_jwt = false`, and the function checks a shared secret. Every such function's URL and secret live in one service-only table, `internal.edge_function_settings (name, url, secret)`, created by epic-invite-sign-in with `sweep-storage`; CI writes one row per function per environment.
   - **Shape:** each function is split into `handler.ts` (pure, tested with `deno test`) and `index.ts` (wiring). A handler queries only the RPCs it names.
 
 ### AD-6 — One role store; one profile creator [ADOPTED]
@@ -132,20 +124,21 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
   - **The list:** the admin keeps `staff_invites` (email lowercased and trimmed, role `teacher`). Adding an email that already has a student profile is refused (`email_is_student`).
   - **The hook:** `internal.before_user_created` admits a Google or Apple sign-up only when its email is on `staff_invites` or equals the bootstrap admin email. It reads both through one `postgres`-owned helper, because `supabase_auth_admin` has no Vault access and does not bypass RLS. It refuses every `email` provider sign-up. It does not fire for admin-API creation, so it never sees `add-students`' users.
   - **Hide My Email:** an Apple private-relay address is refused with "Share your email with Fermi, or use Google".
-  - **Auth config:** `[auth] enable_signup = true`, `[auth.email] enabled = true` (password sign-in stays on), anonymous sign-ins off, manual linking off.
+  - **Auth config:** `[auth] enable_signup = true` from the change that registers the hook (epic-platform-baseline ships it `false`), `[auth.email] enabled = true` (password sign-in stays on), anonymous sign-ins off, manual linking off.
+  - **The list's writers:** `add_staff_invite` and `remove_staff_invite` (admin only, audited) are the only writers of `staff_invites`; the admin console calls the same functions.
   - **Sign-in screen:** "I'm a teacher" shows Google and Apple; "I'm a student" shows email and password.
   - **Test:** pgTAP drives the hook with listed, unlisted, relay, email-provider and bootstrap payloads. This is the ticket's "no account without an invitation" check.
 
 ### AD-8 — Student accounts are created by their teacher [ADOPTED]
 
-- **Binds:** R1, R2, R4, R5; epic-classes-rosters owns
-- **Prevents:** two ways to create a student; a student outside a roster; a teacher turning an invited colleague into a student; a password or name overwritten by a second class
-- **Rule:** only `add-students` creates students. A teacher (or the admin) calls it for a class they teach, with name and school email rows. A CSV of up to 1000 rows is sent in chunks of at most 100 rows per call. Each row is handled on its own and returns its own result:
+- **Binds:** R1, R2, R4, R5, R26, K10; epic-classes-rosters owns; epic-admin-console owns the admin's roster screen
+- **Prevents:** two ways to create a student; a student outside a roster; a teacher turning an invited colleague into a student; a password or name overwritten by a second class; the admin refused by a teaches-only check, or given a second admin-only path
+- **Rule:** only `add-students` creates students. A caller who `app.manages_class` (a class's teacher, or the admin for any class) sends name and school email rows for that class. A CSV of up to 1000 rows is sent in chunks of at most 100 rows per call. Before creating any Auth user, `add-students` asks `internal.check_add_students_as(actor, class)`, which checks `app.manages_class` and `app.class_open`. Each row is handled on its own and returns its own result:
   - an email on `staff_invites`, the bootstrap email, or a teacher or admin profile is refused;
   - an existing student is enrolled, keeping their password and `display_name`;
   - a new email gets an Auth user (`email_confirm: true`, `app_metadata.fermi_role = 'student'`) with a generated password, and is enrolled.
 
-  Enrollment is written by `internal.enroll_student_as(actor, class, student)`, which checks `app.teaches` and `app.class_open`. The generated password is stored as a Vault secret referenced by `student_credentials`. It is read only through `reveal_student_password(student)` (`app.teaches_student` or admin) and replaced only by `reset-student-password`. The printable sheet lists the rows that succeeded, each with its current password. Students cannot leave a class; only the teacher removes them. Students cannot change their own password, even through the raw Auth API: a `BEFORE UPDATE ON auth.users` trigger refuses a student's password change unless `reset-student-password` first wrote a short-lived ticket in `internal.password_resets`, which the trigger consumes. Every reveal and reset is recorded in the audit log (AD-22).
+  Enrollment is written by `internal.enroll_student_as(actor, class, student)`, and removal by `remove_student`; both check `app.manages_class` and `app.class_open`. Roster status (waiting for first sign-in or connected) is read only through `roster_status(class)`, allowed for `app.manages_class`. The generated password is stored as a Vault secret referenced by `student_credentials`. It is read only through `reveal_student_password(student)`, allowed for `app.manages_student`. It is replaced only by `reset-student-password`, which asks `internal.issue_password_reset_as(actor, student, new_password)` (checks `app.manages_student`). That call writes a short-lived ticket in `internal.password_resets` carrying the actor and the new password's Vault secret, then the function updates the Auth user. A `BEFORE UPDATE ON auth.users` trigger refuses a student's password change unless it consumes such a ticket; consuming it swaps `student_credentials` to the ticket's secret and writes the audit event, so a failed Auth call changes nothing. Students cannot change their own password, even through the raw Auth API, and cannot leave a class. The printable sheet lists the rows that succeeded, each with its current password. Every reveal and reset is in the audit log (AD-22).
 
 ### AD-9 — Enrollment is the only class membership; archived classes are read-only [ADOPTED]
 
@@ -154,8 +147,9 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 - **Rule:**
   - **Membership:** `enrollments (class_id, student_id)` is the only record of who is in a class. Nothing copies it.
   - **Archived classes:** `classes.archived_at` set means every class-scoped write checks `app.class_open` and is refused. Reads stay: teachers for their classes, students for their own records.
+  - **Reads of classes and rosters:** `app.manages_class` reads a class, its enrollments and its roster status, so the admin reads every class.
   - **Removal:** removing a student's enrollment ends their access to everything scoped to that class, their own grades and points included; the rows stay for the teacher.
-  - **Deleting a class:** only `delete_class`, which cascades.
+  - **Deleting a class:** only `delete_class` (through `internal.delete_class_as`), which cascades and is audited, including when a teacher deletes their own account.
   - **Companion rows:** a per-class row another epic needs (the class chat, the Announcements board) is created by an `AFTER INSERT ON classes` trigger in that epic's migration. The same migration backfills existing classes, and `unique (class_id)` holds.
 
 ### AD-10 — Chat is one model with fixed pairing rules [ADOPTED]
@@ -175,12 +169,12 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 
 ### AD-11 — Presence and do-not-disturb [ADOPTED]
 
-- **Binds:** R10, R11, R12, R15, R17, R24; epic-chat owns
-- **Prevents:** faked presence; presence beyond the directory; DND enforced in one sender only
+- **Binds:** R10, R11, R12, R15, R17, R24; epic-invite-sign-in owns the columns, the heartbeat and `app.presence`; epic-chat owns the dots, the do-not-disturb switch and typing
+- **Prevents:** faked presence; presence beyond the directory; DND enforced in one sender only; dots and the admin's online count disagreeing
 - **Rule:**
-  - **Online:** `touch_presence()` sets `profiles.last_seen_at = now()` about every 60 seconds while Fermi is in front. Clients have no update grant on that column.
-  - **Do not disturb:** `profiles.dnd` is user-settable.
-  - **Dots:** green when seen within 2 minutes and DND is off, yellow when seen and DND is on, red otherwise. Visible only where `app.can_see_user` allows.
+  - **Online:** the app shell (epic-invite-sign-in) calls `touch_presence()` about every 60 seconds while Fermi is in front, which sets `profiles.last_seen_at = now()`. Clients have no update grant on that column.
+  - **Do not disturb:** `profiles.dnd`; epic-invite-sign-in grants `UPDATE (dnd)` on the caller's own row, and epic-chat's switch writes through that grant.
+  - **Dots:** `app.presence(u)` returns `green` when seen within 2 minutes and DND is off, `yellow` when seen and DND is on, `red` otherwise. The dots and the admin's online count (green or yellow) both read it. Visible only where `app.can_see_user` allows.
   - **Typing:** Realtime Presence on the chat's channel, never stored.
   - **What DND silences:** every push and the in-app pop-up; inbox rows are still written.
 
@@ -217,7 +211,7 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 
 ### AD-14 — One notification pipeline [ADOPTED]
 
-- **Binds:** R11, R14, R17, R20, R24; epic-invite-sign-in owns the inbox, epic-notifications owns delivery
+- **Binds:** R11, R14, R17, R20, R24, R27, R29; epic-invite-sign-in owns the inbox, epic-notifications owns delivery
 - **Prevents:** each feature sending pushes its own way; recipients re-derived in TypeScript; DND or dead-token handling in one path only
 - **Rule:** the kinds are `chat_message`, `assignment_published`, `grade_posted`, `announcement`, `due_reminder` and `removal_request`. Adding a kind amends this AD.
   - **Inbox:** an inbox row is written only by `internal.notify(recipients, kind, ref)`. Epic-invite-sign-in creates `notifications` and `notify`, so epics 3, 4 and 7 can emit before delivery exists. `chat_message` writes no inbox row; chat unread counts cover it.
@@ -231,7 +225,7 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 
 ### AD-15 — Scheduled work runs in pg_cron through the `_as` functions [ADOPTED]
 
-- **Binds:** R16, due reminders; epic-chat and epic-assignments-grades own their jobs
+- **Binds:** R16, R27; epic-chat, epic-assignments-grades and epic-invite-sign-in (`sweep-storage`) own their jobs
 - **Prevents:** a scheduler that bypasses checks, impersonates users through a client-callable parameter, or retries forever
 - **Rule:** `pg_cron` workers in `internal` call the `_as` functions with the stored actor: the author for scheduled messages, and the system for reminders through `internal.notify`. Each due row runs in its own subtransaction. A refusal marks that row `failed` with its error key, writes `internal.job_failures`, and is never retried.
   - **Due reminders:** default to 24 hours before the due time, for every enrolled student who has not submitted.
@@ -239,17 +233,17 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 
 ### AD-16 — Account deletion follows one rule [ADOPTED]
 
-- **Binds:** R15, App Store 5.1.1(v); epic-admin-console owns every path; epic-classes-rosters owns the student's request
-- **Prevents:** orphaned rows, files or secrets; a deleted teacher signing back in; one teacher wiping a student shared with others
-- **Rule:** only `delete-account` deletes accounts.
+- **Binds:** R15, R28, R29, App Store 5.1.1(v); epic-admin-console owns every path; epic-classes-rosters owns the student's request
+- **Prevents:** orphaned rows, files or secrets; a deleted teacher signing back in; one teacher wiping a student shared with others; two epics removing the same thing
+- **Rule:** only `delete-account` deletes accounts. It asks `internal.delete_account_as(actor, target)`, which checks who may delete and records the actor in `internal.pending_deletions`, then deletes the Auth user through the admin API. It removes nothing itself.
   - **Who may delete:**
-    - the admin deletes anyone but themselves;
-    - a teacher deletes themselves from Settings, after a warning listing their classes, which go with them;
-    - a student cannot delete themselves. "Ask my teacher to remove my account" writes a request and a `removal_request` notification to their teachers and the admin. A teacher of that student, or the admin, can then delete the account, and never without an open request (`no_removal_request`).
-  - **What deletion removes:** the person's `staff_invites` row, their Vault secret and the Auth user.
-  - **Cascades:** every foreign key to `profiles` is `ON DELETE CASCADE`, except author columns on `messages`, `threads`, `replies` and `support_reports`, which are `SET NULL` and shown as "Deleted user".
-  - **Files:** every table that stores a path enqueues it into `internal.storage_deletions` from an `AFTER DELETE` trigger in the owning epic's migration. `sweep-storage`, called by `pg_cron`, deletes the queued objects through the Storage API. A kept message keeps its attachment.
-  - **Tests:** each epic that adds a foreign key to `profiles`, a bucket or a secret adds its case to the deletion test file.
+    - the admin deletes anyone but themselves, with no request needed;
+    - a teacher deletes themselves from Settings, after a warning listing their classes; `internal.delete_account_as` first deletes each class through `internal.delete_class_as`, so each is audited;
+    - a student cannot delete themselves. "Ask my teacher to remove my account" writes a request and a `removal_request` notification to their teachers and the admin. A teacher of that student can then delete the account, and never without an open request (`no_removal_request`).
+  - **The deletion root is `DELETE FROM auth.users`.** `profiles` cascades from it. Every other effect is a cascade or an `AFTER DELETE` trigger in the owning epic's migration: the `staff_invites` row (epic-invite-sign-in, by email), the Vault secret (epic-classes-rosters, on `student_credentials`), and stored files (each bucket owner).
+  - **Cascades:** every foreign key to `profiles` is `ON DELETE CASCADE`, except author columns on `messages`, `threads`, `replies` and `support_reports`, which are `SET NULL` and shown as "Deleted user"; `audit_events` has no foreign keys (AD-22).
+  - **Files:** each such trigger enqueues the path into `internal.storage_deletions`. `sweep-storage`, called by `pg_cron`, deletes the queued objects through the Storage API. A kept message keeps its attachment.
+  - **Tests:** the pgTAP file `supabase/tests/database/NN_account_deletion.sql`, created by epic-invite-sign-in with the `profiles`, `staff_invites` and `avatars` cases. Each case deletes the `auth.users` row directly and asserts every effect. Each later epic that adds a foreign key to `profiles`, a bucket or a secret adds its case; epic-admin-console adds the `internal.delete_account_as` cases there and the handler cases in `delete-account`'s `deno test`.
 
 ### AD-17 — Errors carry a code end to end [ADOPTED]
 
@@ -284,18 +278,19 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
 - **Binds:** K6, K7, K13; epic-platform-baseline owns
 - **Prevents:** hosted settings set by hand or missing; silent failures; the Free project pausing; expired secrets
 - **Rule:**
+  - **Extensions:** only epic-platform-baseline enables extensions: `pg_cron` (schema `pg_catalog`), `pg_net` (schema `extensions`) and `pgtap` for tests; `supabase_vault` is on by default.
   - **Deploy order:** migrate, then push the hosted Auth config (`supabase config push`, provider secrets through `env()`), then set Realtime private-only through the Management API, then deploy functions, build and package the live update, `wrangler deploy`, and the health check.
-  - **Health check:** reads the hosted Auth and Realtime config through the Management API and fails unless the hook is registered, email sign-in is on, anonymous sign-ins are off and Realtime is private-only.
-  - **Per-environment settings:** CI writes `send-push`'s URL and shared secret per environment.
-  - **Keep-alive:** a twice-daily workflow runs a real query through the API so breaks do not pause the Free project. It fails, and GitHub emails the owner, when `internal.job_failures` or `cron.job_run_details` holds new failures. It re-enables itself monthly through the GitHub API, because GitHub disables scheduled workflows in an inactive public repo after 60 days.
+  - **Health check:** reads the hosted Auth and Realtime config through the Management API and fails unless email sign-in is on, anonymous sign-ins are off and Realtime is private-only (a missing `private_only` fails). Epic-platform-baseline ships `[auth] enable_signup = false` and asserts it. Epic-invite-sign-in, in the change that creates the hook, turns sign-up on and replaces that assertion with one comparing the registered hook URI exactly.
+  - **Per-environment settings:** CI writes each pg_net-called function's row in `internal.edge_function_settings` per environment (AD-5).
+  - **Keep-alive:** a twice-daily workflow runs a real query through the API so breaks do not pause the Free project. It calls `public.job_health()`, a `postgres`-owned definer function only `service_role` may execute (epic-platform-baseline), and fails, so GitHub emails the owner, when `internal.job_failures`, `cron.job_run_details` or non-2xx `net._http_response` rows for those functions hold new failures. It re-enables itself monthly through the GitHub API, because GitHub disables scheduled workflows in an inactive public repo after 60 days.
   - **Apple secret:** a scheduled workflow regenerates the Apple sign-in client secret from the `.p8` key monthly; Apple's limit is 6 months.
-  - **Backups:** the Free plan has none, so a weekly workflow runs `supabase db dump --remote` (roles, schema, data) through the Session pooler. It encrypts the dump to the owner's age key and keeps it as a 90-day workflow artifact, never committed, because the repo is public. It restores the dump into a throwaway local database to prove it works. Storage file bytes are not backed up.
+  - **Backups:** the Free plan has none, so a weekly workflow runs `supabase db dump --remote` (roles, schema, data) through the Session pooler. It encrypts the dump to the owner's age key and keeps it as a 90-day workflow artifact, never committed, because the repo is public. It restores the dump into a throwaway local database to prove it works. Storage file bytes are not backed up, and neither is the Vault root key, so a restore into a new project loses stored student passwords and teachers reset them.
 
 ### AD-22 — One audit log for access-changing actions [ADOPTED]
 
-- **Binds:** R4, R5, R15, R21, AD-8, AD-16; epic-invite-sign-in owns the log, each epic writes its own actions
-- **Prevents:** each epic logging differently or not at all; a change to who is in Fermi with no record
-- **Rule:** `audit_events (actor_id, action, class_id, subject_id, at, detail)` is written only by `internal.audit(...)`, called inside the same function and transaction as the change it records. It has no client write grant and is never updated or deleted, except by cascade when its class is deleted. Actions:
+- **Binds:** R4, R5, R15, R21, R26, R29, R30, AD-8, AD-16; epic-invite-sign-in owns the log and the admin's read policy; epic-classes-rosters adds the teacher read policy and the teachers' view; epic-admin-console the admin's view; each epic writes its own actions
+- **Prevents:** each epic logging differently or not at all; a change to who is in Fermi with no record; a deletion erasing the events that record it
+- **Rule:** `audit_events (actor_id, action, class_id, subject_id, at, detail)` has no foreign keys: the ids are plain uuids, and `detail` snapshots names, email and class name at write time. It is written only by `internal.audit(...)`, has no client write grant, and is never updated or deleted. A change made in SQL calls `internal.audit` in the same transaction. A change made through the Auth admin API is audited by the database trigger that observes it: a password reset by the ticket-consuming trigger (AD-8), an account deletion by an `AFTER DELETE ON auth.users` trigger reading the actor from `internal.pending_deletions` (epic-admin-console). Actions:
   - staff invite added or removed;
   - class created, archived or deleted;
   - student added to or removed from a class;
@@ -303,7 +298,7 @@ Arrows are the only allowed dependency directions. Only `app/src/api/` imports t
   - removal request made;
   - account deleted.
 
-  Adding an action amends this AD. The admin reads every event; a teacher reads events for their classes and their students. Students read none.
+  Adding an action amends this AD. The admin reads every event. A teacher reads the events of classes they teach now and of students they teach now; events of deleted classes and people are the admin's only. Students read none.
 
 ## Consistency Conventions
 
@@ -411,6 +406,7 @@ erDiagram
 | Capability | Lives in | Governed by |
 | --- | --- | --- |
 | R1, R2, R25 sign-in and landing | `staff_invites`, hook, `on_auth_user_created`, `profiles` | AD-6, AD-7, AD-8 |
+| R26 student passwords | `student_credentials`, `reveal_student_password`, `reset-student-password`, password-change trigger | AD-8, AD-22 |
 | R3 name and picture | `profiles`, `avatars` | AD-3, AD-12, AD-13 |
 | R4, R5, R21 classes, rosters, archive | `classes`, `enrollments`, `add-students`, `student_credentials` | AD-2, AD-8, AD-9 |
 | R6, R18, R21 assignments, grades, analytics | `assignments`, `submissions`, `grades`, grade-summary function, file buckets | AD-4, AD-9, AD-13 |
@@ -420,11 +416,15 @@ erDiagram
 | R10, R12, R16 chat, presence, scheduled | `chats`, `chat_members`, `chat_reads`, `messages`, `send_message`, pg_cron | AD-10, AD-11, AD-15, AD-19 |
 | R11, R14, R17, R24 notifications | `notifications`, `push_devices`, `send-push`, `user:` events | AD-11, AD-14, AD-19 |
 | R13 support reports | `support_reports` (insert own, admin reads) | AD-1, AD-3 |
-| R15 admin console | `profiles` counts, `staff_invites`, `delete-account` | AD-7, AD-11, AD-16 |
+| R15 admin console | `app.presence` counts, `staff_invites` writers, admin roster screen, `delete-account` | AD-7, AD-8, AD-11, AD-16 |
 | R19 dashboards | `security_invoker` views and the grade-summary function | AD-3, conventions |
 | R22 Gmail compose | `app.visible_email` | AD-12 |
 | R23 live updates | updater, `latest.json`, `MIN_NATIVE_BUILD` | AD-18, AD-20 |
-| Due reminders (new) | `reminder_preferences`, pg_cron, `notify` | AD-14, AD-15 |
+| R27 due reminders | `reminder_preferences`, pg_cron, `notify` | AD-14, AD-15 |
+| R28, R29 self-deletion and removal requests | `delete-account`, removal-request rows, `removal_request` kind | AD-14, AD-16 |
+| R30 audit log | `audit_events`, `internal.audit` | AD-22 |
+| K17 uploads | buckets, Drive copy-in | AD-13 |
+| K18 Free plan | keep-alive, backup workflows | AD-21 |
 | K7, K13 deploy and tests | workflows, privilege fixture | AD-3, AD-21 |
 
 ## Deferred

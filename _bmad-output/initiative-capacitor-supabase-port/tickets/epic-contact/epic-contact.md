@@ -14,7 +14,7 @@ risk: low
 
 ## Description
 
-A user submits a support or bug report, and the admin reads them in a reports list this epic adds; a user opens Gmail's compose screen from inside Fermi with the recipient filled in from epic 2's user directory when started from a Fermi user.
+A user submits a support or bug report, and the admin reads them in a reports list this epic adds; a user opens Gmail's compose screen from inside Fermi with the recipient filled in from epic 2's app.visible_email when started from a Fermi user (AD-12).
 
 ## Outcome
 
@@ -32,8 +32,10 @@ Users reach the admin with reports and email the people they may email (initiati
 ## References
 
 - parent — _bmad-output/initiative-capacitor-supabase-port/initiative-capacitor-supabase-port.md, Requirements R13, R22, Constraints
+- architecture — _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md, AD-1, AD-3, AD-12
+- architecture — _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/epic-map-capacitor-supabase-port.md, Ownership row 10 Contact, Seams to watch
 - companion — _bmad-output/initiative-capacitor-supabase-port/parity-inventory.md
 
 ## Notes
 
-- Waits on epic-invite-sign-in because: accounts, the user directory and the admin role
+- Waits on epic-invite-sign-in because: accounts, the directory, app.visible_email and the admin role

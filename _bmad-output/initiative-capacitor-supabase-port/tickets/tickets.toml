@@ -4,101 +4,101 @@
 id = 1
 slug = "epic-platform-baseline"
 title = "The new app ships from CI"
-description = "A Capacitor web build and iOS shell live in a new app/ folder beside the untouched Flutter app, the iOS project taking over bundle com.academic-tools.fermi and its build numbers; a new deploy workflow replaces 02_deploy_web.yml and, on a push to main, applies Supabase migrations, deploys edge functions, builds, packages the live update, deploys the fermi-plus Worker (wrangler.toml rewritten to assets only on workers.dev) and passes the health check; access-policy and edge-function tests run in CI; an iOS build installed through TestFlight internal testing offers to restart onto each new deploy. Every later epic builds on this pipeline."
+description = "A Capacitor web build and iOS shell live in a new app/ folder beside the untouched Flutter app, the iOS project taking over bundle com.academic-tools.fermi and its build numbers, with the app/src/api/ client and its error map (AD-17); a new deploy workflow replaces 02_deploy_web.yml and, on a push to main, applies Supabase migrations, pushes the hosted Auth config and sets Realtime private-only, deploys edge functions, builds, packages the live update with its minimum native build (AD-18), deploys the fermi-plus Worker from an assets-only wrangler.jsonc on workers.dev, which replaces wrangler.toml and passes a health check that also asserts the Auth and Realtime config, with sign-up off until epic 2's hook exists (AD-21); the empty app and internal schemas, pg_cron, pg_net and pgtap, the job-health check the keep-alive calls, the job-failure table, the privilege fixture and its catalog test exist (AD-3); access-policy and edge-function tests run in CI; scheduled workflows keep the Free project awake and take a weekly encrypted backup (K18); an iOS build installed through TestFlight internal testing offers to restart onto each new deploy. Every later epic builds on this pipeline."
 covers = ["R23"]
 
 [[epic]]
 id = 2
 slug = "epic-invite-sign-in"
-title = "Teachers and the admin get in by invite"
-description = "On the deployed site and the iOS build, the landing page says access is by invite only, shows how to add Fermi to the Home Screen and links Fermi's existing App Store listing; the admin is made by migration on first Google sign-in and creates teacher codes (R15's teacher-code part); a teacher signs in with a code and Google or Apple; roles are set on the server, nobody changes their own, the admin and teachers land on their dashboards, and users complete their name and upload or remove a profile picture. Owns the upload pattern (type and real byte-size checks, short-lived links) that epics 4 and 5 reuse, and the user directory (who sees whose name, picture and email). Hands accounts, roles and the invite-code model to epic 3, and accounts, the directory and the admin role to epics 5, 9, 10 and 12."
-covers = ["R1", "R2", "R3", "R15", "R25"]
-after = [{ epic = 1, needs = "the CI pipeline, the Supabase project and the app shell" }]
+title = "Teachers and the admin sign in from the admin's list"
+description = "On the deployed site and the iOS build, the landing page says Fermi is for teachers on the admin's list and the students they add, shows how to add Fermi to the Home Screen and links the App Store listing; the sign-in screen opens with I'm a teacher (Google, Apple) and I'm a student (email and password); the bootstrap admin and teachers on the admin's email list, which the admin adds to and removes from (R15's list part), sign in with Google or Apple and land on their dashboards, while every other Google or Apple account, a hidden Apple email and an email sign-up are refused (AD-7); roles live only in profiles, set by the one profile creator (AD-6), and nobody changes their own; users complete their name and upload or remove a profile picture (R1's and R2's teacher and admin half; R30's staff-list part). Owns the foundations later epics write into: the directory and app.visible_email with stub class and chat clauses (AD-2, AD-12), the online heartbeat, the do-not-disturb flag and the presence colour every screen reads (AD-11), the notifications table and internal.notify (AD-14), the audit log (AD-22), the user: Realtime topic (AD-19), the upload pattern with the avatars bucket and file cleanup (AD-13, AD-16), the account-deletion test file that later epics add their cases to, the settings table for functions the database calls, and the Apple secret renewal workflow. Turns sign-up on and adds the hook to epic 1's health check in the change that creates the hook. Opens with the spine's sign-in spikes. Hands profiles, the profile creator, notify and the audit log to epic 3; notify to epics 4, 6 and 7; the upload pattern and file cleanup to epics 4 and 5; presence, the do-not-disturb flag and the user: topic to epics 5 and 6; app.visible_email to epic 10; accounts and the directory to epics 5, 9 and 10; and the admin role, the teacher list and the audit log to epic 12."
+covers = ["R1", "R2", "R3", "R15", "R25", "R30"]
+after = [{ epic = 1, needs = "the CI pipeline, the Supabase project, the app shell, the empty schemas, pg_cron and pg_net" }]
 
 [[epic]]
 id = 3
 slug = "epic-classes-rosters"
-title = "Teachers run classes and students join them"
-description = "A teacher creates, edits, archives and deletes classes and fills each roster by name, one at a time or by CSV; an archived class leaves the main class views and stays under Archived (R21's class part); a student joins with the class code and their name, matched to the roster with claim-once, teacher approval for near matches and undo, and lands on the student dashboard. Delivers R1's student half on epic 2's invite model, and hands classes, membership and the archived flag to epics 4, 5, 7 and 8."
-covers = ["R1", "R2", "R4", "R5", "R21"]
-after = [{ epic = 2, needs = "accounts, server-set roles and the invite-code model" }]
+title = "Teachers run classes and add their students"
+description = "A teacher creates, edits, archives and deletes classes (an archived class leaves the main views, stays under Archived and takes no new writes; R21's class part) and adds students to each roster by name and school email, one at a time or by CSV, which creates each new student's account with a generated password, enrolls an existing student keeping theirs, refuses staff emails and ends with a printable sheet (AD-8; R5's and R26's teacher part, the admin's is epic 12's); a rostered student signs in with that email and password and lands on the student dashboard (R1's and R2's student half); each roster row shows waiting or connected, Show password and Reset password, and students cannot change their password or leave a class; a teacher removes a student, ending their access to the class (AD-9); every roster function also works for the admin on any class, for epic 12's screen; a student's Ask my teacher to remove my account writes a request and notifies their teachers and the admin. Class, roster, password and removal-request actions go into epic 2's audit log, and teachers read their classes' and students' events in a view this epic adds (R29's request part; R30's class, roster, password and request part). Fills epic 2's class clauses of the directory, hands classes, enrollment, the archived flag and the class checks to epics 4, 5, 7 and 8, and removal requests to epic 12."
+covers = ["R1", "R2", "R4", "R5", "R21", "R26", "R29", "R30"]
+after = [{ epic = 2, needs = "profiles and the profile creator, the directory, notify and the audit log" }]
 
 [[epic]]
 id = 4
 slug = "epic-assignments-grades"
 title = "Assignments, submissions and grades"
-description = "On epic 3's classes and membership and epic 2's upload pattern, a teacher publishes assignments with files from the device or Google Drive; enrolled students open them and submit text with files from the device or Drive; the teacher grades; a student sees only their own grades; a teacher sees a class's grade analytics; an archived class's grades stay viewable under Archived (R21's grades part). Hands assignments, submissions and grades to epic 11."
-covers = ["R6", "R18", "R21"]
-after = [{ epic = 3, needs = "classes, enrollment and the archived flag" }]
+description = "On epic 3's classes and checks and epic 2's upload pattern, a teacher publishes assignments with files from the device or copied in from Google Drive (AD-13); enrolled students open them and submit text with files from the device or Drive, frozen at submit; the teacher grades; a student sees only their own grades; students get a notification for a published assignment and a graded submission through epic 2's notify; a teacher sees a class's grade analytics from one grade-summary function; an archived class's grades stay viewable under Archived and it takes no new assignments, submissions or grades (R21's grades part); students get due reminders for unsubmitted work, 24 hours before by default, each setting their own times or turning them off (AD-15). Opens with a spike on the Drive picker page in the iOS sign-in sheet. Hands assignments, submissions, grades and the grade-summary function to epic 11."
+covers = ["R6", "R18", "R21", "R27"]
+after = [{ epic = 3, needs = "classes, enrollment, the class checks and the archived flag" }]
 
 [[epic]]
 id = 5
 slug = "epic-chat"
 title = "Chat on one model"
-description = "On epic 3's class membership, epic 2's user directory and upload pattern, users chat one-to-one, in groups and in class chats on one chat model, with text and checked attachments up to 10 MB, typing and unread counts; only participants read or post; scheduled messages post at their time; users see who is online. Hands the message event to epic 6 and presence to epic 12."
+description = "On epic 3's class membership and epic 2's directory and upload pattern, users chat on one chat model (AD-10): one-to-one between a teacher and their own student or the admin and a teacher, in groups only teachers create with their own students, and in class chats that follow the roster; teachers and the admin attach files up to 10 MB, students send text; users see typing and unread counts; only participants read or post; a removed student loses the class chat and that teacher's groups with history, and an archived class's chat takes no new messages; scheduled messages post at their time through the same send check; users see green, yellow and red presence dots and turn do-not-disturb on or off, over epic 2's presence colour and flag (AD-11). Fills epic 2's chat clause of the directory. Hands message recipients to epic 6 and presence to epic 12."
 covers = ["R10", "R12", "R16"]
-after = [{ epic = 3, needs = "classes and enrollment for class chats" }]
+after = [{ epic = 3, needs = "classes, enrollment and the class checks for class chats and pairing" }]
 
 [[epic]]
 id = 6
 slug = "epic-notifications"
 title = "Notifications reach people"
-description = "Users see, mark read and delete their notifications; on the website a notification arriving while Fermi is open shows as a pop-up; a chat message reaches a closed iOS app as a push and, best effort, a closed Home Screen web app as a web push. Opens with a spike that proves web push on the owner's iPhone. Consumes epic 5's message event and hands the notification model to epic 7."
+description = "Users see, mark read and delete their notifications in an inbox screen over epic 2's notifications table; on the website a notification arriving while Fermi is open shows as a pop-up; chat messages and every notification kind reach a closed iOS app as a push and, best effort, the Home Screen web app and desktop Chrome, Edge and Safari as a web push; do-not-disturb silences push and pop-ups, and dead device tokens are removed (AD-14). Opens with a spike that proves web push on the owner's iPhone. Consumes epic 2's notify and epic 5's message recipients; notifications written by epics 3 and 4 start reaching devices when this ships, and epic 7's announcements reach people through it."
 covers = ["R11", "R14", "R17", "R24"]
-after = [{ epic = 5, needs = "the chat message event to notify on" }]
+after = [{ epic = 5, needs = "the messages table and message recipients to deliver on" }]
 
 [[epic]]
 id = 7
 slug = "epic-boards-announcements"
 title = "Discussion boards and announcements"
-description = "On epic 3's classes and membership, teachers create boards; users read, post, reply and like; authors delete their own posts; a teacher's announcement in a class's Announcements board notifies the class through epic 6's notification model. Hands posts to epic 11 for recent activity."
+description = "On epic 3's classes and checks, teachers create boards; users read, post, reply and like; authors delete their own posts; each class gets an Announcements board (AD-9), and a teacher's announcement notifies the class's members through epic 2's notify, which they see in epic 6's inbox and as a push; an archived class's boards take no new posts. Hands posts to epic 11 for recent activity."
 covers = ["R9", "R20"]
-after = [{ epic = 3, needs = "classes and membership" }, { epic = 6, needs = "the notification model" }]
+after = [{ epic = 3, needs = "classes and membership" }, { epic = 6, needs = "the inbox screen and push delivery, so members see the announcement" }]
 
 [[epic]]
 id = 8
 slug = "epic-behavior-points"
 title = "Behavior points"
-description = "On epic 3's classes and membership, a teacher manages a class's behaviors, awards and undoes points, and sees totals and filtered history; a student sees only their own points and history. Hands points to epic 11 for recent activity."
+description = "On epic 3's classes and checks, a teacher manages a class's behaviors, awards and undoes points, and sees totals and filtered history; a student sees only their own points and history, and loses them when removed from the class; an archived class takes no new points. Hands points to epic 11 for recent activity."
 covers = ["R7"]
-after = [{ epic = 3, needs = "classes and enrollment" }]
+after = [{ epic = 3, needs = "classes, enrollment and the class checks" }]
 
 [[epic]]
 id = 9
 slug = "epic-calendar"
 title = "Calendar"
-description = "A user creates calendar events and sees the events they created or were added to."
+description = "A user creates calendar events and sees the events they created or were added to; a creator adds only people epic 2's directory lets them see."
 covers = ["R8"]
-after = [{ epic = 2, needs = "accounts" }]
+after = [{ epic = 2, needs = "accounts and the directory" }]
 
 [[epic]]
 id = 10
 slug = "epic-contact"
 title = "Support reports and Gmail"
-description = "A user submits a support or bug report, and the admin reads them in a reports list this epic adds; a user opens Gmail's compose screen from inside Fermi with the recipient filled in from epic 2's user directory when started from a Fermi user."
+description = "A user submits a support or bug report, and the admin reads them in a reports list this epic adds; a user opens Gmail's compose screen from inside Fermi with the recipient filled in from epic 2's app.visible_email when started from a Fermi user (AD-12)."
 covers = ["R13", "R22"]
-after = [{ epic = 2, needs = "accounts, the user directory and the admin role" }]
+after = [{ epic = 2, needs = "accounts, the directory, app.visible_email and the admin role" }]
 
 [[epic]]
 id = 11
 slug = "epic-dashboards"
 title = "Dashboards show real data"
-description = "A teacher's dashboard shows assignment stats and recent activity; a student's shows upcoming assignments, recent grades, assignment stats and GPA; every widget reads data epics 4, 7 and 8 write, and writes none of its own."
+description = "A teacher's dashboard shows assignment stats and recent activity; a student's shows upcoming assignments, recent grades, assignment stats and GPA; every widget reads views over data epics 4, 7 and 8 write and epic 4's grade-summary function, and writes none of its own."
 covers = ["R19"]
-after = [{ epic = 4, needs = "assignments, submissions and grades" }, { epic = 7, needs = "posts for recent activity" }, { epic = 8, needs = "points for recent activity" }]
+after = [{ epic = 4, needs = "assignments, submissions, grades and the grade-summary function" }, { epic = 7, needs = "posts for recent activity" }, { epic = 8, needs = "points for recent activity" }]
 
 [[epic]]
 id = 12
 slug = "epic-admin-console"
-title = "Admin console"
-description = "The admin lists users with counts by role and online (from epic 5's presence) and deletes any account but their own, the delete following the shared account-delete rule. Delivers R15's rest beside epic 2's teacher codes."
-covers = ["R15"]
-after = [{ epic = 2, needs = "accounts and the admin role" }, { epic = 5, needs = "presence for the online count" }]
+title = "Admin console and account deletion"
+description = "The admin lists users with counts by role and online (from epic 2's presence colour) manages epic 2's teacher email list in the console, and opens any class's roster to add students and show or reset passwords as its teacher can (R5's and R26's admin part); delete-account is the only way an account is deleted (AD-16): the admin deletes any account but their own, a teacher deletes their own account from Settings after a warning listing their classes, and a teacher of a student completes that student's open removal request from epic 3; deletion removes the person's teacher list entry, stored password, files and rows by the cascade rule, and each deletion is written to epic 2's audit log, which the admin reads in a view this epic adds (R29's completion part; R30's account-deletion part). Delivers R15's rest beside epic 2's teacher list."
+covers = ["R5", "R15", "R26", "R28", "R29", "R30"]
+after = [{ epic = 2, needs = "accounts, the admin role, the teacher list and the audit log" }, { epic = 3, needs = "removal requests and teacher-student links" }]
 
 [[epic]]
 id = 13
 slug = "epic-app-store-release"
 title = "Release on the App Store and retire Flutter"
-description = "The iOS app passes App Store review as an update to com.academic-tools.fermi with Sign in with Apple and a reviewer invite code; the Flutter app, functions/, Firebase config, src/index.js, the email worker, workflows 01_ci, 03, 04 and 05 and the Cloudflare Pages project fermi are removed; a per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R25 working."
+description = "The iOS app passes App Store review as an update to com.academic-tools.fermi with Sign in with Apple, account deletion and a demo teacher login and a demo student login in the review notes with a note that sign-in is invitation-only; the Flutter app, functions/, Firebase config, src/index.js, the email worker, workflows 01_ci, 03, 04 and 05 and the Cloudflare Pages project fermi are removed; a per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working."
 covers = []
-after = [{ epic = 4, needs = "R6, R18 and R21 deployed for the walkthrough" }, { epic = 6, needs = "R11, R14, R17 and R24 deployed, push working in the iOS build" }, { epic = 7, needs = "R9 and R20 deployed" }, { epic = 9, needs = "R8 deployed" }, { epic = 10, needs = "R13 and R22 deployed" }, { epic = 11, needs = "R19 deployed" }, { epic = 12, needs = "R15 complete" }]
+after = [{ epic = 4, needs = "R6, R18, R21 and R27 deployed for the walkthrough" }, { epic = 6, needs = "R11, R14, R17 and R24 deployed, push working in the iOS build" }, { epic = 7, needs = "R9 and R20 deployed" }, { epic = 9, needs = "R8 deployed" }, { epic = 10, needs = "R13 and R22 deployed" }, { epic = 11, needs = "R19 deployed" }, { epic = 12, needs = "R15, R28 and R29 complete, account deletion for App Review" }]
