@@ -355,7 +355,11 @@ Fermi/
     tests/database/         # pgTAP, privilege fixture
   wrangler.jsonc            # Worker fermi-plus, assets only
   scripts/package-live-update.sh
-  .github/workflows/        # deploy.yml, test.yml, keep-alive.yml, apple-secret.yml, backup.yml
+  .github/
+    dependabot.yml          # app/ npm and GitHub Actions only
+    workflows/              # deploy.yml, test.yml, keep-alive.yml, apple-secret.yml, backup.yml,
+                            # dependency-review.yml, dependabot-auto-merge.yml,
+                            # claude.yml, claude-code-review.yml (all epic-platform-baseline)
 ```
 
 ```mermaid
