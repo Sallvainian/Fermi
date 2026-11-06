@@ -26,6 +26,7 @@ Users message the people they may message on one chat model that only participan
 - A scheduled message posts at its time
 - Users see green, yellow and red presence dots and turn do-not-disturb on and off
 - Automated checks refuse a non-participant reading or posting, a student-to-student or student attachment send, and a removed student reading the class chat or that teacher's groups
+- A `bmad-tea-trace` run at closure maps each Requirements line to passing tests, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -41,3 +42,4 @@ Users message the people they may message on one chat model that only participan
 ## Notes
 
 - Waits on epic-classes-rosters because: classes, enrollment and the class checks for class chats and pairing
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite

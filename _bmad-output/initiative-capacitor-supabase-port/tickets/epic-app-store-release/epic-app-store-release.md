@@ -26,6 +26,7 @@ Fermi's App Store listing runs the new app, and nothing of Flutter or Firebase r
 - The iOS app passes App Store review as an update to com.academic-tools.fermi, with demo accounts on the lists in the review notes
 - A per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working
 - The Flutter app, functions/, Firebase config, the email worker and the Pages project fermi are gone, and no Firebase package, config or SDK call remains
+- A `bmad-tea-trace` run maps the initiative's R1–R30 to passing tests and the walkthrough, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -50,3 +51,4 @@ Fermi's App Store listing runs the new app, and nothing of Flutter or Firebase r
 - Decision: 2026-11-06, this epic makes the first TestFlight build and is the first to check production APNs; earlier epics check the iOS app in the Simulator (spine Tests, AD-18)
 - Decision: 2026-11-06, a .github audit found workflows 01_ci, 03, 04 and 05 failing on every pull request or firing together on a v* tag; their removal and the ten repo secrets only they use moved to epic-platform-baseline story 1.12, built now, and retargeting claude.yml and claude-code-review.yml to app/ and supabase/ to story 1.13; this epic still removes the Pages project fermi
 - Open question: how do TestFlight builds reach App Store Connect, Xcode by hand or CI? Settle at refinement and list the secrets it needs. None of the old ones can be reused: the Flutter-era distribution certificate expired 2026-08-18, the App Store Connect API key secrets were already gone, and the signing set was deleted in 01d3424. CI needs an Apple Distribution certificate (.p12) and its password, an App Store provisioning profile for com.academic-tools.fermi or automatic signing through the API key, an App Store Connect API key (key ID, issuer ID, .p8) and a temporary keychain password; by hand needs no GitHub secrets, and My-Love has no CI upload path to copy. waits: epic-app-store-release refinement
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, before its stories are planned, covering the per-role walkthrough, the TestFlight push check and App Review; its test plan is adopted as a companion and each story names the scenarios it covers

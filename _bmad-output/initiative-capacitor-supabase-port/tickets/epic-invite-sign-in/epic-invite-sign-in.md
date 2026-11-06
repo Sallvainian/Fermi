@@ -27,6 +27,7 @@ The admin and listed teachers get into Fermi with Google or Apple, nobody else c
 - The admin adds and removes teacher emails, a student's email is refused, and each change is in the audit log
 - A user completes their name and uploads or removes a profile picture; a file over 10 MB or of the wrong type is refused by its stored bytes, and a removed picture's file is swept
 - The landing page shows who Fermi is for, the Home Screen steps and the App Store link
+- A `bmad-tea-trace` run at closure maps each Requirements line to passing tests, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -45,3 +46,4 @@ The admin and listed teachers get into Fermi with Google or Apple, nobody else c
 
 - Waits on epic-platform-baseline because: the CI pipeline, the Supabase project, the app shell, the empty schemas, pg_cron and pg_net
 - Decision: 2026-11-06, when this epic's stories are planned, pin epic 1's entries: 1.1 (pipeline, hosted project, app shell, empty schemas), 1.4 (the health check's sign-up assertion this epic replaces), 1.5 (the API client and error shapes), 1.7 (pg_cron and pg_net) and 1.9 (the live update the shell ships through)
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite

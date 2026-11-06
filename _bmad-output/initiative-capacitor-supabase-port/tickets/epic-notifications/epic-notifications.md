@@ -28,6 +28,7 @@ People learn about messages and notifications without opening Fermi, reliably in
 - Users see, mark read and delete notifications, and on the website a notification arriving while Fermi is open shows as a pop-up
 - Automated checks show do-not-disturb skips push and the pop-up, a device row records the push environment the app reported at registration, a gone device token (APNs 410, web push 404 or 410) is removed, and an APNs 400 `BadDeviceToken` is logged and the device kept
 - All of it deployed from CI
+- A `bmad-tea-trace` run at closure maps each Requirements line to passing tests, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -46,3 +47,4 @@ People learn about messages and notifications without opening Fermi, reliably in
 
 - Waits on epic-chat because: the messages table and message recipients to deliver on
 - Decision: 2026-11-06, iOS push is checked in the Simulator through Apple's sandbox push server, not on TestFlight; the spine's Tests line, AD-14 and Open Questions were amended to match, and production APNs moves to epic-app-store-release
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite

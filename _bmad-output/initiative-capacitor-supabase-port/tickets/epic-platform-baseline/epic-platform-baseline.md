@@ -58,6 +58,7 @@ Every later epic ships by pushing to main: the website on workers.dev and the iO
 - Workflows 01_ci, 03, 04 and 05 are gone, and `gh secret list` shows none of the ten secrets only they used and no repo-level Cloudflare secret
 - Dependabot's jobs for `app/` npm and GitHub Actions run without errors; Main refuses a merge while `test.yml`'s summary check is red, and a Dependabot pull request merges itself once it is green
 - The Claude workflows install no Flutter and target `app/` and `supabase/`
+- A `bmad-tea-trace` run at closure maps R1–R13 to passing tests or each story's runnable check, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -98,3 +99,5 @@ Every later epic ships by pushing to main: the website on workers.dev and the iO
 - Decision: 2026-11-06, stale docs split by who deletes the thing they describe: README.md's CI/CD items 1 (01_ci) and 3 (Platform Releases) and docs/claude-code-setup.md's ANTHROPIC_API_KEY (Required), CI Pipeline Enhancement and MCP Server Configuration sections go in story 12; README item 2 (02_deploy_web) in story 1; README item 4 and the rest of that page, which story 13 rewrites or deletes, in story 13
 - Decision: 2026-11-06, story 12 sits second in build order with no prerequisite so it is built now; this amends the tracer decision's "iOS follows as story 2" to next after story 12, and accepts that stories 1 and 12 each remove different items of README.md's CI/CD list in parallel
 - Decision: 2026-11-06, the epic map's row 13 still gives epic-app-store-release "the old workflows" and src/index.js, and the spine's Structural Seed lists only deploy.yml, test.yml, keep-alive.yml, apple-secret.yml and backup.yml, not dependency-review.yml, dependabot-auto-merge.yml or the two Claude workflows; both are the architect's to amend through bmad-architecture
+- Decision: 2026-11-06, this epic was sliced before TEA was planned in, so instead of an epic-level test design, a system-level `bmad-tea-test-design` run on the initiative goes before story 3's framework run, which then follows its risk plan; the no-closing-suite decision above stands for this epic
+- Decision: 2026-11-06, story 13 records in AGENTS.md, through `bmad-project-context`, that Playwright tests use the `@seontechnologies/playwright-utils` fixtures story 3 sets up and a vanilla Playwright equivalent needs a stated reason, because `bmad-build` and `bmad-build-auto` do not load TEA's Playwright Utils rule (grep 2026-11-06) and every build reads AGENTS.md

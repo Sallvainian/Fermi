@@ -25,6 +25,7 @@ Classes discuss on boards and hear teachers' announcements (initiative R9, R20).
 - On the deployed site, a teacher creates a board, and users post, reply, like, and delete their own posts
 - A student cannot create a board, and an archived class's boards refuse new posts
 - A teacher's announcement reaches the class's members in the inbox and as a push
+- A `bmad-tea-trace` run at closure maps each Requirements line to passing tests, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -41,3 +42,4 @@ Classes discuss on boards and hear teachers' announcements (initiative R9, R20).
 
 - Waits on epic-classes-rosters because: classes and membership
 - Waits on epic-notifications because: the inbox screen and push delivery, so members see the announcement
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite

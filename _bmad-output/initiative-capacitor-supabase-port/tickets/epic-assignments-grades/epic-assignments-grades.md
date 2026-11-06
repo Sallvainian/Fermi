@@ -27,6 +27,7 @@ Teachers assign and grade work with files and Drive, students see only their own
 - A student who has not submitted gets a due reminder at their own times, or none when they turned reminders off
 - The teacher sees the class's analytics, and an archived class's grades stay viewable under Archived
 - Automated checks refuse a student submitting to an assignment outside their classes, or editing a submission after submit
+- A `bmad-tea-trace` run at closure maps each Requirements line to passing tests, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -44,3 +45,4 @@ Teachers assign and grade work with files and Drive, students see only their own
 ## Notes
 
 - Waits on epic-classes-rosters because: classes, enrollment, the class checks and the archived flag
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite

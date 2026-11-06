@@ -26,6 +26,7 @@ The admin sees who uses Fermi, and every account can be deleted the one way the 
 - The admin deletes another account and their own is refused; a teacher deletes their own account after the warning, and their classes go with it
 - A teacher completes a student's open removal request, and without one is refused
 - Automated checks show each deletion leaves no rows, files or stored password behind except kept authored posts, and is in the audit log
+- A `bmad-tea-trace` run at closure maps each Requirements line to passing tests, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -43,3 +44,4 @@ The admin sees who uses Fermi, and every account can be deleted the one way the 
 
 - Waits on epic-invite-sign-in because: accounts, the admin role, the teacher list and the audit log
 - Waits on epic-classes-rosters because: removal requests and teacher-student links
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite

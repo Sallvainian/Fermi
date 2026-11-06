@@ -27,6 +27,7 @@ Teachers run their classes and create their students' accounts, and only rostere
 - A removed student loses access to the class; an archived class leaves the main views, stays under Archived and refuses new writes
 - A student's removal request notifies their teachers and the admin, and class, roster, password and request actions are in the audit log
 - Automated checks refuse a teacher editing another teacher's class or seeing a password of a student they do not teach
+- A `bmad-tea-trace` run at closure maps each Requirements line to passing tests, and its gate is PASS or each gap has a waiver in Notes
 
 ## Boundaries
 
@@ -43,3 +44,4 @@ Teachers run their classes and create their students' accounts, and only rostere
 ## Notes
 
 - Waits on epic-invite-sign-in because: profiles and the profile creator, the directory, notify and the audit log
+- Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite
