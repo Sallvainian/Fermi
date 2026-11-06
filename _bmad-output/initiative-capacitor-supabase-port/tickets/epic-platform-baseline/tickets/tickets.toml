@@ -1,0 +1,122 @@
+# Stories of epic-platform-baseline, in build order.
+
+[[entry]]
+id = 1
+type = "story"
+title = "The empty app ships to workers.dev from a push to main"
+description = "Delivers R2's migrate, build, deploy and site-check part, R3, and R7's schemas part. Scaffolds app/ (Vite, React, React Router, TypeScript, Tailwind, Zustand, zod, supabase-js and Capacitor core, CLI and iOS at the Stack's pinned versions, with ESLint and typecheck) as a shell page that shows the build's commit id; adds supabase/config.toml with [auth] enable_signup = false and a first migration creating the empty app and internal schemas, not exposed by the Data API; adds an assets-only wrangler.jsonc for the Worker fermi-plus on workers.dev and a deploy.yml that runs migrate, build, wrangler deploy and an HTTP health check; deletes 02_deploy_web.yml, wrangler.toml and src/index.js, and deletes the Flutter-era root package.json and package-lock.json (wrangler is pinned in app/ instead). Setup (hitl), as My-Love did it: a GitHub environment Production holding CLOUDFLARE_API_TOKEN (Edit Cloudflare Workers template, the account whose workers.dev subdomain is sallvain), CLOUDFLARE_ACCOUNT_ID and the Supabase secrets for project mzbblbgmrvcgvzxwhptm, plus the repo variables SITE_URL (https://fermi-plus.sallvain.workers.dev/) and SUPABASE_PROJECT_ID; the first wrangler deploy creates the Worker. Hands the scaffold, the pinned dependency set and deploy.yml to every later story."
+verify = "After a push to main, fermi-plus.sallvain.workers.dev shows the shell with that push's commit id, the run shows migrate, build, deploy and health check green, and wrangler.toml, src/index.js, 02_deploy_web.yml and the root package.json are gone from main."
+covers = ["R2", "R3", "R7"]
+after = []
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 2
+type = "story"
+title = "The iOS shell runs in the Simulator under Fermi's bundle"
+description = "Delivers R4. Adds the Capacitor iOS project in app/ios for bundle com.academic-tools.fermi and team W778837A9L, with a build number above the last one App Store Connect holds, and records that build as MIN_NATIVE_BUILD in one checked-in file. Setup (hitl): looking up that last build number in App Store Connect, and opening the app in the iOS Simulator from Xcode. Uses story 1's scaffold; hands the native project and MIN_NATIVE_BUILD to stories 9 and 10."
+verify = "In the iOS Simulator, Fermi opens the shell showing the commit id it was built from."
+covers = ["R4"]
+after = [1]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 3
+type = "story"
+title = "Every test kind runs in CI and fails the run"
+description = "Delivers R5's CI-lane part and R7's pgtap part, built by running TEA's test framework setup with its CI scope (bmad-tea-framework, framework and CI together) to My-Love's standard. Enables pgtap in a migration with a first pgTAP test asserting the app and internal schemas exist and anon has no usage on them; adds test.yml, run on every pull request and push: ESLint and typecheck, Vitest with coverage, pgTAP through supabase test db on a local stack at CLI 2.122.0, deno test over every folder in supabase/functions (none yet; story 5 adds the first), and Playwright on Desktop Chrome and iPhone WebKit against the built shell, with My-Love's checks that every test ran and its burn-in of changed specs, each failing the run when it fails. Points .mcp.json's playwright-test server at app/'s Playwright (My-Love runs the same server from its root, where its Playwright is installed). Setup (hitl): the owner runs the TEA session. Uses story 1's scaffold; hands the lanes stories 5, 6 and 7 add tests to."
+verify = "A pull request with one failing ESLint rule, Vitest test, pgTAP test and Playwright test shows a red run naming each failed job; reverting it turns the run green."
+covers = ["R5", "R7"]
+after = [1]
+hitl = true
+risk = "medium"
+
+[[entry]]
+id = 4
+type = "story"
+title = "Deploys set and assert the hosted Auth and Realtime config"
+description = "Delivers R2's hosted-config part. After migrate, deploy.yml pushes the Auth config from supabase/config.toml (supabase config push, provider secrets through env()) and sets Realtime private-only through the Management API; the health check reads both back through the Management API and fails unless email sign-in is on, anonymous sign-ins are off, sign-up is off and private_only is true, a missing private_only failing too; the health check can also be run alone by manual dispatch. Builds on story 1's deploy.yml and health check; hands the config assertions epic-invite-sign-in replaces with the hook assertion."
+verify = "With anonymous sign-ins turned on in the Supabase dashboard, a manual run of the health check alone fails naming that setting; the next push to main turns it off again and passes."
+covers = ["R2"]
+after = [1]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 5
+type = "story"
+title = "Errors carry a code from database to screen"
+description = "Delivers R6 and R2's edge-functions part. Adds app/src/api/ as the only importer of the Supabase client (an ESLint rule refuses any other import), its env config, and one error map from SQLSTATE and snake_case keys to text; adds supabase/functions/_shared with the one helper every edge function answers errors through (real HTTP status, { error: { code, message } }); adds the deploy.yml step that deploys every function folder and passes with none. Tests: Vitest for the map, deno test for the helper. Uses story 3's lanes and story 4's deploy order; hands the client and both error shapes to every later epic (AD-17)."
+verify = "CI shows the Vitest and deno tests for both error shapes passing, a deliberately failing deno test turns the run red, a Supabase import outside app/src/api/ fails lint, and the deploy run shows the functions step green."
+covers = ["R2", "R6"]
+after = [3, 4]
+hitl = false
+risk = "low"
+
+[[entry]]
+id = 6
+type = "story"
+title = "A catalog test fails on any grant the fixture does not list"
+description = "Delivers R5's privilege-fixture part. Adds the checked-in privilege fixture under supabase/tests/database listing the expected grants of every table, column, function and view in public, app and internal, and a pgTAP catalog test that fails on an object missing from the fixture or differing from it; anon gets nothing (AD-3). Runs in story 3's pgTAP lane, on story 3's pgtap; hands the fixture every later migration updates in the same change."
+verify = "CI's pgTAP job passes on main, and a pull request adding a function without a fixture entry, or granting EXECUTE to anon, fails it naming the object."
+covers = ["R5"]
+after = [3]
+hitl = false
+risk = "medium"
+
+[[entry]]
+id = 7
+type = "story"
+title = "The keep-alive keeps the Free project awake and reports failed jobs"
+description = "Delivers R7's pg_cron, pg_net and job-failures part and R8. Enables pg_cron (schema pg_catalog) and pg_net (schema extensions); adds internal.job_failures and public.job_health(), postgres-owned and executable by service_role only, with their fixture entries and pgTAP tests; adds keep-alive.yml, run twice daily, which calls job_health through the API and fails on new job failures, failed cron runs or non-2xx pg_net responses, and re-enables itself monthly through the GitHub API. Setup (hitl): the service-role secret for the workflow. Hands pg_cron, pg_net and job_failures to epics 2, 4 and 5."
+verify = "A manual run of keep-alive.yml is green; after a test row is put into internal.job_failures on the hosted project, the next run fails and GitHub emails the owner."
+covers = ["R7", "R8"]
+after = [6]
+hitl = true
+risk = "medium"
+
+[[entry]]
+id = 8
+type = "story"
+title = "A weekly encrypted backup that proves it restores"
+description = "Delivers R9. Adds backup.yml, run weekly: supabase db dump --remote (roles, schema, data) through the Session pooler, encryption to the owner's age public key, a 90-day workflow artifact holding only the encrypted dump, and a restore of the dump into a throwaway local database that fails the run if it fails. Setup (hitl): the owner's age public key and the Session pooler connection secret. Uses story 1's hosted project link."
+verify = "A manual run of backup.yml is green with its restore step passing, its artifact holds only the encrypted dump, and the owner decrypts it locally with their age key."
+covers = ["R9"]
+after = [1]
+hitl = true
+risk = "medium"
+
+[[entry]]
+id = 9
+type = "story"
+title = "Each deploy publishes a live update with its minimum native build"
+description = "Delivers R1's packaging part and R2's live-update and latest.json-check part. Adds scripts/package-live-update.sh, which zips the build and writes updates/latest.json with version (the commit id baked into the build), url, checksum and min_native_build read from story 2's MIN_NATIVE_BUILD file, and refuses a build whose id does not match; deploy.yml runs it after the build; the health check asserts latest.json is served as JSON, not the SPA fallback. Builds on story 5's deploy.yml; hands latest.json to story 10."
+verify = "After a push to main, fermi-plus.sallvain.workers.dev/updates/latest.json shows that push's commit id, a url whose zip matches the checksum, and min_native_build equal to the checked-in value."
+covers = ["R1", "R2"]
+after = [2, 5]
+hitl = false
+risk = "low"
+
+[[entry]]
+id = 10
+type = "story"
+title = "The iOS app offers to restart onto each new deploy"
+description = "Delivers R1's in-app part. Adds @capgo/capacitor-updater (no Capgo account, stats off) and a native-update service that checks latest.json on launch, downloads a newer bundle in the background, offers to restart onto it, and skips a bundle whose min_native_build is above the app's own build; every plugin call is guarded with Capacitor.isPluginAvailable and the web build loads no updater. Adding the plugin is a native change, so it raises MIN_NATIVE_BUILD and needs a new native build (AD-18). Tests: Vitest for the check and skip rules. Setup (hitl): the check in the iOS Simulator."
+verify = "In the iOS Simulator, a push to main brings the restart offer and after restarting the app shows the new commit id; a push that raises MIN_NATIVE_BUILD above the installed build brings no offer, and reverting it brings the offer back."
+covers = ["R1"]
+after = [2, 9]
+hitl = true
+risk = "high"
+
+[[entry]]
+id = 11
+type = "story"
+title = "Refactor sweep"
+description = "Cleanup only, scoped at its start from what this epic's plans and reviews deferred; scope pushed out of another story is a new story."
+verify = "CI is green on main and each deferred item named at the start is closed or recorded as a new entry."
+covers = []
+after = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+hitl = false
+risk = "low"

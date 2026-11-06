@@ -101,7 +101,7 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Out: fixing or hardening the Firebase backend that is being retired
 - Touch point: the hosted Supabase project — linked, migrated and configured from CI, kept awake and backed up by scheduled workflows; owner: epic-platform-baseline
 - Touch point: the Cloudflare account — the fermi-plus Worker on workers.dev; the old Pages project `fermi` is removed by epic-app-store-release; owner: epic-platform-baseline
-- Touch point: Apple Developer and App Store Connect — TestFlight internal builds (epic-platform-baseline), Sign in with Apple and its monthly client-secret renewal (epic-invite-sign-in), the push key (epic-notifications), review of the listing com.academic-tools.fermi; owner: epic-app-store-release
+- Touch point: Apple Developer and App Store Connect — TestFlight builds (epic-app-store-release; epic-platform-baseline checks the iOS app in the Simulator), Sign in with Apple and its monthly client-secret renewal (epic-invite-sign-in), the push key (epic-notifications), review of the listing com.academic-tools.fermi; owner: epic-app-store-release
 - Touch point: the Google Cloud project Fermi-Plus (`fermi-plus-513902`) — the OAuth client for sign-in and its basic app verification; owner: epic-invite-sign-in; the Drive Picker and `drive.file` on it; owner: epic-assignments-grades
 - Touch point: Gmail — its compose screen is opened, never called; owner: epic-contact
 - Touch point: the `@capgo/capacitor-updater` plugin — self-hosted live updates, no Capgo account; owner: epic-platform-baseline
@@ -139,3 +139,4 @@ Teachers, students and the admin use Fermi on the website and in the iPhone app 
 - Decision: 2026-11-06, epic-platform-baseline enables pg_cron and pg_net, since its keep-alive reads the cron run log and epics 2, 4 and 5 each schedule jobs
 - Decision: 2026-11-06, the tree check's remaining suggestions (audit log screens, Settings owner, epics 9 and 10 waiting on epic 3, GitHub and Firebase-project touch points, shared files) are settled when each epic is refined
 - Decision: 2026-11-06, the spine is amended so the admin works on any class's roster (AD-8, AD-9), with its review fixes; the epic map's build-order details now match these Notes
+- Decision: 2026-11-06, epic-platform-baseline refined and broken into 11 stories; it checks the iOS app in the Simulator, not TestFlight, and removes src/index.js, so epic-app-store-release no longer lists it

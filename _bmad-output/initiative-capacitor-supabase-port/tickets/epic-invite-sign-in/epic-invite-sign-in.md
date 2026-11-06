@@ -44,3 +44,4 @@ The admin and listed teachers get into Fermi with Google or Apple, nobody else c
 ## Notes
 
 - Waits on epic-platform-baseline because: the CI pipeline, the Supabase project, the app shell, the empty schemas, pg_cron and pg_net
+- Decision: 2026-11-06, when this epic's stories are planned, pin epic 1's entries: 1.1 (pipeline, hosted project, app shell, empty schemas), 1.4 (the health check's sign-up assertion this epic replaces), 1.5 (the API client and error shapes), 1.7 (pg_cron and pg_net) and 1.9 (the live update the shell ships through)

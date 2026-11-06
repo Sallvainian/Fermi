@@ -14,7 +14,7 @@ risk: high
 
 ## Description
 
-The iOS app passes App Store review as an update to com.academic-tools.fermi with Sign in with Apple, account deletion and a demo teacher login and a demo student login in the review notes with a note that sign-in is invitation-only; the Flutter app, functions/, Firebase config, src/index.js, the email worker, workflows 01_ci, 03, 04 and 05 and the Cloudflare Pages project fermi are removed; a per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working.
+The iOS app passes App Store review as an update to com.academic-tools.fermi with Sign in with Apple, account deletion and a demo teacher login and a demo student login in the review notes with a note that sign-in is invitation-only; the Flutter app, functions/, Firebase config, the email worker, workflows 01_ci, 03, 04 and 05 and the Cloudflare Pages project fermi are removed; a per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working.
 
 ## Outcome
 
@@ -24,7 +24,7 @@ Fermi's App Store listing runs the new app, and nothing of Flutter or Firebase r
 
 - The iOS app passes App Store review as an update to com.academic-tools.fermi, with demo accounts on the lists in the review notes
 - A per-role walkthrough on the website, the Home Screen web app and the App Store app shows R1 to R30 working
-- The Flutter app, functions/, Firebase config, src/index.js, the email worker, workflows 01_ci, 03, 04 and 05 and the Pages project fermi are gone, and no Firebase package, config or SDK call remains
+- The Flutter app, functions/, Firebase config, the email worker, workflows 01_ci, 03, 04 and 05 and the Pages project fermi are gone, and no Firebase package, config or SDK call remains
 
 ## Boundaries
 

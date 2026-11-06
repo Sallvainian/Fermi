@@ -3,10 +3,14 @@ type: epic
 title: "The new app ships from CI"
 parent: initiative-capacitor-supabase-port
 covers: [R23]
-sources: []
-companions: []
+sources:
+  - _bmad-output/initiative-capacitor-supabase-port/initiative-capacitor-supabase-port.md
+  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md
+companions:
+  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md
+  - _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/epic-map-capacitor-supabase-port.md
 after: []
-refined: false
+refined: true
 risk: high
 ---
 
@@ -14,25 +18,52 @@ risk: high
 
 ## Description
 
-A Capacitor web build and iOS shell live in a new app/ folder beside the untouched Flutter app, the iOS project taking over bundle com.academic-tools.fermi and its build numbers, with the app/src/api/ client and its error map (AD-17); a new deploy workflow replaces 02_deploy_web.yml and, on a push to main, applies Supabase migrations, pushes the hosted Auth config and sets Realtime private-only, deploys edge functions, builds, packages the live update with its minimum native build (AD-18), deploys the fermi-plus Worker from an assets-only wrangler.jsonc on workers.dev, which replaces wrangler.toml and passes a health check that also asserts the Auth and Realtime config, with sign-up off until epic 2's hook exists (AD-21); the empty app and internal schemas, pg_cron, pg_net and pgtap, the job-health check the keep-alive calls, the job-failure table, the privilege fixture and its catalog test exist (AD-3); access-policy and edge-function tests run in CI; scheduled workflows keep the Free project awake and take a weekly encrypted backup (K18); an iOS build installed through TestFlight internal testing offers to restart onto each new deploy. Every later epic builds on this pipeline.
+A Capacitor web build and iOS shell live in a new app/ folder beside the untouched Flutter app, the iOS project taking over bundle com.academic-tools.fermi and its build numbers, with the app/src/api/ client and its error map (AD-17); a new deploy workflow replaces 02_deploy_web.yml and, on a push to main, applies Supabase migrations, pushes the hosted Auth config and sets Realtime private-only, deploys edge functions, builds, packages the live update with its minimum native build (AD-18), deploys the fermi-plus Worker from an assets-only wrangler.jsonc on workers.dev, which replaces wrangler.toml and passes a health check that also asserts the Auth and Realtime config, with sign-up off until epic 2's hook exists (AD-21); the empty app and internal schemas, pg_cron, pg_net and pgtap, the job-health check the keep-alive calls, the job-failure table, the privilege fixture and its catalog test exist (AD-3); access-policy and edge-function tests run in CI; scheduled workflows keep the Free project awake and take a weekly encrypted backup (K18); an iOS build running in the iOS Simulator offers to restart onto each new deploy. Every later epic builds on this pipeline.
 
 ## Outcome
 
-Every later epic ships by pushing to main: the website on workers.dev and the TestFlight iOS build update themselves with no hand deploy, and the Free Supabase project stays awake and backed up (initiative K7, K18, R23).
+Every later epic ships by pushing to main: the website on workers.dev and the iOS app update themselves with no hand deploy, and the Free Supabase project stays awake and backed up (initiative K7, K18, R23).
+
+## Requirements
+
+- R1 (parent R23, AD-18): after a deploy, the iOS app downloads the new bundle in the background and offers to restart onto it, shown in the iOS Simulator; a bundle whose `min_native_build` is above the app's own build is skipped, and web code guards every plugin with `Capacitor.isPluginAvailable`
+- R2 (parent K7, AD-21): a push to main runs, in order and with no hand step: migrations, the hosted Auth config push, Realtime private-only, edge functions, build and live-update packaging, `wrangler deploy`, and a health check that fails unless the site and `updates/latest.json` are served and the hosted config has email sign-in on, anonymous sign-ins off, sign-up off and Realtime private-only
+- R3 (parent K6): the Worker `fermi-plus` on workers.dev (`fermi-plus.sallvain.workers.dev`) serves the Capacitor web build as static assets only from `wrangler.jsonc`; `wrangler.toml`, `src/index.js` and `02_deploy_web.yml` are gone
+- R4 (parent K1, K11, spine Structural Seed): `app/` holds the Vite React web build and an iOS project for bundle `com.academic-tools.fermi` (team W778837A9L) with a build number above the listing's last, which runs in the iOS Simulator; the Flutter app is untouched
+- R5 (parent K13, AD-3): every pull request and push runs ESLint, typecheck, Vitest, pgTAP, `deno test` and Playwright (Desktop Chrome, iPhone WebKit), and any failure fails the run; a checked-in privilege fixture lists the expected grants for every table, column, function and view, and a pgTAP catalog test fails on any object missing from it or differing
+- R6 (AD-17): `app/src/api/` is the only code that imports the Supabase client and maps every error key to text in one place; edge functions answer with the real HTTP status and `{ "error": { "code", "message" } }` through one shared helper
+- R7 (AD-3, AD-21, spine Structural Seed): schemas `app` and `internal` exist, empty and not exposed by the Data API; `pg_cron`, `pg_net` and `pgtap` are enabled, by this epic only; `internal.job_failures` exists
+- R8 (parent K18, AD-21): a twice-daily workflow calls `public.job_health()` (executable by `service_role` only) through the API and fails, so GitHub emails the owner, on new rows in `internal.job_failures`, failed `cron.job_run_details` or non-2xx `net._http_response`; it re-enables itself monthly
+- R9 (parent K18, AD-21): a weekly workflow dumps the hosted database (roles, schema, data) through the Session pooler, encrypts it to the owner's age key, keeps it as a 90-day artifact never committed, and proves it by restoring into a throwaway local database
+
+## Constraints
+
+- K1 (parent K1): one Capacitor codebase ships the website and an iOS app; no Android or desktop shell
+- K2 (parent K2): Supabase is the only backend; no Firebase SDK, config or project dependency in `app/`, `supabase/` or the new workflows
+- K6 (parent K6): Cloudflare Workers static assets only, Worker `fermi-plus` on the free workers.dev subdomain `sallvain`, no bought domain, no Worker script
+- K7 (parent K7): deploy order migrate, Auth config and Realtime private-only, edge functions, build and live-update package, wrangler deploy, health check; the live update is served from the Workers site with no Capgo account; nothing is deployed by hand
+- K11 (parent K11): the iOS project keeps bundle `com.academic-tools.fermi` and team W778837A9L so it ships as an update to Fermi's existing listing
+- K13 (parent K13): access policies and edge functions have automated tests that run in CI
+- K15 (parent K15, AD-18): a change to native code, a plugin, `Info.plist`, entitlements or `capacitor.config` is an App Store build that raises `MIN_NATIVE_BUILD`; live updates carry web code only
+- K18 (parent K18): Supabase Free plan; keep-alive twice daily; weekly backup encrypted to the owner's key, never committed, because the repo is public; Storage bytes are not backed up
+- Stack (spine Stack, Deferred): the Stack table's versions are pinned; Supabase CLI 2.122.0, as in My-Love's workflows
 
 ## Done when
 
 - A push to main runs migrations, the Auth config push, the Realtime private-only setting, edge functions, build, live-update packaging, wrangler deploy and a health check that asserts the hosted config, with no hand step
-- The workers.dev site serves the Capacitor web build from an assets-only `wrangler.jsonc`, and `wrangler.toml` with `src/index.js` and the fermi-plus.com route is gone
+- The workers.dev site serves the Capacitor web build from an assets-only `wrangler.jsonc`, and `wrangler.toml`, `src/index.js`, `02_deploy_web.yml` and the Flutter-era root `package.json` are gone
 - Access-policy, privilege-fixture and edge-function tests run in CI and fail the run when they fail
 - The keep-alive and weekly backup workflows run on schedule, and the backup restores into a throwaway local database
-- A TestFlight build on the owner's iPhone offers to restart onto the next deploy, and skips a bundle above its native build
+- The iOS app in the iOS Simulator offers to restart onto the next deploy, and skips a bundle above its native build
 
 ## Boundaries
 
 - Out: any user-facing feature; the landing page is epic-invite-sign-in's
 - Out: removing Flutter or the old workflows other than 02_deploy_web.yml (epic-app-store-release)
 - Out: the sign-in hook and its health-check assertion (epic-invite-sign-in)
+- Out: TestFlight and App Store builds (epic-app-store-release)
+- Touch point: the Cloudflare account — Worker `fermi-plus` on `sallvain.workers.dev`, deployed with the Production environment's account token; owner: epic-platform-baseline
+- Touch point: the hosted Supabase project `mzbblbgmrvcgvzxwhptm` (Free) — linked, migrated, configured, kept awake and backed up; owner: epic-platform-baseline
 
 ## References
 
@@ -40,3 +71,17 @@ Every later epic ships by pushing to main: the website on workers.dev and the Te
 - architecture — _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/architecture-capacitor-supabase-port.md, AD-3, AD-17, AD-18, AD-20, AD-21, Structural Seed, Stack
 - architecture — _bmad-output/initiative-capacitor-supabase-port/architecture-capacitor-supabase-port/epic-map-capacitor-supabase-port.md, Ownership row 1 Platform baseline, Seams to watch
 - companion — _bmad-output/initiative-capacitor-supabase-port/parity-inventory.md
+- reference — /Users/sallvain/Projects/My-Love/.github/workflows/deploy.yml, test.yml; scripts/package-live-update.sh; src/services/nativeUpdates.ts; README.md, Cloudflare Workers and secrets
+
+## Notes
+
+- Decision: 2026-11-06, refined: Requirements R1–R9 deepen R23 with K6, K7, K13, K18 and AD-3, AD-17, AD-18, AD-21, since R23 alone does not describe this epic
+- Decision: 2026-11-06, the iOS app is checked in the iOS Simulator in this epic, not on TestFlight, which is for beta releases and first matters at epic-app-store-release
+- Source conflict: spine Consistency Conventions, Tests ("native-only paths … checked by hand on TestFlight") — vs the Simulator decision above; amending the spine is the architect's (bmad-architecture)
+- Decision: 2026-11-06, tracer bullet is story 1, web only: the shell reaches workers.dev through migrate, build, wrangler deploy and the health check; iOS follows as story 2, the least certain part, because its setup is all hand steps
+- Decision: 2026-11-06, sequencing: stories 1, 4, 5 and 9 edit deploy.yml in that order; story 3 owns the CI lanes and pgtap before the fixture (6) and the keep-alive (7); stories 2, 3, 4 and 8 can run in parallel after story 1
+- Decision: 2026-11-06, the shared edge-function error helper in `supabase/functions/_shared` is this epic's (story 5); the epic map names no owner
+- Decision: 2026-11-06, story 1 deletes the Flutter-era root `package.json` and `package-lock.json`, whose `file:../mcp-firestore-fixed` dependency cannot install in CI; wrangler is pinned in `app/`; story 3 points `.mcp.json`'s playwright-test server at `app/`
+- Decision: 2026-11-06, story 3 is built by one TEA run of `bmad-tea-framework` with framework and CI scope, to My-Love's test rigor
+- Decision: 2026-11-06, Cloudflare is set up as in My-Love: environment Production holds `CLOUDFLARE_API_TOKEN` (Edit Cloudflare Workers account token, verified active) and `CLOUDFLARE_ACCOUNT_ID`; repo variable `SITE_URL` is `https://fermi-plus.sallvain.workers.dev/`; no `fermi-plus` Worker or fermi-plus.com zone exists, so no route is detached
+- Decision: 2026-11-06, the refactor sweep closes the epic; no closing end-to-end suite, since the sources hold no test plan
