@@ -22,7 +22,7 @@ Every later epic ships by pushing to main: the website on workers.dev and the iO
 
 ## Requirements
 
-- R1 (parent R23, AD-18): after a deploy, the iOS app downloads the new bundle in the background and offers to restart onto it, shown in the iOS Simulator; a bundle whose `min_native_build` is above the app's own build is skipped, and web code guards every plugin with `Capacitor.isPluginAvailable`
+- R1 (parent R23, AD-18): after a deploy, the iOS app downloads the new bundle in the background and offers to restart onto it, shown in the iOS Simulator; a bundle whose `min_native_build` is above the app's own build is skipped, and the app then shows a dismissible message, "A new version of Fermi+ is in the App Store", when it opens or returns from the background, at most once a day once dismissed, whose Update button opens Fermi's App Store listing while the app stays usable on its current bundle; web code guards every plugin with `Capacitor.isPluginAvailable`
 - R2 (parent K7, AD-21): a push to main runs, in order and with no hand step: migrations, the hosted Auth config push, Realtime private-only, edge functions, build and live-update packaging, `wrangler deploy`, and a health check that fails unless the site and `updates/latest.json` are served and the hosted config has email sign-in on, anonymous sign-ins off, sign-up off and Realtime private-only
 - R3 (parent K6): the Worker `fermi-plus` on workers.dev (`fermi-plus.sallvain.workers.dev`) serves the Capacitor web build as static assets only from `wrangler.jsonc`; `wrangler.toml`, `src/index.js` and `02_deploy_web.yml` are gone
 - R4 (parent K1, K11, spine Structural Seed): `app/` holds the Vite React web build and an iOS project for bundle `com.academic-tools.fermi` (team W778837A9L) with a build number above the listing's last, which runs in the iOS Simulator; the Flutter app is untouched
@@ -55,7 +55,7 @@ Every later epic ships by pushing to main: the website on workers.dev and the iO
 - The workers.dev site serves the Capacitor web build from an assets-only `wrangler.jsonc`, and `wrangler.toml`, `src/index.js`, `02_deploy_web.yml` and the Flutter-era root `package.json` are gone
 - Access-policy, privilege-fixture and edge-function tests run in CI and fail the run when they fail
 - The keep-alive and weekly backup workflows run on schedule, and the backup restores into a throwaway local database
-- The iOS app in the iOS Simulator offers to restart onto the next deploy, and skips a bundle above its native build
+- The iOS app in the iOS Simulator offers to restart onto the next deploy, and skips a bundle above its native build with the App Store message, whose Update button opens the listing
 - Workflows 01_ci, 03, 04 and 05 are gone, and `gh secret list` shows none of the ten secrets only they used and no repo-level Cloudflare secret
 - Dependabot's version-update jobs for `app/` npm and GitHub Actions run without errors; Main refuses a merge while `Test Summary` or `Dependency Review` is red; a Dependabot pull request outside the native group merges itself once both are green and is live within a day, and a native-group one waits for the owner
 - The Claude workflows install no Flutter and target `app/` and `supabase/`
@@ -63,7 +63,7 @@ Every later epic ships by pushing to main: the website on workers.dev and the iO
 
 ## Boundaries
 
-- Out: any user-facing feature; the landing page is epic-invite-sign-in's
+- Out: any user-facing feature other than the restart offer and the App Store message (R1); the landing page is epic-invite-sign-in's
 - Out: removing the Flutter app, functions/, Firebase config, the email worker and the Pages project fermi (epic-app-store-release)
 - Out: the sign-in hook and its health-check assertion (epic-invite-sign-in)
 - Out: TestFlight and App Store builds (epic-app-store-release)
@@ -110,3 +110,8 @@ Every later epic ships by pushing to main: the website on workers.dev and the iO
 - Decision: 2026-11-06, set check on the replan: story 9's test.yml job also fails a pull request whose MIN_NATIVE_BUILD is above the Xcode build number, since packaging refuses it only after the merge; story 13's auto-merge holds a pull request by the native group's package patterns, not its Dependabot group, since a security update carries no group; story 9's risk is medium, holding the only automatic AD-18 guard and the daily deploy
 - Decision: 2026-11-06, extra check for this high-risk epic: one week after closure the owner confirms that Monday's Dependabot pull requests merged and were live on the site by Tuesday, that keep-alive and backup ran on schedule, and that any Capacitor update that arrived that week is still an open pull request, since Capacitor packages release often
 - Decision: 2026-11-06, a native-group pull request stays open until the next planned App Store build, unless it fixes a security advisory, because raising MIN_NATIVE_BUILD stops live updates to installs on older builds; Dependabot keeps adding releases to the one open pull request; story 13 records it in AGENTS.md, its only home, since AD-18 does not carry it
+- Decision: 2026-11-06, from AD-18's amendment: when the app skips a bundle above its native build it shows at each launch a dismissible "A new version of Fermi is in the App Store" message whose Update button opens the listing, so a student on an old App Store build does not silently miss every later fix; R1 re-rendered; story 10 builds it in web code with no new plugin; the listing is https://apps.apple.com/app/id6751152901 (Apple's public lookup of bundle com.academic-tools.fermi, 2026-11-06; listing title Fermi+)
+- Decision: 2026-11-06, the App Store message reads "A new version of Fermi+ is in the App Store", matching the listing's title Fermi+; AD-18 still says "Fermi", which is the architect's to amend through bmad-architecture
+- Decision: 2026-11-06, the App Store message is a banner at the top of the screen with Update and Not now, shown when the app opens or returns from the background, Not now hiding it until the next day, because iOS rarely restarts a suspended app, so a fresh-launch-only message would seldom show; AD-18's "at each launch" is the architect's to amend with the Fermi+ wording
+- Decision: 2026-11-06, story 10 reads the app's own build number through `@capacitor/app`, since the updater reports the version string, not the build (UNVERIFIED; My-Love's updater definitions); it joins the native group by its `@capacitor/` scope and ships in story 10's native build, so it needs no extra App Store build
+- Decision: 2026-11-06, the architect aligned AD-18 with story 10 (Fermi+, shown on open and on return from the background, Not now until the next day), settling the two flags above
