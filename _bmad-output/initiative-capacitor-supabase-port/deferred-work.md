@@ -57,3 +57,11 @@ source_spec: `tickets/epic-platform-baseline/tickets/story-the-keep-alive-keeps-
 severity: high
 reason: GitHub's notification docs: when a scheduled workflow is disabled and then re-enabled, notifications go to the user who re-enabled it. Whether PUT /actions/workflows/{id}/enable on an already-enabled workflow counts is undocumented. Settles it: after a manual keep-alive run (which runs the re-enable job), a failing scheduled run emails the owner. If it does not, call the enable endpoint with the owner's token, or drop the call and rely on other repository activity. (declared severity: high (unverified))
 status: open
+
+### DW-8: A native change passes the check when it raises MIN_NATIVE_BUILD to a value at or below a build number that already shipped without that change.
+origin: spec-deferred 77cb954e51a0
+location: scripts/check-native-build.sh:390
+source_spec: `tickets/epic-platform-baseline/tickets/story-each-deploy-publishes-a-live-update-with-its-minimum-native-plan.md`
+severity: medium
+reason: scripts/check-native-build.sh requires head MIN > base MIN and MIN <= every CURRENT_PROJECT_VERSION, as the ticket and this plan's intent define "raised". Once a web-only App Store build puts CURRENT_PROJECT_VERSION above MIN (e.g. Xcode 10, MIN 8), a native change raising MIN to 9 and leaving the pbxproj at 10 passes; installs on build 10, which lack the new native code, would then accept the bundle that needs it. AGENTS.md says a native change raises both numbers, which would close it (new MIN above the base's highest CURRENT_PROJECT_VERSION). Not reachable today (8/8, no App Store build until epic-app-store-release). Settling it changes AD-18's / the ticket's rule, which is the owner's or architect's call.
+status: open
