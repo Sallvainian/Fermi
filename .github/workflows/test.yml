@@ -165,7 +165,9 @@ jobs:
   # scripts/deploy-gate.sh, the daily deploy decision, runs against the same
   # builds: it must print deploy=false only for the live commit.
   # scripts/check-hosted-config.sh against fixture API responses: it must pass
-  # for the right Auth and Realtime config and name each wrong setting.
+  # for the right Auth and Realtime config and name each wrong setting,
+  # including a site_url or redirect URL off the workers.dev origin and an
+  # empty redirect list.
   # scripts/write-latest-json.sh against fake builds: it must write only
   # latest.json for the build's own id and refuse an id the build lacks, an
   # unset GITHUB_SHA and a missing build. No secret, no Supabase CLI.

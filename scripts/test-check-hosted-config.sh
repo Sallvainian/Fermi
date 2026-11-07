@@ -10,6 +10,10 @@
 #   - email sign-in off                   -> must fail naming email sign-in
 #   - private_only false / null / absent  -> must fail naming Realtime private-only
 #   - two wrong settings                  -> must fail naming both
+#   - a localhost site_url                -> must fail naming the site URL
+#   - a redirect URL on another origin, or on a look-alike host
+#                                         -> must fail naming that URL
+#   - an empty redirect list              -> must fail naming it empty
 #   - unknown project ref (HTTP 404)      -> must fail naming HTTP 404
 #   - HTTP 200 with a body that is not JSON -> must fail naming "not a JSON object"
 # A failing case passes only when the checker fails for that case's reason.
@@ -31,12 +35,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
+origin="https://fermi-plus.sallvain.workers.dev"
+
 # fixture <ref> <email> <anonymous> <disable_signup> <private_only-json-or-absent>
+#         [site_url] [uri_allow_list]  (default: the workers.dev origin and its /**)
 fixture() {
   local dir="$work/v1/projects/$1/config" realtime
   mkdir -p "$dir"
-  printf '{"external_email_enabled":%s,"external_anonymous_users_enabled":%s,"disable_signup":%s,"site_url":"http://localhost:3000"}\n' \
-    "$2" "$3" "$4" >"$dir/auth"
+  jq -n --argjson email "$2" --argjson anon "$3" --argjson nosignup "$4" \
+    --arg site "${6:-$origin}" --arg allow "${7-$origin/**}" \
+    '{external_email_enabled: $email, external_anonymous_users_enabled: $anon,
+      disable_signup: $nosignup, site_url: $site, uri_allow_list: $allow}' >"$dir/auth"
   if [ "$5" = absent ]; then
     realtime='{"max_concurrent_users":200}'
   else
@@ -54,6 +63,10 @@ fixture   po-false   true   false  true     false
 fixture   po-null    true   false  true     null
 fixture   po-absent  true   false  true     absent
 fixture   two-wrong  true   true   false    true
+fixture   site-localhost  true false true true 'http://localhost:3000'
+fixture   redirect-other  true false true true "$origin" "$origin/**,https://evil.example.com/**"
+fixture   redirect-lookalike true false true true "$origin" "$origin.evil.com/**"
+fixture   redirect-empty  true false true true "$origin" ''
 # A 200 reply whose body is not JSON.
 mkdir -p "$work/v1/projects/not-json/config"
 echo '<html>maintenance</html>' >"$work/v1/projects/not-json/config/auth"
@@ -118,6 +131,10 @@ expect_fail 'private_only false' po-false 'Realtime private-only is wrong' 'priv
 expect_fail 'private_only null' po-null 'Realtime private-only is wrong' 'private_only is null'
 expect_fail 'private_only absent' po-absent 'Realtime private-only is wrong' 'private_only is null'
 expect_fail 'two wrong settings' two-wrong 'anonymous sign-ins is wrong' 'sign-up is wrong'
+expect_fail 'a localhost site_url' site-localhost 'site URL is wrong' 'site_url is "http://localhost:3000"'
+expect_fail 'a redirect URL on another origin' redirect-other 'redirect URLs is wrong' 'holds https://evil.example.com/**'
+expect_fail 'a redirect URL on a look-alike host' redirect-lookalike 'redirect URLs is wrong' "holds $origin.evil.com/**"
+expect_fail 'an empty redirect list' redirect-empty 'redirect URLs is wrong' 'uri_allow_list is empty'
 expect_fail 'a missing project ref' no-such-ref 'HTTP 404' '/v1/projects/no-such-ref/config/auth'
 expect_fail 'a reply that is not JSON' not-json 'not a JSON object' '/v1/projects/not-json/config/auth'
 

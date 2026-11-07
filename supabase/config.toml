@@ -418,7 +418,9 @@ enabled = true
 # The deploy's `supabase config push` (deploy.yml, Hosted config) applies this
 # block over the settings above for the hosted project, so it changes only what
 # config.toml decides for both. The values below are the hosted project's own as
-# of 2026-11-06; the local-dev defaults above differ and a push without this
+# of 2026-11-06, except auth's site_url and additional_redirect_urls, which AD-7
+# pins to the workers.dev origin (story 18; scripts/check-hosted-config.sh
+# asserts them); the local-dev defaults above differ and a push without this
 # block would overwrite them. A later epic that changes a hosted value changes
 # it here -- the push then touches only the settings that epic names.
 # Check with: supabase config diff --project-ref mzbblbgmrvcgvzxwhptm
@@ -433,8 +435,8 @@ max_client_conn = 200
 enabled = false
 
 [remotes.production.auth]
-site_url = "http://localhost:3000"
-additional_redirect_urls = []
+site_url = "https://fermi-plus.sallvain.workers.dev"
+additional_redirect_urls = ["https://fermi-plus.sallvain.workers.dev/**"]
 
 [remotes.production.auth.email]
 enable_confirmations = true
