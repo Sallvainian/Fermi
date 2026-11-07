@@ -3,7 +3,7 @@ title: 'The hosted sign-in returns to the workers.dev site, not localhost'
 type: feature
 ticket: '18'
 created: '2026-11-07'
-status: blocked
+status: done
 baseline_revision: '5288a9f4eaf2843a538d98e90738f8a1cb8c0b63'
 route: oneshot
 route_source: auto
@@ -20,8 +20,6 @@ operator_actions:
   - 'After this branch merges to main, open the Deploy run for that push and confirm Hosted config and Health check are green, and that the Health check log''s "Check the hosted Auth and Realtime config" step shows "OK: site URL (site_url = "https://fermi-plus.sallvain.workers.dev")" and "OK: redirect URLs (uri_allow_list = https://fermi-plus.sallvain.workers.dev/**)".'
   - 'In the Supabase dashboard for project mzbblbgmrvcgvzxwhptm, open Authentication → URL Configuration and change Site URL to another value (for example http://localhost:3000), then in GitHub run the Deploy workflow by hand from main with "health_check_only" ticked, and confirm the Health check fails with "site URL is wrong" naming the value you set.'
   - 'Make the next push to main and confirm its Deploy run passes, and that the dashboard''s Site URL is https://fermi-plus.sallvain.workers.dev again.'
-blocked_at: "2026-11-07"
-blocked_reason: "awaiting operator: After this branch merges to main, open the Deploy run for that push and confirm Hosted config and Health check are green, and that the Health check log's \"Check the hosted Auth and Realtime config\" step shows \"OK: site URL (site_url = \"https://fermi-plus.sallvain.workers.dev\")\" and \"OK: redirect URLs (uri_allow_list = https://fermi-plus.sallvain.workers.dev/**)\".; In the Supabase dashboard for project mzbblbgmrvcgvzxwhptm, open Authentication → URL Configuration and change Site URL to another value (for example http://localhost:3000), then in GitHub run the Deploy workflow by hand from main with \"health_check_only\" ticked, and confirm the Health check fails with \"site URL is wrong\" naming the value you set.; Make the next push to main and confirm its Deploy run passes, and that the dashboard's Site URL is https://fermi-plus.sallvain.workers.dev again."
 ---
 
 <intent-contract>
@@ -84,3 +82,13 @@ Status: awaiting-operator
 **Owed by the operator (operator_actions):** confirm the first Deploy run on main is green and its Health check log shows the pinned site_url and redirect URL; change Site URL in the dashboard and confirm a health-check-only run fails naming it; confirm the next push to main restores it and passes.
 
 **Residual risks:** the push to the hosted project runs for real only on main. Until the Google OAuth client (epic-invite-sign-in) lists the origin, a hosted Google sign-in is not yet usable; this change only fixes where Supabase returns users. The origin is pinned in both `config.toml` and the checker, so moving off workers.dev means changing both (the checker then fails until they agree).
+
+## Operator Confirmation
+
+Confirmed 2026-11-07: the external actions this story owed were carried out.
+
+- After this branch merges to main, open the Deploy run for that push and confirm Hosted config and Health check are green, and that the Health check log's "Check the hosted Auth and Realtime config" step shows "OK: site URL (site_url = "https://fermi-plus.sallvain.workers.dev")" and "OK: redirect URLs (uri_allow_list = https://fermi-plus.sallvain.workers.dev/**)".
+- In the Supabase dashboard for project mzbblbgmrvcgvzxwhptm, open Authentication → URL Configuration and change Site URL to another value (for example http://localhost:3000), then in GitHub run the Deploy workflow by hand from main with "health_check_only" ticked, and confirm the Health check fails with "site URL is wrong" naming the value you set.
+- Make the next push to main and confirm its Deploy run passes, and that the dashboard's Site URL is https://fermi-plus.sallvain.workers.dev again.
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._
