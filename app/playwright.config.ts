@@ -45,8 +45,8 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      // WebKit with an iPhone's screen and user agent. Not iOS Safari and not
-      // the Capacitor shell (test design TC-8); those are checked by hand.
+      // WebKit with an iPhone's screen and user agent. Not iOS Safari (test
+      // design TC-8); that is checked by hand.
       name: 'webkit',
       testDir: './tests/e2e',
       use: { ...devices['iPhone 15'] },

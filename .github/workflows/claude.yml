@@ -68,8 +68,8 @@ jobs:
           prompt: |
             ## Fermi
 
-            Fermi is a Capacitor iOS app: a Vite + React shell in `app/` on
-            Supabase (`supabase/`: migrations, pgTAP tests, edge functions). Read
+            Fermi is a web app: a Vite + React app in `app/` on Supabase
+            (`supabase/`: migrations, pgTAP tests, edge functions). Read
             `AGENTS.md` before changing behavior it covers; it is the source for
             this repo's policy, layout and conventions. The legacy mobile tree
             outside `app/` and `supabase/` is being retired: do not change it
@@ -92,7 +92,7 @@ jobs:
             checked it.
 
             Do NOT claim on-device coverage. This job has no device or
-            simulator, so nothing here exercises the app as a user runs it.
+            browser, so nothing here exercises the app as a user runs it.
 
             If you could not verify something, say so plainly rather than
             implying it passed.

@@ -17,20 +17,8 @@ updates:
       - 'dependencies'
       - 'npm'
     # Dependabot puts a dependency in the first group that matches it, so the
-    # order here matters: native and vitest come before the two catch-all groups.
+    # order here matters: vitest comes before the two catch-all groups.
     groups:
-      # AD-18's one list of native packages: the Capacitor core, CLI and
-      # platform packages must move together, and so must the plugins. Add each
-      # Capacitor plugin to this list. Majors are included so the set never
-      # lands half-updated.
-      native:
-        patterns:
-          - '@capacitor/*'
-          - '@capgo/*'
-        update-types:
-          - 'major'
-          - 'minor'
-          - 'patch'
       # vitest and its companion packages peer-pin each other on an exact
       # version, so a major that arrives as one PR per package can never
       # install. Named explicitly so they always travel together, majors

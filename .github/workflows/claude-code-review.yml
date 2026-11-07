@@ -86,8 +86,7 @@ jobs:
                simply have no rules file to check against.
             2. Run `gh pr diff ${{ github.event.pull_request.number }}` to get the full diff.
             3. Check if the diff ONLY contains lockfiles, markdown, version bumps, or
-               auto-generated files (generated Supabase types, `app/ios/` project
-               files that only bump a build number). If so, skip the review
+               auto-generated files (generated Supabase types). If so, skip the review
                entirely and make your comment read exactly: "No reviewable changes."
             4. This workflow re-runs on every push. Your comment is reused and rewritten
                in place, so write it as a complete standalone review of the CURRENT diff —
@@ -133,10 +132,6 @@ jobs:
               set after unmount, subscriptions or timers never cleaned up, a
               route or guard that lets a signed-out user or the wrong role reach a
               screen
-            - **Capacitor**: a plugin called without a `Capacitor.isPluginAvailable`
-              guard (the browser build has no native plugins), a native change
-              (plugin, iOS project, native config) that does not raise both
-              `app/MIN_NATIVE_BUILD` and the Xcode `CURRENT_PROJECT_VERSION`
             - **Data access**: a Supabase client created or called outside
               `app/src/api/`
 
