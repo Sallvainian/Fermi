@@ -3,7 +3,7 @@ title: 'Deploys set and assert the hosted Auth and Realtime config'
 type: feature
 ticket: '4'
 created: '2026-11-06'
-status: blocked
+status: done
 baseline_revision: 'f43e1c5417125aac2c3534f0d273dcd60c4c73c6'
 route: full
 route_source: auto
@@ -20,8 +20,6 @@ operator_actions:
   - After this branch merges to main, open the Deploy run for that push and confirm Migrate, Hosted config, Build, Deploy and Health check are all green (the first Hosted config run turns hosted sign-up off and sets Realtime private-only).
   - In the Supabase dashboard for project mzbblbgmrvcgvzxwhptm, open Authentication → Sign In / Providers and turn on "Allow anonymous sign-ins", then in GitHub run the Deploy workflow by hand from main with "health_check_only" ticked, and confirm the Health check fails with "anonymous sign-ins is wrong".
   - Make the next push to main and confirm its Deploy run passes, and that the dashboard shows anonymous sign-ins off again.
-blocked_at: "2026-11-06"
-blocked_reason: "awaiting operator: After this branch merges to main, open the Deploy run for that push and confirm Migrate, Hosted config, Build, Deploy and Health check are all green (the first Hosted config run turns hosted sign-up off and sets Realtime private-only).; In the Supabase dashboard for project mzbblbgmrvcgvzxwhptm, open Authentication → Sign In / Providers and turn on \"Allow anonymous sign-ins\", then in GitHub run the Deploy workflow by hand from main with \"health_check_only\" ticked, and confirm the Health check fails with \"anonymous sign-ins is wrong\".; Make the next push to main and confirm its Deploy run passes, and that the dashboard shows anonymous sign-ins off again."
 ---
 
 <intent-contract>
@@ -140,3 +138,12 @@ Status: awaiting-operator
 
 **Residual risks:** the config push, the Realtime PATCH and the health_check_only path run for real only on main. The remotes block pins hosted values as of 2026-11-06, including the hosted site_url `http://localhost:3000`, which epic-invite-sign-in will need to set to the real site. DW-1 (hosted sign-up and exposed schemas) is settled by this change once the first Deploy run passes; `deferred-work.md` was not edited.
 
+## Operator Confirmation
+
+Confirmed 2026-11-06: the external actions this story owed were carried out.
+
+- After this branch merges to main, open the Deploy run for that push and confirm Migrate, Hosted config, Build, Deploy and Health check are all green (the first Hosted config run turns hosted sign-up off and sets Realtime private-only).
+- In the Supabase dashboard for project mzbblbgmrvcgvzxwhptm, open Authentication → Sign In / Providers and turn on "Allow anonymous sign-ins", then in GitHub run the Deploy workflow by hand from main with "health_check_only" ticked, and confirm the Health check fails with "anonymous sign-ins is wrong".
+- Make the next push to main and confirm its Deploy run passes, and that the dashboard shows anonymous sign-ins off again.
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._
