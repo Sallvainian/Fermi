@@ -48,7 +48,9 @@ cp -R "$work/good" "$work/no-id-in-js"
 perl -pi -e "s{\Q$build_id\E}{not-the-build-id}g" "$work/no-id-in-js${js_ref}"
 
 serve() {
-  npx vite preview --outDir "$1" --port "$port" --strictPort >"$work/preview.log" 2>&1 &
+  # vite itself, not `npx`: on Linux npx leaves a sh between it and node, so
+  # $! would be npm, and killing it would leave the server holding the port.
+  "$root/app/node_modules/.bin/vite" preview --outDir "$1" --port "$port" --strictPort >"$work/preview.log" 2>&1 &
   pid=$!
   for _ in $(seq 1 60); do
     if curl -sf -o /dev/null "http://localhost:$port/"; then return 0; fi
