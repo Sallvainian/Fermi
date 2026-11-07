@@ -13,10 +13,14 @@
 #     schema.sql:<line> and SQLSTATE 22012
 #   - data.sql with a delete of internal.job_failures   -> restore check must fail naming that
 #     table and both counts
+#   - data.sql with an empty COPY into a storage table  -> restore check must pass, naming the
+#     the throwaway database lacks (hosted is newer)       skipped table
+#   - the same COPY holding one row                     -> restore check must fail naming the
+#                                                          table and its row count
 #   - an empty recipients file, a line `not-a-key`      -> encrypt must fail and write no output
 #   - a dump with a wrong password                      -> dump must exit 1 naming the failed
 #     authentication, so backup.yml stops before encrypting or uploading
-#   - after the three restore checks                    -> no restore-check container is left
+#   - after the five restore checks                     -> no restore-check container is left
 #   - missing arguments                                 -> each script must exit 2
 # A failing case passes only when the script fails for that case's reason.
 #
@@ -156,12 +160,31 @@ expect_fail 'a dump that deletes restored rows' 1 \
   '"internal"\."job_failures": the dump has [1-9][0-9]* rows, the restored table has 0' -- \
   "$root/scripts/backup-restore-check.sh" "$work/bad-count"
 
-# After the last restore check: the passing run and both failing runs.
+# A storage table that a newer hosted storage service has and the throwaway
+# database lacks: skipped when empty, a failure when it holds rows.
+cp -R "$dump" "$work/new-empty"
+printf '\nCOPY "storage"."not_in_this_image" ("id") FROM stdin;\n\\.\n' >>"$work/new-empty/data.sql"
+expect_ok 'a dump with an empty storage table the image lacks' \
+  "$root/scripts/backup-restore-check.sh" "$work/new-empty"
+cases=$((cases + 1))
+if grep -q '^skipped "storage"\."not_in_this_image": empty' "$work/out.log"; then
+  pass 'the restore check names the skipped table'
+else
+  fail 'the restore check passed without naming the skipped table:' "$work/out.log"
+fi
+
+cp -R "$dump" "$work/new-rows"
+printf '\nCOPY "storage"."not_in_this_image" ("id") FROM stdin;\n1\n\\.\n' >>"$work/new-rows/data.sql"
+expect_fail 'a dump with rows for a storage table the image lacks' 1 \
+  '"storage"\."not_in_this_image" holds 1 rows, but the throwaway database has no such table' -- \
+  "$root/scripts/backup-restore-check.sh" "$work/new-rows"
+
+# After the last restore check: the two passing runs and the three failing runs.
 cases=$((cases + 1))
 if docker ps -a --format '{{.Names}}' | grep -q 'fermi-restore-check'; then
   fail 'a restore check left its database container behind.'
 else
-  pass 'the three restore checks left no container'
+  pass 'the five restore checks left no container'
 fi
 
 # Bad recipients: no output file.
