@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       health_check_only:
-        description: 'Run only the Health check (site and hosted config); skips migrate, hosted config, build and deploy. The site check expects the build of main''s latest commit, so it fails if that commit is not what is live'
+        description: 'Run only the Health check (site and hosted config); skips migrate, hosted config, edge functions, build and deploy. The site check expects the build of main''s latest commit, so it fails if that commit is not what is live'
         type: boolean
         default: false
 
@@ -26,8 +26,8 @@ jobs:
   migrate:
     name: Migrate
     # Production has no deployment-branch policy, so a manual run from another
-    # branch must not push its migrations; hosted-config, build, deploy and
-    # health-check need this job. A health-check-only run skips it.
+    # branch must not push its migrations; hosted-config, functions, build, deploy
+    # and health-check need this job. A health-check-only run skips it.
     if: github.ref == 'refs/heads/main' && !inputs.health_check_only
     runs-on: ubuntu-latest
     environment: Production
@@ -128,10 +128,53 @@ jobs:
             -d '{"private_only":true}' "$url"
           echo "Realtime set to private-only."
 
+  # The edge functions, after the schema and config they rely on and before the
+  # build ships a frontend that calls them. Holds the Management API token and
+  # runs no npm code. A skipped migrate (a health-check-only run) skips it too.
+  functions:
+    name: Edge functions
+    needs: hosted-config
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.122.0
+
+      # Deploys every function folder. _shared is not one (its name starts with
+      # an underscore), and with no function folders the CLI would exit 1 with
+      # NoFunctionsToDeployError, so this step passes without calling it.
+      # --use-api bundles on the Management API, so no Docker. No --prune: a
+      # deploy never deletes a function it does not know about.
+      - name: Deploy edge functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+        run: |
+          shopt -s nullglob
+          functions=()
+          for dir in supabase/functions/*/; do
+            name="$(basename "$dir")"
+            if [[ "$name" =~ ^[A-Za-z][A-Za-z0-9_-]*$ ]]; then
+              functions+=("$name")
+            fi
+          done
+          if [ "${#functions[@]}" -eq 0 ]; then
+            echo "no edge functions to deploy"
+            exit 0
+          fi
+          echo "Deploying: ${functions[*]}"
+          supabase functions deploy --project-ref "$PROJECT_ID" --use-api
+
   # Runs third-party npm code, so it has no environment and no secrets.
   build:
     name: Build
-    needs: hosted-config
+    needs: functions
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -153,9 +196,27 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Without these the build falls back to the local stack (app/src/api/
+      # env.ts), which a deployed app must never point at.
+      - name: Check the Supabase build variables
+        env:
+          SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          for name in SUPABASE_PROJECT_ID SUPABASE_PUBLISHABLE_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "::error::The repository variable $name is empty; the build would not target the hosted project."
+              exit 1
+            fi
+          done
+
       # GITHUB_SHA is the id vite.config.ts bakes in as __BUILD_ID__ and as the
-      # fermi-build meta the health check reads back.
+      # fermi-build meta the health check reads back. The publishable key is
+      # public by design.
       - name: Build application
+        env:
+          VITE_SUPABASE_URL: https://${{ vars.SUPABASE_PROJECT_ID }}.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
       - name: Upload build
@@ -166,11 +227,11 @@ jobs:
           retention-days: 7
 
   # The secrets live on the Production environment, so only the jobs on it
-  # (migrate, hosted-config, deploy, health-check) can read them -- not the
-  # build. None of them runs a third-party npm install script: this job installs
-  # with --ignore-scripts, so no dependency's install script runs beside the
-  # token, and the others run no npm code. Only this job references the
-  # Cloudflare secrets.
+  # (migrate, hosted-config, functions, deploy, health-check) can read them --
+  # not the build. None of them runs a third-party npm install script: this job
+  # installs with --ignore-scripts, so no dependency's install script runs
+  # beside the token, and the others run no npm code. Only this job references
+  # the Cloudflare secrets.
   deploy:
     name: Deploy
     needs: build
@@ -209,8 +270,8 @@ jobs:
   # Proves this push is what the site serves and that the hosted Auth and
   # Realtime config is what the app assumes. Holds the Management API token
   # (read-only GETs) and runs no npm code. Runs after a green deploy, or alone
-  # for a health_check_only dispatch, where migrate, hosted-config, build and
-  # deploy are skipped.
+  # for a health_check_only dispatch, where migrate, hosted-config, functions,
+  # build and deploy are skipped.
   health-check:
     name: Health check
     needs: deploy

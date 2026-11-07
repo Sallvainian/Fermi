@@ -45,6 +45,29 @@ export default defineConfig(
       'no-console': ['error', { allow: ['warn', 'error'] }],
     },
   },
+  // AD-17: app/src/api/ is the only app code that talks to Supabase, so the
+  // one client and the one error map cannot be bypassed. Test helpers below
+  // import supabase-js on purpose, against the local stack only.
+  {
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['@supabase/*'],
+              message:
+                'Import Supabase only in app/src/api/ (AD-17): call it through the client and error map there.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/api/**', 'tests/**'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
   // Config files run in Node.
   {
     files: ['*.config.{js,ts}'],

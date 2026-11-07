@@ -117,9 +117,9 @@ jobs:
           deno-version: v2.x
 
       # Every folder in supabase/functions, each handler.ts's tests beside it
-      # (AD-5). --no-lock: a bare run writes a deno.lock that could change what
-      # `supabase functions deploy` resolves. Story 5 adds the first function;
-      # until then the folder does not exist.
+      # (AD-5), and _shared/*.ts's beside them. --no-lock: a bare run writes a
+      # deno.lock that could change what `supabase functions deploy` resolves.
+      # The guard stays for a checkout without the folder.
       - name: deno test
         run: |
           if [ ! -d supabase/functions ]; then
