@@ -15,7 +15,7 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 
 | Req | Firebase pieces behind it today | Source |
 |---|---|---|
-| R1 | `AuthService.signInWithGoogle`; `autoAssignRole` (`beforeUserCreated`) and `DOMAIN_ROLE_MAPPINGS` give way to the admin's teacher list and teacher-created student accounts; Apple sign-in and the teacher/student choice screen are new (only `reauthenticateWithApple` existed); student email-and-password sign-in comes back for students only | Q1, Q2, AD-7, AD-8 |
+| R1 | `AuthService.signInWithGoogle`; `autoAssignRole` (`beforeUserCreated`) and `DOMAIN_ROLE_MAPPINGS` give way to the admin's teacher list and teacher-created student accounts; the teacher/student choice screen is new; `reauthenticateWithApple` is not ported (Apple sign-in is out, initiative Decision 2026-11-07); student email-and-password sign-in comes back for students only | Q1, Q2, AD-7, AD-8 |
 | R2 | `AuthProvider._processUser` (role from `users.role`, sign-out when null); router redirects; `/dashboard` picks by role | Q1 |
 | R3 | `profile_completion_dialog`; Storage `users/{uid}/profile/avatar.jpg` | Q4, Q5 |
 | R4 | `classes` (`teacherId`, `studentIds`, `isActive`); `ClassService`, `ClassProvider`; `enrollmentCode` is not ported | Q3, Q6, AD-9 |
@@ -25,7 +25,7 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 | R8 | `calendar_events` (`createdBy`, `participantIds`) | Q3, Q6 |
 | R9 | `discussion_boards` / `threads` / `replies` / `likes` and their counters | Q3, Q7 |
 | R10 | `chatRooms` list, groups, class chat; `conversations/{id}/messages`, `typing`; callables `sendMessage`, `markMessagesAsRead`, `updateTypingStatus`, `uploadChatFile` | Q4, Q7, Q10 |
-| R11 | `FirebaseMessagingService` (iOS); `sendPushNotifications` reading `users.fcmToken` | Q11 |
+| R11 | `FirebaseMessagingService` (iOS); `sendPushNotifications` reading `users.fcmToken`; the port delivers it as web push to the Home Screen web app, not native push (initiative Decision 2026-11-07) | Q11 |
 | R12 | `presence/{uid}` (`online`, `lastSeen`); admin online count | Q5 |
 | R13 | `bug_reports` add from `contact_support_screen` | Q5 |
 | R14 | `notifications` via `FirebaseNotificationService` (`isRead`); `NotificationsScreen` routed at `app_router.dart:585`, `:599` | Q5 |
@@ -37,7 +37,7 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 | R20 | "Announcements" board category (`create_board_dialog.dart:24`), thread type, `NotificationType.announcement`; the `announcements` collection has only a rule (`firestore.rules:385-388`) | Q3, D11 |
 | R21 | `GradeService.archiveOldGrades` (`grade_service.dart:266`) moves returned grades older than 180 days to `archived_grades`; it has no caller, and nothing reads the archive | D13 |
 | R22 | New | D14 |
-| R23 | New; follows My-Love's `src/services/nativeUpdates.ts` and `scripts/package-live-update.sh` | D9 |
+| R23 | New; AD-24's full-screen refresh page when `updates/latest.json`'s `app` id differs from the running build's | D9, AD-24 |
 | R24 | New; web never registers for push today | Q11, D9 |
 | R25 | New | D9, AD-7 |
 | R26 | New | AD-8 |
@@ -51,6 +51,7 @@ What the port keeps, drops and must not repeat. Each line cites the research at 
 **By decision** (brief D1, D2, D4, D5, D7, D11, D12, D15):
 - macOS, Windows and Linux builds; `DirectDesktopOAuthHandler`, `SecureDesktopOAuthHandler`, `DesktopOAuthHandler`; `getOAuthUrl`, `exchangeOAuthCode`, `refreshOAuthToken`; `oauth_pkce_challenges`, `_rate_limits`, `cleanupExpiredPKCEChallenges`, `manualPKCECleanup` (Q1, Q8, Q9)
 - Android, including Android push and FCM (D5, Q11)
+- The iPhone app: the Flutter iOS build's replacement in any form (App Store, TestFlight, ad hoc, Apple School Manager), Capacitor, APNs and Sign in with Apple; the Fermi+ listing is removed from sale (initiative Decision 2026-11-07)
 - Any Firebase Auth or Firestore data migration; `migrateAllUserRoles`, `migrateUserRoles`, `migrateUsernamesToPublic`, `migrateUsernamesHttp`, `migrateStudentClassEnrollment` (Q2, Q9, Q10)
 - Jeopardy entirely: both `SimpleJeopardyProvider` classes, the games screen, `jeopardy_games`, `jeopardy_questions`, `jeopardy_sessions` (Q8)
 - `calls` and `candidates`; `games` and `scores` (D11)

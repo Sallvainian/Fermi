@@ -10,13 +10,20 @@
 #   - the id missing from the JavaScript      -> must fail: the bundle lacks it
 #   - no updates/ folder                      -> must fail: answered as HTML
 #   - latest.json naming a stale version      -> must fail: not the expected id
-#   - latest.json with a wrong checksum       -> must fail: not the zip's sha256
-#   - latest.json with another min_native_build -> must fail: not MIN_NATIVE_BUILD
-#   - latest.json whose url is off the site   -> must fail: not under the base URL
-# The good build is packaged with scripts/package-live-update.sh first.
+#   - `/` with no Cache-Control               -> must fail: no max-age=0
+#   - `/` with max-age=600                    -> must fail: not max-age=0
+#   - latest.json with no Cache-Control       -> must fail: no max-age=0
+#   - latest.json with max-age=600            -> must fail: not max-age=0
+# The good build gets its latest.json from scripts/write-latest-json.sh first
+# (with its APP_ID, as the deploy writes it).
+# The server is `vite preview` with scripts/check-site-preview.config.mjs, which
+# answers `/` and latest.json itself so each case picks their Cache-Control
+# (CHECK_SITE_ROOT_CACHE, CHECK_SITE_LATEST_CACHE; the default is Cloudflare's
+# `public, max-age=0, must-revalidate`): vite preview's own file server sends
+# `no-cache` and overrides any header set before it.
 # Then scripts/deploy-gate.sh, deploy.yml's daily decision, against the same
 # builds: `deploy=false` only when latest.json names the given commit, and
-# `deploy=true` for another commit, no live update, a latest.json that is not
+# `deploy=true` for another commit, no latest.json, a latest.json that is not
 # valid JSON, or no server at all.
 # A failing case passes only when check-site.sh fails for that case's reason,
 # so a case cannot pass because the server was down.
@@ -41,7 +48,8 @@ trap cleanup EXIT
 cd "$root/app"
 
 echo "Building the shell with build id $build_id"
-GITHUB_SHA="$build_id" npx vite build --outDir "$work/good" --emptyOutDir --logLevel warn
+app_id="app-$build_id"
+GITHUB_SHA="$build_id" APP_ID="$app_id" npx vite build --outDir "$work/good" --emptyOutDir --logLevel warn
 
 js_ref="$(grep -o '/assets/[^"]*\.js' "$work/good/index.html" | head -n 1)"
 if [ -z "$js_ref" ] || ! grep -qF "$build_id" "$work/good${js_ref}"; then
@@ -49,9 +57,8 @@ if [ -z "$js_ref" ] || ! grep -qF "$build_id" "$work/good${js_ref}"; then
   exit 1
 fi
 
-# The live update, as the deploy packages it. Its urls point at this server.
-GITHUB_SHA="$build_id" DIST="$work/good" UPDATE_BASE_URL="http://localhost:$port" \
-  "$root/scripts/package-live-update.sh"
+# The version file, as the deploy writes it.
+GITHUB_SHA="$build_id" APP_ID="$app_id" DIST="$work/good" "$root/scripts/write-latest-json.sh"
 
 # The page names a script file that does not exist.
 cp -R "$work/good" "$work/missing-js"
@@ -61,7 +68,7 @@ perl -pi -e "s{\Q$js_ref\E}{/assets/missing-$build_id.js}g" "$work/missing-js/in
 cp -R "$work/good" "$work/no-id-in-js"
 perl -pi -e "s{\Q$build_id\E}{not-the-build-id}g" "$work/no-id-in-js${js_ref}"
 
-# The good build with no live update: the SPA fallback answers the manifest.
+# The good build with no latest.json: the SPA fallback answers the manifest.
 cp -R "$work/good" "$work/no-updates"
 rm -rf "$work/no-updates/updates"
 
@@ -71,10 +78,6 @@ tamper_manifest() {  # <dir> <jq filter>
   jq "$2" "$work/good/updates/latest.json" >"$1/updates/latest.json"
 }
 tamper_manifest "$work/stale-version" '.version = "stale-version"'
-tamper_manifest "$work/bad-checksum" ".checksum = \"$(printf '0%.0s' $(seq 1 64))\""
-tamper_manifest "$work/other-min" '.min_native_build += 1'
-other_min="$(jq '.min_native_build' "$work/other-min/updates/latest.json")"
-tamper_manifest "$work/foreign-url" '.url = "https://elsewhere.test/updates/bundle.zip"'
 
 # The good build whose latest.json is not JSON.
 cp -R "$work/good" "$work/bad-json"
@@ -83,7 +86,7 @@ echo 'not json{' >"$work/bad-json/updates/latest.json"
 serve() {
   # vite itself, not `npx`: on Linux npx leaves a sh between it and node, so
   # $! would be npm, and killing it would leave the server holding the port.
-  "$root/app/node_modules/.bin/vite" preview --outDir "$1" --port "$port" --strictPort >"$work/preview.log" 2>&1 &
+  "$root/app/node_modules/.bin/vite" preview --config "$root/scripts/check-site-preview.config.mjs" --outDir "$1" --port "$port" --strictPort >"$work/preview.log" 2>&1 &
   pid=$!
   for _ in $(seq 1 60); do
     if curl -sf -o /dev/null "http://localhost:$port/"; then return 0; fi
@@ -136,11 +139,12 @@ expect_pass 'the right build id' "$work/good" "$build_id"
 expect_fail 'a stale build id' "$work/good" "stale-$build_id" "the site serves build $build_id, not the expected stale-$build_id"
 expect_fail 'a missing JavaScript file' "$work/missing-js" "$build_id" "(expected JavaScript); the file is missing and the SPA fallback answered"
 expect_fail 'the id missing from the JavaScript' "$work/no-id-in-js" "$build_id" "does not contain the expected build id $build_id"
-expect_fail 'no live update' "$work/no-updates" "$build_id" "/updates/latest.json served as 'text/html"
-expect_fail 'a stale live-update version' "$work/stale-version" "$build_id" "latest.json version is 'stale-version', not the expected $build_id"
-expect_fail 'a wrong live-update checksum' "$work/bad-checksum" "$build_id" "does not match the sha256 of"
-expect_fail 'another min_native_build' "$work/other-min" "$build_id" "latest.json min_native_build is '$other_min'"
-expect_fail 'a live-update url off the site' "$work/foreign-url" "$build_id" "does not start with http://localhost:$port/"
+expect_fail 'no latest.json' "$work/no-updates" "$build_id" "/updates/latest.json served as 'text/html"
+expect_fail 'a stale latest.json version' "$work/stale-version" "$build_id" "latest.json version is 'stale-version', not the expected $build_id"
+CHECK_SITE_ROOT_CACHE='' expect_fail 'the page with no Cache-Control' "$work/good" "$build_id" "http://localhost:$port/ has no Cache-Control header (expected max-age=0)"
+CHECK_SITE_ROOT_CACHE='public, max-age=600' expect_fail 'the page with max-age=600' "$work/good" "$build_id" "http://localhost:$port/ is served with Cache-Control 'public, max-age=600' (expected max-age=0)"
+CHECK_SITE_LATEST_CACHE='' expect_fail 'latest.json with no Cache-Control' "$work/good" "$build_id" "http://localhost:$port/updates/latest.json has no Cache-Control header (expected max-age=0)"
+CHECK_SITE_LATEST_CACHE='public, max-age=600' expect_fail 'latest.json with max-age=600' "$work/good" "$build_id" "http://localhost:$port/updates/latest.json is served with Cache-Control 'public, max-age=600' (expected max-age=0)"
 
 # deploy-gate.sh: <case> <dir, or - for no server> <commit> <expected line>
 expect_gate() {
@@ -159,7 +163,7 @@ expect_gate() {
 
 expect_gate 'the live commit' "$work/good" "$build_id" 'deploy=false'
 expect_gate 'main ahead of the live commit' "$work/good" "newer-$build_id" 'deploy=true'
-expect_gate 'no live update (SPA answers)' "$work/no-updates" "$build_id" 'deploy=true'
+expect_gate 'no latest.json (SPA answers)' "$work/no-updates" "$build_id" 'deploy=true'
 expect_gate 'a latest.json that is not JSON' "$work/bad-json" "$build_id" 'deploy=true'
 expect_gate 'no server' - "$build_id" 'deploy=true'
 
@@ -167,4 +171,4 @@ if [ "$failures" -ne 0 ]; then
   echo "$failures health check case(s) did not behave as expected."
   exit 1
 fi
-echo "All 14 health check and deploy gate cases behaved as expected."
+echo "All 15 health check and deploy gate cases behaved as expected."

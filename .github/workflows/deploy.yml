@@ -1,8 +1,11 @@
 name: Deploy
 
 on:
-  # Every push to main deploys: a docs-only push redeploys the same build, and
-  # nothing that should ship can be left out by a forgotten path filter.
+  # Every push to main deploys, so nothing that should ship can be left out by a
+  # forgotten path filter. Every push also writes a new latest.json `version`,
+  # its own commit id, even when only docs changed; only a change under app/
+  # moves the `app` id (the git tree hash of app/) and so brings open clients
+  # the refresh page (AD-24).
   push:
     branches: [main]
   # Once a day, deploy only if the live site is behind main. GitHub starts no
@@ -48,7 +51,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Compare the live update with this commit
+      - name: Compare the live latest.json with this commit
         id: decide
         env:
           EVENT: ${{ github.event_name }}
@@ -217,9 +220,8 @@ jobs:
           supabase functions deploy --project-ref "$PROJECT_ID" --use-api
 
   # Runs third-party npm code, so it has no environment and no secrets. It also
-  # packages the live update for the iOS shell (dist/updates/, served beside the
-  # site), which refuses a build id that is not GITHUB_SHA and a
-  # MIN_NATIVE_BUILD above the Xcode build number.
+  # writes latest.json (dist/updates/, served beside the site), which refuses a
+  # build id that is not GITHUB_SHA and an app id the build lacks.
   build:
     name: Build
     needs: functions
@@ -258,21 +260,27 @@ jobs:
             fi
           done
 
+      # The app id is the git tree hash of app/: it changes only when something
+      # under app/ does, so the update check can tell a docs-only push from an
+      # app change. HEAD:app reads the tree from the commit, so it works on the
+      # shallow checkout. The assignment makes `-e` catch a failure. The Build
+      # and Write latest.json steps inherit APP_ID from GITHUB_ENV.
+      - name: Compute the app id
+        run: |
+          app_id="$(git rev-parse HEAD:app)"
+          echo "APP_ID=$app_id" >> "$GITHUB_ENV"
+
       # GITHUB_SHA is the id vite.config.ts bakes in as __BUILD_ID__ and as the
-      # fermi-build meta the health check reads back. The publishable key is
-      # public by design.
+      # fermi-build meta the health check reads back; APP_ID is baked in as
+      # __APP_ID__. The publishable key is public by design.
       - name: Build application
         env:
           VITE_SUPABASE_URL: https://${{ vars.SUPABASE_PROJECT_ID }}.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
 
-      # The zip's url points at the site, which SITE_URL names. A repository
-      # variable, so the build still reads no secret.
-      - name: Package live update
-        env:
-          UPDATE_BASE_URL: ${{ vars.SITE_URL }}
-        run: ../scripts/package-live-update.sh
+      - name: Write latest.json
+        run: ../scripts/write-latest-json.sh
 
       - name: Upload build
         uses: actions/upload-artifact@v7
@@ -322,10 +330,10 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: app/node_modules/.bin/wrangler deploy
 
-  # Proves this push is what the site serves (the page, its script, and the live
-  # update's latest.json, zip checksum and min_native_build) and that the hosted
-  # Auth and Realtime config is what the app assumes. Holds the Management API token
-  # (read-only GETs) and runs no npm code. Runs after a green deploy, or alone
+  # Proves this push is what the site serves (the page, its script, and
+  # latest.json's version) and that the hosted Auth and Realtime config is what
+  # the app assumes. Holds the Management API token (read-only GETs) and runs
+  # no npm code. Runs after a green deploy, or alone
   # for a health_check_only dispatch, where migrate, hosted-config, functions,
   # build and deploy are skipped.
   health-check:

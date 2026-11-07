@@ -3,7 +3,7 @@ title: 'A weekly encrypted backup that proves it restores'
 type: feature
 ticket: '8'
 created: '2026-11-06'
-status: blocked
+status: done
 baseline_revision: '4e831cb766aebdc0fc8b4806951b361f32d8f0d5'
 route: full
 route_source: auto
@@ -21,8 +21,6 @@ operator_actions:
   - "On that run's page, confirm its one artifact, fermi-db-backup-<run id>, holds only fermi-db-<date>.tar.gz.age, with a 90-day expiry."
   - "Download the artifact on the Mac, unzip it, and decrypt it with: age -d -i ~/.age/key.txt fermi-db-<date>.tar.gz.age | tar -tz — confirm it lists roles.sql, schema.sql, data.sql, history_schema.sql and history_data.sql; then delete the decrypted and downloaded copies."
   - "On the Sunday after the merge, confirm the scheduled Backup run (06:23 UTC) ran and is green."
-blocked_at: "2026-11-06"
-blocked_reason: "awaiting operator: After this branch merges to main, run Actions > Backup > Run workflow on main and confirm the Backup job is green, including its step Restore into a throwaway database, whose log ends with 'restored N tables, M rows'.; On that run's page, confirm its one artifact, fermi-db-backup-<run id>, holds only fermi-db-<date>.tar.gz.age, with a 90-day expiry.; Download the artifact on the Mac, unzip it, and decrypt it with: age -d -i ~/.age/key.txt fermi-db-<date>.tar.gz.age | tar -tz — confirm it lists roles.sql, schema.sql, data.sql, history_schema.sql and history_data.sql; then delete the decrypted and downloaded copies.; On the Sunday after the merge, confirm the scheduled Backup run (06:23 UTC) ran and is green."
 ---
 
 <intent-contract>
@@ -150,3 +148,13 @@ Not run here: anything on GitHub or the hosted project, the runner's `apt-get in
 - Whether hosted `cron.job` rows reach the data dump is UNVERIFIED. There are no jobs yet.
 - A restore into a new hosted project loses Storage bytes and Vault secrets, and needs roles.sql's `GRANT SET ON PARAMETER` line removed (header comment).
 
+## Operator Confirmation
+
+Confirmed 2026-11-07: the external actions this story owed were carried out.
+
+- After this branch merges to main, run Actions > Backup > Run workflow on main and confirm the Backup job is green, including its step Restore into a throwaway database, whose log ends with 'restored N tables, M rows'.
+- On that run's page, confirm its one artifact, fermi-db-backup-<run id>, holds only fermi-db-<date>.tar.gz.age, with a 90-day expiry.
+- Download the artifact on the Mac, unzip it, and decrypt it with: age -d -i ~/.age/key.txt fermi-db-<date>.tar.gz.age | tar -tz — confirm it lists roles.sql, schema.sql, data.sql, history_schema.sql and history_data.sql; then delete the decrypted and downloaded copies.
+- On the Sunday after the merge, confirm the scheduled Backup run (06:23 UTC) ran and is green.
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._

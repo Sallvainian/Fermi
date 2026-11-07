@@ -5,10 +5,7 @@
 # Usage: scripts/check-site.sh <base-url> <expected-build-id>
 #   ATTEMPTS     tries before giving up (default 6)
 #   RETRY_DELAY  seconds between tries (default 10)
-#   EXPECTED_MIN_NATIVE_BUILD  the min_native_build latest.json must carry
-#                (default: the integer in app/MIN_NATIVE_BUILD beside this script)
-# Exit 0 the site passed, 1 it did not within the attempts, 2 bad usage or no
-# expected min_native_build.
+# Exit 0 the site passed, 1 it did not within the attempts, 2 bad usage.
 #
 # Each attempt fails unless:
 #   - the base URL answers 200 text/html and its fermi-build meta tag equals the
@@ -20,13 +17,14 @@
 #   - that JavaScript file contains the expected id (a dropped __BUILD_ID__
 #     define would leave a blank page while the meta still matches);
 #   - a deep path answers 200 text/html (the SPA fallback works);
-#   - /updates/latest.json (the live update, scripts/package-live-update.sh)
-#     answers 200 application/json, valid JSON, and
-#       version          equals the expected id,
-#       min_native_build is the number in app/MIN_NATIVE_BUILD (or in
-#                        EXPECTED_MIN_NATIVE_BUILD, when set),
-#       url              starts with the base URL, and
-#       checksum         is the sha256 of the file the url downloads.
+#   - /updates/latest.json (written by scripts/write-latest-json.sh, read by
+#     scripts/deploy-gate.sh and the app's update check) answers 200
+#     application/json, is a JSON object, and its version equals the expected
+#     id;
+#   - the base URL and /updates/latest.json each carry a Cache-Control header
+#     with a max-age=0 directive, so a browser asks again for the page and the
+#     version file instead of reusing a copy (AD-21). The app's update check
+#     cannot see a deploy through a cached latest.json.
 # Later stories add their assertions to check_once.
 set -euo pipefail
 
@@ -40,36 +38,53 @@ expected="$2"
 attempts="${ATTEMPTS:-6}"
 delay="${RETRY_DELAY:-10}"
 
-expected_min="${EXPECTED_MIN_NATIVE_BUILD:-}"
-if [ -z "$expected_min" ]; then
-  min_file="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/app/MIN_NATIVE_BUILD"
-  if [ ! -f "$min_file" ]; then
-    echo "check-site: $min_file not found and EXPECTED_MIN_NATIVE_BUILD is not set" >&2
-    exit 2
-  fi
-  expected_min="$(tr -d '[:space:]' <"$min_file")"
-fi
-case "$expected_min" in
-  '' | *[!0-9]*)
-    echo "check-site: the expected min_native_build '$expected_min' is not an integer" >&2
-    exit 2
-    ;;
-esac
-expected_min=$((10#$expected_min))
-
 served="(none)"
 reason=""
 
-# GET a URL into $body_file and set $status and $ctype.
+# GET a URL into $body_file and set $status and $ctype. The response headers
+# go to $headers_file, one block per redirect hop.
 fetch() {
   local out
-  out="$(curl -sS -L --max-time 30 -o "$body_file" -w '%{http_code} %{content_type}' "$1")" || {
+  out="$(curl -sS -L --max-time 30 -D "$headers_file" -o "$body_file" -w '%{http_code} %{content_type}' "$1")" || {
     status="000"
     ctype=""
     return 0
   }
   status="${out%% *}"
   ctype="${out#* }"
+}
+
+# Print the Cache-Control of the last fetch's final response, repeated header
+# lines joined with ", ". Prints nothing when it has none.
+cache_control() {
+  tr -d '\r' <"$headers_file" | awk '
+    /^HTTP\// { value = ""; next }
+    tolower($0) ~ /^cache-control[ \t]*:/ {
+      line = $0
+      sub(/^[^:]*:/, "", line)
+      gsub(/^[ \t]+|[ \t]+$/, "", line)
+      value = (value == "" ? line : value ", " line)
+    }
+    END { print value }
+  '
+}
+
+# Succeeds when the last fetch's Cache-Control has a max-age=0 directive
+# (comma-separated, case-insensitive, whitespace trimmed). Otherwise sets
+# $reason and fails.
+require_max_age_zero() {  # <url>
+  local value
+  value="$(cache_control)"
+  if [ -z "$value" ]; then
+    reason="$1 has no Cache-Control header (expected max-age=0)"
+    return 1
+  fi
+  if ! tr ',' '\n' <<<"$value" | awk '
+      { gsub(/^[ \t]+|[ \t]+$/, ""); if (tolower($0) == "max-age=0") found = 1 }
+      END { exit !found }'; then
+    reason="$1 is served with Cache-Control '$value' (expected max-age=0)"
+    return 1
+  fi
 }
 
 check_once() {
@@ -87,6 +102,7 @@ check_once() {
       return 1
       ;;
   esac
+  require_max_age_zero "$base" || return 1
 
   served="$(sed -n 's/.*<meta name="fermi-build" content="\([^"]*\)".*/\1/p' "$body_file" | head -n 1)"
   [ -n "$served" ] || served="(no fermi-build meta)"
@@ -132,7 +148,7 @@ check_once() {
       ;;
   esac
 
-  # The live update the shell downloads (story 10).
+  # The version file deploy-gate.sh and the app's update check read.
   local manifest_url="${base}updates/latest.json"
   fetch "$manifest_url"
   if [ "$status" != "200" ]; then
@@ -146,43 +162,15 @@ check_once() {
       return 1
       ;;
   esac
+  require_max_age_zero "$manifest_url" || return 1
   if ! jq -e 'type == "object"' "$body_file" >/dev/null 2>&1; then
     reason="$manifest_url is not a JSON object"
     return 1
   fi
-  local live_version live_url live_checksum live_min
+  local live_version
   live_version="$(jq -r '.version | strings' "$body_file")"
-  live_url="$(jq -r '.url | strings' "$body_file")"
-  live_checksum="$(jq -r '.checksum | strings' "$body_file")"
-  live_min="$(jq -r '.min_native_build | numbers' "$body_file")"
   if [ "$live_version" != "$expected" ]; then
     reason="latest.json version is '$live_version', not the expected $expected"
-    return 1
-  fi
-  if [ "$live_min" != "$expected_min" ]; then
-    reason="latest.json min_native_build is '$live_min' (a number is expected), not the expected $expected_min"
-    return 1
-  fi
-  case "$live_url" in
-    "$base"?*) ;;
-    *)
-      reason="latest.json url '$live_url' does not start with $base"
-      return 1
-      ;;
-  esac
-  fetch "$live_url"
-  if [ "$status" != "200" ]; then
-    reason="latest.json url $live_url returned HTTP $status (expected 200)"
-    return 1
-  fi
-  local actual_checksum
-  if command -v sha256sum >/dev/null; then
-    actual_checksum="$(sha256sum "$body_file" | cut -d' ' -f1)"
-  else
-    actual_checksum="$(shasum -a 256 "$body_file" | cut -d' ' -f1)"
-  fi
-  if [ "$live_checksum" != "$actual_checksum" ]; then
-    reason="latest.json checksum '$live_checksum' does not match the sha256 of $live_url ($actual_checksum)"
     return 1
   fi
 
@@ -190,7 +178,8 @@ check_once() {
 }
 
 body_file="$(mktemp)"
-trap 'rm -f "$body_file"' EXIT
+headers_file="$(mktemp)"
+trap 'rm -f "$body_file" "$headers_file"' EXIT
 
 for ((i = 1; i <= attempts; i++)); do
   echo "Attempt $i/$attempts: $base"

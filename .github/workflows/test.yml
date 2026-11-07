@@ -161,13 +161,18 @@ jobs:
   # The deploy health checks. scripts/check-site.sh against the built shell
   # served by vite preview: it must pass for the build's own id and fail for a
   # stale id, a missing JavaScript file and an id missing from the JavaScript
-  # (DW-2), and for a missing live update, a stale latest.json version, a wrong
-  # zip checksum, another min_native_build and a url off the site.
+  # (DW-2), for a missing latest.json and a stale latest.json version, and for
+  # `/` or latest.json served with no Cache-Control or with max-age=600 (AD-21).
   # scripts/deploy-gate.sh, the daily deploy decision, runs against the same
   # builds: it must print deploy=false only for the live commit.
   # scripts/check-hosted-config.sh against fixture API responses: it must pass
-  # for the right Auth and Realtime config and name each wrong setting. No
-  # secret, no Supabase CLI.
+  # for the right Auth and Realtime config and name each wrong setting,
+  # including a site_url or redirect URL off the workers.dev origin and an
+  # empty redirect list.
+  # scripts/write-latest-json.sh against fake builds: it must write only
+  # latest.json for the build's own id and app id and refuse an id the build
+  # lacks, an app id the build lacks, an unset GITHUB_SHA, an unset APP_ID and
+  # a missing build. No secret, no Supabase CLI.
   site-check-tests:
     name: Health Check Tests
     runs-on: ubuntu-latest
@@ -191,47 +196,8 @@ jobs:
       - name: check-hosted-config.sh passes and fails as it should
         run: scripts/test-check-hosted-config.sh
 
-  # The native-build rule (AD-18). First the scripts' own tests against fixture
-  # repos; then the real check: a native change (a native-group package, app/ios,
-  # app/capacitor.config.*) must raise app/MIN_NATIVE_BUILD, which must not exceed
-  # the Xcode build number. A pull request is judged as its merge commit against
-  # the base tip (HEAD^1); a push against the commit before it. A Dependabot
-  # native-group pull request fails by design: it is held open, and the owner
-  # raises MIN_NATIVE_BUILD on it before merging. No secret.
-  native-build-check:
-    name: Native Build Check
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: check-native-build.sh and package-live-update.sh pass and fail as they should
-        run: scripts/test-check-native-build.sh
-
-      - name: A native change raises MIN_NATIVE_BUILD
-        env:
-          # Security: inputs passed through env: to prevent script injection
-          EVENT: ${{ github.event_name }}
-          BEFORE: ${{ github.event.before }}
-        run: |
-          case "$EVENT" in
-            pull_request)
-              scripts/check-native-build.sh HEAD^1 HEAD
-              ;;
-            push)
-              # A new branch or a rewritten history has no usable previous commit.
-              if [[ -z "$BEFORE" || "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-                scripts/check-native-build.sh
-              else
-                scripts/check-native-build.sh "$BEFORE" HEAD
-              fi
-              ;;
-            *)
-              scripts/check-native-build.sh
-              ;;
-          esac
+      - name: write-latest-json.sh writes and refuses as it should
+        run: scripts/test-write-latest-json.sh
 
   playwright:
     name: Playwright (${{ matrix.project }})
@@ -325,7 +291,7 @@ jobs:
     name: Test Summary
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    needs: [lint, unit-tests, db-tests, function-tests, migration-check, site-check-tests, native-build-check, playwright, burn-in]
+    needs: [lint, unit-tests, db-tests, function-tests, migration-check, site-check-tests, playwright, burn-in]
     if: always()
     steps:
       - name: Evaluate results
@@ -337,7 +303,6 @@ jobs:
           FUNCTIONS: ${{ needs.function-tests.result }}
           MIGRATIONS: ${{ needs.migration-check.result }}
           SITE_CHECK: ${{ needs.site-check-tests.result }}
-          NATIVE_BUILD: ${{ needs.native-build-check.result }}
           PLAYWRIGHT: ${{ needs.playwright.result }}
           BURN_IN: ${{ needs.burn-in.result }}
         run: |
@@ -356,7 +321,6 @@ jobs:
           check "Edge Function Tests" "$FUNCTIONS"
           check "Migration Check" "$MIGRATIONS"
           check "Health Check Tests" "$SITE_CHECK"
-          check "Native Build Check" "$NATIVE_BUILD"
           check "Playwright" "$PLAYWRIGHT"
 
           # Burn-in runs on pull requests and the weekly schedule. Skipped is

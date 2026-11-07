@@ -4,6 +4,7 @@ import {
   FunctionsRelayError,
   type PostgrestError,
 } from '@supabase/supabase-js';
+import { checkForUpdate } from '../update/updateCheck.ts';
 
 // Every error a screen sees is an ApiError, whether it came from a SQL call
 // (PostgREST), an edge function or the network (AD-17). A screen shows
@@ -98,11 +99,21 @@ function resolve(key: string | undefined, fallback: string | undefined) {
   return { code: wellFormed ?? fallback, text: ERROR_TEXT[fallback] };
 }
 
+// The codes of a call this build makes that the live database no longer
+// answers: PostgREST's no-such-function (PGRST202) and no-such-column
+// (PGRST204), and Postgres's undefined_function (42883) and undefined_column
+// (42703). Each means the client is older than the schema (AD-24), so a check
+// for a newer app runs at once. The mapping below is unchanged.
+const STALE_CLIENT_CODES = new Set(['PGRST202', 'PGRST204', '42883', '42703']);
+
 // A PostgREST error: `code` is the SQLSTATE, `message` the key the SQL
 // function raised with.
 export function fromPostgrestError(
   err: Pick<PostgrestError, 'code' | 'message'>,
 ): ApiError {
+  if (typeof err.code === 'string' && STALE_CLIENT_CODES.has(err.code)) {
+    void checkForUpdate();
+  }
   const sqlstate = typeof err.code === 'string' ? err.code : '';
   const fallback = has(SQLSTATE_CODE, sqlstate) ? SQLSTATE_CODE[sqlstate] : undefined;
   const key = typeof err.message === 'string' ? err.message : undefined;

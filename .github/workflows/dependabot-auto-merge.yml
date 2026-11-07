@@ -1,13 +1,7 @@
-# Enable GitHub auto-merge for Dependabot PRs, except those that change a
-# native package (AD-18): those stay open until the next planned App Store
-# build, because a native change needs a new build and a raised MIN_NATIVE_BUILD.
+# Enable GitHub auto-merge for every Dependabot PR, majors included.
 # The Main ruleset requires "Test Summary" and "Dependency Review", which is
-# what `--auto` waits on. A merge here does not deploy; story 9's daily run does.
-#
-# The native packages are the `native` group's patterns in dependabot.yml,
-# matched against every package the PR changes (scripts/dependabot-native-hold.sh).
-# The script and config come from the base commit, so a PR cannot edit its own
-# hold. Any doubt fails the job and merges nothing.
+# what `--auto` waits on. A merge here does not deploy; deploy.yml's daily run
+# does.
 
 name: Dependabot auto-merge
 
@@ -24,56 +18,12 @@ jobs:
     timeout-minutes: 5
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:
-      - name: Checkout base commit
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          persist-credentials: false
-
-      - name: Fetch Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Hold native PRs, enable auto-merge for the rest
+      - name: Enable auto-merge for Dependabot PRs
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NAMES: ${{ steps.metadata.outputs.dependency-names }}
         run: |
           set -euo pipefail
-
-          set +e
-          native=$(scripts/dependabot-native-hold.sh .github/dependabot.yml "$NAMES")
-          rc=$?
-          set -e
-
-          case $rc in
-            0) ;;
-            3)
-              packages=$(echo "$native" | paste -sd, - | sed 's/,/, /g')
-              echo "::notice::Held, not auto-merged: native package(s) ${packages}. Merge by hand after raising MIN_NATIVE_BUILD."
-              {
-                echo "### Held: native package change"
-                echo
-                echo "Packages: ${packages}"
-                echo
-                echo "Merge by hand after raising MIN_NATIVE_BUILD (and CURRENT_PROJECT_VERSION), at the next planned App Store build."
-              } >> "$GITHUB_STEP_SUMMARY"
-              # Auto-merge may have been enabled by an earlier run or by hand.
-              auto=$(gh pr view "$PR_URL" --json autoMergeRequest --jq '.autoMergeRequest != null')
-              if [ "$auto" = "true" ]; then
-                gh pr merge --disable-auto "$PR_URL"
-              fi
-              exit 0
-              ;;
-            *)
-              echo "Native hold could not decide (exit $rc); merging nothing." >&2
-              exit 1
-              ;;
-          esac
-
           if gh pr merge --auto --squash "$PR_URL"; then
             exit 0
           fi

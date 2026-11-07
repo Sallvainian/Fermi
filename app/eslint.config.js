@@ -10,7 +10,6 @@ export default defineConfig(
     ignores: [
       'dist/**',
       'node_modules/**',
-      'ios/**',
       // Test output (gitignored).
       'coverage/**',
       'test-results/**',
