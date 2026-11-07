@@ -6,7 +6,19 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
-  { ignores: ['dist/**', 'node_modules/**', 'ios/**'] },
+  {
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'ios/**',
+      // Test output (gitignored).
+      'coverage/**',
+      'test-results/**',
+      'playwright-report/**',
+      'blob-report/**',
+      '.auth/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   // A disable directive is a written exemption, so a dead one is a false claim
@@ -37,5 +49,20 @@ export default defineConfig(
   {
     files: ['*.config.{js,ts}'],
     languageOptions: { globals: globals.node },
+  },
+  // Test code runs in Node (Vitest's happy-dom adds the browser globals).
+  {
+    files: ['tests/**/*.{ts,tsx}'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+  // Playwright fixtures are `async ({ deps }, use) => ...`: `use` is
+  // Playwright's callback, not React's hook, and a fixture with no
+  // dependencies must destructure `{}`.
+  {
+    files: ['tests/support/**/*.ts', 'tests/e2e/**/*.ts', 'tests/api/**/*.ts'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
+      'no-empty-pattern': 'off',
+    },
   },
 );

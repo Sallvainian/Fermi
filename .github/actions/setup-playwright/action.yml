@@ -1,0 +1,64 @@
+name: 'Setup Playwright'
+description: 'Install app/ dependencies and the Playwright browsers, and start the local Supabase stack'
+
+inputs:
+  browsers:
+    description: 'Browsers to install, space-separated: chromium, webkit'
+    required: false
+    default: 'chromium webkit'
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: app/.node-version
+        cache: npm
+        cache-dependency-path: app/package-lock.json
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: app
+      run: npm ci
+
+    # Keyed on the playwright-core version, which alone decides the browser
+    # builds; the whole lockfile's hash would miss on every dependency bump.
+    - name: Read Playwright version
+      id: pw-version
+      shell: bash
+      working-directory: app
+      run: echo "version=$(jq -er '.packages["node_modules/playwright-core"].version' package-lock.json)" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Playwright browsers
+      id: pw-cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}-${{ inputs.browsers }}
+        # An older cache still saves the browsers that did not change;
+        # `playwright install` below fetches only what is missing.
+        restore-keys: ${{ runner.os }}-playwright-
+
+    - name: Install Playwright browsers and their system libraries
+      shell: bash
+      working-directory: app
+      env:
+        # Security: inputs passed through env: to prevent script injection
+        BROWSERS: ${{ inputs.browsers }}
+        CACHE_HIT: ${{ steps.pw-cache.outputs.cache-hit }}
+      run: |
+        set -euo pipefail
+        for b in $BROWSERS; do
+          case "$b" in chromium|webkit) ;; *) echo "::error::Unknown browser '$b'."; exit 1 ;; esac
+        done
+        # WebKit needs system libraries the runner image lacks, so they are
+        # installed even when the browser binaries come from the cache. On a
+        # partial (restore-keys) hit, install fetches only the missing builds.
+        if [ "$CACHE_HIT" = "true" ]; then
+          npx playwright install-deps $BROWSERS
+        else
+          npx playwright install --with-deps $BROWSERS
+        fi
+
+    - name: Setup Supabase Local
+      uses: ./.github/actions/setup-supabase

@@ -1,0 +1,137 @@
+name: 'Setup Supabase Local'
+description: 'Install the pinned Supabase CLI, start the local stack, and export its URL and demo keys'
+
+# Adapted from My-Love's .github/actions/setup-supabase. Reads no secret: the
+# keys it exports are the local stack's demo keys, the same on every runner
+# (AD-23).
+
+inputs:
+  supabase-version:
+    description: 'Supabase CLI version; keep it equal to deploy.yml and the spine (2.122.0)'
+    required: false
+    default: '2.122.0'
+
+runs:
+  using: 'composite'
+  steps:
+    # Cached by version, and the cold download is retried, time-bounded and
+    # checksum-verified. supabase/setup-cli's npm postinstall has no retry or
+    # timeout, which in My-Love produced ECONNRESET failures and a 15-minute
+    # hang. deploy.yml still uses setup-cli at the same version.
+    - name: Cache Supabase CLI
+      id: cli-cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.local/bin/supabase
+        key: ${{ runner.os }}-${{ runner.arch }}-supabase-cli-${{ inputs.supabase-version }}
+
+    - name: Install Supabase CLI
+      if: steps.cli-cache.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        # Security: inputs passed through env: to prevent script injection
+        VER: ${{ inputs.supabase-version }}
+      run: |
+        set -euo pipefail
+        if ! [[ "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "::error::supabase-version must be X.Y.Z, got '$VER'."
+          exit 1
+        fi
+        base="https://github.com/supabase/cli/releases/download/v$VER"
+
+        # The release layout differs between versions (versioned or plain
+        # tarball and checksums names), so probe both.
+        dl() {
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 15 \
+            --max-time "$2" --retry-max-time "$3" -o "$4" "$base/$1"
+        }
+
+        tarball=""
+        for name in "supabase_${VER}_linux_amd64.tar.gz" "supabase_linux_amd64.tar.gz"; do
+          if dl "$name" 60 180 /tmp/supabase_cli.tar.gz; then tarball="$name"; break; fi
+        done
+        if [ -z "$tarball" ]; then
+          echo "::error::No linux_amd64 tarball found in supabase/cli release v$VER."
+          exit 1
+        fi
+
+        sums=""
+        for name in "checksums.txt" "supabase_${VER}_checksums.txt"; do
+          if dl "$name" 20 60 /tmp/supabase_checksums.txt; then sums="$name"; break; fi
+        done
+        if [ -z "$sums" ]; then
+          echo "::error::No checksums file found in supabase/cli release v$VER."
+          exit 1
+        fi
+
+        if ! grep -q "  ${tarball}\$" /tmp/supabase_checksums.txt; then
+          echo "::error::$sums does not list $tarball; refusing to install an unverified binary."
+          exit 1
+        fi
+        cp /tmp/supabase_cli.tar.gz "/tmp/$tarball"
+        (cd /tmp && grep "  ${tarball}\$" supabase_checksums.txt | sha256sum -c -)
+
+        mkdir -p ~/.local/bin
+        tar -xzf /tmp/supabase_cli.tar.gz -C ~/.local/bin supabase
+        chmod +x ~/.local/bin/supabase
+
+    - name: Add Supabase CLI to PATH
+      shell: bash
+      run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    # Pull Supabase's images from GitHub's registry instead of public.ecr.aws,
+    # which rate-limits anonymous pulls (My-Love lost whole jobs to
+    # `toomanyrequests`). The CLI then pulls only from this registry.
+    - name: Use GitHub's container registry for Supabase images
+      shell: bash
+      run: echo "SUPABASE_INTERNAL_IMAGE_REGISTRY=ghcr.io" >> "$GITHUB_ENV"
+
+    # Services no CI test uses are not pulled or started: Studio and its
+    # postgres-meta, imgproxy, the mail catcher, the edge runtime, and the
+    # analytics pair (logflare, vector). A later spec that calls an edge
+    # function through Kong, or reads an auth email, must take edge-runtime or
+    # mailpit off this list in the same change. The CLI only warns on an
+    # unknown -x name, so each one is checked against its help text.
+    - name: Start Supabase Local
+      shell: bash
+      run: |
+        set -euo pipefail
+        EXCLUDE='studio,postgres-meta,imgproxy,mailpit,edge-runtime,logflare,vector'
+
+        VALID=$(supabase start --help 2>/dev/null | sed -n 's/.*--exclude.*\[\([^]]*\)\].*/\1/p') || true
+        if [ -z "$VALID" ]; then
+          echo "::error::Could not read the -x name list from 'supabase start --help'."
+          exit 1
+        fi
+        for svc in ${EXCLUDE//,/ }; do
+          case ",$VALID," in
+            *",$svc,"*) ;;
+            *) echo "::error::'$svc' is not an excludable container (valid: $VALID)."; exit 1 ;;
+          esac
+        done
+
+        # One retry: `supabase stop` keeps pulled images, so a second attempt
+        # re-pulls only what the first missed.
+        if ! supabase start -x "$EXCLUDE"; then
+          echo "::warning::supabase start failed on attempt 1; retrying once."
+          supabase stop --no-backup || true
+          sleep 30
+          supabase start -x "$EXCLUDE"
+        fi
+        supabase status --output json | jq -e '.DB_URL' > /dev/null
+
+    - name: Export Supabase URL and keys
+      shell: bash
+      run: |
+        set -euo pipefail
+        status=$(supabase status --output json)
+        {
+          echo "SUPABASE_URL=$(jq -re '.API_URL' <<<"$status")"
+          echo "SUPABASE_PUBLISHABLE_KEY=$(jq -re '.PUBLISHABLE_KEY' <<<"$status")"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(jq -re '.SERVICE_ROLE_KEY' <<<"$status")"
+        } >> "$GITHUB_ENV"
+
+    - name: Verify Supabase is reachable
+      shell: bash
+      run: |
+        curl -sf "${SUPABASE_URL}/rest/v1/" -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" > /dev/null

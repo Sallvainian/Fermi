@@ -27,8 +27,6 @@ keys/
 *.key
 **/AuthKey_*.p8
 **/service-account*.json
-AGENTS.md
-**/AGENTS.md
 
 # Admin scripts (contain sensitive info)
 scripts/create_admin.js
@@ -106,6 +104,8 @@ tools/
 
 # Sensitive/Environment files (critical for public repo—keep these!)
 .env*
+# Example files list variable names and local defaults only, never secrets.
+!.env.example
 *.env
 .envs/
 secrets.json
