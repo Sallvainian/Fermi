@@ -24,7 +24,7 @@ test.describe('shell', () => {
     expect(status).toBe(200);
 
     await log.step('Then it shows the build id, and its fermi-build meta carries the same id');
-    await expect(page.getByTestId('build-commit-id')).toHaveText(expectedBuildId);
+    await expect(page.getByTestId('build-commit-id')).toHaveText('probe-wrong-id');
     await expect(page.locator('meta[name="fermi-build"]')).toHaveAttribute('content', expectedBuildId);
   });
 });
