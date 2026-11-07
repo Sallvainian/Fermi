@@ -422,15 +422,6 @@ dart fix --apply
 
 ## 🚀 CI/CD Pipeline
 
-### GitHub Actions Workflows
-
-The project includes comprehensive CI/CD automation:
-
-1. **Code Review Automation**
-   - Claude Code review integration
-   - Gemini AI-powered issue triage
-   - Automated PR reviews
-
 ### Deployment Commands
 
 ```bash

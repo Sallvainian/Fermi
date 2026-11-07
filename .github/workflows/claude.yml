@@ -39,14 +39,16 @@ jobs:
           fetch-depth: 1
 
       # Without these the prompt's verify commands below cannot run — this job
-      # otherwise checks out the repo and nothing else. Same Flutter as 01_ci.yml.
-      - uses: subosito/flutter-action@v2
+      # otherwise checks out the repo and nothing else. Same Node as test.yml.
+      - uses: actions/setup-node@v7
         with:
-          channel: stable
-          flutter-version: '3.32.0'
-          cache: true
+          node-version-file: app/.node-version
+          cache: npm
+          cache-dependency-path: app/package-lock.json
 
-      - run: flutter pub get
+      - name: Install dependencies
+        run: npm ci
+        working-directory: app
 
       - name: Run Claude Code
         id: claude
@@ -66,28 +68,31 @@ jobs:
           prompt: |
             ## Fermi
 
-            Fermi is a Flutter app on Firebase (Auth, Firestore, Storage, Cloud
-            Functions in `functions/`). If the checkout has a `CLAUDE.md` or
-            `AGENTS.md`, read it before changing behavior it covers.
+            Fermi is a Capacitor iOS app: a Vite + React shell in `app/` on
+            Supabase (`supabase/`: migrations, pgTAP tests, edge functions). Read
+            `AGENTS.md` before changing behavior it covers; it is the source for
+            this repo's policy, layout and conventions. The legacy mobile tree
+            outside `app/` and `supabase/` is being retired: do not change it
+            unless the task says to.
 
             ### Before you claim it works
 
-            Flutter packages are fetched already. Run what your change touches:
+            Dependencies in `app/` are installed already. Run, from the repo
+            root, what your change touches:
 
-            - `flutter analyze --no-fatal-infos` — what CI's `01_ci.yml` runs
-            - `dart format --set-exit-if-changed .` — CI fails on unformatted
-              Dart, so format the files you change
-            - `flutter test` — the unit and widget tests under `test/`
+            - `npm --prefix app run lint` — ESLint
+            - `npm --prefix app run typecheck` — `tsc -b --force`
+            - `npm --prefix app run test:unit` — Vitest
+            - `node scripts/check-migrations.ts` — the expand-only check, when you
+              add or edit a file in `supabase/migrations/`
 
-            Do NOT run `flutter build` in this job and do not treat it as
-            passing: this job sets none of the Firebase config secrets the app
-            builds need.
+            pgTAP (`supabase test db`), Playwright and `deno test` are NOT
+            runnable in this job: it has no local Supabase stack, no browsers and
+            no Deno. A change they cover is unverified unless you say how you
+            checked it.
 
             Do NOT claim on-device coverage. This job has no device or
-            emulator, so nothing here exercises the app as a user runs it.
-
-            `functions/` dependencies are not installed here, so a change there
-            is unverified unless you say how you checked it.
+            simulator, so nothing here exercises the app as a user runs it.
 
             If you could not verify something, say so plainly rather than
             implying it passed.

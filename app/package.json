@@ -8,7 +8,14 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --force",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage --sequence.shuffle",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:burn-in": "node tests/burn-in/run.ts"
   },
   "dependencies": {
     "@capacitor/core": "8.6.0",
@@ -23,19 +30,28 @@
   "devDependencies": {
     "@capacitor/cli": "8.6.0",
     "@eslint/js": "10.0.1",
+    "@faker-js/faker": "10.6.0",
+    "@playwright/test": "1.65.0",
+    "@seontechnologies/playwright-utils": "4.6.1",
     "@tailwindcss/vite": "4.3.4",
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
     "@types/node": "26.6.6",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.2.1",
+    "@vitest/coverage-v8": "5.1.0",
     "eslint": "10.14.0",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-react-refresh": "0.5.7",
     "globals": "17.14.0",
+    "happy-dom": "21.0.4",
     "tailwindcss": "4.3.4",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
     "vite": "8.3.6",
+    "vitest": "5.1.0",
     "wrangler": "4.158.0"
   }
 }

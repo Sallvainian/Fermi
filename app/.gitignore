@@ -1,1 +1,10 @@
 dist/
+
+# Test output: reports, traces and coverage are CI artifacts, never committed.
+coverage/
+test-results/
+playwright-report/
+blob-report/
+# Supabase sessions Playwright Utils' auth-session caches between runs
+# (it always writes to <cwd>/.auth/).
+.auth/

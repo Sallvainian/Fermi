@@ -34,18 +34,20 @@ jobs:
         with:
           fetch-depth: 1
 
-      # The review agent's sandbox has no network to pub.dev, so `flutter pub
-      # get` can never succeed once the agent is running. Resolve packages here,
-      # where the runner has network — the agent then runs `flutter analyze` and
-      # `flutter test` against ready packages, offline. Same Flutter as 01_ci.yml.
-      - uses: subosito/flutter-action@v2
+      # The review agent's sandbox has no network to the npm registry, so
+      # `npm ci` can never succeed once the agent is running. Install here,
+      # where the runner has network — the agent then runs lint, typecheck and
+      # the unit tests against a ready node_modules, offline. Same Node as
+      # test.yml.
+      - uses: actions/setup-node@v7
         with:
-          channel: stable
-          flutter-version: '3.32.0'
-          cache: true
+          node-version-file: app/.node-version
+          cache: npm
+          cache-dependency-path: app/package-lock.json
 
-      - name: Get dependencies
-        run: flutter pub get
+      - name: Install dependencies
+        run: npm ci
+        working-directory: app
 
       - name: Run Claude Code Review
         id: claude-review
@@ -84,9 +86,8 @@ jobs:
                simply have no rules file to check against.
             2. Run `gh pr diff ${{ github.event.pull_request.number }}` to get the full diff.
             3. Check if the diff ONLY contains lockfiles, markdown, version bumps, or
-               auto-generated files (`*.g.dart`, `*.freezed.dart`,
-               `lib/firebase_options.dart`, generated plugin registrants under
-               `android/`, `ios/`, `macos/`, `windows/`). If so, skip the review
+               auto-generated files (generated Supabase types, `app/ios/` project
+               files that only bump a build number). If so, skip the review
                entirely and make your comment read exactly: "No reviewable changes."
             4. This workflow re-runs on every push. Your comment is reused and rewritten
                in place, so write it as a complete standalone review of the CURRENT diff —
@@ -122,20 +123,29 @@ jobs:
             Then, subject to the same filter gate:
             - **Bugs**: Logic errors, race conditions, null access, off-by-one errors
             - **Security**: Exposed secrets or API keys, auth bypasses, missing input validation
-            - **Firebase**: `firestore.rules` or `storage.rules` changes that expose
-              another user's data or reject a write the app makes; queries that need
-              a composite index missing from `firestore.indexes.json`; Cloud
-              Functions in `functions/` that skip the caller's auth or role check
-            - **Flutter/Dart**: `BuildContext` used across an async gap without a
-              `mounted` check, `setState` after dispose, controllers, streams or
-              subscriptions never disposed or cancelled, `!` on a value that can be
-              null, unawaited futures whose errors are lost, Provider listened to
-              inside callbacks
-            - **Routing**: `go_router` routes or redirects that let a signed-out user
-              or the wrong role reach a page
+            - **Supabase**: a table without row level security, a policy that
+              exposes another user's rows or rejects a write the app makes, a grant
+              wider than the feature needs, a migration that drops or renames
+              something instead of only adding (expand-only; a contract step needs
+              its `-- contract:` first line), an edge function that skips the
+              caller's auth or role check
+            - **React/State**: effects with missing or wrong dependencies, state
+              set after unmount, subscriptions or timers never cleaned up, a
+              route or guard that lets a signed-out user or the wrong role reach a
+              screen
+            - **Capacitor**: a plugin called without a `Capacitor.isPluginAvailable`
+              guard (the browser build has no native plugins), a native change
+              (plugin, iOS project, native config) that does not raise both
+              `app/MIN_NATIVE_BUILD` and the Xcode `CURRENT_PROJECT_VERSION`
+            - **Data access**: a Supabase client created or called outside
+              `app/src/api/`
 
-            Run `flutter analyze` and `flutter test` when the diff touches Dart code;
-            a failure the diff introduced is a finding.
+            Run `npm --prefix app run lint`, `npm --prefix app run typecheck` and
+            `npm --prefix app run test:unit` when the diff touches `app/`, and
+            `node scripts/check-migrations.ts` when it touches
+            `supabase/migrations/`; a failure the diff introduced is a finding.
+            pgTAP, Playwright and `deno test` cannot run here, so never report
+            them as passing or failing.
 
             ## Output Format
 
@@ -151,7 +161,7 @@ jobs:
             **Summary** — one or two sentences on what this PR changes.
 
             **Issues Found** — problems that passed the filter gate above. For each:
-            `path/to/file.dart:42` — what is wrong, and the fix. Include a suggestion
+            `path/to/file.ts:42` — what is wrong, and the fix. Include a suggestion
             block where a one-click fix is possible. Order by user impact, highest
             first.
 
@@ -190,7 +200,7 @@ jobs:
             - Praise or compliments ("Great job!", "Nice work on this!")
             - Open-ended questions ("Have you considered...?")
             - Emojis
-            - Style preferences (naming, formatting) — `flutter analyze` and `dart format` handle those
+            - Style preferences (naming, formatting) — ESLint handles those
             - Commenting on code outside the PR diff
             - Suggesting tests unless a bug is found that tests would catch
             - Documentation suggestions unless a public API changed
@@ -200,4 +210,4 @@ jobs:
           claude_args: |
             --model claude-opus-5-5
             --effort high
-            --allowedTools "Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*),Bash(flutter analyze:*),Bash(flutter test:*)"
+            --allowedTools "Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh api:*),Bash(npm --prefix app run lint),Bash(npm --prefix app run typecheck),Bash(npm --prefix app run test:unit),Bash(node scripts/check-migrations.ts)"
