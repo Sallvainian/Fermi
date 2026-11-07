@@ -3,7 +3,7 @@ title: 'Errors carry a code from database to screen'
 type: feature
 ticket: '5'
 created: '2026-11-06'
-status: blocked
+status: done
 baseline_revision: '492284b790f4a422601eff1419f2f7fa6f8eb49e'
 route: full
 route_source: auto
@@ -20,8 +20,6 @@ operator_actions:
   - Once the loop's pull request for this branch runs test.yml on GitHub, confirm the Unit Tests and Edge Function Tests jobs pass and list the src/api Vitest files and the supabase/functions/_shared deno tests.
   - On that pull request (or a scratch branch from it), push a commit adding a failing Deno.test to supabase/functions/_shared/errors.test.ts, confirm Edge Function Tests and Test Summary go red, then revert it and confirm both go green.
   - After this branch merges to main, open the Deploy run for that push and confirm the jobs run Migrate, Hosted config, Edge functions, Build, Deploy, Health check in that order and all green, with the Edge functions log saying "no edge functions to deploy".
-blocked_at: "2026-11-06"
-blocked_reason: "awaiting operator: Once the loop's pull request for this branch runs test.yml on GitHub, confirm the Unit Tests and Edge Function Tests jobs pass and list the src/api Vitest files and the supabase/functions/_shared deno tests.; On that pull request (or a scratch branch from it), push a commit adding a failing Deno.test to supabase/functions/_shared/errors.test.ts, confirm Edge Function Tests and Test Summary go red, then revert it and confirm both go green.; After this branch merges to main, open the Deploy run for that push and confirm the jobs run Migrate, Hosted config, Edge functions, Build, Deploy, Health check in that order and all green, with the Edge functions log saying \"no edge functions to deploy\"."
 ---
 
 <intent-contract>
@@ -159,3 +157,13 @@ Status: awaiting-operator
 **Owed by the operator (operator_actions):** confirm the pull request's Unit Tests and Edge Function Tests are green on GitHub; confirm a deliberately failing deno test turns the run red and its revert green; after merge, confirm the Deploy run shows Edge functions green in its place in the order.
 
 **Residual risks:** No GitHub run of the new Edge functions job or of the Vitest/deno tests exists yet. The owner's shell exports `VITE_SUPABASE_URL` for another project (`xojempkrugifnaveqtqc`) without `VITE_SUPABASE_PUBLISHABLE_KEY`, so in that shell a local build's `supabase()` would throw naming the key; nothing calls it yet and CI is unaffected. CORS allows any origin (`*`), which is safe with bearer-token auth and no cookies, but a later epic may want to narrow it. Dynamic `import()` of Supabase is not caught by lint. The map holds only generic texts; domain keys arrive with later epics.
+
+## Operator Confirmation
+
+Confirmed 2026-11-06: the external actions this story owed were carried out.
+
+- Once the loop's pull request for this branch runs test.yml on GitHub, confirm the Unit Tests and Edge Function Tests jobs pass and list the src/api Vitest files and the supabase/functions/_shared deno tests.
+- On that pull request (or a scratch branch from it), push a commit adding a failing Deno.test to supabase/functions/_shared/errors.test.ts, confirm Edge Function Tests and Test Summary go red, then revert it and confirm both go green.
+- After this branch merges to main, open the Deploy run for that push and confirm the jobs run Migrate, Hosted config, Edge functions, Build, Deploy, Health check in that order and all green, with the Edge functions log saying "no edge functions to deploy".
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._

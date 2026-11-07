@@ -38,4 +38,14 @@
 -- name. Tests 4, 5 and 6 fail whatever this file says.
 copy pg_temp.privilege_fixture (kind, object, grants) from stdin with (format csv, delimiter '|', quote e'\x01', header true);
 kind|object|grants
+table|internal.job_failures|
+column|internal.job_failures.id|
+column|internal.job_failures.job|
+column|internal.job_failures.error_code|
+column|internal.job_failures.detail|
+column|internal.job_failures.failed_at|
+column|internal.job_failures.reported_at|
+table|internal.job_health_checks|
+column|internal.job_health_checks.checked_at|
+function|public.job_health(run_at timestamp with time zone)|service_role:EXECUTE
 \.
