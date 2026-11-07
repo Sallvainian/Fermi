@@ -3,7 +3,7 @@ title: 'A Fermi on an old build is replaced by the refresh page'
 type: feature
 ticket: '16'
 created: '2026-11-07'
-status: blocked
+status: done
 operator_actions:
   - "After this change is live, push a change under app/ to main. Then, in a desktop browser tab and in the Fermi+ Home Screen web app on your iPhone, both opened on the previous build, confirm each shows only the refresh page when it comes back on screen or within 15 minutes, and that Refresh brings up the build showing the new commit id."
   - "On the iPhone Home Screen web app, while it is on the refresh page, set a value under a fermi:draft: key in sessionStorage (Safari Web Inspector console from a Mac). Tap Refresh, then confirm the value is still there after the app returns from suspension."
@@ -21,8 +21,6 @@ followup_review_recommended: false
 context: []
 warnings: [oversized]
 deferred: []
-blocked_at: "2026-11-07"
-blocked_reason: "awaiting operator: After this change is live, push a change under app/ to main. Then, in a desktop browser tab and in the Fermi+ Home Screen web app on your iPhone, both opened on the previous build, confirm each shows only the refresh page when it comes back on screen or within 15 minutes, and that Refresh brings up the build showing the new commit id.; On the iPhone Home Screen web app, while it is on the refresh page, set a value under a fermi:draft: key in sessionStorage (Safari Web Inspector console from a Mac). Tap Refresh, then confirm the value is still there after the app returns from suspension.; Push a change that touches only _bmad-output/ to main, then confirm neither the tab nor the Home Screen web app shows the refresh page.; In that deploy's Health check job log, confirm check-site.sh passed, which includes the max-age=0 assertion on / and /updates/latest.json, and that https://fermi-plus.sallvain.workers.dev/updates/latest.json shows that push's commit as version and its app/ tree hash as app."
 ---
 
 <intent-contract>
@@ -211,3 +209,14 @@ Status: awaiting-operator
 - **Stale spine:** the spine's AD-24 and Structural Seed still name `scripts/package-live-update.sh`. That is for the architect to amend.
 - **OAuth callback:** AD-24's rule that the OAuth callback clears its code before the page may show has no route to apply to yet. It belongs to epic-invite-sign-in.
 - **Rejected edge case:** a `removeItem` that throws after a good `getItem` skips the 30 s wait (the rejected finding).
+
+## Operator Confirmation
+
+Confirmed 2026-11-07: the external actions this story owed were carried out.
+
+- After this change is live, push a change under app/ to main. Then, in a desktop browser tab and in the Fermi+ Home Screen web app on your iPhone, both opened on the previous build, confirm each shows only the refresh page when it comes back on screen or within 15 minutes, and that Refresh brings up the build showing the new commit id.
+- On the iPhone Home Screen web app, while it is on the refresh page, set a value under a fermi:draft: key in sessionStorage (Safari Web Inspector console from a Mac). Tap Refresh, then confirm the value is still there after the app returns from suspension.
+- Push a change that touches only _bmad-output/ to main, then confirm neither the tab nor the Home Screen web app shows the refresh page.
+- In that deploy's Health check job log, confirm check-site.sh passed, which includes the max-age=0 assertion on / and /updates/latest.json, and that https://fermi-plus.sallvain.workers.dev/updates/latest.json shows that push's commit as version and its app/ tree hash as app.
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._
