@@ -21,3 +21,19 @@ source_spec: `tickets/epic-platform-baseline/tickets/story-the-empty-app-ships-t
 severity: medium
 reason: The migration's check ran once on a scratch local stack (2 schemas, 0 objects, has_schema_privilege false x4, PGRST106). Story 3 owns the pgTAP lane and story 6 the catalog test; a schema-privilege case belongs in the first of them.
 status: open
+
+### DW-4: The Capacitor template's Info.plist adds UIRequiredDeviceCapabilities = armv7, which the live Flutter build's Info.plist does not have.
+origin: spec-deferred 84a633284180
+location: app/ios/App/App/Info.plist
+source_spec: `tickets/epic-platform-baseline/tickets/story-the-ios-shell-runs-in-the-simulator-under-fermi-s-bundle-plan.md`
+severity: medium
+reason: grep -c UIRequiredDeviceCapabilities ios/Runner/Info.plist is 0. Whether App Store Connect refuses an update that adds this key (it excludes no device that runs iOS 15) is UNVERIFIED; Capacitor apps ship with it routinely. Settled at epic-app-store-release's first TestFlight upload, or by removing the key in a native build before then. (declared severity: medium (unverified))
+status: open
+
+### DW-5: The iOS project ships Capacitor's placeholder app icon and splash images, which would replace Fermi's icon on the listing if uploaded as is.
+origin: spec-deferred 133f23344436
+location: app/ios/App/App/Assets.xcassets
+source_spec: `tickets/epic-platform-baseline/tickets/story-the-ios-shell-runs-in-the-simulator-under-fermi-s-bundle-plan.md`
+severity: low
+reason: AppIcon-512@2x.png and the three identical splash-2732x2732 PNGs are the template defaults. This epic builds for the Simulator only; App Store builds are epic-app-store-release's (epic Boundaries), which needs real icon and splash assets before its first upload.
+status: open
