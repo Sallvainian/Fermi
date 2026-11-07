@@ -43,3 +43,4 @@ Users message the people they may message on one chat model that only participan
 
 - Waits on epic-classes-rosters because: classes, enrollment and the class checks for class chats and pairing
 - Decision: 2026-11-06, `bmad-tea-test-design` runs on this epic at epic level during its refinement, after its Requirements are written and before its stories are planned; its test plan is adopted as a companion, each story names the scenarios it covers, and the plan settles whether the epic closes with an end-to-end suite
+- Decision: 2026-11-06, from the system-level test design: the scheduled-message job takes the current time as a parameter, so its tests set the time instead of waiting (epic-platform-baseline story 3's convention)

@@ -240,6 +240,11 @@ _bmad-output/*
 !_bmad-output/initiative-*/
 !_bmad-output/backlog/
 !_bmad-output/archive/
+# TEA test designs are plans the builds read, so they are tracked; other
+# test artifacts (runs, reports) stay local.
+!_bmad-output/test-artifacts/
+_bmad-output/test-artifacts/*
+!_bmad-output/test-artifacts/test-design/
 
 # BMAD customization overrides are shared configuration, but never personal
 # `*.user.toml` overrides. `_bmad/*` above ends in `*` so git descends far
