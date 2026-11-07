@@ -99,6 +99,8 @@ A form field that must survive the refresh page keeps its value with `useDraft(d
 
 An open tab or Home Screen web app learns of a deploy from `/updates/latest.json`, which `scripts/write-latest-json.sh` writes as `{ "version": "<commit>", "app": "<git tree hash of app/>" }` (deploy.yml computes `APP_ID=$(git rev-parse HEAD:app)`; the build bakes it in as `__APP_ID__`, `local` off CI). `app/src/update/updateCheck.ts` fetches it (`cache: 'no-store'`) at start, when the tab turns visible, on `pageshow`, `online`, `vite:preloadError`, a dynamic-import failure, every 15 minutes while visible, and on a stale-client PostgREST code (`PGRST202`, `PGRST204`, `42883`, `42703` in `fromPostgrestError`). A different `app` waits on the busy registry (2 minutes at most), then `UpdateGate` renders the refresh page in place of the router; a new `version` with the same `app` (a docs-only push) shows nothing. Refresh stores `__APP_ID__` under `fermi:update:refreshed-from` and reloads; if the same build comes back, checks wait 30 s. Epic-invite-sign-in's realtime code calls the exported `checkForUpdate()`. Their tests are `tests/unit/updateCheck.test.ts`, `RefreshPage.test.tsx` and `tests/e2e/refresh-page.spec.ts`, which fulfills `latest.json` with another app id.
 
+To see it on the live site, keep a tab and the Home Screen web app open on the current build, merge any change under `app/` (this paragraph counts: the README is part of the `app/` tree), and bring each back on screen once the deploy is green: both show only the refresh page. An iOS Simulator works for the Home Screen app: Safari's Share → Add to Home Screen, then open the new icon.
+
 ## Folder layout
 
 - `tests/support/merged-fixtures.ts`: the entry point (`test`, `expect`, `log`)
