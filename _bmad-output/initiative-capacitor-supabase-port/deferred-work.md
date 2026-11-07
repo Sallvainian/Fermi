@@ -32,7 +32,9 @@ location: app/ios/App/App/Info.plist
 source_spec: `tickets/epic-platform-baseline/tickets/story-the-ios-shell-runs-in-the-simulator-under-fermi-s-bundle-plan.md`
 severity: medium
 reason: grep -c UIRequiredDeviceCapabilities ios/Runner/Info.plist is 0. Whether App Store Connect refuses an update that adds this key (it excludes no device that runs iOS 15) is UNVERIFIED; Capacitor apps ship with it routinely. Settled at epic-app-store-release's first TestFlight upload, or by removing the key in a native build before then. (declared severity: medium (unverified))
-status: open
+status: done 2026-11-07
+resolution: resolved by story 1.14
+resolution-undo: 964154be8a61156e358332ef257c7aee437046507a857cf34ddc07459e4ad5ad 2026-11-07 7374617475733a206f70656e
 
 ### DW-5: The iOS project ships Capacitor's placeholder app icon and splash images, which would replace Fermi's icon on the listing if uploaded as is.
 origin: spec-deferred 133f23344436
@@ -40,7 +42,9 @@ location: app/ios/App/App/Assets.xcassets
 source_spec: `tickets/epic-platform-baseline/tickets/story-the-ios-shell-runs-in-the-simulator-under-fermi-s-bundle-plan.md`
 severity: low
 reason: AppIcon-512@2x.png and the three identical splash-2732x2732 PNGs are the template defaults. This epic builds for the Simulator only; App Store builds are epic-app-store-release's (epic Boundaries), which needs real icon and splash assets before its first upload.
-status: open
+status: done 2026-11-07
+resolution: resolved by story 1.15
+resolution-undo: 36930a3124740b2c806b0d0ae424eedc674d02c311479da43a3923a4256791a0 2026-11-07 7374617475733a206f70656e
 
 ### DW-6: A twice-daily keep-alive sees only the last 6 hours of pg_net responses, because pg_net deletes net._http_response rows after pg_net.ttl.
 origin: spec-deferred ed8bfe938c4d
@@ -64,4 +68,6 @@ location: scripts/check-native-build.sh:390
 source_spec: `tickets/epic-platform-baseline/tickets/story-each-deploy-publishes-a-live-update-with-its-minimum-native-plan.md`
 severity: medium
 reason: scripts/check-native-build.sh requires head MIN > base MIN and MIN <= every CURRENT_PROJECT_VERSION, as the ticket and this plan's intent define "raised". Once a web-only App Store build puts CURRENT_PROJECT_VERSION above MIN (e.g. Xcode 10, MIN 8), a native change raising MIN to 9 and leaving the pbxproj at 10 passes; installs on build 10, which lack the new native code, would then accept the bundle that needs it. AGENTS.md says a native change raises both numbers, which would close it (new MIN above the base's highest CURRENT_PROJECT_VERSION). Not reachable today (8/8, no App Store build until epic-app-store-release). Settling it changes AD-18's / the ticket's rule, which is the owner's or architect's call.
-status: open
+status: done 2026-11-07
+resolution: resolved by story 1.14
+resolution-undo: 964154be8a61156e358332ef257c7aee437046507a857cf34ddc07459e4ad5ad 2026-11-07 7374617475733a206f70656e

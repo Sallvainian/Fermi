@@ -4,6 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Fermi+</title>
+    <!--
+      Home Screen install (R14): the manifest makes Fermi saved from Safari open
+      standalone as Fermi+, which iPhone web push needs. The icons in public/
+      are Fermi's own, resized with sips from the Flutter app's
+      ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png.
+      tests/e2e/home-screen.spec.ts checks every link and size.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Fermi+" />
   </head>
   <body>
     <div id="root"></div>

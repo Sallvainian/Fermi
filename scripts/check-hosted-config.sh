@@ -4,7 +4,12 @@
 #   - email sign-in is on         (auth config: external_email_enabled)
 #   - anonymous sign-ins are off  (auth config: external_anonymous_users_enabled)
 #   - sign-up is off              (auth config: disable_signup)
+#   - the site URL is the workers.dev origin (auth config: site_url)
+#   - every redirect URL is on that origin, and there is at least one
+#                                 (auth config: uri_allow_list, a comma-separated
+#                                 string; null, absent or blank counts as empty)
 #   - Realtime is private-only    (realtime config: private_only; null or absent fails)
+# The origin is pinned here (AD-7), not read from the deploy's vars.
 # Needs only curl and jq, no Supabase CLI.
 #
 # Usage: scripts/check-hosted-config.sh <project-ref>
@@ -22,6 +27,7 @@ if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
 fi
 
 ref="$1"
+origin="https://fermi-plus.sallvain.workers.dev"
 api="${SUPABASE_API_URL:-https://api.supabase.com}"
 api="${api%/}"
 
@@ -63,6 +69,31 @@ check 'email sign-in' external_email_enabled true
 check 'anonymous sign-ins' external_anonymous_users_enabled false
 # epic-invite-sign-in replaces this assertion with the sign-in hook URI one.
 check 'sign-up' disable_signup true
+check 'site URL' site_url "\"$origin\""
+
+# Each redirect URL must be the origin itself or a path on it; a bare prefix
+# match would let https://fermi-plus.sallvain.workers.dev.evil.com through.
+redirects=()
+while IFS= read -r url; do
+  redirects+=("$url")
+done < <(jq -r '(.uri_allow_list // "") | split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(. != "")) | .[]' "$body_file")
+if [ "${#redirects[@]}" -eq 0 ]; then
+  echo "::error::redirect URLs is wrong: uri_allow_list is empty, expected paths on $origin"
+  failures=$((failures + 1))
+else
+  off_origin=0
+  for url in "${redirects[@]}"; do
+    if [ "$url" != "$origin" ] && [ "${url#"$origin"/}" = "$url" ]; then
+      echo "::error::redirect URLs is wrong: uri_allow_list holds $url, which is not on $origin"
+      off_origin=1
+    fi
+  done
+  if [ "$off_origin" -eq 0 ]; then
+    echo "OK: redirect URLs (uri_allow_list = $(IFS=,; echo "${redirects[*]}"))"
+  else
+    failures=$((failures + 1))
+  fi
+fi
 
 fetch_config realtime
 check 'Realtime private-only' private_only true

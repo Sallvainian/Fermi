@@ -3,7 +3,7 @@ title: 'The keep-alive keeps the Free project awake and reports failed jobs'
 type: feature
 ticket: '7'
 created: '2026-11-06'
-status: blocked
+status: done
 baseline_revision: '9587352a26599f239055e6b9ce9b5379cfe9872e'
 route: full
 route_source: auto
@@ -35,8 +35,6 @@ deferred:
     location: >-
       .github/workflows/keep-alive.yml (re-enable job)
     severity: high (unverified)
-blocked_at: "2026-11-06"
-blocked_reason: "awaiting operator: After this branch is merged and deploy.yml on main has applied migration 20261106230000 to the hosted project, run Actions > Keep alive > Run workflow on main, and confirm both jobs, Job health and Re-enable schedule, are green.; In the hosted project's SQL editor run: insert into internal.job_failures (job, error_code) values ('operator-test', 'manual_check');; Wait for the next scheduled Keep alive run (05:17 or 17:17 UTC; not a manual run, which emails whoever started it), and confirm it is red with an error naming operator-test and that GitHub emailed the owner; if no email arrives, record that the monthly re-enable call moved failure emails away from the owner (deferred item in this plan).; Delete the test row in the hosted SQL editor: delete from internal.job_failures where job = 'operator-test';"
 ---
 
 <intent-contract>
@@ -220,3 +218,14 @@ Status: awaiting-operator
   - Whether the monthly re-enable call keeps the 60-day timer reset and leaves failure emails going to the owner is unverified (deferred; the operator check below settles the email part).
   - Enabling pg_net lets Supabase's own event trigger grant `anon` and `authenticated` access to schema `net`; nothing reaches it while `net` is not in `[api] schemas`.
   - `deploy.yml` has not yet applied this migration to the hosted project; until it does, `keep-alive.yml` fails with PostgREST's missing-function error.
+
+## Operator Confirmation
+
+Confirmed 2026-11-07: the external actions this story owed were carried out.
+
+- After this branch is merged and deploy.yml on main has applied migration 20261106230000 to the hosted project, run Actions > Keep alive > Run workflow on main, and confirm both jobs, Job health and Re-enable schedule, are green.
+- In the hosted project's SQL editor run: insert into internal.job_failures (job, error_code) values ('operator-test', 'manual_check');
+- Wait for the next scheduled Keep alive run (05:17 or 17:17 UTC; not a manual run, which emails whoever started it), and confirm it is red with an error naming operator-test and that GitHub emailed the owner; if no email arrives, record that the monthly re-enable call moved failure emails away from the owner (deferred item in this plan).
+- Delete the test row in the hosted SQL editor: delete from internal.job_failures where job = 'operator-test';
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._
