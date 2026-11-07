@@ -91,6 +91,10 @@ Specs import from `tests/support/merged-fixtures.ts` and nowhere else, and use `
 - **`supabase start` fails pulling an image:** the job retries once; rerun the job. Images come from ghcr.io, not the rate-limited public.ecr.aws.
 - **Test Summary fails with every lane green:** a lane was cancelled or skipped; Test Summary accepts only success (burn-in may be skipped only on pushes and manual runs).
 
+## Drafts and busy work
+
+A form field that must survive the refresh page keeps its value with `useDraft(draftKey(feature, ...scopeIds, field), initial)` (`app/src/drafts/`); `draftKey` is the only builder of `fermi:draft:` keys, and `app/src/api/auth.ts` (`startAuth()`, called from `main.tsx`) wipes every draft on `SIGNED_OUT`. A flow of several calls (an upload, a CSV import) wraps itself in `runBusy(fn)` or `holdBusy()` (`app/src/busy/busy.ts`) so the refresh page waits for it. Their tests are `tests/unit/draftKey.test.ts`, `useDraft.test.tsx`, `auth.test.ts` and `busy.test.ts`.
+
 ## Folder layout
 
 - `tests/support/merged-fixtures.ts`: the entry point (`test`, `expect`, `log`)
