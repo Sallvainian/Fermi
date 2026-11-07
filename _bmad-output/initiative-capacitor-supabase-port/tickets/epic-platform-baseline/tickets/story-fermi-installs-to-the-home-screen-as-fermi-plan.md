@@ -3,7 +3,7 @@ title: 'Fermi installs to the Home Screen as Fermi+'
 type: feature
 ticket: '15'
 created: '2026-11-07'
-status: blocked
+status: done
 baseline_revision: '05c8cd4892b1dede778a33d7012e40572389a13f'
 route: oneshot
 route_source: auto
@@ -21,8 +21,6 @@ operator_actions:
   - 'After this branch merges to main, open the Deploy run for that push, confirm it is green, and confirm https://fermi-plus.sallvain.workers.dev/manifest.webmanifest is served as JSON with name Fermi+ and display standalone, and that https://fermi-plus.sallvain.workers.dev/icons/icon-192.png, /icons/icon-512.png and /apple-touch-icon.png load as PNG images.'
   - 'On your iPhone, open https://fermi-plus.sallvain.workers.dev/ in Safari, tap Share then Add to Home Screen, and confirm it offers the name Fermi+ with Fermi''s icon (the purple F under the infinity sign on black).'
   - 'Tap the saved Fermi+ icon on the Home Screen and confirm Fermi opens with no Safari address bar or toolbar.'
-blocked_at: "2026-11-07"
-blocked_reason: "awaiting operator: After this branch merges to main, open the Deploy run for that push, confirm it is green, and confirm https://fermi-plus.sallvain.workers.dev/manifest.webmanifest is served as JSON with name Fermi+ and display standalone, and that https://fermi-plus.sallvain.workers.dev/icons/icon-192.png, /icons/icon-512.png and /apple-touch-icon.png load as PNG images.; On your iPhone, open https://fermi-plus.sallvain.workers.dev/ in Safari, tap Share then Add to Home Screen, and confirm it offers the name Fermi+ with Fermi's icon (the purple F under the infinity sign on black).; Tap the saved Fermi+ icon on the Home Screen and confirm Fermi opens with no Safari address bar or toolbar."
 ---
 
 <intent-contract>
@@ -88,3 +86,13 @@ Status: awaiting-operator
 **Verification:** `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build` exit 0, and `dist/` holds the manifest and the three PNGs. `playwright test --project=chromium --project=webkit` passes 4/4: home-screen and shell, each on both projects. Vitest passes 89/89. `scripts/test-check-site.sh` passes 11/11. sips reads the icons as 180, 192 and 512 square. In a negative check, the 512 icon was pointed at a missing path: the spec failed on the SPA fallback's `text/html`, and the change was reverted.
 
 **Residual risks:** The Home Screen install itself (Safari's Add to Home Screen, the standalone launch) is not automated. WebKit in Playwright is not iOS Safari (test design TC-8), so the owner checks it on the iPhone after the merge (operator_actions). The deployed manifest's content type on Cloudflare is not checked here and is UNVERIFIED until the post-merge check.
+
+## Operator Confirmation
+
+Confirmed 2026-11-07: the external actions this story owed were carried out.
+
+- After this branch merges to main, open the Deploy run for that push, confirm it is green, and confirm https://fermi-plus.sallvain.workers.dev/manifest.webmanifest is served as JSON with name Fermi+ and display standalone, and that https://fermi-plus.sallvain.workers.dev/icons/icon-192.png, /icons/icon-512.png and /apple-touch-icon.png load as PNG images.
+- On your iPhone, open https://fermi-plus.sallvain.workers.dev/ in Safari, tap Share then Add to Home Screen, and confirm it offers the name Fermi+ with Fermi's icon (the purple F under the infinity sign on black).
+- Tap the saved Fermi+ icon on the Home Screen and confirm Fermi opens with no Safari address bar or toolbar.
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._
