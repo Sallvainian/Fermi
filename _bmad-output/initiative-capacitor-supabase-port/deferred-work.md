@@ -42,7 +42,9 @@ location: app/ios/App/App/Assets.xcassets
 source_spec: `tickets/epic-platform-baseline/tickets/story-the-ios-shell-runs-in-the-simulator-under-fermi-s-bundle-plan.md`
 severity: low
 reason: AppIcon-512@2x.png and the three identical splash-2732x2732 PNGs are the template defaults. This epic builds for the Simulator only; App Store builds are epic-app-store-release's (epic Boundaries), which needs real icon and splash assets before its first upload.
-status: open
+status: done 2026-11-07
+resolution: resolved by story 1.15
+resolution-undo: 36930a3124740b2c806b0d0ae424eedc674d02c311479da43a3923a4256791a0 2026-11-07 7374617475733a206f70656e
 
 ### DW-6: A twice-daily keep-alive sees only the last 6 hours of pg_net responses, because pg_net deletes net._http_response rows after pg_net.ttl.
 origin: spec-deferred ed8bfe938c4d
