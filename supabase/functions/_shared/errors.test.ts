@@ -125,3 +125,8 @@ Deno.test('fromRpcError: a missing code is a 500 internal_error', async () => {
   eq(err?.status, 500);
   eq(err?.code, 'internal_error');
 });
+
+// CI red probe (do not merge): this test must fail Edge Function Tests.
+Deno.test("probe: deliberately failing", () => {
+  throw new Error("probe_red_1_5");
+});
