@@ -4,8 +4,8 @@ on:
   # Every push to main deploys, so nothing that should ship can be left out by a
   # forgotten path filter. Every push also writes a new latest.json `version`,
   # its own commit id, even when only docs changed; only a change under app/
-  # will bring open clients the refresh page, once story 16 adds the app id
-  # (AD-24).
+  # moves the `app` id (the git tree hash of app/) and so brings open clients
+  # the refresh page (AD-24).
   push:
     branches: [main]
   # Once a day, deploy only if the live site is behind main. GitHub starts no
@@ -221,7 +221,7 @@ jobs:
 
   # Runs third-party npm code, so it has no environment and no secrets. It also
   # writes latest.json (dist/updates/, served beside the site), which refuses a
-  # build id that is not GITHUB_SHA.
+  # build id that is not GITHUB_SHA and an app id the build lacks.
   build:
     name: Build
     needs: functions
@@ -260,9 +260,19 @@ jobs:
             fi
           done
 
+      # The app id is the git tree hash of app/: it changes only when something
+      # under app/ does, so the update check can tell a docs-only push from an
+      # app change. HEAD:app reads the tree from the commit, so it works on the
+      # shallow checkout. The assignment makes `-e` catch a failure. The Build
+      # and Write latest.json steps inherit APP_ID from GITHUB_ENV.
+      - name: Compute the app id
+        run: |
+          app_id="$(git rev-parse HEAD:app)"
+          echo "APP_ID=$app_id" >> "$GITHUB_ENV"
+
       # GITHUB_SHA is the id vite.config.ts bakes in as __BUILD_ID__ and as the
-      # fermi-build meta the health check reads back. The publishable key is
-      # public by design.
+      # fermi-build meta the health check reads back; APP_ID is baked in as
+      # __APP_ID__. The publishable key is public by design.
       - name: Build application
         env:
           VITE_SUPABASE_URL: https://${{ vars.SUPABASE_PROJECT_ID }}.supabase.co

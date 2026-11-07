@@ -70,7 +70,7 @@ Specs import from `tests/support/merged-fixtures.ts` and nowhere else, and use `
 | Database Tests | a migration that does not apply to a fresh database, a failing pgTAP test, `scripts/test-check-job-health.sh` or `scripts/test-backup.sh` failing against the local stack |
 | Edge Function Tests | a failing `deno test` |
 | Migration Check | a migration that drops, renames or changes a function's arguments without a contract line |
-| Health Check Tests | `scripts/check-site.sh` passing a stale id, a missing JavaScript file, an id missing from the JavaScript, a missing `updates/latest.json`, a stale `latest.json` version, or failing the right id (DW-2); `scripts/deploy-gate.sh` (deploy.yml's daily decision) skipping a deploy when main is ahead or no `latest.json` is served; `scripts/write-latest-json.sh` failing a case (writing more than `latest.json`, or not refusing an absent build id, an unset `GITHUB_SHA` or a missing build) |
+| Health Check Tests | `scripts/check-site.sh` passing a stale id, a missing JavaScript file, an id missing from the JavaScript, a missing `updates/latest.json`, a stale `latest.json` version, a missing or nonzero `max-age` on `/` or `latest.json`, or failing the right id (DW-2); `scripts/deploy-gate.sh` (deploy.yml's daily decision) skipping a deploy when main is ahead or no `latest.json` is served; `scripts/write-latest-json.sh` failing a case (writing more than `latest.json`, or not refusing an absent build id, an absent app id, an unset `GITHUB_SHA`, an unset `APP_ID` or a missing build) |
 | Playwright (chromium, webkit, api) | a failing test, or fewer tests run than listed |
 | Burn-In | an affected spec failing in any of 5 runs (pull requests; every spec on Sundays) |
 | **Test Summary** | any job above not passing |
@@ -94,6 +94,10 @@ Specs import from `tests/support/merged-fixtures.ts` and nowhere else, and use `
 ## Drafts and busy work
 
 A form field that must survive the refresh page keeps its value with `useDraft(draftKey(feature, ...scopeIds, field), initial)` (`app/src/drafts/`); `draftKey` is the only builder of `fermi:draft:` keys, and `app/src/api/auth.ts` (`startAuth()`, called from `main.tsx`) wipes every draft on `SIGNED_OUT`. A flow of several calls (an upload, a CSV import) wraps itself in `runBusy(fn)` or `holdBusy()` (`app/src/busy/busy.ts`) so the refresh page waits for it. Their tests are `tests/unit/draftKey.test.ts`, `useDraft.test.tsx`, `auth.test.ts` and `busy.test.ts`.
+
+## Update check
+
+An open tab or Home Screen web app learns of a deploy from `/updates/latest.json`, which `scripts/write-latest-json.sh` writes as `{ "version": "<commit>", "app": "<git tree hash of app/>" }` (deploy.yml computes `APP_ID=$(git rev-parse HEAD:app)`; the build bakes it in as `__APP_ID__`, `local` off CI). `app/src/update/updateCheck.ts` fetches it (`cache: 'no-store'`) at start, when the tab turns visible, on `pageshow`, `online`, `vite:preloadError`, a dynamic-import failure, every 15 minutes while visible, and on a stale-client PostgREST code (`PGRST202`, `PGRST204`, `42883`, `42703` in `fromPostgrestError`). A different `app` waits on the busy registry (2 minutes at most), then `UpdateGate` renders the refresh page in place of the router; a new `version` with the same `app` (a docs-only push) shows nothing. Refresh stores `__APP_ID__` under `fermi:update:refreshed-from` and reloads; if the same build comes back, checks wait 30 s. Epic-invite-sign-in's realtime code calls the exported `checkForUpdate()`. Their tests are `tests/unit/updateCheck.test.ts`, `RefreshPage.test.tsx` and `tests/e2e/refresh-page.spec.ts`, which fulfills `latest.json` with another app id.
 
 ## Folder layout
 

@@ -20,15 +20,14 @@ failures=0
 rc=0
 out=""
 
-# Run the script with GITHUB_SHA and DIST set as given (an empty id leaves
-# GITHUB_SHA unset); sets $rc and $out (stdout and stderr).
-write() {  # <dist> <id>
+# Run the script with GITHUB_SHA, APP_ID and DIST set as given (an empty id
+# leaves GITHUB_SHA or APP_ID unset); sets $rc and $out (stdout and stderr).
+write() {  # <dist> <id> <app id>
+  local -a vars=("DIST=$1")
+  [ -z "$2" ] || vars+=("GITHUB_SHA=$2")
+  [ -z "$3" ] || vars+=("APP_ID=$3")
   rc=0
-  if [ -n "$2" ]; then
-    out="$(env -u GITHUB_SHA -u DIST GITHUB_SHA="$2" DIST="$1" "$script" 2>&1)" || rc=$?
-  else
-    out="$(env -u GITHUB_SHA -u DIST DIST="$1" "$script" 2>&1)" || rc=$?
-  fi
+  out="$(env -u GITHUB_SHA -u APP_ID -u DIST "${vars[@]}" "$script" 2>&1)" || rc=$?
 }
 
 # Judge the last run: exit code, then every substring must be in the output.
@@ -59,18 +58,18 @@ expect_wrote_nothing() {  # <case> <dist>
   fi
 }
 
-# A fake build whose script holds "<id>" as a quoted literal.
-fake_dist() {  # <dir> <id>
+# A fake build whose script holds "<id>" and "<app id>" as quoted literals.
+fake_dist() {  # <dir> <id> <app id>
   mkdir -p "$1/assets"
   echo '<!doctype html><title>fixture</title>' >"$1/index.html"
-  echo "export const id = \"$2\";" >"$1/assets/x.js"
+  echo "export const id = \"$2\", app = \"$3\";" >"$1/assets/x.js"
 }
 
-fake_dist "$work/dist-good" abc123
+fake_dist "$work/dist-good" abc123 tree123
 mkdir -p "$work/dist-good/updates"
 echo stale >"$work/dist-good/updates/old.txt"
-write "$work/dist-good" abc123
-expect 'a matching build is written' 0 'latest.json written for abc123'
+write "$work/dist-good" abc123 tree123
+expect 'a matching build is written' 0 'latest.json written for abc123 (app tree123)'
 
 cases=$((cases + 1))
 bad=""
@@ -78,37 +77,55 @@ manifest="$work/dist-good/updates/latest.json"
 if [ ! -f "$manifest" ]; then
   bad="latest.json is missing"
 else
-  [ "$(jq -cS . "$manifest")" = '{"version":"abc123"}' ] || bad="latest.json is not exactly {\"version\":\"abc123\"}"
+  [ "$(jq -cS . "$manifest")" = '{"app":"tree123","version":"abc123"}' ] || bad="latest.json is not exactly {\"app\":\"tree123\",\"version\":\"abc123\"}"
   [ "$(ls "$work/dist-good/updates")" = latest.json ] || bad="${bad:+$bad; }updates/ holds more than latest.json"
 fi
 if [ -z "$bad" ]; then
-  echo "ok: updates/ holds only latest.json, exactly {\"version\":\"abc123\"}"
+  echo "ok: updates/ holds only latest.json, exactly {\"app\":\"tree123\",\"version\":\"abc123\"}"
 else
   echo "::error::the written output is wrong: $bad"
   failures=$((failures + 1))
 fi
 
-fake_dist "$work/dist-id" abc123
+fake_dist "$work/dist-id" abc123 tree123
 mkdir -p "$work/dist-id/updates"
 echo stale >"$work/dist-id/updates/latest.json"
-write "$work/dist-id" deadbeef
+write "$work/dist-id" deadbeef tree123
 expect 'a build id not in the build fails and names it' 1 'deadbeef'
 expect_wrote_nothing 'a build id not in the build' "$work/dist-id"
 
-fake_dist "$work/dist-bare" abc123
-echo 'const a = "xabc123x"; onabc123;' >"$work/dist-bare/assets/x.js"
-write "$work/dist-bare" abc123
+fake_dist "$work/dist-app" abc123 tree123
+mkdir -p "$work/dist-app/updates"
+echo stale >"$work/dist-app/updates/latest.json"
+write "$work/dist-app" abc123 othertree
+expect 'an app id not in the build fails and names it' 1 'othertree'
+expect_wrote_nothing 'an app id not in the build' "$work/dist-app"
+
+fake_dist "$work/dist-bare" abc123 tree123
+echo 'const a = "xabc123x"; onabc123; const b = "xtree123x"; ontree123;' >"$work/dist-bare/assets/x.js"
+write "$work/dist-bare" abc123 tree123
 expect 'a build id that is only a substring fails' 1 'abc123'
 expect_wrote_nothing 'a build id that is only a substring' "$work/dist-bare"
 
-write "$work/no-such-dist" abc123
+fake_dist "$work/dist-bare-app" abc123 tree123
+echo 'const a = "abc123"; const b = "xtree123x"; ontree123;' >"$work/dist-bare-app/assets/x.js"
+write "$work/dist-bare-app" abc123 tree123
+expect 'an app id that is only a substring fails' 1 'tree123'
+expect_wrote_nothing 'an app id that is only a substring' "$work/dist-bare-app"
+
+write "$work/no-such-dist" abc123 tree123
 expect 'a missing dist is bad input' 2 'holds no build'
 expect_wrote_nothing 'a missing dist' "$work/no-such-dist"
 
-fake_dist "$work/dist-env" abc123
-write "$work/dist-env" ''
+fake_dist "$work/dist-env" abc123 tree123
+write "$work/dist-env" '' tree123
 expect 'an unset GITHUB_SHA is bad input' 2 'GITHUB_SHA'
 expect_wrote_nothing 'an unset GITHUB_SHA' "$work/dist-env"
+
+fake_dist "$work/dist-noapp" abc123 tree123
+write "$work/dist-noapp" abc123 ''
+expect 'an unset APP_ID is bad input' 2 'APP_ID'
+expect_wrote_nothing 'an unset APP_ID' "$work/dist-noapp"
 
 if [ "$failures" -ne 0 ]; then
   echo "$failures of $cases write-latest-json case(s) did not behave as expected."

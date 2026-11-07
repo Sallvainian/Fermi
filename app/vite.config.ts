@@ -7,6 +7,12 @@ import tailwindcss from '@tailwindcss/vite';
 // from the served HTML to prove the push that just ran is the one that is live.
 const buildId = process.env.GITHUB_SHA || 'local';
 
+// The git tree hash of app/ (deploy.yml's APP_ID, `git rev-parse HEAD:app`), or
+// `local`. It changes only when something under app/ does, so the update check
+// (src/update/) compares it with latest.json's `app` and shows the refresh page
+// only for a real app change, not for a docs-only push.
+const appId = process.env.APP_ID || 'local';
+
 // Writes the build id into index.html as a meta tag, so the health check can
 // read it without running any JavaScript.
 const buildIdMeta: Plugin = {
@@ -29,6 +35,7 @@ export default defineConfig({
   define: {
     // Declared in src/vite-env.d.ts.
     __BUILD_ID__: JSON.stringify(buildId),
+    __APP_ID__: JSON.stringify(appId),
   },
   plugins: [react(), tailwindcss(), buildIdMeta],
 });
