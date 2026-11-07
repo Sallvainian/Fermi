@@ -1,0 +1,41 @@
+-- The expected grants of every table, view, column and function in schemas
+-- public, app and internal. 03_privileges.sql includes this file and compares
+-- it to the live catalog (AD-3 "locked by default", P0-006). This file is not
+-- run as a test itself.
+--
+-- Update it in the same change as the migration that adds or changes a table,
+-- column, function or view. List every object, even one with no grants.
+--
+-- One line per object: kind|object|grants
+--   kind     table, view, materialized view, foreign table, column, function
+--            (also aggregates and window functions) or procedure
+--   object   schema.name, schema.table.column, or schema.name(identity args)
+--            for a function, as pg_get_function_identity_arguments prints them
+--   grants   space-separated grantee:PRIV,PRIV; grantee PUBLIC for everyone;
+--            PRIV* when grantable; ALL when a table or view grantee holds every
+--            privilege; empty for no grants. Order does not matter.
+--   The object's owner and extension-owned objects are left out. Every column
+--   of every table and view has its own line; its grants are column-level
+--   grants only (table-level grants sit on the table line), so most are empty.
+--
+-- Examples:
+--   table|app.classes|authenticated:SELECT service_role:ALL
+--   column|app.classes.name|authenticated:UPDATE
+--   function|internal.add_student_as(actor uuid, student uuid)|
+--
+-- Reading a failure: tests 1 (object missing here) and 2 (stale line) print
+-- fixture lines; the other tests do not. pgTAP prints each row as record text:
+-- in parentheses, and when the line holds a space, a parenthesis or a double
+-- quote also inside double quotes with every inner " doubled, e.g.
+--   (column|app.t.id|)
+--   ("function|public.f()|PUBLIC:EXECUTE anon:EXECUTE")
+--   ("table|app.""order""|")
+-- Paste the text inside the parentheses, dropping the outer double quotes and
+-- turning each "" back into ". For a missing object, paste it below after
+-- checking its grants are what you intend. For a stale line, delete it. Test 3
+-- prints the object with the expected and actual grants. Test 4 prints one
+-- grant to anon or PUBLIC per row, and tests 5 and 6 print only the object
+-- name. Tests 4, 5 and 6 fail whatever this file says.
+copy pg_temp.privilege_fixture (kind, object, grants) from stdin with (format csv, delimiter '|', quote e'\x01', header true);
+kind|object|grants
+\.
