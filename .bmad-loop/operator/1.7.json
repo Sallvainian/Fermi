@@ -1,0 +1,15 @@
+{
+  "actions": [
+    "After this branch is merged and deploy.yml on main has applied migration 20261106230000 to the hosted project, run Actions > Keep alive > Run workflow on main, and confirm both jobs, Job health and Re-enable schedule, are green.",
+    "In the hosted project's SQL editor run: insert into internal.job_failures (job, error_code) values ('operator-test', 'manual_check');",
+    "Wait for the next scheduled Keep alive run (05:17 or 17:17 UTC; not a manual run, which emails whoever started it), and confirm it is red with an error naming operator-test and that GitHub emailed the owner; if no email arrives, record that the monthly re-enable call moved failure emails away from the owner (deferred item in this plan).",
+    "Delete the test row in the hosted SQL editor: delete from internal.job_failures where job = 'operator-test';"
+  ],
+  "followup_review_recommended": false,
+  "parked_at": "2026-11-06",
+  "ref": "1.7",
+  "run_id": "20261106-192429-3aab",
+  "source": "tickets",
+  "spec_file": "_bmad-output/initiative-capacitor-supabase-port/tickets/epic-platform-baseline/tickets/story-the-keep-alive-keeps-the-free-project-awake-and-reports-fail-plan.md",
+  "story_key": "1.7"
+}

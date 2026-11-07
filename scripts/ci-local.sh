@@ -35,6 +35,7 @@ scripts/test-check-hosted-config.sh
 step 'Database Tests'
 supabase status >/dev/null 2>&1 || supabase start
 supabase test db
+scripts/test-check-job-health.sh
 
 for project in chromium webkit api; do
   step "Playwright ($project)"

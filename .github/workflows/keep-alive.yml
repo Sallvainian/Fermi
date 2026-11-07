@@ -1,0 +1,68 @@
+# Keeps the Free Supabase project awake and reports scheduled-job failures.
+#
+# Twice a day (05:17 and 17:17 UTC) the job-health job calls public.job_health
+# through the Data API with the secret key. The Free plan pauses a project after
+# a week without activity, and that call is a real query, so it counts. The
+# function also returns every failure since the previous call (a job_failures
+# row, a failed pg_cron run, a non-2xx pg_net response), and
+# scripts/check-job-health.sh fails the run when there is one. A failed
+# scheduled run emails whoever last changed the schedule lines below or, per
+# GitHub's docs, whoever last re-enabled a disabled workflow, so that is who
+# learns about a failure; keep that person current. Whether the re-enable job's
+# enable call counts when the workflow is already enabled is unverified: the
+# operator check (a failing scheduled run emails the owner) settles it.
+#
+# The call is not retried. It moves the check window forward, so a retry after
+# a lost response would skip the failures the first response already carried.
+# The next scheduled run (or a manual one) asks again.
+#
+# GitHub disables a scheduled workflow after 60 days without repository
+# activity. The re-enable job calls the enable endpoint monthly, which resets
+# that timer; it runs on the monthly schedule and by hand only.
+#
+# Not part of Test Summary: this workflow reads a secret, which test.yml never
+# does (AD-23). scripts/test-check-job-health.sh covers the checker in test.yml.
+
+name: Keep alive
+
+on:
+  schedule:
+    - cron: '17 5,17 * * *'
+    - cron: '41 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keep-alive
+  cancel-in-progress: false
+
+jobs:
+  job-health:
+    name: Job health
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: Production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Check job health
+        env:
+          SUPABASE_URL: https://${{ vars.SUPABASE_PROJECT_ID }}.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: scripts/check-job-health.sh
+
+  re-enable:
+    name: Re-enable schedule
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '41 4 1 * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Re-enable this workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method PUT "repos/${{ github.repository }}/actions/workflows/keep-alive.yml/enable"

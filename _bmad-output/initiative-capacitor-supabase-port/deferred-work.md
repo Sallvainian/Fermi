@@ -41,3 +41,19 @@ source_spec: `tickets/epic-platform-baseline/tickets/story-the-ios-shell-runs-in
 severity: low
 reason: AppIcon-512@2x.png and the three identical splash-2732x2732 PNGs are the template defaults. This epic builds for the Simulator only; App Store builds are epic-app-store-release's (epic Boundaries), which needs real icon and splash assets before its first upload.
 status: open
+
+### DW-6: A twice-daily keep-alive sees only the last 6 hours of pg_net responses, because pg_net deletes net._http_response rows after pg_net.ttl.
+origin: spec-deferred ed8bfe938c4d
+location: supabase/migrations/20261106230000_enable_cron_net_and_job_health.sql (http source of public.job_health)
+source_spec: `tickets/epic-platform-baseline/tickets/story-the-keep-alive-keeps-the-free-project-awake-and-reports-fail-plan.md`
+severity: medium
+reason: Local stack: show pg_net.ttl = 6 hours, context sighup; alter database / alter role ... set pg_net.ttl as postgres fail ("cannot be changed now"), so no migration can raise it. R8 and AD-21 fix the cadence at twice daily. Fix options for the owner or architect: check every 6 hours or less, or add a pg_cron job that copies non-2xx responses into internal.job_failures. No pg_net call exists until a later epic (sweep-storage, send-push) adds one.
+status: open
+
+### DW-7: The monthly re-enable call made with github.token may make GitHub send failed scheduled-run emails to github-actions[bot] instead of the owner.
+origin: spec-deferred 7ec2def5483e
+location: .github/workflows/keep-alive.yml (re-enable job)
+source_spec: `tickets/epic-platform-baseline/tickets/story-the-keep-alive-keeps-the-free-project-awake-and-reports-fail-plan.md`
+severity: high
+reason: GitHub's notification docs: when a scheduled workflow is disabled and then re-enabled, notifications go to the user who re-enabled it. Whether PUT /actions/workflows/{id}/enable on an already-enabled workflow counts is undocumented. Settles it: after a manual keep-alive run (which runs the re-enable job), a failing scheduled run emails the owner. If it does not, call the enable endpoint with the owner's token, or drop the call and rely on other repository activity. (declared severity: high (unverified))
+status: open

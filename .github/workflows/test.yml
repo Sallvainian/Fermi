@@ -104,6 +104,10 @@ jobs:
       - name: pgTAP
         run: supabase test db
 
+      # Calls public.job_health through the local Data API with the demo secret key; no repo secret.
+      - name: check-job-health.sh passes and fails as it should
+        run: scripts/test-check-job-health.sh
+
   function-tests:
     name: Edge Function Tests
     runs-on: ubuntu-latest
