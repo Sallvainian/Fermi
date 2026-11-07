@@ -1,0 +1,151 @@
+name: Deploy
+
+on:
+  # Every push to main deploys: a docs-only push redeploys the same build, and
+  # nothing that should ship can be left out by a forgotten path filter.
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: 'deploy'
+  cancel-in-progress: false
+
+jobs:
+  # Schema before frontend: the build ships code that assumes the current
+  # schema, so a frontend that deploys ahead of its migration runs against a
+  # database it does not match.
+  migrate:
+    name: Migrate
+    # Production has no deployment-branch policy, so a manual run from another
+    # branch must not push its migrations; build, deploy and health-check need this job.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.122.0
+
+      - name: Link to production project
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase link --project-ref ${{ vars.SUPABASE_PROJECT_ID }}
+
+      - name: Show pending migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "::group::Remote migration history"
+          supabase migration list --linked
+          echo "::endgroup::"
+
+          # Print what would run before anything writes, so a failed apply has
+          # a readable record of what it was attempting.
+          echo "::group::Dry run"
+          supabase db push --dry-run
+          echo "::endgroup::"
+
+      - name: Apply migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: supabase db push
+
+  # Runs third-party npm code, so it has no environment and no secrets.
+  build:
+    name: Build
+    needs: migrate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: app/.node-version
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # GITHUB_SHA is the id vite.config.ts bakes in as __BUILD_ID__ and as the
+      # fermi-build meta the health check reads back.
+      - name: Build application
+        run: npm run build
+
+      - name: Upload build
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: app/dist
+          retention-days: 7
+
+  # The Cloudflare credentials live on the Production environment, so only this
+  # job and migrate, which runs no npm code, can read them -- not the build.
+  # This job installs with --ignore-scripts for the same reason: no
+  # dependency's install script runs beside the token. wrangler deploy needs
+  # none of them.
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+      url: ${{ vars.SITE_URL }}
+    steps:
+      # For wrangler.jsonc and the lockfile-pinned wrangler.
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: app/.node-version
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci --ignore-scripts
+
+      - name: Download build
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: app/dist
+
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: app/node_modules/.bin/wrangler deploy
+
+  # Proves this push is what the site serves. No secrets.
+  health-check:
+    name: Health check
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Check the deployed site
+        run: scripts/check-site.sh "${{ vars.SITE_URL }}" "$GITHUB_SHA"

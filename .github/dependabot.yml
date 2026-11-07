@@ -1,125 +1,75 @@
+# Dependabot configuration
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
 version: 2
 updates:
-  # Enable version updates for pub (Dart/Flutter) dependencies
-  - package-ecosystem: "pub"
-    directory: "/"
+  # npm dependencies of the app
+  - package-ecosystem: 'npm'
+    directory: '/app'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    pull-request-branch-name:
-      separator: "-"
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'deps'
+      include: 'scope'
+    open-pull-requests-limit: 10
     labels:
-      - "dependencies"
-      - "dart"
-      - "automated"
-    assignees:
-      - "@owner"
-    reviewers:
-      - "@owner"
-    open-pull-requests-limit: 5
+      - 'dependencies'
+      - 'npm'
+    # Dependabot puts a dependency in the first group that matches it, so the
+    # order here matters: native and vitest come before the two catch-all groups.
     groups:
-      # Group Firebase dependencies together
-      firebase:
+      # AD-18's one list of native packages: the Capacitor core, CLI and
+      # platform packages must move together, and so must the plugins. Add each
+      # Capacitor plugin to this list. Majors are included so the set never
+      # lands half-updated.
+      native:
         patterns:
-          - "firebase*"
-          - "cloud_firestore"
-          - "firebase_*"
-      # Group Flutter/Dart core dependencies
-      flutter:
+          - '@capacitor/*'
+          - '@capgo/*'
+        update-types:
+          - 'major'
+          - 'minor'
+          - 'patch'
+      # vitest and its companion packages peer-pin each other on an exact
+      # version, so a major that arrives as one PR per package can never
+      # install. Named explicitly so they always travel together, majors
+      # included.
+      vitest:
         patterns:
-          - "flutter*"
-          - "dart*"
-      # Group development dependencies
+          - 'vitest'
+          - '@vitest/*'
+        update-types:
+          - 'major'
+          - 'minor'
+          - 'patch'
+      production-dependencies:
+        dependency-type: 'production'
+        update-types:
+          - 'minor'
+          - 'patch'
       dev-dependencies:
-        dependency-type: "development"
-      # Group testing dependencies
-      testing:
-        patterns:
-          - "*test*"
-          - "mockito"
-          - "faker"
-          - "golden_toolkit"
-          - "patrol"
-    ignore:
-      # Ignore specific dependencies if needed
-      # - dependency-name: "example_package"
-      #   versions: ["1.x", "2.x"]
-    
-  # Enable version updates for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+        dependency-type: 'development'
+        update-types:
+          - 'minor'
+          - 'patch'
+
+  # GitHub Actions
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    pull-request-branch-name:
-      separator: "-"
+      interval: 'weekly'
+      day: 'monday'
+    commit-message:
+      prefix: 'ci'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "github-actions"
-      - "automated"
-    assignees:
-      - "@owner"
-    reviewers:
-      - "@owner"
-    open-pull-requests-limit: 3
-    
-  # Enable version updates for Android Gradle dependencies
-  - package-ecosystem: "gradle"
-    directory: "/android"
-    schedule:
-      interval: "monthly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    pull-request-branch-name:
-      separator: "-"
-    labels:
-      - "dependencies"
-      - "android"
-      - "automated"
-    assignees:
-      - "@owner"
-    reviewers:
-      - "@owner"
-    open-pull-requests-limit: 3
+      - 'dependencies'
+      - 'github-actions'
     groups:
-      # Group Android build tools
-      android-build:
+      actions:
         patterns:
-          - "com.android.tools*"
-          - "com.android.application"
-          - "org.jetbrains.kotlin*"
-      # Group Google services
-      google-services:
-        patterns:
-          - "com.google.*"
-    
-  # Enable version updates for npm dependencies (if any)
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
-    pull-request-branch-name:
-      separator: "-"
-    labels:
-      - "dependencies"
-      - "javascript"
-      - "automated"
-    assignees:
-      - "@owner"
-    reviewers:
-      - "@owner"
-    open-pull-requests-limit: 3
-    allow:
-      - dependency-type: "direct"
-    ignore:
-      # Ignore specific versions if needed
-      # - dependency-name: "example"
-      #   versions: ["1.x"]
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
