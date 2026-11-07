@@ -23,7 +23,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: tests-${{ github.ref }}
+  # The weekly scheduled run gets its own group, so a merge to main during it
+  # cannot cancel that week's only full burn-in.
+  group: tests-${{ github.ref }}${{ github.event_name == 'schedule' && '-schedule' || '' }}
   cancel-in-progress: true
 
 permissions:
