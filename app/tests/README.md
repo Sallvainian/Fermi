@@ -7,7 +7,7 @@ Every kind of test the port uses, how to run each one, and the rules they share.
 | Lint and types | ESLint, `tsc -b` | `app/` | `npm run lint && npm run typecheck` (in `app/`) |
 | Unit and component | Vitest 5.1.0, Testing Library, happy-dom | `app/tests/unit/`, or beside the code as `src/**/*.test.ts(x)` | `npm run test:unit` (`test:unit:coverage` for coverage) |
 | Database | pgTAP through `supabase test db` | `supabase/tests/database/NN_*.sql` | `supabase test db` (repo root) |
-| Edge functions | `deno test` | beside each `handler.ts` in `supabase/functions/` | `deno test --no-lock --permit-no-files supabase/functions` (repo root) |
+| Edge functions | `deno test` | beside each `handler.ts` in `supabase/functions/`, and beside each `_shared/*.ts` | `deno test --no-lock --permit-no-files supabase/functions` (repo root) |
 | Browser | Playwright: Desktop Chrome (`chromium`), iPhone WebKit (`webkit`) | `app/tests/e2e/*.spec.ts` | `npm run test:e2e -- --project=chromium` |
 | API | Playwright `api` project (HTTP; Playwright Utils still opens a page) | `app/tests/api/*.spec.ts` | `npm run test:e2e -- --project=api` |
 | Migration check | `scripts/check-migrations.ts` | `supabase/migrations/` | `node scripts/check-migrations.ts` (repo root) |
