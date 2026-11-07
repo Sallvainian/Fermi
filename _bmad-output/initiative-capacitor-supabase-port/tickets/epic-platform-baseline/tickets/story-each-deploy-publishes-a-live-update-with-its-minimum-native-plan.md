@@ -3,7 +3,7 @@ title: 'Each deploy publishes a live update with its minimum native build'
 type: feature
 ticket: '9'
 created: '2026-11-06'
-status: blocked
+status: done
 baseline_revision: '1e5bc44ca005dd1f300c5b61fc5373630a48b9af'
 route: full
 route_source: auto
@@ -28,8 +28,6 @@ operator_actions:
   - On a scratch branch from main, push a commit adding "@capacitor/app" to app/package.json dependencies without raising app/MIN_NATIVE_BUILD, open a pull request, and confirm Native Build Check and Test Summary fail naming @capacitor/app; then push a second commit setting app/MIN_NATIVE_BUILD to 9 with CURRENT_PROJECT_VERSION left at 8 and confirm it still fails naming the build numbers; close the pull request and delete the branch.
   - After this branch merges to main, open https://fermi-plus.sallvain.workers.dev/updates/latest.json and confirm version is that push's commit id and min_native_build is 8, and that the Deploy run's Build log shows "Live update <id> packaged" and its Health check passes.
   - With main's latest commit live, run Deploy by hand with "daily_check" ticked and confirm it stops at "Check for a new commit" with the notice "already live" and Migrate skipped; after a later commit lands on main without a deploy (e.g. an auto-merged Dependabot pull request), run it again with "daily_check" ticked, or wait for the 08:17 UTC schedule, and confirm it deploys.
-blocked_at: "2026-11-06"
-blocked_reason: "awaiting operator: Once the loop's pull request for this branch runs test.yml on GitHub, confirm the Native Build Check and Health Check Tests jobs pass and Test Summary lists Native Build Check.; On a scratch branch from main, push a commit adding \"@capacitor/app\" to app/package.json dependencies without raising app/MIN_NATIVE_BUILD, open a pull request, and confirm Native Build Check and Test Summary fail naming @capacitor/app; then push a second commit setting app/MIN_NATIVE_BUILD to 9 with CURRENT_PROJECT_VERSION left at 8 and confirm it still fails naming the build numbers; close the pull request and delete the branch.; After this branch merges to main, open https://fermi-plus.sallvain.workers.dev/updates/latest.json and confirm version is that push's commit id and min_native_build is 8, and that the Deploy run's Build log shows \"Live update <id> packaged\" and its Health check passes.; With main's latest commit live, run Deploy by hand with \"daily_check\" ticked and confirm it stops at \"Check for a new commit\" with the notice \"already live\" and Migrate skipped; after a later commit lands on main without a deploy (e.g. an auto-merged Dependabot pull request), run it again with \"daily_check\" ticked, or wait for the 08:17 UTC schedule, and confirm it deploys."
 ---
 
 <intent-contract>
@@ -179,3 +177,14 @@ Status: awaiting-operator
 - A Dependabot native-group pull request fails Native Build Check by design until MIN_NATIVE_BUILD is raised on it.
 - The deferred MIN-versus-shipped-build gap above.
 - Scheduled workflows stop after 60 days without a commit to the repo; the daily deploy would stop with them.
+
+## Operator Confirmation
+
+Confirmed 2026-11-06: the external actions this story owed were carried out.
+
+- Once the loop's pull request for this branch runs test.yml on GitHub, confirm the Native Build Check and Health Check Tests jobs pass and Test Summary lists Native Build Check.
+- On a scratch branch from main, push a commit adding "@capacitor/app" to app/package.json dependencies without raising app/MIN_NATIVE_BUILD, open a pull request, and confirm Native Build Check and Test Summary fail naming @capacitor/app; then push a second commit setting app/MIN_NATIVE_BUILD to 9 with CURRENT_PROJECT_VERSION left at 8 and confirm it still fails naming the build numbers; close the pull request and delete the branch.
+- After this branch merges to main, open https://fermi-plus.sallvain.workers.dev/updates/latest.json and confirm version is that push's commit id and min_native_build is 8, and that the Deploy run's Build log shows "Live update <id> packaged" and its Health check passes.
+- With main's latest commit live, run Deploy by hand with "daily_check" ticked and confirm it stops at "Check for a new commit" with the notice "already live" and Migrate skipped; after a later commit lands on main without a deploy (e.g. an auto-merged Dependabot pull request), run it again with "daily_check" ticked, or wait for the 08:17 UTC schedule, and confirm it deploys.
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._
