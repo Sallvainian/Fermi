@@ -5,10 +5,20 @@ on:
   # nothing that should ship can be left out by a forgotten path filter.
   push:
     branches: [main]
+  # Once a day, deploy only if the live site is behind main. GitHub starts no
+  # workflow from a merge made with its own token, so a Dependabot pull request
+  # that story 13's auto-merge lands would otherwise never reach the site. The
+  # `gate` job reads the live latest.json to decide.
+  schedule:
+    - cron: '17 8 * * *'
   workflow_dispatch:
     inputs:
       health_check_only:
         description: 'Run only the Health check (site and hosted config); skips migrate, hosted config, edge functions, build and deploy. The site check expects the build of main''s latest commit, so it fails if that commit is not what is live'
+        type: boolean
+        default: false
+      daily_check:
+        description: 'Behave as the daily schedule: deploy only if the live latest.json is not main''s latest commit'
         type: boolean
         default: false
 
@@ -20,6 +30,39 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # A push and an ordinary dispatch always deploy. The daily schedule (and a
+  # dispatch with daily_check) deploys only when the site's latest.json is not
+  # this commit's, so an unchanged main is not redeployed every day. It fails
+  # open (scripts/deploy-gate.sh, tested by scripts/test-check-site.sh): a
+  # missing file, SPA HTML, bad JSON or a network error all deploy,
+  # because an extra deploy of an unchanged commit is harmless (migrations and
+  # config pushes are idempotent) and a missed one leaves a merge unshipped.
+  # No environment, no secret, no npm code. Migrate waits on it, and every later
+  # job waits on migrate, so `deploy=false` skips them all.
+  gate:
+    name: Check for a new commit
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.decide.outputs.deploy }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Compare the live update with this commit
+        id: decide
+        env:
+          EVENT: ${{ github.event_name }}
+          DAILY_CHECK: ${{ inputs.daily_check }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          set -o pipefail
+          if [ "$EVENT" != "schedule" ] && [ "$DAILY_CHECK" != "true" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          scripts/deploy-gate.sh "$SITE_URL" "$COMMIT" | tee -a "$GITHUB_OUTPUT"
+
   # Schema before frontend: the build ships code that assumes the current
   # schema, so a frontend that deploys ahead of its migration runs against a
   # database it does not match.
@@ -27,8 +70,10 @@ jobs:
     name: Migrate
     # Production has no deployment-branch policy, so a manual run from another
     # branch must not push its migrations; hosted-config, functions, build, deploy
-    # and health-check need this job. A health-check-only run skips it.
-    if: github.ref == 'refs/heads/main' && !inputs.health_check_only
+    # and health-check need this job. A health-check-only run skips it, and so
+    # does a daily run when the gate finds this commit already live.
+    needs: gate
+    if: github.ref == 'refs/heads/main' && !inputs.health_check_only && needs.gate.outputs.deploy == 'true'
     runs-on: ubuntu-latest
     environment: Production
     steps:
@@ -171,7 +216,10 @@ jobs:
           echo "Deploying: ${functions[*]}"
           supabase functions deploy --project-ref "$PROJECT_ID" --use-api
 
-  # Runs third-party npm code, so it has no environment and no secrets.
+  # Runs third-party npm code, so it has no environment and no secrets. It also
+  # packages the live update for the iOS shell (dist/updates/, served beside the
+  # site), which refuses a build id that is not GITHUB_SHA and a
+  # MIN_NATIVE_BUILD above the Xcode build number.
   build:
     name: Build
     needs: functions
@@ -218,6 +266,13 @@ jobs:
           VITE_SUPABASE_URL: https://${{ vars.SUPABASE_PROJECT_ID }}.supabase.co
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: npm run build
+
+      # The zip's url points at the site, which SITE_URL names. A repository
+      # variable, so the build still reads no secret.
+      - name: Package live update
+        env:
+          UPDATE_BASE_URL: ${{ vars.SITE_URL }}
+        run: ../scripts/package-live-update.sh
 
       - name: Upload build
         uses: actions/upload-artifact@v7
@@ -267,8 +322,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: app/node_modules/.bin/wrangler deploy
 
-  # Proves this push is what the site serves and that the hosted Auth and
-  # Realtime config is what the app assumes. Holds the Management API token
+  # Proves this push is what the site serves (the page, its script, and the live
+  # update's latest.json, zip checksum and min_native_build) and that the hosted
+  # Auth and Realtime config is what the app assumes. Holds the Management API token
   # (read-only GETs) and runs no npm code. Runs after a green deploy, or alone
   # for a health_check_only dispatch, where migrate, hosted-config, functions,
   # build and deploy are skipped.

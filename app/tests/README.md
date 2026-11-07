@@ -12,11 +12,12 @@ Every kind of test the port uses, how to run each one, and the rules they share.
 | API | Playwright `api` project (HTTP; Playwright Utils still opens a page) | `app/tests/api/*.spec.ts` | `npm run test:e2e -- --project=api` |
 | Migration check | `scripts/check-migrations.ts` | `supabase/migrations/` | `node scripts/check-migrations.ts` (repo root) |
 | Health check tests | `scripts/test-check-site.sh`, `scripts/test-check-hosted-config.sh` | the deploy health checks, `scripts/check-site.sh` and `scripts/check-hosted-config.sh` | `scripts/test-check-site.sh` and `scripts/test-check-hosted-config.sh` (repo root) |
+| Native build check | `scripts/test-check-native-build.sh`, then `scripts/check-native-build.sh` | `scripts/check-native-build.sh` (a native change raises `app/MIN_NATIVE_BUILD`, which stays within the Xcode build number) and `scripts/package-live-update.sh` | `scripts/test-check-native-build.sh`, then `scripts/check-native-build.sh "$(git merge-base origin/main HEAD)" HEAD` (repo root) |
 | Burn-in | Playwright Utils `runBurnIn` | changed Playwright specs | `npm run test:burn-in -- --base-branch=main` |
 
 ## Setup
 
-1. `npm ci` in `app/`, then `npx playwright install chromium webkit`.
+1. `npm ci` in `app/`, then `npx playwright install chromium webkit`; the script lanes also need `yq` (mikefarah v4), `jq`, `zip` and `unzip`.
 2. Start the local stack from the repo root: `supabase start`. Fermi's local ports are 563xx (`supabase/config.toml`), so it runs beside My-Love's stack.
 3. Nothing else: the tests read the stack's URL and keys from `supabase status`. See `app/.env.example` for the variables you can override.
 
@@ -70,7 +71,8 @@ Specs import from `tests/support/merged-fixtures.ts` and nowhere else, and use `
 | Database Tests | a migration that does not apply to a fresh database, a failing pgTAP test, `scripts/test-check-job-health.sh` or `scripts/test-backup.sh` failing against the local stack |
 | Edge Function Tests | a failing `deno test` |
 | Migration Check | a migration that drops, renames or changes a function's arguments without a contract line |
-| Health Check Tests | `scripts/check-site.sh` passing a stale id, a missing JavaScript file or an id missing from the JavaScript, or failing the right id (DW-2) |
+| Health Check Tests | `scripts/check-site.sh` passing a stale id, a missing JavaScript file, an id missing from the JavaScript, a missing `updates/latest.json`, a stale `latest.json` version, a wrong zip checksum, another `min_native_build` or a zip url off the site, or failing the right id (DW-2); `scripts/deploy-gate.sh` (deploy.yml's daily decision) skipping a deploy when main is ahead or no live update is served |
+| Native Build Check | `scripts/test-check-native-build.sh` failing a case, or the real check failing: a native-group package, `app/ios/` or `app/capacitor.config.*` changed without raising `app/MIN_NATIVE_BUILD` (a pull request is judged as its merge commit against the base tip), or `MIN_NATIVE_BUILD` above `CURRENT_PROJECT_VERSION`. A Dependabot native-group pull request fails by design; it stays open until `MIN_NATIVE_BUILD` is raised on it |
 | Playwright (chromium, webkit, api) | a failing test, or fewer tests run than listed |
 | Burn-In | an affected spec failing in any of 5 runs (pull requests; every spec on Sundays) |
 | **Test Summary** | any job above not passing |

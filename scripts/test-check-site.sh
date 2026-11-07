@@ -8,6 +8,16 @@
 #   - a stale id                              -> must fail: the meta tag differs
 #   - the page's JavaScript file missing      -> must fail: answered as HTML
 #   - the id missing from the JavaScript      -> must fail: the bundle lacks it
+#   - no updates/ folder                      -> must fail: answered as HTML
+#   - latest.json naming a stale version      -> must fail: not the expected id
+#   - latest.json with a wrong checksum       -> must fail: not the zip's sha256
+#   - latest.json with another min_native_build -> must fail: not MIN_NATIVE_BUILD
+#   - latest.json whose url is off the site   -> must fail: not under the base URL
+# The good build is packaged with scripts/package-live-update.sh first.
+# Then scripts/deploy-gate.sh, deploy.yml's daily decision, against the same
+# builds: `deploy=false` only when latest.json names the given commit, and
+# `deploy=true` for another commit, no live update, a latest.json that is not
+# valid JSON, or no server at all.
 # A failing case passes only when check-site.sh fails for that case's reason,
 # so a case cannot pass because the server was down.
 #
@@ -39,6 +49,10 @@ if [ -z "$js_ref" ] || ! grep -qF "$build_id" "$work/good${js_ref}"; then
   exit 1
 fi
 
+# The live update, as the deploy packages it. Its urls point at this server.
+GITHUB_SHA="$build_id" DIST="$work/good" UPDATE_BASE_URL="http://localhost:$port" \
+  "$root/scripts/package-live-update.sh"
+
 # The page names a script file that does not exist.
 cp -R "$work/good" "$work/missing-js"
 perl -pi -e "s{\Q$js_ref\E}{/assets/missing-$build_id.js}g" "$work/missing-js/index.html"
@@ -46,6 +60,25 @@ perl -pi -e "s{\Q$js_ref\E}{/assets/missing-$build_id.js}g" "$work/missing-js/in
 # The script file no longer carries the id; the meta tag still does.
 cp -R "$work/good" "$work/no-id-in-js"
 perl -pi -e "s{\Q$build_id\E}{not-the-build-id}g" "$work/no-id-in-js${js_ref}"
+
+# The good build with no live update: the SPA fallback answers the manifest.
+cp -R "$work/good" "$work/no-updates"
+rm -rf "$work/no-updates/updates"
+
+# The good build with latest.json changed by a jq filter.
+tamper_manifest() {  # <dir> <jq filter>
+  cp -R "$work/good" "$1"
+  jq "$2" "$work/good/updates/latest.json" >"$1/updates/latest.json"
+}
+tamper_manifest "$work/stale-version" '.version = "stale-version"'
+tamper_manifest "$work/bad-checksum" ".checksum = \"$(printf '0%.0s' $(seq 1 64))\""
+tamper_manifest "$work/other-min" '.min_native_build += 1'
+other_min="$(jq '.min_native_build' "$work/other-min/updates/latest.json")"
+tamper_manifest "$work/foreign-url" '.url = "https://elsewhere.test/updates/bundle.zip"'
+
+# The good build whose latest.json is not JSON.
+cp -R "$work/good" "$work/bad-json"
+echo 'not json{' >"$work/bad-json/updates/latest.json"
 
 serve() {
   # vite itself, not `npx`: on Linux npx leaves a sh between it and node, so
@@ -103,9 +136,35 @@ expect_pass 'the right build id' "$work/good" "$build_id"
 expect_fail 'a stale build id' "$work/good" "stale-$build_id" "the site serves build $build_id, not the expected stale-$build_id"
 expect_fail 'a missing JavaScript file' "$work/missing-js" "$build_id" "(expected JavaScript); the file is missing and the SPA fallback answered"
 expect_fail 'the id missing from the JavaScript' "$work/no-id-in-js" "$build_id" "does not contain the expected build id $build_id"
+expect_fail 'no live update' "$work/no-updates" "$build_id" "/updates/latest.json served as 'text/html"
+expect_fail 'a stale live-update version' "$work/stale-version" "$build_id" "latest.json version is 'stale-version', not the expected $build_id"
+expect_fail 'a wrong live-update checksum' "$work/bad-checksum" "$build_id" "does not match the sha256 of"
+expect_fail 'another min_native_build' "$work/other-min" "$build_id" "latest.json min_native_build is '$other_min'"
+expect_fail 'a live-update url off the site' "$work/foreign-url" "$build_id" "does not start with http://localhost:$port/"
+
+# deploy-gate.sh: <case> <dir, or - for no server> <commit> <expected line>
+expect_gate() {
+  [ "$2" = - ] || serve "$2"
+  local got
+  got="$("$root/scripts/deploy-gate.sh" "http://localhost:$port/" "$3" 2>"$work/gate.log")" || got="exit $?"
+  if [ "$got" = "$4" ]; then
+    echo "ok: deploy gate, $1: $4"
+  else
+    echo "::error::deploy gate, $1: printed '$got', expected '$4':"
+    cat "$work/gate.log"
+    failures=$((failures + 1))
+  fi
+  [ "$2" = - ] || stop
+}
+
+expect_gate 'the live commit' "$work/good" "$build_id" 'deploy=false'
+expect_gate 'main ahead of the live commit' "$work/good" "newer-$build_id" 'deploy=true'
+expect_gate 'no live update (SPA answers)' "$work/no-updates" "$build_id" 'deploy=true'
+expect_gate 'a latest.json that is not JSON' "$work/bad-json" "$build_id" 'deploy=true'
+expect_gate 'no server' - "$build_id" 'deploy=true'
 
 if [ "$failures" -ne 0 ]; then
   echo "$failures health check case(s) did not behave as expected."
   exit 1
 fi
-echo "All 4 health check cases behaved as expected."
+echo "All 14 health check and deploy gate cases behaved as expected."

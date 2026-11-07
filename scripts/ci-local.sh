@@ -3,7 +3,7 @@
 # order and with the same commands, and stops at the first failure.
 #
 # Needs: Node 24, Deno 2, Docker, Supabase CLI 2.122.0, age and age-keygen,
-# `npm ci` and `npx playwright install chromium webkit` done in app/.
+# yq (mikefarah v4), jq, zip and unzip, `npm ci` and `npx playwright install chromium webkit` done in app/.
 # Usage, from anywhere in the repo: scripts/ci-local.sh
 # Burn-in is left out: it needs committed changes; run
 # `npm run test:burn-in -- --base-branch=main` in app/ for it.
@@ -31,6 +31,16 @@ fi
 step 'Health Check Tests'
 scripts/test-check-site.sh
 scripts/test-check-hosted-config.sh
+
+step 'Native Build Check'
+scripts/test-check-native-build.sh
+# CI judges a pull request's merge commit against the base tip; here, HEAD
+# against where it left main. Without origin/main only the Xcode rule runs.
+if git rev-parse --verify --quiet origin/main >/dev/null; then
+  scripts/check-native-build.sh "$(git merge-base origin/main HEAD)" HEAD
+else
+  scripts/check-native-build.sh
+fi
 
 step 'Database Tests'
 supabase status >/dev/null 2>&1 || supabase start
