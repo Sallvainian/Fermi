@@ -426,18 +426,7 @@ dart fix --apply
 
 The project includes comprehensive CI/CD automation:
 
-1. **CI Workflow** (`01_ci.yml`)
-   - Code quality checks
-   - Dead code detection
-   - Linting and formatting
-   - Triggered on pull requests
-
-3. **Platform Releases**
-   - Windows release workflow
-   - macOS release workflow
-   - Mobile build workflows
-
-4. **Code Review Automation**
+1. **Code Review Automation**
    - Claude Code review integration
    - Gemini AI-powered issue triage
    - Automated PR reviews
