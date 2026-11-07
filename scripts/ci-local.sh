@@ -30,6 +30,7 @@ fi
 
 step 'Health Check Tests'
 scripts/test-check-site.sh
+scripts/test-check-hosted-config.sh
 
 step 'Database Tests'
 supabase status >/dev/null 2>&1 || supabase start

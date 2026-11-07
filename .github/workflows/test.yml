@@ -145,10 +145,12 @@ jobs:
       - name: Expand-only check
         run: node scripts/check-migrations.ts
 
-  # The deploy health check, scripts/check-site.sh, against the built shell
+  # The deploy health checks. scripts/check-site.sh against the built shell
   # served by vite preview: it must pass for the build's own id and fail for a
   # stale id, a missing JavaScript file and an id missing from the JavaScript
-  # (DW-2).
+  # (DW-2). scripts/check-hosted-config.sh against fixture API responses: it
+  # must pass for the right Auth and Realtime config and name each wrong
+  # setting. No secret, no Supabase CLI.
   site-check-tests:
     name: Health Check Tests
     runs-on: ubuntu-latest
@@ -168,6 +170,9 @@ jobs:
 
       - name: check-site.sh passes and fails as it should
         run: scripts/test-check-site.sh
+
+      - name: check-hosted-config.sh passes and fails as it should
+        run: scripts/test-check-hosted-config.sh
 
   playwright:
     name: Playwright (${{ matrix.project }})

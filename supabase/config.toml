@@ -414,3 +414,33 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# The deploy's `supabase config push` (deploy.yml, Hosted config) applies this
+# block over the settings above for the hosted project, so it changes only what
+# config.toml decides for both. The values below are the hosted project's own as
+# of 2026-11-06; the local-dev defaults above differ and a push without this
+# block would overwrite them. A later epic that changes a hosted value changes
+# it here -- the push then touches only the settings that epic names.
+# Check with: supabase config diff --project-ref mzbblbgmrvcgvzxwhptm
+[remotes.production]
+project_id = "mzbblbgmrvcgvzxwhptm"
+
+[remotes.production.db.pooler]
+default_pool_size = 15
+max_client_conn = 200
+
+[remotes.production.storage.vector]
+enabled = false
+
+[remotes.production.auth]
+site_url = "http://localhost:3000"
+additional_redirect_urls = []
+
+[remotes.production.auth.email]
+enable_confirmations = true
+max_frequency = "1m0s"
+otp_length = 8
+
+[remotes.production.auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true

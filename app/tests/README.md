@@ -11,7 +11,7 @@ Every kind of test the port uses, how to run each one, and the rules they share.
 | Browser | Playwright: Desktop Chrome (`chromium`), iPhone WebKit (`webkit`) | `app/tests/e2e/*.spec.ts` | `npm run test:e2e -- --project=chromium` |
 | API | Playwright `api` project (HTTP; Playwright Utils still opens a page) | `app/tests/api/*.spec.ts` | `npm run test:e2e -- --project=api` |
 | Migration check | `scripts/check-migrations.ts` | `supabase/migrations/` | `node scripts/check-migrations.ts` (repo root) |
-| Health check tests | `scripts/test-check-site.sh` | the deploy health check, `scripts/check-site.sh` | `scripts/test-check-site.sh` (repo root) |
+| Health check tests | `scripts/test-check-site.sh`, `scripts/test-check-hosted-config.sh` | the deploy health checks, `scripts/check-site.sh` and `scripts/check-hosted-config.sh` | `scripts/test-check-site.sh` and `scripts/test-check-hosted-config.sh` (repo root) |
 | Burn-in | Playwright Utils `runBurnIn` | changed Playwright specs | `npm run test:burn-in -- --base-branch=main` |
 
 ## Setup
