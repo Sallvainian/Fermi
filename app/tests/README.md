@@ -67,7 +67,7 @@ Specs import from `tests/support/merged-fixtures.ts` and nowhere else, and use `
 | --- | --- |
 | Lint & Type Check | an ESLint error or a TypeScript error |
 | Unit Tests | a failing Vitest test, or under 80% line coverage in `app/src/api/` |
-| Database Tests | a migration that does not apply to a fresh database, a failing pgTAP test, or `scripts/test-check-job-health.sh` failing against the local stack |
+| Database Tests | a migration that does not apply to a fresh database, a failing pgTAP test, `scripts/test-check-job-health.sh` or `scripts/test-backup.sh` failing against the local stack |
 | Edge Function Tests | a failing `deno test` |
 | Migration Check | a migration that drops, renames or changes a function's arguments without a contract line |
 | Health Check Tests | `scripts/check-site.sh` passing a stale id, a missing JavaScript file or an id missing from the JavaScript, or failing the right id (DW-2) |

@@ -108,6 +108,15 @@ jobs:
       - name: check-job-health.sh passes and fails as it should
         run: scripts/test-check-job-health.sh
 
+      # Dumps the local stack, restores it into a throwaway database and
+      # encrypts it to a fresh key; the weekly backup.yml runs the same scripts
+      # against the hosted project. No repo secret.
+      - name: Install age
+        run: sudo apt-get update && sudo apt-get install -y age
+
+      - name: backup scripts pass and fail as they should
+        run: scripts/test-backup.sh
+
   function-tests:
     name: Edge Function Tests
     runs-on: ubuntu-latest

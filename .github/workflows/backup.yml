@@ -1,0 +1,106 @@
+# Weekly encrypted backup of the hosted Supabase database, restored into a
+# throwaway local database to prove it restores (R9).
+#
+# Why: the Free plan keeps no backups, and this repository is public, so a
+# plain dump can never be committed, uploaded or shown in a log. The dump is
+# encrypted to the owner's age public keys (repo variable BACKUP_AGE_RECIPIENTS,
+# one age1... key per line) and only the encrypted file is kept, as a 90-day
+# artifact. The private keys never reach GitHub.
+#
+# In the dump (scripts/backup-dump.sh, through the Session pooler URL in the
+# secret SUPABASE_SESSION_POOLER_URL): roles, the schema, the data of every
+# schema including auth.users (password hashes and all) and storage.objects
+# rows, and the migration history (supabase_migrations).
+# Not in it: Storage file bytes, and the Vault root key (Vault rows come along,
+# encrypted by a key that stays at Supabase).
+#
+# Order: the encrypted file is uploaded before the restore check. A dump that
+# fails the local restore (say, a hosted Auth column the pinned CLI's local
+# schema lacks) is still the newest copy of the data; the run is red either way.
+# The restore check runs on the plaintext before encryption, since CI must
+# never hold a private key; the encryption round trip is proven by
+# scripts/test-backup.sh and by the owner's decrypt.
+#
+# No re-enable job, unlike keep-alive.yml: GitHub disables a schedule after 60
+# days without repository activity, but an enable call may redirect failure
+# emails away from the owner (keep-alive.yml's open question). A backup is a
+# reason to look at this workflow's runs from time to time.
+#
+# Not part of Test Summary: this workflow reads a secret, which test.yml never
+# does (AD-23). scripts/test-backup.sh covers the three scripts in test.yml
+# against the local stack.
+#
+# Restoring, as the owner (the Mac's age key, fnox's FNOX_AGE_KEY_FILE, is
+# ~/.age/key.txt):
+#   age -d -i ~/.age/key.txt fermi-db-<date>.tar.gz.age | tar -xz
+#   psql -X --single-transaction -v ON_ERROR_STOP=1 "$DB_URL" \
+#     -f roles.sql -f schema.sql -c 'SET session_replication_role = replica' \
+#     -f data.sql -f history_schema.sql -f history_data.sql
+# Into a local Supabase database, connect as supabase_admin. Into a hosted
+# project, connect as postgres and first drop roles.sql's
+# GRANT SET ON PARAMETER line, which hosted postgres may not run.
+
+name: Backup
+
+on:
+  schedule:
+    - cron: '23 6 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: Production
+    env:
+      # The CLI's pg_dump and the throwaway database run in Supabase's images;
+      # pull them from GitHub's registry, as .github/actions/setup-supabase
+      # does, because public.ecr.aws rate-limits anonymous pulls.
+      SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.122.0
+
+      - name: Install age
+        run: sudo apt-get update && sudo apt-get install -y age
+
+      # The plaintext goes to $RUNNER_TEMP, outside the workspace and never an
+      # artifact. The secret is masked in logs; the script prints no row.
+      - name: Dump the database
+        env:
+          SUPABASE_SESSION_POOLER_URL: ${{ secrets.SUPABASE_SESSION_POOLER_URL }}
+        run: scripts/backup-dump.sh "$SUPABASE_SESSION_POOLER_URL" "$RUNNER_TEMP/backup-dump"
+
+      - name: Encrypt the dump
+        env:
+          BACKUP_AGE_RECIPIENTS: ${{ vars.BACKUP_AGE_RECIPIENTS }}
+        run: |
+          printf '%s\n' "$BACKUP_AGE_RECIPIENTS" > "$RUNNER_TEMP/backup-recipients.txt"
+          mkdir "$RUNNER_TEMP/backup-out"
+          scripts/backup-encrypt.sh "$RUNNER_TEMP/backup-dump" "$RUNNER_TEMP/backup-recipients.txt" \
+            "$RUNNER_TEMP/backup-out/fermi-db-$(date -u +%F).tar.gz.age"
+
+      - name: Upload the encrypted dump
+        uses: actions/upload-artifact@v7
+        with:
+          name: fermi-db-backup-${{ github.run_id }}
+          path: ${{ runner.temp }}/backup-out/*.tar.gz.age
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
+
+      - name: Restore into a throwaway database
+        run: scripts/backup-restore-check.sh "$RUNNER_TEMP/backup-dump"

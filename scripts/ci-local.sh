@@ -2,8 +2,8 @@
 # Runs every lane of .github/workflows/test.yml on this machine, in the same
 # order and with the same commands, and stops at the first failure.
 #
-# Needs: Node 24, Deno 2, Docker, Supabase CLI 2.122.0, `npm ci` and
-# `npx playwright install chromium webkit` done in app/.
+# Needs: Node 24, Deno 2, Docker, Supabase CLI 2.122.0, age and age-keygen,
+# `npm ci` and `npx playwright install chromium webkit` done in app/.
 # Usage, from anywhere in the repo: scripts/ci-local.sh
 # Burn-in is left out: it needs committed changes; run
 # `npm run test:burn-in -- --base-branch=main` in app/ for it.
@@ -36,6 +36,7 @@ step 'Database Tests'
 supabase status >/dev/null 2>&1 || supabase start
 supabase test db
 scripts/test-check-job-health.sh
+scripts/test-backup.sh
 
 for project in chromium webkit api; do
   step "Playwright ($project)"

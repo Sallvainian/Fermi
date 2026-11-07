@@ -1,0 +1,15 @@
+{
+  "actions": [
+    "After this branch merges to main, run Actions > Backup > Run workflow on main and confirm the Backup job is green, including its step Restore into a throwaway database, whose log ends with 'restored N tables, M rows'.",
+    "On that run's page, confirm its one artifact, fermi-db-backup-<run id>, holds only fermi-db-<date>.tar.gz.age, with a 90-day expiry.",
+    "Download the artifact on the Mac, unzip it, and decrypt it with: age -d -i ~/.age/key.txt fermi-db-<date>.tar.gz.age | tar -tz \u2014 confirm it lists roles.sql, schema.sql, data.sql, history_schema.sql and history_data.sql; then delete the decrypted and downloaded copies.",
+    "On the Sunday after the merge, confirm the scheduled Backup run (06:23 UTC) ran and is green."
+  ],
+  "followup_review_recommended": false,
+  "parked_at": "2026-11-06",
+  "ref": "1.8",
+  "run_id": "20261106-192429-3aab",
+  "source": "tickets",
+  "spec_file": "_bmad-output/initiative-capacitor-supabase-port/tickets/epic-platform-baseline/tickets/story-a-weekly-encrypted-backup-that-proves-it-restores-plan.md",
+  "story_key": "1.8"
+}
