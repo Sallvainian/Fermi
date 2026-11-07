@@ -432,12 +432,6 @@ The project includes comprehensive CI/CD automation:
    - Linting and formatting
    - Triggered on pull requests
 
-2. **Web Deployment** (`02_deploy_web.yml`)
-   - Builds production web app
-   - Deploys to Firebase Hosting
-   - Updates Firestore rules
-   - Triggered on main branch
-
 3. **Platform Releases**
    - Windows release workflow
    - macOS release workflow

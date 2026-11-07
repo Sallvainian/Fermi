@@ -1,0 +1,18 @@
+{
+  "$schema": "app/node_modules/wrangler/config-schema.json",
+  // Served at https://fermi-plus.sallvain.workers.dev/ -- the name is the first
+  // label of that host, so renaming the Worker moves the site to a new origin.
+  "name": "fermi-plus",
+  // Must not be later than the workerd runtime bundled with app/'s wrangler.
+  // 2026-11-04 matched wrangler 4.158.0 (workerd 1.20261104.1); check it on a bump.
+  "compatibility_date": "2026-11-04",
+  // Opt out of wrangler's anonymous usage telemetry.
+  "send_metrics": false,
+  // Assets only, no Worker script: the build output is served as-is.
+  "assets": {
+    "directory": "./app/dist",
+    // Every path that is not a file gets index.html with a 200, so a reload on
+    // a deep link reaches the app.
+    "not_found_handling": "single-page-application"
+  }
+}
