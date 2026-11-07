@@ -73,7 +73,7 @@ export function stripSql(sql: string): string {
       out += blank(sql.slice(i, j + 1));
       i = j + 1;
     } else {
-      const tag = /^\$[A-Za-z_]*\$/.exec(rest);
+      const tag = /^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/.exec(rest);
       if (tag) {
         const end = sql.indexOf(tag[0], i + tag[0].length);
         const stop = end === -1 ? sql.length : end + tag[0].length;

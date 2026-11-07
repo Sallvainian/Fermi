@@ -12,7 +12,9 @@ location: scripts/check-site.sh
 source_spec: `tickets/epic-platform-baseline/tickets/story-the-empty-app-ships-to-workers-dev-from-a-push-to-main-plan.md`
 severity: medium
 reason: They were exercised only by this build's verification commands; the repo has no shell test harness and no app/ CI lane yet. The epic gives CI lanes to story 3 (test.yml), where a run against vite preview with a right and a wrong id would cover them.
-status: open
+status: done 2026-11-06
+resolution: resolved by story 1.3
+resolution-undo: 59de52defe7c2e46512b2a8ff64291b5d8476c498e8ee13e5b3a8ba04f0606c9 2026-11-06 7374617475733a206f70656e
 
 ### DW-3: Nothing automated guards that anon and authenticated lack USAGE on schemas app and internal, or that neither is added to [api] schemas, until the pgTAP lane and the privilege fixture exist.
 origin: spec-deferred c0804412c0ba
@@ -20,7 +22,9 @@ location: supabase/migrations/20261106190000_create_app_and_internal_schemas.sql
 source_spec: `tickets/epic-platform-baseline/tickets/story-the-empty-app-ships-to-workers-dev-from-a-push-to-main-plan.md`
 severity: medium
 reason: The migration's check ran once on a scratch local stack (2 schemas, 0 objects, has_schema_privilege false x4, PGRST106). Story 3 owns the pgTAP lane and story 6 the catalog test; a schema-privilege case belongs in the first of them.
-status: open
+status: done 2026-11-06
+resolution: resolved by story 1.3
+resolution-undo: 59de52defe7c2e46512b2a8ff64291b5d8476c498e8ee13e5b3a8ba04f0606c9 2026-11-06 7374617475733a206f70656e
 
 ### DW-4: The Capacitor template's Info.plist adds UIRequiredDeviceCapabilities = armv7, which the live Flutter build's Info.plist does not have.
 origin: spec-deferred 84a633284180

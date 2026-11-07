@@ -39,7 +39,8 @@ for project in chromium webkit api; do
   step "Playwright ($project)"
   folder=tests/e2e
   [ "$project" = api ] && folder=tests/api
-  (cd app && npx playwright test --project="$project" && scripts/check-test-counts.sh "$project" "$folder")
+  # CI=1, as on GitHub's runners: retries, 2 workers, forbidOnly and a fresh server.
+  (cd app && CI=1 npx playwright test --project="$project" && scripts/check-test-counts.sh "$project" "$folder")
 done
 
 printf '\nAll lanes passed.\n'

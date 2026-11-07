@@ -1,6 +1,6 @@
 # Fermi tests
 
-Every kind of test the port uses, how to run each one, and the rules they share. CI runs all of them on every pull request and push (`.github/workflows/test.yml`), and its **Test Summary** job passes only when every lane passes.
+Every kind of test the port uses, how to run each one, and the rules they share. CI runs all of them on every pull request and every push to main (`.github/workflows/test.yml`), and its **Test Summary** job passes only when every lane passes.
 
 | Lane | Tool | Where the tests live | Run locally |
 | --- | --- | --- | --- |

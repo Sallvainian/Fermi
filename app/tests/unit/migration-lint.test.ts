@@ -32,6 +32,11 @@ describe('migrations that only add', () => {
     ].join('\n');
     expect(messages(sql)).toEqual([]);
   });
+
+  it('ignores a DROP inside a function body whose dollar-quote tag has a digit', () => {
+    const sql = "create function app.g() returns void language plpgsql as $fn1$ begin perform 1; drop table tmp; raise notice 'it''s'; end $fn1$;";
+    expect(messages(sql)).toEqual([]);
+  });
 });
 
 describe('migrations that break a client', () => {
