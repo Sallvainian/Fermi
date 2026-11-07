@@ -3,7 +3,7 @@ title: 'The empty app ships to workers.dev from a push to main'
 type: feature
 ticket: '1'
 created: '2026-11-06'
-status: blocked
+status: done
 baseline_revision: 'bca95df3f3e398379b2c103fa98acd196926f0fe'
 route: full
 route_source: auto
@@ -41,8 +41,6 @@ operator_actions:
   - After this branch merges to main, open the Deploy run for that push and confirm Migrate, Build, Deploy and Health check are all green, and that https://fermi-plus.sallvain.workers.dev/ shows "Build <that commit id>".
   - Once that Deploy run is green, delete the repo-level Cloudflare secrets with `gh secret delete CLOUDFLARE_API_TOKEN` and `gh secret delete CLOUDFLARE_ACCOUNT_ID`, then confirm `gh secret list` shows no CLOUDFLARE_ entry (the Production environment keeps its own copies).
   - In GitHub, open Insights → Dependency graph → Dependabot and confirm the /app npm and github-actions version-update jobs ran without errors (security-update runs on functions/ are expected to stay red).
-blocked_at: "2026-11-06"
-blocked_reason: "awaiting operator: After this branch merges to main, open the Deploy run for that push and confirm Migrate, Build, Deploy and Health check are all green, and that https://fermi-plus.sallvain.workers.dev/ shows \"Build <that commit id>\".; Once that Deploy run is green, delete the repo-level Cloudflare secrets with `gh secret delete CLOUDFLARE_API_TOKEN` and `gh secret delete CLOUDFLARE_ACCOUNT_ID`, then confirm `gh secret list` shows no CLOUDFLARE_ entry (the Production environment keeps its own copies).; In GitHub, open Insights → Dependency graph → Dependabot and confirm the /app npm and github-actions version-update jobs ran without errors (security-update runs on functions/ are expected to stay red)."
 ---
 
 <intent-contract>
@@ -190,3 +188,13 @@ Status: awaiting-operator
 **Owed by the operator (operator_actions):** confirm the first Deploy run on main and the live site's id; then delete the repo-level CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID; confirm Dependabot's version-update jobs run clean.
 
 **Residual risks:** the first `supabase link`/`db push` and the first `wrangler deploy` (which creates the Worker) run for the first time on main; hosted sign-up stays at its current setting until the config-push story; 10 moderate dev-only npm advisories (minimatch via eslint).
+
+## Operator Confirmation
+
+Confirmed 2026-11-06: the external actions this story owed were carried out.
+
+- After this branch merges to main, open the Deploy run for that push and confirm Migrate, Build, Deploy and Health check are all green, and that https://fermi-plus.sallvain.workers.dev/ shows "Build <that commit id>".
+- Once that Deploy run is green, delete the repo-level Cloudflare secrets with `gh secret delete CLOUDFLARE_API_TOKEN` and `gh secret delete CLOUDFLARE_ACCOUNT_ID`, then confirm `gh secret list` shows no CLOUDFLARE_ entry (the Production environment keeps its own copies).
+- In GitHub, open Insights → Dependency graph → Dependabot and confirm the /app npm and github-actions version-update jobs ran without errors (security-update runs on functions/ are expected to stay red).
+
+_Appended by the bmad-loop orchestrator (`bmad-loop confirm`, #335): a human confirmed these external actions out of band, and the story was advanced from `awaiting-operator` to `done`._
