@@ -11,7 +11,8 @@
 #
 # schema.sql never defines the auth and storage schemas' tables: Supabase's own
 # services create them, so the throwaway database has those of the pinned CLI's
-# images, and hosted Supabase can run a newer service with a table they lack.
+# images, and hosted Supabase can run a newer service with a table or a column
+# they lack.
 # An empty COPY block for such a table restores nothing, so it is skipped and
 # named in the log (its two lines become comments, keeping line numbers). One
 # that holds rows fails the check: this database could not hold them.
@@ -107,37 +108,60 @@ for file in data.sql history_data.sql; do
   ' "$dump/$file"
 done >"$work/expected.tsv"
 
-# data.sql's auth and storage tables that the throwaway database lacks (see the
-# header). One query per table, in the order of service.tsv.
-awk -F'\t' '$1 ~ /^"(auth|storage)"\./' "$work/expected.tsv" >"$work/service.tsv"
+# data.sql's auth and storage tables that the throwaway database lacks, or lacks
+# a column of (see the header): name, COPY row count and column list. One query
+# per table, in the order of service.tsv. The column list ("a", "b") is also the
+# inside of an array literal.
+awk '
+  inblock && $0 == "\\." { if (service) print name "\t" rows "\t" cols; inblock = 0; next }
+  inblock { rows++; next }
+  /^COPY "/ {
+    name = $2
+    service = (name ~ /^"(auth|storage)"\./)
+    cols = $0
+    if (!sub(/^COPY [^ ]+ \(/, "", cols) || !sub(/\) FROM stdin;$/, "", cols)) cols = ""
+    inblock = 1
+    rows = 0
+  }
+' "$dump/data.sql" >"$work/service.tsv"
 : >"$work/skip.txt"
 if [ -s "$work/service.tsv" ]; then
-  cut -f1 "$work/service.tsv" |
-    sed -e "s/'/''/g" -e "s/^\\(.*\\)\$/select to_regclass('\\1') is null;/" >"$work/exists.sql"
+  # Prints "table" for a missing table, else its missing columns, else "-".
+  sed "s/'/''/g" "$work/service.tsv" | awk -F'\t' -v q="'" '{
+    name = q $1 q
+    printf "select case when to_regclass(%s) is null then %stable%s else coalesce((", name, q, q
+    printf "select string_agg(c, %s, %s order by c) from unnest(%s{%s}%s::text[]) c ", q, q, q, $3, q
+    printf "where not exists (select from pg_attribute where attrelid = to_regclass(%s) ", name
+    printf "and attname = c and attnum > 0 and not attisdropped)), %s-%s) end;\n", q, q
+  }' >"$work/exists.sql"
   psql "$db_url" -X -qAt -v ON_ERROR_STOP=1 -v VERBOSITY=sqlstate \
     -f "$work/exists.sql" >"$work/missing.txt" 2>"$work/exists.err" || {
     echo "::error::Checking the throwaway database's auth and storage tables failed:"
     print_psql_errors "$work/exists.err"
     exit 1
   }
-  paste "$work/service.tsv" "$work/missing.txt" >"$work/service-missing.tsv"
+  # name, rows, and what is missing in words ("-" for nothing).
+  cut -f1,2 "$work/service.tsv" | paste - "$work/missing.txt" | awk -F'\t' '
+    $3 == "table" { print $1 "\t" $2 "\thas no such table"; next }
+    $3 == "-" { print; next }
+    { print $1 "\t" $2 "\tlacks its column(s) " $3 }
+  ' >"$work/service-missing.tsv"
   if ! awk -F'\t' '
-    $3 == "t" && $2 > 0 {
-      printf "::error::%s holds %d rows, but the throwaway database has no such table: hosted Supabase runs a newer service than the pinned CLI'"'"'s image.\n", $1, $2
+    $3 != "-" && $2 > 0 {
+      printf "::error::%s holds %d rows, but the throwaway database %s: hosted Supabase runs a newer service than the pinned CLI'"'"'s image.\n", $1, $2, $3
       bad++
     }
     END { exit bad ? 1 : 0 }
   ' "$work/service-missing.tsv"; then
     exit 1
   fi
-  awk -F'\t' '$3 == "t" { print $1 }' "$work/service-missing.tsv" >"$work/skip.txt"
+  awk -F'\t' '$3 != "-" { print $1 }' "$work/service-missing.tsv" >"$work/skip.txt"
 fi
 
 data_file="$dump/data.sql"
 if [ -s "$work/skip.txt" ]; then
-  while IFS= read -r table; do
-    echo "skipped $table: empty, and the throwaway database has no such table"
-  done <"$work/skip.txt"
+  awk -F'\t' '$3 != "-" { printf "skipped %s: empty, and the throwaway database %s\n", $1, $3 }' \
+    "$work/service-missing.tsv"
   data_file="$work/data.sql"
   # Data lines are passed through before any COPY test, so a row that reads
   # like a COPY line is never taken for one.

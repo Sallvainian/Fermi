@@ -17,10 +17,14 @@
 #     the throwaway database lacks (hosted is newer)       skipped table
 #   - the same COPY holding one row                     -> restore check must fail naming the
 #                                                          table and its row count
+#   - an empty auth table's COPY naming a column        -> restore check must pass, naming the
+#     the throwaway database lacks                         skipped table and the column
+#   - the same COPY holding one row                     -> restore check must fail naming the
+#                                                          table, its row count and the column
 #   - an empty recipients file, a line `not-a-key`      -> encrypt must fail and write no output
 #   - a dump with a wrong password                      -> dump must exit 1 naming the failed
 #     authentication, so backup.yml stops before encrypting or uploading
-#   - after the five restore checks                     -> no restore-check container is left
+#   - after the seven restore checks                    -> no restore-check container is left
 #   - missing arguments                                 -> each script must exit 2
 # A failing case passes only when the script fails for that case's reason.
 #
@@ -179,12 +183,39 @@ expect_fail 'a dump with rows for a storage table the image lacks' 1 \
   '"storage"\."not_in_this_image" holds 1 rows, but the throwaway database has no such table' -- \
   "$root/scripts/backup-restore-check.sh" "$work/new-rows"
 
-# After the last restore check: the two passing runs and the three failing runs.
+# A column that a newer hosted Auth service has and the throwaway database
+# lacks: its table is skipped when empty, a failure when it holds rows.
+cp -R "$dump" "$work/column-empty"
+sed -E '/^COPY "auth"\."saml_providers" \(/s/\) FROM stdin;$/, "not_in_this_image") FROM stdin;/' \
+  "$dump/data.sql" >"$work/column-empty/data.sql"
+cases=$((cases + 1))
+if grep -qE '^COPY "auth"\."saml_providers" \(.*, "not_in_this_image"\) FROM stdin;$' "$work/column-empty/data.sql"; then
+  pass 'the dump names a column of auth.saml_providers that the image lacks'
+else
+  fail 'data.sql has no COPY of auth.saml_providers to change; the checks below would prove nothing.'
+fi
+expect_ok 'a dump with an empty auth table that has a column the image lacks' \
+  "$root/scripts/backup-restore-check.sh" "$work/column-empty"
+cases=$((cases + 1))
+if grep -q '^skipped "auth"\."saml_providers": empty, .* lacks its column(s) not_in_this_image$' "$work/out.log"; then
+  pass 'the restore check names the skipped table and the column'
+else
+  fail 'the restore check passed without naming the skipped table and the column:' "$work/out.log"
+fi
+
+cp -R "$dump" "$work/column-rows"
+awk '{ print } /^COPY "auth"\."saml_providers" \(/ { print "1" }' \
+  "$work/column-empty/data.sql" >"$work/column-rows/data.sql"
+expect_fail 'a dump with rows for an auth table that has a column the image lacks' 1 \
+  '"auth"\."saml_providers" holds 1 rows, but the throwaway database lacks its column\(s\) not_in_this_image' -- \
+  "$root/scripts/backup-restore-check.sh" "$work/column-rows"
+
+# After the last restore check: the three passing runs and the four failing runs.
 cases=$((cases + 1))
 if docker ps -a --format '{{.Names}}' | grep -q 'fermi-restore-check'; then
   fail 'a restore check left its database container behind.'
 else
-  pass 'the five restore checks left no container'
+  pass 'the seven restore checks left no container'
 fi
 
 # Bad recipients: no output file.
