@@ -21,23 +21,30 @@ runs:
       working-directory: app
       run: npm ci
 
-    # Keyed on the playwright-core version, which alone decides the browser
-    # builds; the whole lockfile's hash would miss on every dependency bump.
-    - name: Read Playwright version
+    # Keyed on the OS version and the playwright-core version, which together
+    # decide the browser builds: each Ubuntu release gets its own WebKit, under
+    # the same folder name. The whole lockfile's hash would miss on every
+    # dependency bump.
+    - name: Read OS and Playwright versions
       id: pw-version
       shell: bash
       working-directory: app
-      run: echo "version=$(jq -er '.packages["node_modules/playwright-core"].version' package-lock.json)" >> "$GITHUB_OUTPUT"
+      run: |
+        set -euo pipefail
+        os=$(. /etc/os-release && echo "$ID$VERSION_ID")
+        version=$(jq -er '.packages["node_modules/playwright-core"].version' package-lock.json)
+        echo "os=$os" >> "$GITHUB_OUTPUT"
+        echo "version=$version" >> "$GITHUB_OUTPUT"
 
     - name: Cache Playwright browsers
       id: pw-cache
       uses: actions/cache@v6
       with:
         path: ~/.cache/ms-playwright
-        key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}-${{ inputs.browsers }}
+        key: ${{ runner.os }}-${{ steps.pw-version.outputs.os }}-playwright-${{ steps.pw-version.outputs.version }}-${{ inputs.browsers }}
         # An older cache still saves the browsers that did not change;
         # `playwright install` below fetches only what is missing.
-        restore-keys: ${{ runner.os }}-playwright-
+        restore-keys: ${{ runner.os }}-${{ steps.pw-version.outputs.os }}-playwright-
 
     - name: Install Playwright browsers and their system libraries
       shell: bash
