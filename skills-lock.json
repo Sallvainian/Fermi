@@ -137,14 +137,6 @@
       "computedHash": "9ece13168db09cd8a84c195f6e14e21f3633a4471c9bbb8c053092717a719187",
       "commit": "86d4b03248e205f99e6c908a91863953a3182f79"
     },
-    "bmad-founder-agent-advisor": {
-      "source": "bmad-code-org/BMAD-METHOD",
-      "ref": "dev",
-      "commit": "86d4b03248e205f99e6c908a91863953a3182f79",
-      "sourceType": "github",
-      "skillPath": "skills/founder/bmad-founder-agent-advisor/SKILL.md",
-      "computedHash": "52c87c1e20c858c0b14923c56dd0d44170dcc0cd518ca79fd00978628e5ca8e9"
-    },
     "bmad-ingest": {
       "source": "bmad-code-org/BMAD-METHOD",
       "ref": "dev",
