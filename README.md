@@ -432,7 +432,6 @@ firebase deploy
 firebase deploy --only hosting
 firebase deploy --only firestore:rules
 firebase deploy --only storage:rules
-firebase deploy --only functions
 
 # Preview deployment
 firebase hosting:channel:deploy preview
