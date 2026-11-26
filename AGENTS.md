@@ -15,3 +15,7 @@ A web app: a Vite + React app in `app/` on Supabase (`supabase/`: migrations, pg
 - Playwright specs import from `app/tests/support/merged-fixtures.ts` and use `@seontechnologies/playwright-utils` for every capability it covers; never import `@playwright/test` directly. A vanilla Playwright equivalent needs a `// playwright-utils deviation: <reason>` comment.
 
 <!-- /bmad:context -->
+
+## Maintained by hand
+
+- The local, gitignored `.bmad-loop/profiles/claude.toml` is a copy of the shipped bmad-loop Claude profile with `CLAUDE_CODE_EXPERIMENTAL_CODE_MODE = "0"` added under `[env]`: the git-excluded `mise.local.toml` turns Code Mode on for interactive sessions here, its background scripts are work a loop session cannot wait for, and a project profile replaces the shipped one whole. After `uv tool upgrade bmad-loop --reinstall`, re-copy `bmad_loop/data/profiles/claude.toml` from the installed package, add the line again and run `bmad-loop validate --probes` before the next run.
