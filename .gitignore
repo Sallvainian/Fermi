@@ -259,3 +259,4 @@ _bmad/custom/*.user.toml
 .bmad-loop/cache/
 .bmad-loop/archive/
 .bmad-loop/policy.toml
+.bmad-loop/profiles/
