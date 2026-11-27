@@ -1,0 +1,58 @@
+# node-deps: give every isolated bmad-loop worktree its own node_modules.
+#
+# Why: a fresh `git worktree add` checkout has no node_modules (it is gitignored).
+# Node still resolves packages by walking up to the main checkout's node_modules,
+# but those paths sit OUTSIDE the worktree, so TypeScript declaration emit
+# (`tsc -b`, composite projects) cannot name them portably and raises false
+# TS2883 errors. Installing dependencies inside each worktree makes it look
+# exactly like the main checkout and CI.
+#
+# Install: copy this folder to .bmad-loop/plugins/node-deps/ and run
+#   bmad-loop plugins enable node-deps
+
+[plugin]
+name = "node-deps"
+version = "1.0.0"
+api_version = 1
+description = "Installs node_modules into each isolated worktree before any agent or verify step runs."
+author = "bmad-loop community"
+
+[[settings]]
+key = "strategy"
+type = "select"
+options = ["install", "clone"]
+default = "install"
+label = "Strategy"
+help = "install = run the project's package manager in the worktree (recommended, works everywhere). clone = copy-on-write clone of the main checkout's root node_modules (cp -c on macOS APFS, cp --reflink on Linux); fast, but root node_modules only."
+
+[[settings]]
+key = "install_command"
+type = "str"
+default = ""
+label = "Install command"
+help = "Override the auto-detected install command (e.g. 'pnpm install --frozen-lockfile --offline'). Empty = detect from packageManager / lockfile."
+
+[[settings]]
+key = "project_dir"
+type = "str"
+default = ""
+label = "Project dir"
+help = "Folder holding package.json, relative to the repo root. Empty = repo root."
+
+[[settings]]
+key = "on_failure"
+type = "select"
+options = ["pause", "defer", "warn"]
+default = "pause"
+label = "On failure"
+help = "pause = stop the run so you can fix the environment (attempt not charged); defer = defer this story; warn = log and carry on without dependencies."
+
+# pre_worktree_setup fires after bmad-loop has created and seeded the worktree,
+# with the worktree as cwd, and (unlike post_worktree_setup) honours a veto, so a
+# failed install can pause the run instead of letting the agent loose on a
+# broken tree. The script always exits 0 and signals failure via stdout JSON.
+[hooks.pre_worktree_setup]
+cmd = 'python3 "{scripts}/install_deps.py"'
+timeout_sec = 900
+blocking = true
+fail_closed = true
