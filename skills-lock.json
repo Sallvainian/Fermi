@@ -6,8 +6,8 @@
       "ref": "dev",
       "sourceType": "github",
       "skillPath": "skills/core-tools/bmad/SKILL.md",
-      "computedHash": "1264d4ef1df9b3360d1b659a23f910d9901ab65c39350bacb637697a789740fa",
-      "commit": "599ef5321b8d891b15fc7d77d277df08fd147325"
+      "computedHash": "4671e56cdfe20357381b0bf2a2a95840f447545a7eb08ceabc906fc9f12eda57",
+      "commit": "b7416ce6e0ff392cca14133c034efc890052481e"
     },
     "bmad-advanced-elicitation": {
       "source": "bmad-code-org/BMAD-METHOD",
