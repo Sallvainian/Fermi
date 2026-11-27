@@ -1,3 +1,10 @@
+# Version updates moved to Renovate (renovate.json). Every entry below has
+# open-pull-requests-limit: 0, which stops Dependabot's version-update PRs; its
+# security-update PRs (a repo setting) still run and still take their commit
+# prefix, labels and directories from this file. dependabot-auto-merge.yml merges
+# them; Renovate's own security PRs are off because they cannot fix a package
+# that appears only in package-lock.json.
+
 # Dependabot configuration
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
@@ -6,13 +13,13 @@ updates:
   # npm dependencies of the app
   - package-ecosystem: 'npm'
     directory: '/app'
+    open-pull-requests-limit: 0
     schedule:
       interval: 'weekly'
       day: 'monday'
     commit-message:
       prefix: 'deps'
       include: 'scope'
-    open-pull-requests-limit: 10
     labels:
       - 'dependencies'
       - 'npm'
@@ -45,6 +52,7 @@ updates:
   # GitHub Actions
   - package-ecosystem: 'github-actions'
     directory: '/'
+    open-pull-requests-limit: 0
     schedule:
       interval: 'weekly'
       day: 'monday'

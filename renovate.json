@@ -1,0 +1,166 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Replaces Dependabot's version updates, with the same rules .github/dependabot.yml had (that file now only shapes Dependabot's security PRs).",
+    "Security fixes stay with Dependabot (alerts and security updates on as GitHub settings; dependabot-auto-merge.yml merges its PRs): it updates vulnerable packages that only appear in package-lock.json, which Renovate's own security PRs do not.",
+    "Renovate works only Monday from midnight to 6 a.m. New York time and never touches a branch outside that window: a Renovate merge, unlike a Dependabot one, starts deploy.yml at once, and a change under app/ shows every open Fermi the refresh page that cannot be dismissed (AD-24). That is the window the daily deploy used to ship Dependabot's merges in."
+  ],
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "npm",
+    "github-actions",
+    "nodenv"
+  ],
+  "includePaths": [
+    "app/package.json",
+    "app/.node-version",
+    ".github/**"
+  ],
+  "timezone": "America/New_York",
+  "schedule": [
+    "* 0-5 * * 1"
+  ],
+  "updateNotScheduled": false,
+  "semanticCommits": "enabled",
+  "rangeStrategy": "bump",
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 0,
+  "labels": [
+    "dependencies"
+  ],
+  "automerge": true,
+  "automergeType": "pr",
+  "platformAutomerge": true,
+  "automergeStrategy": "squash",
+  "vulnerabilityAlerts": {
+    "enabled": false
+  },
+  "packageRules": [
+    {
+      "description": "npm (app/): commits as deps(deps) / deps(deps-dev), labelled npm (Dependabot's npm block).",
+      "matchManagers": [
+        "npm"
+      ],
+      "semanticCommitType": "deps",
+      "semanticCommitScope": "deps",
+      "addLabels": [
+        "npm"
+      ]
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "semanticCommitScope": "deps-dev"
+    },
+    {
+      "description": "Minor and patch updates travel together, one PR for production and one for development dependencies.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "production-dependencies"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "dev-dependencies"
+    },
+    {
+      "description": "vitest and its companion packages peer-pin each other on an exact version, so a major that arrives as one PR per package can never install. They always travel together, majors included. Listed after the two groups above so it overrides them.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/**"
+      ],
+      "groupName": "vitest"
+    },
+    {
+      "description": "Dependabot never touched package.json overrides: they are hand-kept security floors (exceljs's uuid), and a bump would move them with no person looking.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "overrides"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "GitHub Actions: commits as ci(deps), labelled github-actions; minor and patch updates grouped.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "semanticCommitType": "ci",
+      "semanticCommitScope": "deps",
+      "addLabels": [
+        "github-actions"
+      ]
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "actions"
+    },
+    {
+      "description": "A Supabase CLI major (2.x to 3.x) changes the commands deploy.yml and backup.yml run, which no PR check exercises, so it waits for a person.",
+      "matchDepNames": [
+        "supabase"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Node's version lives in app/.node-version, which every workflow reads (node-version-file). The major-only range ('26') is kept, and a new major waits for a person.",
+      "matchManagers": [
+        "nodenv"
+      ],
+      "matchDepNames": [
+        "node"
+      ],
+      "groupName": "node",
+      "rangeStrategy": "replace",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "node"
+    },
+    {
+      "matchManagers": [
+        "nodenv"
+      ],
+      "matchDepNames": [
+        "node"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    }
+  ]
+}
