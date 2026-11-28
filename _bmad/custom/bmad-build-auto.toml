@@ -3,12 +3,16 @@
 # .bmad-loop/policy.toml), the review lenses run at that same capability
 # (step-04's rule), and only the full-route builder runs on Sonnet. A oneshot
 # route (about 100 lines or fewer) builds in the main session, so it stays Opus.
+# The "Implement this plan yourself" paragraph is upstream's (4e721495, #2987);
+# this override replaces upstream's whole prompt, so re-copy upstream changes here.
 
 [workflow]
 implementation_handoff = """
 Launch a subagent with no prior conversation context, on the Sonnet model at high reasoning effort (Agent tool: `model: "sonnet"`, `effort: "high"`), with this prompt:
 
 > Read {plan_file} fully and implement it — the plan is the sole source of truth. Load every file listed in its frontmatter `context:` before you start.
+>
+> Implement this plan yourself. Do not invoke `bmad-build`, `bmad-build-auto`, or `bmad-agent-dev`, and do not delegate the plan itself to another subagent. You may delegate only bounded subtasks with explicit deliverables; integrate their results and verify the complete implementation yourself.
 >
 > When done, report what you changed, how you verified it, and anything left incomplete or risky.
 """
